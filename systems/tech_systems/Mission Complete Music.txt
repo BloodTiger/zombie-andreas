@@ -1,0 +1,105 @@
+:MIS_CMP
+thread 'MIS_CMP'
+              
+gosub @RANDOM_MISSION_COMPLETE_SOUND
+USER_TAPE_OFF_FLAG = 1
+Audiostream.PerformAction($MISSION_COMPLETE_SOUND, PLAY)
+Audiostream.Loop($MISSION_COMPLETE_SOUND, 0)
+0086: $MUSIC_VOLUME222 = $MUSIC_VOLUME // (float)
+$MUSIC_VOLUME222 *= 0.7
+Audiostream.Volume($MISSION_COMPLETE_SOUND) = $MUSIC_VOLUME222  
+
+:MIS_CMP_CHECK_END
+wait 0
+if
+$SAVESTATUS_TRUE == 0
+jf @MISC_CMP_MUSIC_OFF
+0AB9: get_mp3 $MISSION_COMPLETE_SOUND state_to 2@
+if 
+2@ == -1 
+jf @MIS_CMP_CHECK_END
+Audiostream.Release($MISSION_COMPLETE_SOUND)
+end_thread
+
+:MISC_CMP_MUSIC_OFF 
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MISSION_COMPLETE_SOUND // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+//////////////////////////////////////////////////////////
+
+end_thread
+
+:RANDOM_MISSION_COMPLETE_SOUND
+random_int 0@ 0 2
+if
+not 0@ == 0
+jf @RANDOM_MISSION_COMPLETE_SOUND1
+if
+not 0@ == 1
+jf @RANDOM_MISSION_COMPLETE_SOUND2
+
+:RANDOM_MISSION_COMPLETE_SOUND1
+
+if 
+$GAMEMODE_CRAZY == 0
+then
+$MISSION_COMPLETE_SOUND = Audiostream.Load("audio\sounds\themonsterswithout1.wav")
+end
+
+if or
+$GAMEMODE_WAR == 1
+$FREEMODE == 1
+then     
+$MISSION_COMPLETE_SOUND = Audiostream.Load("audio\sounds\themonsterswithout1_metal1.wav")    
+end
+
+if
+$GAMEMODE_CRAZY == 1
+then  
+$MISSION_COMPLETE_SOUND = Audiostream.Load("audio\sounds\themonsterswithout1_metal2.wav")  
+end
+
+return
+
+:RANDOM_MISSION_COMPLETE_SOUND2
+
+if 
+$GAMEMODE_CRAZY == 0
+then
+$MISSION_COMPLETE_SOUND = Audiostream.Load("audio\sounds\themonsterswithout2.wav")
+end
+
+if 
+$GAMEMODE_WAR == 1
+then     
+$MISSION_COMPLETE_SOUND = Audiostream.Load("audio\sounds\themonsterswithout2_metal1.wav")    
+end
+
+if
+$GAMEMODE_CRAZY == 1
+then  
+$MISSION_COMPLETE_SOUND = Audiostream.Load("audio\sounds\themonsterswithout2_metal2.wav")  
+end
+
+return

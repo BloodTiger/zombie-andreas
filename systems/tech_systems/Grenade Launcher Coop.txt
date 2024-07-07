@@ -1,0 +1,713 @@
+const
+GRENADE_LAUNCHER_HAS = 10@
+MOLOTOV_ID = 11@
+GAS_ID = 12@
+GRENADE_ID = 13@
+FP_ON_PRE = 14@
+end
+
+:GRNDLN2
+thread 'GRNDLN2'
+
+:GRNDLN2_START
+
+///////////////////////////////////////////////
+
+repeat
+wait 0
+until 0800:   in_two_players_mode
+
+if and
+056D:   actor COOP_ACTOR defined
+not COOP_ACTOR == -69
+then
+07FE: set_actor COOP_ACTOR fighting_style_to 15 moves 6
+end
+
+008B: FP_ON_PRE = $FP_ON // (int)
+$FP_ON = 0
+if
+$INF_SIDE == 0
+then
+04DD: 0@ = actor COOP_ACTOR armour
+055F: set_player 1 max_armour += 100
+04DD: 1@ = actor COOP_ACTOR armour
+0062: 1@ -= 0@  // (int)
+1@ *= -2
+1@ /= 2
+035F: actor COOP_ACTOR armour += 1@
+COOP_ADJUSTED_ARMOR_FLAG = 1
+end
+
+if
+UNITED_MAP == 0
+then
+MOLOTOV_ID = 18
+GAS_ID = 17
+GRENADE_ID = 16
+else
+
+if
+STORIES_MAP == 1
+then
+
+if
+$UNITED_III_SPAWN == 1
+then
+MOLOTOV_ID = 179
+GAS_ID = 178
+GRENADE_ID = 177
+else
+MOLOTOV_ID = 209
+GAS_ID = 208
+GRENADE_ID = 207
+end
+
+else
+
+if
+$UNITED_III_SPAWN == 0
+then
+MOLOTOV_ID = 134
+GAS_ID = 133
+GRENADE_ID = 132
+else
+MOLOTOV_ID = 118
+GAS_ID = 17
+GRENADE_ID = 115
+end
+
+end
+
+end
+
+///////////////////////////////////////////////
+
+32@ = 0
+33@ = 0
+
+$GRND_LNCHR_MOLOTOV = 0
+GRENADE_LAUNCHER_HAS = 0
+
+while 0800:   in_two_players_mode
+wait 0
+
+if and
+056D:   actor COOP_ACTOR defined
+not COOP_ACTOR == -69
+then
+
+//----- Dynamic separate vehicle detector ----------    
+if or
+//00F2:   actor COOP_ACTOR near_actor PLAYER_ACTOR radius 5.0 5.0 sphere 0
+//00F2:   actor PLAYER_ACTOR near_actor COOP_ACTOR radius 5.0 5.0 sphere 0
+//  
+//00F4:   actor COOP_ACTOR near_actor PLAYER_ACTOR radius 5.0 5.0 sphere 0 in_car
+//00F4:   actor PLAYER_ACTOR near_actor COOP_ACTOR radius 5.0 5.0 sphere 0 in_car
+//
+//00F3:   actor COOP_ACTOR near_actor PLAYER_ACTOR radius 5.0 5.0 sphere 0 on_foot
+//00F3:   actor PLAYER_ACTOR near_actor COOP_ACTOR radius 5.0 5.0 sphere 0 on_foot
+actor.DrivingVehicleType(PLAYER_ACTOR,#BMX)
+actor.DrivingVehicleType(PLAYER_ACTOR,#BIKE)
+actor.DrivingVehicleType(PLAYER_ACTOR,#MTBIKE)
+actor.DrivingVehicleType(COOP_ACTOR,#BMX)
+actor.DrivingVehicleType(COOP_ACTOR,#BIKE)
+actor.DrivingVehicleType(COOP_ACTOR,#MTBIKE)        
+then
+    06FA: allow_players_to_use_separate_vehicles 1
+else
+    06FA: allow_players_to_use_separate_vehicles 0
+end
+
+if and
+0E3E: is_button_just_pressed 1 button 12
+80E1: not  player 1 pressed_key 4
+    then    
+    if and
+    00DF:   actor PLAYER_ACTOR driving
+    00DF:   actor COOP_ACTOR driving
+        then    
+        0A8D: 0@ = read_memory 0x0527F18 size 4 virtual_protect 0
+        if
+        0@ == 5405539
+            then
+            0A8C: write_memory 0x0527F18 size 4 value 5405563 virtual_protect 0        
+            else
+            0A8C: write_memory 0x0527F18 size 4 value 5405539 virtual_protect 0
+            end        
+        else    
+//        if
+//        CAN_2P_TARGET_VEHICLES == 0
+//            then
+//            CAN_2P_TARGET_VEHICLES = 1
+//            CAN_2P_TARGET_VEHICLES_SWITCH = 1
+//            text.ShowTextBox('GME1183')
+//            else
+//            CAN_2P_TARGET_VEHICLES = 0
+//            CAN_2P_TARGET_VEHICLES_SWITCH = 1
+//            text.ShowTextBox('GME1184')
+//            end
+        end            
+    end
+    
+if and
+0E3E: is_button_just_pressed 1 button 12
+00E1:  player 1 pressed_key 4
+    then    
+    if
+    CAN_AIM_AT_SURVIVORS == 0
+        then
+        CAN_AIM_AT_SURVIVORS = 1
+        text.ShowTextBox('GME1236')
+        else
+        CAN_AIM_AT_SURVIVORS = 0
+        text.ShowTextBox('GME1237')
+        end            
+    end    
+
+if and
+0E3E: is_button_just_pressed 0 button 15
+044B:   actor PLAYER_ACTOR on_foot
+89DE: not  actor PLAYER_ACTOR entering_car
+89DE: not  actor COOP_ACTOR entering_car
+8E4A: not is_char_exiting_any_car PLAYER_ACTOR
+actor.Driving(COOP_ACTOR)
+not actor.Driving(PLAYER_ACTOR)
+not $PANEL_OPEN == 1
+    then
+    0@ = actor.CurrentCar(COOP_ACTOR)
+    0AB5: store_actor PLAYER_ACTOR closest_vehicle_to 1@ closest_ped_to 2@
+    if and
+    003B:   0@ == 1@  // (int)
+    not $PANEL_OPEN2P == 1
+        then
+        05CA: AS_actor PLAYER_ACTOR enter_car 0@ passenger_seat -1 time 4500
+        end
+    end
+
+if and
+0E3E: is_button_just_pressed 1 button 15
+044B:   actor COOP_ACTOR on_foot
+89DE: not  actor PLAYER_ACTOR entering_car
+89DE: not  actor COOP_ACTOR entering_car
+8E4A: not is_char_exiting_any_car COOP_ACTOR
+actor.Driving(PLAYER_ACTOR)
+not actor.Driving(COOP_ACTOR)
+not $PANEL_OPEN == 1
+    then
+    0@ = actor.CurrentCar(PLAYER_ACTOR)
+    0AB5: store_actor COOP_ACTOR closest_vehicle_to 1@ closest_ped_to 2@
+    if and
+    003B:   0@ == 1@  // (int)
+    not $PANEL_OPEN2P == 1
+        then
+        05CA: AS_actor COOP_ACTOR enter_car 0@ passenger_seat -1 time 4500
+        end
+    end
+
+if and
+GRENADE_LAUNCHER_HAS == 0
+$GRND_LNCHR_MOLOTOV == 0
+02D8:   actor COOP_ACTOR current_weapon == 92
+0491:   actor COOP_ACTOR has_weapon MOLOTOV_ID
+    then
+    GRENADE_LAUNCHER_HAS = 1
+    $GRND_LNCHR_MOLOTOV = 1
+    end
+
+if and
+GRENADE_LAUNCHER_HAS == 1
+$GRND_LNCHR_MOLOTOV == 1
+02D8:   actor COOP_ACTOR current_weapon == 92
+8491: not  actor COOP_ACTOR has_weapon MOLOTOV_ID
+    then
+    GRENADE_LAUNCHER_HAS = 1
+    $GRND_LNCHR_MOLOTOV = 0
+    end
+
+if and
+GRENADE_LAUNCHER_HAS == 0
+$GRND_LNCHR_MOLOTOV == 0
+02D8:   actor COOP_ACTOR current_weapon == 92
+then
+if or
+0491:   actor COOP_ACTOR has_weapon GRENADE_ID
+0491:   actor COOP_ACTOR has_weapon GAS_ID
+    then
+    GRENADE_LAUNCHER_HAS = 1
+    $GRND_LNCHR_MOLOTOV = 1
+    end
+end
+
+if and
+GRENADE_LAUNCHER_HAS == 1
+8491: not  actor COOP_ACTOR has_weapon 92
+then
+GRENADE_LAUNCHER_HAS = 0
+$GRND_LNCHR_MOLOTOV = 0
+end
+
+///////////////////////////////////////////////////////////////////////////
+
+if
+$INF_SIDE == 0
+    then
+    
+    if
+    $GAMEMODE_STORYLINE == 0
+        then
+        
+        if
+        02D8:   actor COOP_ACTOR current_weapon == 92
+        then
+        0881: set_player PLAYER_CHAR able_to_shoot_weapons 0
+        else
+        0881: set_player PLAYER_CHAR able_to_shoot_weapons 1
+        end
+        
+        end
+    
+    end
+
+///////////////////////////////////////////////////////////////////////////
+
+if and
+0597:   actor COOP_ACTOR crouching
+02D8:   actor COOP_ACTOR current_weapon == 92
+then
+04EB: AS_actor COOP_ACTOR crouch 0
+end
+
+if or
+0491:   actor COOP_ACTOR has_weapon GRENADE_ID
+0491:   actor COOP_ACTOR has_weapon GAS_ID
+0491:   actor COOP_ACTOR has_weapon MOLOTOV_ID
+    then
+    041A: 0@ = actor COOP_ACTOR weapon GRENADE_ID ammo
+    041A: 1@ = actor COOP_ACTOR weapon GAS_ID ammo
+    041A: 2@ = actor COOP_ACTOR weapon MOLOTOV_ID ammo
+    if or
+    not 0@ == 0
+    not 1@ == 0
+    not 2@ == 0
+        then
+        if 
+        02D8:   actor COOP_ACTOR current_weapon == 92        
+            then
+            
+            gosub @POWER_GET_COOP                
+            
+            if and
+            00E1:   player 1 pressed_key 11
+            0491:   actor COOP_ACTOR has_weapon MOLOTOV_ID
+            not actor.Driving(COOP_ACTOR)
+            0E46: is_char_using_gun COOP_ACTOR
+                then
+                if or
+                0491:   actor COOP_ACTOR has_weapon GRENADE_ID
+                0491:   actor COOP_ACTOR has_weapon GAS_ID
+                    then
+                
+                    if
+                    $GRND_LNCHR_MOLOTOV == 0
+                    then
+                    audiostream.LinkToActor($GRND_LNCHR_SOUND2,COOP_ACTOR)
+                    audiostream.Loop($GRND_LNCHR_SOUND2,0)
+                    audiostream.Volume($GRND_LNCHR_SOUND2) = $SOUNDS_VOLUME
+                    audiostream.PerformAction($GRND_LNCHR_SOUND2,PLAY)
+                    $GRND_LNCHR_MOLOTOV = 1
+                    wait 200
+                    else
+                    audiostream.LinkToActor($GRND_LNCHR_SOUND2,COOP_ACTOR)
+                    audiostream.Loop($GRND_LNCHR_SOUND2,0)
+                    audiostream.Volume($GRND_LNCHR_SOUND2) = $SOUNDS_VOLUME
+                    audiostream.PerformAction($GRND_LNCHR_SOUND2,PLAY)
+                    $GRND_LNCHR_MOLOTOV = 0
+                    wait 200
+                    end
+                    
+                    end
+                end
+            
+            if
+            Actor.Animation(COOP_ACTOR) == "buddy_fire"
+                then
+                0881: set_player PLAYER_CHAR able_to_shoot_weapons 1
+                if and
+                00E1:   player 1 pressed_key 17
+                32@ > 1000
+                    then
+                    
+                    if and
+                    0491:   actor COOP_ACTOR has_weapon GRENADE_ID
+                    $GRND_LNCHR_MOLOTOV == 0
+                    then
+                    0085: 20@ = GRENADE_ID // (int)
+                    end
+                    
+                    if and
+                    0491:   actor COOP_ACTOR has_weapon GAS_ID
+                    $GRND_LNCHR_MOLOTOV == 0
+                    then
+                    0085: 20@ = GAS_ID // (int)
+                    end
+                    
+                    if and
+                    0491:   actor COOP_ACTOR has_weapon MOLOTOV_ID
+                    $GRND_LNCHR_MOLOTOV == 1
+                    then
+                    0085: 20@ = MOLOTOV_ID // (int)
+                    end                                        
+                    
+                    32@ = 0
+                    0D0B: get_actor COOP_ACTOR bone 35 matrix_pointer_to 25@ // IF and SET                        
+                    
+                    0D0A: store_coords_to 1@ 2@ 3@ from_matrix 25@ with_offsets 0.0 0.0 0.0 
+                    0D0A: store_coords_to 4@ 5@ 6@ from_matrix 25@ with_offsets 0.0 0.0 -40.0
+                    0A96: 15@ = actor COOP_ACTOR struct
+                    
+                    041A: 0@ = actor COOP_ACTOR weapon 20@ ammo
+                    if
+                    not 0@ == 0
+                        then
+                        0@ -= 1
+                        017B: set_actor COOP_ACTOR weapon 20@ ammo_to 0@                        
+                         
+                        0D60: create_projectile_type 20@ launched_from_entity 15@ origin 1@ 2@ 3@ target 4@ 5@ 6@ target_entity 0 force 30@ // IF and SET
+                        
+                        audiostream.LinkToActor($GRND_LNCHR_SOUND,COOP_ACTOR)
+                        audiostream.Loop($GRND_LNCHR_SOUND,0)
+                        audiostream.Volume($GRND_LNCHR_SOUND) = $SOUNDS_VOLUME
+                        audiostream.PerformAction($GRND_LNCHR_SOUND,PLAY)
+                        
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+end
+
+end
+
+008A: $FP_ON = FP_ON_PRE // (int)
+
+jump to @GRNDLN2_START
+
+end_thread
+
+:POWER_GET_COOP
+
+if and
+0491:   actor COOP_ACTOR has_weapon GRENADE_ID
+$GRND_LNCHR_MOLOTOV == 0
+then
+0085: 20@ = GRENADE_ID // (int)
+end
+                    
+if and
+0491:   actor COOP_ACTOR has_weapon GAS_ID
+$GRND_LNCHR_MOLOTOV == 0
+then
+0085: 20@ = GAS_ID // (int)
+end
+                    
+if and
+0491:   actor COOP_ACTOR has_weapon MOLOTOV_ID
+$GRND_LNCHR_MOLOTOV == 1
+then
+0085: 20@ = MOLOTOV_ID // (int)
+end
+
+0D0B: get_actor COOP_ACTOR bone 4 matrix_pointer_to 25@ // IF and SET
+0D03: 28@ = matrix 25@ y_angle
+                    
+30@ = 64.0
+
+if and
+28@ > 64.0
+28@ < 67.0
+then
+28@ = 64.0
+end
+                    
+if
+28@ > 67.0
+then
+28@ = 0.0
+end
+                    
+0063: 30@ -= 28@  // (float)
+30@ /= 40.0
+                    
+if
+003B:   20@ == GRENADE_ID  // (int)
+then
+30@ *= 1.0
+end
+                    
+if
+003B:   20@ == GAS_ID  // (int)
+then
+30@ *= 1.25
+end
+                    
+if
+003B:   20@ == MOLOTOV_ID  // (int)
+then
+30@ *= 1.5
+end
+                    
+if
+30@ < 0
+then
+30@ *= -1
+end
+                    
+if
+30@ < 0.2
+then
+30@ = 0.2
+end
+                    
+if and
+30@ > 1.55
+003B:   20@ == GRENADE_ID  // (int)
+then
+30@ = 1.55
+end
+                    
+if and
+30@ > 1.65
+003B:   20@ == GAS_ID  // (int)
+then
+30@ = 1.65
+end
+                    
+if and
+30@ > 1.95
+003B:   20@ == MOLOTOV_ID  // (int)
+then
+30@ = 1.95
+end
+
+29@ = 0
+
+if
+0491:   actor COOP_ACTOR has_weapon 16
+then
+29@ = 16
+end
+
+if
+0491:   actor COOP_ACTOR has_weapon 17
+then
+29@ = 17
+end
+
+if
+0491:   actor COOP_ACTOR has_weapon 18
+then
+29@ = 18
+end
+
+if
+0491:   actor COOP_ACTOR has_weapon 115
+then
+29@ = 115
+end
+
+if
+0491:   actor COOP_ACTOR has_weapon 118
+then
+29@ = 118
+end
+
+if
+0491:   actor COOP_ACTOR has_weapon 132
+then
+29@ = 132
+end
+
+if
+0491:   actor COOP_ACTOR has_weapon 133
+then
+29@ = 133
+end
+
+if
+0491:   actor COOP_ACTOR has_weapon 134
+then
+29@ = 134
+end
+
+if
+0491:   actor COOP_ACTOR has_weapon 177
+then
+29@ = 177
+end
+
+if
+0491:   actor COOP_ACTOR has_weapon 178
+then
+29@ = 178
+end
+
+if
+0491:   actor COOP_ACTOR has_weapon 179
+then
+29@ = 179
+end
+
+if
+0491:   actor COOP_ACTOR has_weapon 207
+then
+29@ = 207
+end
+
+if
+0491:   actor COOP_ACTOR has_weapon 208
+then
+29@ = 208
+end
+
+if
+0491:   actor COOP_ACTOR has_weapon 209
+then
+29@ = 209
+end
+
+if
+$GAMEMODE_EDITOR == 1
+then
+if
+0117:   player 0 wasted
+    then
+    return
+    end
+end
+
+if
+0AD2: 28@ = player 1 targeted_actor //IF and SET
+then
+actor.StorePos(COOP_ACTOR,25@,26@,27@)
+actor.StorePos(28@,1@,2@,3@)
+0509: 30@ = distance_between_XY 25@ 26@ and_XY 1@ 2@
+
+if
+30@ > 100.0
+then
+30@ = 100.0
+end
+
+if or
+29@ == 16
+29@ == 132
+29@ == 177
+29@ == 207
+then
+30@ /= 74.07
+30@ *= 2.5
+end
+
+if or
+29@ == 17
+29@ == 133
+29@ == 178
+29@ == 208
+then
+30@ /= 71.42
+30@ *= 2.5
+end
+
+if or
+29@ == 18
+29@ == 134
+29@ == 179
+29@ == 209
+then
+30@ /= 62.5
+30@ *= 2.5
+end
+
+if
+30@ > 1.35
+then
+
+if or
+29@ == 16
+29@ == 115
+29@ == 132
+29@ == 177
+29@ == 207
+then
+30@ = 1.35
+end
+
+end
+                    
+if
+30@ > 1.4
+then
+
+if or
+29@ == 17
+29@ == 133
+29@ == 178
+29@ == 208
+then
+30@ = 1.4
+end
+
+end
+                    
+if
+30@ > 1.6
+then
+
+if or
+29@ == 18
+29@ == 118
+29@ == 134
+29@ == 179
+29@ == 209
+then
+30@ = 1.6
+end
+
+end        
+
+//////////////////////////////////////////////////////////////////
+
+end
+                    
+//0AD1: show_formatted_text_highpriority "POWER: %f, ANGLE: %f" time 50 30@ 28@
+
+return
+
+:ANT_2PC
+thread 'ANT_2PC'
+
+repeat
+wait 0
+
+if and
+056D:   actor COOP_ACTOR defined
+0800:   in_two_players_mode
+then
+if or
+0E42: is_char_doing_task_id COOP_ACTOR 700
+0E42: is_char_doing_task_id COOP_ACTOR 712
+0E42: is_char_doing_task_id COOP_ACTOR 718
+    then
+    0687: clear_actor COOP_ACTOR task
+    break
+    end
+else
+break
+end
+
+until 32@ >= 500
+
+end_thread

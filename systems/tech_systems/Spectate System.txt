@@ -1,0 +1,578 @@
+:SPECTAT
+thread 'SPECTAT'
+
+const
+SPECTATE_MODE = 30@
+TARGET_FOUNDED = 31@
+CAMERA_LOCKED = 29@
+SPEC_MARK = 26@
+SPEC_CAM_REACTIVATE_FLAG = 25@
+SPEC_GAMESPEED = 24@
+end   
+
+if
+$ZOMBIE_DERBY_FLAG == 0
+then
+$HUD_REMOVE = 1
+cinema.Widescreen(1)
+end  
+
+32@ = 0
+
+$SPECTATING_FLAG = 1
+$FP_ON = 0
+SPEC_GAMESPEED = 1.0
+
+if
+856D: not  actor $SPEC_ACTOR defined
+then           
+TARGET_FOUNDED = 0
+SPECTATE_MODE = 0
+else
+TARGET_FOUNDED = 1
+SPECTATE_MODE = 1
+end     
+
+while actor.Dead(PLAYER_ACTOR)
+wait 0   
+$FP_ACTIVATED = 0 
+fade 0 0   
+end    
+
+0930: (unknown) 0
+camera.Restore_WithJumpCut()
+
+actor.StorePos(PLAYER_ACTOR,1@,2@,3@)    
+
+actor.LockInCurrentPosition(PLAYER_ACTOR,TRUE)
+actor.PutAtNoOffset(PLAYER_ACTOR,1@,2@,3@)
+        
+0619: enable_actor PLAYER_ACTOR collision_detection 0
+0568: set_actor PLAYER_ACTOR untargetable 1
+0D10: set_actor PLAYER_ACTOR alpha 0 // IF and SET
+        
+0489: set_actor $VOICE_ACTOR muted 1
+
+/////////////////////////////////////////////////////////
+
+if
+CARMA_REPLAY_FLAG == 1
+then
+
+if and
+$ZOMBIE_DERBY_FLAG == 1
+not actor.Dead($SPEC_ACTOR)
+    then
+    CARMA_GLOB_DERBY_PLAYER_CAR = actor.CurrentCar($SPEC_ACTOR)
+    04C4: store_coords_to 1@ 2@ 3@ from_actor PLAYER_ACTOR with_offset 0.0 0.0 50.0
+    0362: remove_actor PLAYER_ACTOR from_car_and_place_at 1@ 2@ 3@        
+    0430: put_actor PLAYER_ACTOR into_car CARMA_GLOB_DERBY_PLAYER_CAR passenger_seat 0
+        
+    if
+    SPEC_MOD_FREE_CAM == 0
+    then
+    camera.Restore_WithJumpCut()
+    else                
+    SPEC_CAM_REACTIVATE_FLAG = 1
+    end
+        
+    gosub @ANNA_CHECK_SPECTATE
+    end
+
+end
+
+/////////////////////////////////////////////////////////
+
+if
+CARMA_REPLAY_FLAG == 0
+then
+fade 1 2000
+end
+
+while true
+wait 0
+
+/////////////////////////////////////////////////////////////////////////////////
+
+if
+0E3D: is_key_just_pressed 81
+    then
+    SPEC_GAMESPEED = 0.5
+    0AD1: show_formatted_text_highpriority "Speed: %f" time 1000 SPEC_GAMESPEED
+    015D: set_gamespeed SPEC_GAMESPEED
+    end
+    
+if
+0E3D: is_key_just_pressed 82
+    then
+    SPEC_GAMESPEED = 2.0
+    0AD1: show_formatted_text_highpriority "Speed: %f" time 1000 SPEC_GAMESPEED
+    015D: set_gamespeed SPEC_GAMESPEED
+    end    
+    
+if
+0E3D: is_key_just_pressed 2
+    then
+    SPEC_GAMESPEED = 1.0
+    0AD1: show_formatted_text_highpriority "Speed: %f" time 1000 SPEC_GAMESPEED
+    015D: set_gamespeed SPEC_GAMESPEED
+    end            
+
+if
+0E10: is_mouse_wheel_up
+    then
+    SPEC_GAMESPEED += 0.05
+    
+    if
+    SPEC_GAMESPEED > 2.0
+    then
+    SPEC_GAMESPEED = 2.0
+    end
+        
+    0AD1: show_formatted_text_highpriority "Speed: %f" time 1000 SPEC_GAMESPEED
+    015D: set_gamespeed SPEC_GAMESPEED
+    end
+
+if
+0E11: is_mouse_wheel_down
+    then    
+    SPEC_GAMESPEED -= 0.05
+    0AD1: show_formatted_text_highpriority "Speed: %f" time 1000 SPEC_GAMESPEED
+        
+    if
+    SPEC_GAMESPEED < 0.0
+    then
+    SPEC_GAMESPEED = 0.0
+    0AD1: show_formatted_text_highpriority "Speed: %f" time 1000 SPEC_GAMESPEED
+    end
+        
+    015D: set_gamespeed SPEC_GAMESPEED        
+    end
+    
+/////////////////////////////////////////////////////////////////////////////////      
+
+$SPECTATING_FLAG = 1
+$ZOMBIE_DONT_ATTACK_PLAYER = 1  
+$WITCH_DONT_ATTACK_PLAYER = 1 
+
+$ARMY_DONT_ATTACK_PLAYER_FLAG = 1
+$BANDITS_DONT_ATTACK_PLAYER_FLAG = 1    
+
+Actor.SetImmunities(PLAYER_ACTOR, 1, 1, 1, 1, 1)
+Actor.Health(PLAYER_ACTOR) = 1000
+
+03BF: set_player PLAYER_CHAR ignored_by_everyone 1
+
+if and
+056D:   actor $SPEC_ACTOR defined
+TARGET_FOUNDED == 1
+    then     
+    
+    if
+    not actor.Dead($SPEC_ACTOR)   
+        then  
+    
+        if
+        056D:   actor $SPEC_ACTOR defined
+        then
+        
+        if 
+        not actor.Dead($SPEC_ACTOR)
+        then
+        1@ = actor.Health($SPEC_ACTOR)
+        0D39: 2@ = actor $SPEC_ACTOR max_health
+        0092: 2@ = float 2@ to_integer
+        04DD: 3@ = actor $SPEC_ACTOR armour
+        end
+        
+        end
+        
+        if
+        $ZOMBIE_DERBY_FLAG == 0
+        then
+        0AD1: show_formatted_text_highpriority "Spectating Mode ~n~ Target Health: ~y~%d~w~/~b~%d~w~ ~n~ Press ~g~USE~w~ key to change target" time 2000 1@ 2@
+        end         
+        
+        if      
+        056D:   actor $SPEC_ACTOR defined
+        then
+        
+        if
+        $ZOMBIE_DERBY_FLAG == 1
+        then
+        CARMA_GLOB_DERBY_PLAYER_CAR = actor.CurrentCar($SPEC_ACTOR)
+        
+        for 1@ = 0 to 109
+        
+        if
+        003A:   $SPEC_ACTOR == $PARK_CAR_DAMAGED[1@] // (int)
+        then
+        break
+        end
+        
+        end        
+        
+        0084: CARMA_GLOB_TIME_VAR = $PARK_CAR_ENGINE[1@] // (int)
+        0084: CARMA_GLOB_DERBY_CREDITS = $PARK_CAR_ID[1@] // (int)
+        
+        end
+        
+        /////////////////////////////////////////
+        
+        if
+        $ZOMBIE_DERBY_FLAG == 0
+        then
+        
+            if 
+            not actor.Dead($SPEC_ACTOR)
+            then
+            
+            if and
+            not actor.Driving($SPEC_ACTOR)
+            8AE2: not 15@ = random_vehicle_near_point 1@ 2@ 3@ in_radius 5.0 find_next 0 pass_wrecked 1 //IF and SET
+            then
+    
+            if
+            CAMERA_LOCKED == 1
+            then
+            camera.Restore_WithJumpCut()
+            CAMERA_LOCKED = 0
+            end
+    
+            else
+            
+            if
+            CAMERA_LOCKED == 0
+            then
+            CAMERA_LOCKED = 1
+            067C: put_camera_on_actor $SPEC_ACTOR offset 0.0 -6.0 1.5 rotation 0.0 0.0 0.35 tilt 0.0 switchstyle 2
+            end
+            
+            end
+            
+            else
+            camera.Restore_WithJumpCut()  
+            TARGET_FOUNDED = 0
+            jump to @OHFUCKGA
+            end
+            
+            end
+        
+        end
+        
+        ////////////////////////////////////////    
+    
+        if
+        056D:   actor $SPEC_ACTOR defined
+        then
+        
+        if 
+        not actor.Dead($SPEC_ACTOR)
+        then
+        
+        actor.StorePos($SPEC_ACTOR,1@,2@,3@)   
+        
+        if and
+        not actor.Driving($SPEC_ACTOR)
+        8AE2: not 15@ = random_vehicle_near_point 1@ 2@ 3@ in_radius 5.0 find_next 0 pass_wrecked 1 //IF and SET  
+        then   
+        04C4: store_coords_to 1@ 2@ 3@ from_actor $SPEC_ACTOR with_offset 0.0 -0.3 0.0
+        else
+        
+        if
+        $ZOMBIE_DERBY_FLAG == 1
+        then
+        04C4: store_coords_to 1@ 2@ 3@ from_actor $SPEC_ACTOR with_offset 0.0 -0.3 0.0
+        else      
+        04C4: store_coords_to 1@ 2@ 3@ from_actor $SPEC_ACTOR with_offset 0.0 -5.5 5.0
+        end
+        
+        end
+        
+        end
+        
+        end    
+        
+        actor.LockInCurrentPosition(PLAYER_ACTOR,TRUE)
+        
+        if
+        $ZOMBIE_DERBY_FLAG == 0
+        then
+        actor.PutAtNoOffset(PLAYER_ACTOR,1@,2@,3@)
+        end
+        
+        0619: enable_actor PLAYER_ACTOR collision_detection 0
+        0568: set_actor PLAYER_ACTOR untargetable 1
+        0D10: set_actor PLAYER_ACTOR alpha 0 // IF and SET
+        
+        0489: set_actor $VOICE_ACTOR muted 1
+        
+        if
+        $ZOMBIE_DERBY_FLAG == 0
+        then
+        $DELETE_SOUND = 1
+        end        
+        
+        else
+        camera.Restore_WithJumpCut() 
+        TARGET_FOUNDED = 0
+        end
+    end
+    
+:OHFUCKGA    
+    
+if  
+TARGET_FOUNDED == 1
+    then 
+    if
+    056D:   actor $SPEC_ACTOR defined
+        then
+        if
+        actor.Dead($SPEC_ACTOR)
+            then
+            camera.Restore_WithJumpCut()  
+            TARGET_FOUNDED = 0
+            end
+        else
+        camera.Restore_WithJumpCut()   
+        TARGET_FOUNDED = 0
+        end
+    end
+    
+if
+0E3D:   key_pressed 69 
+    then
+    
+    if
+    SPEC_MOD_FREE_CAM == 0 
+    then
+    SPEC_MOD_FREE_CAM = 1
+    0627: update_integer_stat 271 to 1
+    0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "CARMA_FREE_CAM_TURNED_FLAG"
+//    093D: lock_camera_on_cinematic_view 0    
+//    0AD1: show_formatted_text_highpriority "Free cam ON." time 2000
+    else
+    SPEC_MOD_FREE_CAM = 0
+    0627: update_integer_stat 271 to 2
+    0AF1: write_int 0 to_ini_file "saves\ZACM.set" section "SCR" key "CARMA_FREE_CAM_TURNED_FLAG"
+//    093D: lock_camera_on_cinematic_view 1
+    09AD: set_vehicle_camera_mode 5        
+//    0AD1: show_formatted_text_highpriority "Free cam OFF." time 2000
+    end
+    
+    end
+    
+if or
+SPEC_CAM_REACTIVATE_FLAG == 1
+SPEC_CAM_REACTIVATE_FLAG == 2
+    then
+    
+    if
+    SPEC_MOD_FREE_CAM == 0 
+        then
+        SPEC_MOD_FREE_CAM = 1
+        0627: update_integer_stat 271 to 1                
+        SPEC_CAM_REACTIVATE_FLAG = 0
+    //    0AD1: show_formatted_text_highpriority "Free cam ON." time 2000
+        else
+        SPEC_MOD_FREE_CAM = 0
+        0627: update_integer_stat 271 to 2                
+        SPEC_CAM_REACTIVATE_FLAG = 2
+    //    0AD1: show_formatted_text_highpriority "Free cam OFF." time 2000
+        end
+    
+    end    
+    
+//if
+//SPEC_MOD_FREE_CAM == 1
+//    then
+//    
+//    0922: set_camera_zoom_from $SPEC_FOV to $SPEC_FOV timelimit GENERAL_FOV_TIMER smooth_transition 0
+//    0AD1: show_formatted_text_highpriority "$SPEC_FOV: %f" time 2000 $SPEC_FOV
+//    $SPEC_FOV -= 1.0
+//    
+//    if 
+//    0E10: is_mouse_wheel_up
+//    then
+//    $SPEC_FOV -= 1.0    
+//    end
+//    
+//    if
+//    0E10: is_mouse_wheel_down
+//    then
+//    $SPEC_FOV += 1.0
+//    end
+//    
+//    end                    
+
+if or
+SPECTATE_MODE == 0    
+0E3E:   player 0 pressed_key 17
+TARGET_FOUNDED == 0
+    then   
+        
+    SPECTATE_MODE = 1   
+        
+    while true
+    wait 0             
+    actor.StorePos(PLAYER_ACTOR,1@,2@,3@)        
+        
+    if
+    $ZOMBIE_DERBY_FLAG == 0
+    then
+    0AD1: show_formatted_text_highpriority "Searching new target..." time 2000
+    end  
+        
+    gosub @SPECTATOR_TARGET_FIND
+        
+    if
+    19@ == 1
+    then      
+            
+    089F: get_actor $SPEC_ACTOR pedtype_to 0@
+        
+    if or
+    actor.Model($SPEC_ACTOR) == #ZTANK
+    actor.Model($SPEC_ACTOR) == #ZHUNTER
+    actor.Model($SPEC_ACTOR) == #ZCHARGER
+    actor.Model($SPEC_ACTOR) == #ZWITCH
+    then
+    if
+    not actor.Dead($SPEC_ACTOR)
+        then
+        jump to @GAY_CUM
+        end
+    end
+        
+    if and
+    not 0@ == 23
+    803A: not  $SPEC_ACTOR == PLAYER_ACTOR // (int)
+    803A: not  $SPEC_ACTOR == $VOICE_ACTOR // (int)
+    803A: not  $SPEC_ACTOR == $SPEC_ACTOR2 // (int)
+    803A: not  $SPEC_ACTOR == $SURV_IN_CAR // (int)
+    not actor.Dead($SPEC_ACTOR)
+//        82D8: not  actor $SPEC_ACTOR current_weapon == 0
+    8A32: not  actor $SPEC_ACTOR on_turret_of_car
+        then     
+        :GAY_CUM 
+        0084: $SPEC_ACTOR2 = $SPEC_ACTOR // (int)           
+        TARGET_FOUNDED = 1
+        break
+        end  
+    end
+            
+    end            
+        
+    end
+
+end
+
+end_thread
+
+:SPECTATOR_TARGET_FIND
+
+19@ = 0
+
+if
+8AB0: not  key_pressed 16
+then
+random_int 1@ 20 to 150
+else
+
+if
+8AB0: not  key_pressed 67            
+then
+random_int 1@ 40 to 44
+else
+1@ = 131
+end
+
+end
+
+if
+$ZOMBIE_DERBY_FLAG == 1
+then
+random_int 1@ 0 CARMA_GLOB_OPPONENTS_COUNT2
+0084: $SPEC_ACTOR = $PARK_CAR_DAMAGED[1@] // (int)
+jump to @SPECTATOR_TARGET_REDIRECT
+end
+
+//if and
+//$ZOMBIE_DERBY_FLAG == 1
+//CARMA_REPLAY_FLAG == 0
+//then
+//random_int 1@ 47 to 57
+//end
+//
+//if and
+//$ZOMBIE_DERBY_FLAG == 1
+//CARMA_REPLAY_FLAG == 1
+//then
+//random_int 1@ 47 to 58
+//end
+
+0084: $SPEC_ACTOR = $CREATURE[1@] // (int)
+
+:SPECTATOR_TARGET_REDIRECT  
+
+if
+056D:   actor $SPEC_ACTOR defined
+    then  
+    if or
+    00F2:   actor PLAYER_ACTOR near_actor $SPEC_ACTOR radius 190.0 190.0 sphere 0
+    $ZOMBIE_DERBY_FLAG == 1
+        then
+        
+        if and
+        $ZOMBIE_DERBY_FLAG == 1
+        not actor.Dead($SPEC_ACTOR)
+        then
+        CARMA_GLOB_DERBY_PLAYER_CAR = actor.CurrentCar($SPEC_ACTOR)
+        04C4: store_coords_to 1@ 2@ 3@ from_actor PLAYER_ACTOR with_offset 0.0 0.0 50.0
+        0362: remove_actor PLAYER_ACTOR from_car_and_place_at 1@ 2@ 3@        
+        0430: put_actor PLAYER_ACTOR into_car CARMA_GLOB_DERBY_PLAYER_CAR passenger_seat 0
+        
+        if
+        SPEC_MOD_FREE_CAM == 0
+        then
+        camera.Restore_WithJumpCut()
+        else                
+        SPEC_CAM_REACTIVATE_FLAG = 1
+        end
+        
+        gosub @ANNA_CHECK_SPECTATE
+        end
+            
+        19@ = 1
+        end
+    end
+
+return
+
+:ANNA_CHECK_SPECTATE
+
+/////////////////////////////////////////////////////////
+
+0665: get_actor $SPEC_ACTOR model_to 0@
+0AD3: v$EDITOR_FILE = format "%d" 0@
+0AF0: 0@ = get_int_from_ini_file "data\skins.ini" section "FEMALE" key v$EDITOR_FILE
+
+if
+0@ == 1
+then
+ANNA_FLAG = 1
+//0AD1: show_formatted_text_highpriority "SPEC IS ANNA" time 2000
+else
+ANNA_FLAG = 0
+//0AD1: show_formatted_text_highpriority "SPEC IS NOT ANNA" time 2000
+end
+
+if
+803A: not  ANNA_FLAG == ANNA_FLAG_PREV // (int)
+then
+fade 0 0
+end
+
+/////////////////////////////////////////////////////////
+
+return

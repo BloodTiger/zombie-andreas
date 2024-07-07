@@ -1,0 +1,213 @@
+:LOW_HEA
+thread 'LOW_HEA'        
+        
+:LOW_HEALTH_CHECK
+wait 0
+
+0@ = actor.Health(PLAYER_ACTOR)
+
+if and
+PERK_LASTCHANCE == 1
+LAST_CHANCE_FLAG == 0
+    then
+    0@ = 21
+    end
+
+if and
+not actor.Dead(PLAYER_ACTOR)
+GAME_OVER_FLAG == 0
+$HUNTER_ON_PLAYER == 0
+0@ < 20
+    then
+    if
+    $HUNTER_ON_PLAYER == 0    
+        then
+        
+        if
+        $GAMEMODE_WAR == 0
+        then
+        text.ShowTextBox('INV149')
+        else
+        text.ShowTextBox('INV217')
+        end
+        
+        end    
+    else
+    jump to @LOW_HEALTH_CHECK
+    end
+
+32@ = 0
+$FATIGUE_STATUS2 = 1
+$PLAYER_DYING = 1
+
+008B: 11@ = $NOTSAVE_MODE // (int)
+$NOTSAVE_MODE = 1
+
+06AF: set_player PLAYER_CHAR sprint_mode 1
+0A8C: write_memory 0xA49EFC size 1 value 6 virtual_protect 0
+if
+84AD: not  actor PLAYER_ACTOR in_water
+then
+0332: set_actor PLAYER_ACTOR bleeding 1
+end
+
+10@ = Audiostream.Load("AUDIO\SOUNDS\heartbeatloop.wav")
+Audiostream.PerformAction(10@, PLAY)
+Audiostream.Loop(10@, 1)
+Audiostream.Volume(10@) = $SOUNDS_VOLUME
+
+fade 0 90000
+gosub @DYING_EFFECT_ON
+
+:LOW_HEALTH_CHECK2
+wait 0
+03F0: enable_text_draw 1
+$DYING_MODE_COLOR_A = 50
+038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA $DYING_MODE_COLOR_R $DYING_MODE_COLOR_G $DYING_MODE_COLOR_B $DYING_MODE_COLOR_A  
+
+if
+056D:   actor $VOICE_ACTOR defined
+then
+
+if
+not $RANDOM_MODE_MODEL == 0
+then
+05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 340
+else
+05C1: AS_actor PLAYER_ACTOR speak_from_audio_table 340
+end
+
+end  
+
+if
+actor.Dead(PLAYER_ACTOR)
+    then
+    
+    text.RemoveTextBox()  
+        
+    if
+    056D:   actor $VOICE_ACTOR defined
+    then    
+    
+    if
+    not $RANDOM_MODE_MODEL == 0
+    then
+    05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 181
+    else
+    05C1: AS_actor PLAYER_ACTOR speak_from_audio_table 181
+    end
+    
+    end     
+      
+    32@ = 0
+    $FATIGUE_STATUS2 = 0
+    $PLAYER_DYING = 0
+    008A: $NOTSAVE_MODE = 11@ // (int)
+    wait 0
+    06AF: set_player PLAYER_CHAR sprint_mode 0
+    0A8C: write_memory 0xA49EFC size 1 value 0 virtual_protect 0
+    0332: set_actor PLAYER_ACTOR bleeding 0
+    
+    05BE: AS_actor PLAYER_ACTOR die 
+    32@ = 0
+    gosub @DYING_EFFECT_OFF
+    
+    fade 1 100    
+    
+    /////////////////////Плавное затухание/////////////////////
+    
+    $MUSIC_FADE_NUMBER += 1
+    if
+    $MUSIC_FADE_NUMBER > 4
+        then
+        $MUSIC_FADE_NUMBER = 0 
+        end    
+    
+    008A: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = 10@ // (int)
+
+    $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+    
+    $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+    $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+    $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+    create_thread @MUS_FAD
+    
+    wait 1
+
+    while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+    wait 0
+    end                            
+        
+    jump to @LOW_HEALTH_CHECK
+        
+    end                 
+
+0@ = actor.Health(PLAYER_ACTOR)
+if
+0@ > 20
+    then    
+    32@ = 0
+    $FATIGUE_STATUS2 = 0
+    $PLAYER_DYING = 0
+    008A: $NOTSAVE_MODE = 11@ // (int)
+    wait 0
+    06AF: set_player PLAYER_CHAR sprint_mode 0
+    0A8C: write_memory 0xA49EFC size 1 value 0 virtual_protect 0
+    0332: set_actor PLAYER_ACTOR bleeding 0
+    
+    gosub @DYING_EFFECT_OFF
+    fade 1 100
+
+    /////////////////////Плавное затухание/////////////////////
+    
+    $MUSIC_FADE_NUMBER += 1
+    if
+    $MUSIC_FADE_NUMBER > 4
+        then
+        $MUSIC_FADE_NUMBER = 0 
+        end    
+    
+    008A: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = 10@ // (int)
+
+    $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+    
+    $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+    $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+    $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+    create_thread @MUS_FAD
+    
+    wait 1
+
+    while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+    wait 0
+    end
+    
+    jump to @LOW_HEALTH_CHECK
+    
+    end
+
+jump to @LOW_HEALTH_CHECK2
+    
+:DYING_EFFECT_ON
+$DYING_MODE_XUY_COLOR_A = 0
+:DYING_EFFECT_ON_IDLE
+wait 1
+$DYING_MODE_XUY_COLOR_A += 5  
+03F0: enable_text_draw 1
+038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA $DYING_MODE_COLOR_R $DYING_MODE_COLOR_G $DYING_MODE_COLOR_B $DYING_MODE_XUY_COLOR_A 
+if
+003A:   $DYING_MODE_XUY_COLOR_A == $DYING_MODE_COLOR_A // (int)
+jf @DYING_EFFECT_ON_IDLE
+return
+
+:DYING_EFFECT_OFF
+0084: $DYING_MODE_XUY_COLOR_A = $DYING_MODE_COLOR_A // (int)
+:DYING_EFFECT_OFF_IDLE
+wait 1
+$DYING_MODE_XUY_COLOR_A -= 5
+03F0: enable_text_draw 1
+038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA $DYING_MODE_COLOR_R $DYING_MODE_COLOR_G $DYING_MODE_COLOR_B $DYING_MODE_XUY_COLOR_A
+if
+$DYING_MODE_XUY_COLOR_A == 0
+jf @DYING_EFFECT_OFF_IDLE
+return

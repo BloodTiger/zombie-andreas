@@ -1,0 +1,551 @@
+const
+GRENADE_LAUNCHER_HAS = 10@
+MOLOTOV_ID = 11@
+GAS_ID = 12@
+GRENADE_ID = 13@
+end
+
+:GRND_LN
+thread 'GRND_LN'
+
+create_thread @GRND_L2
+create_thread @GRNDLN2
+
+repeat
+wait 0
+until $GAMEMODE_SELECTED == 1
+
+///////////////////////////////////////////////
+
+if
+UNITED_MAP == 0
+then
+MOLOTOV_ID = 18
+GAS_ID = 17
+GRENADE_ID = 16
+else
+
+if
+STORIES_MAP == 1
+then
+
+if
+$UNITED_III_SPAWN == 1
+then
+MOLOTOV_ID = 179
+GAS_ID = 178
+GRENADE_ID = 177
+else
+MOLOTOV_ID = 209
+GAS_ID = 208
+GRENADE_ID = 207
+end
+
+else
+
+if
+$UNITED_III_SPAWN == 0
+then
+MOLOTOV_ID = 134
+GAS_ID = 133
+GRENADE_ID = 132
+else
+MOLOTOV_ID = 118
+GAS_ID = 17
+GRENADE_ID = 115
+end
+
+end
+
+end
+
+///////////////////////////////////////////////
+
+32@ = 0
+33@ = 0
+
+$GRND_LNCHR_MOLOTOV = 0
+GRENADE_LAUNCHER_HAS = 0
+
+while true
+wait 0
+
+if and
+GRENADE_LAUNCHER_HAS == 0
+$GRND_LNCHR_MOLOTOV == 0
+02D8:   actor PLAYER_ACTOR current_weapon == 92
+0491:   actor PLAYER_ACTOR has_weapon MOLOTOV_ID
+    then
+    GRENADE_LAUNCHER_HAS = 1
+    $GRND_LNCHR_MOLOTOV = 1
+    end
+
+if and
+GRENADE_LAUNCHER_HAS == 1
+$GRND_LNCHR_MOLOTOV == 1
+02D8:   actor PLAYER_ACTOR current_weapon == 92
+8491: not  actor PLAYER_ACTOR has_weapon MOLOTOV_ID
+    then
+    GRENADE_LAUNCHER_HAS = 1
+    $GRND_LNCHR_MOLOTOV = 0
+    end
+
+if and
+GRENADE_LAUNCHER_HAS == 0
+$GRND_LNCHR_MOLOTOV == 0
+02D8:   actor PLAYER_ACTOR current_weapon == 92
+then
+if or
+0491:   actor PLAYER_ACTOR has_weapon GRENADE_ID
+0491:   actor PLAYER_ACTOR has_weapon GAS_ID
+    then
+    GRENADE_LAUNCHER_HAS = 1
+    $GRND_LNCHR_MOLOTOV = 1
+    end
+end
+
+if and
+GRENADE_LAUNCHER_HAS == 1
+8491: not  actor PLAYER_ACTOR has_weapon 92
+then
+GRENADE_LAUNCHER_HAS = 0
+$GRND_LNCHR_MOLOTOV = 0
+end
+
+///////////////////////////////////////////////////////////////////////////
+
+if
+$INF_SIDE == 0
+    then
+    
+    if
+    $GAMEMODE_STORYLINE == 0
+        then
+        
+        if or
+        02D8:   actor PLAYER_ACTOR current_weapon == 92
+        ANTI_LEFT_STENKA_FLAG == 1
+        then
+        0881: set_player PLAYER_CHAR able_to_shoot_weapons 0
+        else
+        0881: set_player PLAYER_CHAR able_to_shoot_weapons 1
+        end
+        
+        else
+        
+        if
+        ANTI_LEFT_STENKA_FLAG == 1
+            then
+            0881: set_player PLAYER_CHAR able_to_shoot_weapons 0
+            end
+        
+        end
+    
+    end
+
+///////////////////////////////////////////////////////////////////////////
+
+if and
+0597:   actor PLAYER_ACTOR crouching
+02D8:   actor PLAYER_ACTOR current_weapon == 92
+then
+04EB: AS_actor PLAYER_ACTOR crouch 0
+end
+
+if or
+0491:   actor PLAYER_ACTOR has_weapon GRENADE_ID
+0491:   actor PLAYER_ACTOR has_weapon GAS_ID
+0491:   actor PLAYER_ACTOR has_weapon MOLOTOV_ID
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon GRENADE_ID ammo
+    041A: 1@ = actor PLAYER_ACTOR weapon GAS_ID ammo
+    041A: 2@ = actor PLAYER_ACTOR weapon MOLOTOV_ID ammo
+    if or
+    not 0@ == 0
+    not 1@ == 0
+    not 2@ == 0
+        then
+        if 
+        02D8:   actor PLAYER_ACTOR current_weapon == 92        
+            then
+            
+            gosub @POWER_GET                
+            
+            if and
+            0AB0:   key_pressed 69
+            0491:   actor PLAYER_ACTOR has_weapon MOLOTOV_ID
+            not actor.Driving(PLAYER_ACTOR)
+            0E46: is_char_using_gun PLAYER_ACTOR
+                then
+                if or
+                0491:   actor PLAYER_ACTOR has_weapon GRENADE_ID
+                0491:   actor PLAYER_ACTOR has_weapon GAS_ID
+                    then
+                
+                    if
+                    $GRND_LNCHR_MOLOTOV == 0
+                    then
+                    audiostream.LinkToActor($GRND_LNCHR_SOUND2,PLAYER_ACTOR)
+                    audiostream.Loop($GRND_LNCHR_SOUND2,0)
+                    audiostream.Volume($GRND_LNCHR_SOUND2) = $SOUNDS_VOLUME
+                    audiostream.PerformAction($GRND_LNCHR_SOUND2,PLAY)
+                    $GRND_LNCHR_MOLOTOV = 1
+                    wait 200
+                    else
+                    audiostream.LinkToActor($GRND_LNCHR_SOUND2,PLAYER_ACTOR)
+                    audiostream.Loop($GRND_LNCHR_SOUND2,0)
+                    audiostream.Volume($GRND_LNCHR_SOUND2) = $SOUNDS_VOLUME
+                    audiostream.PerformAction($GRND_LNCHR_SOUND2,PLAY)
+                    $GRND_LNCHR_MOLOTOV = 0
+                    wait 200
+                    end
+                    
+                    end
+                end
+            
+            if
+            Actor.Animation(PLAYER_ACTOR) == "buddy_fire"
+                then
+                0881: set_player PLAYER_CHAR able_to_shoot_weapons 1
+                if and
+                00E1:   player 0 pressed_key 17
+                32@ > 1000
+                    then
+                    
+                    if and
+                    0491:   actor PLAYER_ACTOR has_weapon GRENADE_ID
+                    $GRND_LNCHR_MOLOTOV == 0
+                    then
+                    0085: 20@ = GRENADE_ID // (int)
+                    end
+                    
+                    if and
+                    0491:   actor PLAYER_ACTOR has_weapon GAS_ID
+                    $GRND_LNCHR_MOLOTOV == 0
+                    then
+                    0085: 20@ = GAS_ID // (int)
+                    end
+                    
+                    if and
+                    0491:   actor PLAYER_ACTOR has_weapon MOLOTOV_ID
+                    $GRND_LNCHR_MOLOTOV == 1
+                    then
+                    0085: 20@ = MOLOTOV_ID // (int)
+                    end                                        
+                    
+                    32@ = 0
+                    0D0B: get_actor PLAYER_ACTOR bone 35 matrix_pointer_to 25@ // IF and SET                        
+                    
+                    0D0A: store_coords_to 1@ 2@ 3@ from_matrix 25@ with_offsets 0.0 0.0 0.0 
+                    0D0A: store_coords_to 4@ 5@ 6@ from_matrix 25@ with_offsets 0.0 0.0 -40.0
+                    0A96: 15@ = actor PLAYER_ACTOR struct
+                    
+                    041A: 0@ = actor PLAYER_ACTOR weapon 20@ ammo
+                    if
+                    not 0@ == 0
+                        then
+                        
+                        0A8D: 14@ = read_memory 0x969178 size 1 virtual_protect 0
+                        if
+                        not 14@ == 1
+                        then
+                        0@ -= 1
+                        017B: set_actor PLAYER_ACTOR weapon 20@ ammo_to 0@
+                        end
+                         
+                        0D60: create_projectile_type 20@ launched_from_entity 15@ origin 1@ 2@ 3@ target 4@ 5@ 6@ target_entity 0 force 30@ // IF and SET
+                        
+                        audiostream.LinkToActor($GRND_LNCHR_SOUND,PLAYER_ACTOR)
+                        audiostream.Loop($GRND_LNCHR_SOUND,0)
+                        audiostream.Volume($GRND_LNCHR_SOUND) = $SOUNDS_VOLUME
+                        audiostream.PerformAction($GRND_LNCHR_SOUND,PLAY)
+                        
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+end
+
+end_thread
+
+:POWER_GET
+
+if and
+0491:   actor PLAYER_ACTOR has_weapon GRENADE_ID
+$GRND_LNCHR_MOLOTOV == 0
+then
+0085: 20@ = GRENADE_ID // (int)
+end
+                    
+if and
+0491:   actor PLAYER_ACTOR has_weapon GAS_ID
+$GRND_LNCHR_MOLOTOV == 0
+then
+0085: 20@ = GAS_ID // (int)
+end
+                    
+if and
+0491:   actor PLAYER_ACTOR has_weapon MOLOTOV_ID
+$GRND_LNCHR_MOLOTOV == 1
+then
+0085: 20@ = MOLOTOV_ID // (int)
+end
+
+0D0B: get_actor PLAYER_ACTOR bone 4 matrix_pointer_to 25@ // IF and SET
+0D03: 28@ = matrix 25@ y_angle
+                    
+30@ = 64.0
+
+if and
+28@ > 64.0
+28@ < 67.0
+then
+28@ = 64.0
+end
+                    
+if
+28@ > 67.0
+then
+28@ = 0.0
+end
+                    
+0063: 30@ -= 28@  // (float)
+30@ /= 40.0
+                    
+if
+003B:   20@ == GRENADE_ID  // (int)
+then
+30@ *= 1.0
+end
+                    
+if
+003B:   20@ == GAS_ID  // (int)
+then
+30@ *= 1.25
+end
+                    
+if
+003B:   20@ == MOLOTOV_ID  // (int)
+then
+30@ *= 1.5
+end
+                    
+if
+30@ < 0
+then
+30@ *= -1
+end
+                    
+if
+30@ < 0.2
+then
+30@ = 0.2
+end
+                    
+if and
+30@ > 1.55
+003B:   20@ == GRENADE_ID  // (int)
+then
+30@ = 1.55
+end
+                    
+if and
+30@ > 1.65
+003B:   20@ == GAS_ID  // (int)
+then
+30@ = 1.65
+end
+                    
+if and
+30@ > 1.95
+003B:   20@ == MOLOTOV_ID  // (int)
+then
+30@ = 1.95
+end
+
+29@ = 0
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 16
+then
+29@ = 16
+end
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 17
+then
+29@ = 17
+end
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 18
+then
+29@ = 18
+end
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 115
+then
+29@ = 115
+end
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 118
+then
+29@ = 118
+end
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 132
+then
+29@ = 132
+end
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 133
+then
+29@ = 133
+end
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 134
+then
+29@ = 134
+end
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 177
+then
+29@ = 177
+end
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 178
+then
+29@ = 178
+end
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 179
+then
+29@ = 179
+end
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 207
+then
+29@ = 207
+end
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 208
+then
+29@ = 208
+end
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 209
+then
+29@ = 209
+end
+
+if
+0AD2: 28@ = player 0 targeted_actor //IF and SET
+then
+actor.StorePos(PLAYER_ACTOR,25@,26@,27@)
+actor.StorePos(28@,1@,2@,3@)
+0509: 30@ = distance_between_XY 25@ 26@ and_XY 1@ 2@
+
+if
+30@ > 100.0
+then
+30@ = 100.0
+end
+
+if or
+29@ == 16
+29@ == 132
+29@ == 177
+29@ == 207
+then
+30@ /= 74.07
+30@ *= 2.5
+end
+
+if or
+29@ == 17
+29@ == 133
+29@ == 178
+29@ == 208
+then
+30@ /= 71.42
+30@ *= 2.5
+end
+
+if or
+29@ == 18
+29@ == 134
+29@ == 179
+29@ == 209
+then
+30@ /= 62.5
+30@ *= 2.5
+end
+
+if
+30@ > 1.35
+then
+
+if or
+29@ == 16
+29@ == 115
+29@ == 132
+29@ == 177
+29@ == 207
+then
+30@ = 1.35
+end
+
+end
+                    
+if
+30@ > 1.4
+then
+
+if or
+29@ == 17
+29@ == 133
+29@ == 178
+29@ == 208
+then
+30@ = 1.4
+end
+
+end
+                    
+if
+30@ > 1.6
+then
+
+if or
+29@ == 18
+29@ == 118
+29@ == 134
+29@ == 179
+29@ == 209
+then
+30@ = 1.6
+end
+
+end        
+
+//////////////////////////////////////////////////////////////////
+
+end
+                    
+//0AD1: show_formatted_text_highpriority "POWER: %f, ANGLE: %f" time 50 30@ 28@
+
+return

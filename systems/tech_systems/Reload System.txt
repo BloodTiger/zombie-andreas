@@ -1,0 +1,747 @@
+:RELOAD
+thread 'RELOAD'                
+
+0662: printstring "----------Original Source Code Reload Weapon by ThirteenAG, Modifed for ZA by BloodTiger----------"
+
+create_thread @RELOAD_C
+
+:RELOAD_11
+wait 0
+if
+not $INF_AMMO_FLAG == 1
+jf @RELOAD_11
+
+if and
+0E46: is_char_using_gun PLAYER_ACTOR
+00E1:   player 0 pressed_key 19
+    then
+    jump to @RELOAD_DO_JOY
+    end 
+
+if and
+0AB0:   key_pressed 82
+not actor.Animation(PLAYER_ACTOR) == "run_back"
+not actor.Animation(PLAYER_ACTOR) == "run_left"
+not actor.Animation(PLAYER_ACTOR) == "run_right"
+jf @RELOAD_11 
+:RELOAD_DO_JOY
+if and
+8818: not  actor PLAYER_ACTOR in_air
+044B:   actor PLAYER_ACTOR on_foot 
+09E7:   player PLAYER_CHAR not_frozen 
+PLAYER_IN_WATER_FULL_FLAG == 0
+jf @RELOAD_11
+if and
+not actor.Animation(PLAYER_ACTOR) == "JUMP_glide"
+not actor.Animation(PLAYER_ACTOR) == "JUMP_land"
+not actor.Animation(PLAYER_ACTOR) == "JUMP_launch"
+not actor.Animation(PLAYER_ACTOR) == "JUMP_launch_R"
+not actor.Animation(PLAYER_ACTOR) == "FALL_land"
+not actor.Animation(PLAYER_ACTOR) == "GunCrouchFwd"
+jf @RELOAD_11
+0470: 2@ = actor PLAYER_ACTOR current_weapon
+if
+2@ > 15
+jf @RELOAD_11  
+
+041A: 6@ = actor PLAYER_ACTOR weapon 2@ ammo
+0085: 0@ = 2@ // (int) 
+0012: 0@ *= 0x70 
+000A: 0@ += 0xC8AAB8 
+000A: 0@ += 0x20 
+0A8D: 3@ = read_memory 0@ size 1 virtual_protect 0  
+
+0A96: 0@ = actor PLAYER_ACTOR struct 
+000A: 0@ += 0x718 
+0A8D: 4@ = read_memory 0@ size 1 virtual_protect 0
+
+0A96: 0@ = actor PLAYER_ACTOR struct 
+000A: 0@ += 0x5A0 
+4@ *= 0x1C 
+005A: 0@ += 4@ // (int) 
+000A: 0@ += 0x8 
+0A8D: 5@ = read_memory 0@ size 4 virtual_protect 0 // GetAmmoClip
+
+if
+001D:   6@ > 5@  // (int)
+jf @RELOAD_11
+
+gosub @RELOAD_AMMO_CHECK
+
+if
+803B: not  5@ == 3@  // (int)
+jf @RELOAD_11
+
+0470: 2@ = actor PLAYER_ACTOR current_weapon
+if or
+2@ == 34
+2@ == 80
+2@ == 96
+2@ == 97
+2@ == 147
+2@ == 176
+2@ == 206
+then
+if and
+not SNIPER_GAYMPAD_FLAG == 1
+not COOP_ACTIVE_FLAG == 1
+    then
+    jump to @RELOAD_SNIPER_RIFLE_CHECK
+    else
+    jump to @RELOAD_SNIPER_RIFLE_CHECK2
+    end
+end
+
+if and
+not 2@ == 34
+not 2@ == 35
+not 2@ == 36
+not 2@ == 37
+not 2@ == 38
+jf @RELOAD_11  
+if and
+not 2@ == 113
+not 2@ == 138
+not 2@ == 140
+not 2@ == 120
+not 2@ == 146
+not 2@ == 114
+not 2@ == 148
+jf @RELOAD_11  
+if and
+not 2@ == 150
+not 2@ == 135
+not 2@ == 80
+not 2@ == 91
+not 2@ == 152
+jf @RELOAD_11
+if and
+not 2@ == 172
+not 2@ == 174
+not 2@ == 175
+not 2@ == 176
+jf @RELOAD_11
+if and
+not 2@ == 202
+not 2@ == 204
+not 2@ == 205
+not 2@ == 206
+jf @RELOAD_11
+if and
+not 2@ == 92
+not 2@ == 93
+not 2@ == 96
+not 2@ == 97
+not 2@ == 109 
+jf @RELOAD_11
+
+:RELOAD_SNIPER_RIFLE_CHECK2     
+
+$PLAYER_RELOADING = 1
+0901: enable_player PLAYER_CHAR jump_key 0
+082A: set_player PLAYER_CHAR able_to_use_crouch_button 0
+
+0A96: 0@ = actor PLAYER_ACTOR struct 
+0@ += 0x718 
+0A8D: 1@ = read_memory 0@ size 1 virtual_protect 0 
+0A96: 0@ = actor PLAYER_ACTOR struct 
+0@ += 0x5A0 
+1@ *= 0x1C 
+005A: 0@ += 1@ // (int) 
+0@ += 0x4 
+0A8C: write_memory 0@ size 4 value 2 virtual_protect 1
+
+while $PLAYER_RELOADING == 1
+wait 0
+0901: enable_player PLAYER_CHAR jump_key 0
+end
+
+082A: set_player PLAYER_CHAR able_to_use_crouch_button 1
+
+if
+$EXTRA_BORING_PLUS == 1
+then
+//0901: enable_player PLAYER_CHAR jump_key 0
+else   
+0901: enable_player PLAYER_CHAR jump_key 1
+end 
+
+jump @RELOAD_11
+
+:RELOAD_SNIPER_RIFLE_CHECK
+
+$PLAYER_RELOADING = 1
+
+if and
+not actor.Animation(PLAYER_ACTOR) == "RIFLE_fire"
+not actor.Animation(PLAYER_ACTOR) == "RIFLE_crouchfire"
+then
+0A1A: actor PLAYER_ACTOR perform_walk_animation "RIFLE_load" IFP "RIFLE" framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF 0 -1 ms // versionC
+end
+
+audiostream.LinkToActor($SNIPER_RELOAD_SOUND,PLAYER_ACTOR)
+audiostream.Loop($SNIPER_RELOAD_SOUND,0)
+0089: 1@ = $SOUNDS_VOLUME // (float)
+1@ *= 0.35
+audiostream.Volume($SNIPER_RELOAD_SOUND) = 1@
+audiostream.PerformAction($SNIPER_RELOAD_SOUND,PLAY)
+
+32@ = 0
+0@ = 0
+
+if
+UNITED_MAP == 0
+then
+2@ = 1200
+else
+2@ = 450
+end
+
+repeat
+wait 0
+
+0901: enable_player PLAYER_CHAR jump_key 0
+audiostream.Volume($SNIPER_RELOAD_SOUND) = 1@
+
+if and
+not actor.Animation(PLAYER_ACTOR) == "RIFLE_load"
+not actor.Animation(PLAYER_ACTOR) == "RIFLE_fire"
+not actor.Animation(PLAYER_ACTOR) == "RIFLE_crouchfire"
+    then
+    0@ = 1
+    audiostream.PerformAction($SNIPER_RELOAD_SOUND,STOP)
+    break
+    end
+
+until 002D:   32@ >= 2@  // (int)
+
+if
+0@ == 0
+then
+0A96: 0@ = actor PLAYER_ACTOR struct 
+0@ += 0x718 
+0A8D: 1@ = read_memory 0@ size 1 virtual_protect 0 
+0A96: 0@ = actor PLAYER_ACTOR struct 
+0@ += 0x5A0 
+1@ *= 0x1C 
+005A: 0@ += 1@ // (int) 
+0@ += 0x4 
+0A8C: write_memory 0@ size 4 value 2 virtual_protect 1
+end
+
+repeat
+wait 0
+until not actor.Animation(PLAYER_ACTOR) == "RIFLE_load"
+
+if and
+not actor.Animation(PLAYER_ACTOR) == "RIFLE_fire"
+not actor.Animation(PLAYER_ACTOR) == "RIFLE_crouchfire"
+then
+0A1A: actor PLAYER_ACTOR perform_walk_animation "fucku" IFP "PED" framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF 0 1 ms // versionC
+end 
+
+$PLAYER_RELOADING = 0
+082A: set_player PLAYER_CHAR able_to_use_crouch_button 1
+
+if
+$EXTRA_BORING_PLUS == 1
+then
+//0901: enable_player PLAYER_CHAR jump_key 0
+else   
+0901: enable_player PLAYER_CHAR jump_key 1
+end 
+
+jump @RELOAD_11 
+
+:RELOAD_AMMO_CHECK
+0E83: get_current_char_weaponinfo PLAYER_ACTOR store_to 2@
+0E88: get_weaponinfo_total_clip 2@ store_to 3@
+return    
+
+3@ = 0
+
+if
+2@ == 22
+then
+3@ = 17
+end
+
+if
+2@ == 23
+then
+3@ = 34
+end
+
+if
+2@ == 24
+then
+3@ = 9
+end
+
+if
+2@ == 26
+then
+3@ = 2
+end
+
+if
+2@ == 27
+then
+3@ = 7
+end
+
+if
+2@ == 28
+then
+3@ = 30
+end
+
+if
+2@ == 29
+then
+3@ = 40
+end
+
+if
+2@ == 30
+then
+3@ = 30
+end
+
+if
+2@ == 31
+then
+3@ = 50
+end
+
+if
+2@ == 32
+then
+3@ = 50
+end
+
+if
+2@ == 33
+then
+3@ = 8
+end
+
+if
+2@ == 34
+then
+3@ = 8
+end
+
+////////////////////////////////////
+
+if
+2@ == 70
+then
+3@ = 200
+end
+
+if
+2@ == 71
+then
+3@ = 6
+end
+
+if
+2@ == 72
+then
+3@ = 30
+end
+
+if
+2@ == 74
+then
+3@ = 100
+end
+
+if
+2@ == 75
+then
+3@ = 20
+end
+
+if
+2@ == 76
+then
+3@ = 30
+end
+
+if
+2@ == 77
+then
+3@ = 64
+end
+
+if
+2@ == 78
+then
+3@ = 20
+end   
+
+if
+2@ == 79
+then
+3@ = 25
+end
+
+if
+2@ == 80
+then
+3@ = 5
+end    
+
+if
+2@ == 81
+then
+3@ = 20
+end    
+
+if
+2@ == 82
+then
+3@ = 30
+end    
+
+if
+2@ == 83
+then
+3@ = 30
+end    
+
+if
+2@ == 84
+then
+3@ = 30
+end    
+
+if
+2@ == 85
+then
+3@ = 30
+end    
+
+if
+2@ == 86
+then
+3@ = 50
+end 
+
+if
+2@ == 87
+then
+3@ = 30
+end 
+
+if
+2@ == 88
+then
+3@ = 30
+end 
+
+if
+2@ == 89
+then
+3@ = 17
+end 
+
+if
+2@ == 90
+then
+3@ = 8
+end
+
+if
+2@ == 94
+then
+3@ = 200
+end
+
+if
+2@ == 95
+then
+3@ = 25
+end
+
+if
+2@ == 96
+then
+3@ = 10
+end
+
+if
+2@ == 97
+then
+3@ = 6
+end
+
+if
+2@ == 98
+then
+3@ = 12
+end
+
+if
+2@ == 99
+then
+3@ = 30
+end
+
+if
+2@ == 100
+then
+3@ = 12
+end
+
+if
+2@ == 101
+then
+3@ = 30
+end
+
+if
+2@ == 102
+then
+3@ = 12
+end
+
+if
+2@ == 103
+then
+3@ = 6
+end
+
+if
+2@ == 104
+then
+3@ = 35
+end
+
+if
+2@ == 105
+then
+3@ = 30
+end   
+
+///////////////////////GTA 3 WEAPS///////////////////////
+
+if
+2@ == 111
+then
+3@ = 12
+end  
+
+if
+2@ == 112
+then
+3@ = 30
+end    
+
+if
+2@ == 116
+then
+3@ = 60
+end  
+
+if
+2@ == 117
+then
+3@ = 25
+end    
+
+///////////////////////GTA VC WEAPS///////////////////////
+
+if
+2@ == 136
+then
+3@ = 17
+end   
+
+if
+2@ == 137
+then
+3@ = 6
+end   
+
+if
+2@ == 139
+then
+3@ = 7
+end   
+
+if
+2@ == 141
+then
+3@ = 50
+end   
+
+if
+2@ == 141
+then
+3@ = 50
+end   
+
+if
+2@ == 142
+then
+3@ = 30
+end  
+
+if
+2@ == 143
+then
+3@ = 30
+end   
+
+if
+2@ == 144
+then
+3@ = 30
+end    
+
+if
+2@ == 145
+then
+3@ = 30
+end   
+
+if
+2@ == 147
+then
+3@ = 7
+end
+
+if
+2@ == 149
+then
+3@ = 200
+end
+
+///////////////////////GTA LCS WEAPS///////////////////////
+
+if
+2@ == 165
+then
+3@ = 17
+end   
+
+if
+2@ == 166
+then
+3@ = 6
+end   
+
+if
+2@ == 167
+then
+3@ = 50
+end   
+
+if
+2@ == 168
+then
+3@ = 30
+end   
+
+if
+2@ == 169
+then
+3@ = 30
+end   
+
+if
+2@ == 170
+then
+3@ = 30
+end  
+
+if
+2@ == 171
+then
+3@ = 30
+end   
+
+if
+2@ == 173
+then
+3@ = 7
+end
+
+if
+2@ == 176
+then
+3@ = 7
+end
+
+if
+2@ == 181
+then
+3@ = 200
+end
+
+///////////////////////GTA VCS WEAPS///////////////////////
+
+if
+2@ == 195
+then
+3@ = 17
+end   
+
+if
+2@ == 196
+then
+3@ = 6
+end   
+
+if
+2@ == 197
+then
+3@ = 30
+end   
+
+if
+2@ == 198
+then
+3@ = 30
+end   
+
+if
+2@ == 199
+then
+3@ = 30
+end   
+
+if
+2@ == 200
+then
+3@ = 30
+end  
+
+if
+2@ == 201
+then
+3@ = 30
+end   
+
+if
+2@ == 203
+then
+3@ = 7
+end
+
+if
+2@ == 206
+then
+3@ = 7
+end
+
+if
+2@ == 211
+then
+3@ = 200
+end       
+
+return

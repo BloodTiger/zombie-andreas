@@ -1,0 +1,687 @@
+const
+LAD_SYS_TOTAL_LADDERS_COUNT = 10@
+LAD_SYS_ARRAY_STRUCT = $LD_SYS_ARR_STR 
+end
+
+:LADDERS
+thread 'LADDERS'
+
+repeat
+wait 250
+
+if or
+$GAMEMODE_STORYLINE == 1
+$GAMEMODE_SURVIVAL == 1
+    then
+    break
+    end
+
+until false
+
+/////////////////////////////////////////////////////////
+
+0AA7: call_function 0x00403DA0{_getModelPtr} num_params 1 pop 1 iId 18161 pclInfo 7@
+if 7@ > 0
+    then
+    0A8E: 9@ = 7@ + 0x18 // CModel*** - CModelHier - CBaseModelInfo - m_fDrawDistance
+    0A8D: 0@ = read_memory 9@ size 4 virtual_protect 0
+    0A8C: write_memory 9@ size 4 value 999.0 vp 0
+    end
+    
+/////////////////////////////////////////////////////////    
+
+for 0@ = 0 to 299
+
+0AD3: v$LADDER_FILE = format "ld%d" 0@
+
+0AF0: 1@ = get_int_from_ini_file "data/ladders.ini" section v$LADDER_FILE key "PONY" 
+
+if
+not 1@ == 1
+    then
+    0@ -= 1
+    0085: LAD_SYS_TOTAL_LADDERS_COUNT = 0@ // (int)
+    gosub @LAD_SYS_WRITE_ARRAY
+    create_thread @LAD_BOT 0 0 0 0 0 0 0 0 0 0 LAD_SYS_TOTAL_LADDERS_COUNT
+    jump to @FUCKINGFUCK
+    end
+
+end
+
+:FUCKINGFUCK
+
+////////////////////////////////////////////////////////////////////
+
+if and
+$SAVESTATUS_TRUE == 1
+$SAVING_DELAY == 1
+then
+
+while $SAVESTATUS_TRUE == 1
+wait 0
+end
+
+while $SAVING_DELAY == 1
+wait 0
+end
+
+gosub @LAD_SYS_WRITE_ARRAY
+
+end
+
+////////////////////////////////////////////////////////////////////  
+
+wait 100
+
+//////////////////////SHOW ALL LADDERS CHEAT////////////////////////
+
+if
+$CHEAT_TYPE_FLAG == 1
+    then
+    if
+    0ADC:   test_cheat "LADSHOW"
+        then
+        
+        for 0@ = 0 to LAD_SYS_TOTAL_LADDERS_COUNT    
+        0085: 31@ = 0@
+        31@ *= 32 //size of xyz
+        0EE2: read_struct_offset_multi LAD_SYS_ARRAY_STRUCT offset 31@ count 8 size 4 1@ 2@ 3@ 4@ 5@ 6@ 7@ 8@
+        018A: 15@ = create_checkpoint_at 1@ 2@ 3@
+        018A: 16@ = create_checkpoint_at 4@ 5@ 6@
+        marker.SetIconSize(15@,1)
+        marker.SetIconSize(16@,1)
+        marker.SetColor(15@,6)
+        marker.SetColor(16@,6)
+        end
+        
+        end    
+    end
+    
+////////////////////////////////////////////////////////////////////    
+
+if or
+0A2A:   text_box 'GAME288' displayed
+0A2A:   text_box 'GAME289' displayed
+0A2A:   text_box 'GA288_2' displayed
+0A2A:   text_box 'GA289_2' displayed
+    then
+    text.RemoveTextBox() 
+    end
+
+for 0@ = 0 to LAD_SYS_TOTAL_LADDERS_COUNT
+    
+0085: 31@ = 0@
+31@ *= 32 //size of xyz
+0EE2: read_struct_offset_multi LAD_SYS_ARRAY_STRUCT offset 31@ count 8 size 4 1@ 2@ 3@ 4@ 5@ 6@ 7@ 8@    
+
+if
+0E45: frame_mod 60
+then
+
+if
+801D: not  0@ > LAD_SYS_TOTAL_LADDERS_COUNT  // (int)
+    then
+    0087: 9@ = 1@ // (float)
+    0095: make 9@ absolute_integer
+    if
+    9@ == 0
+        then
+        gosub @LAD_SYS_WRITE_ARRAY
+        end
+    end
+    
+end              
+    
+///////////////////////////////////Спускание с лестницы///////////////////////////////////    
+
+if and
+//00FE:   actor PLAYER_ACTOR sphere 0 in_sphere 1@ 2@ 3@ radius 5.0 5.0 5.0
+0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos 1@ 2@ 3@ radius 5.0
+$PANEL_OPEN == 0
+not $KANISTRA_USING == 1
+not $JIMMY_USING == 1
+    then
+    
+    if and
+    0@ == 80
+    OOS_CURRENT_PROGRESS == 3
+    then
+    jump to @OFFICE_LAD_SKIP1
+    end
+    
+    if and
+    0@ == 77
+    UNITED_MAP == 0
+    then
+    if
+    84E6: not  object $ZA_OFFICE_LIFT_OBJECT near_point 1786.95 -1303.62 121.156 radius 10.0 10.0 0.001 flag 0
+        then
+        jump to @OFFICE_LAD_SKIP1
+        end
+    end    
+    
+    while 0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos 1@ 2@ 3@ radius 3.0
+//    00FE:   actor PLAYER_ACTOR sphere 0 in_sphere 1@ 2@ 3@ radius 3.0 3.0 3.0
+    wait 0
+    
+    if
+    $CHEATS_ON == 1
+    then
+    if
+    0E8D: is_any_fire_button_pressed 0
+        then
+        0AD1: show_formatted_text_highpriority "LADDER NUM is %d" time 2000 0@
+        end
+    end
+    
+    if or
+    $PANEL_OPEN == 1
+    $KANISTRA_USING == 1
+    $JIMMY_USING == 1
+    then
+    break
+    end                        
+    
+    if and
+    00FE:   actor PLAYER_ACTOR sphere 0 in_sphere 1@ 2@ 3@ radius 1.5 1.5 3.0
+    not actor.Driving(PLAYER_ACTOR)    
+        then
+        LADDER_ON_MARKER_FLAG = 1
+        
+        if and
+        $KEY_USE == 69
+        8A4B: not  controls_set_to_joystick
+        then
+        0512: show_permanent_text_box 'GAME289'
+        else
+        if
+        8A4B: not  controls_set_to_joystick
+            then
+            0512: show_permanent_text_box 'GA289_2'
+            else
+            0512: show_permanent_text_box 'GA289_3'
+            end
+        end
+        
+        if
+        0AB0:   key_pressed 69
+            then
+            
+            0EAC: get_char_proofs PLAYER_ACTOR bullet $CIM_BUL fire $CIM_FIR explosion $CIM_EXP collision $CIM_COL melee $CIM_MEL
+            actor.SetImmunities(PLAYER_ACTOR,1,1,1,1,1)     
+            
+            text.RemoveTextBox()
+                    
+//            player.CanMove(PLAYER_CHAR) = false
+            0E68: set_player_control_pad 0 1 
+            0E69: set_player_control_pad_movement 0 0                             
+                    
+            $HUD_REMOVE = 1
+            fade 0 500
+            wait 500
+                    
+            $SPEED_01_FLAG = 1
+                    
+            11@ = Audiostream.Load("AUDIO\SOUNDS\LadderClimb.mp3") 
+            Audiostream.Loop(11@, 1)  
+            Audiostream.PerformAction(11@, PLAY)
+            Audiostream.Volume(11@) = $SOUNDS_VOLUME
+                    
+            0087: 15@ = 3@ // (float)
+            0087: 16@ = 6@ // (float)
+                                
+            0063: 15@ -= 16@  // (float)  
+                    
+            if
+            15@ < 0.0
+            then                            
+            15@ *= -1.0 
+            end
+    
+            0092: 15@ = float 15@ to_integer
+                    
+            15@ *= 25                    
+            
+            gosub @LADDER_SYS_GOING_PROCESS 
+                    
+//            wait 15@
+                    
+            $SPEED_01_FLAG = 0                
+            015D: set_gamespeed 1.0
+                    
+            if
+            $COMMAND_STAY_IN_CAR == 1
+            then
+            09BC: put_actor PLAYER_ACTOR at 4@ 5@ 6@ no_offset_and_dont_warp_gang
+            else        
+            actor.PutAtNoOffset(PLAYER_ACTOR,4@,5@,6@)
+            end
+            
+            actor.Angle(PLAYER_ACTOR) = 8@
+            camera.Restore_WithJumpCut()                        
+                    
+            audiostream.PerformAction(11@,STOP)
+            audiostream.Release(11@)
+            
+            if
+            $COMMAND_STAY_IN_CAR == 0
+            then
+            gosub @FRNDS_LDR_CHECK_TP
+            end
+                    
+//            player.CanMove(PLAYER_CHAR) = true
+            0E68: set_player_control_pad 1 1 
+            0E69: set_player_control_pad_movement 0 1
+            
+            actor.SetImmunities(PLAYER_ACTOR,$CIM_BUL,$CIM_FIR,$CIM_EXP,$CIM_COL,$CIM_MEL)
+                    
+            fade 1 500
+            $HUD_REMOVE = 0
+            wait 500
+            
+            LADDER_ON_MARKER_FLAG = 0                
+                    
+            end
+        else
+        if or
+        0A2A:   text_box 'GAME289' displayed
+        0A2A:   text_box 'GA289_2' displayed
+        0A2A:   text_box 'GA289_3' displayed
+            then
+            text.RemoveTextBox()
+            LADDER_ON_MARKER_FLAG = 0 
+            end 
+        end 
+        
+    end
+    
+    LADDER_ON_MARKER_FLAG = 0
+    
+    end
+        
+:OFFICE_LAD_SKIP1        
+            
+///////////////////////////////////Поднимание на лестнице///////////////////////////////////
+
+if and
+//00FE:   actor PLAYER_ACTOR sphere 0 in_sphere 4@ 5@ 6@ radius 3.0 3.0 3.0
+0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos 4@ 5@ 6@ radius 3.0
+$PANEL_OPEN == 0
+not $KANISTRA_USING == 1
+not $JIMMY_USING == 1
+    then
+    
+    if and
+    0@ == 80
+    OOS_CURRENT_PROGRESS == 3
+    then
+    jump to @OFFICE_LAD_SKIP2
+    end
+    
+    if and
+    0@ == 77
+    UNITED_MAP == 0
+    then
+    if
+    84E6: not  object $ZA_OFFICE_LIFT_OBJECT near_point 1786.95 -1303.62 121.156 radius 10.0 10.0 0.001 flag 0
+        then
+        jump to @OFFICE_LAD_SKIP2
+        end
+    end    
+            
+    while 0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos 4@ 5@ 6@ radius 3.0
+//    00FE:   actor PLAYER_ACTOR sphere 0 in_sphere 4@ 5@ 6@ radius 3.0 3.0 3.0
+    wait 0
+    
+    if
+    $CHEATS_ON == 1
+    then
+    if
+    0E8D: is_any_fire_button_pressed 0
+        then
+        0AD1: show_formatted_text_highpriority "LADDER NUM is %d" time 2000 0@
+        end
+    end
+    
+    if or
+    $PANEL_OPEN == 1
+    $KANISTRA_USING == 1
+    $JIMMY_USING == 1
+    then
+    break
+    end                
+            
+    if and
+    00FE:   actor PLAYER_ACTOR sphere 0 in_sphere 4@ 5@ 6@ radius 1.5 1.5 3.0
+    not actor.Driving(PLAYER_ACTOR)    
+        then
+        LADDER_ON_MARKER_FLAG = 1
+        
+        if and
+        $KEY_USE == 69
+        8A4B: not  controls_set_to_joystick
+        then
+        0512: show_permanent_text_box 'GAME288'
+        else
+        if
+        8A4B: not  controls_set_to_joystick
+            then
+            0512: show_permanent_text_box 'GA288_2'
+            else
+            0512: show_permanent_text_box 'GA288_3'
+            end
+        end
+        
+        if
+        0AB0:   key_pressed 69
+            then
+            
+            0EAC: get_char_proofs PLAYER_ACTOR bullet $CIM_BUL fire $CIM_FIR explosion $CIM_EXP collision $CIM_COL melee $CIM_MEL
+            actor.SetImmunities(PLAYER_ACTOR,1,1,1,1,1)    
+            
+            text.RemoveTextBox()
+                    
+//            player.CanMove(PLAYER_CHAR) = false
+            0E68: set_player_control_pad 0 1 
+            0E69: set_player_control_pad_movement 0 0                            
+                    
+            $HUD_REMOVE = 1
+            fade 0 500
+            wait 500
+                    
+            $SPEED_01_FLAG = 1
+                    
+            11@ = Audiostream.Load("AUDIO\SOUNDS\LadderClimb.mp3") 
+            Audiostream.Loop(11@, 1)  
+            Audiostream.PerformAction(11@, PLAY)
+            Audiostream.Volume(11@) = $SOUNDS_VOLUME
+                    
+            0087: 15@ = 3@ // (float)
+            0087: 16@ = 6@ // (float)
+                                
+            0063: 15@ -= 16@  // (float)  
+                    
+            if
+            15@ < 0.0
+            then                            
+            15@ *= -1.0
+            end
+    
+            0092: 15@ = float 15@ to_integer
+                    
+            15@ *= 25
+            
+            gosub @LADDER_SYS_GOING_PROCESS                    
+                    
+//            wait 15@
+                    
+            $SPEED_01_FLAG = 0                
+            015D: set_gamespeed 1.0
+            
+            if
+            $COMMAND_STAY_IN_CAR == 1
+            then
+            09BC: put_actor PLAYER_ACTOR at 1@ 2@ 3@ no_offset_and_dont_warp_gang
+            else        
+            actor.PutAtNoOffset(PLAYER_ACTOR,1@,2@,3@)
+            end
+            
+            actor.Angle(PLAYER_ACTOR) = 7@
+            camera.Restore_WithJumpCut()                        
+                    
+            audiostream.PerformAction(11@,STOP)
+            audiostream.Release(11@)
+            
+            if
+            $COMMAND_STAY_IN_CAR == 0
+            then
+            gosub @FRNDS_LDR_CHECK_TP
+            end
+                    
+//            player.CanMove(PLAYER_CHAR) = true
+            0E68: set_player_control_pad 1 1 
+            0E69: set_player_control_pad_movement 0 1
+            
+            actor.SetImmunities(PLAYER_ACTOR,$CIM_BUL,$CIM_FIR,$CIM_EXP,$CIM_COL,$CIM_MEL)
+                    
+            fade 1 500
+            $HUD_REMOVE = 0
+            wait 500
+            
+            LADDER_ON_MARKER_FLAG = 0                
+                    
+            end
+        else        
+        if or
+        0A2A:   text_box 'GAME288' displayed
+        0A2A:   text_box 'GA288_2' displayed
+        0A2A:   text_box 'GA288_3' displayed
+            then
+            text.RemoveTextBox()
+            LADDER_ON_MARKER_FLAG = 0 
+            end 
+        end                                                       
+        
+    end
+    
+    LADDER_ON_MARKER_FLAG = 0    
+    
+    end
+    
+:OFFICE_LAD_SKIP2    
+    
+end    
+                                                                       
+////////////////////////////////////////////////////////////////////
+
+jump to @FUCKINGFUCK
+
+end_thread
+                   
+:FRNDS_LDR_CHECK_TP
+
+046D: 21@ = actor PLAYER_ACTOR members_in_group
+
+if
+21@ == 0
+then
+return
+end
+
+077E: get_active_interior_to 7@
+
+092B: 0@ = group PLAYER_GROUP member 0
+092B: 1@ = group PLAYER_GROUP member 1
+092B: 2@ = group PLAYER_GROUP member 2
+092B: 3@ = group PLAYER_GROUP member 3
+092B: 4@ = group PLAYER_GROUP member 4
+092B: 5@ = group PLAYER_GROUP member 5
+092B: 6@ = group PLAYER_GROUP member 6
+
+if
+056D:   actor 0@ defined
+jf @FRNDS_LDR_CHECK2
+if or
+$COMMAND_STAY_IN_CAR == 1
+80F2: not  actor 0@ near_actor PLAYER_ACTOR radius 180.0 180.0 0
+then
+else
+jump to @FRNDS_LDR_CHECK2
+end
+04C4: store_coords_to 25@ 26@ 27@ from_actor PLAYER_ACTOR with_offset 0.0 1.0 0.0
+0362: remove_actor 0@ from_car_and_place_at 25@ 26@ 27@
+actor.PutAtNoOffset(0@,25@,26@,27@)
+0860: link_actor 0@ to_interior 7@
+:FRNDS_LDR_CHECK2
+if
+056D:   actor 1@ defined
+jf @FRNDS_LDR_CHECK3
+if or
+$COMMAND_STAY_IN_CAR == 1
+80F2: not  actor 1@ near_actor PLAYER_ACTOR radius 180.0 180.0 0
+then
+else
+jump to @FRNDS_LDR_CHECK3
+end
+04C4: store_coords_to 25@ 26@ 27@ from_actor PLAYER_ACTOR with_offset 1.0 1.0 0.0
+0362: remove_actor 1@ from_car_and_place_at 25@ 26@ 27@
+actor.PutAtNoOffset(1@,25@,26@,27@)
+0860: link_actor 1@ to_interior 7@  
+:FRNDS_LDR_CHECK3
+if
+056D:   actor 2@ defined
+jf @FRNDS_LDR_CHECK4
+if or
+$COMMAND_STAY_IN_CAR == 1
+80F2: not  actor 2@ near_actor PLAYER_ACTOR radius 180.0 180.0 0
+then
+else
+jump to @FRNDS_LDR_CHECK4
+end
+04C4: store_coords_to 25@ 26@ 27@ from_actor PLAYER_ACTOR with_offset -1.0 1.0 0.0
+0362: remove_actor 2@ from_car_and_place_at 25@ 26@ 27@
+actor.PutAtNoOffset(2@,25@,26@,27@)
+0860: link_actor 2@ to_interior 7@            
+:FRNDS_LDR_CHECK4
+if
+056D:   actor 3@ defined
+jf @FRNDS_LDR_CHECK5
+if or
+$COMMAND_STAY_IN_CAR == 1
+80F2: not  actor 3@ near_actor PLAYER_ACTOR radius 180.0 180.0 0
+then
+else
+jump to @FRNDS_LDR_CHECK5
+end
+04C4: store_coords_to 25@ 26@ 27@ from_actor PLAYER_ACTOR with_offset 0.0 2.0 0.0
+0362: remove_actor 3@ from_car_and_place_at 25@ 26@ 27@
+actor.PutAtNoOffset(3@,25@,26@,27@)
+0860: link_actor 3@ to_interior 7@ 
+:FRNDS_LDR_CHECK5
+if
+056D:   actor 4@ defined
+jf @FRNDS_LDR_CHECK6
+if or
+$COMMAND_STAY_IN_CAR == 1
+80F2: not  actor 4@ near_actor PLAYER_ACTOR radius 180.0 180.0 0
+then
+else
+jump to @FRNDS_LDR_CHECK6
+end
+04C4: store_coords_to 25@ 26@ 27@ from_actor PLAYER_ACTOR with_offset 1.0 2.0 0.0
+0362: remove_actor 4@ from_car_and_place_at 25@ 26@ 27@
+actor.PutAtNoOffset(4@,25@,26@,27@)
+0860: link_actor 4@ to_interior 7@  
+:FRNDS_LDR_CHECK6                   
+if
+056D:   actor 5@ defined
+jf @FRNDS_LDR_CHECK7
+if or
+$COMMAND_STAY_IN_CAR == 1
+80F2: not  actor 5@ near_actor PLAYER_ACTOR radius 180.0 180.0 0
+then
+else
+jump to @FRNDS_LDR_CHECK7
+end
+04C4: store_coords_to 25@ 26@ 27@ from_actor PLAYER_ACTOR with_offset -1.0 2.0 0.0
+0362: remove_actor 5@ from_car_and_place_at 25@ 26@ 27@
+actor.PutAtNoOffset(5@,25@,26@,27@)
+0860: link_actor 5@ to_interior 7@   
+:FRNDS_LDR_CHECK7
+if
+056D:   actor 6@ defined
+jf @FRNDS_LDR_CHECK_RETURN
+if or
+$COMMAND_STAY_IN_CAR == 1
+80F2: not  actor 6@ near_actor PLAYER_ACTOR radius 180.0 180.0 0
+then
+else
+jump to @FRNDS_LDR_CHECK_RETURN
+end
+04C4: store_coords_to 25@ 26@ 27@ from_actor PLAYER_ACTOR with_offset -1.0 3.0 0.0
+0362: remove_actor 6@ from_car_and_place_at 25@ 26@ 27@
+actor.PutAtNoOffset(6@,25@,26@,27@)
+0860: link_actor 6@ to_interior 7@
+wait 1000
+
+:FRNDS_LDR_CHECK_RETURN
+if and
+not $COMMAND_STAY_IN_CAR == 1
+8800: not  in_two_players_mode
+then
+0A96: 0@ = actor PLAYER_ACTOR struct
+0AA5: call 0x043F1F0 num_params 1 pop 0 0@ //CEntryExit::WarpGangWithPlayer
+end
+return
+
+:LAD_SYS_WRITE_ARRAY
+
+0AC6: LAD_SYS_ARRAY_STRUCT = label @LADDERS_POSITIONS_ARRAY offset
+
+for 13@ = 0 to LAD_SYS_TOTAL_LADDERS_COUNT
+0AD3: v$LADDER_FILE = format "ld%d" 13@
+0AF2: 21@ = get_float_from_ini_file "data/ladders.ini" section v$LADDER_FILE key "UPX" 
+0AF2: 22@ = get_float_from_ini_file "data/ladders.ini" section v$LADDER_FILE key "UPY" 
+0AF2: 23@ = get_float_from_ini_file "data/ladders.ini" section v$LADDER_FILE key "UPZ" 
+0AF2: 24@ = get_float_from_ini_file "data/ladders.ini" section v$LADDER_FILE key "DWX" 
+0AF2: 25@ = get_float_from_ini_file "data/ladders.ini" section v$LADDER_FILE key "DWY" 
+0AF2: 26@ = get_float_from_ini_file "data/ladders.ini" section v$LADDER_FILE key "DWZ" 
+0AF2: 27@ = get_float_from_ini_file "data/ladders.ini" section v$LADDER_FILE key "UPA"
+0AF2: 28@ = get_float_from_ini_file "data/ladders.ini" section v$LADDER_FILE key "DWA"
+0085: 31@ = 13@
+31@ *= 32 //size of xyz
+0EE3: write_struct_offset_multi LAD_SYS_ARRAY_STRUCT offset 31@ count 8 size 4 21@ 22@ 23@ 24@ 25@ 26@ 27@ 28@
+end
+
+return
+
+:LADDER_SYS_GOING_PROCESS
+
+32@ = 0
+            
+repeat
+wait 0
+
+fade 0 0
+
+0085: 29@ = 15@ // (int)
+29@ /= 100
+0085: 30@ = 32@ // (int)
+
+if
+29@ < 1
+then
+return
+end
+
+0072: 30@ /= 29@ // (int)
+            
+03F0: enable_text_draw 1
+0349: set_text_draw_font 2
+0340: set_text_draw_RGBA 180 180 180 255
+if
+DIRECTFONT_INSTALLED == 1
+then    
+0340: set_text_draw_RGBA DIRECTFONT_FONT2_R DIRECTFONT_FONT2_G DIRECTFONT_FONT2_B 255
+end
+ 
+033F: set_text_draw_letter_size $SAVING_TEXT_SIZE_X $SAVING_TEXT_SIZE_Y
+0343: set_text_draw_linewidth 640.0
+            
+if
+UNITED_MAP == 1
+then    
+0349: set_text_draw_font 2
+end
+
+if
+30@ > 100
+then
+30@ = 100
+end
+            
+045A: draw_text_1number 260.0 220.0 GXT 'GME1001' number 30@
+            
+until 30@ >= 100
+            
+return             

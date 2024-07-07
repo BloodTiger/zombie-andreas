@@ -1,0 +1,218 @@
+:GMV_OVR
+thread 'GMV_OVR'
+
+09BD: allow_other_threads_to_display_text_boxes 1  
+
+$FPS_COUNTER_ENABLED = 0
+
+if
+$GAMEMODE_STORYLINE == 1
+then
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 100
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+end
+
+$SPEED_08_FLAG = 1
+
+if 
+$GAMEMODE_STORYLINE == 1
+    then    
+    
+    0AF0: 10@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MIKE_STORY_FAILS"     
+        
+    10@ += 1          
+    
+    0AF1: write_int 10@ to_ini_file "data\survival.set" section "SCR" key "MIKE_STORY_FAILS"            
+    0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "STATS_MISSIONS_FAILED"    
+                    
+    0@ += 1                       
+     
+    0AF1: write_int 0@ to_ini_file "data\survival.set" section "SCR" key "STATS_MISSIONS_FAILED"     
+    
+    if
+    actor.Dead(PLAYER_ACTOR)
+        then        
+        0AF0: 10@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MIKE_STORY_DEATHS"         
+            
+        10@ += 1            
+        
+        0AF1: write_int 10@ to_ini_file "data\survival.set" section "SCR" key "MIKE_STORY_DEATHS"
+        
+        end
+    else
+    if and
+    actor.Dead(PLAYER_ACTOR)
+    HARDCORE_MODE == 1
+        then 
+        28@ = 28       
+//        0AF0: 10@ = get_int_from_ini_file "data\survival.set" section "SCR" key "HARDCORE_DEATHS"                     
+//        10@ += 1                    
+//        0AF1: write_int 10@ to_ini_file "data\survival.set" section "SCR" key "HARDCORE_DEATHS"        
+        end 
+    end
+    
+$SPEED_08_FLAG = 1    
+
+015D: set_gamespeed 0.08
+
+if or
+$CARL_STORY == 1
+MCS_FLAG == 1
+USHER_STORY_FLAG == 1
+then
+cinema.Widescreen(1)
+BLACK_POLOSKI_ON = 1
+end                      
+           
+GAME_OVER_FLAG = 1
+$HUD_REMOVE = 1    
+create_thread @GM_OVS  
+create_thread @END_TXT 
+
+$SPEED_08_FLAG = 1
+
+cinema.Radar(0) 
+cinema.hud(0)     
+
+if
+$GAMEMODE_HOLD == 1
+    then
+    end_thread
+    end
+    
+player.CanMove(PLAYER_CHAR) = false    
+
+31@ = 0
+32@ = 0
+        
+:GAME_OVER2
+0169: set_fade_color_RGB 20 0 0
+wait 0 
+
+if
+00E1:   player 0 pressed_key 17
+    then
+    31@ += 1
+    end
+
+if
+31@ > 48
+    then
+    fade 0 50
+    wait 50
+    $SPEED_08_FLAG = 0
+    015D: set_gamespeed 1.0
+    32@ = 1001
+    end
+   
+fade 0 1000
+015D: set_gamespeed 0.08  
+cinema.Hud(0) 
+cinema.Radar(0) 
+0169: set_fade_color_RGB 20 0 0
+$HUD_REMOVE = 1
+player.CanMove(PLAYER_CHAR) = false    
+if or       
+00EC:   actor PLAYER_ACTOR sphere 0 near_point 1047.1239 2971.5955 radius 40.0 40.0
+32@ > 999
+jf @GAME_OVER2 
+
+if
+$NIGHTMARE_FLAG == 1
+    then
+    0A48: enable_menu_access_in_widescreen_mode 1      
+    end
+
+015D: set_gamespeed 1.0 
+
+$SPEED_08_FLAG = 0 
+
+0169: set_fade_color_RGB 20 0 0
+2@ = 20 
+
+:FADE_COLOR_SET
+wait 0
+cinema.Radar(0) 
+cinema.hud(0)
+fade 0 0 
+2@ -= 1 
+0169: set_fade_color_RGB 2@ 0 0 
+if 
+2@ == 0 
+jf @FADE_COLOR_SET
+fade 0 0         
+05BE: AS_actor PLAYER_ACTOR die
+32@ = 0
+
+$SAVESTATUS = 1
+$SAVESTATUS_TRUE = 1
+
+jump @GAME_OVER3
+
+:STATS_SHOW_CHECK
+if
+$GAMEMODE_SURVIVAL == 0
+jf @STATS_SHOW_CHECK2
+$STATS_SHOW_GAMEMODE = 0
+return
+
+:STATS_SHOW_CHECK2
+$STATS_SHOW_GAMEMODE = 1
+return
+
+:GAME_OVER3
+wait 0
+fade 0 0 
+
+if
+$GAMEMODE_STORYLINE == 1
+    then                
+    
+    if 32@ < 5000
+    then
+    03F0: enable_text_draw 1
+    
+    if
+    not 28@ == 28
+    then
+    0937: text_draw_box_cornerA $OFF_SCREEN_TEXT_CORNER_A_X $OFF_SCREEN_TEXT_CORNER_A_Y cornerB $OFF_SCREEN_TEXT_CORNER_B_X $OFF_SCREEN_TEXT_CORNER_B_Y GXT_reference 'GAME46' style 1
+    else
+    0937: text_draw_box_cornerA $OFF_SCREEN_TEXT_CORNER_A_X $OFF_SCREEN_TEXT_CORNER_A_Y cornerB $OFF_SCREEN_TEXT_CORNER_B_X $OFF_SCREEN_TEXT_CORNER_B_Y GXT_reference 'GME46B' style 1
+    end
+       
+    end
+    
+    if 32@ > 5000    
+    then                
+        if 0AA2: 2@ = load_library "User32.dll"
+        then
+             if 0AA4: 2@ = get_proc_address "keybd_event" library 2@
+             then                                              
+                 0AA5: call 2@ num_params 4 pop 0 0 0 0 0x1B           
+                 wait 1
+                 0AA5: call 2@ num_params 4 pop 0 0 0x02 0 0x1B 
+             end
+        end
+    end
+    
+    jump @GAME_OVER3
+    end     
+
+0A8C: write_memory 0x0440F73 size 1 value 255 virtual_protect 1
+0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME    
+    
+jump @GAME_OVER3    

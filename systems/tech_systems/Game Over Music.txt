@@ -1,0 +1,86 @@
+:GM_OVS
+thread 'GM_OVS'        
+        
+gosub @RANDOM_GAME_OVER_SOUND  
+   
+Audiostream.PerformAction($GAME_OVER_SOUND, PLAY)
+Audiostream.Loop($GAME_OVER_SOUND, 0)
+0086: $MUSIC_VOLUME222 = $MUSIC_VOLUME // (float)
+if
+$GAMEMODE_EDITOR == 0
+then
+$MUSIC_VOLUME222 *= 0.7
+end
+Audiostream.Volume($GAME_OVER_SOUND) = $MUSIC_VOLUME222
+  
+:GM_OVS_CHECK_END
+wait 0
+0AB9: get_mp3 $GAME_OVER_SOUND state_to 2@
+if 
+2@ == -1 
+jf @GM_OVS_CHECK_END
+Audiostream.Release($GAME_OVER_SOUND)
+end_thread
+
+:GM_OVS_MUSIC_OFF 
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $GAME_OVER_SOUND // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+//////////////////////////////////////////////////////////
+
+end_thread
+
+:RANDOM_GAME_OVER_SOUND
+//$GAME_OVER_SOUND = Audiostream.Load("audio\sounds\GAME_OVER.wav")
+
+if
+$GAMEMODE_EDITOR == 1
+then
+0AD3: 0@v = format "me\%d\gamvr.mp3" $RNDM_HOUSE_BANKA[122]
+if
+0AAB:   file_exists 0@v
+    then
+    $GAME_OVER_SOUND = Audiostream.Load(0@v)
+    else
+    0AD3: 0@v = format "me\%d\gamvr.wav" $RNDM_HOUSE_BANKA[122]
+    if
+    0AAB:   file_exists 0@v
+        then
+        $GAME_OVER_SOUND = Audiostream.Load(0@v)
+        else
+        0AD3: 0@v = format "me\%d\gamvr.ogg" $RNDM_HOUSE_BANKA[122]
+        if
+        0AAB:   file_exists 0@v
+            then
+            $GAME_OVER_SOUND = Audiostream.Load(0@v)
+            else
+            $GAME_OVER_SOUND = Audiostream.Load("audio\sounds\GAME_OVER.wav")
+            end
+        end
+    end
+else
+$GAME_OVER_SOUND = Audiostream.Load("audio\sounds\GAME_OVER.wav")
+end
+
+return

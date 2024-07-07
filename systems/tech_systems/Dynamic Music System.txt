@@ -1,0 +1,5425 @@
+//Dynamic Music Thread
+
+:D_MUSIC
+thread 'D_MUSIC'  
+
+const
+HORDE_DRUMS_SOUND = 22@
+HORDE_BEAT_SOUND = 23@
+HORDE_SLAYER_SOUND = 24@
+HORDE_START_SOUND = $HORDE_START_SOUND
+HORDE_END_SOUND = 27@
+end
+
+if 
+$DYNAMIC_MUSIC_OFF == 1
+then
+end_thread
+end
+
+$START_VOLUME_MULTIPLIER = 0.8 
+
+$CHASE_VOLUME_MULTIPLIER = 0.7 
+
+$QUIET_VOLUME_MULTIPLIER = 0.85
+
+$AMBIENT_VOLUME_MULTIPLIER = 0.5
+
+$AMBIENT2_VOLUME_MULTIPLIER = 0.75
+
+$CLOWN_VOLUME_MULTIPLIER = 0.6 
+  
+$DYING_VOLUME_MULTIPLIER = 1.0 
+
+$WITCH_VOLUME_MULTIPLIER = 0.85 
+  
+$HORDE_VOLUME_MULTIPLIER = 0.3 
+
+$ZONE_VOLUME_MULTIPLIER = 0.7 
+
+$ALLY_DEAD_VOLUME_MULTIPLIER = 0.7 
+
+$WITCH_NEAR_VOLUME_MULTIPLIER = 0.8 
+
+$HUNTER_ON_PLAYER_VOLUME_MULTIPLIER = 0.8                       
+
+:RANDOM_STARTING_MUSIC_THEME_CHECK
+
+while $MUSIC_VOLUME == 0.0
+wait 0
+end
+
+if or
+$START_TUNE_DONT_PLAY == 1
+$FREEMODE == 1
+    then
+    jump to @RANDOM_MUSIC_THEME_STARTER
+    end
+
+0842: 0@ = player PLAYER_CHAR town_number
+
+if
+UNITED_MAP == 1
+then
+random_int 0@ 0 2
+end
+
+if
+0@ == 0   
+    then
+    random_int 0@ 0 5
+    if
+    0@ == 0
+    then
+    $MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\starting_theme_country1.wav")
+    end
+
+    if
+    0@ == 1
+    then
+    $MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\starting_theme_country2.wav")
+    end
+
+    if
+    0@ == 2
+    then
+    $MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\starting_theme_country3.wav")
+    end  
+    
+    if
+    0@ == 3
+    then
+    $MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\starting_theme_country4.wav")
+    end  
+    
+    if
+    0@ == 4
+    then
+    $MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\starting_theme_country5.wav")
+    end  
+              
+    else
+    random_int 0@ 0 5
+
+    if
+    0@ == 0
+    then
+    $MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\starting_theme_city1.wav")
+    end
+
+    if
+    0@ == 1
+    then
+    $MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\starting_theme_city2.wav")
+    end
+
+    if
+    0@ == 2
+    then
+    $MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\starting_theme_city3.wav")
+    end
+
+    if
+    0@ == 3
+    then
+    $MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\starting_theme_city4.wav")
+    end
+    
+    if
+    0@ == 4
+    then
+    $MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\starting_theme_city5.wav")
+    end
+    
+    end
+
+Audiostream.Volume($MUSIC_MISSION) = 0.0    
+Audiostream.PerformAction($MUSIC_MISSION, PLAY)
+Audiostream.Loop($MUSIC_MISSION, 0)
+
+0086: $MUSIC_VOLUME55 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME55 *= $START_VOLUME_MULTIPLIER // (float)
+
+gosub @CHECK_ALL_MUSIC
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME55 // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+//////////////////////////////////////////////////////////
+
+if 
+$MUTATION_SELECTED == 0
+    then
+    $STARTING_THEME_FLAG = 1
+    end
+
+:RANDOM_STARTING_MUSIC_THEME_PLAYING_CHECK
+wait 0
+
+if
+$MUTE_MUSIC_FLAG == 0
+then
+0086: $MUSIC_VOLUME55 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME55 *= $START_VOLUME_MULTIPLIER // (float)
+Audiostream.Volume($MUSIC_MISSION) = $MUSIC_VOLUME55
+else
+Audiostream.Volume($MUSIC_MISSION) = 0.0
+end
+
+if or
+$SAVESTATUS_TRUE == 1
+$PLAY_TANK_MUSIC_FLAG == 1
+$WITCH_NEAR == 1
+$ZOMBIES_HORDE == 1
+$SOUND_EFFECT1_FLAG == 1
+CAMP_RAID_FLAG == 1
+actor.Dead(PLAYER_ACTOR)
+    then     
+    jump @RANDOM_STARTING_MUSIC_THEME_PLAYING_OFF  
+    end
+    
+if or
+$CASETTE_PLAYING_FLAG == 1
+$MUSIC_TURN_OFF_FLAG == 1
+$READING_NOTE_FLAG == 1 
+$END_STARTING_MUSIC == 1
+    then
+    jump @RANDOM_STARTING_MUSIC_THEME_PLAYING_OFF    
+    end
+
+if or
+$ALLY_DEAD_FLAG == 1
+$HUNTER_ON_PLAYER == 1
+$PLAYER_DYING == 1
+$BANDITS1_CHASE_FLAG == 1
+$ARMY1_CHASE_FLAG == 1    
+    then     
+    jump @RANDOM_STARTING_MUSIC_THEME_PLAYING_OFF  
+    end
+    
+if or
+BANDIT_HELI_CHASE_FLAG == 1
+ARMY_HELI_CHASE_FLAG == 1
+ARMY_RHINO_CHASE_FLAG == 1
+$CLOWN_SPANWED == 1
+$SAVEPLACE_ON == 1
+PLAYER_IN_NEST_FLAG == 1
+    then
+    jump @RANDOM_STARTING_MUSIC_THEME_PLAYING_OFF
+    end    
+
+0AB9: get_mp3 $MUSIC_MISSION state_to 1@
+if
+1@ == -1
+    then
+    Audiostream.Release($MUSIC_MISSION)
+    $STARTING_THEME_FLAG = 0
+    jump to @RANDOM_MUSIC_THEME_STARTER  
+else
+jump to @RANDOM_STARTING_MUSIC_THEME_PLAYING_CHECK
+end
+
+:RANDOM_STARTING_MUSIC_THEME_PLAYING_OFF
+
+gosub @CHECK_ALL_MUSIC
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+if and
+$HUNTER_ON_PLAYER == 0
+$SAVESTATUS_TRUE == 0
+then
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+else
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+end
+
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+$STARTING_THEME_FLAG = 0
+        
+$ZOMBIE_WITCH_SPAWN_TIMER_RESTART = 1   
+wait 5
+$ZOMBIE_WITCH_SPAWN_TIMER_RESTART = 0     
+
+jump to @RANDOM_MUSIC_THEME_STARTER
+
+////////////////////////////////////////////////////////////////////////////////
+
+:RANDOM_MUSIC_THEME_STARTER
+wait 0
+
+DMUSIC_IDLING_FLAG = 1
+
+while $MUSIC_VOLUME == 0.0
+wait 0
+end
+
+if and
+$HUNTER_ON_PLAYER == 1
+not $MUTATION_ACTIVE == 4
+not MAIN_QUEST_MUSIC_FLAG == 1
+then
+DMUSIC_IDLING_FLAG = 0
+jump @RANDOM_MUSIC_HUNTER_ON_PLAYER_PLAY
+end
+
+if and
+$SAVESTATUS_TRUE == 0
+$DELETE_SOUND == 0
+$ACTOR_DEAD == 0  
+$SAVING_DELAY == 0
+jf @RANDOM_MUSIC_THEME_STARTER  
+if and
+$CASETTE_PLAYING_FLAG == 0
+$MUSIC_TURN_OFF_FLAG == 0
+$READING_NOTE_FLAG == 0
+not MAIN_QUEST_MUSIC_FLAG == 1 
+jf @RANDOM_MUSIC_THEME_STARTER
+
+if and
+$PLAYER_DYING == 1
+not MAIN_QUEST_MUSIC_FLAG == 1  
+    then
+    DMUSIC_IDLING_FLAG = 0
+    jump @RANDOM_MUSIC_DYING_PLAY
+    end 
+
+if or
+$ENEMY_ZONE_IN == 1
+CAMP_RAID_FLAG == 1 
+    then
+    DMUSIC_IDLING_FLAG = 0
+    jump @RANDOM_MUSIC_ZONE_PLAY   
+    end
+
+if and
+$PLAY_TANK_MUSIC_FLAG == 0
+not MAIN_QUEST_MUSIC_FLAG == 1
+    then       
+    if or
+    $BANDITS1_CHASE_FLAG == 1
+    $ARMY1_CHASE_FLAG == 1
+    BANDIT_HELI_CHASE_FLAG == 1
+    ARMY_HELI_CHASE_FLAG == 1
+    ARMY_RHINO_CHASE_FLAG == 1
+        then
+        DMUSIC_IDLING_FLAG = 0
+        jump to @RANDOM_MUSIC_CHASE_PLAY
+        end    
+    end
+
+if and     
+$ZOMBIES_HORDE == 1 
+$SOUND_EFFECT1_FLAG == 0
+$PLAY_TANK_MUSIC_FLAG == 0
+not MAIN_QUEST_MUSIC_FLAG == 1
+    then
+    DMUSIC_IDLING_FLAG = 0
+    jump @RANDOM_MUSIC_HORDE_PLAY   
+    end
+
+if and
+ANY_WITCH_AGRED_FLAG == 1
+not MAIN_QUEST_MUSIC_FLAG == 1
+not $MUTATION_ACTIVE == 5
+8867: not  unknown_in_burglary_interior 0
+$PLAY_TANK_MUSIC_FLAG == 0
+    then
+    DMUSIC_IDLING_FLAG = 0
+    jump @RANDOM_MUSIC_WITCH_PLAY
+    end
+    
+if and
+$GAMEMODE_HOLD == 0
+$ALLY_DEAD_FLAG == 1
+$PLAY_TANK_MUSIC_FLAG == 0
+not MAIN_QUEST_MUSIC_FLAG == 1
+    then
+    DMUSIC_IDLING_FLAG = 0
+    jump @RANDOM_MUSIC_ALLY_DEAD_PLAY
+    end
+    
+if and
+$PLAY_TANK_MUSIC_FLAG == 1
+not $MUTATION_ACTIVE == 5
+8867: not  unknown_in_burglary_interior 0
+$SAVER_GET_IN_START == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+not MAIN_QUEST_MUSIC_FLAG == 1
+    then
+    DMUSIC_IDLING_FLAG = 0
+    jump @RANDOM_MUSIC_TANK_PLAY
+    end        
+    
+if and
+$CLOWN_SPANWED == 1
+not MAIN_QUEST_MUSIC_FLAG == 1
+    then
+    jump @RANDOM_CLOWN_MUSIC_PLAY
+    end          
+
+if and
+$WITCH_NEAR == 1
+not $MUTATION_ACTIVE == 5
+8867: not  unknown_in_burglary_interior 0
+$PLAY_TANK_MUSIC_FLAG == 0
+not MAIN_QUEST_MUSIC_FLAG == 1
+    then
+    DMUSIC_IDLING_FLAG = 0
+    jump @RANDOM_MUSIC_WITCH_NEAR_PLAY
+    end        
+
+jump to @RANDOM_MUSIC_QUIET_PLAY
+
+:RANDOM_MUSIC_CHASE_PLAY
+if and
+$HUNTER_ON_PLAYER == 0
+$PLAYER_DYING == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+
+if
+056D:   actor $VOICE_ACTOR defined
+then
+05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 181  
+end
+
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\chase_theme.wav")
+Audiostream.Volume($MUSIC_MISSION) = 0.0
+Audiostream.PerformAction($MUSIC_MISSION, PLAY)
+Audiostream.Loop($MUSIC_MISSION, 1)
+
+0086: $MUSIC_VOLUME55 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME55 *= $CHASE_VOLUME_MULTIPLIER // (float)
+
+gosub @CHECK_ALL_MUSIC
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME55 // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+//////////////////////////////////////////////////////////
+
+:RANDOM_CHASE_MUSIC_THEME_PLAYING_CHECK
+wait 0
+
+if
+$MUTE_MUSIC_FLAG == 0
+then
+0086: $MUSIC_VOLUME55 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME55 *= $CHASE_VOLUME_MULTIPLIER // (float)
+Audiostream.Volume($MUSIC_MISSION) = $MUSIC_VOLUME55
+else
+Audiostream.Volume($MUSIC_MISSION) = 0.0
+end
+
+if and
+$SAVESTATUS_TRUE == 0
+$PLAY_TANK_MUSIC_FLAG == 0
+$HUNTER_ON_PLAYER == 0 
+$PLAYER_DYING == 0
+$DELETE_SOUND == 0
+$END_SAVING == 0
+$ACTOR_DEAD == 0
+jf @RANDOM_CHASE_MUSIC_THEME_PLAYING_OFF
+if and
+$CASETTE_PLAYING_FLAG == 0
+$MUSIC_TURN_OFF_FLAG == 0
+$READING_NOTE_FLAG == 0 
+$ENEMY_ZONE_IN == 0
+CAMP_RAID_FLAG == 0 
+jf @RANDOM_CHASE_MUSIC_THEME_PLAYING_OFF
+if or
+$BANDITS1_CHASE_FLAG == 1
+$ARMY1_CHASE_FLAG == 1
+BANDIT_HELI_CHASE_FLAG == 1
+ARMY_HELI_CHASE_FLAG == 1
+ARMY_RHINO_CHASE_FLAG == 1
+jf @RANDOM_CHASE_MUSIC_THEME_PLAYING_OFF
+jump to @RANDOM_CHASE_MUSIC_THEME_PLAYING_CHECK
+
+:RANDOM_CHASE_MUSIC_THEME_PLAYING_OFF
+
+gosub @CHECK_ALL_MUSIC
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+if and
+$HUNTER_ON_PLAYER == 0
+$SAVESTATUS_TRUE == 0
+then
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+else
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+end
+
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+jump to @RANDOM_MUSIC_THEME_STARTER
+
+:RANDOM_MUSIC_WITCH_PLAY
+if and
+$SAVESTATUS_TRUE == 0
+$PLAY_TANK_MUSIC_FLAG == 0
+$HUNTER_ON_PLAYER == 0
+$PLAYER_DYING == 0
+$DELETE_SOUND == 0
+$END_SAVING == 0
+$ACTOR_DEAD == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+if and
+$CASETTE_PLAYING_FLAG == 0
+$MUSIC_TURN_OFF_FLAG == 0
+$READING_NOTE_FLAG == 0 
+$ENEMY_ZONE_IN == 0
+CAMP_RAID_FLAG == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+
+if
+056D:   actor $VOICE_ACTOR defined
+then
+05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 181 
+end
+
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\psychowitch_theme.wav")
+Audiostream.Volume($MUSIC_MISSION) = 0.0
+Audiostream.PerformAction($MUSIC_MISSION, PLAY)
+Audiostream.Loop($MUSIC_MISSION, 1)
+
+0086: $MUSIC_VOLUME55 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME55 *= $WITCH_VOLUME_MULTIPLIER // (float)
+
+gosub @CHECK_ALL_MUSIC
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME55 // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 100
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+//////////////////////////////////////////////////////////
+
+:RANDOM_WITCH_MUSIC_THEME_PLAYING_CHECK
+wait 0
+
+if
+$MUTE_MUSIC_FLAG == 0
+then
+0086: $MUSIC_VOLUME55 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME55 *= $WITCH_VOLUME_MULTIPLIER // (float)
+Audiostream.Volume($MUSIC_MISSION) = $MUSIC_VOLUME55
+else
+Audiostream.Volume($MUSIC_MISSION) = 0.0
+end
+
+if and
+$SAVESTATUS_TRUE == 0
+$PLAY_TANK_MUSIC_FLAG == 0
+$HUNTER_ON_PLAYER == 0
+$PLAYER_DYING == 0
+$DELETE_SOUND == 0
+$END_SAVING == 0
+$ACTOR_DEAD == 0
+jf @RANDOM_WITCH_MUSIC_THEME_PLAYING_OFF
+if and
+$SAVER_GET_IN_START == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+$BANDITS1_CHASE_FLAG == 0
+$ARMY1_CHASE_FLAG == 0
+BANDIT_HELI_CHASE_FLAG == 0
+ARMY_HELI_CHASE_FLAG == 0
+ARMY_RHINO_CHASE_FLAG == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+jf @RANDOM_WITCH_MUSIC_THEME_PLAYING_OFF
+if and
+$CASETTE_PLAYING_FLAG == 0
+$MUSIC_TURN_OFF_FLAG == 0
+$READING_NOTE_FLAG == 0 
+$ENEMY_ZONE_IN == 0
+CAMP_RAID_FLAG == 0
+jf @RANDOM_WITCH_MUSIC_THEME_PLAYING_OFF
+if
+ANY_WITCH_AGRED_FLAG == 0
+jf @RANDOM_WITCH_MUSIC_THEME_PLAYING_CHECK
+
+:RANDOM_WITCH_MUSIC_THEME_PLAYING_OFF
+
+gosub @CHECK_ALL_MUSIC
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+if and
+$HUNTER_ON_PLAYER == 0
+$SAVESTATUS_TRUE == 0
+then
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+else
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+end
+
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+jump to @RANDOM_MUSIC_THEME_STARTER
+
+:RANDOM_MUSIC_WITCH_NEAR_PLAY
+if and
+$HUNTER_ON_PLAYER == 0
+$PLAYER_DYING == 0
+$BANDITS1_CHASE_FLAG == 0
+$ARMY1_CHASE_FLAG == 0
+$ZOMBIES_HORDE == 0
+ANY_WITCH_AGRED_FLAG == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+if and
+BANDIT_HELI_CHASE_FLAG == 0
+ARMY_HELI_CHASE_FLAG == 0
+ARMY_RHINO_CHASE_FLAG == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\witchencroacher.wav")
+Audiostream.Volume($MUSIC_MISSION) = 0.0   
+Audiostream.PerformAction($MUSIC_MISSION, PLAY)
+Audiostream.Loop($MUSIC_MISSION, 1)
+
+0086: $MUSIC_VOLUME55 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME55 *= $WITCH_NEAR_VOLUME_MULTIPLIER // (float)
+
+gosub @CHECK_ALL_MUSIC
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME55 // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 100
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+//////////////////////////////////////////////////////////
+
+:RANDOM_WITCH_NEAR_MUSIC_THEME_PLAYING_CHECK
+wait 0
+
+if
+$MUTE_MUSIC_FLAG == 0
+then
+0086: $MUSIC_VOLUME55 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME55 *= $WITCH_NEAR_VOLUME_MULTIPLIER // (float)
+Audiostream.Volume($MUSIC_MISSION) = $MUSIC_VOLUME55
+else
+Audiostream.Volume($MUSIC_MISSION) = 0.0
+end
+
+if and
+$SAVESTATUS_TRUE == 0
+$PLAY_TANK_MUSIC_FLAG == 0
+$HUNTER_ON_PLAYER == 0
+$PLAYER_DYING == 0
+$DELETE_SOUND == 0
+$END_SAVING == 0
+$ACTOR_DEAD == 0
+jf @RANDOM_WITCH_NEAR_MUSIC_THEME_PLAYING_OFF
+if and
+$SAVER_GET_IN_START == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+$BANDITS1_CHASE_FLAG == 0
+$ARMY1_CHASE_FLAG == 0
+$ZOMBIES_HORDE == 0
+ANY_WITCH_AGRED_FLAG == 0
+jf @RANDOM_WITCH_NEAR_MUSIC_THEME_PLAYING_OFF
+if and
+BANDIT_HELI_CHASE_FLAG == 0
+ARMY_HELI_CHASE_FLAG == 0
+ARMY_RHINO_CHASE_FLAG == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+jf @RANDOM_WITCH_NEAR_MUSIC_THEME_PLAYING_OFF
+if and
+$CASETTE_PLAYING_FLAG == 0
+$MUSIC_TURN_OFF_FLAG == 0
+$READING_NOTE_FLAG == 0 
+$ENEMY_ZONE_IN == 0
+CAMP_RAID_FLAG == 0
+jf @RANDOM_WITCH_NEAR_MUSIC_THEME_PLAYING_OFF
+if 
+$WITCH_NEAR == 0
+jf @RANDOM_WITCH_NEAR_MUSIC_THEME_PLAYING_CHECK
+
+:RANDOM_WITCH_NEAR_MUSIC_THEME_PLAYING_OFF
+
+gosub @CHECK_ALL_MUSIC
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+if and
+$HUNTER_ON_PLAYER == 0
+$SAVESTATUS_TRUE == 0
+then
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+else
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+end
+
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+jump to @RANDOM_MUSIC_THEME_STARTER
+
+:RANDOM_MUSIC_HUNTER_ON_PLAYER_PLAY
+
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\exenteration.wav")
+0086: $MUSIC_VOLUME55 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME55 *= $HUNTER_ON_PLAYER_VOLUME_MULTIPLIER // (float)
+Audiostream.Volume($MUSIC_MISSION) = $MUSIC_VOLUME55   
+Audiostream.PerformAction($MUSIC_MISSION, PLAY)
+Audiostream.Loop($MUSIC_MISSION, 1)
+
+:RANDOM_HUNTER_ON_PLAYER_MUSIC_THEME_PLAYING_CHECK
+wait 0
+
+if
+$MUTE_MUSIC_FLAG == 0
+then
+0086: $MUSIC_VOLUME55 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME55 *= $HUNTER_ON_PLAYER_VOLUME_MULTIPLIER // (float)
+Audiostream.Volume($MUSIC_MISSION) = $MUSIC_VOLUME55
+else
+Audiostream.Volume($MUSIC_MISSION) = 0.0
+end
+
+if and
+$SAVESTATUS_TRUE == 0
+$PLAYER_DYING == 0
+$DELETE_SOUND == 0
+$END_SAVING == 0
+$ACTOR_DEAD == 0
+jf @RANDOM_HUNTER_ON_PLAYER_MUSIC_THEME_PLAYING_OFF
+if and
+$SAVER_GET_IN_START == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+jf @RANDOM_HUNTER_ON_PLAYER_MUSIC_THEME_PLAYING_OFF
+if 
+$HUNTER_ON_PLAYER == 0
+jf @RANDOM_HUNTER_ON_PLAYER_MUSIC_THEME_PLAYING_CHECK
+
+:RANDOM_HUNTER_ON_PLAYER_MUSIC_THEME_PLAYING_OFF
+
+audiostream.PerformAction($MUSIC_MISSION,STOP)
+audiostream.Release($MUSIC_MISSION)
+
+jump to @RANDOM_MUSIC_THEME_STARTER
+
+:RANDOM_MUSIC_DYING_PLAY
+if and
+$HUNTER_ON_PLAYER == 0
+$CASETTE_PLAYING_FLAG == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\dying_theme.wav")
+Audiostream.Volume($MUSIC_MISSION) = 0.0
+Audiostream.PerformAction($MUSIC_MISSION, PLAY)
+Audiostream.Loop($MUSIC_MISSION, 1)
+
+0086: $MUSIC_VOLUME55 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME55 *= $DYING_VOLUME_MULTIPLIER // (float)
+
+gosub @CHECK_ALL_MUSIC
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME55 // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 150
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+//////////////////////////////////////////////////////////
+
+:RANDOM_DYING_MUSIC_THEME_PLAYING_CHECK
+wait 0
+
+if
+$MUTE_MUSIC_FLAG == 0
+then
+0086: $MUSIC_VOLUME55 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME55 *= $DYING_VOLUME_MULTIPLIER // (float)
+Audiostream.Volume($MUSIC_MISSION) = $MUSIC_VOLUME55
+else
+Audiostream.Volume($MUSIC_MISSION) = 0.0
+end
+
+if and
+$SAVESTATUS_TRUE == 0
+$DELETE_SOUND == 0
+$END_SAVING == 0
+$ACTOR_DEAD == 0
+jf @RANDOM_DYING_MUSIC_THEME_PLAYING_OFF
+if and
+$CASETTE_PLAYING_FLAG == 0
+$MUSIC_TURN_OFF_FLAG == 0
+$READING_NOTE_FLAG == 0 
+jf @RANDOM_DYING_MUSIC_THEME_PLAYING_OFF
+if
+$PLAYER_DYING == 0
+jf @RANDOM_DYING_MUSIC_THEME_PLAYING_CHECK
+
+:RANDOM_DYING_MUSIC_THEME_PLAYING_OFF
+
+gosub @CHECK_ALL_MUSIC
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+if and
+$HUNTER_ON_PLAYER == 0
+$SAVESTATUS_TRUE == 0
+then
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+else
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+end
+
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+jump to @RANDOM_MUSIC_THEME_STARTER
+
+:RANDOM_MUSIC_TANK_PLAY
+if and
+$HUNTER_ON_PLAYER == 0
+$PLAYER_DYING == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+
+random_int 0@ 0 2
+if 
+0@ == 0
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\infected_sounds\tank_sounds\tank_theme.wav")
+end
+
+if 
+0@ == 1
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\infected_sounds\tank_sounds\tank_theme2.wav")
+end
+
+Audiostream.Volume($MUSIC_MISSION) = 0.0
+Audiostream.PerformAction($MUSIC_MISSION, PLAY)
+Audiostream.Loop($MUSIC_MISSION, 1)
+
+0086: $MUSIC_VOLUME55 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME55 *= $TANK_VOLUME_MULTIPLIER // (float)
+
+gosub @CHECK_ALL_MUSIC
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME55 // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 100
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+//////////////////////////////////////////////////////////
+
+:RANDOM_TANK_MUSIC_THEME_PLAYING_CHECK
+wait 0
+
+if
+$MUTE_MUSIC_FLAG == 0
+then
+0086: $MUSIC_VOLUME55 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME55 *= $TANK_VOLUME_MULTIPLIER // (float)
+Audiostream.Volume($MUSIC_MISSION) = $MUSIC_VOLUME55
+else
+Audiostream.Volume($MUSIC_MISSION) = 0.0
+end
+
+if and
+$SAVESTATUS_TRUE == 0
+$HUNTER_ON_PLAYER == 0
+$PLAYER_DYING == 0
+$DELETE_SOUND == 0
+$END_SAVING == 0
+$ACTOR_DEAD == 0
+jf @RANDOM_TANK_MUSIC_THEME_PLAYING_OFF
+if and
+$CASETTE_PLAYING_FLAG == 0
+$MUSIC_TURN_OFF_FLAG == 0
+$READING_NOTE_FLAG == 0 
+$ENEMY_ZONE_IN == 0
+CAMP_RAID_FLAG == 0
+jf @RANDOM_TANK_MUSIC_THEME_PLAYING_OFF
+if or
+$PLAY_TANK_MUSIC_FLAG == 0
+$SAVER_GET_IN_START == 1
+MAIN_QUEST_MUSIC_FLAG == 1
+jf @RANDOM_TANK_MUSIC_THEME_PLAYING_CHECK
+
+$PLAY_TANK_MUSIC_FLAG = 0
+
+:RANDOM_TANK_MUSIC_THEME_PLAYING_OFF
+
+gosub @CHECK_ALL_MUSIC
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+if and
+$HUNTER_ON_PLAYER == 0
+$SAVESTATUS_TRUE == 0
+then
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+else
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+end
+
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+jump to @RANDOM_MUSIC_THEME_STARTER
+
+//////////////////////////////////////////////////////////////////////////////////
+
+:RANDOM_MUSIC_QUIET_PLAY
+
+if and
+not $MUTATION_ACTIVE == 5
+8867: not  unknown_in_burglary_interior 0
+then
+if and
+$SAVESTATUS_TRUE == 0
+$PLAY_TANK_MUSIC_FLAG == 0
+$HUNTER_ON_PLAYER == 0  
+$DELETE_SOUND == 0 
+$END_SAVING == 0 
+$ACTOR_DEAD == 0
+$WITCH_NEAR == 0  
+jf @RANDOM_MUSIC_THEME_STARTER 
+if and
+$CASETTE_PLAYING_FLAG == 0
+$MUSIC_TURN_OFF_FLAG == 0
+$READING_NOTE_FLAG == 0 
+$ENEMY_ZONE_IN == 0
+CAMP_RAID_FLAG == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+if
+$PLAYER_DYING == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+else
+if and
+$SAVESTATUS_TRUE == 0
+$HUNTER_ON_PLAYER == 0  
+$DELETE_SOUND == 0 
+$END_SAVING == 0 
+$ACTOR_DEAD == 0  
+jf @RANDOM_MUSIC_THEME_STARTER 
+if and
+$CASETTE_PLAYING_FLAG == 0
+$MUSIC_TURN_OFF_FLAG == 0
+$READING_NOTE_FLAG == 0 
+$ENEMY_ZONE_IN == 0
+CAMP_RAID_FLAG == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+if
+$PLAYER_DYING == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+end
+
+if
+$FREEMODE == 1
+then
+
+if
+not $SAVEPLACE_ON == 1
+then
+jump to @RANDOM_SURVIVAL_AMBIENT_PLAY
+end
+ 
+end
+
+if
+$GAMEMODE_HOLD == 0
+    then
+    if
+    $ALLY_DEAD_FLAG == 0   
+    jf @RANDOM_MUSIC_THEME_STARTER
+    end
+
+if and
+not $MUTATION_ACTIVE == 5
+8867: not  unknown_in_burglary_interior 0
+then  
+if and 
+$HUNTER_ON_PLAYER == 0    
+not $ZOMBIES_HORDE == 1 
+ANY_WITCH_AGRED_FLAG == 0  
+$SAVER_GET_IN_START == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+$BANDITS1_CHASE_FLAG == 0
+$ARMY1_CHASE_FLAG == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+if and
+BANDIT_HELI_CHASE_FLAG == 0
+ARMY_HELI_CHASE_FLAG == 0
+ARMY_RHINO_CHASE_FLAG == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+else
+if and 
+$HUNTER_ON_PLAYER == 0     
+$SAVER_GET_IN_START == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+$BANDITS1_CHASE_FLAG == 0
+$ARMY1_CHASE_FLAG == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+if and
+BANDIT_HELI_CHASE_FLAG == 0
+ARMY_HELI_CHASE_FLAG == 0
+ARMY_RHINO_CHASE_FLAG == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+end
+
+random_int 0@ 0 5
+
+if
+0@ == 0
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\quiet_music\quiet_theme1.wav")
+end
+
+if
+0@ == 1
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\quiet_music\quiet_theme2.wav")
+end
+
+if
+0@ == 2
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\quiet_music\quiet_theme3.wav")
+end
+
+if
+0@ == 3
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\quiet_music\quiet_theme4.wav")
+end
+
+if
+0@ == 4
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\quiet_music\quiet_theme5.wav")
+end
+
+Audiostream.Volume($MUSIC_MISSION) = 0.0 
+Audiostream.PerformAction($MUSIC_MISSION, PLAY)
+Audiostream.Loop($MUSIC_MISSION, 1)
+
+0086: $MUSIC_VOLUME55 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME55 *= $QUIET_VOLUME_MULTIPLIER // (float)
+
+gosub @CHECK_ALL_MUSIC
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME55 // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+//////////////////////////////////////////////////////////
+
+$QUIET_MUSIC_FLAG = 1
+
+:RANDOM_QUIET_MUSIC_THEME_PLAYING_CHECK
+wait 0
+
+if
+$MUTE_MUSIC_FLAG == 0
+then
+0086: $MUSIC_VOLUME55 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME55 *= $QUIET_VOLUME_MULTIPLIER // (float)
+Audiostream.Volume($MUSIC_MISSION) = $MUSIC_VOLUME55
+else
+Audiostream.Volume($MUSIC_MISSION) = 0.0
+end
+
+if and
+not $MUTATION_ACTIVE == 5
+8867: not  unknown_in_burglary_interior 0
+then
+if and
+$SAVESTATUS_TRUE == 0
+$PLAY_TANK_MUSIC_FLAG == 0
+$HUNTER_ON_PLAYER == 0
+$DELETE_SOUND == 0 
+$END_SAVING == 0 
+$ACTOR_DEAD == 0
+$WITCH_NEAR == 0
+jf @RANDOM_QUIET_MUSIC_THEME_PLAYING_OFF
+if and
+$CASETTE_PLAYING_FLAG == 0
+$MUSIC_TURN_OFF_FLAG == 0
+$READING_NOTE_FLAG == 0 
+$ENEMY_ZONE_IN == 0
+CAMP_RAID_FLAG == 0
+$CLOWN_SPANWED == 0
+jf @RANDOM_QUIET_MUSIC_THEME_PLAYING_OFF
+else
+if and
+$SAVESTATUS_TRUE == 0
+$HUNTER_ON_PLAYER == 0
+$DELETE_SOUND == 0 
+$END_SAVING == 0 
+$ACTOR_DEAD == 0
+jf @RANDOM_QUIET_MUSIC_THEME_PLAYING_OFF
+if and
+$CASETTE_PLAYING_FLAG == 0
+$MUSIC_TURN_OFF_FLAG == 0
+$READING_NOTE_FLAG == 0 
+$ENEMY_ZONE_IN == 0
+CAMP_RAID_FLAG == 0
+$CLOWN_SPANWED == 0 
+jf @RANDOM_QUIET_MUSIC_THEME_PLAYING_OFF
+end
+
+if
+$GAMEMODE_HOLD == 0
+    then
+    if
+    $ALLY_DEAD_FLAG == 0   
+    jf @RANDOM_QUIET_MUSIC_THEME_PLAYING_OFF
+    end
+    
+if and
+not $MUTATION_ACTIVE == 5
+8867: not  unknown_in_burglary_interior 0
+then  
+if and
+$HUNTER_ON_PLAYER == 0    
+not $ZOMBIES_HORDE == 1 
+ANY_WITCH_AGRED_FLAG == 0  
+$SAVER_GET_IN_START == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+$BANDITS1_CHASE_FLAG == 0
+$ARMY1_CHASE_FLAG == 0  
+jf @RANDOM_QUIET_MUSIC_THEME_PLAYING_OFF
+if and
+BANDIT_HELI_CHASE_FLAG == 0
+ARMY_HELI_CHASE_FLAG == 0
+ARMY_RHINO_CHASE_FLAG == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+jf @RANDOM_QUIET_MUSIC_THEME_PLAYING_OFF
+else   
+if and
+$HUNTER_ON_PLAYER == 0    
+not $ZOMBIES_HORDE == 1 
+$SAVER_GET_IN_START == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+$BANDITS1_CHASE_FLAG == 0
+$ARMY1_CHASE_FLAG == 0  
+jf @RANDOM_QUIET_MUSIC_THEME_PLAYING_OFF
+if and
+BANDIT_HELI_CHASE_FLAG == 0
+ARMY_HELI_CHASE_FLAG == 0
+ARMY_RHINO_CHASE_FLAG == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+jf @RANDOM_QUIET_MUSIC_THEME_PLAYING_OFF
+end
+
+if
+$FREEMODE == 1
+then
+if
+$SAVEPLACE_ON == 1
+jf @RANDOM_QUIET_MUSIC_THEME_PLAYING_OFF 
+end    
+
+if
+$PLAYER_DYING == 0
+jf @RANDOM_QUIET_MUSIC_THEME_PLAYING_OFF
+
+jump to @RANDOM_QUIET_MUSIC_THEME_PLAYING_CHECK 
+
+:RANDOM_QUIET_MUSIC_THEME_PLAYING_OFF
+
+gosub @CHECK_ALL_MUSIC
+
+/////////////////////Плавное затухание///////////////////// 
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+if
+$HUNTER_ON_PLAYER == 0
+then
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+else
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+end
+
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+$QUIET_MUSIC_FLAG = 0
+jump to @RANDOM_MUSIC_THEME_STARTER
+
+//////////////////////////////////////////////////////////////////////////////////
+
+:RANDOM_CLOWN_MUSIC_PLAY
+
+if and
+not $MUTATION_ACTIVE == 5
+8867: not  unknown_in_burglary_interior 0
+then
+if and
+$SAVESTATUS_TRUE == 0
+$PLAY_TANK_MUSIC_FLAG == 0
+$HUNTER_ON_PLAYER == 0  
+$DELETE_SOUND == 0 
+$END_SAVING == 0 
+$ACTOR_DEAD == 0
+$WITCH_NEAR == 0  
+jf @RANDOM_MUSIC_THEME_STARTER 
+if and
+$CASETTE_PLAYING_FLAG == 0
+$MUSIC_TURN_OFF_FLAG == 0
+$READING_NOTE_FLAG == 0 
+$ENEMY_ZONE_IN == 0
+CAMP_RAID_FLAG == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+if
+$PLAYER_DYING == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+else
+if and
+$SAVESTATUS_TRUE == 0
+$HUNTER_ON_PLAYER == 0  
+$DELETE_SOUND == 0 
+$END_SAVING == 0 
+$ACTOR_DEAD == 0  
+jf @RANDOM_MUSIC_THEME_STARTER 
+if and
+$CASETTE_PLAYING_FLAG == 0
+$MUSIC_TURN_OFF_FLAG == 0
+$READING_NOTE_FLAG == 0 
+$ENEMY_ZONE_IN == 0
+CAMP_RAID_FLAG == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+if
+$PLAYER_DYING == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+end 
+
+if
+$GAMEMODE_HOLD == 0
+    then
+    if
+    $ALLY_DEAD_FLAG == 0   
+    jf @RANDOM_MUSIC_THEME_STARTER
+    end
+
+if and
+not $MUTATION_ACTIVE == 5
+8867: not  unknown_in_burglary_interior 0
+then  
+if and 
+$HUNTER_ON_PLAYER == 0    
+not $ZOMBIES_HORDE == 1 
+ANY_WITCH_AGRED_FLAG == 0  
+$SAVER_GET_IN_START == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+$BANDITS1_CHASE_FLAG == 0
+$ARMY1_CHASE_FLAG == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+if and
+BANDIT_HELI_CHASE_FLAG == 0
+ARMY_HELI_CHASE_FLAG == 0
+ARMY_RHINO_CHASE_FLAG == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+else
+if and 
+$HUNTER_ON_PLAYER == 0     
+$SAVER_GET_IN_START == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+$BANDITS1_CHASE_FLAG == 0
+$ARMY1_CHASE_FLAG == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+if and
+BANDIT_HELI_CHASE_FLAG == 0
+ARMY_HELI_CHASE_FLAG == 0
+ARMY_RHINO_CHASE_FLAG == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+end
+
+if
+$CLOWN_SPANWED == 1
+jf @RANDOM_MUSIC_THEME_STARTER
+
+gosub @RANDOM_CLOWN_MUSIC_PLAY_RANDOM
+
+Audiostream.Volume($MUSIC_MISSION) = 0.0 
+Audiostream.PerformAction($MUSIC_MISSION, PLAY)
+Audiostream.Loop($MUSIC_MISSION, 0)
+
+0086: $MUSIC_VOLUME55 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME55 *= $CLOWN_VOLUME_MULTIPLIER // (float)
+
+gosub @CHECK_ALL_MUSIC
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME55 // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+//////////////////////////////////////////////////////////
+
+$CLOWN_MUSIC_FLAG = 1
+
+:RANDOM_CLOWN_MUSIC_THEME_PLAYING_CHECK
+wait 0
+
+if
+$MUTE_MUSIC_FLAG == 0
+then
+0086: $MUSIC_VOLUME55 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME55 *= $CLOWN_VOLUME_MULTIPLIER // (float)
+Audiostream.Volume($MUSIC_MISSION) = $MUSIC_VOLUME55
+else
+Audiostream.Volume($MUSIC_MISSION) = 0.0
+end
+
+if and
+not $MUTATION_ACTIVE == 5
+8867: not  unknown_in_burglary_interior 0
+then
+if and
+$SAVESTATUS_TRUE == 0
+$PLAY_TANK_MUSIC_FLAG == 0
+$HUNTER_ON_PLAYER == 0
+$DELETE_SOUND == 0 
+$END_SAVING == 0 
+$ACTOR_DEAD == 0
+$WITCH_NEAR == 0
+jf @RANDOM_CLOWN_MUSIC_THEME_PLAYING_OFF
+if and
+$CASETTE_PLAYING_FLAG == 0
+$MUSIC_TURN_OFF_FLAG == 0
+$READING_NOTE_FLAG == 0 
+$ENEMY_ZONE_IN == 0
+CAMP_RAID_FLAG == 0
+jf @RANDOM_CLOWN_MUSIC_THEME_PLAYING_OFF
+else
+if and
+$SAVESTATUS_TRUE == 0
+$HUNTER_ON_PLAYER == 0
+$DELETE_SOUND == 0 
+$END_SAVING == 0 
+$ACTOR_DEAD == 0
+jf @RANDOM_CLOWN_MUSIC_THEME_PLAYING_OFF
+if and
+$CASETTE_PLAYING_FLAG == 0
+$MUSIC_TURN_OFF_FLAG == 0
+$READING_NOTE_FLAG == 0 
+$ENEMY_ZONE_IN == 0
+CAMP_RAID_FLAG == 0 
+jf @RANDOM_CLOWN_MUSIC_THEME_PLAYING_OFF
+end
+
+if
+$GAMEMODE_HOLD == 0
+    then
+    if
+    $ALLY_DEAD_FLAG == 0   
+    jf @RANDOM_CLOWN_MUSIC_THEME_PLAYING_OFF
+    end
+    
+if and
+not $MUTATION_ACTIVE == 5
+8867: not  unknown_in_burglary_interior 0
+then  
+if and
+$HUNTER_ON_PLAYER == 0    
+not $ZOMBIES_HORDE == 1 
+ANY_WITCH_AGRED_FLAG == 0  
+$SAVER_GET_IN_START == 0
+$BANDITS1_CHASE_FLAG == 0
+$ARMY1_CHASE_FLAG == 0  
+jf @RANDOM_CLOWN_MUSIC_THEME_PLAYING_OFF
+if and
+BANDIT_HELI_CHASE_FLAG == 0
+ARMY_HELI_CHASE_FLAG == 0
+ARMY_RHINO_CHASE_FLAG == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+jf @RANDOM_CLOWN_MUSIC_THEME_PLAYING_OFF
+else   
+if and
+$HUNTER_ON_PLAYER == 0    
+not $ZOMBIES_HORDE == 1 
+$SAVER_GET_IN_START == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+$BANDITS1_CHASE_FLAG == 0
+$ARMY1_CHASE_FLAG == 0  
+jf @RANDOM_CLOWN_MUSIC_THEME_PLAYING_OFF
+if and
+BANDIT_HELI_CHASE_FLAG == 0
+ARMY_HELI_CHASE_FLAG == 0
+ARMY_RHINO_CHASE_FLAG == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+jf @RANDOM_CLOWN_MUSIC_THEME_PLAYING_OFF
+end    
+
+if
+$PLAYER_DYING == 0
+jf @RANDOM_CLOWN_MUSIC_THEME_PLAYING_OFF
+
+if
+$CLOWN_SPANWED == 1
+jf @RANDOM_CLOWN_MUSIC_THEME_PLAYING_OFF
+
+0AB9: get_mp3 $MUSIC_MISSION state_to 0@
+if
+0@ == -1
+then
+jump to @RANDOM_CLOWN_MUSIC_THEME_PLAYING_OFF2
+end    
+
+jump to @RANDOM_CLOWN_MUSIC_THEME_PLAYING_CHECK
+
+:RANDOM_CLOWN_MUSIC_THEME_PLAYING_OFF
+
+gosub @CHECK_ALL_MUSIC
+
+/////////////////////Плавное затухание///////////////////// 
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+if
+$HUNTER_ON_PLAYER == 0
+then
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+else
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+end
+
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+$CLOWN_MUSIC_FLAG = 0
+jump to @RANDOM_MUSIC_THEME_STARTER
+
+:RANDOM_CLOWN_MUSIC_THEME_PLAYING_OFF2
+audiostream.Release($MUSIC_MISSION)
+jump to @RANDOM_CLOWN_MUSIC_PLAY
+
+//////////////////////////////////////////////////////////////////////////////////
+
+:RANDOM_CLOWN_MUSIC_PLAY_RANDOM
+
+random_int 0@ 0 3
+
+if
+0@ == 0
+then
+$MUSIC_MISSION = Audiostream.Load("audio\sounds\infected_sounds\zombie_sounds\zombie_clown_danger.mp3")
+end
+
+if
+0@ == 1
+then
+$MUSIC_MISSION = Audiostream.Load("audio\sounds\infected_sounds\zombie_sounds\gallery_music.mp3")
+end
+
+if
+0@ == 2
+then
+$MUSIC_MISSION = Audiostream.Load("audio\sounds\infected_sounds\zombie_sounds\wam_music.mp3")
+end
+
+return
+
+//////////////////////////////////////////////////////////////////////////////////
+
+:RANDOM_SURVIVAL_AMBIENT_PLAY
+
+if and
+not $MUTATION_ACTIVE == 5
+8867: not  unknown_in_burglary_interior 0
+then
+if and
+$SAVESTATUS_TRUE == 0
+$PLAY_TANK_MUSIC_FLAG == 0
+$HUNTER_ON_PLAYER == 0  
+$DELETE_SOUND == 0 
+$END_SAVING == 0 
+$ACTOR_DEAD == 0
+$WITCH_NEAR == 0  
+jf @RANDOM_MUSIC_THEME_STARTER 
+if and
+$CASETTE_PLAYING_FLAG == 0
+$MUSIC_TURN_OFF_FLAG == 0
+$READING_NOTE_FLAG == 0 
+$ENEMY_ZONE_IN == 0
+CAMP_RAID_FLAG == 0
+$CLOWN_SPANWED == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+if
+$PLAYER_DYING == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+else
+if and
+$SAVESTATUS_TRUE == 0
+$HUNTER_ON_PLAYER == 0  
+$DELETE_SOUND == 0 
+$END_SAVING == 0 
+$ACTOR_DEAD == 0  
+jf @RANDOM_MUSIC_THEME_STARTER 
+if and
+$CASETTE_PLAYING_FLAG == 0
+$MUSIC_TURN_OFF_FLAG == 0
+$READING_NOTE_FLAG == 0 
+$ENEMY_ZONE_IN == 0
+CAMP_RAID_FLAG == 0
+$CLOWN_SPANWED == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+if
+$PLAYER_DYING == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+end
+
+if
+$SAVEPLACE_ON == 0
+jf @RANDOM_MUSIC_THEME_STARTER 
+
+if
+$GAMEMODE_HOLD == 0
+    then
+    if
+    $ALLY_DEAD_FLAG == 0   
+    jf @RANDOM_MUSIC_THEME_STARTER
+    end
+
+if and
+not $MUTATION_ACTIVE == 5
+8867: not  unknown_in_burglary_interior 0
+then  
+if and 
+$HUNTER_ON_PLAYER == 0    
+not $ZOMBIES_HORDE == 1 
+ANY_WITCH_AGRED_FLAG == 0  
+$SAVER_GET_IN_START == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+$BANDITS1_CHASE_FLAG == 0
+$ARMY1_CHASE_FLAG == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+if and
+BANDIT_HELI_CHASE_FLAG == 0
+ARMY_HELI_CHASE_FLAG == 0
+ARMY_RHINO_CHASE_FLAG == 0
+MAIN_QUEST_MUSIC_FLAG == 0 
+jf @RANDOM_MUSIC_THEME_STARTER
+else
+if and 
+$HUNTER_ON_PLAYER == 0     
+$SAVER_GET_IN_START == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+$BANDITS1_CHASE_FLAG == 0
+$ARMY1_CHASE_FLAG == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+if and
+BANDIT_HELI_CHASE_FLAG == 0
+ARMY_HELI_CHASE_FLAG == 0
+ARMY_RHINO_CHASE_FLAG == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+end
+
+if or
+PLAYER_IN_NEST_FLAG == 1
+0867:   unknown_in_burglary_interior 0
+then
+
+if
+0867:   unknown_in_burglary_interior 0
+then
+
+32@ = 0
+
+repeat
+wait 0
+
+if
+32@ > 500
+    then
+    if or
+    DONT_DO_BURGLARY == 1
+    8867: not  unknown_in_burglary_interior 0
+        then
+        jump to @PLAY_SURVIVAL_AMBIENT_JUMP
+        end
+    end
+
+until BURGLARY_PROCESSED == 1
+
+gosub @AMBIENT_HOUSE_PLAY_RANDOM
+else
+gosub @RANDOM_NEST_AMBIENT_PLAY_RANDOM
+end
+ 
+else
+
+////////////////////////////////////////////////////////
+
+if
+QUARANTINE_SOUND_PLAY_FLAG == 0
+then
+:PLAY_SURVIVAL_AMBIENT_JUMP
+gosub @RANDOM_SURVIVAL_AMBIENT_PLAY_RANDOM
+else
+QUARANTINE_SOUND_PLAY_FLAG = 0
+gosub @RANDOM_QUARANTINE_SOUND_PLAY_RANDOM
+end
+
+////////////////////////////////////////////////////////
+
+end
+
+Audiostream.Volume($MUSIC_MISSION) = 0.0 
+Audiostream.PerformAction($MUSIC_MISSION, PLAY)
+Audiostream.Loop($MUSIC_MISSION, 0)
+HORDE_YAR_FLAG = 0
+
+0086: $MUSIC_VOLUME55 = $MUSIC_VOLUME // (float)
+if
+NEST_AMBIENT_PLAYING_FLAG == 0
+then
+0069: $MUSIC_VOLUME55 *= $AMBIENT_VOLUME_MULTIPLIER // (float)
+else
+0069: $MUSIC_VOLUME55 *= $AMBIENT2_VOLUME_MULTIPLIER // (float)
+end
+
+0@ = 666777888
+gosub @CHECK_ALL_MUSIC
+0@ = 0
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME55 // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+//////////////////////////////////////////////////////////
+
+$SURVIVAL_AMBIENT_FLAG = 1
+
+:RANDOM_SURVIVAL_AMBIENT_THEME_PLAYING_CHECK
+wait 0
+
+random_int 0@ 0 to 1000
+if and
+0@ == 500
+$ACTIVE_INTERIOR == 0
+then
+gosub @RANDOM_SURVIVAL_AMBIENT_ADD_SOUND_PLAY
+end
+
+if
+$MUTE_MUSIC_FLAG == 0
+then
+0086: $MUSIC_VOLUME55 = $MUSIC_VOLUME // (float)
+
+if
+NEST_AMBIENT_PLAYING_FLAG == 0
+then
+0069: $MUSIC_VOLUME55 *= $AMBIENT_VOLUME_MULTIPLIER // (float)
+else
+0069: $MUSIC_VOLUME55 *= $AMBIENT2_VOLUME_MULTIPLIER // (float)
+end
+
+Audiostream.Volume($MUSIC_MISSION) = $MUSIC_VOLUME55
+else
+Audiostream.Volume($MUSIC_MISSION) = 0.0
+end
+
+if and
+not $MUTATION_ACTIVE == 5
+8867: not  unknown_in_burglary_interior 0
+then
+if and
+$SAVESTATUS_TRUE == 0
+$PLAY_TANK_MUSIC_FLAG == 0
+$HUNTER_ON_PLAYER == 0
+$DELETE_SOUND == 0 
+$END_SAVING == 0 
+$ACTOR_DEAD == 0
+$WITCH_NEAR == 0
+jf @RANDOM_SURVIVAL_AMBIENT_THEME_PLAYING_OFF
+if and
+$CASETTE_PLAYING_FLAG == 0
+$MUSIC_TURN_OFF_FLAG == 0
+$READING_NOTE_FLAG == 0 
+$ENEMY_ZONE_IN == 0
+CAMP_RAID_FLAG == 0
+$CLOWN_SPANWED == 0
+jf @RANDOM_SURVIVAL_AMBIENT_THEME_PLAYING_OFF
+else
+if and
+$SAVESTATUS_TRUE == 0
+$HUNTER_ON_PLAYER == 0
+$DELETE_SOUND == 0 
+$END_SAVING == 0 
+$ACTOR_DEAD == 0
+jf @RANDOM_SURVIVAL_AMBIENT_THEME_PLAYING_OFF
+if and
+$CASETTE_PLAYING_FLAG == 0
+$MUSIC_TURN_OFF_FLAG == 0
+$READING_NOTE_FLAG == 0 
+$ENEMY_ZONE_IN == 0
+CAMP_RAID_FLAG == 0
+$CLOWN_SPANWED == 0 
+jf @RANDOM_SURVIVAL_AMBIENT_THEME_PLAYING_OFF
+end
+
+if
+$GAMEMODE_HOLD == 0
+    then
+    if
+    $ALLY_DEAD_FLAG == 0   
+    jf @RANDOM_SURVIVAL_AMBIENT_THEME_PLAYING_OFF
+    end
+    
+if and
+not $MUTATION_ACTIVE == 5
+8867: not  unknown_in_burglary_interior 0
+then  
+if and
+$HUNTER_ON_PLAYER == 0    
+not $ZOMBIES_HORDE == 1 
+ANY_WITCH_AGRED_FLAG == 0  
+$SAVER_GET_IN_START == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+$BANDITS1_CHASE_FLAG == 0
+$ARMY1_CHASE_FLAG == 0  
+jf @RANDOM_SURVIVAL_AMBIENT_THEME_PLAYING_OFF
+if and
+BANDIT_HELI_CHASE_FLAG == 0
+ARMY_HELI_CHASE_FLAG == 0
+ARMY_RHINO_CHASE_FLAG == 0
+jf @RANDOM_SURVIVAL_AMBIENT_THEME_PLAYING_OFF
+else   
+if and
+$HUNTER_ON_PLAYER == 0    
+not $ZOMBIES_HORDE == 1 
+$SAVER_GET_IN_START == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+$BANDITS1_CHASE_FLAG == 0
+$ARMY1_CHASE_FLAG == 0  
+jf @RANDOM_SURVIVAL_AMBIENT_THEME_PLAYING_OFF
+if and
+BANDIT_HELI_CHASE_FLAG == 0
+ARMY_HELI_CHASE_FLAG == 0
+ARMY_RHINO_CHASE_FLAG == 0
+MAIN_QUEST_MUSIC_FLAG == 0 
+jf @RANDOM_SURVIVAL_AMBIENT_THEME_PLAYING_OFF
+end
+
+if
+$SAVEPLACE_ON == 0
+jf @RANDOM_SURVIVAL_AMBIENT_THEME_PLAYING_OFF    
+
+if
+$PLAYER_DYING == 0
+jf @RANDOM_SURVIVAL_AMBIENT_THEME_PLAYING_OFF
+
+0AB9: get_mp3 $MUSIC_MISSION state_to 0@
+if
+0@ == -1
+then
+jump to @RANDOM_SURVIVAL_AMBIENT_THEME_PLAYING_OFF2
+end
+
+if and
+PLAYER_IN_NEST_FLAG == 1
+NEST_AMBIENT_PLAYING_FLAG == 0
+    then
+    NEST_AMBIENT_PLAYING_FLAG = 1
+    jump @RANDOM_SURVIVAL_AMBIENT_THEME_PLAYING_OFF3
+    end    
+if and
+PLAYER_IN_NEST_FLAG == 0
+NEST_AMBIENT_PLAYING_FLAG == 1
+    then
+    NEST_AMBIENT_PLAYING_FLAG = 0
+    jump @RANDOM_SURVIVAL_AMBIENT_THEME_PLAYING_OFF
+    end
+    
+if and
+0867:   unknown_in_burglary_interior 0
+HOUSE_AMBIENT_PLAYING_FLAG == 0
+    then
+    HOUSE_AMBIENT_PLAYING_FLAG = 1
+    jump @RANDOM_SURVIVAL_AMBIENT_THEME_PLAYING_OFF3
+    end    
+if and
+8867: not  unknown_in_burglary_interior 0
+HOUSE_AMBIENT_PLAYING_FLAG == 1
+    then
+    HOUSE_AMBIENT_PLAYING_FLAG = 0
+    jump @RANDOM_SURVIVAL_AMBIENT_THEME_PLAYING_OFF
+    end        
+
+jump to @RANDOM_SURVIVAL_AMBIENT_THEME_PLAYING_CHECK
+
+:RANDOM_SURVIVAL_AMBIENT_THEME_PLAYING_OFF
+
+gosub @CHECK_ALL_MUSIC
+
+/////////////////////Плавное затухание///////////////////// 
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+if
+$HUNTER_ON_PLAYER == 0
+then
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+else
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+end
+
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+$SURVIVAL_AMBIENT_FLAG = 0
+
+if
+NEST_AMBIENT_PLAYING_FLAG == 1
+then
+NEST_AMBIENT_PLAYING_FLAG = 0
+end
+
+jump to @RANDOM_MUSIC_THEME_STARTER
+
+:RANDOM_SURVIVAL_AMBIENT_THEME_PLAYING_OFF2
+audiostream.Release($MUSIC_MISSION)  
+jump to @RANDOM_SURVIVAL_AMBIENT_PLAY
+
+:RANDOM_SURVIVAL_AMBIENT_THEME_PLAYING_OFF3
+
+gosub @CHECK_ALL_MUSIC
+
+/////////////////////Плавное затухание///////////////////// 
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+if
+$HUNTER_ON_PLAYER == 0
+then
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+else
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+end
+
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+$SURVIVAL_AMBIENT_FLAG = 0
+
+jump to @RANDOM_MUSIC_THEME_STARTER
+
+:RANDOM_SURVIVAL_AMBIENT_ADD_SOUND_PLAY
+
+random_int 0@ 0 20
+
+if
+0@ == 0
+then
+Audiostream.Loop($AMB_SND1, 0)
+Audiostream.Volume($AMB_SND1) = $SOUNDS_VOLUME
+Audiostream.PerformAction($AMB_SND1, PLAY)
+end
+
+if
+0@ == 1
+then
+Audiostream.Loop($AMB_SND2, 0)
+Audiostream.Volume($AMB_SND2) = $SOUNDS_VOLUME
+Audiostream.PerformAction($AMB_SND2, PLAY)
+end
+
+if
+0@ == 2
+then
+Audiostream.Loop($AMB_SND3, 0)
+Audiostream.Volume($AMB_SND3) = $SOUNDS_VOLUME
+Audiostream.PerformAction($AMB_SND3, PLAY)
+end
+
+if
+0@ == 3
+then
+Audiostream.Loop($AMB_SND4, 0)
+Audiostream.Volume($AMB_SND4) = $SOUNDS_VOLUME
+Audiostream.PerformAction($AMB_SND4, PLAY)
+end
+
+if
+0@ == 4
+then
+Audiostream.Loop($AMB_SND5, 0)
+Audiostream.Volume($AMB_SND5) = $SOUNDS_VOLUME
+Audiostream.PerformAction($AMB_SND5, PLAY)
+end
+
+if
+0@ == 5
+then
+Audiostream.Loop($AMB_SND6, 0)
+Audiostream.Volume($AMB_SND6) = $SOUNDS_VOLUME
+Audiostream.PerformAction($AMB_SND6, PLAY)
+end
+
+if
+0@ == 6
+then
+Audiostream.Loop($AMB_SND7, 0)
+Audiostream.Volume($AMB_SND7) = $SOUNDS_VOLUME
+Audiostream.PerformAction($AMB_SND7, PLAY)
+end
+
+if
+0@ == 7
+then
+Audiostream.Loop($AMB_SND8, 0)
+Audiostream.Volume($AMB_SND8) = $SOUNDS_VOLUME
+Audiostream.PerformAction($AMB_SND8, PLAY)
+end
+
+if
+0@ == 8
+then
+Audiostream.Loop($AMB_SND9, 0)
+Audiostream.Volume($AMB_SND9) = $SOUNDS_VOLUME
+Audiostream.PerformAction($AMB_SND9, PLAY)
+end
+
+if
+0@ == 9
+then
+Audiostream.Loop($AMB_SND10, 0)
+Audiostream.Volume($AMB_SND10) = $SOUNDS_VOLUME
+Audiostream.PerformAction($AMB_SND10, PLAY)
+end
+
+if
+0@ == 10
+then
+Audiostream.Loop($AMB_SND11, 0)
+Audiostream.Volume($AMB_SND11) = $SOUNDS_VOLUME
+Audiostream.PerformAction($AMB_SND11, PLAY)
+end
+
+if
+0@ == 11
+then
+Audiostream.Loop($AMB_SND12, 0)
+Audiostream.Volume($AMB_SND12) = $SOUNDS_VOLUME
+Audiostream.PerformAction($AMB_SND12, PLAY)
+end
+
+if
+0@ == 12
+then
+Audiostream.Loop($AMB_SND13, 0)
+Audiostream.Volume($AMB_SND13) = $SOUNDS_VOLUME
+Audiostream.PerformAction($AMB_SND13, PLAY)
+end
+
+if
+0@ == 13
+then
+Audiostream.Loop($AMB_SND14, 0)
+Audiostream.Volume($AMB_SND14) = $SOUNDS_VOLUME
+Audiostream.PerformAction($AMB_SND14, PLAY)
+end
+
+if
+0@ == 14
+then
+Audiostream.Loop($AMB_SND15, 0)
+Audiostream.Volume($AMB_SND15) = $SOUNDS_VOLUME
+Audiostream.PerformAction($AMB_SND15, PLAY)
+end
+
+if
+0@ == 15
+then
+Audiostream.Loop($AMB_SND16, 0)
+Audiostream.Volume($AMB_SND16) = $SOUNDS_VOLUME
+Audiostream.PerformAction($AMB_SND16, PLAY)
+end
+
+if
+0@ == 16
+then
+Audiostream.Loop($AMB_SND17, 0)
+Audiostream.Volume($AMB_SND17) = $SOUNDS_VOLUME
+Audiostream.PerformAction($AMB_SND17, PLAY)
+end
+
+if
+0@ == 17
+then
+Audiostream.Loop($AMB_SND18, 0)
+Audiostream.Volume($AMB_SND18) = $SOUNDS_VOLUME
+Audiostream.PerformAction($AMB_SND18, PLAY)
+end
+
+if
+0@ == 18
+then
+Audiostream.Loop($AMB_SND19, 0)
+Audiostream.Volume($AMB_SND19) = $SOUNDS_VOLUME
+Audiostream.PerformAction($AMB_SND19, PLAY)
+end
+
+if
+0@ == 19
+then
+Audiostream.Loop($AMB_SND20, 0)
+Audiostream.Volume($AMB_SND20) = $SOUNDS_VOLUME
+Audiostream.PerformAction($AMB_SND20, PLAY)
+end
+
+return
+
+//////////////////////////////////////////////////////////////////////////////////
+
+:RANDOM_SURVIVAL_AMBIENT_PLAY_RANDOM
+
+if
+DO_SLOW_AMBIENT_FLAG == 1
+then
+
+random_int 0@ 0 10
+
+if
+0@ == 0
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c2rabies_01_slow.wav")
+end
+
+if
+0@ == 1
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c2rabies_02_slow.wav")
+end
+
+if
+0@ == 2
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c2rabies_03_slow.wav")
+end
+
+if
+0@ == 3
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c2rabies_04_slow.wav")
+end
+
+if
+0@ == 4
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c2rabies_05_slow.wav")
+end
+
+if
+0@ == 5
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c2rabies_06_slow.wav")
+end
+
+if
+0@ == 6
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c2rabies_07_slow.wav")
+end
+
+if
+0@ == 7
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c2rabies_08_slow.wav")
+end
+
+if
+0@ == 8
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c2rabies_09_slow.wav")
+end
+
+if
+0@ == 9
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c2rabies_10_slow.wav")
+end
+
+return
+
+end
+
+random_int 0@ 0 64
+
+if
+0@ == 0
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c1rabies_01.wav")
+end
+
+if
+0@ == 1
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c1rabies_02.wav")
+end
+
+if
+0@ == 2
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c1rabies_03.wav")
+end
+
+if
+0@ == 3
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c1rabies_04.wav")
+end
+
+if
+0@ == 4
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c1rabies_05.wav")
+end
+
+if
+0@ == 5
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c1rabies_06.wav")
+end
+
+if
+0@ == 6
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c1rabies_07.wav")
+end
+
+if
+0@ == 7
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c1rabies_08.wav")
+end
+
+if
+0@ == 8
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c1rabies_09.wav")
+end
+
+if
+0@ == 9
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c1rabies_10.wav")
+end
+
+if
+0@ == 10
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c1rabies_11.wav")
+end
+
+if
+0@ == 11
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c1rabies_12.wav")
+end
+
+if
+0@ == 12
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c1rabies_13.wav")
+end
+
+if
+0@ == 13
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c1rabies_14.wav")
+end
+
+if
+0@ == 14
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c2rabies_01.wav")
+end
+
+if
+0@ == 15
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c2rabies_02.wav")
+end
+
+if
+0@ == 16
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c2rabies_03.wav")
+end
+
+if
+0@ == 17
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c2rabies_04.wav")
+end
+
+if
+0@ == 18
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c2rabies_05.wav")
+end
+
+if
+0@ == 19
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c2rabies_06.wav")
+end
+
+if
+0@ == 20
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c2rabies_07.wav")
+end
+
+if
+0@ == 21
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c2rabies_08.wav")
+end
+
+if
+0@ == 22
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c2rabies_09.wav")
+end
+
+if
+0@ == 23
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c2rabies_10.wav")
+end
+
+if
+0@ == 24
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c3rabies_01.wav")
+end
+
+if
+0@ == 25
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c3rabies_02.wav")
+end
+
+if
+0@ == 26
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c3rabies_03.wav")
+end
+
+if
+0@ == 27
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c3rabies_04.wav")
+end
+
+if
+0@ == 28
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c3rabies_05.wav")
+end
+
+if
+0@ == 29
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c3rabies_06.wav")
+end
+
+if
+0@ == 30
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c3rabies_07.wav")
+end
+
+if
+0@ == 31
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c3rabies_08.wav")
+end
+
+if
+0@ == 32
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c3rabies_09.wav")
+end
+
+if
+0@ == 33
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c3rabies_10.wav")
+end
+
+if
+0@ == 34
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c4rabies_01.wav")
+end
+
+if
+0@ == 35
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c4rabies_02.wav")
+end
+
+if
+0@ == 36
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c4rabies_03.wav")
+end
+
+if
+0@ == 37
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c4rabies_04.wav")
+end
+
+if
+0@ == 38
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c4rabies_05.wav")
+end
+
+if
+0@ == 39
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c4rabies_06.wav")
+end
+
+if
+0@ == 40
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c4rabies_07.wav")
+end
+
+if
+0@ == 41
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c4rabies_08.wav")
+end
+
+if
+0@ == 42
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c4rabies_09.wav")
+end
+
+if
+0@ == 43
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c4rabies_10.wav")
+end
+
+if
+0@ == 44
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c4rabies_11.wav")
+end
+
+if
+0@ == 45
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c4rabies_12.wav")
+end
+
+if
+0@ == 46
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c4rabies_13.wav")
+end
+
+if
+0@ == 47
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c4rabies_14.wav")
+end
+
+if
+0@ == 48
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c4rabies_15.wav")
+end
+
+if
+0@ == 49
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c5rabies_01.wav")
+end
+
+if
+0@ == 50
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c5rabies_02.wav")
+end
+
+if
+0@ == 51
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c5rabies_03.wav")
+end
+
+if
+0@ == 52
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c5rabies_04.wav")
+end
+
+if
+0@ == 53
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c5rabies_05.wav")
+end
+
+if
+0@ == 54
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c5rabies_06.wav")
+end
+
+if
+0@ == 55
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c5rabies_07.wav")
+end
+
+if
+0@ == 56
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c5rabies_08.wav")
+end
+
+if
+0@ == 57
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c5rabies_09.wav")
+end
+
+if
+0@ == 58
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c5rabies_10.wav")
+end
+
+if
+0@ == 59
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c5rabies_11.wav")
+end
+
+if
+0@ == 60
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c5rabies_12.wav")
+end
+
+if
+0@ == 61
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c5rabies_13.wav")
+end
+
+if
+0@ == 62
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c5rabies_14.wav")
+end
+
+if
+0@ == 63
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\c5rabies_15.wav")
+end
+
+return
+
+:RANDOM_QUARANTINE_SOUND_PLAY_RANDOM
+
+random_int 0@ 0 3
+
+if
+0@ == 0
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\survival_ambient\quarantine_01.wav")
+end
+
+if
+0@ == 1
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\survival_ambient\quarantine_02.wav")
+end
+
+if
+0@ == 2
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\survival_ambient\quarantine_03.wav")
+end
+
+return
+
+//////////////////////////////////////////////////////////////////////////////////
+
+:RANDOM_INTENSE_AMBIENT_PLAY_RANDOM
+
+random_int 0@ 0 22
+
+if
+0@ == 0
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\l4d2_rabies_01.wav")
+end
+
+if
+0@ == 1
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\l4d2_rabies_02.wav")
+end
+
+if
+0@ == 2
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\l4d2_rabies_03.wav")
+end
+
+if
+0@ == 3
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\l4d2_rabies_04.wav")
+end
+
+if
+0@ == 4
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\l4d2_rabies_05.wav")
+end
+
+if
+0@ == 5
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\l4d2_rabies_06.wav")
+end
+
+if
+0@ == 6
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\l4d2_rabies_08.wav")
+end
+
+if
+0@ == 7
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\l4d2_rabies_09.wav")
+end
+
+if
+0@ == 8
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\l4d2_rabies_00.wav")
+end
+
+if
+0@ == 9
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\l4d2_rabies_10.wav")
+end
+
+if
+0@ == 10
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\l4d2_rabies_11.wav")
+end
+
+if
+0@ == 11
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\l4d2_rabies_12.wav")
+end
+
+if
+0@ == 12
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\l4d2_rabies_13.wav")
+end
+
+if
+0@ == 13
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\l4d2_rabies_14.wav")
+end
+
+if
+0@ == 14
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\l4d2_rabies_15.wav")
+end
+
+if
+0@ == 15
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\l4d2_rabies_16.wav")
+end
+
+if
+0@ == 16
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\l4d2_rabies_17.wav")
+end
+
+if
+0@ == 17
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\l4d2_rabies_18.wav")
+end
+
+if
+0@ == 18
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\l4d2_rabies_19.wav")
+end
+
+if
+0@ == 19
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\l4d2_rabies_20.wav")
+end
+
+if
+0@ == 20
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\l4d2_rabies_21.wav")
+end
+
+if
+0@ == 21
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\SURVIVAL_AMBIENT\l4d2_rabies_22.wav")
+end
+
+return
+
+:AMBIENT_HOUSE_PLAY_RANDOM
+
+if
+HOUSE_AMBIENT_TYPE == 1
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\loot_themes\loot_calm.wav")
+end
+
+if
+HOUSE_AMBIENT_TYPE == 2
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\loot_themes\loot_infested.wav")
+end
+
+return
+
+:RANDOM_NEST_AMBIENT_PLAY_RANDOM
+
+random_int 0@ 0 7
+
+if
+0@ == 0
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\survival_ambient\drones\drone_02.wav")
+end
+
+if
+0@ == 1
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\survival_ambient\drones\drone_03.wav")
+end
+
+if
+0@ == 2
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\survival_ambient\drones\drone_04_glassy.wav")
+end
+
+if
+0@ == 3
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\survival_ambient\drones\drone_05.wav")
+end
+
+if
+0@ == 4
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\survival_ambient\drones\drone_06.wav")
+end
+
+if
+0@ == 5
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\survival_ambient\drones\drone_07.wav")
+end
+
+if
+0@ == 6
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\survival_ambient\drones\drone_mvmnt_01.wav")
+end
+
+return
+
+:INTENSE_AMBIENT_PLAY_CHECK
+
+1@ = 0
+
+///////////////////////////////////////////////////
+
+if or
+$ARMY1_SPOTTED_FLAG == 1
+$BANDITS1_SPOTTED_FLAG == 1
+$FERMERS1_DAMAGE_FLAG == 1
+PLAYER_IN_NEST_FLAG == 1
+then
+1@ = 1
+end
+
+///////////////////////////////////////////////////
+
+for 0@ = 0 to 4
+
+if and
+$SURVIVOR_ATTACKED_BY_PLAYER_FLAG[0@] == 1
+056D:   actor $SURVIVER[0@] defined
+not $SURVIVER[0@] == -69 
+then
+1@ = 1
+end
+
+end
+
+///////////////////////////////////////////////////
+
+return
+
+////////////////////////////////////////////////////////////////////////////////// 
+
+:RANDOM_MUSIC_HORDE_PLAY
+random_int $HORDE_THEME_SET 0 5
+
+if
+not HORDE_YAR_FLAG == 1
+then
+
+if
+$HORDE_THEME_SET == 0
+    then
+    gosub @BANJO_WARN
+    end
+    
+if
+$HORDE_THEME_SET == 1
+    then
+    gosub @DEVIDDLE_WARN
+    end
+    
+if
+$HORDE_THEME_SET == 2
+    then
+    gosub @DOBRO_WARN
+    end
+    
+if
+$HORDE_THEME_SET == 3
+    then
+    gosub @SAW_WARN
+    end
+    
+if
+$HORDE_THEME_SET == 4
+    then
+    gosub @TRUMPET_WARN
+    end
+        
+create_thread @HOR_SND
+audiostream.Volume(HORDE_START_SOUND) = 0.0  
+Audiostream.PerformAction(HORDE_START_SOUND, PLAY) 
+Audiostream.Loop(HORDE_START_SOUND, 0)
+else
+HORDE_YAR_FLAG = 0
+jump to @RANDOM_MUSIC_HORDE_PLAY_AGAIN
+end 
+
+if
+056D:   actor $VOICE_ACTOR defined
+then
+05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 181 
+end 
+
+0086: $MUSIC_VOLUME55 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME55 *= $HORDE_VOLUME_MULTIPLIER // (float)
+
+gosub @CHECK_ALL_MUSIC
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = HORDE_START_SOUND // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME55 // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+//////////////////////////////////////////////////////////       
+
+:RANDOM_MUSIC_HORDE_PLAY_CHECK
+wait 0
+
+if
+$MUTE_MUSIC_FLAG == 0
+then
+0086: $MUSIC_VOLUME55 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME55 *= $HORDE_VOLUME_MULTIPLIER // (float)
+Audiostream.Volume(HORDE_START_SOUND) = $MUSIC_VOLUME55
+else
+Audiostream.Volume(HORDE_START_SOUND) = 0.0
+end
+
+if
+$SAVESTATUS_TRUE == 1
+    then
+    audiostream.Release(HORDE_START_SOUND)
+    jump to @RANDOM_MUSIC_THEME_STARTER
+    end
+
+0AB9: get_mp3 HORDE_START_SOUND state_to 0@
+if        
+0@ == -1  
+jf @RANDOM_MUSIC_HORDE_PLAY_CHECK
+
+audiostream.Release(HORDE_START_SOUND)
+
+:RANDOM_MUSIC_HORDE_PLAY_AGAIN 
+
+:RANDOM_HORDE_MUSIC_THEME_PLAYING_ON
+2@ = 0.0
+
+if
+$HORDE_THEME_SET == 0
+    then
+    gosub @RANDOM_BANJO 
+    end
+
+if
+$HORDE_THEME_SET == 1
+    then
+    gosub @RANDOM_DEVIDDLE 
+    end
+
+if
+$HORDE_THEME_SET == 2
+    then
+    gosub @RANDOM_DOBRO 
+    end
+
+if
+$HORDE_THEME_SET == 3
+    then
+    gosub @RANDOM_SAW 
+    end
+
+if
+$HORDE_THEME_SET == 4
+    then
+    gosub @RANDOM_TRUMPET 
+    end
+
+gosub @RANDOM_DRUMS
+                          
+gosub @HORDE_VOLUME_SET 
+
+008B: HORDE_SLAYER_SOUND = $HORDE_SLAYER_SOUND // (int)
+
+if
+25@ == 0
+then
+
+if
+$MUTE_MUSIC_FLAG == 0
+then
+0ABC: set_audiostream HORDE_DRUMS_SOUND volume 2@
+0ABC: set_audiostream HORDE_BEAT_SOUND volume 2@
+0ABC: set_audiostream HORDE_SLAYER_SOUND volume 2@
+else
+0ABC: set_audiostream HORDE_DRUMS_SOUND volume 0.0
+0ABC: set_audiostream HORDE_BEAT_SOUND volume 0.0
+0ABC: set_audiostream HORDE_SLAYER_SOUND volume 0.0
+end
+  
+else
+0086: $MUSIC_VOLUME23 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME23 *= $HORDE_VOLUME_MULTIPLIER2 // (float) 
+0086: $MUSIC_VOLUME24 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME24 *= $HORDE_VOLUME_MULTIPLIER // (float)
+
+if
+$MUTE_MUSIC_FLAG == 0
+then   
+0ABC: set_audiostream HORDE_DRUMS_SOUND volume $MUSIC_VOLUME24 
+0ABC: set_audiostream HORDE_BEAT_SOUND volume $MUSIC_VOLUME23   
+0ABC: set_audiostream HORDE_SLAYER_SOUND volume $MUSIC_VOLUME23
+else
+0ABC: set_audiostream HORDE_DRUMS_SOUND volume 0.0 
+0ABC: set_audiostream HORDE_BEAT_SOUND volume 0.0   
+0ABC: set_audiostream HORDE_SLAYER_SOUND volume 0.0
+end
+        
+end
+
+Audiostream.Loop(HORDE_DRUMS_SOUND, 0)
+Audiostream.Loop(HORDE_BEAT_SOUND, 1)
+Audiostream.Loop(HORDE_SLAYER_SOUND, 1)
+
+Audiostream.PerformAction(HORDE_DRUMS_SOUND, PLAY)
+
+random_int 0@ 0 10
+if
+not 0@ == 5
+    then
+    $HORDE_BEAT2_PLAY_FLAG = 1
+    Audiostream.PerformAction(HORDE_BEAT_SOUND, PLAY)
+    else
+    $HORDE_BEAT2_PLAY_FLAG = 0
+    end 
+    
+random_int $HORDE_SLAYER 0 10   
+if or
+$HORDE_SLAYER == 5
+$HORDE_BEAT2_PLAY_FLAG == 0
+    then
+    0086: $MUSIC_VOLUME23 = $MUSIC_VOLUME // (float)
+    0069: $MUSIC_VOLUME23 *= $HORDE_VOLUME_MULTIPLIER2 // (float)
+    0086: $MUSIC_VOLUME24 = $MUSIC_VOLUME // (float)
+    0069: $MUSIC_VOLUME24 *= $HORDE_VOLUME_MULTIPLIER // (float)
+    
+    if
+    $MUTE_MUSIC_FLAG == 0
+    then     
+    0ABC: set_audiostream HORDE_SLAYER_SOUND volume $MUSIC_VOLUME23
+    else
+    0ABC: set_audiostream HORDE_SLAYER_SOUND volume 0.0
+    end
+        
+    else
+    0ABC: set_audiostream HORDE_SLAYER_SOUND volume 0.0
+    end         
+
+Audiostream.PerformAction(HORDE_SLAYER_SOUND, PLAY)
+
+$HORDE_ZOMBIES_MUSIC_FLAG = 1
+
+32@ = 0
+
+if
+25@ == 0
+jf @RANDOM_HORDE_MUSIC_THEME_PLAYING_CHECK
+
+:RANDOM_HORDE_MUSIC_THEME_PLAYING_ON_2
+wait 1
+0086: $MUSIC_VOLUME23 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME23 *= $HORDE_VOLUME_MULTIPLIER2 // (float)
+0086: $MUSIC_VOLUME24 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME24 *= $HORDE_VOLUME_MULTIPLIER // (float) 
+
+21@ = 0.05
+006F: 21@ *= $MUSIC_VOLUME23 // (float) 
+005B: 2@ += 21@  // (float)   
+
+if
+$MUTE_MUSIC_FLAG == 0
+then 
+0ABC: set_audiostream HORDE_DRUMS_SOUND volume 2@
+0ABC: set_audiostream HORDE_BEAT_SOUND volume 2@
+0ABC: set_audiostream HORDE_SLAYER_SOUND volume 2@
+else
+0ABC: set_audiostream HORDE_DRUMS_SOUND volume 0.0
+0ABC: set_audiostream HORDE_BEAT_SOUND volume 0.0
+0ABC: set_audiostream HORDE_SLAYER_SOUND volume 0.0
+end
+
+if 
+0037:   2@ >= $MUSIC_VOLUME23  // (float)
+jf @RANDOM_HORDE_MUSIC_THEME_PLAYING_ON_2 
+
+jump to @RANDOM_HORDE_MUSIC_THEME_PLAYING_CHECK
+
+:RANDOM_HORDE_MUSIC_THEME_PLAYING_CHECK     
+wait 0
+
+gosub @HORDE_VOLUME_SET
+
+0086: $MUSIC_VOLUME23 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME23 *= $HORDE_VOLUME_MULTIPLIER2 // (float)
+0086: $MUSIC_VOLUME24 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME24 *= $HORDE_VOLUME_MULTIPLIER // (float)
+
+if
+$MUTE_MUSIC_FLAG == 0
+then     
+audiostream.Volume(HORDE_DRUMS_SOUND) = $MUSIC_VOLUME24  
+audiostream.Volume(HORDE_BEAT_SOUND) = $MUSIC_VOLUME23
+else
+audiostream.Volume(HORDE_DRUMS_SOUND) = 0.0  
+audiostream.Volume(HORDE_BEAT_SOUND) = 0.0
+end 
+
+if or
+$HORDE_SLAYER == 5
+$HORDE_BEAT2_PLAY_FLAG == 0
+    then
+    
+    if
+    $MUTE_MUSIC_FLAG == 0
+    then  
+    audiostream.Volume(HORDE_SLAYER_SOUND) = $MUSIC_VOLUME23
+    else
+    audiostream.Volume(HORDE_SLAYER_SOUND) = 0.0
+    end
+        
+    end
+    
+$ZOMBIES_NEAR_TOTAL = 0
+
+for 0@ = 0 to 19
+
+if
+$ZOMBIE_NEAR[0@] == 1
+then
+$ZOMBIES_NEAR_TOTAL += 1
+end
+
+end
+ 
+if and
+$SAVESTATUS_TRUE == 0
+$PLAY_TANK_MUSIC_FLAG == 0
+$HUNTER_ON_PLAYER == 0
+$PLAYER_DYING == 0
+$ACTOR_DEAD == 0
+$ZOMBIES_HORDE_ROUGH_OFF == 0
+$SOUND_EFFECT1_FLAG == 0
+jf @RANDOM_HORDE_MUSIC_THEME_PLAYING_OFF 
+if and
+$CASETTE_PLAYING_FLAG == 0
+$MUSIC_TURN_OFF_FLAG == 0
+$READING_NOTE_FLAG == 0  
+jf @RANDOM_HORDE_MUSIC_THEME_PLAYING_OFF
+if or
+$ZOMBIES_HORDE == 1 
+$ZOMBIES_NEAR_TOTAL > 5
+jf @RANDOM_HORDE_MUSIC_THEME_PLAYING_OFF 
+if and
+$SAVER_GET_IN_START == 0
+$BANDITS1_CHASE_FLAG == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+$ARMY1_CHASE_FLAG == 0
+BANDIT_HELI_CHASE_FLAG == 0
+ARMY_HELI_CHASE_FLAG == 0
+ARMY_RHINO_CHASE_FLAG == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+jf @RANDOM_HORDE_MUSIC_THEME_PLAYING_OFF
+0AB9: get_mp3 HORDE_DRUMS_SOUND state_to 1@  
+if or                                                     
+1@ == -1  
+32@ > 7000   
+jf @RANDOM_HORDE_MUSIC_THEME_PLAYING_CHECK  
+25@ = 1 
+
+gosub @2RANDOM_DRUMS
+
+Audiostream.PerformAction(HORDE_DRUMS_SOUND, STOP)
+Audiostream.PerformAction($DRUMS01, STOP)
+Audiostream.PerformAction($DRUMS02, STOP)
+Audiostream.PerformAction($DRUMS03, STOP)
+Audiostream.PerformAction($DRUMS04, STOP)
+Audiostream.PerformAction($DRUMS05, STOP)
+Audiostream.PerformAction($DRUMS06, STOP)
+Audiostream.PerformAction($DRUMS07, STOP)
+Audiostream.PerformAction($DRUMS08, STOP)
+Audiostream.PerformAction($DRUMS09, STOP)
+Audiostream.PerformAction($DRUMS10, STOP)
+Audiostream.PerformAction($DRUMS11, STOP)
+Audiostream.PerformAction($DRUMS12, STOP)
+Audiostream.PerformAction($DRUMS13, STOP)
+Audiostream.PerformAction($DRUMS14, STOP)
+Audiostream.PerformAction($DRUMS15, STOP)
+Audiostream.PerformAction($DRUMS16, STOP)
+Audiostream.PerformAction($DRUMS17, STOP)
+Audiostream.PerformAction($DRUMS18, STOP)
+Audiostream.PerformAction($DRUMS19, STOP)
+Audiostream.PerformAction($DRUMS20, STOP)
+Audiostream.PerformAction($DRUMS21, STOP)
+Audiostream.PerformAction($DRUMS22, STOP)
+Audiostream.PerformAction($DRUMS23, STOP)
+Audiostream.PerformAction($DRUMS24, STOP)
+Audiostream.PerformAction($DRUMS25, STOP)
+Audiostream.PerformAction($DRUMS26, STOP)
+Audiostream.PerformAction($DRUMS27, STOP)
+Audiostream.PerformAction($DRUMS28, STOP)
+Audiostream.PerformAction($DRUMS29, STOP)    
+
+Audiostream.PerformAction(HORDE_BEAT_SOUND, STOP)     
+
+Audiostream.PerformAction(HORDE_SLAYER_SOUND, STOP)      
+
+jump to @RANDOM_MUSIC_HORDE_PLAY_AGAIN 
+
+:RANDOM_HORDE_MUSIC_THEME_PLAYING_OFF
+
+if
+$ZOMBIES_HORDE == 1
+then
+HORDE_YAR_FLAG = 1
+end  
+
+gosub @2RANDOM_DRUMS
+
+if and
+not HORDE_PREV_STATUS == 1
+not HORDE_YAR_FLAG == 1
+then
+Audiostream.PerformAction(HORDE_DRUMS_SOUND, STOP)
+Audiostream.PerformAction($DRUMS01, STOP)
+Audiostream.PerformAction($DRUMS02, STOP)
+Audiostream.PerformAction($DRUMS03, STOP)
+Audiostream.PerformAction($DRUMS04, STOP)
+Audiostream.PerformAction($DRUMS05, STOP)
+Audiostream.PerformAction($DRUMS06, STOP)
+Audiostream.PerformAction($DRUMS07, STOP)
+Audiostream.PerformAction($DRUMS08, STOP)
+Audiostream.PerformAction($DRUMS09, STOP)
+Audiostream.PerformAction($DRUMS10, STOP)
+Audiostream.PerformAction($DRUMS11, STOP)
+Audiostream.PerformAction($DRUMS12, STOP)
+Audiostream.PerformAction($DRUMS13, STOP)
+Audiostream.PerformAction($DRUMS14, STOP)
+Audiostream.PerformAction($DRUMS15, STOP)
+Audiostream.PerformAction($DRUMS16, STOP)
+Audiostream.PerformAction($DRUMS17, STOP)
+Audiostream.PerformAction($DRUMS18, STOP)
+Audiostream.PerformAction($DRUMS19, STOP)
+Audiostream.PerformAction($DRUMS20, STOP)
+Audiostream.PerformAction($DRUMS21, STOP)
+Audiostream.PerformAction($DRUMS22, STOP)
+Audiostream.PerformAction($DRUMS23, STOP)
+Audiostream.PerformAction($DRUMS24, STOP)
+Audiostream.PerformAction($DRUMS25, STOP)
+Audiostream.PerformAction($DRUMS26, STOP)
+Audiostream.PerformAction($DRUMS27, STOP)
+Audiostream.PerformAction($DRUMS28, STOP)
+Audiostream.PerformAction($DRUMS29, STOP)  
+end   
+
+if and
+not HORDE_PREV_STATUS == 1
+not HORDE_YAR_FLAG == 1
+then
+Audiostream.PerformAction(HORDE_BEAT_SOUND, STOP)     
+Audiostream.PerformAction(HORDE_SLAYER_SOUND, STOP)
+end
+
+if
+$PLAY_TANK_MUSIC_FLAG == 1
+then
+$HORDE_ZOMBIES_MUSIC_FLAG = 0
+25@ = 0
+Audiostream.PerformAction(HORDE_DRUMS_SOUND, STOP)
+Audiostream.PerformAction($DRUMS01, STOP)
+Audiostream.PerformAction($DRUMS02, STOP)
+Audiostream.PerformAction($DRUMS03, STOP)
+Audiostream.PerformAction($DRUMS04, STOP)
+Audiostream.PerformAction($DRUMS05, STOP)
+Audiostream.PerformAction($DRUMS06, STOP)
+Audiostream.PerformAction($DRUMS07, STOP)
+Audiostream.PerformAction($DRUMS08, STOP)
+Audiostream.PerformAction($DRUMS09, STOP)
+Audiostream.PerformAction($DRUMS10, STOP)
+Audiostream.PerformAction($DRUMS11, STOP)
+Audiostream.PerformAction($DRUMS12, STOP)
+Audiostream.PerformAction($DRUMS13, STOP)
+Audiostream.PerformAction($DRUMS14, STOP)
+Audiostream.PerformAction($DRUMS15, STOP)
+Audiostream.PerformAction($DRUMS16, STOP)
+Audiostream.PerformAction($DRUMS17, STOP)
+Audiostream.PerformAction($DRUMS18, STOP)
+Audiostream.PerformAction($DRUMS19, STOP)
+Audiostream.PerformAction($DRUMS20, STOP)
+Audiostream.PerformAction($DRUMS21, STOP)
+Audiostream.PerformAction($DRUMS22, STOP)
+Audiostream.PerformAction($DRUMS23, STOP)
+Audiostream.PerformAction($DRUMS24, STOP)
+Audiostream.PerformAction($DRUMS25, STOP)
+Audiostream.PerformAction($DRUMS26, STOP)
+Audiostream.PerformAction($DRUMS27, STOP)
+Audiostream.PerformAction($DRUMS28, STOP)
+Audiostream.PerformAction($DRUMS29, STOP)
+Audiostream.PerformAction(HORDE_BEAT_SOUND, STOP)     
+Audiostream.PerformAction(HORDE_SLAYER_SOUND, STOP)
+jump to @RANDOM_MUSIC_THEME_STARTER
+end    
+
+if and
+not HORDE_PREV_STATUS == 1
+not HORDE_YAR_FLAG == 1
+then  
+
+HORDE_END_SOUND = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\horde_music\gatesofhell.wav")
+
+0086: $MUSIC_VOLUME23 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME23 *= $HORDE_VOLUME_MULTIPLIER // (float)
+0089: 2@ = $MUSIC_VOLUME23 // (float)
+
+audiostream.Volume(HORDE_END_SOUND) = $MUSIC_VOLUME23
+Audiostream.PerformAction(HORDE_END_SOUND, PLAY) 
+Audiostream.Loop(HORDE_END_SOUND, 0)
+
+else
+
+Audiostream.Loop(HORDE_BEAT_SOUND, 0)
+Audiostream.Loop(HORDE_SLAYER_SOUND, 0)
+0ABB: 0@ = audiostream HORDE_BEAT_SOUND volume
+if
+0@ > 0.0
+    then
+    
+    /////////////////////Плавное затухание/////////////////////
+        
+    $MUSIC_FADE_NUMBER += 1
+    if
+    $MUSIC_FADE_NUMBER > 4
+        then
+        $MUSIC_FADE_NUMBER = 0 
+        end    
+    
+    008A: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = HORDE_BEAT_SOUND // (int)
+    $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+    
+    $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+    $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+    $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+    create_thread @MUS_FAD
+    
+    wait 1
+    
+    end
+    
+0ABB: 0@ = audiostream HORDE_SLAYER_SOUND volume
+if
+0@ > 0.0
+    then
+    
+    /////////////////////Плавное затухание/////////////////////
+        
+    $MUSIC_FADE_NUMBER += 1
+    if
+    $MUSIC_FADE_NUMBER > 4
+        then
+        $MUSIC_FADE_NUMBER = 0 
+        end    
+    
+    008A: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = HORDE_SLAYER_SOUND // (int)
+    $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+    
+    $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+    $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+    $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+    create_thread @MUS_FAD
+    
+    wait 1
+    
+    end    
+
+/////////////////////Плавное затухание/////////////////////
+    
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+008A: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = HORDE_DRUMS_SOUND // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+jump to @YARHORDE_JUMP_AVOID_BULLSHIT
+
+end
+
+:RANDOM_MUSIC_HORDE_THEME_PLAYING_OFF
+wait 0
+
+if
+$MUTE_MUSIC_FLAG == 0
+then
+0086: $MUSIC_VOLUME55 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME55 *= $HORDE_VOLUME_MULTIPLIER // (float)
+Audiostream.Volume($MUSIC_MISSION) = $MUSIC_VOLUME55
+else
+Audiostream.Volume($MUSIC_MISSION) = 0.0
+end
+
+if
+$SAVESTATUS_TRUE == 1
+then
+audiostream.Release(HORDE_END_SOUND)
+jump to @RANDOM_MUSIC_THEME_STARTER
+end
+
+0AB9: get_mp3 HORDE_END_SOUND state_to 0@
+if        
+0@ == -1  
+jf @RANDOM_MUSIC_HORDE_THEME_PLAYING_OFF
+
+:YARHORDE_JUMP_AVOID_BULLSHIT
+
+audiostream.Release(HORDE_END_SOUND)
+$HORDE_ZOMBIES_MUSIC_FLAG = 0
+25@ = 0
+jump to @RANDOM_MUSIC_THEME_STARTER
+
+:HORDE_VOLUME_SET
+
+0086: $HORDE_VOLUME_MULTIPLIER2 = $HORDE_VOLUME_MULTIPLIER // (float)
+
+$ZOMBIES_NEAR_TOTAL2 = 0
+
+for 0@ = 0 to 19
+
+if and
+$ZOMBIE_NEAR[0@] == 1
+$ACTIVE_INTERIOR == 0
+then
+$ZOMBIES_NEAR_TOTAL2 += 1
+end
+
+end
+
+008D: $ZOMBIES_NEAR_TOTAL2 = integer $ZOMBIES_NEAR_TOTAL2 to_float
+
+$ZOMBIES_NEAR_TOTAL2 /= 20.0
+
+0069: $HORDE_VOLUME_MULTIPLIER2 *= $ZOMBIES_NEAR_TOTAL2 // (float)
+
+$HORDE_VOLUME_MULTIPLIER2 *= 5.5
+
+if
+$HORDE_VOLUME_MULTIPLIER2 > 0.35
+then
+$HORDE_VOLUME_MULTIPLIER2 = 0.35
+end     
+
+return
+
+:RANDOM_MUSIC_ZONE_PLAY
+
+if
+056D:   actor $VOICE_ACTOR defined
+then
+05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 181 
+end 
+
+:RANDOM_MUSIC_ZONE_PLAY_AGAIN 
+
+:RANDOM_ZONE_MUSIC_THEME_PLAYING_ON
+2@ = 0.0
+
+gosub @RANDOM_ZONE_BEAT                         
+
+if
+25@ == 0
+then
+0ABC: set_audiostream $ZONE_BEAT_SOUND volume 2@
+else
+0086: $MUSIC_VOLUME23 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME23 *= $ZONE_VOLUME_MULTIPLIER // (float)
+
+if
+$MUTE_MUSIC_FLAG == 0
+then 
+0ABC: set_audiostream $ZONE_BEAT_SOUND volume $MUSIC_VOLUME23
+else
+0ABC: set_audiostream $ZONE_BEAT_SOUND volume 0.0
+end
+   
+end
+
+Audiostream.Loop($ZONE_BEAT_SOUND, 0)
+Audiostream.PerformAction($ZONE_BEAT_SOUND, PLAY)    
+
+32@ = 0
+
+if
+25@ == 0
+jf @RANDOM_ZONE_MUSIC_THEME_PLAYING_CHECK
+
+:RANDOM_ZONE_MUSIC_THEME_PLAYING_ON_2
+wait 1
+0086: $MUSIC_VOLUME23 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME23 *= $ZONE_VOLUME_MULTIPLIER // (float)
+
+21@ = 0.05
+006F: 21@ *= $MUSIC_VOLUME23 // (float) 
+005B: 2@ += 21@  // (float)   
+ 
+0ABC: set_audiostream $ZONE_BEAT_SOUND volume 2@
+if 
+0037:   2@ >= $MUSIC_VOLUME23  // (float)
+jf @RANDOM_ZONE_MUSIC_THEME_PLAYING_ON_2 
+
+jump to @RANDOM_ZONE_MUSIC_THEME_PLAYING_CHECK
+
+:RANDOM_ZONE_MUSIC_THEME_PLAYING_CHECK     
+wait 0
+
+0086: $MUSIC_VOLUME23 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME23 *= $ZONE_VOLUME_MULTIPLIER // (float)
+
+if
+$MUTE_MUSIC_FLAG == 0
+then
+audiostream.Volume($ZONE_BEAT_SOUND) = $MUSIC_VOLUME23
+else
+audiostream.Volume($ZONE_BEAT_SOUND) = 0.0
+end 
+ 
+if and
+$SAVESTATUS_TRUE == 0
+$HUNTER_ON_PLAYER == 0
+$PLAYER_DYING == 0
+$ACTOR_DEAD == 0
+jf @RANDOM_ZONE_MUSIC_THEME_PLAYING_OFF
+if or
+$ENEMY_ZONE_IN == 1
+CAMP_RAID_FLAG == 1
+jf @RANDOM_ZONE_MUSIC_THEME_PLAYING_OFF 
+if and
+$CASETTE_PLAYING_FLAG == 0
+$MUSIC_TURN_OFF_FLAG == 0
+$READING_NOTE_FLAG == 0 
+jf @RANDOM_ZONE_MUSIC_THEME_PLAYING_OFF
+0AB9: get_mp3 $ZONE_BEAT_SOUND state_to 1@  
+if or                                                     
+1@ == -1  
+32@ > 12000   
+jf @RANDOM_ZONE_MUSIC_THEME_PLAYING_CHECK  
+25@ = 1 
+         
+Audiostream.PerformAction($ZONE_BEAT_SOUND, STOP)
+Audiostream.Release($ZONE_BEAT_SOUND)        
+
+jump to @RANDOM_MUSIC_ZONE_PLAY_AGAIN 
+
+:RANDOM_ZONE_MUSIC_THEME_PLAYING_OFF  
+
+Audiostream.PerformAction($ZONE_BEAT_SOUND, STOP)
+Audiostream.Release($ZONE_BEAT_SOUND)     
+
+$ZONE_END_SOUND = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\horde_music\gatesofhell.wav")
+
+0086: $MUSIC_VOLUME23 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME23 *= $ZONE_VOLUME_MULTIPLIER // (float)
+0089: 2@ = $MUSIC_VOLUME23 // (float)
+
+audiostream.Volume($ZONE_END_SOUND) = $MUSIC_VOLUME23  
+Audiostream.PerformAction($ZONE_END_SOUND, PLAY) 
+Audiostream.Loop($ZONE_END_SOUND, 0)
+
+:RANDOM_MUSIC_ZONE_THEME_PLAYING_OFF
+wait 0
+
+if
+$MUTE_MUSIC_FLAG == 0
+then
+0086: $MUSIC_VOLUME55 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME55 *= $START_VOLUME_MULTIPLIER // (float)
+Audiostream.Volume($ZONE_END_SOUND) = $MUSIC_VOLUME55
+else
+Audiostream.Volume($ZONE_END_SOUND) = 0.0
+end
+
+if
+$SAVESTATUS_TRUE == 1
+then
+audiostream.Release($ZONE_END_SOUND)
+jump to @RANDOM_MUSIC_THEME_STARTER
+end
+
+0AB9: get_mp3 $ZONE_END_SOUND state_to 0@
+if        
+0@ == -1  
+jf @RANDOM_MUSIC_ZONE_THEME_PLAYING_OFF
+
+audiostream.Release($ZONE_END_SOUND)
+25@ = 0
+jump to @RANDOM_MUSIC_THEME_STARTER
+
+
+:RANDOM_MUSIC_ALLY_DEAD_PLAY
+if and
+$HUNTER_ON_PLAYER == 0
+$PLAYER_DYING == 0
+jf @RANDOM_MUSIC_THEME_STARTER
+
+random_int 0@ 0 4      
+
+if
+056D:   actor $VOICE_ACTOR defined
+then
+05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 181 
+end            
+
+if
+not $FREEMODE == 1
+then
+
+if
+0@ == 0
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\ally_music\ally_dead1.wav")
+end
+
+if
+0@ == 1
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\ally_music\ally_dead2.wav")
+end
+
+if
+0@ == 2
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\ally_music\ally_dead3.wav")
+end
+
+if
+0@ == 3
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\ally_music\ally_dead4.wav")
+end
+
+else
+
+if
+0@ == 0
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\ally_music\ally_dead1_short.wav")
+end
+
+if
+0@ == 1
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\ally_music\ally_dead2_short.wav")
+end
+
+if
+0@ == 2
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\ally_music\ally_dead3_short.wav")
+end
+
+if
+0@ == 3
+then
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\ally_music\ally_dead4_short.wav")
+end
+
+end
+
+Audiostream.Volume($MUSIC_MISSION) = 0.0
+Audiostream.PerformAction($MUSIC_MISSION, PLAY)
+Audiostream.Loop($MUSIC_MISSION, 0)
+
+0086: $MUSIC_VOLUME55 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME55 *= $ALLY_DEAD_VOLUME_MULTIPLIER // (float)
+
+gosub @CHECK_ALL_MUSIC
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME55 // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+//////////////////////////////////////////////////////////
+
+$ALLY_DEAD_MUSIC_FLAG = 1
+
+:RANDOM_ALLY_DEAD_MUSIC_THEME_PLAYING_CHECK
+wait 0
+
+if
+$MUTE_MUSIC_FLAG == 0
+then
+0086: $MUSIC_VOLUME55 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME55 *= $ALLY_DEAD_VOLUME_MULTIPLIER // (float)
+Audiostream.Volume($MUSIC_MISSION) = $MUSIC_VOLUME55
+else
+Audiostream.Volume($MUSIC_MISSION) = 0.0
+end
+
+if and
+$SAVESTATUS_TRUE == 0
+$PLAY_TANK_MUSIC_FLAG == 0
+$HUNTER_ON_PLAYER == 0 
+$PLAYER_DYING == 0 
+$DELETE_SOUND == 0
+$END_SAVING == 0
+$ACTOR_DEAD == 0
+jf @RANDOM_ALLY_DEAD_MUSIC_THEME_PLAYING_OFF
+if and
+$CASETTE_PLAYING_FLAG == 0
+$MUSIC_TURN_OFF_FLAG == 0
+$READING_NOTE_FLAG == 0 
+$ENEMY_ZONE_IN == 0
+CAMP_RAID_FLAG == 0
+jf @RANDOM_ALLY_DEAD_MUSIC_THEME_PLAYING_OFF
+if and
+not $ZOMBIES_HORDE == 1
+not ANY_WITCH_AGRED_FLAG == 1   
+$SAVER_GET_IN_START == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+$BANDITS1_CHASE_FLAG == 0
+$ARMY1_CHASE_FLAG == 0
+$WITCH_NEAR == 0
+jf @RANDOM_ALLY_DEAD_MUSIC_THEME_PLAYING_OFF
+if and
+BANDIT_HELI_CHASE_FLAG == 0
+ARMY_HELI_CHASE_FLAG == 0
+ARMY_RHINO_CHASE_FLAG == 0
+MAIN_QUEST_MUSIC_FLAG == 0
+jf @RANDOM_ALLY_DEAD_MUSIC_THEME_PLAYING_OFF
+0AB9: get_mp3 $MUSIC_MISSION state_to 1@
+if
+1@ == -1
+jf @RANDOM_ALLY_DEAD_MUSIC_THEME_PLAYING_CHECK
+Audiostream.Release($MUSIC_MISSION)
+$ALLY_DEAD_MUSIC_FLAG = 0
+$ALLY_DEAD_FLAG = 0         
+jump to @RANDOM_MUSIC_THEME_STARTER
+
+:RANDOM_ALLY_DEAD_MUSIC_THEME_PLAYING_OFF
+
+gosub @CHECK_ALL_MUSIC
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+if and
+$HUNTER_ON_PLAYER == 0
+$SAVESTATUS_TRUE == 0
+then
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+else
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+end
+
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+$ALLY_DEAD_MUSIC_FLAG = 0
+$ALLY_DEAD_FLAG = 0
+jump to @RANDOM_MUSIC_THEME_STARTER
+
+:BANJO_WARN
+random_int 0@ 0 12
+
+0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "PRV_WARN_BNJ"
+
+if
+803B: not  0@ == 1@  // (int)
+jf @BANJO_WARN
+
+0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "PRV_WARN_BNJ" 
+
+if
+0@ == 0
+then
+008B: HORDE_START_SOUND = $BANJO_WARN1 // (int)
+end 
+
+if
+0@ == 1
+then
+008B: HORDE_START_SOUND = $BANJO_WARN2 // (int)
+end 
+
+if
+0@ == 2
+then
+008B: HORDE_START_SOUND = $BANJO_WARN3 // (int)
+end 
+
+if
+0@ == 3
+then
+008B: HORDE_START_SOUND = $BANJO_WARN4 // (int)
+end 
+
+if
+0@ == 4
+then
+008B: HORDE_START_SOUND = $BANJO_WARN5 // (int)
+end 
+
+if
+0@ == 5
+then
+008B: HORDE_START_SOUND = $BANJO_WARN6 // (int)
+end 
+
+if
+0@ == 6
+then
+008B: HORDE_START_SOUND = $BANJO_WARN7 // (int)
+end 
+
+if
+0@ == 7
+then
+008B: HORDE_START_SOUND = $BANJO_WARN8 // (int)
+end 
+
+if
+0@ == 8
+then
+008B: HORDE_START_SOUND = $BANJO_WARN9 // (int)
+end 
+
+if
+0@ == 9
+then
+008B: HORDE_START_SOUND = $BANJO_WARN10 // (int)
+end 
+
+if
+0@ == 10
+then
+008B: HORDE_START_SOUND = $BANJO_WARN11 // (int)
+end 
+
+if
+0@ == 11
+then
+008B: HORDE_START_SOUND = $BANJO_WARN12 // (int)
+end 
+
+return
+
+:DEVIDDLE_WARN
+random_int 0@ 0 12
+
+0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "PRV_WARN_DVL"
+
+if
+803B: not  0@ == 1@  // (int)
+jf @DEVIDDLE_WARN
+
+0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "PRV_WARN_DVL" 
+
+if
+0@ == 0
+then
+008B: HORDE_START_SOUND = $DEVIDDLE_WARN1 // (int)
+end 
+
+if
+0@ == 1
+then
+008B: HORDE_START_SOUND = $DEVIDDLE_WARN2 // (int)
+end 
+
+if
+0@ == 2
+then
+008B: HORDE_START_SOUND = $DEVIDDLE_WARN3 // (int)
+end 
+
+if
+0@ == 3
+then
+008B: HORDE_START_SOUND = $DEVIDDLE_WARN4 // (int)
+end 
+
+if
+0@ == 4
+then
+008B: HORDE_START_SOUND = $DEVIDDLE_WARN5 // (int)
+end 
+
+if
+0@ == 5
+then
+008B: HORDE_START_SOUND = $DEVIDDLE_WARN6 // (int)
+end 
+
+if
+0@ == 6
+then
+008B: HORDE_START_SOUND = $DEVIDDLE_WARN7 // (int)
+end 
+
+if
+0@ == 7
+then
+008B: HORDE_START_SOUND = $DEVIDDLE_WARN8 // (int)
+end 
+
+if
+0@ == 8
+then
+008B: HORDE_START_SOUND = $DEVIDDLE_WARN9 // (int)
+end 
+
+if
+0@ == 9
+then
+008B: HORDE_START_SOUND = $DEVIDDLE_WARN10 // (int)
+end 
+
+if
+0@ == 10
+then
+008B: HORDE_START_SOUND = $DEVIDDLE_WARN11 // (int)
+end 
+
+if
+0@ == 11
+then
+008B: HORDE_START_SOUND = $DEVIDDLE_WARN12 // (int)
+end 
+
+return
+
+:DOBRO_WARN
+random_int 0@ 0 18
+
+0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "PRV_WARN_DBR"
+
+if
+803B: not  0@ == 1@  // (int)
+jf @DOBRO_WARN
+
+0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "PRV_WARN_DBR" 
+
+if
+0@ == 0
+then
+008B: HORDE_START_SOUND = $DOBRO_WARN1 // (int)
+end 
+
+if
+0@ == 1
+then
+008B: HORDE_START_SOUND = $DOBRO_WARN2 // (int)
+end 
+
+if
+0@ == 2
+then
+008B: HORDE_START_SOUND = $DOBRO_WARN3 // (int)
+end 
+
+if
+0@ == 3
+then
+008B: HORDE_START_SOUND = $DOBRO_WARN4 // (int)
+end 
+
+if
+0@ == 4
+then
+008B: HORDE_START_SOUND = $DOBRO_WARN5 // (int)
+end 
+
+if
+0@ == 5
+then
+008B: HORDE_START_SOUND = $DOBRO_WARN6 // (int)
+end 
+
+if
+0@ == 6
+then
+008B: HORDE_START_SOUND = $DOBRO_WARN7 // (int)
+end 
+
+if
+0@ == 7
+then
+008B: HORDE_START_SOUND = $DOBRO_WARN8 // (int)
+end 
+
+if
+0@ == 8
+then
+008B: HORDE_START_SOUND = $DOBRO_WARN9 // (int)
+end 
+
+if
+0@ == 9
+then
+008B: HORDE_START_SOUND = $DOBRO_WARN10 // (int)
+end 
+
+if
+0@ == 10
+then
+008B: HORDE_START_SOUND = $DOBRO_WARN11 // (int)
+end 
+
+if
+0@ == 11
+then
+008B: HORDE_START_SOUND = $DOBRO_WARN12 // (int)
+end
+
+if
+0@ == 12
+then
+008B: HORDE_START_SOUND = $DOBRO_WARN13 // (int)
+end
+
+if
+0@ == 13
+then
+008B: HORDE_START_SOUND = $DOBRO_WARN14 // (int)
+end
+
+if
+0@ == 14
+then
+008B: HORDE_START_SOUND = $DOBRO_WARN15 // (int)
+end
+
+if
+0@ == 15
+then
+008B: HORDE_START_SOUND = $DOBRO_WARN16 // (int)
+end
+
+if
+0@ == 16
+then
+008B: HORDE_START_SOUND = $DOBRO_WARN17 // (int)
+end
+
+if
+0@ == 17
+then
+008B: HORDE_START_SOUND = $DOBRO_WARN18 // (int)
+end 
+
+return
+
+:SAW_WARN
+random_int 0@ 0 12
+
+0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "PRV_WARN_SW"
+
+if
+803B: not  0@ == 1@  // (int)
+jf @SAW_WARN
+
+0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "PRV_WARN_SW" 
+
+if
+0@ == 0
+then
+008B: HORDE_START_SOUND = $SAW_WARN1 // (int)
+end 
+
+if
+0@ == 1
+then
+008B: HORDE_START_SOUND = $SAW_WARN2 // (int)
+end 
+
+if
+0@ == 2
+then
+008B: HORDE_START_SOUND = $SAW_WARN3 // (int)
+end 
+
+if
+0@ == 3
+then
+008B: HORDE_START_SOUND = $SAW_WARN4 // (int)
+end 
+
+if
+0@ == 4
+then
+008B: HORDE_START_SOUND = $SAW_WARN5 // (int)
+end 
+
+if
+0@ == 5
+then
+008B: HORDE_START_SOUND = $SAW_WARN6 // (int)
+end 
+
+if
+0@ == 6
+then
+008B: HORDE_START_SOUND = $SAW_WARN7 // (int)
+end 
+
+if
+0@ == 7
+then
+008B: HORDE_START_SOUND = $SAW_WARN8 // (int)
+end 
+
+if
+0@ == 8
+then
+008B: HORDE_START_SOUND = $SAW_WARN9 // (int)
+end 
+
+if
+0@ == 9
+then
+008B: HORDE_START_SOUND = $SAW_WARN10 // (int)
+end 
+
+if
+0@ == 10
+then
+008B: HORDE_START_SOUND = $SAW_WARN11 // (int)
+end 
+
+if
+0@ == 11
+then
+008B: HORDE_START_SOUND = $SAW_WARN12 // (int)
+end 
+
+return
+
+:TRUMPET_WARN
+random_int 0@ 0 17
+
+0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "PRV_WARN_TRMP"
+
+if
+803B: not  0@ == 1@  // (int)
+jf @TRUMPET_WARN
+
+0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "PRV_WARN_TRMP" 
+
+if
+0@ == 0
+then
+008B: HORDE_START_SOUND = $TRUMPET_WARN1 // (int)
+end 
+
+if
+0@ == 1
+then
+008B: HORDE_START_SOUND = $TRUMPET_WARN2 // (int)
+end 
+
+if
+0@ == 2
+then
+008B: HORDE_START_SOUND = $TRUMPET_WARN3 // (int)
+end 
+
+if
+0@ == 3
+then
+008B: HORDE_START_SOUND = $TRUMPET_WARN4 // (int)
+end 
+
+if
+0@ == 4
+then
+008B: HORDE_START_SOUND = $TRUMPET_WARN5 // (int)
+end 
+
+if
+0@ == 5
+then
+008B: HORDE_START_SOUND = $TRUMPET_WARN6 // (int)
+end 
+
+if
+0@ == 6
+then
+008B: HORDE_START_SOUND = $TRUMPET_WARN7 // (int)
+end 
+
+if
+0@ == 7
+then
+008B: HORDE_START_SOUND = $TRUMPET_WARN8 // (int)
+end 
+
+if
+0@ == 8
+then
+008B: HORDE_START_SOUND = $TRUMPET_WARN9 // (int)
+end 
+
+if
+0@ == 9
+then
+008B: HORDE_START_SOUND = $TRUMPET_WARN10 // (int)
+end 
+
+if
+0@ == 10
+then
+008B: HORDE_START_SOUND = $TRUMPET_WARN11 // (int)
+end 
+
+if
+0@ == 11
+then
+008B: HORDE_START_SOUND = $TRUMPET_WARN12 // (int)
+end
+
+if
+0@ == 12
+then
+008B: HORDE_START_SOUND = $TRUMPET_WARN13 // (int)
+end
+
+if
+0@ == 13
+then
+008B: HORDE_START_SOUND = $TRUMPET_WARN14 // (int)
+end
+
+if
+0@ == 14
+then
+008B: HORDE_START_SOUND = $TRUMPET_WARN15 // (int)
+end
+
+if
+0@ == 15
+then
+008B: HORDE_START_SOUND = $TRUMPET_WARN16 // (int)
+end
+
+if
+0@ == 16
+then
+008B: HORDE_START_SOUND = $TRUMPET_WARN17 // (int)
+end  
+
+return
+
+:RANDOM_DRUMS
+random_int $RANDOM_DRUMS 0 to 29
+
+0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "PRVDRMS"
+
+if
+803B: not  $RANDOM_DRUMS == 1@  // (int)
+jf @RANDOM_DRUMS
+
+0AF1: write_int $RANDOM_DRUMS to_ini_file "saves/ZACM.set" section "SCR" key "PRVDRMS"
+
+:2RANDOM_DRUMS
+
+if
+$RANDOM_DRUMS == 0
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS01 // (int)
+    end
+
+if
+$RANDOM_DRUMS == 1
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS02 // (int)
+    end
+    
+if
+$RANDOM_DRUMS == 2
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS03 // (int)
+    end
+    
+if
+$RANDOM_DRUMS == 3
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS04 // (int)
+    end
+    
+if
+$RANDOM_DRUMS == 4
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS05 // (int)
+    end
+    
+if
+$RANDOM_DRUMS == 5
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS06 // (int)
+    end
+    
+if
+$RANDOM_DRUMS == 6
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS07 // (int)
+    end
+    
+if
+$RANDOM_DRUMS == 7
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS08 // (int)
+    end
+    
+if
+$RANDOM_DRUMS == 8
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS09 // (int)
+    end
+    
+if
+$RANDOM_DRUMS == 9
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS10 // (int)
+    end
+    
+if
+$RANDOM_DRUMS == 10
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS11 // (int)
+    end
+    
+if
+$RANDOM_DRUMS == 11
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS12 // (int)
+    end
+
+if
+$RANDOM_DRUMS == 12
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS13 // (int)
+    end
+    
+if
+$RANDOM_DRUMS == 13
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS14 // (int)
+    end
+    
+if
+$RANDOM_DRUMS == 14
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS15 // (int)
+    end
+    
+if
+$RANDOM_DRUMS == 15
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS16 // (int)
+    end
+    
+if
+$RANDOM_DRUMS == 16
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS17 // (int)
+    end
+    
+if
+$RANDOM_DRUMS == 17
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS18 // (int)
+    end
+    
+if
+$RANDOM_DRUMS == 18
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS19 // (int)
+    end
+    
+if
+$RANDOM_DRUMS == 19
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS20 // (int)
+    end
+    
+if
+$RANDOM_DRUMS == 20
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS21 // (int)
+    end
+    
+if
+$RANDOM_DRUMS == 21
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS22 // (int)
+    end
+    
+if
+$RANDOM_DRUMS == 22
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS23 // (int)
+    end
+    
+if
+$RANDOM_DRUMS == 23
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS24 // (int)
+    end
+    
+if
+$RANDOM_DRUMS == 24
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS25 // (int)
+    end
+    
+if
+$RANDOM_DRUMS == 25
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS26 // (int)
+    end
+    
+if
+$RANDOM_DRUMS == 26
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS27 // (int)
+    end
+
+if
+$RANDOM_DRUMS == 27
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS28 // (int)
+    end
+    
+if
+$RANDOM_DRUMS == 28
+    then
+    008B: HORDE_DRUMS_SOUND = $DRUMS29 // (int)
+    end    
+
+return
+
+:RANDOM_BANJO
+
+random_int 0@ 0 to 22
+
+0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "PRVBNJ"
+
+if
+803B: not  0@ == 1@  // (int)
+jf @RANDOM_BANJO
+
+0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "PRVBNJ"
+
+if
+0@ == 0
+    then
+    008B: HORDE_BEAT_SOUND = $BANJO01 // (int)
+    end
+
+if
+0@ == 1
+    then
+    008B: HORDE_BEAT_SOUND = $BANJO02 // (int)
+    end
+    
+if
+0@ == 2
+    then
+    008B: HORDE_BEAT_SOUND = $BANJO03 // (int)
+    end
+    
+if
+0@ == 3
+    then
+    008B: HORDE_BEAT_SOUND = $BANJO04 // (int)
+    end
+    
+if
+0@ == 4
+    then
+    008B: HORDE_BEAT_SOUND = $BANJO05 // (int)
+    end
+    
+if
+0@ == 5
+    then
+    008B: HORDE_BEAT_SOUND = $BANJO06 // (int)
+    end
+    
+if
+0@ == 6
+    then
+    008B: HORDE_BEAT_SOUND = $BANJO07 // (int)
+    end
+    
+if
+0@ == 7
+    then
+    008B: HORDE_BEAT_SOUND = $BANJO08 // (int)
+    end
+    
+if
+0@ == 8
+    then
+    008B: HORDE_BEAT_SOUND = $BANJO09 // (int)
+    end
+    
+if
+0@ == 9
+    then
+    008B: HORDE_BEAT_SOUND = $BANJO10 // (int)
+    end
+    
+if
+0@ == 10
+    then
+    008B: HORDE_BEAT_SOUND = $BANJO11 // (int)
+    end
+    
+if
+0@ == 11
+    then
+    008B: HORDE_BEAT_SOUND = $BANJO12 // (int)
+    end
+
+if
+0@ == 12
+    then
+    008B: HORDE_BEAT_SOUND = $BANJO13 // (int)
+    end
+    
+if
+0@ == 13
+    then
+    008B: HORDE_BEAT_SOUND = $BANJO14 // (int)
+    end
+    
+if
+0@ == 14
+    then
+    008B: HORDE_BEAT_SOUND = $BANJO15 // (int)
+    end
+    
+if
+0@ == 15
+    then
+    008B: HORDE_BEAT_SOUND = $BANJO16 // (int)
+    end
+    
+if
+0@ == 16
+    then
+    008B: HORDE_BEAT_SOUND = $BANJO17 // (int)
+    end
+    
+if
+0@ == 17
+    then
+    008B: HORDE_BEAT_SOUND = $BANJO18 // (int)
+    end
+    
+if
+0@ == 18
+    then
+    008B: HORDE_BEAT_SOUND = $BANJO19 // (int)
+    end
+    
+if
+0@ == 19
+    then
+    008B: HORDE_BEAT_SOUND = $BANJO20 // (int)
+    end
+    
+if
+0@ == 20
+    then
+    008B: HORDE_BEAT_SOUND = $BANJO21 // (int)
+    end
+    
+if
+0@ == 21
+    then
+    008B: HORDE_BEAT_SOUND = $BANJO22 // (int)
+    end
+
+return
+
+:RANDOM_deviddle
+
+random_int 0@ 0 to 23
+
+0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "PRVDEVL"
+
+if
+803B: not  0@ == 1@  // (int)
+jf @RANDOM_deviddle
+
+0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "PRVDEVL"
+
+if
+0@ == 0
+    then
+    008B: HORDE_BEAT_SOUND = $DEVIDDLE01 // (int)
+    end
+
+if
+0@ == 1
+    then
+    008B: HORDE_BEAT_SOUND = $DEVIDDLE02 // (int)
+    end
+    
+if
+0@ == 2
+    then
+    008B: HORDE_BEAT_SOUND = $DEVIDDLE03 // (int)
+    end
+    
+if
+0@ == 3
+    then
+    008B: HORDE_BEAT_SOUND = $DEVIDDLE04 // (int)
+    end
+    
+if
+0@ == 4
+    then
+    008B: HORDE_BEAT_SOUND = $DEVIDDLE05 // (int)
+    end
+    
+if
+0@ == 5
+    then
+    008B: HORDE_BEAT_SOUND = $DEVIDDLE06 // (int)
+    end
+    
+if
+0@ == 6
+    then
+    008B: HORDE_BEAT_SOUND = $DEVIDDLE07 // (int)
+    end
+    
+if
+0@ == 7
+    then
+    008B: HORDE_BEAT_SOUND = $DEVIDDLE08 // (int)
+    end
+    
+if
+0@ == 8
+    then
+    008B: HORDE_BEAT_SOUND = $DEVIDDLE09 // (int)
+    end
+    
+if
+0@ == 9
+    then
+    008B: HORDE_BEAT_SOUND = $DEVIDDLE10 // (int)
+    end
+    
+if
+0@ == 10
+    then
+    008B: HORDE_BEAT_SOUND = $DEVIDDLE11 // (int)
+    end
+    
+if
+0@ == 11
+    then
+    008B: HORDE_BEAT_SOUND = $DEVIDDLE12 // (int)
+    end
+
+if
+0@ == 12
+    then
+    008B: HORDE_BEAT_SOUND = $DEVIDDLE13 // (int)
+    end
+    
+if
+0@ == 13
+    then
+    008B: HORDE_BEAT_SOUND = $DEVIDDLE14 // (int)
+    end
+    
+if
+0@ == 14
+    then
+    008B: HORDE_BEAT_SOUND = $DEVIDDLE15 // (int)
+    end
+    
+if
+0@ == 15
+    then
+    008B: HORDE_BEAT_SOUND = $DEVIDDLE16 // (int)
+    end
+    
+if
+0@ == 16
+    then
+    008B: HORDE_BEAT_SOUND = $DEVIDDLE17 // (int)
+    end
+    
+if
+0@ == 17
+    then
+    008B: HORDE_BEAT_SOUND = $DEVIDDLE18 // (int)
+    end
+    
+if
+0@ == 18
+    then
+    008B: HORDE_BEAT_SOUND = $DEVIDDLE19 // (int)
+    end
+    
+if
+0@ == 19
+    then
+    008B: HORDE_BEAT_SOUND = $DEVIDDLE20 // (int)
+    end
+    
+if
+0@ == 20
+    then
+    008B: HORDE_BEAT_SOUND = $DEVIDDLE21 // (int)
+    end
+    
+if
+0@ == 21
+    then
+    008B: HORDE_BEAT_SOUND = $DEVIDDLE22 // (int)
+    end
+    
+if
+0@ == 22
+    then
+    008B: HORDE_BEAT_SOUND = $DEVIDDLE23 // (int)
+    end    
+
+return
+
+:RANDOM_dobro
+
+random_int 0@ 0 to 18   
+
+0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "PRVDBR"
+
+if
+803B: not  0@ == 1@  // (int)
+jf @RANDOM_dobro
+
+0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "PRVDBR" 
+
+if
+0@ == 0
+    then
+    008B: HORDE_BEAT_SOUND = $DOBRO01 // (int)
+    end
+
+if
+0@ == 1
+    then
+    008B: HORDE_BEAT_SOUND = $DOBRO02 // (int)
+    end
+    
+if
+0@ == 2
+    then
+    008B: HORDE_BEAT_SOUND = $DOBRO03 // (int)
+    end
+    
+if
+0@ == 3
+    then
+    008B: HORDE_BEAT_SOUND = $DOBRO04 // (int)
+    end
+    
+if
+0@ == 4
+    then
+    008B: HORDE_BEAT_SOUND = $DOBRO05 // (int)
+    end
+    
+if
+0@ == 5
+    then
+    008B: HORDE_BEAT_SOUND = $DOBRO06 // (int)
+    end
+    
+if
+0@ == 6
+    then
+    008B: HORDE_BEAT_SOUND = $DOBRO07 // (int)
+    end
+    
+if
+0@ == 7
+    then
+    008B: HORDE_BEAT_SOUND = $DOBRO08 // (int)
+    end
+    
+if
+0@ == 8
+    then
+    008B: HORDE_BEAT_SOUND = $DOBRO09 // (int)
+    end
+    
+if
+0@ == 9
+    then
+    008B: HORDE_BEAT_SOUND = $DOBRO10 // (int)
+    end
+    
+if
+0@ == 10
+    then
+    008B: HORDE_BEAT_SOUND = $DOBRO11 // (int)
+    end
+    
+if
+0@ == 11
+    then
+    008B: HORDE_BEAT_SOUND = $DOBRO12 // (int)
+    end
+
+if
+0@ == 12
+    then
+    008B: HORDE_BEAT_SOUND = $DOBRO13 // (int)
+    end
+    
+if
+0@ == 13
+    then
+    008B: HORDE_BEAT_SOUND = $DOBRO14 // (int)
+    end
+    
+if
+0@ == 14
+    then
+    008B: HORDE_BEAT_SOUND = $DOBRO15 // (int)
+    end
+    
+if
+0@ == 15
+    then
+    008B: HORDE_BEAT_SOUND = $DOBRO16 // (int)
+    end
+    
+if
+0@ == 16
+    then
+    008B: HORDE_BEAT_SOUND = $DOBRO17 // (int)
+    end
+    
+if
+0@ == 17
+    then
+    008B: HORDE_BEAT_SOUND = $DOBRO18 // (int)
+    end        
+
+return
+
+:RANDOM_saw
+random_int 0@ 0 to 24
+
+0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "PRVSW"
+
+if
+803B: not  0@ == 1@  // (int)
+jf @RANDOM_saw
+
+0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "PRVSW" 
+
+if
+0@ == 0
+    then
+    008B: HORDE_BEAT_SOUND = $SAW01 // (int)
+    end
+
+if
+0@ == 1
+    then
+    008B: HORDE_BEAT_SOUND = $SAW02 // (int)
+    end
+    
+if
+0@ == 2
+    then
+    008B: HORDE_BEAT_SOUND = $SAW03 // (int)
+    end
+    
+if
+0@ == 3
+    then
+    008B: HORDE_BEAT_SOUND = $SAW04 // (int)
+    end
+    
+if
+0@ == 4
+    then
+    008B: HORDE_BEAT_SOUND = $SAW05 // (int)
+    end
+    
+if
+0@ == 5
+    then
+    008B: HORDE_BEAT_SOUND = $SAW06 // (int)
+    end
+    
+if
+0@ == 6
+    then
+    008B: HORDE_BEAT_SOUND = $SAW07 // (int)
+    end
+    
+if
+0@ == 7
+    then
+    008B: HORDE_BEAT_SOUND = $SAW08 // (int)
+    end
+    
+if
+0@ == 8
+    then
+    008B: HORDE_BEAT_SOUND = $SAW09 // (int)
+    end
+    
+if
+0@ == 9
+    then
+    008B: HORDE_BEAT_SOUND = $SAW10 // (int)
+    end
+    
+if
+0@ == 10
+    then
+    008B: HORDE_BEAT_SOUND = $SAW11 // (int)
+    end
+    
+if
+0@ == 11
+    then
+    008B: HORDE_BEAT_SOUND = $SAW12 // (int)
+    end
+
+if
+0@ == 12
+    then
+    008B: HORDE_BEAT_SOUND = $SAW13 // (int)
+    end
+    
+if
+0@ == 13
+    then
+    008B: HORDE_BEAT_SOUND = $SAW14 // (int)
+    end
+    
+if
+0@ == 14
+    then
+    008B: HORDE_BEAT_SOUND = $SAW15 // (int)
+    end
+    
+if
+0@ == 15
+    then
+    008B: HORDE_BEAT_SOUND = $SAW16 // (int)
+    end
+    
+if
+0@ == 16
+    then
+    008B: HORDE_BEAT_SOUND = $SAW17 // (int)
+    end
+    
+if
+0@ == 17
+    then
+    008B: HORDE_BEAT_SOUND = $SAW18 // (int)
+    end
+    
+if
+0@ == 18
+    then
+    008B: HORDE_BEAT_SOUND = $SAW19 // (int)
+    end
+    
+if
+0@ == 19
+    then
+    008B: HORDE_BEAT_SOUND = $SAW20 // (int)
+    end
+    
+if
+0@ == 20
+    then
+    008B: HORDE_BEAT_SOUND = $SAW21 // (int)
+    end
+    
+if
+0@ == 21
+    then
+    008B: HORDE_BEAT_SOUND = $SAW22 // (int)
+    end
+    
+if
+0@ == 22
+    then
+    008B: HORDE_BEAT_SOUND = $SAW23 // (int)
+    end
+    
+if
+0@ == 23
+    then
+    008B: HORDE_BEAT_SOUND = $SAW24 // (int)
+    end        
+
+return
+
+:RANDOM_trumpet
+random_int 0@ 0 to 15
+
+0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "PRVTRMP"
+
+if
+803B: not  0@ == 1@  // (int)
+jf @RANDOM_trumpet
+
+0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "PRVTRMP" 
+
+if
+0@ == 0
+    then
+    008B: HORDE_BEAT_SOUND = $TRUMPET01 // (int)
+    end
+
+if
+0@ == 1
+    then
+    008B: HORDE_BEAT_SOUND = $TRUMPET02 // (int)
+    end
+    
+if
+0@ == 2
+    then
+    008B: HORDE_BEAT_SOUND = $TRUMPET03 // (int)
+    end
+    
+if
+0@ == 3
+    then
+    008B: HORDE_BEAT_SOUND = $TRUMPET04 // (int)
+    end
+    
+if
+0@ == 4
+    then
+    008B: HORDE_BEAT_SOUND = $TRUMPET05 // (int)
+    end
+    
+if
+0@ == 5
+    then
+    008B: HORDE_BEAT_SOUND = $TRUMPET06 // (int)
+    end
+    
+if
+0@ == 6
+    then
+    008B: HORDE_BEAT_SOUND = $TRUMPET07 // (int)
+    end
+    
+if
+0@ == 7
+    then
+    008B: HORDE_BEAT_SOUND = $TRUMPET08 // (int)
+    end
+    
+if
+0@ == 8
+    then
+    008B: HORDE_BEAT_SOUND = $TRUMPET09 // (int)
+    end
+    
+if
+0@ == 9
+    then
+    008B: HORDE_BEAT_SOUND = $TRUMPET10 // (int)
+    end
+    
+if
+0@ == 10
+    then
+    008B: HORDE_BEAT_SOUND = $TRUMPET11 // (int)
+    end
+    
+if
+0@ == 11
+    then
+    008B: HORDE_BEAT_SOUND = $TRUMPET12 // (int)
+    end
+
+if
+0@ == 12
+    then
+    008B: HORDE_BEAT_SOUND = $TRUMPET13 // (int)
+    end
+    
+if
+0@ == 13
+    then
+    008B: HORDE_BEAT_SOUND = $TRUMPET14 // (int)
+    end
+    
+if
+0@ == 14
+    then
+    008B: HORDE_BEAT_SOUND = $TRUMPET15 // (int)
+    end            
+
+return
+
+:RANDOM_ZONE_BEAT
+
+random_int 0@ 0 to 4
+
+if
+0@ == 0
+    then
+    $ZONE_BEAT_SOUND = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\ZONE_music\level01.wav")
+    end
+
+if
+0@ == 1
+    then
+    $ZONE_BEAT_SOUND = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\ZONE_music\level02.wav")
+    end
+    
+if
+0@ == 2
+    then
+    $ZONE_BEAT_SOUND = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\ZONE_music\level03.wav")
+    end
+    
+if
+0@ == 3
+    then
+    $ZONE_BEAT_SOUND = Audiostream.Load("AUDIO\SOUNDS\MUSIC\dynamic_music\ZONE_music\level04.wav")
+    end
+
+return
+
+:CHECK_ALL_MUSIC
+
+while true
+wait 0
+            
+if and
+$MUSIC_FADE_ENDED[0] == 1
+$MUSIC_FADE_ENDED[1] == 1
+$MUSIC_FADE_ENDED[2] == 1
+$MUSIC_FADE_ENDED[3] == 1
+$MUSIC_FADE_ENDED[4] == 1
+then
+break
+end
+            
+end
+
+return

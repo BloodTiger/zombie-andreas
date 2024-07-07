@@ -1,0 +1,556 @@
+:MUS_FAD
+thread 'MUS_FAD'
+
+008B: 24@ = $MUSIC_FADE_NUMBER // (int)
+
+008B: 0@ = $MUSIC_FADE_NUMBER // (int)
+
+if
+0@ > 0
+then
+0@ -= 1
+end
+
+if
+0@ == 0
+then
+0@ = 4
+end
+
+while $MUSIC_FADE_ENDED[0@] == 0
+wait 0
+end
+
+$MUSIC_FADE_ENDED[24@] = 0
+
+0ABB: 2@ = audiostream $MUSIC_FADE1[24@] volume
+
+if
+MUSIC_DEBUG_FLAG == 1
+then
+
+if
+24@ == 0
+then
+0AF3: write_float 2@ to_ini_file "music_debug.ini" section "1" key "MFADING_START_VOLUME"
+end
+
+if
+24@ == 1
+then
+0AF3: write_float 2@ to_ini_file "music_debug.ini" section "2" key "MFADING_START_VOLUME"
+end
+
+if
+24@ == 2
+then
+0AF3: write_float 2@ to_ini_file "music_debug.ini" section "3" key "MFADING_START_VOLUME"
+end
+
+if
+24@ == 3
+then
+0AF3: write_float 2@ to_ini_file "music_debug.ini" section "4" key "MFADING_START_VOLUME"
+end
+
+if
+24@ == 4
+then
+0AF3: write_float 2@ to_ini_file "music_debug.ini" section "5" key "MFADING_START_VOLUME"
+end
+
+end
+
+if and
+2@ <= 0.0
+$MUSIC_FADE_FLAG[24@] == 0
+$MUSIC_FADE_END_VOLUME[24@] <= 0.0
+then
+jump to @MUSIC_FADING_FADE_INST
+end
+
+if
+$MUSIC_VOLUME == 0.0
+    then
+    :MUSIC_FADING_FADE_INST        
+    
+    if
+    $MUSIC_FADE_FLAG[24@] == 0
+    then    
+    
+    008B: 8@ = $MUSIC_FADE_COUNT[24@] // (int)
+    if
+    8@ > 0
+        then
+        audiostream.Release($MUSIC_FADE1[24@])
+        
+        if
+        MUSIC_DEBUG_FLAG == 1
+        then
+        0ACE: show_formatted_text_box "inst audiostream 1 release %d" $MUSIC_FADE1[24@]
+        end
+        
+        end
+    
+    if
+    8@ > 1
+        then
+        audiostream.Release($MUSIC_FADE2[24@])
+        
+        if
+        MUSIC_DEBUG_FLAG == 1
+        then
+        0ACE: show_formatted_text_box "inst audiostreams 2 release %d" $MUSIC_FADE2[24@]
+        end
+        
+        end
+    
+    if
+    8@ > 2
+        then
+        audiostream.Release($MUSIC_FADE3[24@])
+        
+        if
+        MUSIC_DEBUG_FLAG == 1
+        then
+        0ACE: show_formatted_text_box "inst audiostreams 3 release %d" $MUSIC_FADE3[24@]
+        end
+        
+        end
+    
+    if
+    8@ > 3
+        then
+        audiostream.Release($MUSIC_FADE4[24@])
+        
+        if
+        MUSIC_DEBUG_FLAG == 1
+        then
+        0ACE: show_formatted_text_box "inst audiostreams 4 release %d" $MUSIC_FADE4[24@]
+        end
+        
+        end
+    
+    if
+    8@ > 4
+        then
+        audiostream.Release($MUSIC_FADE5[24@])
+        
+        if
+        MUSIC_DEBUG_FLAG == 1
+        then
+        0ACE: show_formatted_text_box "inst audiostreams 5 release %d" $MUSIC_FADE5[24@]
+        end
+        
+        end
+    
+    end
+    
+    $MUSIC_FADE_ENDED[24@] = 1
+    
+    if
+    MUSIC_DEBUG_FLAG == 1
+    then
+    gosub @MUSIC_FADING_END_STATUS_SET
+    end
+      
+    end_thread
+    end
+
+008B: 6@ = $MUSIC_FADE_END_VOLUME[24@] // (int)
+008B: 7@ = $MUSIC_FADE_FLAG[24@] // (int)
+008B: 8@ = $MUSIC_FADE_COUNT[24@] // (int)
+
+if
+$MUSIC_FADE_FLAG[24@] == 1
+    then
+    0085: 2@ = 6@ // (int)
+    end
+
+008B: 4@ = $MUSIC_FADE_TIME[24@] // (int)
+0085: 25@ = 4@ // (int)
+0093: 25@ = integer 25@ to_float
+25@ *= 2.0
+0092: 25@ = float 25@ to_integer
+
+if
+7@ == 1
+    then
+    4@ /= 2
+    end
+
+0085: 5@ = 4@ // (int)
+5@ /= 5
+
+005A: 4@ += 5@  // (int)
+
+4@ += 200
+
+4@ *= 5
+
+4@ /= 100
+
+0093: 4@ = integer 4@ to_float
+
+0087: 3@ = 2@ // (float)
+
+0073: 3@ /= 4@ // (float)
+3@ *= 1.5
+
+0092: 4@ = float 4@ to_integer
+
+if
+7@ == 1
+    then
+    2@ = 0.0
+    end        
+
+32@ = 0
+
+:MUSIC_FADING_CHECK
+wait 0
+
+if
+MUSIC_DEBUG_FLAG == 1
+then
+gosub @MUSIC_FADING_STATUS_GET
+end 
+
+if
+7@ == 0
+    then    
+    0063: 2@ -= 3@  // (float)    
+    if
+    2@ < 0.0
+        then
+        2@ = 0.0
+        end                    
+    else    
+    005B: 2@ += 3@  // (float)        
+    if
+    0025:   2@ > 6@  // (float)
+        then
+        0087: 2@ = 6@ // (float)
+        end            
+    end        
+    
+if or
+$MUTE_MUSIC_FLAG == 1
+$END_FADING_MUSIC_FAST == 1
+    then
+    2@ = 0.0
+    end                
+
+if
+8@ > 0
+    then
+    0ABC: set_audiostream $MUSIC_FADE1[24@] volume 2@
+    end
+
+if
+8@ > 1
+    then
+    0ABC: set_audiostream $MUSIC_FADE2[24@] volume 2@
+    end
+
+if
+8@ > 2
+    then
+    0ABC: set_audiostream $MUSIC_FADE3[24@] volume 2@
+    end
+
+if
+8@ > 3
+    then
+    0ABC: set_audiostream $MUSIC_FADE4[24@] volume 2@
+    end
+
+if
+8@ > 4
+    then
+    0ABC: set_audiostream $MUSIC_FADE5[24@] volume 2@
+    end
+    
+if
+$MUTE_MUSIC_FLAG == 1
+    then
+    jump to @MUSIC_FADING_CHECK_END
+    end    
+
+if
+7@ == 0
+then
+if
+not 2@ == 0.0
+jf @MUSIC_FADING_CHECK_END
+else
+if
+8035: not  2@ >= 6@  // (float)
+jf @MUSIC_FADING_CHECK_END
+end
+
+if and
+001D:   32@ > 25@  // (int)
+$GAMEMODE_SELECTED == 1
+$SIMULATING_FLAG == 0
+then
+jump to @MUSIC_FADING_CHECK_END
+end
+
+if or
+2@ < 0.0
+2@ > 1.0
+then
+jump to @MUSIC_FADING_CHECK_END
+end
+
+jump to @MUSIC_FADING_CHECK
+
+:MUSIC_FADING_CHECK_END
+
+if
+7@ == 0
+then
+
+if
+8@ > 0
+    then
+    audiostream.Release($MUSIC_FADE1[24@])
+    
+    if
+    MUSIC_DEBUG_FLAG == 1
+    then
+    0ACE: show_formatted_text_box "audiostream 1 release %d" $MUSIC_FADE1[24@]
+    end
+    
+    end
+
+if
+8@ > 1
+    then
+    audiostream.Release($MUSIC_FADE2[24@])
+    
+    if
+    MUSIC_DEBUG_FLAG == 1
+    then
+    0ACE: show_formatted_text_box "audiostreams 2 release %d" $MUSIC_FADE2[24@]
+    end
+    
+    end
+
+if
+8@ > 2
+    then
+    audiostream.Release($MUSIC_FADE3[24@])
+    
+    if
+    MUSIC_DEBUG_FLAG == 1
+    then
+    0ACE: show_formatted_text_box "audiostreams 3 release %d" $MUSIC_FADE3[24@]
+    end
+    
+    end
+
+if
+8@ > 3
+    then
+    audiostream.Release($MUSIC_FADE4[24@])
+    
+    if
+    MUSIC_DEBUG_FLAG == 1
+    then
+    0ACE: show_formatted_text_box "audiostreams 4 release %d" $MUSIC_FADE4[24@]
+    end
+    
+    end
+
+if
+8@ > 4
+    then
+    audiostream.Release($MUSIC_FADE5[24@])
+    
+    if
+    MUSIC_DEBUG_FLAG == 1
+    then
+    0ACE: show_formatted_text_box "audiostreams 5 release %d" $MUSIC_FADE5[24@]
+    end
+    
+    end
+
+else
+
+if
+8@ > 0
+    then
+    0ABC: set_audiostream $MUSIC_FADE1[24@] volume 6@
+    end
+
+if
+8@ > 1
+    then
+    0ABC: set_audiostream $MUSIC_FADE2[24@] volume 6@
+    end
+
+if
+8@ > 2
+    then
+    0ABC: set_audiostream $MUSIC_FADE3[24@] volume 6@
+    end
+
+if
+8@ > 3
+    then
+    0ABC: set_audiostream $MUSIC_FADE4[24@] volume 6@
+    end
+
+if
+8@ > 4
+    then
+    0ABC: set_audiostream $MUSIC_FADE5[24@] volume 6@
+    end
+
+end
+    
+$MUSIC_FADE_ENDED[24@] = 1
+
+if
+MUSIC_DEBUG_FLAG == 1
+then
+gosub @MUSIC_FADING_STATUS_GET
+gosub @MUSIC_FADING_END_STATUS_SET
+end    
+
+end_thread
+
+:MUSIC_FADING_STATUS_GET
+
+if
+24@ == 0
+then
+0AF3: write_float 2@ to_ini_file "music_debug.ini" section "1" key "MFADING_CURRENT_VOLUME"
+0AF3: write_float 6@ to_ini_file "music_debug.ini" section "1" key "MFADING_END_VOLUME"
+0AF3: write_float 3@ to_ini_file "music_debug.ini" section "1" key "MFADING_VOLUME_CHANGE_FACTOR"
+0AF1: write_int $MUSIC_FADE1[24@] to_ini_file "music_debug.ini" section "1" key "MFADING_HANDLE1"
+0AF1: write_int $MUSIC_FADE2[24@] to_ini_file "music_debug.ini" section "1" key "MFADING_HANDLE2"
+0AF1: write_int $MUSIC_FADE3[24@] to_ini_file "music_debug.ini" section "1" key "MFADING_HANDLE3"
+0AF1: write_int $MUSIC_FADE4[24@] to_ini_file "music_debug.ini" section "1" key "MFADING_HANDLE4"
+0AF1: write_int $MUSIC_FADE5[24@] to_ini_file "music_debug.ini" section "1" key "MFADING_HANDLE5"
+0AF1: write_int $MUSIC_FADE_FLAG[24@] to_ini_file "music_debug.ini" section "1" key "MFADING_FLAG"
+0AF1: write_int $MUSIC_FADE_COUNT[24@] to_ini_file "music_debug.ini" section "1" key "MFADING_COUNT"
+0AF1: write_int $MUSIC_FADE_TIME[24@] to_ini_file "music_debug.ini" section "1" key "MFADING_END_TIME"
+0AF1: write_int 25@ to_ini_file "music_debug.ini" section "1" key "MFADING_END_TIME_MEASURED"
+0AF1: write_int 32@ to_ini_file "music_debug.ini" section "1" key "TIME_ELAPSED"
+0AF1: write_int $MUSIC_FADE_ENDED[24@] to_ini_file "music_debug.ini" section "1" key "MFADING_ENDED_FLAG"
+end
+
+if
+24@ == 1
+then
+0AF3: write_float 2@ to_ini_file "music_debug.ini" section "2" key "MFADING_CURRENT_VOLUME"
+0AF3: write_float 6@ to_ini_file "music_debug.ini" section "2" key "MFADING_END_VOLUME"
+0AF3: write_float 3@ to_ini_file "music_debug.ini" section "2" key "MFADING_VOLUME_CHANGE_FACTOR"
+0AF1: write_int $MUSIC_FADE1[24@] to_ini_file "music_debug.ini" section "2" key "MFADING_HANDLE1"
+0AF1: write_int $MUSIC_FADE2[24@] to_ini_file "music_debug.ini" section "2" key "MFADING_HANDLE2"
+0AF1: write_int $MUSIC_FADE3[24@] to_ini_file "music_debug.ini" section "2" key "MFADING_HANDLE3"
+0AF1: write_int $MUSIC_FADE4[24@] to_ini_file "music_debug.ini" section "2" key "MFADING_HANDLE4"
+0AF1: write_int $MUSIC_FADE5[24@] to_ini_file "music_debug.ini" section "2" key "MFADING_HANDLE5"
+0AF1: write_int $MUSIC_FADE_FLAG[24@] to_ini_file "music_debug.ini" section "2" key "MFADING_FLAG"
+0AF1: write_int $MUSIC_FADE_COUNT[24@] to_ini_file "music_debug.ini" section "2" key "MFADING_COUNT"
+0AF1: write_int $MUSIC_FADE_TIME[24@] to_ini_file "music_debug.ini" section "2" key "MFADING_END_TIME"
+0AF1: write_int 25@ to_ini_file "music_debug.ini" section "2" key "MFADING_END_TIME_MEASURED"
+0AF1: write_int 32@ to_ini_file "music_debug.ini" section "2" key "TIME_ELAPSED"
+0AF1: write_int $MUSIC_FADE_ENDED[24@] to_ini_file "music_debug.ini" section "2" key "MFADING_ENDED_FLAG"
+end
+
+if
+24@ == 2
+then
+0AF3: write_float 2@ to_ini_file "music_debug.ini" section "3" key "MFADING_CURRENT_VOLUME"
+0AF3: write_float 6@ to_ini_file "music_debug.ini" section "3" key "MFADING_END_VOLUME"
+0AF3: write_float 3@ to_ini_file "music_debug.ini" section "3" key "MFADING_VOLUME_CHANGE_FACTOR"
+0AF1: write_int $MUSIC_FADE1[24@] to_ini_file "music_debug.ini" section "3" key "MFADING_HANDLE1"
+0AF1: write_int $MUSIC_FADE2[24@] to_ini_file "music_debug.ini" section "3" key "MFADING_HANDLE2"
+0AF1: write_int $MUSIC_FADE3[24@] to_ini_file "music_debug.ini" section "3" key "MFADING_HANDLE3"
+0AF1: write_int $MUSIC_FADE4[24@] to_ini_file "music_debug.ini" section "3" key "MFADING_HANDLE4"
+0AF1: write_int $MUSIC_FADE5[24@] to_ini_file "music_debug.ini" section "3" key "MFADING_HANDLE5"
+0AF1: write_int $MUSIC_FADE_FLAG[24@] to_ini_file "music_debug.ini" section "3" key "MFADING_FLAG"
+0AF1: write_int $MUSIC_FADE_COUNT[24@] to_ini_file "music_debug.ini" section "3" key "MFADING_COUNT"
+0AF1: write_int $MUSIC_FADE_TIME[24@] to_ini_file "music_debug.ini" section "3" key "MFADING_END_TIME"
+0AF1: write_int 25@ to_ini_file "music_debug.ini" section "3" key "MFADING_END_TIME_MEASURED"
+0AF1: write_int 32@ to_ini_file "music_debug.ini" section "3" key "TIME_ELAPSED"
+0AF1: write_int $MUSIC_FADE_ENDED[24@] to_ini_file "music_debug.ini" section "3" key "MFADING_ENDED_FLAG"
+end
+
+if
+24@ == 3
+then
+0AF3: write_float 2@ to_ini_file "music_debug.ini" section "4" key "MFADING_CURRENT_VOLUME"
+0AF3: write_float 6@ to_ini_file "music_debug.ini" section "4" key "MFADING_END_VOLUME"
+0AF3: write_float 3@ to_ini_file "music_debug.ini" section "4" key "MFADING_VOLUME_CHANGE_FACTOR"
+0AF1: write_int $MUSIC_FADE1[24@] to_ini_file "music_debug.ini" section "4" key "MFADING_HANDLE1"
+0AF1: write_int $MUSIC_FADE2[24@] to_ini_file "music_debug.ini" section "4" key "MFADING_HANDLE2"
+0AF1: write_int $MUSIC_FADE3[24@] to_ini_file "music_debug.ini" section "4" key "MFADING_HANDLE3"
+0AF1: write_int $MUSIC_FADE4[24@] to_ini_file "music_debug.ini" section "4" key "MFADING_HANDLE4"
+0AF1: write_int $MUSIC_FADE5[24@] to_ini_file "music_debug.ini" section "4" key "MFADING_HANDLE5"
+0AF1: write_int $MUSIC_FADE_FLAG[24@] to_ini_file "music_debug.ini" section "4" key "MFADING_FLAG"
+0AF1: write_int $MUSIC_FADE_COUNT[24@] to_ini_file "music_debug.ini" section "4" key "MFADING_COUNT"
+0AF1: write_int $MUSIC_FADE_TIME[24@] to_ini_file "music_debug.ini" section "4" key "MFADING_END_TIME"
+0AF1: write_int 25@ to_ini_file "music_debug.ini" section "4" key "MFADING_END_TIME_MEASURED"
+0AF1: write_int 32@ to_ini_file "music_debug.ini" section "4" key "TIME_ELAPSED"
+0AF1: write_int $MUSIC_FADE_ENDED[24@] to_ini_file "music_debug.ini" section "4" key "MFADING_ENDED_FLAG"
+end
+
+if
+24@ == 4
+then
+0AF3: write_float 2@ to_ini_file "music_debug.ini" section "5" key "MFADING_CURRENT_VOLUME"
+0AF3: write_float 6@ to_ini_file "music_debug.ini" section "5" key "MFADING_END_VOLUME"
+0AF3: write_float 3@ to_ini_file "music_debug.ini" section "5" key "MFADING_VOLUME_CHANGE_FACTOR"
+0AF1: write_int $MUSIC_FADE1[24@] to_ini_file "music_debug.ini" section "5" key "MFADING_HANDLE1"
+0AF1: write_int $MUSIC_FADE2[24@] to_ini_file "music_debug.ini" section "5" key "MFADING_HANDLE2"
+0AF1: write_int $MUSIC_FADE3[24@] to_ini_file "music_debug.ini" section "5" key "MFADING_HANDLE3"
+0AF1: write_int $MUSIC_FADE4[24@] to_ini_file "music_debug.ini" section "5" key "MFADING_HANDLE4"
+0AF1: write_int $MUSIC_FADE5[24@] to_ini_file "music_debug.ini" section "5" key "MFADING_HANDLE5"
+0AF1: write_int $MUSIC_FADE_FLAG[24@] to_ini_file "music_debug.ini" section "5" key "MFADING_FLAG"
+0AF1: write_int $MUSIC_FADE_COUNT[24@] to_ini_file "music_debug.ini" section "5" key "MFADING_COUNT"
+0AF1: write_int $MUSIC_FADE_TIME[24@] to_ini_file "music_debug.ini" section "5" key "MFADING_END_TIME"
+0AF1: write_int 25@ to_ini_file "music_debug.ini" section "5" key "MFADING_END_TIME_MEASURED"
+0AF1: write_int 32@ to_ini_file "music_debug.ini" section "5" key "TIME_ELAPSED"
+0AF1: write_int $MUSIC_FADE_ENDED[24@] to_ini_file "music_debug.ini" section "5" key "MFADING_ENDED_FLAG"
+end
+
+return
+
+:MUSIC_FADING_END_STATUS_SET
+
+if
+24@ == 0
+then
+0AF1: write_int $MUSIC_FADE_ENDED[24@] to_ini_file "music_debug.ini" section "1" key "MFADING_ENDED_FLAG"
+end
+
+if
+24@ == 1
+then
+0AF1: write_int $MUSIC_FADE_ENDED[24@] to_ini_file "music_debug.ini" section "2" key "MFADING_ENDED_FLAG"
+end
+
+if
+24@ == 2
+then
+0AF1: write_int $MUSIC_FADE_ENDED[24@] to_ini_file "music_debug.ini" section "3" key "MFADING_ENDED_FLAG"
+end
+
+if
+24@ == 3
+then
+0AF1: write_int $MUSIC_FADE_ENDED[24@] to_ini_file "music_debug.ini" section "4" key "MFADING_ENDED_FLAG"
+end
+
+if
+24@ == 4
+then
+0AF1: write_int $MUSIC_FADE_ENDED[24@] to_ini_file "music_debug.ini" section "5" key "MFADING_ENDED_FLAG"
+end
+
+return                

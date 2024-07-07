@@ -1,0 +1,524 @@
+:GAS_SY2
+thread 'GAS_SY2'
+
+GASOLINE_OFFED_FLAG_2P = 0        
+
+:GASOLINE_COOP_START    
+    
+repeat
+wait 0
+until 0800:   in_two_players_mode
+        
+:GASOLINE_CHECK_COOP
+wait 0
+
+while 0800:   in_two_players_mode
+wait 0
+
+if and
+056D:   actor COOP_ACTOR defined
+not COOP_ACTOR == -69
+then
+
+if and
+Actor.Driving(COOP_ACTOR)   
+$CARS_WORK_FLAG == 0
+    then
+    GASOLINE_OFFED_FLAG_2P = 0
+    if and
+    $INF_GASOLINE == 0
+    $END_SAVING == 0
+        then
+        if and
+        80DD: not actor COOP_ACTOR driving_car_with_model #BMX
+        80DD: not actor COOP_ACTOR driving_car_with_model #MTBIKE
+        80DD: not actor COOP_ACTOR driving_car_with_model #BIKE
+        80DD: not actor COOP_ACTOR driving_car_with_model 15489
+        89AE: not actor COOP_ACTOR driving_train
+            then
+            0@ = Actor.CurrentCar(COOP_ACTOR)
+            if
+            Actor.Driving(PLAYER_ACTOR)
+            then
+            1@ = Actor.CurrentCar(COOP_ACTOR)
+            if
+            003B:   0@ == 1@  // (int)
+                then
+                jump to @GASOLINE_CHECK_COOP
+                end
+            end
+            32@ = 0  
+            0A97: 11@ = car 0@ struct 
+            11@ += 4 
+            0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+            if
+            88B7:   not test 12@ bit 1
+            jf @GASOLINE_CHECK_COOP_9    
+            32@ = 0
+            08BD: set 12@ bit 1 
+            0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+            08C3: clear 12@ bit 1                   
+            random_float $BENZIN_CAR_2P $GASOLINE_MIN $GASOLINE_MAX
+            jump @GASOLINE_MINUS_COOP
+            end
+        end
+    end 
+    
+jump @GASOLINE_CHECK_COOP
+
+end
+
+end
+
+jump @GASOLINE_COOP_START                             
+
+:GASOLINE_CHECK_COOP_9 
+32@ = 0        
+0A97: 22@ = car 0@ struct 
+0A8E: 23@ = 22@ + 5 // int 
+0A8D: $BENZIN_CAR_2P = read_memory 23@ size 4 virtual_protect 0     
+if
+not $BENZIN_CAR_2P < 1.0
+jf @GASOLINE_NONE_COOP
+gosub @GASOLINE_CHECK_COOP_MAX_CAP
+if
+8026: not  $BENZIN_CAR_2P < 23@  // (float)
+jf @GASOLINE_1000_COOP
+jump @GASOLINE_MINUS_COOP
+
+:GASOLINE_1000_COOP
+0088: $BENZIN_CAR_2P = 23@ // (float)
+jump @GASOLINE_MINUS_COOP
+
+:GASOLINE_MINUS_COOP 
+wait 0
+
+if and
+056D:   actor COOP_ACTOR defined
+not COOP_ACTOR == -69
+jf @GASOLINE_COOP_START
+
+if
+CAR_2P_UPDATE_GAS_INCAR == 1
+then
+0A97: 22@ = car 0@ struct 
+0A8E: 23@ = 22@ + 5 // int 
+0A8D: $BENZIN_CAR_2P = read_memory 23@ size 4 virtual_protect 0
+CAR_2P_UPDATE_GAS_INCAR = 0
+end
+
+if
+Actor.Driving(PLAYER_ACTOR)
+then
+1@ = Actor.CurrentCar(COOP_ACTOR)
+if
+003B:   0@ == 1@  // (int)
+    then
+    jump to @GASOLINE_CHECK_COOP_2
+    end
+end
+if and
+actor.InCar(COOP_ACTOR,0@)
+$INF_GASOLINE == 0
+jf @GASOLINE_CHECK_COOP_2
+
+///////////////////////////////////////////////////////////////
+
+if and
+84C8: not  actor COOP_ACTOR driving_flying_vehicle
+84A7: not  actor COOP_ACTOR driving_boat
+then
+
+if
+PERK_GOODRIVER == 0
+then
+28@ = 2000
+else
+
+if
+PERK_GOODRIVER == 1
+then
+28@ = 2400
+else
+28@ = 2900
+end
+
+end
+
+if
+002D:   32@ >= 28@  // (int)
+jf @GASOLINE_MINUS_COOP
+
+else
+
+if
+04C8:   actor COOP_ACTOR driving_flying_vehicle
+then
+
+////////////////////////
+
+if
+PERK_GOODRIVER == 0
+then
+
+if 
+32@ >= 1500
+jf @GASOLINE_MINUS_COOP
+
+else
+
+if
+PERK_GOODRIVER == 1
+then
+
+if 
+32@ >= 1800
+jf @GASOLINE_MINUS_COOP
+
+else
+
+if 
+32@ >= 2175
+jf @GASOLINE_MINUS_COOP
+end
+
+end
+
+////////////////////////
+
+end
+
+if
+04A7:   actor COOP_ACTOR driving_boat
+then
+
+////////////////////////
+
+if
+PERK_GOODRIVER == 0
+then
+
+if 
+32@ >= 800
+jf @GASOLINE_MINUS_COOP
+
+else
+
+if
+PERK_GOODRIVER == 1
+then
+
+if 
+32@ >= 960
+jf @GASOLINE_MINUS_COOP
+
+else
+
+if 
+32@ >= 1160
+jf @GASOLINE_MINUS_COOP
+end
+
+end
+
+////////////////////////
+
+end
+
+end
+
+///////////////////////////////////////////////////////////////
+
+if
+not $BENZIN_CAR_2P < 1.0 
+jf @GASOLINE_NONE_COOP
+if
+not $BENZIN_CAR_2P == 0
+jf @GASOLINE_MINUS_COOP
+32@ = 0
+0A97: 10@ = car 0@ struct
+0A8E: 2@ = 10@ + 0x49C 
+0A8D: 3@ = read_memory 2@ size 4 virtual_protect 1
+0092: 4@ = float 3@ to_integer
+0092: 20@ = float 20@ to_integer
+
+if and
+047A:   actor COOP_ACTOR driving_bike
+not 4@ == 1
+then
+4@ = 0
+end
+
+if and
+84C8: not  actor COOP_ACTOR driving_flying_vehicle
+not actor.DrivingVehicleType(COOP_ACTOR,#VORTEX)
+then
+if or
+4@ == 1   
+4@ == -1   
+jf @GASOLINE_MINUS_COOP
+else
+if or
+00E1:   player 1 pressed_key 16
+00E1:   player 1 pressed_key 14   
+jf @GASOLINE_MINUS_COOP
+end
+
+if or
+car.Model(0@) == #KART
+car.Model(0@) == #MOWER
+car.Model(0@) == #TRACTOR
+car.Model(0@) == #CADDY
+car.Model(0@) == #TUG
+car.Model(0@) == #SWEEPER
+car.Model(0@) == #BAGGAGE
+car.Model(0@) == #VORTEX
+then
+$BENZIN_CAR_2P -= 0.075  
+$BENZIN_LOST += 0.075
+else
+$BENZIN_CAR_2P -= 0.15  
+$BENZIN_LOST += 0.15
+end
+
+if and
+0969:   car 0@ is_big
+not PLAYER_CAR_BONUS_FLAG == 1
+then
+$BENZIN_CAR_2P -= 0.05  
+$BENZIN_LOST += 0.05
+end
+
+if
+actor.DrivingVehicleType(COOP_ACTOR,ARMY_HUNTER_MODEL_NUMBER)
+then
+if
+SURVIVAL_CUSTOM_WEAPON_NABOR == 6
+    then
+    $BENZIN_CAR_2P -= 0.08  
+    $BENZIN_LOST += 0.08
+    else
+    $BENZIN_CAR_2P -= 0.20  
+    $BENZIN_LOST += 0.20
+    end
+end
+
+if
+actor.DrivingVehicleType(COOP_ACTOR,#RHINO)
+then
+if
+SURVIVAL_CUSTOM_WEAPON_NABOR == 6
+    then
+    $BENZIN_CAR_2P -= 0.18  
+    $BENZIN_LOST += 0.18
+    else
+    $BENZIN_CAR_2P -= 0.45  
+    $BENZIN_LOST += 0.45
+    end
+end
+
+if
+$BENZIN_CAR_2P < 0.15
+then
+$BENZIN_CAR_2P = 0.0
+end
+
+if
+not $BENZIN_CAR_2P < 1.0
+jf @GASOLINE_NONE_COOP
+jump @GASOLINE_MINUS_COOP  
+
+:GASOLINE_NONE_COOP
+
+if
+84C8: not  actor COOP_ACTOR driving_flying_vehicle 
+then
+
+if
+GASOLINE_OFFED_FLAG_2P == 0
+then
+GASOLINE_OFFED_FLAG_2P = 1
+
+if
+047A:   actor PLAYER_ACTOR driving_bike
+then
+02D4: car 0@ turn_off_engine
+else
+0918: set_car 0@ engine_operation 0
+end
+
+text.ShowTextBox('INV362B')
+end
+
+else
+
+if
+04AB:   actor COOP_ACTOR driving_plane
+then
+0ABF: set_vehicle 0@ engine_state_to false
+if
+GASOLINE_OFFED_FLAG_2P == 0
+    then
+    GASOLINE_OFFED_FLAG_2P = 1
+    text.ShowTextBox('INV362B')
+    end
+else
+
+if
+GASOLINE_OFFED_FLAG_2P == 0
+then
+//07D5: set_car 0@ velocity_in_direction_XYZ 0.0 0.0 -0.01 rotation_velocitiesXY 0.0 0.0 unk 0.0
+//0622: AS_actor COOP_ACTOR bail_car 0@
+GASOLINE_OFFED_FLAG_2P = 1
+create_thread @GAS_HEL 0@ 0 0 0 COOP_ACTOR
+text.ShowTextBox('INV362B')
+end
+
+end
+
+end
+
+jump @GASOLINE_MINUS_COOP
+
+:GASOLINE_CHECK_COOP_2
+if
+056E:   car 0@ defined
+jf @GASOLINE_CHECK_COOP
+0A97: 22@ = car 0@ struct 
+0A8E: 23@ = 22@ + 5 // int 
+0A8C: write_memory 23@ size 4 value $BENZIN_CAR_2P virtual_protect 0 
+jump @GASOLINE_CHECK_COOP
+
+:GASOLINE_CHECK_COOP_MAX_CAP
+
+22@ = car.Model(0@)
+23@ = 100.0
+
+if
+0820:   model 22@ heli
+then
+23@ = 200.0
+end
+
+if
+081F:  model 22@ plane 
+then
+23@ = 300.0
+end
+
+if and
+881E: not model 22@ boat
+881F: not model 22@ plane
+8820: not model 22@ heli
+8A01: not model 22@ car
+then
+23@ = 50.0
+end
+
+if
+car.Model(0@) == ARMY_HUNTER_MODEL_NUMBER
+then
+23@ = 1420.0
+end
+
+if or
+car.Model(0@) == #MAVERICK
+car.Model(0@) == #POLMAV
+car.Model(0@) == #VCNMAV
+then
+23@ = 574.0
+end
+
+if
+car.Model(0@) == #ANDROM
+then
+23@ = 178610.0
+end
+
+if
+car.Model(0@) == #BEAGLE
+then
+23@ = 1628.0
+end
+
+if
+car.Model(0@) == #CARGOBOB
+then
+23@ = 3914.0
+end
+
+if
+car.Model(0@) == #CROPDUST
+then
+23@ = 160.0
+end
+
+if
+car.Model(0@) == #LEVIATHN
+then
+23@ = 6360.0
+end
+
+if
+car.Model(0@) == #RAINDANC
+then
+23@ = 2720.0
+end
+
+if
+car.Model(0@) == #NEVADA
+then
+23@ = 4700.0
+end
+
+if
+car.Model(0@) == #RUSTLER
+then
+23@ = 1392.0
+end
+
+if or
+car.Model(0@) == #SPARROW
+car.Model(0@) == #SEASPAR
+then
+23@ = 900.0
+end
+
+if
+car.Model(0@) == #SHAMAL
+then
+23@ = 6068.0
+end
+
+if
+car.Model(0@) == #AT400
+then
+23@ = 32546.0
+end
+
+if
+car.Model(0@) == #HYDRA
+then
+23@ = 2800.0
+end
+
+if
+car.Model(0@) == #STUNT
+then
+23@ = 336.0
+end
+
+if
+car.Model(0@) == #RHINO
+then
+23@ = 3800.0
+end
+
+if or
+car.Model(0@) == #DODO
+car.Model(0@) == #SKIMMER
+then
+23@ = 170.0
+end
+
+return   

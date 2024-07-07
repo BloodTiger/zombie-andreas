@@ -1,0 +1,75 @@
+:HOR_SND
+thread 'HOR_SND'
+                
+gosub @RANDOM_HORDE_SOUND
+
+Audiostream.PerformAction($HORDE_SOUND_EFFECT, PLAY)
+Audiostream.Loop($HORDE_SOUND_EFFECT, 0)
+Audiostream.Volume($HORDE_SOUND_EFFECT) = $SOUNDS_VOLUME
+
+:HORDE_SOUND_CHECK_END
+wait 0
+
+if
+$GAME_SPEED >= 1.0
+then
+Audiostream.Volume($HORDE_SOUND_EFFECT) = $SOUNDS_VOLUME
+else
+Audiostream.Volume($HORDE_SOUND_EFFECT) = 0.0
+end
+
+if
+$SAVESTATUS_TRUE == 0
+jf @HORDE_SOUND_MUSIC_OFF
+0AB9: get_mp3 $HORDE_SOUND_EFFECT state_to 2@
+if 
+  2@ == -1 
+jf @HORDE_SOUND_CHECK_END
+Audiostream.Release($HORDE_SOUND_EFFECT)
+end_thread
+
+:HORDE_SOUND_MUSIC_OFF 
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $HORDE_SOUND_EFFECT // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+//////////////////////////////////////////////////////////
+
+end_thread
+
+:RANDOM_HORDE_SOUND
+random_int 0@ 0 2
+if
+not 0@ == 0
+jf @RANDOM_HORDE_SOUND1
+if
+not 0@ == 1
+jf @RANDOM_HORDE_SOUND2
+
+:RANDOM_HORDE_SOUND1
+$HORDE_SOUND_EFFECT = Audiostream.Load("audio\sounds\horde_incoming1.wav")
+return
+
+:RANDOM_HORDE_SOUND2
+$HORDE_SOUND_EFFECT = Audiostream.Load("audio\sounds\horde_incoming2.wav")
+return
