@@ -1,0 +1,375 @@
+:SV_GTN
+thread 'SV_GTN'   
+             
+if
+not $NOT_MUSIC_SAVING == 1
+jf @SAVER_GET_IN_START
+
+if
+$GAMEMODE_EDITOR == 1
+then
+0AD3: 0@v = format "me\%d\end.mp3" $RNDM_HOUSE_BANKA[122]
+if
+0AAB:   file_exists 0@v
+    then
+    $MUSIC_SAVER = audiostream.Load(0@v)
+    Audiostream.PerformAction($MUSIC_SAVER, PLAY)
+    Audiostream.Loop($MUSIC_SAVER, 1)
+    Audiostream.Volume($MUSIC_SAVER) = $MUSIC_VOLUME
+    else
+    0AD3: 0@v = format "me\%d\end.wav" $RNDM_HOUSE_BANKA[122]
+    if
+    0AAB:   file_exists 0@v
+        then
+        $MUSIC_SAVER = audiostream.Load(0@v)
+        Audiostream.PerformAction($MUSIC_SAVER, PLAY)
+        Audiostream.Loop($MUSIC_SAVER, 1)
+        Audiostream.Volume($MUSIC_SAVER) = $MUSIC_VOLUME
+        else
+        0AD3: 0@v = format "me\%d\end.ogg" $RNDM_HOUSE_BANKA[122]
+        if
+        0AAB:   file_exists 0@v
+            then
+            $MUSIC_SAVER = audiostream.Load(0@v)
+            Audiostream.PerformAction($MUSIC_SAVER, PLAY)
+            Audiostream.Loop($MUSIC_SAVER, 1)
+            Audiostream.Volume($MUSIC_SAVER) = $MUSIC_VOLUME
+            else
+            gosub @RANDOM_MSUIC_SAVING
+            end
+        end
+    end
+else
+gosub @RANDOM_MSUIC_SAVING
+end
+
+:SAVER_GET_IN_START
+wait 0
+if
+$SAVER_GET_IN_START == 1
+jf @SAVER_GET_IN_START
+if
+$END_SAVING == 0
+jf @SAVER_GET_IN_END_THREAD
+if
+not $SAVE_METHOD == 1
+jf @SAVER_GET_IN_START_HELI
+if
+not $SAVE_METHOD == 2
+jf @SAVER_GET_IN_START_BOAT
+if
+not $SAVE_METHOD == 3
+jf @SAVER_GET_IN_START_HELI
+if
+not $SAVE_METHOD == 4
+jf @SAVER_GET_IN_START_VEHICLE
+
+:SAVER_GET_IN_START_HELI
+gosub @SAVER_GET_IN_START_HELI_SET
+jump @SAVER_GET_IN_CHECK_IDLE
+
+:SAVER_GET_IN_START_BOAT
+gosub @SAVER_GET_IN_START_BOAT_SET
+jump @SAVER_GET_IN_CHECK_IDLE
+
+:SAVER_GET_IN_START_VEHICLE
+gosub @SAVER_GET_IN_START_VEHICLE_SET
+jump @SAVER_GET_IN_CHECK_IDLE
+
+:SAVER_GET_IN_CHECK_IDLE
+wait 0  
+if and 
+not Actor.Dead(PLAYER_ACTOR)
+$END_SAVING == 0 
+jf @SAVER_GET_IN_END_THREAD
+0AB9: get_mp3 $MUSIC_CRAZY state_to 11@ 
+if 
+11@ == -1 
+jf @SAVER_GET_IN_CHECK_IDLE
+32@ = 0
+gosub @SAVER_GET_IN_CHECK_OFF
+jump @SAVER_GET_IN_CHECK_OFF3
+
+:SAVER_GET_IN_CHECK_OFF3
+wait 0
+if and
+not actor.Dead(PLAYER_ACTOR)
+$END_SAVING == 0
+jf @SAVER_GET_IN_END_THREAD
+if
+32@ > 9999
+jf @SAVER_GET_IN_CHECK_OFF3 
+jump @SAVER_GET_IN_START
+
+:SAVER_GET_IN_END_THREAD
+gosub @SAVER_GET_IN_CHECK_2OFF
+end_thread
+
+:SAVER_GET_IN_CHECK_OFF
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_CRAZY // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+//////////////////////////////////////////////////////////
+
+return
+
+:SAVER_GET_IN_CHECK_2OFF
+if
+not $NOT_MUSIC_SAVING == 1
+jf @SAVER_GET_IN_CHECK_2OFF22
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_SAVER // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+//////////////////////////////////////////////////////////
+
+:SAVER_GET_IN_CHECK_2OFF22
+return
+                      
+:SAVER_GET_IN_START_HELI_SET
+random_int 0@ 0 6
+if
+not 0@ == 0
+jf @SAVER_GET_IN_START_HELI1
+if
+not 0@ == 1
+jf @SAVER_GET_IN_START_HELI2
+if
+not 0@ == 2
+jf @SAVER_GET_IN_START_HELI3
+if
+not 0@ == 3
+jf @SAVER_GET_IN_START_HELI4
+if
+not 0@ == 4
+jf @SAVER_GET_IN_START_HELI5
+if
+not 0@ == 5
+jf @SAVER_GET_IN_START_HELI6
+
+:SAVER_GET_IN_START_HELI1
+$MUSIC_CRAZY = Audiostream.Load("AUDIO\SOUNDS\voice\pilot\hospital_pilot_finale_getin_01.wav")
+Audiostream.PerformAction($MUSIC_CRAZY, PLAY)
+Audiostream.Loop($MUSIC_CRAZY, 0)
+Audiostream.Volume($MUSIC_CRAZY) = $SOUNDS_VOLUME
+text.ShowH('GMD_S3',3000,1)
+return
+
+:SAVER_GET_IN_START_HELI2
+$MUSIC_CRAZY = Audiostream.Load("AUDIO\SOUNDS\voice\pilot\hospital_pilot_finale_getin_02.wav")
+Audiostream.PerformAction($MUSIC_CRAZY, PLAY)
+Audiostream.Loop($MUSIC_CRAZY, 0)
+Audiostream.Volume($MUSIC_CRAZY) = $SOUNDS_VOLUME
+text.ShowH('GMD_S4',3000,1)
+return
+
+:SAVER_GET_IN_START_HELI3
+$MUSIC_CRAZY = Audiostream.Load("AUDIO\SOUNDS\voice\pilot\hospital_pilot_finale_getin_03.wav")
+Audiostream.PerformAction($MUSIC_CRAZY, PLAY)
+Audiostream.Loop($MUSIC_CRAZY, 0)
+Audiostream.Volume($MUSIC_CRAZY) = $SOUNDS_VOLUME
+text.ShowH('GMD_S5',3000,1)
+return
+
+:SAVER_GET_IN_START_HELI4
+$MUSIC_CRAZY = Audiostream.Load("AUDIO\SOUNDS\voice\pilot\hospital_pilot_finale_getin_04.wav")
+Audiostream.PerformAction($MUSIC_CRAZY, PLAY)
+Audiostream.Loop($MUSIC_CRAZY, 0)
+Audiostream.Volume($MUSIC_CRAZY) = $SOUNDS_VOLUME
+text.ShowH('GMD_S6',3000,1)
+return
+
+:SAVER_GET_IN_START_HELI5
+$MUSIC_CRAZY = Audiostream.Load("AUDIO\SOUNDS\voice\pilot\hospital_pilot_finale_getin_05.wav")
+Audiostream.PerformAction($MUSIC_CRAZY, PLAY)
+Audiostream.Loop($MUSIC_CRAZY, 0)
+Audiostream.Volume($MUSIC_CRAZY) = $SOUNDS_VOLUME
+text.ShowH('GMD_S7',3000,1)
+return
+
+:SAVER_GET_IN_START_HELI6
+$MUSIC_CRAZY = Audiostream.Load("AUDIO\SOUNDS\voice\pilot\hospital_pilot_finale_getin_06.wav")
+Audiostream.PerformAction($MUSIC_CRAZY, PLAY)
+Audiostream.Loop($MUSIC_CRAZY, 0)
+Audiostream.Volume($MUSIC_CRAZY) = $SOUNDS_VOLUME
+text.ShowH('GMD_S8',3000,1)
+return
+
+:SAVER_GET_IN_START_BOAT_SET
+random_int 0@ 0 7
+if
+not 0@ == 0
+jf @SAVER_GET_IN_START_BOAT1
+if
+not 0@ == 1
+jf @SAVER_GET_IN_START_BOAT2
+if
+not 0@ == 2
+jf @SAVER_GET_IN_START_BOAT3
+if
+not 0@ == 3
+jf @SAVER_GET_IN_START_BOAT4
+if
+not 0@ == 4
+jf @SAVER_GET_IN_START_BOAT5
+if
+not 0@ == 5
+jf @SAVER_GET_IN_START_BOAT6
+if
+not 0@ == 6
+jf @SAVER_GET_IN_START_BOAT7
+
+:SAVER_GET_IN_START_BOAT1
+$MUSIC_CRAZY = Audiostream.Load("AUDIO\SOUNDS\voice\boat\c4end01.wav")
+Audiostream.PerformAction($MUSIC_CRAZY, PLAY)
+Audiostream.Loop($MUSIC_CRAZY, 0)
+Audiostream.Volume($MUSIC_CRAZY) = $SOUNDS_VOLUME
+text.ShowH('GMD_S9',3000,1)
+return
+
+:SAVER_GET_IN_START_BOAT2
+$MUSIC_CRAZY = Audiostream.Load("AUDIO\SOUNDS\voice\boat\c4end02.wav")
+Audiostream.PerformAction($MUSIC_CRAZY, PLAY)
+Audiostream.Loop($MUSIC_CRAZY, 0)
+Audiostream.Volume($MUSIC_CRAZY) = $SOUNDS_VOLUME
+text.ShowH('GMD_S10',3000,1)
+return
+
+:SAVER_GET_IN_START_BOAT3
+$MUSIC_CRAZY = Audiostream.Load("AUDIO\SOUNDS\voice\boat\c4end03.wav")
+Audiostream.PerformAction($MUSIC_CRAZY, PLAY)
+Audiostream.Loop($MUSIC_CRAZY, 0)
+Audiostream.Volume($MUSIC_CRAZY) = $SOUNDS_VOLUME
+text.ShowH('GMD_S11',3000,1)
+return
+
+:SAVER_GET_IN_START_BOAT4
+$MUSIC_CRAZY = Audiostream.Load("AUDIO\SOUNDS\voice\boat\c4end04.wav")
+Audiostream.PerformAction($MUSIC_CRAZY, PLAY)
+Audiostream.Loop($MUSIC_CRAZY, 0)
+Audiostream.Volume($MUSIC_CRAZY) = $SOUNDS_VOLUME
+text.ShowH('GMD_S12',3000,1)
+return
+
+:SAVER_GET_IN_START_BOAT5
+$MUSIC_CRAZY = Audiostream.Load("AUDIO\SOUNDS\voice\boat\c4end05.wav")
+Audiostream.PerformAction($MUSIC_CRAZY, PLAY)
+Audiostream.Loop($MUSIC_CRAZY, 0)
+Audiostream.Volume($MUSIC_CRAZY) = $SOUNDS_VOLUME
+text.ShowH('GMD_S13',3000,1)
+return
+
+:SAVER_GET_IN_START_BOAT6
+$MUSIC_CRAZY = Audiostream.Load("AUDIO\SOUNDS\voice\boat\c4end06.wav")
+Audiostream.PerformAction($MUSIC_CRAZY, PLAY)
+Audiostream.Loop($MUSIC_CRAZY, 0)
+Audiostream.Volume($MUSIC_CRAZY) = $SOUNDS_VOLUME
+text.ShowH('GMD_S14',3000,1)
+return
+
+:SAVER_GET_IN_START_BOAT7
+$MUSIC_CRAZY = Audiostream.Load("AUDIO\SOUNDS\voice\boat\c4end07.wav")
+Audiostream.PerformAction($MUSIC_CRAZY, PLAY)
+Audiostream.Loop($MUSIC_CRAZY, 0)
+Audiostream.Volume($MUSIC_CRAZY) = $SOUNDS_VOLUME
+text.ShowH('GMD_S15',3000,1)
+return
+
+:SAVER_GET_IN_START_VEHICLE_SET
+random_int 0@ 0 2
+if
+not 0@ == 0
+jf @SAVER_GET_IN_START_VEHICLE1
+if
+not 0@ == 1
+jf @SAVER_GET_IN_START_VEHICLE2
+
+:SAVER_GET_IN_START_VEHICLE1
+$MUSIC_CRAZY = Audiostream.Load("AUDIO\SOUNDS\voice\truck\radioarrived01.wav")
+Audiostream.PerformAction($MUSIC_CRAZY, PLAY)
+Audiostream.Loop($MUSIC_CRAZY, 0)
+Audiostream.Volume($MUSIC_CRAZY) = $SOUNDS_VOLUME
+text.ShowH('GMD_S16',3000,1)
+return
+
+:SAVER_GET_IN_START_VEHICLE2
+$MUSIC_CRAZY = Audiostream.Load("AUDIO\SOUNDS\voice\truck\radioarrived10.wav")
+Audiostream.PerformAction($MUSIC_CRAZY, PLAY)
+Audiostream.Loop($MUSIC_CRAZY, 0)
+Audiostream.Volume($MUSIC_CRAZY) = $SOUNDS_VOLUME
+text.ShowH('GMD_S17',3000,1)
+return
+
+:RANDOM_MSUIC_SAVING
+random_int 0@ 0 3
+if
+not 0@ == 0
+jf @RANDOM_MSUIC_SAVING1
+if
+not 0@ == 1
+jf @RANDOM_MSUIC_SAVING2
+if
+not 0@ == 2
+jf @RANDOM_MSUIC_SAVING3
+
+:RANDOM_MSUIC_SAVING1
+$MUSIC_SAVER = Audiostream.Load("AUDIO\SOUNDS\music\end_music\skinonourteeth1.wav")
+Audiostream.PerformAction($MUSIC_SAVER, PLAY)
+Audiostream.Loop($MUSIC_SAVER, 1)
+Audiostream.Volume($MUSIC_SAVER) = $MUSIC_VOLUME
+return
+
+:RANDOM_MSUIC_SAVING2
+$MUSIC_SAVER = Audiostream.Load("AUDIO\SOUNDS\music\end_music\skinonourteeth2.wav")
+Audiostream.PerformAction($MUSIC_SAVER, PLAY)
+Audiostream.Loop($MUSIC_SAVER, 1)
+Audiostream.Volume($MUSIC_SAVER) = $MUSIC_VOLUME
+return
+
+:RANDOM_MSUIC_SAVING3
+$MUSIC_SAVER = Audiostream.Load("AUDIO\SOUNDS\music\end_music\gascanofvictory.wav")
+Audiostream.PerformAction($MUSIC_SAVER, PLAY)
+Audiostream.Loop($MUSIC_SAVER, 1)
+Audiostream.Volume($MUSIC_SAVER) = $MUSIC_VOLUME
+return

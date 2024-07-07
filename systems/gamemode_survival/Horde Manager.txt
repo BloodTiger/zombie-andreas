@@ -1,0 +1,378 @@
+:RND_HRD
+thread 'RND_HRD'
+                 
+random_int $ZOMBIES_COUNT 0 20  
+0084: $WITCH_INSTANT_AGR2 = $WITCH_INSTANT_AGR // (int) 
+
+if
+$GAMEMODE_WAR == 1
+    then
+    end_thread
+    end
+
+if and
+$ALLOW_ZOMBIE_HORDES == 0
+$GAMEMODE_WAR == 0
+    then
+    end_thread
+    end
+    
+////////////////////////ÎÐÄÀ ÂÛÊËÞ×ÈËÀÑÜ/ÍÅ ÁÛËÀ ÈÍÈÖÈÀËÈÇÈÐÎÂÀÍÀ, ÐÀÍÄÎÌÈÇÈÐÓÅÌ ÒÀÉÌÅÐ ÑËÅÄÓÞÙÅÉ ÎÐÄÛ////////////////////////    
+
+:RANDOM_ZOMBIE_HORDE_OFF_START
+wait 0
+
+{$INCLUDE Horde Manager Hold.txt}
+
+if and
+$SALVATION_FLAG == 0
+$SAVESTATUS == 0
+$NEAR_SAVE_POINT == 0
+$SOUND_EFFECT1_FLAG == 0  
+$SAVEPLACE_ON == 0  
+$ZOMBIES_PROCENT > 0.0
+$ACTIVE_INTERIOR == 0
+PLAYER_IN_NEST_FLAG == 0   
+jf @RANDOM_ZOMBIE_HORDE_OFF_START
+if
+not MQ_ALLOW_HORDE == 1
+then
+if and
+MAIN_QUEST_MUSIC_FLAG == 0
+$ALLOW_ZOMBIE_HORDES == 1
+jf @RANDOM_ZOMBIE_HORDE_OFF_START
+end
+if
+not $QUEST_TYPE == 5
+jf @RANDOM_ZOMBIE_HORDE_OFF_START
+
+0842: 0@ = player PLAYER_CHAR town_number
+
+if
+0@ > 0
+then
+
+if
+$ACTIVE_INTERIOR == 0
+then
+random_int $ZOMBIES_COUNT 0 20
+end
+
+0209: $HORDE_TIME = random_int_in_ranges $1HRD_OFF_TIME_MIN $1HRD_OFF_TIME_MAX
+else
+
+if
+$ACTIVE_INTERIOR == 0
+then
+random_int $ZOMBIES_COUNT 0 10
+end
+
+0209: $HORDE_TIME = random_int_in_ranges $2HRD_OFF_TIME_MIN $2HRD_OFF_TIME_MAX
+end 
+
+$ZOMBIES_HORDE = 0
+0084: $WITCH_INSTANT_AGR = $WITCH_INSTANT_AGR2 // (int)    
+$HORDE_OFF_TIMER_COUNTER = 0
+
+///////////////////////////////////////////ÎÐÄÀ ÂÛÊËÞ×ÅÍÀ, Ñ×ÈÒÀÅÌ ÒÀÉÌÅÐ ÍÀ×ÀËÀ ÎÐÄÛ///////////////////////////////////////////
+
+:RANDOM_ZOMBIE_HORDE_OFF_CHECK
+wait 0 
+
+{$INCLUDE Horde Manager Hold.txt}
+
+gosub @HORDE_NEAR_CAMP_CHECK    
+
+if and
+$SALVATION_FLAG == 0
+$SAVESTATUS == 0
+$NEAR_SAVE_POINT == 0
+$SOUND_EFFECT1_FLAG == 0  
+$SAVEPLACE_ON == 0  
+$ZOMBIES_PROCENT > 0.0
+$ACTIVE_INTERIOR == 0
+2@ == 0
+jf @RANDOM_ZOMBIE_HORDE_OFF_CHECK
+if
+PLAYER_IN_NEST_FLAG == 0
+jf @RANDOM_ZOMBIE_HORDE_OFF_CHECK
+if
+not MQ_ALLOW_HORDE == 1
+then
+if and
+MAIN_QUEST_MUSIC_FLAG == 0
+$ALLOW_ZOMBIE_HORDES == 1
+jf @RANDOM_ZOMBIE_HORDE_OFF
+end
+if
+not $QUEST_TYPE == 5
+jf @RANDOM_ZOMBIE_HORDE_OFF
+
+if and
+ZOMBIES_NOTSPAWN == 0
+$SAVEPLACE_ON == 0
+$ACTIVE_INTERIOR == 0
+2@ == 0
+PLAYER_IN_NEST_FLAG == 0
+then
+
+if or
+$GAME_SPEED == 1.0
+$GAME_SPEED == 0.2
+then
+
+if
+33@ >= 100
+then
+33@ = 0
+$HORDE_OFF_TIMER_COUNTER += 60
+end
+
+end
+
+end
+ 
+if 
+$HORDE_SHOW_TIMER == 1
+then
+0AD1: show_formatted_text_highpriority "Horde Off Timer: %d/%d" time 100 $HORDE_OFF_TIMER_COUNTER $HORDE_TIME
+end
+
+if and
+SURVIVAL_CUSTOM_WEAPON_NABOR == 8
+not $ZOMBIES_HORDE == 1
+    then  
+    008B: 31@ = $HORDE_TIME // (int)
+    31@ -= 60000
+    008B: 30@ = $HORDE_TIME // (int)
+    30@ -= 59000
+//    0AD1: show_formatted_text_highpriority "%d > %d~n~ %d < %d" time 100 $HORDE_OFF_TIMER_COUNTER 31@ $HORDE_OFF_TIMER_COUNTER 30@
+    if and
+    001E:   $HORDE_OFF_TIMER_COUNTER > 31@ // (int)
+    801E:   $HORDE_OFF_TIMER_COUNTER < 30@ // (int)
+        then        
+        gosub @HORDE_ORIGIN_SPOTTED_PHRASE
+        $HORDE_OFF_TIMER_COUNTER += 1100         
+        end
+    end
+
+if
+001C:   $HORDE_OFF_TIMER_COUNTER > $HORDE_TIME // (int)
+jf @RANDOM_ZOMBIE_HORDE_OFF_CHECK
+
+0842: 0@ = player PLAYER_CHAR town_number
+
+if
+0@ > 0
+then
+0209: $HORDE_TIME = random_int_in_ranges $1HRD_ON_TIME_MIN $1HRD_ON_TIME_MAX  
+else
+0209: $HORDE_TIME = random_int_in_ranges $2HRD_ON_TIME_MIN $2HRD_ON_TIME_MAX
+end 
+
+0084: $WITCH_INSTANT_AGR2 = $WITCH_INSTANT_AGR // (int)
+$WITCH_INSTANT_AGR = 1
+
+$ZOMBIES_HORDE = 1
+
+if
+$MUSIC_VOLUME == 0.0
+then
+create_thread @HOR_SND
+end
+
+$HORDE_ON_TIMER_COUNTER = 0
+
+jump to @RANDOM_ZOMBIE_HORDE_ON_CHECK
+
+///////////////////////////////////////////ÎÐÄÀ ÂÊËÞ×ÅÍÀ, Ñ×ÈÒÀÅÌ ÒÀÉÌÅÐ ÎÊÎÍ×ÀÍÈß ÎÐÄÛ///////////////////////////////////////////
+
+:RANDOM_ZOMBIE_HORDE_ON_CHECK
+wait 0
+
+$ZOMBIES_HORDE = 1
+
+//0AD1: show_formatted_text_highpriority "$HORDE_ON_TIMER_COUNTER: %d, $HORDE_TIME: %d, $ZOMBIES_HORDE: %d" time 100 $HORDE_ON_TIMER_COUNTER $HORDE_TIME $ZOMBIES_HORDE
+
+if or
+$GAME_SPEED == 1.0
+$GAME_SPEED == 0.2  
+then
+
+if
+33@ >= 100
+then
+33@ = 0
+$HORDE_ON_TIMER_COUNTER += 60
+end
+
+end
+
+if
+$HORDE_SHOW_TIMER == 1
+then
+0AD1: show_formatted_text_highpriority "Horde On Timer: %d/%d" time 100 $HORDE_ON_TIMER_COUNTER $HORDE_TIME
+end
+
+if and
+$SALVATION_FLAG == 0
+$SAVESTATUS == 0
+$NEAR_SAVE_POINT == 0
+$SOUND_EFFECT1_FLAG == 0
+$SAVEPLACE_ON == 0
+$ZOMBIES_PROCENT > 0.0
+jf @RANDOM_ZOMBIE_HORDE_OFF
+if
+PLAYER_IN_NEST_FLAG == 0
+jf @RANDOM_ZOMBIE_HORDE_OFF
+if
+not MQ_ALLOW_HORDE == 1
+then
+if and
+MAIN_QUEST_MUSIC_FLAG == 0
+$ALLOW_ZOMBIE_HORDES == 1
+jf @RANDOM_ZOMBIE_HORDE_OFF
+end
+if
+not $QUEST_TYPE == 5
+jf @RANDOM_ZOMBIE_HORDE_OFF
+if
+001C:   $HORDE_ON_TIMER_COUNTER > $HORDE_TIME // (int)
+jf @RANDOM_ZOMBIE_HORDE_ON_CHECK
+$ZOMBIES_HORDE = 0  
+0084: $WITCH_INSTANT_AGR = $WITCH_INSTANT_AGR2 // (int)
+jump to @RANDOM_ZOMBIE_HORDE_OFF_START
+
+:RANDOM_ZOMBIE_HORDE_OFF
+$ZOMBIES_HORDE = 0  
+0084: $WITCH_INSTANT_AGR = $WITCH_INSTANT_AGR2 // (int)    
+jump to @RANDOM_ZOMBIE_HORDE_OFF_START
+
+:HORDE_NEAR_CAMP_CHECK
+
+2@ = 0
+
+if
+MQ_ALLOW_HORDE == 1
+then
+return
+end
+
+///////////////////////////////////////////////////////////////////////
+
+if
+UNITED_MAP == 0
+then
+1@ = 14
+else
+1@ = 9
+end
+
+for 0@ = 0 to 1@
+
+if
+UNITED_MAP == 0
+    then
+    
+    if and
+    00EC:   actor PLAYER_ACTOR sphere 0 near_point $CAMP_X[0@] $CAMP_Y[0@] radius 240.0 240.0
+    $CAMP_DEAD_FLAG[0@] == 0
+    then
+    2@ = 1
+    end
+    
+    else
+    
+    if and
+    00EC:   actor PLAYER_ACTOR sphere 0 near_point $CAMP_X[0@] $CAMP_Y[0@] radius 100.0 100.0
+    $CAMP_DEAD_FLAG[0@] == 0
+    then
+    2@ = 1
+    end
+    
+    end
+
+end
+
+///////////////////////////////////////////////////////////////////////
+
+if and
+2@ == 1
+PLAYER_NEAR_CAMP_ZMB_SPWN == 0
+then
+PLAYER_NEAR_CAMP_ZMB_SPWN = 1
+end
+
+if and
+2@ == 0
+PLAYER_NEAR_CAMP_ZMB_SPWN == 1
+then
+PLAYER_NEAR_CAMP_ZMB_SPWN = 0
+end
+
+return
+
+:HORDE_ORIGIN_SPOTTED_PHRASE
+
+repeat
+wait 0
+until ORIGIN_SPOTTED_SOME_SHIT == 0
+
+ORIGIN_SPOTTED_SOME_SHIT = 1
+
+gosub @RANDOM_DIALOG_DCD_SPOTTED_HORDE
+
+09FD: get_gxt_string v$PHRASE3 width_to 1@
+0093: 1@ = integer 1@ to_float
+1@ *= 8.0
+0092: 1@ = float 1@ to_integer
+
+32@ = 0
+008B: 31@ = $PHRASES_OFF_FLAG // (int)                    
+                    
+repeat
+wait 0
+$PHRASES_OFF_FLAG = 1 
+        
+0384: show_text_1string GXT v$PHRASE3 string v$NAME3 time 99 1
+            
+if or
+$SAVESTATUS_TRUE == 1
+$SAVESTATUS == 1
+GAME_OVER_FLAG == 1
+    then 
+    break
+    end
+            
+until 002D:   32@ >= 1@  // (int)
+
+008A: $PHRASES_OFF_FLAG = 31@ // (int)
+
+ORIGIN_SPOTTED_SOME_SHIT = 0
+
+return   
+
+:RANDOM_DIALOG_DCD_SPOTTED_HORDE
+    
+for 1@ = 0 to 200
+
+v$PHRASE1 = "DO184_"
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 30@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "DO184_"
+0AD3: v$PHRASE2 = format "%d" 30@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return

@@ -1,0 +1,3983 @@
+const
+SURV_SECOND_WAVE_EVACUATION_ENDING_FLAG = 20@
+EVA2_BANDITS_SPAWN_MIN = $BANDIT_MARKER_FLAG[0]
+EVA2_BANDITS_SPAWN_MAX = $BANDIT_MARKER_FLAG[1]
+EVA2_ARMY_SPAWN_MIN = $BANDIT_MARKER_FLAG[2]
+EVA2_ARMY_SPAWN_MAX = $BANDIT_MARKER_FLAG[3] 
+EVA2_FERMER_SPAWN_MIN = $BANDIT_MARKER_FLAG[4]
+EVA2_FERMER_SPAWN_MAX = $BANDIT_MARKER_FLAG[5]
+EVA2_SWAT_SPAWN_MIN = $BANDIT_MARKER_FLAG[6] 
+EVA2_SWAT_SPAWN_MAX = $BANDIT_MARKER_FLAG[7]
+EVA2_SURVIVERS_SPAWN_MIN = $BANDIT_MARKER_FLAG[8]
+EVA2_SURVIVERS_SPAWN_MAX = $BANDIT_MARKER_FLAG[9]
+EVA2_RNDM_PEOPLE_CAR_SPAWN_MIN = $BANDIT_MARKER_FLAG[10]
+EVA2_RNDM_PEOPLE_CAR_SPAWN_MAX = $BANDIT_MARKER_FLAG[11]
+end
+
+:SALVAT
+thread 'SALVAT'
+
+if
+SURV_SECOND_WAVE_EVACUATION_STARTED == 1
+then
+
+0084: EVA2_BANDITS_SPAWN_MIN = $BANDITS_SPAWN_MIN // (int)
+0084: EVA2_BANDITS_SPAWN_MAX = $BANDITS_SPAWN_MAX // (int)
+0084: EVA2_ARMY_SPAWN_MIN = $ARMY_SPAWN_MIN // (int)
+0084: EVA2_ARMY_SPAWN_MAX = $ARMY_SPAWN_MAX // (int)
+0084: EVA2_FERMER_SPAWN_MIN = $FERMER_SPAWN_MIN // (int)
+0084: EVA2_FERMER_SPAWN_MAX = $FERMER_SPAWN_MAX // (int)
+0084: EVA2_SWAT_SPAWN_MIN = $SWAT_SPAWN_MIN // (int)
+0084: EVA2_SWAT_SPAWN_MAX = $SWAT_SPAWN_MAX // (int)
+0084: EVA2_SURVIVERS_SPAWN_MIN = $SURVIVERS_SPAWN_MIN // (int)
+0084: EVA2_SURVIVERS_SPAWN_MAX = $SURVIVERS_SPAWN_MAX // (int)
+0084: EVA2_RNDM_PEOPLE_CAR_SPAWN_MIN = $RNDM_PEOPLE_CAR_SPAWN_MIN // (int)
+0084: EVA2_RNDM_PEOPLE_CAR_SPAWN_MAX = $RNDM_PEOPLE_CAR_SPAWN_MAX // (int)
+
+$BANDITS_SPAWN_MIN = 20
+$BANDITS_SPAWN_MAX = 40
+$ARMY_SPAWN_MIN = 20
+$ARMY_SPAWN_MAX = 40 
+$FERMER_SPAWN_MIN = 20
+$FERMER_SPAWN_MAX = 40
+$SWAT_SPAWN_MIN = 20 
+$SWAT_SPAWN_MAX = 40
+$SURVIVERS_SPAWN_MIN = 10000
+$SURVIVERS_SPAWN_MAX = 20000
+$RNDM_PEOPLE_CAR_SPAWN_MIN = 20
+$RNDM_PEOPLE_CAR_SPAWN_MAX = 40
+
+$NOTSAVE_MODE = 1
+
+32@ = 0
+SURV_SECOND_WAVE_EVACUATION_ENDING_FLAG = 0
+
+///////////////////////////////////////////////////////////////////
+
+$RADIO_SOUND = Audiostream.Load("AUDIO\SOUNDS\Radio.mp3") 
+Audiostream.Loop($RADIO_SOUND, 1)  
+Audiostream.Volume($RADIO_SOUND) = 0.0
+Audiostream.PerformAction($RADIO_SOUND, PLAY)
+
+Audiostream.Loop($RADIO_ON_SOUND,0)
+Audiostream.PerformAction($RADIO_ON_SOUND, PLAY)
+Audiostream.Volume($RADIO_ON_SOUND) = $SOUNDS_VOLUME
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $SOUNDS_VOLUME // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1 
+
+////////////////////////////////////////////////////////
+
+$PHRASES_OFF_FLAG = 1
+
+gosub @RANDOM_HELI_SAVER_SAY2
+
+09FD: get_gxt_string v$PHRASE3 width_to 3@
+0093: 3@ = integer 3@ to_float
+3@ *= 8.0
+0092: 3@ = float 3@ to_integer  
+
+32@ = 0
+
+text.ClearAll()
+
+repeat
+wait 0                        
+0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 3@ 1
+
+if or
+$SAVESTATUS_TRUE == 1
+$SAVESTATUS == 1
+$PANEL_OPEN == 1
+    then
+    $PHRASES_OFF_FLAG = 0
+    break
+    end
+
+until 001D:   32@ > 3@  // (int)
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 150
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+/////////////////////////////////////////////////////////////////
+
+Audiostream.Loop($RADIO_OFF_SOUND,0)
+Audiostream.PerformAction($RADIO_OFF_SOUND, PLAY)
+Audiostream.Volume($RADIO_OFF_SOUND) = $SOUNDS_VOLUME
+
+if
+UNITED_MAP == 0
+then
+
+gosub @SALVATION_SA_CREATED_POINTS_CHECK
+
+else
+
+if
+$UNITED_III_SPAWN == 1
+    then
+    $SAVE3 = marker.CreateIconAndSphere2(19, 139.5814, 652.1831, 11.8182)    
+    $SAVE2 = marker.CreateIconAndSphere2(19, -2293.0181, 505.5552, 2.6048)
+    else
+    $SAVE1 = marker.CreateIconAndSphere2(19, 194.3155, -2426.1455, 10.1189)    
+    $SAVE4 = marker.CreateIconAndSphere2(19, 2942.2952, 180.8833, 12.3776)
+    end
+
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+:RADIO_SAVE_CHECK
+wait 250
+
+/////////////////////////////////////////////////////////////////
+
+if and
+SURV_SECOND_WAVE_EVACUATION_STARTED == 1
+SURV_SECOND_WAVE_EVACUATION_ENDING_FLAG == 0
+32@ > 210000
+then
+33@ = 0
+SURV_SECOND_WAVE_EVACUATION_ENDING_FLAG = 1
+end
+
+/////////////////////////////////////////////////////////////////
+
+if and
+SURV_SECOND_WAVE_EVACUATION_STARTED == 1
+SURV_SECOND_WAVE_EVACUATION_ENDING_FLAG == 1
+33@ > 1000
+then
+33@ = 0
+
+////////////////////////////////
+
+if
+UNITED_MAP == 0
+then
+
+gosub @SALVATION_SA_CREATED_POINTS_CHECK2
+
+else
+
+////////////////////////////////
+
+if
+$UNITED_III_SPAWN == 1
+then
+
+if
+075C:   marker $SAVE3 enabled
+then
+marker.Disable($SAVE3)
+$SAVE3 = 0
+end
+if
+075C:   marker $SAVE2 enabled
+then
+marker.Disable($SAVE2)
+$SAVE2 = 0
+end
+
+else
+
+if
+075C:   marker $SAVE1 enabled
+then
+marker.Disable($SAVE1)
+$SAVE1 = 0
+end
+if
+075C:   marker $SAVE4 enabled
+then
+marker.Disable($SAVE4)
+$SAVE4 = 0
+end
+
+end
+
+end
+
+////////////////////////////////
+ 
+wait 500
+
+if
+UNITED_MAP == 0
+then
+
+gosub @SALVATION_SA_CREATED_POINTS_CHECK
+
+else
+
+if
+$UNITED_III_SPAWN == 1
+then
+$SAVE3 = marker.CreateIconAndSphere2(19, 139.5814, 652.1831, 11.8182)
+$SAVE2 = marker.CreateIconAndSphere2(19, -2293.0181, 505.5552, 2.6048)
+else
+$SAVE1 = marker.CreateIconAndSphere2(19, 194.3155, -2426.1455, 10.1189)
+$SAVE4 = marker.CreateIconAndSphere2(19, 2942.2952, 180.8833, 12.3776)
+end
+
+end
+
+////////////////////////////////
+
+wait 500
+end
+
+/////////////////////////////////////////////////////////////////
+
+if and
+SURV_SECOND_WAVE_EVACUATION_STARTED == 1
+32@ > 240000
+then
+
+////////////////////////////////
+
+if
+UNITED_MAP == 0
+then
+
+gosub @SALVATION_SA_CREATED_POINTS_CHECK2
+
+else
+
+if
+$UNITED_III_SPAWN == 1
+then
+
+if
+075C:   marker $SAVE3 enabled
+then
+marker.Disable($SAVE3)
+$SAVE3 = 0
+end
+if
+075C:   marker $SAVE2 enabled
+then
+marker.Disable($SAVE2)
+$SAVE2 = 0
+end
+
+else
+
+if
+075C:   marker $SAVE1 enabled
+then
+marker.Disable($SAVE1)
+$SAVE1 = 0
+end
+if
+075C:   marker $SAVE4 enabled
+then
+marker.Disable($SAVE4)
+$SAVE4 = 0
+end
+
+end
+
+end
+
+////////////////////////////////
+
+0084: $BANDITS_SPAWN_MIN = EVA2_BANDITS_SPAWN_MIN // (int)
+0084: $BANDITS_SPAWN_MAX = EVA2_BANDITS_SPAWN_MAX // (int)
+0084: $ARMY_SPAWN_MIN = EVA2_ARMY_SPAWN_MIN // (int)
+0084: $ARMY_SPAWN_MAX = EVA2_ARMY_SPAWN_MAX // (int)
+0084: $FERMER_SPAWN_MIN = EVA2_FERMER_SPAWN_MIN // (int)
+0084: $FERMER_SPAWN_MAX = EVA2_FERMER_SPAWN_MAX // (int)
+0084: $SWAT_SPAWN_MIN = EVA2_SWAT_SPAWN_MIN // (int)
+0084: $SWAT_SPAWN_MAX = EVA2_SWAT_SPAWN_MAX // (int)
+0084: $SURVIVERS_SPAWN_MIN = EVA2_SURVIVERS_SPAWN_MIN // (int)
+0084: $SURVIVERS_SPAWN_MAX = EVA2_SURVIVERS_SPAWN_MAX // (int)
+0084: $RNDM_PEOPLE_CAR_SPAWN_MIN = EVA2_RNDM_PEOPLE_CAR_SPAWN_MIN // (int)
+0084: $RNDM_PEOPLE_CAR_SPAWN_MAX = EVA2_RNDM_PEOPLE_CAR_SPAWN_MAX // (int)
+
+$NOTSAVE_MODE = 0
+$RADIO_HELP_FLAG = 0
+SURV_SECOND_WAVE_EVACUATION_STARTED = 2
+
+end_thread 
+
+end
+
+///////////////////////////////////////////////////////////////// 
+
+if 
+$RADIO_HELP_FLAG == 1
+jf @RADIO_SAVE_CHECK
+
+if
+UNITED_MAP == 0
+then
+jump @RADIO_SAVE_PLACE_CHECK1
+else
+jump @RADIO_SAVE_PLACE_CHECK_UNITED1
+end
+
+end_thread
+
+:RADIO_SAVE_PLACE_CHECK_UNITED1
+wait 0
+if and
+00FE:   actor PLAYER_ACTOR sphere 0 near_point -2292.6699 505.5513 10.1189 radius 40.0 40.0 20.0
+075C:   marker $SAVE2 enabled
+jf @RADIO_SAVE_PLACE_CHECK_UNITED2  
+$SAVE_METHOD = 3
+if
+STORIES_MAP == 0
+then
+
+if
+$UNITED_III_SPAWN == 1
+then   
+$CAR_MODEL = 15363
+else
+$CAR_MODEL = 15346
+end
+
+else
+$CAR_MODEL = 15553
+end
+$SAVE_PATH = 969
+$SAVE_PATH2 = 970
+v$SAVE_PLACE_STRING = "INV208"
+$SAVE_PLACE_NUMBER = 0
+0084: $SAVER_MODEL = $III_SAVER_SKIN // (int)
+$CAR_DES_X = -2292.6699
+$CAR_DES_Y = 505.5513
+$ZOMBIE_NEW_COORDS = 1
+$ZOMBIE_COORD_MAX = 1  
+$SPECIAL_INFECTED_SPAWN_OZC_FLAG = 1  
+$ZOMBIE_X[0] = -2378.938
+$ZOMBIE_Y[0] = 556.1007
+$ZOMBIE_Z[0] = 9.8051
+$LIMIT_X1 = -2351.9224
+$LIMIT_Y1 = 502.8865
+$LIMIT_Z1 = 2.8102
+$LIMIT_X2 = -2221.9692
+$LIMIT_Y2 = 520.2053
+$LIMIT_Z2 = 29.8102
+$SAVE_WAIT_TIME = 480000
+$ONMISSION = 1
+jump @RADIO_SAVE_START
+
+:RADIO_SAVE_PLACE_CHECK_UNITED2
+if and
+00FE:   actor PLAYER_ACTOR sphere 0 near_point 139.5814 652.1831 11.8182 radius 40.0 40.0 20.0
+075C:   marker $SAVE3 enabled
+jf @RADIO_SAVE_PLACE_CHECK_UNITED3  
+$SAVE_METHOD = 2   
+if
+STORIES_MAP == 0
+then   
+$CAR_MODEL = 15242
+else
+$CAR_MODEL = 15589
+end
+$SAVE_PATH = 971
+$SAVE_PATH2 = 972
+v$SAVE_PLACE_STRING = "INV209"
+$SAVE_PLACE_NUMBER = 1
+0084: $SAVER_MODEL = $III_SAVER_SKIN // (int)
+$CAR_DES_X = 118.0778
+$CAR_DES_Y = 643.902
+$ZOMBIE_NEW_COORDS = 1
+$ZOMBIE_COORD_MAX = 1  
+$SPECIAL_INFECTED_SPAWN_OZC_FLAG = 1  
+$ZOMBIE_X[0] = 36.676
+$ZOMBIE_Y[0] = 644.5884
+$ZOMBIE_Z[0] = 10.8182
+$LIMIT_X1 = 83.0552
+$LIMIT_Y1 = 652.8378
+$LIMIT_Z1 = 11.3963
+$LIMIT_X2 = 149.8965
+$LIMIT_Y2 = 635.699
+$LIMIT_Z2 = 22.3963
+$SAVE_WAIT_TIME = 480000
+$ONMISSION = 1
+jump @RADIO_SAVE_START      
+
+:RADIO_SAVE_PLACE_CHECK_UNITED3
+if and
+00FE:   actor PLAYER_ACTOR sphere 0 near_point 194.3155 -2426.1455 10.1189 radius 40.0 40.0 20.0
+075C:   marker $SAVE1 enabled
+jf @RADIO_SAVE_PLACE_CHECK_UNITED4  
+$SAVE_METHOD = 3   
+if
+STORIES_MAP == 0
+then
+   
+if
+$UNITED_III_SPAWN == 1
+then   
+$CAR_MODEL = 15363
+else
+$CAR_MODEL = 15346
+end
+
+else
+$CAR_MODEL = 15553
+end
+$SAVE_PATH = 975
+$SAVE_PATH2 = 976
+v$SAVE_PLACE_STRING = "INV210"
+$SAVE_PLACE_NUMBER = 2
+0084: $SAVER_MODEL = $VC_SAVER_SKIN // (int)
+$CAR_DES_X = 196.3573
+$CAR_DES_Y = -2415.0762
+$ZOMBIE_NEW_COORDS = 1
+$ZOMBIE_COORD_MAX = 3  
+$SPECIAL_INFECTED_SPAWN_OZC_FLAG = 1  
+$ZOMBIE_X[0] = 235.1093
+$ZOMBIE_Y[0] = -2500.2766
+$ZOMBIE_Z[0] = 8.3255
+$ZOMBIE_X[1] = 189.7406
+$ZOMBIE_Y[1] = -2313.0195
+$ZOMBIE_Z[1] = 8.3281
+$ZOMBIE_X[2] = 296.362
+$ZOMBIE_Y[2] = -2349.0737
+$ZOMBIE_Z[2] = 8.3281
+$LIMIT_X1 = 236.3371
+$LIMIT_Y1 = -2379.98
+$LIMIT_Z1 = 9.3255
+$LIMIT_X2 = 168.1604
+$LIMIT_Y2 = -2479.4636
+$LIMIT_Z2 = 9.3255
+$SAVE_WAIT_TIME = 480000
+$ONMISSION = 1
+jump @RADIO_SAVE_START
+
+:RADIO_SAVE_PLACE_CHECK_UNITED4
+if and
+00FE:   actor PLAYER_ACTOR sphere 0 near_point 2942.2952 180.8833 12.3776 radius 40.0 40.0 20.0
+075C:   marker $SAVE4 enabled
+jf @RADIO_SAVE_PLACE_CHECK_UNITED1  
+$SAVE_METHOD = 2   
+if
+STORIES_MAP == 0
+then   
+$CAR_MODEL = 15242
+else
+$CAR_MODEL = 15589
+end
+$SAVE_PATH = 973
+$SAVE_PATH2 = 974
+v$SAVE_PLACE_STRING = "INV211"
+$SAVE_PLACE_NUMBER = 3
+0084: $SAVER_MODEL = $VC_SAVER_SKIN // (int)
+$CAR_DES_X = 2942.2952
+$CAR_DES_Y = 180.8833
+$ZOMBIE_NEW_COORDS = 1
+$ZOMBIE_COORD_MAX = 2  
+$SPECIAL_INFECTED_SPAWN_OZC_FLAG = 1  
+$ZOMBIE_X[0] = 2924.3591
+$ZOMBIE_Y[0] = 116.5628   
+$ZOMBIE_Z[0] = 11.3776
+$ZOMBIE_X[1] = 2919.3467
+$ZOMBIE_Y[1] = 107.906
+$ZOMBIE_Z[1] = 11.3776
+$LIMIT_X1 = 2920.1912
+$LIMIT_Y1 = 146.3721
+$LIMIT_Z1 = 10.3849
+$LIMIT_X2 = 2959.4424
+$LIMIT_Y2 = 214.4888
+$LIMIT_Z2 = 20.3776
+$SAVE_WAIT_TIME = 480000
+$ONMISSION = 1
+jump @RADIO_SAVE_START      
+
+:RADIO_SAVE_PLACE_CHECK1
+wait 0
+if and
+00FE:   actor PLAYER_ACTOR sphere 0 near_point 2092.2388 2414.5007 74.5786 radius 40.0 40.0 20.0
+075C:   marker $SAVE8 enabled
+jf @RADIO_SAVE_PLACE_CHECK2  
+$SAVE_METHOD = 1
+$SAVE_PATH = 904
+$CAR_MODEL = 487
+v$SAVE_PLACE_STRING = "INV54"
+$SAVE_PLACE_NUMBER = 0
+$OUT_HEIGHT = 200.0
+$SAVER_MODEL = 240
+$CAR_DES_X = 2092.2388
+$CAR_DES_Y = 2414.5007
+$CAR_DES_OUT_X[0] = -3953.7019
+$CAR_DES_OUT_Y[0] = -3951.5923
+$CAR_DES_OUT_Z[0] = 22.9657
+$ZOMBIE_NEW_COORDS = 1
+$ZOMBIE_COORD_MAX = 1  
+$SPECIAL_INFECTED_SPAWN_OZC_FLAG = 1 
+$ZOMBIE_X[0] = 2098.468
+$ZOMBIE_Y[0] = 2401.6218
+$ZOMBIE_Z[0] = 74.5786
+$LIMIT_X1 = 2077.3831
+$LIMIT_Y1 = 2398.8921
+$LIMIT_Z1 = 85.2815
+$LIMIT_X2 = 2109.8833
+$LIMIT_Y2 = 2430.9563
+$LIMIT_Z2 = 72.2815
+$ZMB_IGNORE_Z = 1
+$ZMB_Z_RADIUS = 200.0
+$ZOMBIE_JUMP_TIMER = 5000
+$SAVE_WAIT_TIME = 480000
+$ONMISSION = 1
+jump @RADIO_SAVE_START
+
+:RADIO_SAVE_PLACE_CHECK2
+if and
+00FE:   actor PLAYER_ACTOR sphere 0 near_point 338.0774 2533.2825 16.8015 radius 40.0 40.0 20.0
+075C:   marker $SAVE1 enabled
+jf @RADIO_SAVE_PLACE_CHECK3
+$SAVE_METHOD = 3
+$CAR_MODEL = 511
+$SAVE_PATH = 923
+$SAVE_PATH2 = 924
+v$SAVE_PLACE_STRING = "INV58"
+$SAVE_PLACE_NUMBER = 1
+$SAVER_MODEL = 240
+$CAR_DES_X = 377.9642
+$CAR_DES_Y = 2539.6697 
+$ZOMBIE_NEW_COORDS = 1
+$ZOMBIE_COORD_MAX = 3  
+$SPECIAL_INFECTED_SPAWN_OZC_FLAG = 1  
+$ZOMBIE_X[0] = 404.9889
+$ZOMBIE_Y[0] = 2605.4883
+$ZOMBIE_Z[0] = 16.0546
+$ZOMBIE_X[1] = 457.0679
+$ZOMBIE_Y[1] = 2493.1467
+$ZOMBIE_Z[1] = 20.2107
+$ZOMBIE_X[2] = 264.3983
+$ZOMBIE_Y[2] = 2541.106
+$ZOMBIE_Z[2] = 16.8125
+$LIMIT_X1 = 406.9671
+$LIMIT_Y1 = 2552.3254
+$LIMIT_Z1 = 14.2316
+$LIMIT_X2 = 277.4519
+$LIMIT_Y2 = 2528.0208
+$LIMIT_Z2 = 24.2316
+$SAVE_WAIT_TIME = 480000
+$ONMISSION = 1
+jump @RADIO_SAVE_START
+
+:RADIO_SAVE_PLACE_CHECK3
+if and                                                 
+00FE:   actor PLAYER_ACTOR sphere 0 near_point 2955.822 -2051.7356 3.548 radius 40.0 40.0 20.0
+075C:   marker $SAVE4 enabled
+jf @RADIO_SAVE_PLACE_CHECK4
+$SAVE_METHOD = 2
+$SAVE_PATH = 909
+$SAVE_PATH2 = 910
+$CAR_MODEL = 473
+v$SAVE_PLACE_STRING = "INV44"
+$SAVE_PLACE_NUMBER = 2
+$SAVER_MODEL = 240
+$CAR_DES_X = 2955.822
+$CAR_DES_Y = -2051.7356 
+$ZOMBIE_NEW_COORDS = 1
+$ZOMBIE_COORD_MAX = 1  
+$SPECIAL_INFECTED_SPAWN_OZC_FLAG = 1 
+$ZOMBIE_X[0] = 2902.1836
+$ZOMBIE_Y[0] = -2101.8538
+$ZOMBIE_Z[0] = -100.0
+$LIMIT_X1 = 2897.4822
+$LIMIT_Y1 = -2055.7043
+$LIMIT_Z1 = -1.6517
+$LIMIT_X2 = 2949.613
+$LIMIT_Y2 = -2045.5352
+$LIMIT_Z2 = 11.6517
+$SAVE_WAIT_TIME = 480000  
+$ONMISSION = 1
+$HOLD_Z_TASK_SET = 50.0
+jump @RADIO_SAVE_START
+
+:RADIO_SAVE_PLACE_CHECK4
+if and
+00FE:   actor PLAYER_ACTOR sphere 0 near_point 2293.906 524.182 1.7944 radius 40.0 40.0 20.0
+075C:   marker $SAVE6 enabled
+jf @RADIO_SAVE_PLACE_CHECK5
+$SAVE_METHOD = 2
+$SAVE_PATH = 911
+$SAVE_PATH2 = 912
+$CAR_MODEL = 473
+v$SAVE_PLACE_STRING = "INV59"
+$SAVE_PLACE_NUMBER = 3
+$SAVER_MODEL = 240
+$CAR_DES_X = 2293.906
+$CAR_DES_Y = 524.182
+$ZOMBIE_NEW_COORDS = 1 
+$ZOMBIE_COORD_MAX = 2 
+$ZOMBIE_JUMP_Z = 5.0  
+$SPECIAL_INFECTED_SPAWN_OZC_FLAG = 1 
+$ZOMBIE_X[0] = 2300.594
+$ZOMBIE_Y[0] = 574.1674
+$ZOMBIE_Z[0] = 6.7812 
+$ZOMBIE_X[1] = 2288.2119
+$ZOMBIE_Y[1] = 573.5015
+$ZOMBIE_Z[1] = 6.7812
+$LIMIT_X1 = 2285.9092
+$LIMIT_Y1 = 517.5234
+$LIMIT_Z1 = -2.7944
+$LIMIT_X2 = 2301.9399
+$LIMIT_Y2 = 543.5726
+$LIMIT_Z2 = 15.7944
+$SAVE_WAIT_TIME = 480000
+$ONMISSION = 1
+jump @RADIO_SAVE_START
+
+:RADIO_SAVE_PLACE_CHECK5
+if and
+00FE:   actor PLAYER_ACTOR sphere 0 near_point 835.2798 -2060.6973 12.8672 radius 40.0 40.0 20.0
+075C:   marker $SAVE9 enabled
+jf @RADIO_SAVE_PLACE_CHECK6
+$SAVE_METHOD = 2
+$SAVE_PATH = 913
+$SAVE_PATH2 = 914
+$CAR_MODEL = 473
+v$SAVE_PLACE_STRING = "INV64"
+$SAVE_PLACE_NUMBER = 4
+$SAVER_MODEL = 240
+$CAR_DES_X = 835.2798
+$CAR_DES_Y = -2060.6973  
+$LIMIT_X1 = 818.3297
+$LIMIT_Y1 = -2069.4736
+$LIMIT_Z1 = 8.8672
+$LIMIT_X2 = 854.6517
+$LIMIT_Y2 = -2039.8262
+$LIMIT_Z2 = 20.8672
+$ZOMBIE_NEW_COORDS = 1
+$ZOMBIE_COORD_MAX = 2  
+$SPECIAL_INFECTED_SPAWN_OZC_FLAG = 1  
+$ZOMBIE_X[0] = 845.3421
+$ZOMBIE_Y[0] = -1990.6323
+$ZOMBIE_Z[0] = 11.8672
+$ZOMBIE_X[1] = 826.4417
+$ZOMBIE_Y[1] = -1992.3405
+$ZOMBIE_Z[1] = 11.8672
+$SAVE_WAIT_TIME = 480000
+$ONMISSION = 1
+jump @RADIO_SAVE_START
+
+:RADIO_SAVE_PLACE_CHECK6
+if and                                                
+00FE:   actor PLAYER_ACTOR sphere 0 near_point -396.5608 -1832.2134 2.3957 radius 40.0 40.0 20.0
+075C:   marker $SAVE3 enabled
+jf @RADIO_SAVE_PLACE_CHECK7
+$SAVE_METHOD = 2
+$SAVE_PATH = 915
+$SAVE_PATH2 = 916
+$CAR_MODEL = 473
+v$SAVE_PLACE_STRING = "INV46"
+$SAVE_PLACE_NUMBER = 5
+$SAVER_MODEL = 240
+$CAR_DES_X = -396.5608
+$CAR_DES_Y = -1832.2134
+$LIMIT_X1 = -412.8444
+$LIMIT_Y1 = -1847.5966
+$LIMIT_Z1 = -3.6608
+$LIMIT_X2 = -360.1818
+$LIMIT_Y2 = -1801.5022
+$LIMIT_Z2 = 12.6608
+$ZOMBIE_NEW_COORDS = 1
+$ZOMBIE_COORD_MAX = 3
+$SPECIAL_INFECTED_SPAWN_OZC_FLAG = 1  
+$ZOMBIE_X[0] = -469.1457
+$ZOMBIE_Y[0] = -1838.224
+$ZOMBIE_Z[0] = 11.4358 
+$ZOMBIE_X[1] = -399.7885
+$ZOMBIE_Y[1] = -1775.5492
+$ZOMBIE_Z[1] = 4.1348
+$ZOMBIE_X[2] = -339.3264
+$ZOMBIE_Y[2] = -1805.8148
+$ZOMBIE_Z[2] = 3.4211
+$SAVE_WAIT_TIME = 480000
+$ONMISSION = 1
+jump @RADIO_SAVE_START
+
+:RADIO_SAVE_PLACE_CHECK7
+if and
+00FE:   actor PLAYER_ACTOR sphere 0 near_point -2227.8855 2326.7197 7.5469 radius 40.0 40.0 20.0
+075C:   marker $SAVE2 enabled
+jf @RADIO_SAVE_PLACE_CHECK8
+$SAVE_METHOD = 1
+$SAVE_PATH = 906
+$CAR_MODEL = 487
+v$SAVE_PLACE_STRING = "INV55"
+$SAVE_PLACE_NUMBER = 6
+$OUT_HEIGHT = 250.0
+$SAVER_MODEL = 240
+$CAR_DES_X = -2227.8855
+$CAR_DES_Y = 2326.7197
+$Z_IGNORE_HEIGHT = 1
+$LIMIT_X1 = -2215.3547
+$LIMIT_Y1 = 2314.4656
+$LIMIT_Z1 = 6.5469
+$LIMIT_X2 = -2240.3801
+$LIMIT_Y2 = 2340.4412
+$LIMIT_Z2 = 15.5469
+$CAR_DES_OUT_X[0] = 918.3443
+$CAR_DES_OUT_Y[0] = 9885.5049
+$CAR_DES_OUT_Z[0] = 129.2719
+$ZOMBIE_NEW_COORDS = 1
+$ZOMBIE_COORD_MAX = 3
+$SPECIAL_INFECTED_SPAWN_OZC_FLAG = 1  
+$ZOMBIE_X[0] = -2287.9355
+$ZOMBIE_Y[0] = 2275.3677
+$ZOMBIE_Z[0] = 4.9707
+$ZOMBIE_X[1] = -2304.606
+$ZOMBIE_Y[1] = 2346.2927
+$ZOMBIE_Z[1] = 4.9844
+$ZOMBIE_X[2] = -2245.8516
+$ZOMBIE_Y[2] = 2373.844
+$ZOMBIE_Z[2] = 5.0023
+$SAVE_WAIT_TIME = 480000
+$ONMISSION = 1
+jump @RADIO_SAVE_START
+
+:RADIO_SAVE_PLACE_CHECK8
+if and                                              
+00FE:   actor PLAYER_ACTOR sphere 0 near_point -2942.2217 486.2326 2.4297 radius 40.0 40.0 20.0
+075C:   marker $SAVE5 enabled
+jf @RADIO_SAVE_PLACE_CHECK9
+$SAVE_METHOD = 2
+$SAVE_PATH = 917
+$SAVE_PATH2 = 918
+$CAR_MODEL = 473
+v$SAVE_PLACE_STRING = "INV69"
+$SAVE_PLACE_NUMBER = 7
+$SAVER_MODEL = 240
+$CAR_DES_X = -2942.2217
+$CAR_DES_Y = 486.2326
+$LIMIT_X1 = -2932.8662
+$LIMIT_Y1 = 508.6983
+$LIMIT_Z1 = 1.4297
+$LIMIT_X2 = -2978.8601
+$LIMIT_Y2 = 488.266
+$LIMIT_Z2 = 8.4297    
+$ZOMBIE_NEW_COORDS = 1
+$ZOMBIE_COORD_MAX = 2
+$SPECIAL_INFECTED_SPAWN_OZC_FLAG = 1  
+$ZOMBIE_X[0] = -2929.2271
+$ZOMBIE_Y[0] = 471.7816
+$ZOMBIE_Z[0] = 3.9141
+$ZOMBIE_X[1] = -2985.8018
+$ZOMBIE_Y[1] = 470.1034
+$ZOMBIE_Z[1] = 3.9141
+$SAVE_WAIT_TIME = 480000
+$ONMISSION = 1
+jump @RADIO_SAVE_START
+
+:RADIO_SAVE_PLACE_CHECK9
+if and
+00FE:   actor PLAYER_ACTOR sphere 0 near_point -1467.9188 1086.3396 1.5894 radius 40.0 40.0 20.0
+075C:   marker $SAVE7 enabled
+jf @RADIO_SAVE_PLACE_CHECK10
+$SAVE_METHOD = 2
+$SAVE_PATH = 919
+$SAVE_PATH2 = 920
+$CAR_MODEL = 473
+$CAR_DES_X = -1467.9188
+$CAR_DES_Y = 1086.3396
+$LIMIT_X1 = -1442.3193
+$LIMIT_Y1 = 1069.3912
+$LIMIT_Z1 = 5.0036
+$LIMIT_X2 = -1497.156
+$LIMIT_Y2 = 1090.7844
+$LIMIT_Z2 = 10.0036
+v$SAVE_PLACE_STRING = "INV71"
+$SAVE_PLACE_NUMBER = 8
+$SAVER_MODEL = 240
+$ZOMBIE_NEW_COORDS = 1
+$ZOMBIE_COORD_MAX = 2
+$SPECIAL_INFECTED_SPAWN_OZC_FLAG = 1 
+$ZOMBIE_X[0] = -1512.8271
+$ZOMBIE_Y[0] = 1047.9952
+$ZOMBIE_Z[0] = 6.1846
+$ZOMBIE_X[1] = -1513.499
+$ZOMBIE_Y[1] = 1105.0676
+$ZOMBIE_Z[1] = 6.1875
+$SAVE_WAIT_TIME = 480000
+$ONMISSION = 1
+$HOLD_Z_TASK_SET = 50.0
+jump @RADIO_SAVE_START
+
+:RADIO_SAVE_PLACE_CHECK10
+if and
+00FE:   actor PLAYER_ACTOR sphere 0 near_point -779.5929 2424.6409 157.1352 radius 40.0 40.0 20.0
+075C:   marker $SAVE10 enabled
+jf @RADIO_NOT_NEAR_ANY_SAVE_PLACE
+$SAVE_METHOD = 1
+$CAR_MODEL = 487
+$SAVE_PATH = 905
+v$SAVE_PLACE_STRING = "INV57"
+$SAVE_PLACE_NUMBER = 9
+$OUT_HEIGHT = 170.0
+$SAVER_MODEL = 240
+$CAR_DES_X = -779.5929
+$CAR_DES_Y = 2424.6409   
+$LIMIT_X1 = -757.3375
+$LIMIT_Y1 = 2475.5684
+$LIMIT_Z1 = 154.0287
+$LIMIT_X2 = -826.1553
+$LIMIT_Y2 = 2365.9309
+$LIMIT_Z2 = 163.0287 
+$CAR_DES_OUT_X[0] = 3958.0
+$CAR_DES_OUT_Y[0] = -3692.4678
+$CAR_DES_OUT_Z[0] = 500.9657  
+$ZOMBIE_NEW_COORDS = 1
+$ZOMBIE_COORD_MAX = 1
+$SPECIAL_INFECTED_SPAWN_OZC_FLAG = 1   
+$ZOMBIE_X[0] = -809.2403
+$ZOMBIE_Y[0] = 2367.5872
+$ZOMBIE_Z[0] = 151.5455
+$SAVE_WAIT_TIME = 480000
+$ONMISSION = 1
+jump @RADIO_SAVE_START
+
+:RADIO_SAVE_START
+wait 0
+
+if
+SURV_SECOND_WAVE_EVACUATION_STARTED == 1 
+then
+
+if
+UNITED_MAP == 0
+then
+
+gosub @SALVATION_SA_CREATED_POINTS_CHECK2
+
+else
+
+if
+$UNITED_III_SPAWN == 1
+then
+
+if
+075C:   marker $SAVE3 enabled
+then
+marker.Disable($SAVE3)
+$SAVE3 = 0
+end
+if
+075C:   marker $SAVE2 enabled
+then
+marker.Disable($SAVE2)
+$SAVE2 = 0
+end
+
+else
+
+if
+075C:   marker $SAVE1 enabled
+then
+marker.Disable($SAVE1)
+$SAVE1 = 0
+end
+if
+075C:   marker $SAVE4 enabled
+then
+marker.Disable($SAVE4)
+$SAVE4 = 0
+end
+
+end
+
+end
+
+end
+
+$CARS_WORK_FLAG = 1
+$INF_GASOLINE = 1
+$SLAVING_STARTED = 1
+$SPECIAL_INFECTED_NOT_SPAWN_FLAG = 1
+$RADIO_HELP_FLAG = 0
+$ZOMBIE_CLIMB_ALWAYS = 1
+$ZOMBIES_ALWAYS_VISIBLE = 1
+$SURVIVOR_THROW_TIME = 1500
+
+$HORDE_OFF_TIMER_COUNTER = 0
+$HORDE_ON_TIMER_COUNTER += 99999999
+
+if
+$MUTATION_ACTIVE == 10
+then
+$ZOMBIE_RUN_SPEED = 0.6
+end
+
+if
+$MUTATION_ACTIVE == 9
+then
+$ALLOW_ZOMBIE_HORDES = 1
+end
+
+if
+$MUTATION_ACTIVE == 13
+then       
+$HUNTER_WAIT_SPAWN_MIN = 10000
+$HUNTER_WAIT_SPAWN_MAX = 20000
+end
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT72_GOT"                                
+                                
+if and
+0@ == 0
+$MINUTES_PLAYED >= 58
+$CHEATED_FLAG == 0
+$FREEMODE == 0
+    then
+    v$ACHIEVEMNT = "ACH72"
+    $ACHIEVEMENT_GOT_FLAG = 1                                    
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT72_GOT"                                    
+    end   
+
+07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 0
+$COMMAND_GRP_SEAT_IN_TEXT = 0
+
+///////////////////////////////////////////////////////////////////
+
+0470: 9@ = actor PLAYER_ACTOR current_weapon
+01B9: set_actor PLAYER_ACTOR armed_weapon_to 0
+0992: set_player PLAYER_CHAR weapons_scrollable 0
+
+while not animation.Available("BOMBER")
+wait 0
+animation.Load("BOMBER")
+end
+
+0605: actor PLAYER_ACTOR perform_animation "BOM_PLANT" IFP "BOMBER" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1
+
+wait 100
+
+while actor.Animation(PLAYER_ACTOR) == "BOM_PLANT"
+wait 0
+
+0613: 0@ = actor PLAYER_ACTOR animation "BOM_PLANT" time
+
+if
+0@ > 0.85
+then
+break
+end
+
+end
+
+actor.StorePos(PLAYER_ACTOR,2@,3@,4@)
+4@ -= 1.0
+064B: 21@ = create_particle "SMOKE_FLARE" at 2@ 3@ 4@ type 1 
+064C: make_particle 21@ visible
+
+while actor.Animation(PLAYER_ACTOR) == "BOM_PLANT"
+wait 0
+end
+
+01B9: set_actor PLAYER_ACTOR armed_weapon_to 9@
+0992: set_player PLAYER_CHAR weapons_scrollable 1
+
+04EF: release_animation "BOMBER"
+
+///////////////////////////////////////////////////////////////////
+
+$RADIO_SOUND = Audiostream.Load("AUDIO\SOUNDS\Radio.mp3") 
+Audiostream.Loop($RADIO_SOUND, 1)  
+Audiostream.Volume($RADIO_SOUND) = 0.0
+Audiostream.PerformAction($RADIO_SOUND, PLAY)
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $SOUNDS_VOLUME // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1 
+
+////////////////////////////////////////////////////////    
+ 
+03E5: show_text_box 'INV42' 
+
+32@ = 0
+random_int 31@ 20000 60000
+
+repeat
+wait 0          
+until 001D:   32@ > 31@  // (int)
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 150
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+//////////////////////////////////////////////////////////
+
+$PHRASES_OFF_FLAG = 1
+
+32@ = 0
+
+09FD: get_gxt_string "INV43" width_to 3@  // ~k~~PED_SPRINT~ Select
+0093: 3@ = integer 3@ to_float
+3@ *= 8.0
+0092: 3@ = float 3@ to_integer
+
+repeat
+wait 0
+00BC: show_text_highpriority GXT 'INV43' time 100 flag 1
+until 001D:   32@ > 3@  // (int)
+
+//actor.StorePos(PLAYER_ACTOR,0@,1@,2@)
+//0843: get_zone_at 0@ 1@ 2@ nameA_to s$PLACE_STRING // 8-byte string
+
+32@ = 0
+
+09FD: get_gxt_string v$SAVE_PLACE_STRING width_to 3@  // ~k~~PED_SPRINT~ Select
+0093: 3@ = integer 3@ to_float
+3@ *= 8.0
+0092: 3@ = float 3@ to_integer
+
+repeat
+wait 0
+0384: show_text_1string GXT v$SAVE_PLACE_STRING string v$NAME3 time 100 1
+until 001D:   32@ > 3@  // (int)
+
+if
+$EASY_MODE == 1
+then
+$SAVE_WAIT_TIME = 180000
+$SAVE_WAIT_TIME2 = 3
+end
+
+if
+$NORMAL_MODE == 1
+then
+$SAVE_WAIT_TIME = 240000
+$SAVE_WAIT_TIME2 = 4
+end
+
+if
+$HARD_MODE == 1
+then
+$SAVE_WAIT_TIME = 300000
+$SAVE_WAIT_TIME2 = 5
+end
+
+if 
+$NIGHTMARE_MODE == 1
+then
+$SAVE_WAIT_TIME = 360000
+$SAVE_WAIT_TIME2 = 6
+end
+
+if
+$CUSTOM_MODE == 1
+then
+0084: $SAVE_WAIT_TIME = $SAVE_TIMER // (int)
+$SAVE_WAIT_TIME2 = 6
+end
+
+if
+SURV_SECOND_WAVE_EVACUATION_STARTED == 1
+then
+$SAVE_WAIT_TIME += 480000
+$SAVE_WAIT_TIME2 += 8
+end
+
+32@ = 0
+
+09FD: get_gxt_string 'INV45' width_to 3@  // ~k~~PED_SPRINT~ Select
+0093: 3@ = integer 3@ to_float
+3@ *= 8.0
+0092: 3@ = float 3@ to_integer
+
+repeat
+wait 0
+text.Show1Number('INV45',$SAVE_WAIT_TIME2,100,1)
+until 001D:   32@ > 3@  // (int)
+
+$PHRASES_OFF_FLAG = 0    
+
+$SAVING_PLACE_FLAG = 1
+$SALVATION_FLAG = 1
+$WITCH_INSTANT_AGR = 1
+
+if
+$MUTATION_ACTIVE == 10
+then
+$ZOMBIE_HP_MIN = 500
+$ZOMBIE_HP_MAX = 1000
+end
+
+fade 0 500
+
+$HUD_REMOVE = 1
+wait 500
+$SAVESTATUS = 1   
+
+06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0
+0992: set_player PLAYER_CHAR weapons_scrollable 1
+
+0792: disembark_instantly_actor PLAYER_ACTOR
+
+0662: printstring "----------Dead Ped On Ground Time by Wesser----------" 
+0A8C: write_memory 0x630D28 size 4 value 5000 virtual_protect 1 
+0A8C: write_memory 0x630D75 size 4 value 5000 virtual_protect 1
+0A8C: write_memory 0x612026 size 4 value 5000 virtual_protect 1
+
+gosub @SPECIAL_SPAWN_TIME_SET 
+gosub @ZOMBIESPAWN_NEW_COORDS                       
+
+wait 500
+
+$SAVING_STARTED = 1
+0629: change_integer_stat 258 to -1
+$SAVESTATUS = 0
+$NOTSPAWN = 0
+$NOTSPAWN_ETC = 1
+$ZOMBIES_HORDE = 1
+$DELETE_SOUND = 0
+fade 1 500
+$HUD_REMOVE = 0  
+wait 500
+03C3: set_timer_to $SAVE_WAIT_TIME type 1 GXT 'INV53'
+$SPECIAL_INFECTED_NOT_SPAWN_FLAG = 0   
+jump @SAVING_PLACE_CHECKING
+
+:SPECIAL_SPAWN_TIME_SET
+$WITCH_ANGRY_INST_FLAG = 1 
+gosub @ZOMBIE_SPAWN_TIME_DIFF_CHECK
+wait 5
+$ZOMBIE_TANK_SPAWN_TIMER_RESTART = 1
+$ZOMBIE_HUNTER_SPAWN_TIMER_RESTART = 1
+$ZOMBIE_WITCH_SPAWN_TIMER_RESTART = 1
+$ZOMBIE_CHARGER_SPAWN_TIMER_RESTART = 1
+wait 1
+$ZOMBIE_TANK_SPAWN_TIMER_RESTART = 0
+$ZOMBIE_HUNTER_SPAWN_TIMER_RESTART = 0
+$ZOMBIE_WITCH_SPAWN_TIMER_RESTART = 0
+$ZOMBIE_CHARGER_SPAWN_TIMER_RESTART = 0
+return
+
+:ZOMBIE_SPAWN_TIME_DIFF_CHECK
+
+if or
+$MUTATION_ACTIVE == 5
+$MUTATION_ACTIVE == 12
+$MUTATION_ACTIVE == 13
+then       
+return
+end
+
+if
+$EASY_MODE == 0
+then
+$TANK_WAIT_SPAWN_MIN = 100000
+$TANK_WAIT_SPAWN_MAX = 120000
+$HUNTER_WAIT_SPAWN_MIN = 40000
+$HUNTER_WAIT_SPAWN_MAX = 100000
+$WITCH_WAIT_SPAWN_MIN = 40000
+$WITCH_WAIT_SPAWN_MAX = 100000
+$CHARGER_WAIT_SPAWN_MIN = 40000
+$CHARGER_WAIT_SPAWN_MAX = 100000
+$CLOWN_TIMER_MIN = 20000
+$CLOWN_TIMER_MAX = 500000
+$HAZMAT_TIMER_MIN = 20000
+$HAZMAT_TIMER_MAX = 500000
+end
+
+if
+$NORMAL_MODE == 0
+then
+$TANK_WAIT_SPAWN_MIN = 100000
+$TANK_WAIT_SPAWN_MAX = 120000
+$HUNTER_WAIT_SPAWN_MIN = 40000
+$HUNTER_WAIT_SPAWN_MAX = 100000
+$WITCH_WAIT_SPAWN_MIN = 40000
+$WITCH_WAIT_SPAWN_MAX = 100000
+$CHARGER_WAIT_SPAWN_MIN = 40000
+$CHARGER_WAIT_SPAWN_MAX = 100000
+$CLOWN_TIMER_MIN = 20000
+$CLOWN_TIMER_MAX = 500000
+$HAZMAT_TIMER_MIN = 20000
+$HAZMAT_TIMER_MAX = 500000
+end
+
+if
+$HARD_MODE == 0
+then
+$TANK_WAIT_SPAWN_MIN = 100000
+$TANK_WAIT_SPAWN_MAX = 120000
+$HUNTER_WAIT_SPAWN_MIN = 40000
+$HUNTER_WAIT_SPAWN_MAX = 100000
+$WITCH_WAIT_SPAWN_MIN = 40000
+$WITCH_WAIT_SPAWN_MAX = 100000
+$CHARGER_WAIT_SPAWN_MIN = 40000
+$CHARGER_WAIT_SPAWN_MAX = 100000
+$CLOWN_TIMER_MIN = 20000
+$CLOWN_TIMER_MAX = 500000
+$HAZMAT_TIMER_MIN = 20000
+$HAZMAT_TIMER_MAX = 500000
+end
+
+if
+$NIGHTMARE_MODE == 0
+then
+$TANK_WAIT_SPAWN_MIN = 100000
+$TANK_WAIT_SPAWN_MAX = 120000
+$HUNTER_WAIT_SPAWN_MIN = 40000
+$HUNTER_WAIT_SPAWN_MAX = 100000
+$WITCH_WAIT_SPAWN_MIN = 40000
+$WITCH_WAIT_SPAWN_MAX = 100000
+$CHARGER_WAIT_SPAWN_MIN = 40000
+$CHARGER_WAIT_SPAWN_MAX = 100000
+$CLOWN_TIMER_MIN = 20000
+$CLOWN_TIMER_MAX = 500000
+$HAZMAT_TIMER_MIN = 20000
+$HAZMAT_TIMER_MAX = 500000
+end
+
+if
+$EXTREME_MODE == 0
+then
+$TANK_WAIT_SPAWN_MIN = 100000
+$TANK_WAIT_SPAWN_MAX = 120000
+$HUNTER_WAIT_SPAWN_MIN = 40000
+$HUNTER_WAIT_SPAWN_MAX = 100000
+$WITCH_WAIT_SPAWN_MIN = 40000
+$WITCH_WAIT_SPAWN_MAX = 100000
+$CHARGER_WAIT_SPAWN_MIN = 40000
+$CHARGER_WAIT_SPAWN_MAX = 100000
+$CLOWN_TIMER_MIN = 20000
+$CLOWN_TIMER_MAX = 500000
+$HAZMAT_TIMER_MIN = 20000
+$HAZMAT_TIMER_MAX = 500000
+end
+
+if
+$MUTATION_ACTIVE == 16
+then
+$WITCH_WAIT_SPAWN_MIN = 5000
+$WITCH_WAIT_SPAWN_MAX = 10000
+$WITCH_HEALTH /= 10
+end
+
+if
+SURV_SECOND_WAVE_EVACUATION_STARTED == 1
+then
+
+//////////////////////////////////////////////////////////////////////////
+
+008D: $TANK_WAIT_SPAWN_MIN = integer $TANK_WAIT_SPAWN_MIN to_float
+$TANK_WAIT_SPAWN_MIN *= 0.65
+008C: $TANK_WAIT_SPAWN_MIN = float $TANK_WAIT_SPAWN_MIN to_integer
+
+008D: $TANK_WAIT_SPAWN_MAX = integer $TANK_WAIT_SPAWN_MAX to_float
+$TANK_WAIT_SPAWN_MAX *= 0.65
+008C: $TANK_WAIT_SPAWN_MAX = float $TANK_WAIT_SPAWN_MAX to_integer
+
+//////////////////////////////////////////////////////////////////////////
+
+008D: $HUNTER_WAIT_SPAWN_MIN = integer $HUNTER_WAIT_SPAWN_MIN to_float
+$HUNTER_WAIT_SPAWN_MIN *= 0.65
+008C: $HUNTER_WAIT_SPAWN_MIN = float $HUNTER_WAIT_SPAWN_MIN to_integer
+
+008D: $HUNTER_WAIT_SPAWN_MAX = integer $HUNTER_WAIT_SPAWN_MAX to_float
+$HUNTER_WAIT_SPAWN_MAX *= 0.65
+008C: $HUNTER_WAIT_SPAWN_MAX = float $HUNTER_WAIT_SPAWN_MAX to_integer
+
+//////////////////////////////////////////////////////////////////////////
+
+008D: $WITCH_WAIT_SPAWN_MIN = integer $WITCH_WAIT_SPAWN_MIN to_float
+$WITCH_WAIT_SPAWN_MIN *= 0.65
+008C: $WITCH_WAIT_SPAWN_MIN = float $WITCH_WAIT_SPAWN_MIN to_integer
+
+008D: $WITCH_WAIT_SPAWN_MAX = integer $WITCH_WAIT_SPAWN_MAX to_float
+$WITCH_WAIT_SPAWN_MAX *= 0.65
+008C: $WITCH_WAIT_SPAWN_MAX = float $WITCH_WAIT_SPAWN_MAX to_integer
+
+//////////////////////////////////////////////////////////////////////////
+
+008D: $CHARGER_WAIT_SPAWN_MIN = integer $CHARGER_WAIT_SPAWN_MIN to_float
+$CHARGER_WAIT_SPAWN_MIN *= 0.65
+008C: $CHARGER_WAIT_SPAWN_MIN = float $CHARGER_WAIT_SPAWN_MIN to_integer
+
+008D: $CHARGER_WAIT_SPAWN_MAX = integer $CHARGER_WAIT_SPAWN_MAX to_float
+$CHARGER_WAIT_SPAWN_MAX *= 0.65
+008C: $CHARGER_WAIT_SPAWN_MAX = float $CHARGER_WAIT_SPAWN_MAX to_integer
+
+//////////////////////////////////////////////////////////////////////////
+
+end
+
+return
+
+:SAVING_PLACE_CHECKING
+wait 0
+07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 0
+$SAVING_PLACE_FLAG = 1 
+$SALVATION_FLAG = 1  
+$ZOMBIES_HORDE = 1
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @SAVING_PLACE_FAILED
+
+if
+UNITED_MAP == 0
+then
+if and
+00EC:   actor PLAYER_ACTOR sphere 0 near_point $CAR_DES_X $CAR_DES_Y radius 50.0 50.0 
+00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA $LIMIT_X1 $LIMIT_Y1 $LIMIT_Z1 cornerB $LIMIT_X2 $LIMIT_Y2 $LIMIT_Z2
+jf @SAVING_PLACE_FAILED3
+else
+if or
+00EC:   actor PLAYER_ACTOR sphere 0 near_point $CAR_DES_X $CAR_DES_Y radius 50.0 50.0 
+00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA $LIMIT_X1 $LIMIT_Y1 $LIMIT_Z1 cornerB $LIMIT_X2 $LIMIT_Y2 $LIMIT_Z2
+jf @SAVING_PLACE_FAILED3
+end
+
+if 
+$SAVE_WAIT_TIME < 10000 
+jf @CHECKING_WATER
+$SAVER_COMING = 1
+if
+not $SAVE_METHOD == 1
+jf @SAVING_PLACE_HELICOPTER
+if
+not $SAVE_METHOD == 2
+jf @SAVING_PLACE_BOAT
+jump @SAVING_PLACE_PLANE
+
+:SAVING_PLACE_HELICOPTER
+wait 0
+04C4: store_coords_to $CAR_X $CAR_Y $CAR_Z from_actor PLAYER_ACTOR with_offset 0.0 300.0 100.0
+
+:CAR_CREATE_SAVE_SALVATION
+if
+model.Available($CAR_MODEL)
+then
+$SAVE_CAR_PLACE = car.Create($CAR_MODEL,$CAR_X,$CAR_Y,$CAR_Z)
+else
+model.Load($CAR_MODEL)
+mload
+wait 0
+jump to @CAR_CREATE_SAVE_SALVATION
+end
+
+if
+model.Available($CAR_MODEL)
+then
+//model.Destroy($CAR_MODEL)
+end
+
+car.Health($SAVE_CAR_PLACE) = CAR_HEALTH_MAX
+
+if
+$CAR_MODEL == #MAVERICK
+then
+0229: set_car $SAVE_CAR_PLACE primary_color_to 1 secondary_color_to 2
+end
+
+while not model.Available($SAVER_MODEL)
+wait 0
+model.Load($SAVER_MODEL)
+mload
+end
+
+$SAVER = actor.CreateAsDriver(26,$SAVER_MODEL,$SAVE_CAR_PLACE)
+0338: set_car $SAVE_CAR_PLACE visibility 0
+0337: set_actor $SAVER visibility 0
+04D8: set_actor $SAVER drowns_in_water 0
+actor.Health($SAVER) = 1000
+actor.SetImmunities($SAVER,1,1,1,1,1,1)
+036A: put_actor $SAVER in_car $SAVE_CAR_PLACE
+
+repeat
+wait 0
+07C0: load_path $SAVE_PATH
+until 07C1:   path $SAVE_PATH available
+
+05EB: assign_car $SAVE_CAR_PLACE to_path $SAVE_PATH
+0338: set_car $SAVE_CAR_PLACE visibility 1
+0337: set_actor $SAVER visibility 1
+
+0A97: 11@ = car $SAVE_CAR_PLACE struct 
+11@ += 18
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+08BD: set 12@ bit 2
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 2
+
+gosub @HORDE_CHECKING 
+
+$RADIO_SOUND = Audiostream.Load("AUDIO\SOUNDS\Radio.mp3") 
+Audiostream.Loop($RADIO_SOUND, 1)  
+Audiostream.Volume($RADIO_SOUND) = 0.0
+Audiostream.PerformAction($RADIO_SOUND, PLAY)
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $SOUNDS_VOLUME // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1 
+
+////////////////////////////////////////////////////////
+
+wait 3000
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 150
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+//////////////////////////////////////////////////////////
+
+wait 2000
+
+32@ = 0 
+
+repeat
+wait 0
+00BC: show_text_highpriority GXT 'INV48' time 100 flag 1
+until 32@ > 3000
+
+$SAVE_CAR_PLACE_MARK = marker.CreateAboveCar($SAVE_CAR_PLACE)
+marker.SetColor($SAVE_CAR_PLACE_MARK,1)
+marker.SetIconSize($SAVE_CAR_PLACE_MARK,2)
+018B: set_marker $SAVE_CAR_PLACE_MARK radar_mode 0
+018B: set_marker $SAVE_CAR_PLACE_MARK radar_mode 2
+
+wait 5000
+014F: stop_timer $SAVE_WAIT_TIME
+ 
+:CHECKING_NEAR_HELICOPTER
+wait 0
+07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 0
+if 
+not car.Wrecked($SAVE_CAR_PLACE) 
+jf @RADIO_SAVE_FAILED_HELICOPTER
+if
+not actor.Dead($SAVER)  
+jf @RADIO_SAVE_FAILED_HELICOPTER_ACTOR
+if   
+not actor.Dead(PLAYER_ACTOR)
+jf @SAVING_PLACE_FAILED2
+0819: 0@ = actor $SAVER distance_from_ground   
+if 
+0@ < 5.0
+jf @CHECKING_NEAR_HELICOPTER
+
+$SAVER_GET_IN_START = 1
+$DELETE_SOUND = 1
+wait 2000
+
+if
+0205:   actor PLAYER_ACTOR near_car $SAVE_CAR_PLACE radius 3.5 3.5 3.5 flag 0
+then
+$NOT_MUSIC_SAVING = 1
+end
+
+create_thread @SV_GTN  
+$SAVE_WAIT_TIME = 30000
+03C3: set_timer_to $SAVE_WAIT_TIME type 1 GXT 'INV152'
+
+:CHECKING_ENTER
+wait 0
+07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 0
+if 
+not car.Wrecked($SAVE_CAR_PLACE) 
+jf @RADIO_SAVE_FAILED_HELICOPTER
+if
+not actor.Dead($SAVER)  
+jf @RADIO_SAVE_FAILED_HELICOPTER_ACTOR
+if
+not $SAVE_WAIT_TIME < 1
+jf @RADIO_SAVE_FAILED_TIME_OUT_HELI                 
+if   
+not actor.Dead(PLAYER_ACTOR)
+jf @SAVING_PLACE_FAILED
+
+:CHECKING_ENTER2
+wait 0
+07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 0
+if 
+not car.Wrecked($SAVE_CAR_PLACE) 
+jf @RADIO_SAVE_FAILED_HELICOPTER
+if
+not actor.Dead($SAVER)  
+jf @RADIO_SAVE_FAILED_HELICOPTER_ACTOR
+if
+not $SAVE_WAIT_TIME < 1
+jf @RADIO_SAVE_FAILED_TIME_OUT_HELI
+if   
+not actor.Dead(PLAYER_ACTOR)
+jf @SAVING_PLACE_FAILED
+
+if and
+0AB0:   key_pressed 69
+$CHEATS_ON == 1
+then
+jump to @CHECKING_ENTER2BBBBB
+end
+  
+if
+0205:   actor PLAYER_ACTOR near_car $SAVE_CAR_PLACE radius 3.5 3.5 3.5 flag 0
+jf @CHECKING_ENTER2
+
+:CHECKING_ENTER2BBBBB
+
+09BD: allow_other_threads_to_display_text_boxes 0
+
+$END_SAVING = 1
+064E: stop_particle 29@
+
+if
+075C:   marker $SAVE_CAR_PLACE_MARK enabled
+then  
+marker.Disable($SAVE_CAR_PLACE_MARK)
+$SAVE_CAR_PLACE_MARK = 0
+end
+
+$HUD_REMOVE = 1
+
+fade 0 200
+wait 200
+
+0430: put_actor PLAYER_ACTOR into_car $SAVE_CAR_PLACE passenger_seat 0
+wait 5
+
+05EC: release_car $SAVE_CAR_PLACE from_path
+0873: release_path $SAVE_PATH
+04A2: heli $SAVE_CAR_PLACE fly_to $CAR_DES_OUT_X[0] $CAR_DES_OUT_Y[0] $CAR_DES_OUT_Z[0] speed $OUT_HEIGHT $OUT_HEIGHT
+         
+$ALLOW_HUNGER = 0
+$DELETE_SOUND = 1
+$SAVER_COMING = 0 
+$FPS_COUNTER_ENABLED = 0 
+$FPS_COUNTER_ENABLED2 = 0    
+$SATIETY_LEVEL = 600.0
+$FATIGUE_LEVEL = 0.0
+$SAVESTATUS = 1
+BLACK_POLOSKI_ON = 1
+0A8C: write_memory 0xBB4A72 size 1 value 1 virtual_protect 0
+
+player.CanMove(PLAYER_CHAR) = false
+
+gosub @SALVATION_ACHIEVEMENT_CHECK
+gosub @FREND_TELEPORT_IN_HELI_CHECK
+
+02A3: enable_widescreen 1
+0A48: enable_menu_access_in_widescreen_mode 1
+
+if
+$FP_ACTIVATED == 0
+then
+093D: lock_camera_on_cinematic_view 1
+end
+  
+text.RemoveTextBox()
+text.ClearAll()
+wait 2000
+
+gosub @FREND_TELEPORT_IN_HELI_CHECK
+
+text.RemoveTextBox()
+text.ClearAll()
+fade 1 2000
+
+gosub @FREND_TELEPORT_IN_HELI_CHECK
+ 
+07BB: set_heli $SAVE_CAR_PLACE horizontal_thrust_power 5
+
+$CASETTE_PLAYING_FLAG = 1 
+gosub @RANDOM_WIN_MUSIC
+
+Audiostream.Volume($WIN_MUSIC) = $MUSIC_VOLUME
+Audiostream.Loop($WIN_MUSIC, 0)
+Audiostream.PerformAction($WIN_MUSIC, PLAY)
+$ZOMBIE_SPAWN_ON_COORD = 0
+$STATS_SHOW_FLAG = 0
+$STATS_SHOW_GAMEMODE = 1
+create_thread @STS_SHW
+
+$STATS_CAN_BE_SKIPPED = 0
+
+:CHECKING_STATS1
+wait 0
+gosub @FREND_TELEPORT_IN_HELI_CHECK
+if
+$STATS_CAN_BE_SKIPPED == 1
+then
+if or
+$STATS_SHOW_END == 1
+00E1:   player 0 pressed_key 17
+jf @CHECKING_STATS1
+else
+jump to @CHECKING_STATS1
+end
+
+$STATS_SHOW_END = 1
+$STATS_TOTAL_SHOW_OFF_FLAG = 1
+
+32@ = 0
+
+fade 0 3000
+
+while 32@ < 3100
+wait 0
+$STATS_TOTAL_SHOW_OFF_FLAG = 1
+end
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $WIN_MUSIC // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+//////////////////////////////////////////////////////////      
+
+$LOADING_THEME = Audiostream.Load("AUDIO\SOUNDS\loading_theme.wav") 
+    
+Audiostream.PerformAction($LOADING_THEME, PLAY)
+Audiostream.Loop($LOADING_THEME, 1)
+0086: $MUSIC_VOLUME22 = $MUSIC_VOLUME // (float)
+$MUSIC_VOLUME22 *= 0.5
+Audiostream.Volume($LOADING_THEME) = $MUSIC_VOLUME22
+
+0A8C: write_memory 0x0440F73 size 1 value 255 virtual_protect 1
+0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
+end_thread
+
+:RANDOM_WIN_MUSIC
+random_int 0@ 0 2
+
+if
+0@ == 0
+then
+$WIN_MUSIC = Audiostream.Load("AUDIO\SOUNDS\music\end_music\WIN1.wav")
+end
+
+if
+0@ == 1
+then
+$WIN_MUSIC = Audiostream.Load("AUDIO\SOUNDS\music\end_music\WIN2.wav")
+end
+
+return
+
+:MUSIC_2SAVE_OFF
+
+if
+$MUSIC_SAVER == -1
+    then
+    return
+    end
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_SAVER // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+return
+
+:FREND_TELEPORT_IN_HELI_CHECK
+
+if and
+056D:   actor $SURVIVER[0] defined
+$SURVIVOR_IN_PLAYER_TEAM[0] == 1
+then
+
+if
+8A32: not actor $SURVIVER[0] on_turret_of_car
+then
+0792: disembark_instantly_actor $SURVIVER[0]
+0470: 5@ = actor $SURVIVER[0] current_weapon
+0464: put_actor $SURVIVER[0] into_turret_on_car $SAVE_CAR_PLACE at_car_offset -1.2 0.0 -0.1 position 1 shooting_angle_limit 0.0 with_weapon 5@
+0812: AS_actor $SURVIVER[0] perform_animation "WEAPON_crouch" IFP "ped" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 99999  // versionB
+actor.Health($SURVIVER[0]) = 1000
+end
+
+end
+
+if and
+056D:   actor $SURVIVER[1] defined
+$SURVIVOR_IN_PLAYER_TEAM[1] == 1
+then
+
+if
+8A32: not actor $SURVIVER[1] on_turret_of_car
+then
+0792: disembark_instantly_actor $SURVIVER[1]
+0470: 5@ = actor $SURVIVER[1] current_weapon
+0464: put_actor $SURVIVER[1] into_turret_on_car $SAVE_CAR_PLACE at_car_offset -1.2 2.0 -0.1 position 1 shooting_angle_limit 0.0 with_weapon 5@
+0812: AS_actor $SURVIVER[1] perform_animation "WEAPON_crouch" IFP "ped" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 99999  // versionB
+actor.Health($SURVIVER[1]) = 1000
+end
+
+end
+
+if and
+056D:   actor $SURVIVER[2] defined
+$SURVIVOR_IN_PLAYER_TEAM[2] == 1
+then
+
+if
+8A32: not actor $SURVIVER[2] on_turret_of_car
+then
+0792: disembark_instantly_actor $SURVIVER[2]
+0470: 5@ = actor $SURVIVER[2] current_weapon
+0464: put_actor $SURVIVER[2] into_turret_on_car $SAVE_CAR_PLACE at_car_offset 1.2 0.0 -0.1 position 1 shooting_angle_limit 0.0 with_weapon 5@
+0812: AS_actor $SURVIVER[2] perform_animation "WEAPON_crouch" IFP "ped" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 99999  // versionB
+actor.Health($SURVIVER[2]) = 1000
+end
+
+end
+
+if and
+056D:   actor $SURVIVER[3] defined
+$SURVIVOR_IN_PLAYER_TEAM[3] == 1
+then
+
+if
+8A32: not actor $SURVIVER[3] on_turret_of_car
+then
+0792: disembark_instantly_actor $SURVIVER[3]
+0470: 5@ = actor $SURVIVER[3] current_weapon
+0464: put_actor $SURVIVER[3] into_turret_on_car $SAVE_CAR_PLACE at_car_offset -1.2 1.0 -0.1 position 1 shooting_angle_limit 0.0 with_weapon 5@
+0812: AS_actor $SURVIVER[3] perform_animation "WEAPON_crouch" IFP "ped" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 99999  // versionB
+actor.Health($SURVIVER[3]) = 1000
+end
+
+end
+
+if and
+056D:   actor $SURVIVER[4] defined
+$SURVIVOR_IN_PLAYER_TEAM[4] == 1
+then
+
+if
+8A32: not actor $SURVIVER[4] on_turret_of_car
+then
+0792: disembark_instantly_actor $SURVIVER[4]
+0470: 5@ = actor $SURVIVER[4] current_weapon
+0464: put_actor $SURVIVER[4] into_turret_on_car $SAVE_CAR_PLACE at_car_offset 1.2 2.0 -0.1 position 1 shooting_angle_limit 0.0 with_weapon 5@
+0812: AS_actor $SURVIVER[4] perform_animation "WEAPON_crouch" IFP "ped" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 99999  // versionB
+actor.Health($SURVIVER[4]) = 1000
+end
+
+end
+
+return
+
+:FREND_TELEPORT_IN_PLANE_CHECK
+
+if and
+056D:   actor $SURVIVER[0] defined
+$SURVIVOR_IN_PLAYER_TEAM[0] == 1
+then
+
+if
+8A32: not actor $SURVIVER[0] on_turret_of_car
+then
+0337: set_actor $SURVIVER[0] visibility 0
+0792: disembark_instantly_actor $SURVIVER[0]
+0470: 5@ = actor $SURVIVER[0] current_weapon
+0464: put_actor $SURVIVER[0] into_turret_on_car $SAVE_CAR_PLACE at_car_offset 0.0 0.0 -100.0 position 1 shooting_angle_limit 0.0 with_weapon 5@
+0812: AS_actor $SURVIVER[0] perform_animation "WEAPON_crouch" IFP "ped" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 99999  // versionB
+actor.Health($SURVIVER[0]) = 1000
+end
+
+end
+
+if and
+056D:   actor $SURVIVER[1] defined
+$SURVIVOR_IN_PLAYER_TEAM[1] == 1
+then
+
+if
+8A32: not actor $SURVIVER[1] on_turret_of_car
+then
+0337: set_actor $SURVIVER[1] visibility 0
+0792: disembark_instantly_actor $SURVIVER[1]
+0470: 5@ = actor $SURVIVER[1] current_weapon
+0464: put_actor $SURVIVER[1] into_turret_on_car $SAVE_CAR_PLACE at_car_offset 0.0 0.0 -100.0 position 1 shooting_angle_limit 0.0 with_weapon 5@
+0812: AS_actor $SURVIVER[1] perform_animation "WEAPON_crouch" IFP "ped" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 99999  // versionB
+actor.Health($SURVIVER[1]) = 1000
+end
+
+end
+
+if and
+056D:   actor $SURVIVER[2] defined
+$SURVIVOR_IN_PLAYER_TEAM[2] == 1
+then
+
+if
+8A32: not actor $SURVIVER[2] on_turret_of_car
+then
+0337: set_actor $SURVIVER[2] visibility 0
+0792: disembark_instantly_actor $SURVIVER[2]
+0470: 5@ = actor $SURVIVER[2] current_weapon
+0464: put_actor $SURVIVER[2] into_turret_on_car $SAVE_CAR_PLACE at_car_offset 0.0 0.0 -100.0 position 1 shooting_angle_limit 0.0 with_weapon 5@
+0812: AS_actor $SURVIVER[2] perform_animation "WEAPON_crouch" IFP "ped" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 99999  // versionB
+actor.Health($SURVIVER[2]) = 1000
+end
+
+end
+
+if and
+056D:   actor $SURVIVER[3] defined
+$SURVIVOR_IN_PLAYER_TEAM[3] == 1
+then
+
+if
+8A32: not actor $SURVIVER[3] on_turret_of_car
+then
+0337: set_actor $SURVIVER[3] visibility 0
+0792: disembark_instantly_actor $SURVIVER[3]
+0470: 5@ = actor $SURVIVER[3] current_weapon
+0464: put_actor $SURVIVER[3] into_turret_on_car $SAVE_CAR_PLACE at_car_offset 0.0 0.0 -100.0 position 1 shooting_angle_limit 0.0 with_weapon 5@
+0812: AS_actor $SURVIVER[3] perform_animation "WEAPON_crouch" IFP "ped" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 99999  // versionB
+actor.Health($SURVIVER[3]) = 1000
+end
+
+end
+
+if and
+056D:   actor $SURVIVER[4] defined
+$SURVIVOR_IN_PLAYER_TEAM[4] == 1
+then
+
+if
+8A32: not actor $SURVIVER[4] on_turret_of_car
+then
+0337: set_actor $SURVIVER[4] visibility 0
+0792: disembark_instantly_actor $SURVIVER[4]
+0470: 5@ = actor $SURVIVER[4] current_weapon
+0464: put_actor $SURVIVER[4] into_turret_on_car $SAVE_CAR_PLACE at_car_offset 0.0 0.0 -100.0 position 1 shooting_angle_limit 0.0 with_weapon 5@
+0812: AS_actor $SURVIVER[4] perform_animation "WEAPON_crouch" IFP "ped" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 99999  // versionB
+actor.Health($SURVIVER[4]) = 1000
+end
+
+end
+
+return  
+
+:RADIO_SAVE_FAILED_HELICOPTER
+if
+075C:   marker $SAVE_CAR_PLACE_MARK enabled
+then
+marker.Disable($SAVE_CAR_PLACE_MARK)
+$SAVE_CAR_PLACE_MARK = 0
+end
+$ONMISSION = 0
+$END_SAVING = 1
+$SAVING_PLACE_FLAG = 0
+$SPAWN_TANK_ON_COORD = 0
+$SPAWN_HUNTER_ON_COORD = 0
+$ZOMBIE_SPAWN_ON_COORD = 0
+gosub @MUSIC_2SAVE_OFF
+v$FAILED_TEXT = "MS_FL9"
+jump @SAVING_PLACE_FAILED2
+
+:RADIO_SAVE_FAILED_PLANE
+if
+075C:   marker $SAVE_CAR_PLACE_MARK enabled
+then
+marker.Disable($SAVE_CAR_PLACE_MARK)
+$SAVE_CAR_PLACE_MARK = 0
+end
+$ONMISSION = 0
+$END_SAVING = 1
+$SAVING_PLACE_FLAG = 0
+$SPAWN_TANK_ON_COORD = 0
+$SPAWN_HUNTER_ON_COORD = 0
+$ZOMBIE_SPAWN_ON_COORD = 0 
+gosub @MUSIC_2SAVE_OFF 
+v$FAILED_TEXT = "MS_FL26"
+jump @SAVING_PLACE_FAILED2
+
+:RADIO_SAVE_FAILED_BOAT
+if
+075C:   marker $SAVE_CAR_PLACE_MARK enabled
+then
+marker.Disable($SAVE_CAR_PLACE_MARK)
+$SAVE_CAR_PLACE_MARK = 0
+end
+$ONMISSION = 0
+$END_SAVING = 1
+$SAVING_PLACE_FLAG = 0
+$SPAWN_TANK_ON_COORD = 0
+$SPAWN_HUNTER_ON_COORD = 0
+$ZOMBIE_SPAWN_ON_COORD = 0  
+0465: remove_actor $SAVER from_turret_mode
+0792: disembark_instantly_actor $SAVER
+05BE: AS_actor $SAVER die  
+gosub @MUSIC_2SAVE_OFF
+v$FAILED_TEXT = "MS_FL10"
+jump @SAVING_PLACE_FAILED2
+
+:RADIO_SAVE_FAILED_HELICOPTER_ACTOR
+if
+075C:   marker $SAVE_CAR_PLACE_MARK enabled
+then
+marker.Disable($SAVE_CAR_PLACE_MARK)
+$SAVE_CAR_PLACE_MARK = 0
+end
+$ONMISSION = 0
+$END_SAVING = 1
+$SAVING_PLACE_FLAG = 0
+$SPAWN_TANK_ON_COORD = 0
+$SPAWN_HUNTER_ON_COORD = 0
+$ZOMBIE_SPAWN_ON_COORD = 0
+gosub @MUSIC_2SAVE_OFF
+v$FAILED_TEXT = "MS_FL20"
+jump @SAVING_PLACE_FAILED2
+
+:RADIO_SAVE_FAILED_TIME_OUT_HELI
+if
+075C:   marker $SAVE_CAR_PLACE_MARK enabled
+then  
+marker.Disable($SAVE_CAR_PLACE_MARK)
+$SAVE_CAR_PLACE_MARK = 0
+end
+$ONMISSION = 0
+$END_SAVING = 1
+$SAVING_PLACE_FLAG = 0
+$SPAWN_TANK_ON_COORD = 0
+$SPAWN_HUNTER_ON_COORD = 0  
+$ZOMBIE_SPAWN_ON_COORD = 0  
+$HUD_REMOVE = 1
+fade 0 500
+wait 500
+gosub @MUSIC_2SAVE_OFF
+fade 1 500
+wait 500
+v$FAILED_TEXT = "MS_FL30"
+05EC: release_car $SAVE_CAR_PLACE from_path
+0873: release_path $SAVE_PATH
+04A2: heli $SAVE_CAR_PLACE fly_to $CAR_DES_OUT_X[0] $CAR_DES_OUT_Y[0] $CAR_DES_OUT_Z[0] speed $OUT_HEIGHT $OUT_HEIGHT
+jump @SAVING_PLACE_FAILED2
+
+:RADIO_SAVE_FAILED_TIME_OUT_BOAT
+if
+075C:   marker $SAVE_CAR_PLACE_MARK enabled
+then
+marker.Disable($SAVE_CAR_PLACE_MARK)
+$SAVE_CAR_PLACE_MARK = 0
+end
+$ONMISSION = 0
+$END_SAVING = 1
+$SAVING_PLACE_FLAG = 0
+$SPAWN_TANK_ON_COORD = 0
+$SPAWN_HUNTER_ON_COORD = 0
+$ZOMBIE_SPAWN_ON_COORD = 0
+$HUD_REMOVE = 1
+fade 0 500
+wait 500
+gosub @MUSIC_2SAVE_OFF
+05EC: release_car $SAVE_CAR_PLACE from_path
+0873: release_path $SAVE_PATH
+
+repeat
+wait 0
+07C0: load_path $SAVE_PATH2
+until 07C1:   path $SAVE_PATH2 available
+
+05EB: assign_car $SAVE_CAR_PLACE to_path $SAVE_PATH2
+fade 1 500
+wait 500           
+v$FAILED_TEXT = "MS_FL30"  
+jump @SAVING_PLACE_FAILED2
+
+:RADIO_SAVE_FAILED_TIME_OUT_PLANE
+if
+075C:   marker $SAVE_CAR_PLACE_MARK enabled
+then
+marker.Disable($SAVE_CAR_PLACE_MARK)
+$SAVE_CAR_PLACE_MARK = 0
+end
+$ONMISSION = 0
+$END_SAVING = 1
+$SAVING_PLACE_FLAG = 0
+$SPAWN_TANK_ON_COORD = 0
+$SPAWN_HUNTER_ON_COORD = 0
+$ZOMBIE_SPAWN_ON_COORD = 0
+$HUD_REMOVE = 1
+fade 0 500
+wait 500
+gosub @MUSIC_2SAVE_OFF
+05EC: release_car $SAVE_CAR_PLACE from_path
+0873: release_path $SAVE_PATH
+
+repeat
+wait 0
+07C0: load_path $SAVE_PATH2
+until 07C1:   path $SAVE_PATH2 available
+
+05EB: assign_car $SAVE_CAR_PLACE to_path $SAVE_PATH2 
+fade 1 500
+wait 500
+v$FAILED_TEXT = "MS_FL30"
+jump @SAVING_PLACE_FAILED2
+
+:RADIO_SAVE_FAILED_BOAT_ACTOR
+if
+075C:   marker $SAVE_CAR_PLACE_MARK enabled
+then
+marker.Disable($SAVE_CAR_PLACE_MARK)
+$SAVE_CAR_PLACE_MARK = 0
+end
+0465: remove_actor $SAVER from_turret_mode
+0792: disembark_instantly_actor $SAVER
+05BE: AS_actor $SAVER die
+$ONMISSION = 0
+$END_SAVING = 1
+$SAVING_PLACE_FLAG = 0
+$SPAWN_TANK_ON_COORD = 0
+$SPAWN_HUNTER_ON_COORD = 0
+$ZOMBIE_SPAWN_ON_COORD = 0
+gosub @MUSIC_2SAVE_OFF
+v$FAILED_TEXT = "MS_FL20"
+jump @SAVING_PLACE_FAILED2
+
+:SAVING_PLACE_BOAT
+wait 0      
+04C4: store_coords_to $CAR_X $CAR_Y $CAR_Z from_actor PLAYER_ACTOR with_offset 0.0 300.0 100.0
+
+:CAR_CREATE_SAVE_SALVATION2
+if
+model.Available($CAR_MODEL)
+then
+$SAVE_CAR_PLACE = car.Create($CAR_MODEL,$CAR_X,$CAR_Y,$CAR_Z)
+else
+model.Load($CAR_MODEL)
+mload
+wait 0
+jump to @CAR_CREATE_SAVE_SALVATION2
+end
+
+if
+model.Available($CAR_MODEL)
+then
+//model.Destroy($CAR_MODEL)
+end
+
+car.Health($SAVE_CAR_PLACE) = CAR_HEALTH_MAX
+
+while not model.Available($SAVER_MODEL)
+wait 0
+model.Load($SAVER_MODEL)
+mload
+end
+
+$SAVER = actor.CreateAsDriver(26,$SAVER_MODEL,$SAVE_CAR_PLACE)    
+0338: set_car $SAVE_CAR_PLACE visibility 0
+0337: set_actor $SAVER visibility 0
+04D8: set_actor $SAVER drowns_in_water 0
+actor.Health($SAVER) = 1000        
+actor.SetImmunities($SAVER,1,1,1,1,1,1)
+0464: put_actor $SAVER into_turret_on_car $SAVE_CAR_PLACE at_car_offset 0.0 0.8 0.9 position 0 shooting_angle_limit 0.0 with_weapon 0 
+0605: actor $SAVER perform_animation "DRIVE_BOAT" IFP "PED" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 1 time 999999999 
+
+0526: set_actor $SAVER stay_in_car_when_jacked 1
+
+create_thread @PED_BKP $SAVER 371
+
+wait 2000
+
+repeat
+wait 0
+07C0: load_path $SAVE_PATH
+until 07C1:   path $SAVE_PATH available
+
+05EB: assign_car $SAVE_CAR_PLACE to_path $SAVE_PATH
+0338: set_car $SAVE_CAR_PLACE visibility 1
+0337: set_actor $SAVER visibility 1
+
+gosub @HORDE_CHECKING    
+
+$RADIO_SOUND = Audiostream.Load("AUDIO\SOUNDS\Radio.mp3") 
+Audiostream.Loop($RADIO_SOUND, 1)  
+Audiostream.Volume($RADIO_SOUND) = 0.0
+Audiostream.PerformAction($RADIO_SOUND, PLAY)
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $SOUNDS_VOLUME // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1 
+
+////////////////////////////////////////////////////////
+
+wait 3000
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 150
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+//////////////////////////////////////////////////////////
+
+wait 2000 
+
+$SAVE_CAR_PLACE_MARK = marker.CreateAboveCar($SAVE_CAR_PLACE)
+marker.SetColor($SAVE_CAR_PLACE_MARK,1)
+marker.SetIconSize($SAVE_CAR_PLACE_MARK,2)
+018B: set_marker $SAVE_CAR_PLACE_MARK radar_mode 0
+018B: set_marker $SAVE_CAR_PLACE_MARK radar_mode 2
+
+014F: stop_timer $SAVE_WAIT_TIME
+
+32@ = 0 
+
+repeat
+wait 0
+00BC: show_text_highpriority GXT 'INV48' time 100 flag 1
+until 32@ > 3000 
+
+:CHECKING_NEAR_BOAT
+wait 0
+if 
+not car.Wrecked($SAVE_CAR_PLACE) 
+jf @RADIO_SAVE_FAILED_BOAT
+0@ = actor.Health($SAVER)
+if
+not 0@ == 0
+jf @RADIO_SAVE_FAILED_BOAT_ACTOR
+if
+not actor.Dead($SAVER)  
+jf @RADIO_SAVE_FAILED_BOAT_ACTOR
+if   
+not actor.Dead(PLAYER_ACTOR)
+jf @SAVING_PLACE_FAILED2
+02E3: 0@ = car $SAVE_CAR_PLACE speed
+if
+0@ < 10.0 
+jf @CHECKING_NEAR_BOAT
+
+$SAVER_GET_IN_START = 1
+$DELETE_SOUND = 1
+wait 2000
+
+if
+UNITED_MAP == 1
+then
+$NOT_MUSIC_SAVING = 1
+end
+
+create_thread @SV_GTN
+   
+$SAVE_WAIT_TIME = 30000
+03C3: set_timer_to $SAVE_WAIT_TIME type 1 GXT 'INV152'
+
+:CHECKING_ENTER_BOAT
+wait 0
+if 
+not car.Wrecked($SAVE_CAR_PLACE) 
+jf @RADIO_SAVE_FAILED_BOAT
+0@ = actor.Health($SAVER)
+if
+not 0@ == 0
+jf @RADIO_SAVE_FAILED_BOAT_ACTOR
+if
+not actor.Dead($SAVER)  
+jf @RADIO_SAVE_FAILED_BOAT_ACTOR
+if
+not $SAVE_WAIT_TIME < 1
+jf @RADIO_SAVE_FAILED_TIME_OUT_BOAT
+if   
+not actor.Dead(PLAYER_ACTOR)
+jf @SAVING_PLACE_FAILED2
+
+if and
+0AB0:   key_pressed 69
+$CHEATS_ON == 1
+then
+jump to @CHECKING_ENTER_BOATBBBBB
+end
+
+if or
+0205:   actor PLAYER_ACTOR near_car $SAVE_CAR_PLACE radius 3.5 3.5 3.5 flag 0
+UNITED_MAP == 1
+jf @CHECKING_ENTER_BOAT
+
+:CHECKING_ENTER_BOATBBBBB
+                       
+09BD: allow_other_threads_to_display_text_boxes 0
+$END_SAVING = 1
+064E: stop_particle 29@
+if
+075C:   marker $SAVE_CAR_PLACE_MARK enabled
+then    
+marker.Disable($SAVE_CAR_PLACE_MARK)
+$SAVE_CAR_PLACE_MARK = 0
+end
+player.CanMove(PLAYER_CHAR) = false
+$HUD_REMOVE = 1
+fade 0 200
+
+repeat
+wait 0
+0464: put_actor $SAVER into_turret_on_car $SAVE_CAR_PLACE at_car_offset 0.0 0.8 0.9 position 0 shooting_angle_limit 0.0 with_weapon 0 
+0605: actor $SAVER perform_animation "DRIVE_BOAT" IFP "PED" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 1 time 999999999 
+until 816B: not  fading
+
+05EC: release_car $SAVE_CAR_PLACE from_path
+0873: release_path $SAVE_PATH
+
+$SAVESTATUS = 1
+
+gosub @SALVATION_ACHIEVEMENT_CHECK
+
+repeat
+wait 0
+07C0: load_path $SAVE_PATH2
+until 07C1:   path $SAVE_PATH2 available
+
+0337: set_actor $SAVER visibility 0
+0464: put_actor $SAVER into_turret_on_car $SAVE_CAR_PLACE at_car_offset 0.0 0.8 20.0 position 0 shooting_angle_limit 0.0 with_weapon 0
+
+05EB: assign_car $SAVE_CAR_PLACE to_path $SAVE_PATH2
+
+06AB: set_actor PLAYER_ACTOR all_weapons_hidden 1
+0792: disembark_instantly_actor PLAYER_ACTOR
+09C7: change_player PLAYER_CHAR model_to $SAVER_MODEL
+036A: put_actor PLAYER_ACTOR in_car $SAVE_CAR_PLACE
+
+while not model.Available($RANDOM_MODE_MODEL)
+wait 0
+model.Load($RANDOM_MODE_MODEL)
+mload
+end
+
+28@ = actor.Create(26,$RANDOM_MODE_MODEL,0.0,0.0,0.0)
+
+create_thread @PED_BKP 28@ 371
+060B: set_actor 28@ decision_maker_to $DEC_PEOPLE
+actor.Health(28@) = 9999
+actor.SetImmunities(28@,1,1,1,1,1)
+0464: put_actor 28@ into_turret_on_car $SAVE_CAR_PLACE at_car_offset 0.5 -0.8 1.0 position 0 shooting_angle_limit 0.0 with_weapon 0
+04EB: AS_actor 28@ crouch 1
+04D8: set_actor 28@ drowns_in_water 0  
+
+gosub @FREND_TELEPORT_IN_BOAT_CHECK
+   
+$ALLOW_HUNGER = 0
+$DELETE_SOUND = 1
+$SAVER_COMING = 0  
+$FPS_COUNTER_ENABLED = 0 
+$FPS_COUNTER_ENABLED2 = 0
+$SATIETY_LEVEL = 600.0
+$FATIGUE_LEVEL = 0.0
+
+BLACK_POLOSKI_ON = 1 
+player.CanMove(PLAYER_CHAR) = false
+02A3: enable_widescreen 1
+0A48: enable_menu_access_in_widescreen_mode 1
+text.RemoveTextBox()
+text.ClearAll()
+
+gosub @FREND_TELEPORT_IN_BOAT_CHECK
+wait 2000
+gosub @FREND_TELEPORT_IN_BOAT_CHECK
+
+text.RemoveTextBox()
+text.ClearAll()
+fade 1 2000
+gosub @FREND_TELEPORT_IN_BOAT_CHECK
+
+repeat
+wait 0
+gosub @FREND_TELEPORT_IN_BOAT_CHECK       
+0464: put_actor $SAVER into_turret_on_car $SAVE_CAR_PLACE at_car_offset 0.0 0.8 20.0 position 0 shooting_angle_limit 0.0 with_weapon 0 
+0605: actor $SAVER perform_animation "DRIVE_BOAT" IFP "PED" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 1 time 999999999 
+until 816B: not  fading
+
+$CASETTE_PLAYING_FLAG = 1 
+gosub @RANDOM_WIN_MUSIC
+
+Audiostream.Volume($WIN_MUSIC) = $MUSIC_VOLUME
+Audiostream.Loop($WIN_MUSIC, 0)
+Audiostream.PerformAction($WIN_MUSIC, PLAY)
+
+$ZOMBIE_SPAWN_ON_COORD = 0
+$ZOMBIE_X[0] = 0.0
+$ZOMBIE_Y[0] = 0.0
+$ZOMBIE_Z[0] = 0.0
+car.LockInCurrentPosition($SAVE_CAR_PLACE,false)
+$STATS_SHOW_FLAG = 0
+$STATS_SHOW_GAMEMODE = 1
+create_thread @STS_SHW
+
+$STATS_CAN_BE_SKIPPED = 0
+
+gosub @FREND_TELEPORT_IN_BOAT_CHECK
+
+for 1@ = 0 to 5
+    
+    092B: 0@ = group PLAYER_GROUP member 1@                                                     
+    if
+    056D:   actor 0@ defined
+    then
+    04D8: set_actor 0@ drowns_in_water 0
+    end
+    
+end
+
+:CHECKING_STATS2
+wait 0
+
+gosub @FREND_TELEPORT_IN_BOAT_CHECK    
+
+for 1@ = 0 to 5
+    
+    092B: 0@ = group PLAYER_GROUP member 1@                                                     
+    if
+    056D:   actor 0@ defined
+    then
+    04D8: set_actor 0@ drowns_in_water 0
+    end
+    
+end
+
+if
+$STATS_CAN_BE_SKIPPED == 1
+then
+if or
+$STATS_SHOW_END == 1
+00E1:   player 0 pressed_key 17
+jf @CHECKING_STATS2
+else
+jump to @CHECKING_STATS2
+end
+
+$STATS_SHOW_END = 1
+$STATS_TOTAL_SHOW_OFF_FLAG = 1
+
+gosub @FREND_TELEPORT_IN_BOAT_CHECK
+
+32@ = 0
+
+fade 0 3000
+
+while 32@ < 3100
+wait 0
+gosub @FREND_TELEPORT_IN_BOAT_CHECK
+$STATS_TOTAL_SHOW_OFF_FLAG = 1
+end
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $WIN_MUSIC // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+//////////////////////////////////////////////////////////      
+
+$LOADING_THEME = Audiostream.Load("AUDIO\SOUNDS\loading_theme.wav") 
+    
+Audiostream.PerformAction($LOADING_THEME, PLAY)
+Audiostream.Loop($LOADING_THEME, 1)
+0086: $MUSIC_VOLUME22 = $MUSIC_VOLUME // (float)
+$MUSIC_VOLUME22 *= 0.5
+Audiostream.Volume($LOADING_THEME) = $MUSIC_VOLUME22
+
+0A8C: write_memory 0x0440F73 size 1 value 255 virtual_protect 1
+0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
+end_thread
+
+:FREND_TELEPORT_IN_BOAT_CHECK
+
+if
+056D:   actor 28@ defined
+then
+0464: put_actor 28@ into_turret_on_car $SAVE_CAR_PLACE at_car_offset 0.5 -0.8 1.0 position 0 shooting_angle_limit 0.0 with_weapon 0
+0812: AS_actor 28@ perform_animation "WEAPON_crouch" IFP "ped" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 99999  // versionB
+04EB: AS_actor 28@ crouch 1
+04D8: set_actor 28@ drowns_in_water 0
+03C8: set_camera_directly_before_player
+end
+
+if and
+056D:   actor $SURVIVER[0] defined
+$SURVIVOR_IN_PLAYER_TEAM[0] == 1
+then
+
+if or
+8A32: not actor $SURVIVER[0] on_turret_of_car
+actor.Animation($SURVIVER[0]) == "run_civi"
+then
+0792: disembark_instantly_actor $SURVIVER[0]
+0470: 5@ = actor $SURVIVER[0] current_weapon
+0464: put_actor $SURVIVER[0] into_turret_on_car $SAVE_CAR_PLACE at_car_offset -0.3 0.3 1.0 position 1 shooting_angle_limit 0.0 with_weapon 5@
+0812: AS_actor $SURVIVER[0] perform_animation "WEAPON_crouch" IFP "ped" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 99999  // versionB
+actor.Health($SURVIVER[0]) = 1000
+end
+
+end
+
+if and
+056D:   actor $SURVIVER[1] defined
+$SURVIVOR_IN_PLAYER_TEAM[1] == 1
+then
+
+if or
+8A32: not actor $SURVIVER[1] on_turret_of_car
+actor.Animation($SURVIVER[1]) == "run_civi"
+then
+0792: disembark_instantly_actor $SURVIVER[1]
+0470: 5@ = actor $SURVIVER[1] current_weapon
+0464: put_actor $SURVIVER[1] into_turret_on_car $SAVE_CAR_PLACE at_car_offset 0.5 0.3 1.0 position 1 shooting_angle_limit 0.0 with_weapon 5@
+0812: AS_actor $SURVIVER[1] perform_animation "WEAPON_crouch" IFP "ped" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 99999  // versionB
+actor.Health($SURVIVER[1]) = 1000
+end
+
+end
+
+if and
+056D:   actor $SURVIVER[2] defined
+$SURVIVOR_IN_PLAYER_TEAM[2] == 1
+then
+
+if or
+8A32: not actor $SURVIVER[2] on_turret_of_car
+actor.Animation($SURVIVER[2]) == "run_civi"
+then
+0792: disembark_instantly_actor $SURVIVER[2]
+0470: 5@ = actor $SURVIVER[2] current_weapon
+0464: put_actor $SURVIVER[2] into_turret_on_car $SAVE_CAR_PLACE at_car_offset -0.3 -0.22 1.0 position 1 shooting_angle_limit 0.0 with_weapon 5@
+0812: AS_actor $SURVIVER[2] perform_animation "WEAPON_crouch" IFP "ped" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 99999  // versionB
+actor.Health($SURVIVER[2]) = 1000
+end
+
+end
+
+if and
+056D:   actor $SURVIVER[3] defined
+$SURVIVOR_IN_PLAYER_TEAM[3] == 1
+then
+
+if or
+8A32: not actor $SURVIVER[3] on_turret_of_car
+actor.Animation($SURVIVER[3]) == "run_civi"
+then
+0792: disembark_instantly_actor $SURVIVER[3]
+0470: 5@ = actor $SURVIVER[3] current_weapon
+0464: put_actor $SURVIVER[3] into_turret_on_car $SAVE_CAR_PLACE at_car_offset 0.5 -0.22 1.0 position 1 shooting_angle_limit 0.0 with_weapon 5@
+0812: AS_actor $SURVIVER[3] perform_animation "WEAPON_crouch" IFP "ped" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 99999  // versionB
+actor.Health($SURVIVER[3]) = 1000
+end
+
+end
+
+if and
+056D:   actor $SURVIVER[4] defined
+$SURVIVOR_IN_PLAYER_TEAM[4] == 1
+then
+
+if or
+8A32: not actor $SURVIVER[4] on_turret_of_car
+actor.Animation($SURVIVER[4]) == "run_civi"
+then
+0792: disembark_instantly_actor $SURVIVER[4]
+0470: 5@ = actor $SURVIVER[4] current_weapon
+0464: put_actor $SURVIVER[4] into_turret_on_car $SAVE_CAR_PLACE at_car_offset -0.3 -0.8 1.0 position 1 shooting_angle_limit 0.0 with_weapon 5@
+0812: AS_actor $SURVIVER[4] perform_animation "WEAPON_crouch" IFP "ped" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 99999  // versionB
+actor.Health($SURVIVER[4]) = 1000
+end
+
+end
+
+return
+
+:SAVING_PLACE_PLANE
+wait 0
+04C4: store_coords_to $CAR_X $CAR_Y $CAR_Z from_actor PLAYER_ACTOR with_offset 0.0 300.0 100.0
+
+:CAR_CREATE_SAVE_SALVATION3
+if
+model.Available($CAR_MODEL)
+then
+$SAVE_CAR_PLACE = car.Create($CAR_MODEL,$CAR_X,$CAR_Y,$CAR_Z)
+else
+model.Load($CAR_MODEL)
+mload
+wait 0
+jump to @CAR_CREATE_SAVE_SALVATION3
+end
+
+if
+model.Available($CAR_MODEL)
+then
+//model.Destroy($CAR_MODEL)
+end
+
+car.Health($SAVE_CAR_PLACE) = CAR_HEALTH_MAX
+
+while not model.Available($SAVER_MODEL)
+wait 0
+model.Load($SAVER_MODEL)
+mload
+end
+
+$SAVER = actor.CreateAsDriver(26,$SAVER_MODEL,$SAVE_CAR_PLACE)
+0338: set_car $SAVE_CAR_PLACE visibility 0
+0337: set_actor $SAVER visibility 0
+04D8: set_actor $SAVER drowns_in_water 0
+actor.Health($SAVER) = 1000
+actor.SetImmunities($SAVER,1,1,1,1,1,1)
+036A: put_actor $SAVER in_car $SAVE_CAR_PLACE
+
+repeat
+wait 0
+07C0: load_path $SAVE_PATH
+until 07C1:   path $SAVE_PATH available
+
+05EB: assign_car $SAVE_CAR_PLACE to_path $SAVE_PATH
+0338: set_car $SAVE_CAR_PLACE visibility 1
+0337: set_actor $SAVER visibility 1
+
+0A97: 11@ = car $SAVE_CAR_PLACE struct 
+11@ += 18
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+08BD: set 12@ bit 2
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 2
+
+gosub @HORDE_CHECKING
+
+$RADIO_SOUND = Audiostream.Load("AUDIO\SOUNDS\Radio.mp3") 
+Audiostream.Loop($RADIO_SOUND, 1)  
+Audiostream.Volume($RADIO_SOUND) = 0.0
+Audiostream.PerformAction($RADIO_SOUND, PLAY)
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $SOUNDS_VOLUME // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1 
+
+////////////////////////////////////////////////////////
+
+wait 3000
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 150
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+//////////////////////////////////////////////////////////
+
+wait 2000
+
+32@ = 0 
+
+repeat
+wait 0
+00BC: show_text_highpriority GXT 'INV48' time 100 flag 1
+until 32@ > 3000
+
+$SAVE_CAR_PLACE_MARK = marker.CreateAboveCar($SAVE_CAR_PLACE)
+marker.SetColor($SAVE_CAR_PLACE_MARK,1)
+marker.SetIconSize($SAVE_CAR_PLACE_MARK,2)
+018B: set_marker $SAVE_CAR_PLACE_MARK radar_mode 0
+018B: set_marker $SAVE_CAR_PLACE_MARK radar_mode 2
+
+wait 5000
+014F: stop_timer $SAVE_WAIT_TIME
+ 
+:CHECKING_NEAR_PLANE
+wait 0
+07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 0
+if 
+not car.Wrecked($SAVE_CAR_PLACE) 
+jf @RADIO_SAVE_FAILED_PLANE
+if
+not actor.Dead($SAVER)  
+jf @RADIO_SAVE_FAILED_HELICOPTER_ACTOR   
+if   
+not actor.Dead(PLAYER_ACTOR)
+jf @SAVING_PLACE_FAILED2
+02E3: 0@ = car $SAVE_CAR_PLACE speed
+if    
+0@ < 10.0   
+jf @CHECKING_NEAR_PLANE    
+
+if
+UNITED_MAP == 1
+then
+car.LockInCurrentPosition($SAVE_CAR_PLACE) = true
+end
+ 
+$SAVER_GET_IN_START = 1
+$DELETE_SOUND = 1
+wait 2000
+
+if
+0205:   actor PLAYER_ACTOR near_car $SAVE_CAR_PLACE radius 3.5 3.5 3.5 flag 0
+then
+$NOT_MUSIC_SAVING = 1
+end
+
+create_thread @SV_GTN  
+$SAVE_WAIT_TIME = 30000
+03C3: set_timer_to $SAVE_WAIT_TIME type 1 GXT 'INV152'
+
+:2CHECKING_ENTER
+wait 0
+07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 0
+if 
+not car.Wrecked($SAVE_CAR_PLACE) 
+jf @RADIO_SAVE_FAILED_PLANE
+if
+not actor.Dead($SAVER)  
+jf @RADIO_SAVE_FAILED_HELICOPTER_ACTOR   
+if
+not $SAVE_WAIT_TIME < 1
+jf @RADIO_SAVE_FAILED_TIME_OUT_PLANE
+if   
+not actor.Dead(PLAYER_ACTOR)
+jf @SAVING_PLACE_FAILED
+
+:2CHECKING_ENTER2
+wait 0
+07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 0
+if 
+not car.Wrecked($SAVE_CAR_PLACE) 
+jf @RADIO_SAVE_FAILED_PLANE
+if
+not actor.Dead($SAVER)  
+jf @RADIO_SAVE_FAILED_HELICOPTER_ACTOR  
+if
+not $SAVE_WAIT_TIME < 1
+jf @RADIO_SAVE_FAILED_TIME_OUT_PLANE
+if   
+not actor.Dead(PLAYER_ACTOR)
+jf @SAVING_PLACE_FAILED  
+
+if and
+0AB0:   key_pressed 69
+$CHEATS_ON == 1
+then
+jump to @2CHECKING_ENTER2TBBBBB
+end
+
+if
+0205:   actor PLAYER_ACTOR near_car $SAVE_CAR_PLACE radius 4.5 4.5 4.5 flag 0
+jf @2CHECKING_ENTER2
+
+:2CHECKING_ENTER2TBBBBB
+
+09BD: allow_other_threads_to_display_text_boxes 0
+
+$END_SAVING = 1
+064E: stop_particle 29@
+if
+075C:   marker $SAVE_CAR_PLACE_MARK enabled
+then
+marker.Disable($SAVE_CAR_PLACE_MARK)
+$SAVE_CAR_PLACE_MARK = 0
+end
+fade 0 200
+$HUD_REMOVE = 1
+wait 200
+
+0792: disembark_instantly_actor PLAYER_ACTOR
+0430: put_actor PLAYER_ACTOR into_car $SAVE_CAR_PLACE passenger_seat 0
+wait 5
+
+05EC: release_car $SAVE_CAR_PLACE from_path
+0873: release_path $SAVE_PATH
+wait 100
+
+if
+UNITED_MAP == 1
+then
+car.LockInCurrentPosition($SAVE_CAR_PLACE) = false
+end
+
+$SAVESTATUS = 1
+
+gosub @SALVATION_ACHIEVEMENT_CHECK
+
+repeat
+wait 0
+07C0: load_path $SAVE_PATH2
+until 07C1:   path $SAVE_PATH2 available
+
+05EB: assign_car $SAVE_CAR_PLACE to_path $SAVE_PATH2
+         
+$ALLOW_HUNGER = 0
+$DELETE_SOUND = 1
+$SAVER_COMING = 0
+$FPS_COUNTER_ENABLED = 0 
+$FPS_COUNTER_ENABLED2 = 0
+$SATIETY_LEVEL = 600.0
+$FATIGUE_LEVEL = 0.0
+BLACK_POLOSKI_ON = 1
+0A8C: write_memory 0xBB4A72 size 1 value 1 virtual_protect 0
+
+player.CanMove(PLAYER_CHAR) = false
+02A3: enable_widescreen 1
+0A48: enable_menu_access_in_widescreen_mode 1
+
+$SAVESTATUS = 1
+
+if
+$FP_ACTIVATED == 0
+then
+093D: lock_camera_on_cinematic_view 1
+end
+
+text.RemoveTextBox()
+text.ClearAll()
+wait 2000
+text.RemoveTextBox()
+text.ClearAll()
+fade 1 2000
+
+$CASETTE_PLAYING_FLAG = 1  
+gosub @RANDOM_WIN_MUSIC
+
+Audiostream.Volume($WIN_MUSIC) = $MUSIC_VOLUME
+Audiostream.Loop($WIN_MUSIC, 0)
+Audiostream.PerformAction($WIN_MUSIC, PLAY)
+
+$ZOMBIE_SPAWN_ON_COORD = 0
+$ZOMBIE_X[0] = 0.0
+$ZOMBIE_Y[0] = 0.0
+$ZOMBIE_Z[0] = 0.0
+$STATS_SHOW_FLAG = 0
+$STATS_SHOW_GAMEMODE = 1
+create_thread @STS_SHW
+
+$STATS_CAN_BE_SKIPPED = 0
+
+:2CHECKING_STATS1
+wait 0
+gosub @FREND_TELEPORT_IN_PLANE_CHECK
+if
+$STATS_CAN_BE_SKIPPED == 1
+then
+if or
+$STATS_SHOW_END == 1
+00E1:   player 0 pressed_key 17
+jf @2CHECKING_STATS1
+else
+jump to @2CHECKING_STATS1
+end
+
+$STATS_SHOW_END = 1
+$STATS_TOTAL_SHOW_OFF_FLAG = 1
+
+32@ = 0
+
+fade 0 3000
+
+while 32@ < 3100
+wait 0
+gosub @FREND_TELEPORT_IN_PLANE_CHECK
+$STATS_TOTAL_SHOW_OFF_FLAG = 1
+end
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $WIN_MUSIC // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+//////////////////////////////////////////////////////////      
+
+$LOADING_THEME = Audiostream.Load("AUDIO\SOUNDS\loading_theme.wav") 
+    
+Audiostream.PerformAction($LOADING_THEME, PLAY)
+Audiostream.Loop($LOADING_THEME, 1)
+0086: $MUSIC_VOLUME22 = $MUSIC_VOLUME // (float)
+$MUSIC_VOLUME22 *= 0.5
+Audiostream.Volume($LOADING_THEME) = $MUSIC_VOLUME22
+
+0A8C: write_memory 0x0440F73 size 1 value 255 virtual_protect 1
+0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
+end_thread
+
+:CHECKING_WATER
+wait 0
+if
+04AD:   actor PLAYER_ACTOR in_water
+jf @SAVING_PLACE_CHECKING
+jump @SAVING_PLACE_FAILED33
+
+:HORDE_CHECKING
+wait 0
+if
+$ZOMBIES_HORDE == 0
+jf @HORDE_CHECKING_RETURN
+return
+
+:HORDE_CHECKING_RETURN
+return
+
+:ZOMBIESPAWN_NEW_COORDS
+if
+$ZOMBIE_NEW_COORDS == 1
+jf @ZOMBIESPAWN_NEW_COORDS_RETURN
+$SAVESTATUS = 1
+$ZOMBIE_SPAWN_ON_COORD = 1
+wait 1000
+$SAVESTATUS = 0
+return
+
+:ZOMBIESPAWN_NEW_COORDS_RETURN
+return
+
+:RADIO_NOT_NEAR_ANY_SAVE_PLACE
+03E5: show_text_box 'INV41'
+$RADIO_HELP_FLAG = 0
+jump @RADIO_SAVE_CHECK
+
+:SAVING_PLACE_FAILED
+$ONMISSION = 0
+$END_SAVING = 1   
+$DELETE_SOUND = 1
+$END_SAVING = 1
+$SALVATION_FAILED = 1                                                  
+014F: stop_timer $SAVE_WAIT_TIME
+014F: stop_timer $WAIT_SPHERE 
+create_thread @GMV_OVR
+end_thread
+
+:SAVING_PLACE_FAILED2
+$ONMISSION = 0
+$END_SAVING = 1  
+$DELETE_SOUND = 1
+$END_SAVING = 1     
+$SALVATION_FAILED = 1                                                 
+car.RemoveReferences($SAVE_CAR_PLACE_MARK)
+actor.RemoveReferences($SAVER) 
+create_thread @GMV_OVR
+end_thread
+
+:SAVING_PLACE_FAILED3
+0396: pause_timer 1
+00BC: show_text_highpriority GXT 'INV52' time 3000 flag 1 
+
+:CHECKING_IN_SPHERE
+wait 0
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @SAVING_PLACE_FAILED
+
+if
+UNITED_MAP == 0
+then
+if and
+00EC:   actor PLAYER_ACTOR sphere 0 near_point $CAR_DES_X $CAR_DES_Y radius 50.0 50.0
+00A4:   actor PLAYER_ACTOR sphere 1 in_cube_cornerA $LIMIT_X1 $LIMIT_Y1 $LIMIT_Z1 cornerB $LIMIT_X2 $LIMIT_Y2 $LIMIT_Z2
+jf @CHECKING_IN_SPHERE
+else
+if or
+00EC:   actor PLAYER_ACTOR sphere 0 near_point $CAR_DES_X $CAR_DES_Y radius 50.0 50.0
+00A4:   actor PLAYER_ACTOR sphere 1 in_cube_cornerA $LIMIT_X1 $LIMIT_Y1 $LIMIT_Z1 cornerB $LIMIT_X2 $LIMIT_Y2 $LIMIT_Z2
+jf @CHECKING_IN_SPHERE
+end
+
+text.ClearAll()
+0396: pause_timer 0
+jump @SAVING_PLACE_CHECKING
+
+:SAVING_PLACE_FAILED33
+0396: pause_timer 1
+00BC: show_text_highpriority GXT 'GMD_S2' time 3000 flag 1  
+  
+:CHECKING_IN_SPHERE3
+wait 0
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @SAVING_PLACE_FAILED
+if
+84AD: not actor PLAYER_ACTOR in_water
+jf @CHECKING_IN_SPHERE3
+text.ClearAll()
+0396: pause_timer 0
+jump @SAVING_PLACE_CHECKING
+
+:SAVING_PLACE_FAILED4
+$ONMISSION = 0   
+$DELETE_SOUND = 1
+$END_SAVING = 1 
+$SAVING_PLACE_FLAG = 0  
+$SALVATION_FAILED = 1                                                  
+014F: stop_timer $SAVE_WAIT_TIME
+014F: stop_timer $WAIT_SPHERE 
+$ZOMBIE_SPAWN_ON_COORD = 0
+$ZOMBIE_X[0] = 0.0
+$ZOMBIE_Y[0] = 0.0
+$ZOMBIE_Z[0] = 0.0
+create_thread @GMV_OVR
+end_thread
+
+:RANDOM_HELI_SAVER_SAY2
+
+for 1@ = 0 to 200
+
+if
+SURV_SECOND_WAVE_EVACUATION_STARTED == 0
+then
+v$PHRASE1 = "PH108_" // v$ // Sunday
+else
+v$PHRASE1 = "PH137_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+if
+SURV_SECOND_WAVE_EVACUATION_STARTED == 0
+then
+v$PHRASE1 = "PH108_" // v$ // Sunday
+else
+v$PHRASE1 = "PH137_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+:SALVATION_SA_CREATED_POINTS_CHECK2
+
+if
+075C:   marker $SAVE1 enabled
+then
+marker.Disable($SAVE1)
+$SAVE1 = 0
+end
+
+if
+075C:   marker $SAVE2 enabled
+then
+marker.Disable($SAVE2)
+$SAVE2 = 0
+end
+
+if
+075C:   marker $SAVE3 enabled
+then
+marker.Disable($SAVE3)
+$SAVE3 = 0
+end
+
+if
+075C:   marker $SAVE4 enabled
+then
+marker.Disable($SAVE4)
+$SAVE4 = 0
+end
+
+if
+075C:   marker $SAVE5 enabled
+then
+marker.Disable($SAVE5)
+$SAVE5 = 0
+end
+
+if
+075C:   marker $SAVE6 enabled
+then
+marker.Disable($SAVE6)
+$SAVE6 = 0
+end
+
+if
+075C:   marker $SAVE7 enabled
+then
+marker.Disable($SAVE7)
+$SAVE7 = 0
+end
+
+if
+075C:   marker $SAVE8 enabled
+then
+marker.Disable($SAVE8)
+$SAVE8 = 0
+end
+
+if
+075C:   marker $SAVE9 enabled
+then
+marker.Disable($SAVE9)
+$SAVE9 = 0
+end
+
+if
+075C:   marker $SAVE10 enabled
+then
+marker.Disable($SAVE10)
+$SAVE10 = 0
+end
+
+return
+
+:SALVATION_SA_CREATED_POINTS_CHECK
+
+if
+SAVEPOINT01_CREATED_FLAG == 1
+then
+$SAVE1 = marker.CreateIconAndSphere2(19, 338.0774, 2533.2825, 16.8015)
+end
+
+if
+SAVEPOINT02_CREATED_FLAG == 1
+then
+$SAVE2 = marker.CreateIconAndSphere2(19, -2228.3655, 2326.533, 7.5469)
+end
+
+if
+SAVEPOINT03_CREATED_FLAG == 1
+then
+$SAVE3 = marker.CreateIconAndSphere2(19, -396.5608, -1832.2134, 2.3957)
+end
+
+if
+SAVEPOINT04_CREATED_FLAG == 1
+then
+$SAVE4 = marker.CreateIconAndSphere2(19, 2940.2991, -2051.5134, 3.548)
+end
+
+if
+SAVEPOINT05_CREATED_FLAG == 1
+then
+$SAVE5 = marker.CreateIconAndSphere2(19, -2947.7029, 501.7598, 2.4297)
+end
+
+if
+SAVEPOINT06_CREATED_FLAG == 1
+then
+$SAVE6 = marker.CreateIconAndSphere2(19, 2293.7642, 540.3326, 1.7944)
+end
+
+if
+SAVEPOINT07_CREATED_FLAG == 1
+then
+$SAVE7 = marker.CreateIconAndSphere2(19, -1464.6096, 1086.0884, 1.5894)
+end
+
+if
+SAVEPOINT08_CREATED_FLAG == 1
+then
+$SAVE8 = marker.CreateIconAndSphere2(19, 2093.3933, 2414.1125, 74.5786)
+end
+
+if
+SAVEPOINT09_CREATED_FLAG == 1
+then
+$SAVE9 = marker.CreateIconAndSphere2(19, 836.8555, -2060.2302, 12.8672)
+end
+
+if
+SAVEPOINT10_CREATED_FLAG == 1
+then
+$SAVE10 = marker.CreateIconAndSphere2(19, -779.5929, 2424.6409, 157.1352)
+end
+
+return
+
+:SALVATION_ACHIEVEMENT_CHECK 
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_SURV_COMPLETED"
+
+if
+$CHEATED_FLAG == 0 
+then                 
+0@ += 1
+end                
+ 
+0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_SURV_COMPLETED"
+0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT32_GOT"
+
+if and
+1@ == 0
+0@ >= 30
+$CHEATED_FLAG == 0
+$FREEMODE == 0
+    then
+    v$ACHIEVEMNT = "ACH32"
+    $ACHIEVEMENT_GOT_FLAG = 1    
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT32_GOT"    
+    end  
+    
+while $ACHIEVEMENT_GOT_FLAG == 1
+wait 0
+end        
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT4_GOT"   
+
+if and
+0@ == 0
+$CHEATED_FLAG == 0
+$FREEMODE == 0
+    then
+    v$ACHIEVEMNT = "ACH4"
+    $ACHIEVEMENT_GOT_FLAG = 1    
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT4_GOT"    
+    end  
+    
+while $ACHIEVEMENT_GOT_FLAG == 1
+wait 0
+end           
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT5_GOT"    
+    
+if and
+0@ == 0
+$NIGHTMARE_MODE == 1
+$CHEATED_FLAG == 0
+$FREEMODE == 0
+    then
+    v$ACHIEVEMNT = "ACH5"
+    $ACHIEVEMENT_GOT_FLAG = 1    
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT5_GOT"    
+    end  
+    
+while $ACHIEVEMENT_GOT_FLAG == 1
+wait 0
+end             
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT7_GOT"     
+    
+if and
+0@ == 0
+$MINUTES_PLAYED <= 20
+$CHEATED_FLAG == 0
+$FREEMODE == 0
+    then
+    v$ACHIEVEMNT = "ACH7"
+    $ACHIEVEMENT_GOT_FLAG = 1    
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT7_GOT"    
+    end  
+    
+while $ACHIEVEMENT_GOT_FLAG == 1
+wait 0
+end           
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT15_GOT"
+    
+if and
+0@ == 0    
+$CHEATED_FLAG == 0
+$ALLY_EVER_DIED == 0
+$STATS_TEAMMATE_BETRAYS_FROM == 0
+$STATS_TEAMMATE_BETRAYS_TO == 0
+$FREEMODE == 0
+    then
+    v$ACHIEVEMNT = "ACH15"
+    $ACHIEVEMENT_GOT_FLAG = 1    
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT15_GOT"    
+    end   
+    
+while $ACHIEVEMENT_GOT_FLAG == 1
+wait 0
+end    
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT28_GOT"
+    
+if and
+0@ == 0    
+$CHEATED_FLAG == 0
+$TEAMMATES_KILLED > 4
+$FREEMODE == 0
+    then
+    v$ACHIEVEMNT = "ACH28"
+    $ACHIEVEMENT_GOT_FLAG = 1    
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT28_GOT"    
+    end   
+    
+while $ACHIEVEMENT_GOT_FLAG == 1
+wait 0
+end
+
+if
+$CHEATED_FLAG == 0
+then
+
+if
+UNITED_MAP == 0
+then
+
+if
+$SAVE_PLACE_NUMBER == 0
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT1_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT1_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+    end
+    
+    end
+    
+if
+$SAVE_PLACE_NUMBER == 1
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT2_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT2_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+    end
+    
+    end
+    
+if
+$SAVE_PLACE_NUMBER == 2
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT3_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT3_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+    end
+    
+    end
+    
+if
+$SAVE_PLACE_NUMBER == 3
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT4_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT4_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+    end
+    
+    end
+    
+else
+
+if
+$SAVE_PLACE_NUMBER == 0
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT11_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT11_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+    end
+    
+    end
+    
+if
+$SAVE_PLACE_NUMBER == 1
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT12_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT12_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+    end
+    
+    end
+    
+if
+$SAVE_PLACE_NUMBER == 2
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT13_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT13_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+    end
+    
+    end
+    
+if
+$SAVE_PLACE_NUMBER == 3
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT14_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT14_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+    end
+    
+    end
+
+end    
+    
+if
+$SAVE_PLACE_NUMBER == 4
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT5_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT5_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+    end
+    
+    end
+    
+if
+$SAVE_PLACE_NUMBER == 5
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT6_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT6_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+    end
+    
+    end
+    
+if
+$SAVE_PLACE_NUMBER == 6
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT7_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT7_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+    end
+    
+    end
+    
+if
+$SAVE_PLACE_NUMBER == 7
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT8_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT8_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+    end
+    
+    end
+    
+if
+$SAVE_PLACE_NUMBER == 8
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT9_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT9_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+    end
+    
+    end
+    
+if
+$SAVE_PLACE_NUMBER == 9
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT10_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT10_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+    end
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT77_GOT"
+0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "SALVATION_POINT_GOT_TOTAL"
+        
+        
+if and
+0@ == 0
+1@ >= 14
+$CHEATED_FLAG == 0
+    then
+    v$ACHIEVEMNT = "ACH77"
+    $ACHIEVEMENT_GOT_FLAG = 1            
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT77_GOT"            
+    end                                                
+
+end
+
+while $ACHIEVEMENT_GOT_FLAG == 1
+wait 0
+end    
+    
+if
+$CHEATED_FLAG == 0
+then
+
+if
+$MUTATION_ACTIVE == 0
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION1_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION1_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    end
+    
+    end
+    
+if
+$MUTATION_ACTIVE == 1
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION2_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION2_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    end
+    
+    end
+    
+if
+$MUTATION_ACTIVE == 2
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION3_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION3_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    end
+    
+    end
+    
+if
+$MUTATION_ACTIVE == 3
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION4_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION4_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    end
+    
+    end
+    
+if
+$MUTATION_ACTIVE == 4
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION5_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION5_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    end
+    
+    end
+    
+if
+$MUTATION_ACTIVE == 5
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION6_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION6_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    end
+    
+    end
+    
+if
+$MUTATION_ACTIVE == 6
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION7_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION7_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    end
+    
+    end
+    
+if
+$MUTATION_ACTIVE == 7
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION8_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION8_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    end
+    
+    end
+    
+if
+$MUTATION_ACTIVE == 8
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION9_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION9_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    end
+    
+    end
+    
+if
+$MUTATION_ACTIVE == 9
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION10_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION10_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    end
+    
+    end
+    
+if
+$MUTATION_ACTIVE == 10
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION11_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION11_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    end
+    
+    end
+    
+if
+$MUTATION_ACTIVE == 11
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION12_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION12_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    end
+    
+    end
+    
+if
+$MUTATION_ACTIVE == 12
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION13_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION13_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    end
+    
+    end
+    
+if
+$MUTATION_ACTIVE == 13
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION14_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION14_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    end
+    
+    end
+    
+if
+$MUTATION_ACTIVE == 14
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION15_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION15_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    end
+    
+    end
+    
+if
+$MUTATION_ACTIVE == 15
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION16_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION16_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    end
+    
+    end
+    
+if
+$MUTATION_ACTIVE == 16
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION17_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION17_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    end
+    
+    end 
+    
+if
+$MUTATION_ACTIVE == 17
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION18_GOT"
+    
+    if
+    0@ == 0
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION18_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"
+    end
+    
+    end                       
+    
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT67_GOT"
+0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "MUTATION_GOT_TOTAL"        
+        
+if and
+0@ == 0
+1@ >= 18
+$CHEATED_FLAG == 0
+    then
+    v$ACHIEVEMNT = "ACH67"
+    $ACHIEVEMENT_GOT_FLAG = 1            
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT67_GOT"            
+    end                                                
+    
+end
+
+while $ACHIEVEMENT_GOT_FLAG == 1
+wait 0
+end                              
+    
+return    
