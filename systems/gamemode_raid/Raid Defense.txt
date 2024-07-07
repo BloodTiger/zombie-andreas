@@ -1,0 +1,1904 @@
+:RD_DEF
+thread 'RD_DEF'
+
+0629: change_integer_stat 252 to 10
+0AF1: write_int 10 to_ini_file "saves/ZACM.set" section "SCR" key "GAMEMODE_AUTOSELECT_NUMBER"
+
+if
+UNITED_MAP == 0
+then
+0776: create_objects_in_object_group "gatesC"
+end
+
+THREADS_AFTERGAMEMODE_SELECT_DELETE = 0
+
+$IGNOREALL_FLAG = 1
+$ASS_FLAG = 1
+LEADER_DIED_FLAG = -1
+
+$SURVIVER_MIN_HEALTH = 2000
+$SURVIVER_MAX_HEALTH = 2000
+
+0AF1: write_int 2 to_ini_file "saves/ZACM.set" section "SCR" key "PLAYER_SPAWNED_FLAG"
+
+0AF0: 27@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "TOTAL_SPAWNS"
+27@ += 1
+0AF1: write_int 27@ to_ini_file "saves/ZACM.set" section "SCR" key "TOTAL_SPAWNS"
+
+if
+$GAMEMODE_WAR == 0
+then
+create_thread @PERK_SH
+end
+
+$FPS_COUNTER_ENABLED = 0   
+
+$GAMEMODE_SURVIVAL = 1
+$DEFENSE_CHALLENGE_FLAG = 1
+PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 1
+
+$ZOMBIE_RUN_SPEED += 0.15
+$ZOMBIE_PREFIGHT_SPEED += 0.15
+$ZOMBIE_ATTACK_SPEED += 0.15
+
+$ZOMBIE_HP_MIN += 40
+$ZOMBIE_HP_MAX += 40
+
+$BANDITS_ACCURACY += ACQ_PLUS
+$ARMY_ACCURACY += ACQ_PLUS
+$FERMER_ACCURACY += ACQ_PLUS
+$SWAT_ACCURACY += ACQ_PLUS
+$SURV_ACCURACY += ACQ_PLUS
+$SURV_ACCURACY2 += ACQ_PLUS
+
+$NOTSAVE_MODE = 1
+$ALLOW_HUNGER = 0
+$CAMP_SPOTTED_FLAG_SAVE = 1
+0084: $QUEST_CAMP_NUMBER = CARMA_GLOB_RACE_NUMBER // (int)
+
+//Выключаем дроп денег насильным путем
+0E6A: make_nop 0x63075C size 5
+
+$DONT_CHANGE_MONTH_FLAG = 1
+wait 100
+random_int 1@ 18 22
+0A8C: write_memory 0x00B70154 size 1 value 1@ virtual_protect 0 //Day
+0A8C: write_memory 0x00B70155 size 1 value 10 virtual_protect 0 //Month
+wait 100
+$DONT_CHANGE_MONTH_FLAG = 0
+
+0835: get_month_day_to 10@ get_month_to 11@
+
+if
+10@ == 18
+then
+0A8C: write_memory 0xB7014E size 1 value 3 virtual_protect 1
+end
+
+if
+10@ == 19
+then
+0A8C: write_memory 0xB7014E size 1 value 4 virtual_protect 1
+end
+
+if
+10@ == 20
+then
+0A8C: write_memory 0xB7014E size 1 value 5 virtual_protect 1
+end
+
+if
+10@ == 21
+then
+0A8C: write_memory 0xB7014E size 1 value 6 virtual_protect 1
+end
+
+1@ = 0.0
+062A: change_float_stat 69 to 1@
+062A: change_float_stat 70 to 1@
+062A: change_float_stat 71 to 1@
+062A: change_float_stat 72 to 1@
+062A: change_float_stat 73 to 1@
+062A: change_float_stat 74 to 1@  
+062A: change_float_stat 75 to 1@  
+062A: change_float_stat 76 to 1@
+062A: change_float_stat 77 to 1@
+062A: change_float_stat 78 to 1@
+062A: change_float_stat 79 to 1@
+
+random_int 1@ 0 to 1000
+0629: change_integer_stat 160 to 1@
+random_int 1@ 0 to 1000
+0629: change_integer_stat 223 to 1@
+random_int 1@ 0 to 1000
+0629: change_integer_stat 225 to 1@
+random_int 1@ 0 to 1000
+0629: change_integer_stat 229 to 1@
+random_int 1@ 0 to 1000
+0629: change_integer_stat 230 to 1@
+
+0489: set_actor PLAYER_ACTOR muted 1
+
+create_thread @PED_BKP PLAYER_ACTOR 371
+
+0781: get_weapon_with_ID 151 model_to 0@
+            
+if 
+not model.Available(0@)
+then
+model.Load(0@)
+mload
+end
+
+actor.GiveWeaponAndAmmo(PLAYER_ACTOR,151,1)
+
+0781: get_weapon_with_ID 92 model_to 0@
+            
+if 
+not model.Available(0@)
+then
+model.Load(0@)
+mload
+end
+
+actor.GiveWeaponAndAmmo(PLAYER_ACTOR,92,1)
+
+ZOMBIES_NOTSPAWN = 1
+$SPECIAL_INFECTED_NOT_SPAWN_FLAG = 1
+$START_TUNE_DONT_PLAY = 1
+
+wait 50
+
+gosub @DEF_MAP_SELECT
+0629: change_integer_stat 264 to $MAP_SELECTED_NUMBER
+0AF1: write_int $MAP_SELECTED_NUMBER to_ini_file "saves/ZACM.set" section "SCR" key "GAMEMODE_AUTOSELECT_PARAM"  
+
+gosub @RANDOM_TIME
+gosub @RANDOM_MELEE
+
+3@ = 0
+while 3@ < 5
+gosub @RANDOM_WEAPON
+3@ += 1
+end
+
+gosub @RANDOM_THROWING_WEAPON
+
+$HEAL = 3
+
+random_int 0@ 0 6
+if and
+0@ == 2 
+$HARD_MODE == 0 
+$NIGHTMARE_MODE == 0  
+not $DIFF_COEFF >= 1.5                 
+    then
+    random_int 0@ 50 200
+    actor.AddArmour(PLAYER_ACTOR,0@)
+    end    
+
+actor.Health(PLAYER_ACTOR) = 200
+actor.AddArmour(PLAYER_ACTOR,200)
+
+01B9: set_actor PLAYER_ACTOR armed_weapon_to $RANDOM_WEAPON
+
+03E6: remove_text_box
+
+cinema.Radar(1)
+
+$HELP_INST_FLAG = 1
+
+$BANDITS_SPAWN_MIN = 9999999
+$BANDITS_SPAWN_MAX = 9999999
+$ARMY_SPAWN_MIN = 9999999
+$ARMY_SPAWN_MAX = 9999999
+$ARMY_HUNTER_SPAWN_MIN = 9999999
+$ARMY_HUNTER_SPAWN_MAX = 9999999      
+$BANDIT_HELI_SPAWN_MIN = 9999999
+$BANDIT_HELI_SPAWN_MAX = 9999999
+
+create_thread @ACQUAIN
+create_thread @BRK_CAR
+create_thread @LOW_HEA
+create_thread @WND_STR
+create_thread @WEP_DAM
+create_thread @DED_CHK
+create_thread @CAMP
+create_thread @MAX_AMM
+create_thread @PLA_VOI
+create_thread @GRP_CMD
+create_thread @INV_SYS
+create_thread @WEP_DRO 
+create_thread @GRE_THR 
+create_thread @CRT_FRA
+create_thread @A_HUNT
+create_thread @BD_HELI
+create_thread @USR_TAP
+
+$WARNING_SOUND = Audiostream.Load("AUDIO\SOUNDS\warning.wav")
+
+$BRONZE_MEDAL = Audiostream.Load("AUDIO\SOUNDS\survival_medal.wav")
+$SILVER_MEDAL = Audiostream.Load("AUDIO\SOUNDS\survival_playerrec.wav")
+$GOLD_MEDAL = Audiostream.Load("AUDIO\SOUNDS\survival_teamrec.wav") 
+
+wait 1
+
+$RANDOM_PEOPLE_SPAWN_FLAG = 0
+
+$SURVIVOR_ALLOW_SPAWN[0] = 0
+$SURVIVOR_ALLOW_SPAWN[1] = 0
+$SURVIVOR_ALLOW_SPAWN[2] = 0
+
+$FREND_NUMBER = 0 
+create_thread @SURVVER
+wait 1
+$FREND_NUMBER = 1
+create_thread @SURVVER
+wait 1
+$FREND_NUMBER = 2
+create_thread @SURVVER  
+
+$SURVIVOR_ALLOW_SPAWN[0] = 1
+wait 1
+$SURVIVOR_ALLOW_SPAWN[1] = 1
+wait 1
+$SURVIVOR_ALLOW_SPAWN[2] = 1
+
+wait 50      
+
+create_thread @F_PERS
+
+$RANDOM_PEOPLE_SPAWN_FLAG = 1
+
+for 1@ = 0xBA3714 to 0xBA376F    
+0A8C: write_memory 1@ size 1 value 1 virtual_protect 0
+end
+
+0489: set_actor PLAYER_ACTOR muted 1
+
+create_thread @HLD_ARM
+
+$MIN_AMMO = 25
+$MAX_AMMO = 65
+
+$SAVESTATUS = 0     
+
+SURVIVAL_STARTED_FULLY_FLAG = 1
+
+player.CanMove(PLAYER_CHAR,true)
+camera.Restore_WithJumpCut()
+
+gosub @GAMEMODE_DEFENSE_MEDS_GIVE
+                         
+fade 1 2000
+
+if
+$CHEATS_ON == 1
+then
+$FLASH_FLAG = 1
+$GODMODE_FLAG = 1
+$HITMAN_FLAG = 1
+$MXP_MD = 1
+$INF_AMMO_FLAG = 1
+0331: set_player PLAYER_CHAR fast_reload 1
+0A8C: write_memory 0x969178 size 1 value 1 virtual_protect 0
+0AF3: write_float 0.0 to_ini_file "moonloader/Weapon Recoil.ini" section "Other_Settings" key "nGlobalRecoilMultiplier"
+1@ = 70
+gosub @CHEAT_PROCESSOR_LOAD_WEP_MODEL            
+actor.GiveWeaponAndAmmo(PLAYER_ACTOR,70,99999)
+00C0: set_current_time 8 0
+end
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "RAID_DEF_HINTS_NUM"
+if
+0@ < -1
+then
+0@ = 3
+end
+
+if
+0@ > 0
+then
+0@ -= 1
+if
+8A4B: not  controls_set_to_joystick
+    then
+    text.ShowH('HINT9',10000,1)
+    else
+    text.ShowH('HINT9B',10000,1)
+    end
+0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "RAID_DEF_HINTS_NUM"
+end
+
+create_thread @C_AMB
+create_thread @W_AMB
+create_thread @D_MUSIC
+$HUD_REMOVE = 0
+
+$HOLD_WAVE = 0
+
+$HORDE_TIMER2 = 0
+$HOLD_WAVE += 1
+
+:GAMEMODE_DEFENSE_START_CHECK
+wait 0 
+
+if
+$HOLD_WAVE > 1
+then
+$NEXT_HORDE = 30000
+else
+$NEXT_HORDE = 15000
+end
+
+03C3: set_timer_to $NEXT_HORDE type 1 GXT 'GAME67' // global_variable  // Time  
+04F7: vagina_text $HOLD_WAVE type 0 line 1 GXT 'GAME54' // global_variable  // Score
+04F7: vagina_text $ENEMIES_KILLED type 0 line 2 GXT 'GAME702' // global_variable  // Score
+
+:GAMEMODE_DEFENSE_START_CHECK2
+wait 0
+
+//0AD1: show_formatted_text_highpriority "CAMP_RAID_FLAG_ARMY: %d, CAMP_RAID_FLAG_BANDITS: %d, RAID_FRACTION_FLAG: %d, CAMP_RAID_FLAG: %d" time 200 CAMP_RAID_FLAG_ARMY CAMP_RAID_FLAG_BANDITS RAID_FRACTION_FLAG CAMP_RAID_FLAG
+
+0@ = 0
+005C: 0@ += $ARMY_KILLED // (int)
+005C: 0@ += $BANDITS_KILLED // (int)
+008A: $ENEMIES_KILLED = 0@ // (int) 
+
+gosub @DEFENSE_WEAPON_PICKUP_CHECK
+
+if
+$ACTOR_DEAD == 1
+then
+jump to @GAMEMODE_DEFENSE_END
+end
+
+if and
+not $CAMP_DEAD_FLAG[$QUEST_CAMP_NUMBER] == 1
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos $CAMP_X[CARMA_GLOB_RACE_NUMBER] $CAMP_Y[CARMA_GLOB_RACE_NUMBER] $CAMP_Z[CARMA_GLOB_RACE_NUMBER] radius 350.0
+jf @GAMEMODE_DEFENSE_END
+
+if
+$NEXT_HORDE < 1
+jf @GAMEMODE_DEFENSE_START_CHECK2
+014F: stop_timer $NEXT_HORDE             
+
+0084: $HOLD_WPN_CREATE_NUMBER2 = $HOLD_WPN_CREATE_NUMBER // (int)
+$HOLD_WPN_CREATE_NUMBER2 -= 1
+
+for 0@ = 0 to $HOLD_WPN_CREATE_NUMBER2
+
+if
+09D1:   pickup $HOLD_WPN[0@] created
+then
+marker.Disable($HOLD_WPN_MRK[0@])
+$HOLD_WPN_MRK[0@] = 0
+pickup.Destroy($HOLD_WPN[0@])
+end
+
+end
+
+$SURVIVOR_ALLOW_SPAWN[0] = 0
+$SURVIVOR_ALLOW_SPAWN[1] = 0
+$SURVIVOR_ALLOW_SPAWN[2] = 0
+
+text.ClearAll()
+text.Show1Number('GAME18',$HOLD_WAVE,4000,1)
+
+RAID_FRACTION_FLAG = 0
+start_mission 37
+$ONMISSION = 1
+
+$NEXT_HORDE = 0
+03C3: set_timer_to $NEXT_HORDE type 0 GXT 'GME1117' // global_variable  // Time
+
+:GAMEMODE_DEFENSE_IDLE_CHECK
+wait 0
+
+0@ = 0
+005C: 0@ += $ARMY_KILLED // (int)
+005C: 0@ += $BANDITS_KILLED // (int)
+008A: $ENEMIES_KILLED = 0@ // (int)
+
+gosub @DEFENSE_WEAPON_PICKUP_CHECK
+
+if
+$ACTOR_DEAD == 1
+then
+jump to @GAMEMODE_DEFENSE_END
+end
+
+if and
+not $CAMP_DEAD_FLAG[$QUEST_CAMP_NUMBER] == 1
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos $CAMP_X[CARMA_GLOB_RACE_NUMBER] $CAMP_Y[CARMA_GLOB_RACE_NUMBER] $CAMP_Z[CARMA_GLOB_RACE_NUMBER] radius 350.0
+jf @GAMEMODE_DEFENSE_END
+
+if 
+$ONMISSION == 0
+jf @GAMEMODE_DEFENSE_IDLE_CHECK
+014F: stop_timer $NEXT_HORDE
+0151: remove_status_text $HOLD_WAVE
+0151: remove_status_text $ENEMIES_KILLED
+
+if 
+not $HOLD_WAVE == 5 
+jf @WAVES_DEFENSE_WIN
+
+text.ClearAll()
+text.ShowH('GAME703',4000,1)
+
+$BANDITS_HEALTH += 35
+$ARMY_HEALTH += 35
+PLAYER_RESIST_MULT -= 0.1
+$MIN_AMMO += 15
+$MAX_AMMO += 30
+
+gosub @GAMEMODE_DEFENSE_MEDS_GIVE 
+
+Audiostream.PerformAction($WARNING_SOUND, PLAY)
+Audiostream.Loop($WARNING_SOUND, 0)
+Audiostream.Volume($WARNING_SOUND) = $SOUNDS_VOLUME
+
+create_thread @MIS_CMP 
+01E3: show_text_1number_styled GXT "GAME20" number $HOLD_WAVE time 5000 style 5  // NEW HIGH SCORE!!~n~~w~~1~
+
+player.CanMove(PLAYER_CHAR) = false 
+$SPEED_004_FLAG = 1 
+015D: set_gamespeed 0.04   
+
+wait 150
+$HUD_REMOVE = 1
+cinema.Radar(0)
+fade 0 50
+wait 50
+cinema.Radar(1)
+$SPEED_004_FLAG = 0
+$SAVESTATUS = 1
+015D: set_gamespeed 1.0
+0395: clear_area 0 at $CAMP_X[CARMA_GLOB_RACE_NUMBER] $CAMP_Y[CARMA_GLOB_RACE_NUMBER] $CAMP_Z[CARMA_GLOB_RACE_NUMBER] radius 300.0  
+
+10@ = 0
+
+0084: $HOLD_WPN_CREATE_NUMBER2 = $HOLD_WPN_CREATE_NUMBER // (int)
+$HOLD_WPN_CREATE_NUMBER2 -= 1
+
+$ITEM_HOLD = -1
+gosub @RANDOM_WEAPON_PICKUP
+
+actor.Health(PLAYER_ACTOR) = 200
+actor.AddArmour(PLAYER_ACTOR,200)  
+
+for 1@ = 0 to 5
+
+092B: 3@ = group PLAYER_GROUP member 1@
+
+if
+056D:   actor 3@ defined
+then
+0D39: 2@ = actor 3@ max_health
+0092: 2@ = float 2@ to_integer 
+2@ += 250 
+actor.Health(3@) = 2@
+08AF: set_actor 3@ max_health_to 2@
+end
+
+end
+
+wait 1400
+
+$SAVESTATUS = 0
+
+wait 100
+
+player.CanMove(PLAYER_CHAR) = true
+
+text.ClearAll()
+
+$SURVIVOR_ALLOW_SPAWN[0] = 1
+$SURVIVOR_ALLOW_SPAWN[1] = 1
+$SURVIVOR_ALLOW_SPAWN[2] = 1
+
+fade 1 1000
+$HUD_REMOVE = 0
+wait 1000
+
+text.ShowH('GAME157',2500,1)
+
+$RANDOM_PEOPLE_SPAWN_FLAG = 1
+
+$HOLD_WAVE += 1
+jump to @GAMEMODE_DEFENSE_START_CHECK
+
+:WAVES_DEFENSE_WIN
+01E3: show_text_1number_styled GXT "GME1116" number $ENEMIES_KILLED time 4000 style 5    
+
+$STATS_SHOW_GAMEMODE = 7 
+create_thread @STS_SHW 
+$SAVESTATUS = 1 
+create_thread @MIS_CMP 
+Player.CanMove(PLAYER_CHAR) = False
+wait 800 
+$SPEED_004_FLAG = 1
+015D: set_gamespeed 0.04 
+wait 150 
+$HUD_REMOVE = 1
+cinema.Radar(0) 
+fade 0 50 
+wait 50 
+
+cinema.Radar(1)
+$SPEED_004_FLAG = 0
+015D: set_gamespeed 1.0 
+
+$SAVESTATUS_TRUE = 1   
+
+wait 2500  
+ 
+fade 0 0 
+03F0: enable_text_draw 0 
+wait 1
+
+0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "NO_INIT_TEXT_FLAG"
+0A8C: write_memory 0x0440F73 size 1 value 255 virtual_protect 1 
+0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME  
+end_thread 
+
+:DEFENSE_WEAPON_PICKUP_CHECK
+
+for 0@ = 0 to $HOLD_WPN_CREATE_NUMBER 
+
+if
+09D1:   pickup $HOLD_WPN[0@] created
+    then
+    if
+    pickup.Picked_up($HOLD_WPN[0@])
+        then
+        
+        if
+        075C:   marker $HOLD_WPN_MRK[0@] enabled
+        then        
+        marker.Disable($HOLD_WPN_MRK[0@])
+        $HOLD_WPN_MRK[0@] = 0
+        end
+        
+        pickup.Destroy($HOLD_WPN[0@])
+        end
+    end
+    
+end    
+
+return
+
+:GAMEMODE_DEFENSE_MEDS_GIVE
+
+if
+$HOLD_WAVE < 2
+then
+
+////////////////////////////////////////////
+
+$HEAL += 1
+
+////////////////////////////////////////////
+
+for 0@ = 0 to 4
+$SURVIVOR_HEAL_COUNT[0@] += 1
+$SURVIVOR_BINT_COUNT[0@] += 2
+
+if
+$SURVIVOR_HEAL_COUNT[0@] > 3
+then
+$SURVIVOR_HEAL_COUNT[0@] = 3
+end
+
+if
+$SURVIVOR_BINT_COUNT[0@] > 4
+then
+$SURVIVOR_BINT_COUNT[0@] = 3
+end
+
+end
+
+////////////////////////////////////////////
+
+else
+
+////////////////////////////////////////////
+
+$HEAL += 2
+
+////////////////////////////////////////////
+
+for 0@ = 0 to 4
+$SURVIVOR_HEAL_COUNT[0@] += 1
+$SURVIVOR_BINT_COUNT[0@] += 3
+
+if
+$SURVIVOR_HEAL_COUNT[0@] > 3
+then
+$SURVIVOR_HEAL_COUNT[0@] = 3
+end
+
+if
+$SURVIVOR_BINT_COUNT[0@] > 4
+then
+$SURVIVOR_BINT_COUNT[0@] = 3
+end
+
+end
+
+////////////////////////////////////////////
+
+end
+
+return
+
+:GAMEMODE_DEFENSE_END
+text.ClearAll()  
+0151: remove_status_text $HOLD_WAVE
+0151: remove_status_text $ENEMIES_KILLED
+
+$STATS_SHOW_FLAG = 0
+$STATS_SHOW_GAMEMODE = 7
+create_thread @STS_SHW    
+    
+gosub @DEFENSE_MAP_RECORD_SET1
+
+    1@ = 0
+    
+    if
+    001C:   $ENEMIES_KILLED > $RECORD_ENEMIES // (int)
+        then        
+        gosub @DEF_MAP_RECORD_SET2
+        1@ = 1
+        end 
+        
+    if
+    001C:   $SECOND_PLAYED > $RECORD_SECONDS // (int)
+        then        
+        gosub @DEF_MAP_RECORD_SET3
+        1@ = 1
+        end 
+        
+    if
+    001C:   $MINUTES_PLAYED > $RECORD_MINUTES // (int)
+        then    
+        gosub @DEF_MAP_RECORD_SET4
+        1@ = 1
+        end  
+        
+    if
+    001C:   $HOLD_WAVE > $RECORD_WAVE // (int)
+        then    
+        gosub @DEF_MAP_RECORD_SET5
+        1@ = 1
+        end 
+        
+$SPEED_08_FLAG = 1                 
+    
+if
+1@ == 1
+    then      
+    $HOLD_FAILED = 0
+    015D: set_gamespeed 0.08
+    text.ClearAll()    
+    create_thread @MIS_CMP 
+    32@ = 0
+    
+    repeat
+    wait 0
+    text.Show4Number('GAME704',$HOLD_WAVE,$MINUTES_PLAYED,$SECOND_PLAYED,$ENEMIES_KILLED,3000,1)
+    until 32@ > 499
+     
+    fade 0 100
+    wait 100
+    015D: set_gamespeed 1.0
+    $SPEED_08_FLAG = 0
+    $HUD_REMOVE = 1  
+    
+    wait 1500
+    
+    $LOADING_THEME = Audiostream.Load("AUDIO\SOUNDS\loading_theme.wav") 
+    
+    Audiostream.PerformAction($LOADING_THEME, PLAY)
+    Audiostream.Loop($LOADING_THEME, 1)
+    0086: $MUSIC_VOLUME22 = $MUSIC_VOLUME // (float)
+    $MUSIC_VOLUME22 *= 0.5
+    Audiostream.Volume($LOADING_THEME) = $MUSIC_VOLUME22  
+    
+    0A8C: write_memory 0x0440F73 size 1 value 255 virtual_protect 1
+    0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
+    else
+    $HOLD_FAILED = 1
+    create_thread @GMV_OVR 
+    32@ = 0 
+    
+    repeat
+    wait 0
+    until 32@ > 499   
+    
+    fade 0 100
+    wait 100
+    015D: set_gamespeed 1.0
+    $SPEED_08_FLAG = 0
+    
+    wait 1500
+    
+    $LOADING_THEME = Audiostream.Load("AUDIO\SOUNDS\loading_theme.wav") 
+    
+    Audiostream.PerformAction($LOADING_THEME, PLAY)
+    Audiostream.Loop($LOADING_THEME, 1)
+    0086: $MUSIC_VOLUME22 = $MUSIC_VOLUME // (float)
+    $MUSIC_VOLUME22 *= 0.5
+    Audiostream.Volume($LOADING_THEME) = $MUSIC_VOLUME22
+    
+    $HUD_REMOVE = 1
+    0A8C: write_memory 0x0440F73 size 1 value 255 virtual_protect 1    
+    0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME    
+    end      
+
+end_thread
+
+:DEFENSE_MAP_RECORD_SET1
+
+if
+UNITED_MAP == 0
+then
+
+if
+$MAP_SELECTED_NUMBER == 0
+    then
+    0AF0: $RECORD_WAVE = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP01_WAVE"    
+    0AF0: $RECORD_MINUTES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP01_MINUTES"
+    0AF0: $RECORD_SECONDS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP01_SECONDS"
+    0AF0: $RECORD_ENEMIES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP01_ENEMIES_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 1
+    then    
+    0AF0: $RECORD_WAVE = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP02_WAVE"
+    0AF0: $RECORD_MINUTES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP02_MINUTES"
+    0AF0: $RECORD_SECONDS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP02_SECONDS"
+    0AF0: $RECORD_ENEMIESS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP02_ENEMIES_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 2
+    then    
+    0AF0: $RECORD_WAVE = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP03_WAVE"
+    0AF0: $RECORD_MINUTES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP03_MINUTES"
+    0AF0: $RECORD_SECONDS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP03_SECONDS"
+    0AF0: $RECORD_ENEMIESS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP03_ENEMIES_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 3
+    then    
+    0AF0: $RECORD_WAVE = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP04_WAVE"
+    0AF0: $RECORD_MINUTES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP04_MINUTES"
+    0AF0: $RECORD_SECONDS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP04_SECONDS"
+    0AF0: $RECORD_ENEMIESS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP04_ENEMIES_KILLS"    
+    end   
+    
+if
+$MAP_SELECTED_NUMBER == 4
+    then    
+    0AF0: $RECORD_WAVE = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP05_WAVE"
+    0AF0: $RECORD_MINUTES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP05_MINUTES"
+    0AF0: $RECORD_SECONDS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP05_SECONDS"
+    0AF0: $RECORD_ENEMIESS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP05_ENEMIES_KILLS"    
+    end  
+    
+if
+$MAP_SELECTED_NUMBER == 5
+    then    
+    0AF0: $RECORD_WAVE = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP06_WAVE"
+    0AF0: $RECORD_MINUTES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP06_MINUTES"
+    0AF0: $RECORD_SECONDS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP06_SECONDS"
+    0AF0: $RECORD_ENEMIESS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP06_ENEMIES_KILLS"    
+    end  
+    
+if
+$MAP_SELECTED_NUMBER == 6
+    then    
+    0AF0: $RECORD_WAVE = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP07_WAVE"
+    0AF0: $RECORD_MINUTES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP07_MINUTES"
+    0AF0: $RECORD_SECONDS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP07_SECONDS"
+    0AF0: $RECORD_ENEMIESS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP07_ENEMIES_KILLS"    
+    end  
+    
+if
+$MAP_SELECTED_NUMBER == 7
+    then    
+    0AF0: $RECORD_WAVE = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP08_WAVE"
+    0AF0: $RECORD_MINUTES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP08_MINUTES"
+    0AF0: $RECORD_SECONDS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP08_SECONDS"
+    0AF0: $RECORD_ENEMIESS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP08_ENEMIES_KILLS"    
+    end  
+    
+if
+$MAP_SELECTED_NUMBER == 8
+    then    
+    0AF0: $RECORD_WAVE = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP09_WAVE"
+    0AF0: $RECORD_MINUTES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP09_MINUTES"
+    0AF0: $RECORD_SECONDS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP09_SECONDS"
+    0AF0: $RECORD_ENEMIESS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP09_ENEMIES_KILLS"    
+    end  
+    
+if
+$MAP_SELECTED_NUMBER == 9
+    then    
+    0AF0: $RECORD_WAVE = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP10_WAVE"
+    0AF0: $RECORD_MINUTES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP10_MINUTES"
+    0AF0: $RECORD_SECONDS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP10_SECONDS"
+    0AF0: $RECORD_ENEMIESS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP10_ENEMIES_KILLS"    
+    end  
+    
+if
+$MAP_SELECTED_NUMBER == 10
+    then    
+    0AF0: $RECORD_WAVE = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP11_WAVE"
+    0AF0: $RECORD_MINUTES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP11_MINUTES"
+    0AF0: $RECORD_SECONDS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP11_SECONDS"
+    0AF0: $RECORD_ENEMIESS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP11_ENEMIES_KILLS"    
+    end  
+    
+if
+$MAP_SELECTED_NUMBER == 11
+    then    
+    0AF0: $RECORD_WAVE = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP12_WAVE"
+    0AF0: $RECORD_MINUTES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP12_MINUTES"
+    0AF0: $RECORD_SECONDS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP12_SECONDS"
+    0AF0: $RECORD_ENEMIESS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP12_ENEMIES_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 12
+    then    
+    0AF0: $RECORD_WAVE = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP13_WAVE"
+    0AF0: $RECORD_MINUTES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP13_MINUTES"
+    0AF0: $RECORD_SECONDS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP13_SECONDS"
+    0AF0: $RECORD_ENEMIESS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP13_ENEMIES_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 13
+    then    
+    0AF0: $RECORD_WAVE = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP14_WAVE"
+    0AF0: $RECORD_MINUTES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP14_MINUTES"
+    0AF0: $RECORD_SECONDS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP14_SECONDS"
+    0AF0: $RECORD_ENEMIESS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP14_ENEMIES_KILLS"    
+    end 
+    
+if
+$MAP_SELECTED_NUMBER == 14
+    then    
+    0AF0: $RECORD_WAVE = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP15_WAVE"
+    0AF0: $RECORD_MINUTES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP15_MINUTES"
+    0AF0: $RECORD_SECONDS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP15_SECONDS"
+    0AF0: $RECORD_ENEMIESS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP15_ENEMIES_KILLS"    
+    end           
+    
+else
+
+if
+$MAP_SELECTED_NUMBER == 0
+    then    
+    0AF0: $RECORD_WAVE = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP01_WAVE"
+    0AF0: $RECORD_MINUTES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP01_MINUTES"
+    0AF0: $RECORD_SECONDS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP01_SECONDS"
+    0AF0: $RECORD_ENEMIESS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP01_ENEMIES_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 1
+    then    
+    0AF0: $RECORD_WAVE = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP02_WAVE"
+    0AF0: $RECORD_MINUTES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP02_MINUTES"
+    0AF0: $RECORD_SECONDS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP02_SECONDS"
+    0AF0: $RECORD_ENEMIESS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP02_ENEMIES_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 2
+    then    
+    0AF0: $RECORD_WAVE = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP03_WAVE"
+    0AF0: $RECORD_MINUTES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP03_MINUTES"
+    0AF0: $RECORD_SECONDS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP03_SECONDS"
+    0AF0: $RECORD_ENEMIESS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP03_ENEMIES_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 3
+    then    
+    0AF0: $RECORD_WAVE = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP04_WAVE"
+    0AF0: $RECORD_MINUTES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP04_MINUTES"
+    0AF0: $RECORD_SECONDS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP04_SECONDS"
+    0AF0: $RECORD_ENEMIESS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP04_ENEMIES_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 4
+    then    
+    0AF0: $RECORD_WAVE = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP05_WAVE"
+    0AF0: $RECORD_MINUTES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP05_MINUTES"
+    0AF0: $RECORD_SECONDS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP05_SECONDS"
+    0AF0: $RECORD_ENEMIESS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP05_ENEMIES_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 5
+    then    
+    0AF0: $RECORD_WAVE = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP06_WAVE"
+    0AF0: $RECORD_MINUTES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP06_MINUTES"
+    0AF0: $RECORD_SECONDS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP06_SECONDS"
+    0AF0: $RECORD_ENEMIESS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP06_ENEMIES_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 6
+    then    
+    0AF0: $RECORD_WAVE = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP07_WAVE"
+    0AF0: $RECORD_MINUTES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP07_MINUTES"
+    0AF0: $RECORD_SECONDS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP07_SECONDS"
+    0AF0: $RECORD_ENEMIESS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP07_ENEMIES_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 7
+    then    
+    0AF0: $RECORD_WAVE = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP08_WAVE"
+    0AF0: $RECORD_MINUTES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP08_MINUTES"
+    0AF0: $RECORD_SECONDS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP08_SECONDS"
+    0AF0: $RECORD_ENEMIESS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP08_ENEMIES_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 8
+    then    
+    0AF0: $RECORD_WAVE = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP09_WAVE"
+    0AF0: $RECORD_MINUTES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP09_MINUTES"
+    0AF0: $RECORD_SECONDS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP09_SECONDS"
+    0AF0: $RECORD_ENEMIESS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP09_ENEMIES_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 9
+    then    
+    0AF0: $RECORD_WAVE = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP10_WAVE"
+    0AF0: $RECORD_MINUTES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP10_MINUTES"
+    0AF0: $RECORD_SECONDS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP10_SECONDS"
+    0AF0: $RECORD_ENEMIESS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP10_ENEMIES_KILLS"    
+    end                           
+
+end                                           
+    
+return
+
+:DEF_MAP_RECORD_SET2
+
+if
+UNITED_MAP == 0
+then
+
+if
+$MAP_SELECTED_NUMBER == 0
+    then    
+    0AF1: write_int $ZOMBIE_KILLED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP01_ZOMBIE_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 1
+    then    
+    0AF1: write_int $ZOMBIE_KILLED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP02_ZOMBIE_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 2
+    then    
+    0AF1: write_int $ZOMBIE_KILLED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP03_ZOMBIE_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 3
+    then    
+    0AF1: write_int $ZOMBIE_KILLED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP04_ZOMBIE_KILLS"    
+    end  
+    
+if
+$MAP_SELECTED_NUMBER == 4
+    then    
+    0AF1: write_int $ZOMBIE_KILLED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP05_ZOMBIE_KILLS"    
+    end  
+    
+if
+$MAP_SELECTED_NUMBER == 5
+    then    
+    0AF1: write_int $ZOMBIE_KILLED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP06_ZOMBIE_KILLS"    
+    end  
+    
+if
+$MAP_SELECTED_NUMBER == 6
+    then    
+    0AF1: write_int $ZOMBIE_KILLED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP07_ZOMBIE_KILLS"    
+    end  
+    
+if
+$MAP_SELECTED_NUMBER == 7
+    then    
+    0AF1: write_int $ZOMBIE_KILLED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP08_ZOMBIE_KILLS"    
+    end  
+    
+if
+$MAP_SELECTED_NUMBER == 8
+    then    
+    0AF1: write_int $ZOMBIE_KILLED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP09_ZOMBIE_KILLS"    
+    end  
+    
+if
+$MAP_SELECTED_NUMBER == 9
+    then    
+    0AF1: write_int $ZOMBIE_KILLED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP10_ZOMBIE_KILLS"    
+    end  
+    
+if
+$MAP_SELECTED_NUMBER == 10
+    then    
+    0AF1: write_int $ZOMBIE_KILLED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP11_ZOMBIE_KILLS"    
+    end  
+    
+if
+$MAP_SELECTED_NUMBER == 11
+    then    
+    0AF1: write_int $ZOMBIE_KILLED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP12_ZOMBIE_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 12
+    then    
+    0AF1: write_int $ZOMBIE_KILLED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP13_ZOMBIE_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 13
+    then    
+    0AF1: write_int $ZOMBIE_KILLED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP14_ZOMBIE_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 14
+    then    
+    0AF1: write_int $ZOMBIE_KILLED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP15_ZOMBIE_KILLS"    
+    end               
+    
+else
+
+if
+$MAP_SELECTED_NUMBER == 0
+    then    
+    0AF1: write_int $ZOMBIE_KILLED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP01_ZOMBIE_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 1
+    then    
+    0AF1: write_int $ZOMBIE_KILLED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP02_ZOMBIE_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 2
+    then    
+    0AF1: write_int $ZOMBIE_KILLED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP03_ZOMBIE_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 3
+    then    
+    0AF1: write_int $ZOMBIE_KILLED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP04_ZOMBIE_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 4
+    then    
+    0AF1: write_int $ZOMBIE_KILLED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP05_ZOMBIE_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 5
+    then    
+    0AF1: write_int $ZOMBIE_KILLED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP06_ZOMBIE_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 6
+    then    
+    0AF1: write_int $ZOMBIE_KILLED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP07_ZOMBIE_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 7
+    then    
+    0AF1: write_int $ZOMBIE_KILLED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP08_ZOMBIE_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 8
+    then    
+    0AF1: write_int $ZOMBIE_KILLED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP09_ZOMBIE_KILLS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 9
+    then    
+    0AF1: write_int $ZOMBIE_KILLED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP10_ZOMBIE_KILLS"    
+    end                          
+
+end                                           
+    
+return
+
+:DEF_MAP_RECORD_SET3
+
+if
+UNITED_MAP == 0
+then
+
+if
+$MAP_SELECTED_NUMBER == 0
+    then    
+    0AF1: write_int $SECOND_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP01_SECONDS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 1
+    then    
+    0AF1: write_int $SECOND_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP02_SECONDS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 2
+    then    
+    0AF1: write_int $SECOND_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP03_SECONDS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 3
+    then    
+    0AF1: write_int $SECOND_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP04_SECONDS"    
+    end  
+    
+if
+$MAP_SELECTED_NUMBER == 4
+    then    
+    0AF1: write_int $SECOND_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP05_SECONDS"    
+    end   
+    
+if
+$MAP_SELECTED_NUMBER == 5
+    then    
+    0AF1: write_int $SECOND_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP06_SECONDS"    
+    end   
+    
+if
+$MAP_SELECTED_NUMBER == 6
+    then    
+    0AF1: write_int $SECOND_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP07_SECONDS"    
+    end  
+
+if
+$MAP_SELECTED_NUMBER == 7
+    then    
+    0AF1: write_int $SECOND_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP08_SECONDS"    
+    end  
+    
+if
+$MAP_SELECTED_NUMBER == 8
+    then    
+    0AF1: write_int $SECOND_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP09_SECONDS"    
+    end  
+    
+if
+$MAP_SELECTED_NUMBER == 9
+    then    
+    0AF1: write_int $SECOND_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP10_SECONDS"    
+    end  
+    
+if
+$MAP_SELECTED_NUMBER == 10
+    then    
+    0AF1: write_int $SECOND_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP11_SECONDS"    
+    end  
+    
+if
+$MAP_SELECTED_NUMBER == 11
+    then    
+    0AF1: write_int $SECOND_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP12_SECONDS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 12
+    then    
+    0AF1: write_int $SECOND_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP13_SECONDS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 13
+    then    
+    0AF1: write_int $SECOND_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP14_SECONDS"    
+    end  
+    
+if
+$MAP_SELECTED_NUMBER == 14
+    then    
+    0AF1: write_int $SECOND_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP15_SECONDS"    
+    end           
+    
+else
+
+if
+$MAP_SELECTED_NUMBER == 0
+    then    
+    0AF1: write_int $SECOND_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP01_SECONDS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 1
+    then    
+    0AF1: write_int $SECOND_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP02_SECONDS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 2
+    then    
+    0AF1: write_int $SECOND_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP03_SECONDS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 3
+    then    
+    0AF1: write_int $SECOND_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP04_SECONDS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 4
+    then    
+    0AF1: write_int $SECOND_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP05_SECONDS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 5
+    then    
+    0AF1: write_int $SECOND_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP06_SECONDS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 6
+    then    
+    0AF1: write_int $SECOND_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP07_SECONDS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 7
+    then    
+    0AF1: write_int $SECOND_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP08_SECONDS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 8
+    then    
+    0AF1: write_int $SECOND_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP09_SECONDS"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 9
+    then    
+    0AF1: write_int $SECOND_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP10_SECONDS"    
+    end                          
+
+end                                          
+    
+return
+
+:DEF_MAP_RECORD_SET4
+
+if
+UNITED_MAP == 0
+then
+
+if
+$MAP_SELECTED_NUMBER == 0
+    then    
+    0AF1: write_int $MINUTES_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP01_MINUTES"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 1
+    then    
+    0AF1: write_int $MINUTES_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP02_MINUTES"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 2
+    then    
+    0AF1: write_int $MINUTES_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP03_MINUTES"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 3
+    then    
+    0AF1: write_int $MINUTES_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP04_MINUTES"    
+    end   
+    
+if
+$MAP_SELECTED_NUMBER == 4
+    then    
+    0AF1: write_int $MINUTES_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP05_MINUTES"    
+    end 
+    
+if
+$MAP_SELECTED_NUMBER == 5
+    then    
+    0AF1: write_int $MINUTES_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP06_MINUTES"    
+    end 
+    
+if
+$MAP_SELECTED_NUMBER == 6
+    then    
+    0AF1: write_int $MINUTES_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP07_MINUTES"    
+    end 
+    
+if
+$MAP_SELECTED_NUMBER == 7
+    then    
+    0AF1: write_int $MINUTES_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP08_MINUTES"    
+    end 
+    
+if
+$MAP_SELECTED_NUMBER == 8
+    then    
+    0AF1: write_int $MINUTES_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP09_MINUTES"    
+    end 
+    
+if
+$MAP_SELECTED_NUMBER == 9
+    then    
+    0AF1: write_int $MINUTES_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP10_MINUTES"    
+    end 
+    
+if
+$MAP_SELECTED_NUMBER == 10
+    then    
+    0AF1: write_int $MINUTES_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP11_MINUTES"    
+    end 
+    
+if
+$MAP_SELECTED_NUMBER == 11
+    then    
+    0AF1: write_int $MINUTES_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP12_MINUTES"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 12
+    then    
+    0AF1: write_int $MINUTES_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP13_MINUTES"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 13
+    then    
+    0AF1: write_int $MINUTES_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP14_MINUTES"    
+    end  
+    
+if
+$MAP_SELECTED_NUMBER == 14
+    then    
+    0AF1: write_int $MINUTES_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP15_MINUTES"    
+    end             
+    
+else
+
+if
+$MAP_SELECTED_NUMBER == 0
+    then    
+    0AF1: write_int $MINUTES_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP01_MINUTES"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 1
+    then    
+    0AF1: write_int $MINUTES_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP02_MINUTES"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 2
+    then    
+    0AF1: write_int $MINUTES_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP03_MINUTES"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 3
+    then    
+    0AF1: write_int $MINUTES_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP04_MINUTES"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 4
+    then    
+    0AF1: write_int $MINUTES_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP05_MINUTES"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 5
+    then    
+    0AF1: write_int $MINUTES_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP06_MINUTES"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 6
+    then    
+    0AF1: write_int $MINUTES_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP07_MINUTES"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 7
+    then    
+    0AF1: write_int $MINUTES_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP08_MINUTES"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 8
+    then    
+    0AF1: write_int $MINUTES_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP09_MINUTES"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 9
+    then    
+    0AF1: write_int $MINUTES_PLAYED to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP10_MINUTES"    
+    end                                   
+
+end                                           
+    
+return      
+
+:DEF_MAP_RECORD_SET5
+
+if
+UNITED_MAP == 0
+then
+
+if
+$MAP_SELECTED_NUMBER == 0
+    then    
+    0AF1: write_int $HOLD_WAVE to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP01_WAVE"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 1
+    then    
+    0AF1: write_int $HOLD_WAVE to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP02_WAVE"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 2
+    then    
+    0AF1: write_int $HOLD_WAVE to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP03_WAVE"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 3
+    then    
+    0AF1: write_int $HOLD_WAVE to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP04_WAVE"    
+    end  
+    
+if
+$MAP_SELECTED_NUMBER == 4
+    then    
+    0AF1: write_int $HOLD_WAVE to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP05_WAVE"    
+    end   
+    
+if
+$MAP_SELECTED_NUMBER == 5
+    then    
+    0AF1: write_int $HOLD_WAVE to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP06_WAVE"    
+    end   
+    
+if
+$MAP_SELECTED_NUMBER == 6
+    then    
+    0AF1: write_int $HOLD_WAVE to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP07_WAVE"    
+    end   
+    
+if
+$MAP_SELECTED_NUMBER == 7
+    then    
+    0AF1: write_int $HOLD_WAVE to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP08_WAVE"    
+    end   
+    
+if
+$MAP_SELECTED_NUMBER == 8
+    then    
+    0AF1: write_int $HOLD_WAVE to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP09_WAVE"    
+    end   
+    
+if
+$MAP_SELECTED_NUMBER == 9
+    then    
+    0AF1: write_int $HOLD_WAVE to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP10_WAVE"    
+    end   
+    
+if
+$MAP_SELECTED_NUMBER == 10
+    then    
+    0AF1: write_int $HOLD_WAVE to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP11_WAVE"    
+    end   
+    
+if
+$MAP_SELECTED_NUMBER == 11
+    then    
+    0AF1: write_int $HOLD_WAVE to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP12_WAVE"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 12
+    then    
+    0AF1: write_int $HOLD_WAVE to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP13_WAVE"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 13
+    then    
+    0AF1: write_int $HOLD_WAVE to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP14_WAVE"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 14
+    then    
+    0AF1: write_int $HOLD_WAVE to_ini_file "saves/ZACM.set" section "SCR" key "DEF_MAP15_WAVE"    
+    end            
+    
+else
+
+if
+$MAP_SELECTED_NUMBER == 0
+    then    
+    0AF1: write_int $HOLD_WAVE to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP01_WAVE"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 1
+    then    
+    0AF1: write_int $HOLD_WAVE to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP02_WAVE"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 2
+    then    
+    0AF1: write_int $HOLD_WAVE to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP03_WAVE"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 3
+    then    
+    0AF1: write_int $HOLD_WAVE to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP04_WAVE"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 4
+    then    
+    0AF1: write_int $HOLD_WAVE to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP05_WAVE"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 5
+    then    
+    0AF1: write_int $HOLD_WAVE to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP06_WAVE"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 6
+    then    
+    0AF1: write_int $HOLD_WAVE to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP07_WAVE"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 7
+    then    
+    0AF1: write_int $HOLD_WAVE to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP08_WAVE"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 8
+    then    
+    0AF1: write_int $HOLD_WAVE to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP09_WAVE"    
+    end
+    
+if
+$MAP_SELECTED_NUMBER == 9
+    then    
+    0AF1: write_int $HOLD_WAVE to_ini_file "saves/ZACM.set" section "SCR" key "2DEF_MAP10_WAVE"    
+    end                          
+
+end                                          
+    
+return
+
+:DEFENSE_MAP_SELECT_PAR
+
+{$INCLUDE Raid Defense Camps Settings.txt}
+
+return
+
+:DEF_MAP_SELECT
+
+if
+UNITED_MAP == 0
+then
+29@ = 14
+else
+
+if
+$UNITED_III_SPAWN == 1
+then
+29@ = 5
+else
+29@ = 3
+end
+
+end
+
+actor.LockInCurrentPosition(PLAYER_ACTOR,true)
+
+if
+not GAMEMODE_AUTOSELECT == 1
+then
+$MAP_SELECTED_NUMBER = 0
+else
+0AF0: $MAP_SELECTED_NUMBER = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "GAMEMODE_AUTOSELECT_PARAM"
+end
+
+if
+SELECT_RANDOM_MAP_AFTER_SELECT_GAMEMODE == 1
+then
+0085: 0@ = 29@ // (int)
+0@ += 1
+random_int $MAP_SELECTED_NUMBER 0 0@
+end
+
+gosub @DEF_TELEPORT_ACTOR
+actor.LockInCurrentPosition(PLAYER_ACTOR,true)
+0337: set_actor PLAYER_ACTOR visibility 0
+cinema.Widescreen(1)
+
+if and
+not GAMEMODE_AUTOSELECT == 1
+not SELECT_RANDOM_MAP_AFTER_SELECT_GAMEMODE == 1
+then
+fade 1 1000
+0512: show_permanent_text_box 'GME1146'
+end
+
+057E: set_radar_grey 0
+
+33@ = 0
+
+gosub @DEFENSE_MAP_RECORD_SET1
+
+while true
+wait 0
+
+if and
+8A2A: not  text_box 'GME1146' displayed
+not GAMEMODE_AUTOSELECT == 1
+then
+09C1: add_next_text_to_brief_history 0
+0512: show_permanent_text_box 'GME1146' 
+end
+
+gosub @DEFENSE_MAPS_RENDER_STATS
+
+text.Show4Number('GAME705',$RECORD_WAVE,$RECORD_MINUTES,$RECORD_SECONDS,$RECORD_ENEMIES,3000,1)
+
+0619: enable_actor PLAYER_ACTOR collision_detection 0
+actor.LockInCurrentPosition(PLAYER_ACTOR,false)
+
+//0AD1: show_formatted_text_highpriority "RACES COUNT: %d" time 2000 29@
+
+00E2: get_player 0 key 1 state_to 0@
+
+if and
+00E1:   player 0 pressed_key 10
+0A4B:   controls_set_to_joystick
+    then
+    0@ = 1
+    end
+    
+if and
+00E1:   player 0 pressed_key 11
+0A4B:   controls_set_to_joystick
+    then
+    0@ = -1
+    end
+
+if
+GAMEMODE_AUTOSELECT == 1
+    then
+    gosub @DEF_TELEPORT_ACTOR
+    jump to @DEFENSE_SELECT_MAP
+    end
+
+if and
+0@ > 0
+33@ > 500
+then
+33@ = 0
+$MAP_SELECTED_NUMBER -= 1
+
+Audiostream.PerformAction($MENU_FOCUS_SOUND, PLAY)
+Audiostream.Loop($MENU_FOCUS_SOUND, 0)
+Audiostream.Volume($MENU_FOCUS_SOUND) = $SOUNDS_VOLUME
+
+if
+001E:   $MAP_SELECTED_NUMBER > 29@ // (int)
+then
+$MAP_SELECTED_NUMBER = 0
+end
+
+if
+$MAP_SELECTED_NUMBER < 0
+then
+008A: $MAP_SELECTED_NUMBER = 29@ // (int)
+end
+
+gosub @DEF_TELEPORT_ACTOR
+end
+
+if and
+0@ < 0
+33@ > 500
+then
+33@ = 0
+$MAP_SELECTED_NUMBER += 1
+
+Audiostream.PerformAction($MENU_FOCUS_SOUND, PLAY)
+Audiostream.Loop($MENU_FOCUS_SOUND, 0)
+Audiostream.Volume($MENU_FOCUS_SOUND) = $SOUNDS_VOLUME 
+
+if
+001E:   $MAP_SELECTED_NUMBER > 29@ // (int)
+then
+$MAP_SELECTED_NUMBER = 0
+end
+
+if
+$MAP_SELECTED_NUMBER < 0
+then
+008A: $MAP_SELECTED_NUMBER = 29@ // (int)
+end
+
+gosub @DEF_TELEPORT_ACTOR
+end
+
+if or
+00E1:   player 0 pressed_key 16
+SELECT_RANDOM_MAP_AFTER_SELECT_GAMEMODE == 1
+    then
+    
+    if
+    not SELECT_RANDOM_MAP_AFTER_SELECT_GAMEMODE == 1
+    then
+    Audiostream.Volume($MENU_ACCEPT_SOUND) = $SOUNDS_VOLUME 
+    Audiostream.Loop($MENU_ACCEPT_SOUND, 0)
+    Audiostream.PerformAction($MENU_ACCEPT_SOUND, PLAY)
+    end        
+        
+    fade 0 500
+    wait 500
+    :DEFENSE_SELECT_MAP
+    text.ClearAll()
+    text.RemoveTextBox()
+    camera.Restore_WithJumpCut()
+    camera.SetBehindPlayer()
+    0337: set_actor PLAYER_ACTOR visibility 1
+    actor.LockInCurrentPosition(PLAYER_ACTOR,false)
+    0619: enable_actor PLAYER_ACTOR collision_detection 1
+    cinema.Widescreen(0)        
+    break
+    end
+
+end
+
+return
+
+:DEFENSE_MAPS_RENDER_STATS
+
+03F0: enable_text_draw 1
+0340: set_text_draw_RGBA 255 255 255 200
+if
+DIRECTFONT_INSTALLED == 1
+then    
+0340: set_text_draw_RGBA DIRECTFONT_FONT0_R DIRECTFONT_FONT0_G DIRECTFONT_FONT0_B 200
+end
+
+03E0: draw_text_behind_textures 1
+0349: set_text_draw_font 0
+03E3: set_texture_to_be_drawn_antialiased 1
+0342: set_text_draw_centered 1
+0344: set_text_draw_linewidth 300.0 for_centered_text 
+033F: set_text_draw_letter_size 1.3 3.36 
+081C: draw_text_outline 1 RGBA 0 0 0 255
+
+if
+not $UNITED_VC_FLAG == 1
+then
+0AD3: v$ST_DIALOG[0] = format "DMAP%d" $MAP_SELECTED_NUMBER
+else
+0AD3: v$ST_DIALOG[0] = format "2DMAP%d" $MAP_SELECTED_NUMBER
+end
+
+033E: set_draw_text_position 320.0 224.5 GXT v$ST_DIALOG[0]
+//gosub @CARMA_MEDAL_RENDER
+
+return
+
+:DEF_TELEPORT_ACTOR
+gosub @DEFENSE_MAP_RECORD_SET1
+
+if
+not GAMEMODE_AUTOSELECT == 1
+then
+fade 0 250
+/////////////////////
+32@ = 0
+while 32@ < 250
+wait 0
+gosub @DEFENSE_MAPS_RENDER_STATS
+end
+/////////////////////
+end
+gosub @RANDOM_TIME
+gosub @DEFENSE_MAP_SELECT_PAR
+text.ClearAll()
+//actor.PutAtNoOffset(PLAYER_ACTOR,$CAMP_X[CARMA_GLOB_RACE_NUMBER],$CAMP_Y[CARMA_GLOB_RACE_NUMBER],$CAMP_Z[CARMA_GLOB_RACE_NUMBER])
+//0AD3: v$RAID_FILE = format "CM%d" CARMA_GLOB_RACE_NUMBER
+//0AD3: v$RAID_FILE2 = format "PTH%d_X" 0
+//0AF2: 1@ = get_float_from_ini_file "data/raid.ini" section v$RAID_FILE key v$RAID_FILE2
+//0AD3: v$RAID_FILE2 = format "PTH%d_Y" 0 
+//0AF2: 2@ = get_float_from_ini_file "data/raid.ini" section v$RAID_FILE key v$RAID_FILE2
+//0E27: get_angle_from_two_coords $CAMP_X[CARMA_GLOB_RACE_NUMBER] $CAMP_Y[CARMA_GLOB_RACE_NUMBER] and 1@ 2@ to 4@
+//actor.Angle(PLAYER_ACTOR) = 4@
+04C4: store_coords_to 10@ 11@ 12@ from_actor PLAYER_ACTOR with_offset 0.0 0.0 2.0
+04C4: store_coords_to 5@ 6@ 7@ from_actor PLAYER_ACTOR with_offset 0.0 5.0 1.8
+camera.SetPosition(10@,11@,12@,0.0,0.0,0.0)
+camera.PointAt(5@,6@,7@,2)
+create_thread @REFR_3D
+$WEATHER_SYNC_FLAG = 1 
+text.ClearAll()
+gosub @DEFENSE_MAP_RECORD_SET1
+text.Show4Number('GAME705',$RECORD_WAVE,$RECORD_MINUTES,$RECORD_SECONDS,$RECORD_ENEMIES,3000,1)
+if and
+not GAMEMODE_AUTOSELECT == 1
+not SELECT_RANDOM_MAP_AFTER_SELECT_GAMEMODE == 1 
+then
+/////////////////////
+32@ = 0
+while 32@ < 100
+wait 0
+gosub @DEFENSE_MAPS_RENDER_STATS
+end
+/////////////////////
+fade 1 250
+end
+/////////////////////
+32@ = 0
+while 32@ < 250
+wait 0
+gosub @DEFENSE_MAPS_RENDER_STATS
+end
+/////////////////////
+return

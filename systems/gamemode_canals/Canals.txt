@@ -1,0 +1,4190 @@
+const
+CANALS_CANNIBAL_COUNTER_IS = 20@
+CANALS_CANNIBAL_TIMER_TO_SPAWN_SET = 21@
+CANNIBAL_SPAWNED_NOT_IN_HIS_ZONE_FLAG = 23@
+CANNIBAL_TOTAL_TRIES_TO_SPAWN_SET = 24@
+end
+
+:CANALS
+thread 'CANALS'
+
+if
+not $CANALS_CHALLENGE_FLAG == 1
+then
+
+if or
+UNITED_MAP == 1
+CLASSIC_CARMA_MAP >= 1
+$FREEMODE == 0
+CUSTOM_MODE_TURN_OFF_STORY_THINGS == 1
+    then   
+    end_thread
+    end
+
+end
+
+if and
+not $CANALS_CHALLENGE_FLAG == 1
+not $GAMEMODE_STORYLINE == 1
+then
+create_thread @IREN
+create_thread @TAPES_S
+else
+if and
+$GAMEMODE_STORYLINE == 1
+$CHEATS_ON == 1
+    then
+    create_thread @IREN
+    create_thread @TAPES_S
+    end
+end
+
+if
+not $CANALS_CHALLENGE_FLAG == 1
+then
+gosub @CANALS_MARKERS_CREATE
+end
+
+07FB: set_interior 'CANALS' access 1
+
+:CANALS_MAIN_LOOP_START
+
+while true
+wait 0   
+
+//////////////////////////////////////////////////////////////////////////    
+
+if and
+PLAYER_IN_CANALS_FLAG == 0
+$ACTIVE_INTERIOR == 1
+    then
+    094B: v$ACTIVE_INTERIOR_CNAME = get_active_interior_name_from_actor PLAYER_ACTOR // 16-byte string
+    06D1: v$ACTIVE_INTERIOR_CNAME2 = "CANALS"
+    
+    0A8D: 0@ = read_memory 0x0440F73 size 1 virtual_protect 0
+    if and
+    0800:   in_two_players_mode
+    0@ == 1
+    then
+    094B: v$ACTIVE_INTERIOR_CNAME = get_active_interior_name_from_actor COOP_ACTOR // 16-byte string
+    06D1: v$ACTIVE_INTERIOR_CNAME2 = "CANALS"
+    end
+    
+    if or
+    08F9:   v$ACTIVE_INTERIOR_CNAME == v$ACTIVE_INTERIOR_CNAME2
+    $CANALS_CHALLENGE_FLAG == 1
+    PLAYER_IN_CANALS_FLAG == 1
+        then        
+        
+        PLAYER_IN_CANALS_FLAG = 1
+        $WITCH_INTERIOR_SPAWN = 1
+        WEATHER_SYS_IDLE_FLAG = 1    
+        0629: change_integer_stat 267 to 1
+        create_thread @CLS_AMB
+
+        if
+        not $CANALS_CHALLENGE_FLAG == 1
+        then
+        random_int CANALS_CANNIBAL_TIMER_TO_SPAWN_SET 1000 2500
+        CANNIBAL_TOTAL_TRIES_TO_SPAWN_SET = 2
+        else
+        CANALS_CANNIBAL_TIMER_TO_SPAWN_SET = 2000
+        CANNIBAL_TOTAL_TRIES_TO_SPAWN_SET = 4
+        end
+        
+        SOME_BOT_IS_USING_MELEE_FLAG = 1
+        32@ = 0
+        33@ = 0
+        gosub @RANDOM_TRACK_PLAY
+        
+        for 0@ = 0 to 39
+        $VAGINA_FLAG[0@] = 0
+        0085: 1@ = 0@ // (int)
+        1@ += 50
+        $WPN_Z[1@] = 960.0
+        end
+        
+        0AC6: 0@ = label @PICKUPS_DISTANCE offset 
+        0A8C: write_memory 0@ size 4 value 300.0 virtual_protect 0 
+        0A8C: write_memory 0x454CC9 size 4 value 0@ virtual_protect 0
+        
+        end
+    end
+    
+//////////////////////////////////////////////////////////////////////////    
+    
+if
+PLAYER_IN_CANALS_FLAG == 1 
+    then
+    
+    if
+    CANALS_MUSIC_PLAY_FLAG == 1
+    then
+    
+    if and
+    not USER_TAPE_TURNED_ON_FLAG == 1
+    not $READING_NOTE_FLAG == 1
+    then
+    Audiostream.Volume($MUSIC_ASSHOLE) = $MUSIC_VOLUME
+    else
+    Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+    end
+    
+    end
+    
+    if and
+    DO_NOT_SPAWN_CANNIBALS == 1
+    CANNIBALS_SHIELD_FLAG == 0
+        then
+        DO_NOT_SPAWN_CANNIBALS = 0
+        CANNIBALS_SHIELD_FLAG = -1
+        end
+    
+    0A8C: write_memory 0x0C402B4 size 1 value 1 virtual_protect 1 
+    0A8C: write_memory 0x08D5094 size 1 value 4 virtual_protect 1
+    
+    if
+    $CHEATS_ON == 1
+    then
+    if
+    0ADC:   test_cheat "CANALSRAT"
+        then
+        33@ += 3600000
+        end
+    end
+    
+    if and
+    33@ > 3600000
+    0E45: frame_mod 60
+        then        
+        0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT110_GOT"                            
+        if and
+        0@ == 0
+        $CHEATED_FLAG == 0
+        $ONMISSION == 0
+            then
+            v$ACHIEVEMNT = "ACH110"
+            $ACHIEVEMENT_GOT_FLAG = 1                                    
+            0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT110_GOT"
+            end
+        end
+    end 
+    
+//////////////////////////////////////////////////////////////////////////       
+    
+if and
+PLAYER_IN_CANALS_FLAG == 1
+$ACTIVE_INTERIOR == 0
+    then
+    
+    0A8C: write_memory 0x0C402B4 size 1 value 0 virtual_protect 1 
+    0A8C: write_memory 0x08D5094 size 1 value 64 virtual_protect 1
+    
+    if
+    03CA:  object CANALS_BLACKBOX_OBJ exists
+    then        
+    object.Destroy(CANALS_BLACKBOX_OBJ)
+    0A8C: write_memory 0x0513256 size 1 value 1 virtual_protect 1 
+    0A8C: write_memory 0x051329F size 1 value 1 virtual_protect 1
+    0AC6: 1@ = label @PICKUPS_DISTANCE offset 
+    0A8C: write_memory 1@ size 4 value 300.0 virtual_protect 0 
+    0A8C: write_memory 0x454CC9 size 4 value 1@ virtual_protect 0
+    end
+        
+    0A8D: 1@ = read_memory 0x0C402B9 size 4 virtual_protect 0
+    if or
+    099D:   night_vision_enabled
+    1@ == 1
+    then
+    create_thread @NVS_GGL
+    end
+        
+    PLAYER_IN_CANALS_FLAG = 0
+    $WITCH_INTERIOR_SPAWN = 0
+    WEATHER_SYS_IDLE_FLAG = 0
+    01B7: release_weather    
+    0629: change_integer_stat 267 to 0
+    SOME_BOT_IS_USING_MELEE_FLAG = 0
+    32@ = 0
+    gosub @RANDOM_TRACK_STOP
+    
+    if
+    CANNIBALS_SHIELD_FLAG > 0
+    then
+    014F: stop_timer CANNIBALS_SHIELD_FLAG
+    CANNIBALS_SHIELD_FLAG = -1
+    DO_NOT_SPAWN_CANNIBALS = 0
+    end
+    
+    /////////////////////////////////////////////
+    
+    for 0@ = 0 to 39
+    
+    if and
+    056D:   actor $ARMY69_2[0@] defined
+    not DO_NOT_SPAWN_CANNIBALS == 1
+    then
+    actor.DestroyWithFade($ARMY69_2[0@])
+    $ARMY69_2[0@] = -69
+    end
+    
+    end
+    
+    /////////////////////////////////////////////    
+        
+    end
+    
+if
+PLAYER_IN_CANALS_FLAG == 1
+    then
+    
+//    set_weather 21
+    
+    if
+    not $CANALS_CHALLENGE_FLAG == 1
+    then
+    gosub @CANALS_BOSSES_CHECK
+    end        
+    
+    if
+    $CANALS_CHALLENGE_FLAG == 1
+    then
+    
+    //////////////////////////////////////////// 
+    
+    if
+    not ARMY_HUNTER_SHIT_30 == 1
+    then
+    0@ = 1800
+    else
+    0@ = 360
+    end
+    
+    if
+    0E45: frame_mod 0@    
+        then        
+        
+        CANALS_CANNIBAL_TIMER_TO_SPAWN_SET -= 150
+        
+        if
+        CANALS_CANNIBAL_TIMER_TO_SPAWN_SET < 0
+        then
+        CANALS_CANNIBAL_TIMER_TO_SPAWN_SET = 0
+        CANNIBAL_TOTAL_TRIES_TO_SPAWN_SET += 1
+        end
+        
+        if
+        CANNIBAL_TOTAL_TRIES_TO_SPAWN_SET > 30
+        then
+        CANNIBAL_TOTAL_TRIES_TO_SPAWN_SET = 30
+        end
+        
+        end
+        
+    if
+    ARMY_HUNTER_SHIT_30 == 1
+        then
+        CANALS_CANNIBAL_TIMER_TO_SPAWN_SET = 0
+        end
+        
+    end            
+    
+    ////////////////////////////////////////////
+    
+    if and
+    $CANALS_CHALLENGE_FLAG == 1
+    ARMY_HUNTER_SHIT_30 == 1
+    then
+    jump to @CANNIBAL_CREATE_START_PIZDEC_MODE
+    end
+    
+    if and
+    002D:   32@ >= CANALS_CANNIBAL_TIMER_TO_SPAWN_SET  // (int)
+    not DO_NOT_SPAWN_CANNIBALS == 1
+        then        
+        32@ = 0
+        
+        ////////////////////////////////////////////////////
+        
+        if
+        not $CANALS_CHALLENGE_FLAG == 1
+        then
+        
+        008B: 28@ = $MONTHS_PASSED // (int)
+        28@ *= 20
+        
+        if
+        0E4D: random_percent 28@
+        then
+//        0AD1: show_formatted_text_highpriority "CANNIBALS SKIP CREATE TRY %d PERCENT GOT" time 2000 28@
+        jump to @CANNIBAL_SKIP_CREATE_TRY
+        end
+        
+        ////////////////////////////////////////////////////
+        
+        28@ = 0
+        
+        for 0@ = 0 to 39
+        
+        if
+        056D:   actor $ARMY69_2[0@] defined
+            then       
+            28@ += 1                       
+            end
+                    
+        end   
+        
+        008B: 0@ = $MONTHS_PASSED // (int)
+        0@ *= 7
+        17@ = 40
+        0062: 17@ -= 0@  // (int)
+        
+        if
+        002D:   28@ >= 17@  // (int)  
+        then
+//        0AD1: show_formatted_text_highpriority "MAXIMUM CANNIBALS CAP %d REACHED" time 2000 17@
+        jump to @CANNIBAL_SKIP_CREATE_TRY
+        end   
+        
+        end
+        
+        ////////////////////////////////////////////////////
+        
+        :CANNIBAL_CREATE_START_PIZDEC_MODE
+        
+        for 28@ = 0 to CANNIBAL_TOTAL_TRIES_TO_SPAWN_SET
+        wait 0                
+        random_int CANALS_CANNIBAL_COUNTER_IS 0 40                
+        gosub @CANNIBAL_CREATE
+        end
+                
+        end
+        
+    ////////////////////////////////////////////
+    
+    if or
+    not DO_NOT_SPAWN_CANNIBALS == 1
+    SWEET_SPAWN_FLAG == 666
+    then
+        
+    for 0@ = 0 to 39
+        
+    if
+    056D:   actor $ARMY69_2[0@] defined
+    then       
+    gosub @CANNIBAL_AI_PROCESS                       
+    end
+                
+    end
+    
+    end
+        
+    ////////////////////////////////////////////
+    
+    end  
+    
+:CANNIBAL_SKIP_CREATE_TRY                  
+
+////////////////////////////////////////////////////////////////////
+
+if and
+$SAVESTATUS_TRUE == 1
+$SAVING_DELAY == 1
+then
+
+0E2B: remove_cleo_blip $CANAL_MARK1
+0E2B: remove_cleo_blip $CANAL_MARK2
+0E2B: remove_cleo_blip $CANAL_MARK3
+0E2B: remove_cleo_blip $CANAL_MARK4
+0E2B: remove_cleo_blip $CANAL_MARK5
+0E2B: remove_cleo_blip $CANAL_MARK6
+0E2B: remove_cleo_blip $CANAL_MARK7
+0E2B: remove_cleo_blip $CANAL_MARK8
+0E2B: remove_cleo_blip $CANAL_MARK9
+0E2B: remove_cleo_blip $CANAL_MARK10
+0E2B: remove_cleo_blip $CANAL_MARK11
+0E2B: remove_cleo_blip $CANAL_MARK12
+0E2B: remove_cleo_blip $CANAL_MARK13
+0E2B: remove_cleo_blip $CANAL_MARK14
+0E2B: remove_cleo_blip $CANAL_MARK15
+0E2B: remove_cleo_blip $CANAL_MARK16
+
+while $SAVESTATUS_TRUE == 1
+wait 0
+end
+
+while $SAVING_DELAY == 1
+wait 0
+end
+
+gosub @CANALS_MARKERS_CREATE
+
+end
+
+////////////////////////////////////////////////////////////////////
+
+end
+
+end_thread
+
+:CANALS_MARKERS_CREATE
+
+0E2A: add_cleo_blip 46 position -2660.032 368.505 is_short 1 RGBA 255 255 255 192 store_to $CANAL_MARK1
+0E2A: add_cleo_blip 46 position -2415.42 727.298 is_short 1 RGBA 255 255 255 192 store_to $CANAL_MARK2
+0E2A: add_cleo_blip 46 position -2245.94 723.159 is_short 1 RGBA 255 255 255 192 store_to $CANAL_MARK3
+0E2A: add_cleo_blip 46 position -1978.56 1085.45 is_short 1 RGBA 255 255 255 192 store_to $CANAL_MARK4
+0E2A: add_cleo_blip 46 position -2799.2795 -216.5822 is_short 1 RGBA 255 255 255 192 store_to $CANAL_MARK5
+0E2A: add_cleo_blip 46 position -2436.4812 -216.1846 is_short 1 RGBA 255 255 255 192 store_to $CANAL_MARK6
+0E2A: add_cleo_blip 46 position -2394.5249 -604.5424 is_short 1 RGBA 255 255 255 192 store_to $CANAL_MARK7
+0E2A: add_cleo_blip 46 position -2156.9978 -408.8389 is_short 1 RGBA 255 255 255 192 store_to $CANAL_MARK8
+0E2A: add_cleo_blip 46 position -1974.1853 170.5296 is_short 1 RGBA 255 255 255 192 store_to $CANAL_MARK9
+0E2A: add_cleo_blip 46 position -2198.0488 153.9472 is_short 1 RGBA 255 255 255 192 store_to $CANAL_MARK10
+0E2A: add_cleo_blip 46 position -2862.6694 755.6849 is_short 1 RGBA 255 255 255 192 store_to $CANAL_MARK11
+0E2A: add_cleo_blip 46 position -2252.8784 1034.9017 is_short 1 RGBA 255 255 255 192 store_to $CANAL_MARK12
+0E2A: add_cleo_blip 46 position -2600.6653 1006.263 is_short 1 RGBA 255 255 255 192 store_to $CANAL_MARK13
+0E2A: add_cleo_blip 46 position -2816.9421 1285.5355 is_short 1 RGBA 255 255 255 192 store_to $CANAL_MARK14
+0E2A: add_cleo_blip 46 position -2455.605 1388.64 is_short 1 RGBA 255 255 255 192 store_to $CANAL_MARK15
+0E2A: add_cleo_blip 46 position -1854.1193 1381.7413 is_short 1 RGBA 255 255 255 192 store_to $CANAL_MARK16
+
+return
+
+:RANDOM_TRACK_PLAY
+
+0652: 17@ = integer_stat 258
+if or
+17@ == 41
+17@ == 32
+then
+return
+end
+
+$MUSIC_TURN_OFF_FLAG = 1
+$CASETTE_PLAYING_FLAG = 1
+
+while true
+wait 0
+$END_FADING_MUSIC_FAST = 1
+
+if and
+$MUSIC_FADE_ENDED[0] == 1
+$MUSIC_FADE_ENDED[1] == 1
+$MUSIC_FADE_ENDED[2] == 1
+$MUSIC_FADE_ENDED[3] == 1
+$MUSIC_FADE_ENDED[4] == 1
+then
+$END_FADING_MUSIC_FAST = 0
+break
+end
+
+end
+
+//////////////////////////////////////////////////////// 
+
+random_int 17@ 0 4
+if
+17@ == 0
+then
+$MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\OTHER\CANALS\ost1.wav")
+end
+if
+17@ == 1
+then
+$MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\OTHER\CANALS\ost2.wav")
+end
+if
+17@ == 2
+then
+$MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\OTHER\CANALS\ost3.wav")
+end
+if
+17@ == 3
+then
+$MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\OTHER\CANALS\ost4.wav")
+end
+
+Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
+Audiostream.Loop($MUSIC_ASSHOLE, 1)
+if
+not USER_TAPE_TURNED_ON_FLAG == 1
+then
+Audiostream.Volume($MUSIC_ASSHOLE) = $MUSIC_VOLUME
+else
+Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+end
+
+CANALS_MUSIC_PLAY_FLAG = 1
+
+return
+
+:RANDOM_TRACK_STOP
+
+0652: 17@ = integer_stat 258
+if or
+17@ == 41
+17@ == 32
+then
+return
+end
+
+CANALS_MUSIC_PLAY_FLAG = 0
+
+Audiostream.PerformAction($MUSIC_ASSHOLE, STOP)
+audiostream.Release($MUSIC_ASSHOLE)
+$MUSIC_TURN_OFF_FLAG = 0
+$CASETTE_PLAYING_FLAG = 0
+
+return
+
+:CANNIBAL_CREATE
+
+if
+056D:   actor $ARMY69_2[CANALS_CANNIBAL_COUNTER_IS] defined
+then
+return
+end
+
+gosub @CANIIBAL_GET_COORD
+
+if
+6@ == 1
+then
+6@ = 0
+CANNIBAL_SPAWNED_NOT_IN_HIS_ZONE_FLAG = 0
+return
+end
+
+random_int 0@ 19130 19149
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+if
+CARMA_VERY_BAD_FLAG == 0
+then
+$ARMY69_2[CANALS_CANNIBAL_COUNTER_IS] = actor.Create(29,0@,2@,3@,4@)
+else
+$ARMY69_2[CANALS_CANNIBAL_COUNTER_IS] = actor.Create(26,0@,2@,3@,4@)
+end
+
+if
+model.Available(0@)
+then
+//model.Destroy(0@)
+end
+
+0E24: fix_char $ARMY69_2[CANALS_CANNIBAL_COUNTER_IS] ground 0 brightness DO_ACTORS_BRIGHT_CORR and_fade_in 1
+            
+0D10: set_actor $ARMY69_2[CANALS_CANNIBAL_COUNTER_IS] alpha 255 // IF and SET
+09F4: set_actor $ARMY69_2[CANALS_CANNIBAL_COUNTER_IS] ignore_height_difference_following_nodes $Z_IGNORE_HEIGHT    
+Actor.WeaponAccuracy($ARMY69_2[CANALS_CANNIBAL_COUNTER_IS]) = 200
+
+1@ = 1000
+if
+AUTOLEVELING_ON_FLAG == 1
+then
+for 0@ = 1 to $PLAYER_LEVEL
+1@ += 20
+end
+end
+
+Actor.Health($ARMY69_2[CANALS_CANNIBAL_COUNTER_IS]) = 1@     
+Actor.SetWalkStyle($ARMY69_2[CANALS_CANNIBAL_COUNTER_IS], "SURV5")
+0446: set_actor $ARMY69_2[CANALS_CANNIBAL_COUNTER_IS] dismemberment_possible 0
+060B: set_actor $ARMY69_2[CANALS_CANNIBAL_COUNTER_IS] decision_maker_to $DEC_PCAMP
+07DD: set_actor $ARMY69_2[CANALS_CANNIBAL_COUNTER_IS] attack_rate 100 // previously known as temper_to
+081A: set_actor $ARMY69_2[CANALS_CANNIBAL_COUNTER_IS] weapon_skill_to 2  
+060F: set_actor $ARMY69_2[CANALS_CANNIBAL_COUNTER_IS] melee_accuracy_to 999.0
+0946: set_actor $ARMY69_2[CANALS_CANNIBAL_COUNTER_IS] actions_uninterupted_by_weapon_fire 1
+094E: set_actor $ARMY69_2[CANALS_CANNIBAL_COUNTER_IS] mute_pain_audio 1
+
+if
+CANNIBAL_SPAWNED_NOT_IN_HIS_ZONE_FLAG == 1
+then
+CANNIBAL_SPAWNED_NOT_IN_HIS_ZONE_FLAG = 0
+
+0781: get_weapon_with_ID 43 model_to 0@
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end    
+actor.GiveWeaponAndAmmo($ARMY69_2[CANALS_CANNIBAL_COUNTER_IS],43,1)
+
+end
+
+random_int 1@ 0 3
+
+if
+1@ == 0
+then
+1@ = 216
+end
+
+if
+1@ == 1
+then
+1@ = 217
+end
+
+if
+1@ == 2
+then
+1@ = 218
+end
+
+if and
+$CANALS_CHALLENGE_FLAG == 1
+0E4D: random_percent 5
+then
+1@ = 9
+Actor.Health($ARMY69_2[CANALS_CANNIBAL_COUNTER_IS]) = 2000
+08AF: set_actor $ARMY69_2[CANALS_CANNIBAL_COUNTER_IS] max_health_to 2000
+else
+if
+0E4D: random_percent 5
+    then
+    1@ = 41
+    end
+end
+
+if
+not CANALS_BOSS1_DONE == 2
+then    
+0781: get_weapon_with_ID 1@ model_to 0@
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+if
+1@ == 41
+then
+actor.GiveWeaponAndAmmo($ARMY69_2[CANALS_CANNIBAL_COUNTER_IS],1@,99999)
+else    
+actor.GiveWeaponAndAmmo($ARMY69_2[CANALS_CANNIBAL_COUNTER_IS],1@,1)
+end
+
+else
+07FE: set_actor $ARMY69_2[CANALS_CANNIBAL_COUNTER_IS] fighting_style_to 6 moves 6
+0ED9: set_char_ignore_damage_anims $ARMY69_2[CANALS_CANNIBAL_COUNTER_IS] 1
+end
+    
+//05E2: AS_actor $ARMY69_2[CANALS_CANNIBAL_COUNTER_IS] kill_actor PLAYER_ACTOR
+//077A: set_actor $ARMY69_2[CANALS_CANNIBAL_COUNTER_IS] acquaintance 4 to_actors_pedtype 0 // see ped.dat
+    
+0A96: 0@ = actor $ARMY69_2[CANALS_CANNIBAL_COUNTER_IS] struct
+0A8E: 0@ = 0@ + 1376
+0A8C: write_memory 0@ size 4 value 1024.0 virtual_protect 1
+0856: set_actor $ARMY69_2[CANALS_CANNIBAL_COUNTER_IS] enable_crouch 0
+
+0860: link_actor $ARMY69_2[CANALS_CANNIBAL_COUNTER_IS] to_interior 1
+087E: set_actor $ARMY69_2[CANALS_CANNIBAL_COUNTER_IS] weapon_droppable 0
+
+$ARMY69_2_MARKER[CANALS_CANNIBAL_COUNTER_IS] = marker.CreateAboveActor($ARMY69_2[CANALS_CANNIBAL_COUNTER_IS])
+marker.SetIconSize($ARMY69_2_MARKER[CANALS_CANNIBAL_COUNTER_IS],2)
+if
+not $CHEATS_ON == 1
+then
+018B: set_marker $ARMY69_2_MARKER[CANALS_CANNIBAL_COUNTER_IS] radar_mode 0
+end
+
+random_float 0@ 0.0 360.0
+actor.Angle($ARMY69_2[CANALS_CANNIBAL_COUNTER_IS]) = 0@
+
+return
+
+:CANIIBAL_GET_COORD
+
+if
+CANALS_BOSS_FIGHT_FLAG == 1
+then
+
+if
+CANALS_BOSS2_DONE == 2
+    then
+    
+    random_int 0@ 0 to 4
+
+    if
+    0@ == 0
+    then
+    //  1019.488
+    //  1019.488       
+    0208: 2@ = random_float_in_ranges -2574.8704 -2576.7844 
+    0208: 3@ = random_float_in_ranges 1270.2877 1261.7621
+    4@ = 996.4841
+    5@ = 996.4841
+    end
+    
+    if
+    0@ == 1
+    then
+    //  1019.488
+    //  1019.488                  
+    0208: 2@ = random_float_in_ranges -2591.3152 -2589.156 
+    0208: 3@ = random_float_in_ranges 1270.22 1261.7496
+    4@ = 996.4841
+    5@ = 996.4841
+    end
+    
+    if
+    0@ == 2
+    then
+    //  1019.488
+    //  1019.488                       
+    0208: 2@ = random_float_in_ranges -2580.8884 -2579.1101 
+    0208: 3@ = random_float_in_ranges 1300.0504 1296.8945
+    4@ = 996.4869
+    5@ = 996.4869
+    end
+    
+    if
+    0@ == 3
+    then
+    //  1019.488
+    //  1019.488                      
+    0208: 2@ = random_float_in_ranges -2587.0686 -2585.3005 
+    0208: 3@ = random_float_in_ranges 1300.0504 1296.8945
+    4@ = 996.4869
+    5@ = 996.4869
+    end
+    
+    4@ += 1.5
+    5@ -= 1.5
+    
+    6@ = 0
+    gosub @CANALS_COORD_SET
+    
+    return
+    
+    end
+
+if
+CANALS_BOSS1_DONE == 2
+    then
+    
+    random_int 0@ 0 to 2
+
+    if
+    0@ == 0
+    then
+    //  1019.488
+    //  1019.488            
+    0208: 2@ = random_float_in_ranges -2156.1899 -2158.0554 
+    0208: 3@ = random_float_in_ranges 576.5969 577.5695
+    4@ = 1019.5052
+    5@ = 1019.5052
+    end
+    
+    if
+    0@ == 1
+    then
+    //  1019.488
+    //  1019.488      
+    0208: 2@ = random_float_in_ranges -2162.8108 -2164.5232 
+    0208: 3@ = random_float_in_ranges 576.2966 577.3597
+    4@ = 1019.5052
+    5@ = 1019.5052
+    end
+    
+    4@ += 1.5
+    5@ -= 1.5
+    
+    6@ = 0
+    gosub @CANALS_COORD_SET
+    
+    return
+    
+    end
+    
+if
+CANALS_BOSS4_DONE == 2
+    then
+    //  1019.488
+    //  1019.488                                    
+    0208: 2@ = random_float_in_ranges 2322.8245 2325.9429 
+    0208: 3@ = random_float_in_ranges -1149.5193 -1147.2245
+    4@ = 1050.7101
+    5@ = 1050.7101
+    
+    4@ += 1.5
+    5@ -= 1.5
+    
+    6@ = 0
+    gosub @CANALS_COORD_SET
+    
+    return
+    
+    end    
+
+end
+
+if
+not $CANALS_CHALLENGE_FLAG == 1
+then
+0@ = 30
+else
+0@ = 60
+end
+
+if and
+ARMY_HUNTER_SHIT_30 == 1
+$CANALS_CHALLENGE_FLAG == 1
+then
+0@ = 90
+end
+
+if and
+0E4D: random_percent 0@
+not SURVIVAL_CUSTOM_WEAPON_NABOR == 9
+then
+
+random_int 0@ 0 169
+0AD3: v$EDITOR_FILE = format "CN%d" 0@
+
+0AF2: 1@ = get_float_from_ini_file "data/canals.ini" section v$EDITOR_FILE key "X1"
+0AF2: 2@ = get_float_from_ini_file "data/canals.ini" section v$EDITOR_FILE key "X2"
+0AF2: 3@ = get_float_from_ini_file "data/canals.ini" section v$EDITOR_FILE key "Y1"
+0AF2: 6@ = get_float_from_ini_file "data/canals.ini" section v$EDITOR_FILE key "Y2"
+
+0AF2: 4@ = get_float_from_ini_file "data/canals.ini" section v$EDITOR_FILE key "Z1"
+0AF2: 5@ = get_float_from_ini_file "data/canals.ini" section v$EDITOR_FILE key "Z2"
+4@ += 1.5
+5@ -= 1.5
+
+0208: 2@ = random_float_in_ranges 1@ 2@ 
+0208: 3@ = random_float_in_ranges 3@ 6@
+
+6@ = 0
+gosub @CANALS_COORD_SET2
+
+CANNIBAL_SPAWNED_NOT_IN_HIS_ZONE_FLAG = 1
+
+if
+$CANALS_CHALLENGE_FLAG == 1
+    then
+    if
+    89D1: not  pickup $MISSION_PICKUP created    
+        then
+        
+        4@ += 1.0
+        
+        if
+        0E4D: random_percent 60
+        then
+        032B: $MISSION_PICKUP = create_weapon_pickup #NVGOGGLES group 15 ammo 1 at 2@ 3@ 4@
+        else
+        032B: $MISSION_PICKUP = create_weapon_pickup #IRGOGGLES group 15 ammo 1 at 2@ 3@ 4@
+        end        
+        
+        4@ -= 1.0
+
+        end
+    end
+
+return
+
+end  
+
+random_int 0@ 0 to 42
+
+if
+0@ == 0
+then
+//  1019.488
+//  1019.488
+0208: 2@ = random_float_in_ranges -1879.7554 -1888.0515 
+0208: 3@ = random_float_in_ranges 702.8057 831.463
+4@ = 1020.5
+5@ = 1018.0
+end
+
+if
+0@ == 1
+then
+//  1019.488
+//  1019.488
+0208: 2@ = random_float_in_ranges -1799.5415 -1807.8378 
+0208: 3@ = random_float_in_ranges 7683.178 841.4804
+4@ = 1020.5
+5@ = 1018.0
+end
+
+if
+0@ == 2
+then
+//  1019.488
+//  1019.488
+0208: 2@ = random_float_in_ranges -1839.4338 -1848.0969 
+0208: 3@ = random_float_in_ranges 823.531 835.442
+4@ = 1020.5
+5@ = 1018.0
+end
+
+if
+0@ == 3
+then
+//  1019.4899
+//  1019.488
+0208: 2@ = random_float_in_ranges -1809.407 -1839.3203 
+0208: 3@ = random_float_in_ranges 835.4098 833.5389
+4@ = 1020.5
+5@ = 1018.0
+end
+
+if
+0@ == 4
+then
+//  1019.4899
+//  1019.4899
+0208: 2@ = random_float_in_ranges -1849.4124 -1878.4026 
+0208: 3@ = random_float_in_ranges 823.5359 825.1642
+4@ = 1020.5
+5@ = 1018.0
+end
+
+if
+0@ == 5
+then
+//  1019.4899
+//  1019.4899
+0208: 2@ = random_float_in_ranges -1878.4543 -1849.4132 
+0208: 3@ = random_float_in_ranges 831.4945 829.6572
+4@ = 1020.5
+5@ = 1018.0
+end
+
+if
+0@ == 6
+then
+//  1019.488
+//  1019.4899
+0208: 2@ = random_float_in_ranges -1847.8102 -1809.4637 
+0208: 3@ = random_float_in_ranges 839.6907 841.4885
+4@ = 1020.5
+5@ = 1018.0
+end
+
+if
+0@ == 7
+then
+//  1017.7458
+//  1017.7458
+0208: 2@ = random_float_in_ranges -1791.2179 -1799.0319 
+0208: 3@ = random_float_in_ranges 848.126 843.3016
+4@ = 1018.5
+5@ = 1016.5
+end
+
+if
+0@ == 8
+then
+//  1019.5
+//  1019.5
+0208: 2@ = random_float_in_ranges -1858.8073 -1800.1844 
+0208: 3@ = random_float_in_ranges 525.8979 533.8512
+4@ = 1020.5
+5@ = 1018.0
+end
+
+if
+0@ == 9
+then
+//  1019.5
+//  1019.506
+0208: 2@ = random_float_in_ranges -1767.3745 -1729.0941 
+0208: 3@ = random_float_in_ranges 505.0017 513.2963
+4@ = 1020.5
+5@ = 1018.0
+end
+
+if
+0@ == 10
+then
+//  1019.506
+//  1019.5
+0208: 2@ = random_float_in_ranges -1728.7549 -1797.3672 
+0208: 3@ = random_float_in_ranges 494.9973 502.9602
+4@ = 1020.5
+5@ = 1018.0
+end
+
+if
+0@ == 11
+then
+//  1019.5
+//  1019.5
+0208: 2@ = random_float_in_ranges -1798.9335 -1819.1121 
+0208: 3@ = random_float_in_ranges 509.5732 501.6698
+4@ = 1020.5
+5@ = 1018.0
+end
+
+if
+0@ == 12
+then
+//  1019.5
+//  1019.5
+0208: 2@ = random_float_in_ranges -1819.6951 -1827.7633 
+0208: 3@ = random_float_in_ranges 509.6285 508.949
+4@ = 1020.5
+5@ = 1018.0
+end
+
+if
+0@ == 13
+then
+//  1019.5
+//  1019.5
+0208: 2@ = random_float_in_ranges -1819.6395 -1829.2686 
+0208: 3@ = random_float_in_ranges 502.2977 503.0042
+4@ = 1020.5
+5@ = 1018.0
+end
+
+if
+0@ == 14
+then
+//  1019.5
+//  1019.5
+0208: 2@ = random_float_in_ranges -1829.8201 -1857.4764 
+0208: 3@ = random_float_in_ranges 495.0526 502.9952
+4@ = 1020.5
+5@ = 1018.0
+end
+
+if
+0@ == 15
+then
+//  1019.5
+//  1019.5
+0208: 2@ = random_float_in_ranges -1799.031 -1818.7664 
+0208: 3@ = random_float_in_ranges 488.4175 496.3586
+4@ = 1020.5
+5@ = 1018.0
+end
+
+if
+0@ == 16
+then
+//  1018.7899
+//  1018.7899
+0208: 2@ = random_float_in_ranges -1883.9869 -1848.2075 
+0208: 3@ = random_float_in_ranges 926.7502 973.6984
+4@ = 1020.2899
+5@ = 1017.2899
+end
+
+if
+0@ == 17
+then
+//  1018.7927
+//  1018.7899
+0208: 2@ = random_float_in_ranges -1847.9709 -1883.7124 
+0208: 3@ = random_float_in_ranges 976.6331 1023.6314
+4@ = 1020.2899
+5@ = 1017.2899
+end
+
+if
+0@ == 18
+then
+//  1017.7881
+//  1017.7928
+0208: 2@ = random_float_in_ranges -1810.326 -1818.6276 
+0208: 3@ = random_float_in_ranges 977.096 1015.3201
+4@ = 1019.2881
+5@ = 1016.2899
+end
+
+if
+0@ == 19
+then
+//  1019.1328
+//  1019.1328
+0208: 2@ = random_float_in_ranges -1883.6846 -1883.8027 
+0208: 3@ = random_float_in_ranges 702.1632 651.8839
+4@ = 1020.6328
+5@ = 1018.6328
+end
+
+if
+0@ == 20
+then
+//  1018.5781
+//  1018.5781
+0208: 2@ = random_float_in_ranges -1879.0724 -1886.8937 
+0208: 3@ = random_float_in_ranges 645.7305 650.7236
+4@ = 1020.0781
+5@ = 1018.0781
+end
+
+if
+0@ == 21
+then
+//  1019.1172
+//  1019.125
+0208: 2@ = random_float_in_ranges -1885.1569 -1885.0568 
+0208: 3@ = random_float_in_ranges 645.3307 590.2771
+4@ = 1020.6172
+5@ = 1018.6172
+end
+
+if
+0@ == 22
+then
+//  1019.1605
+//  1019.1328
+0208: 2@ = random_float_in_ranges -1875.2363 -1925.1572 
+0208: 3@ = random_float_in_ranges 590.2214 590.2757
+4@ = 1020.6605
+5@ = 1018.6605
+end
+
+if
+0@ == 22
+then
+0208: 2@ = random_float_in_ranges -1925.2268 -1925.264 
+0208: 3@ = random_float_in_ranges 590.0771 570.5505
+4@ = 1019.1328
+5@ = 1019.1328
+end
+
+if
+0@ == 23
+then
+0208: 2@ = random_float_in_ranges -1925.3437 -1910.6893 
+0208: 3@ = random_float_in_ranges 570.2768 545.1429
+4@ = 1019.1328
+5@ = 1019.1328
+end    
+
+if
+0@ == 24
+then
+0208: 2@ = random_float_in_ranges -1910.5865 -1884.9183 
+0208: 3@ = random_float_in_ranges 544.7249 529.9769
+4@ = 1019.1328
+5@ = 1019.1328
+end
+
+if
+0@ == 25
+then
+0208: 2@ = random_float_in_ranges -1884.9183 -1860.0494 
+0208: 3@ = random_float_in_ranges 529.9769 529.9268
+4@ = 1019.1328
+5@ = 1019.1328
+end
+
+if
+0@ == 26
+then
+0208: 2@ = random_float_in_ranges -1793.9788 -1773.4104 
+0208: 3@ = random_float_in_ranges 529.5612 509.2067
+4@ = 1019.1328
+5@ = 1019.1328
+end
+
+if
+0@ == 27
+then
+0208: 2@ = random_float_in_ranges -1773.3695 -1768.217 
+0208: 3@ = random_float_in_ranges 509.0186 509.0193
+4@ = 1019.1328
+5@ = 1019.1328
+end  
+
+if
+0@ == 28
+then
+0208: 2@ = random_float_in_ranges -1857.988 -2023.4729 
+0208: 3@ = random_float_in_ranges 499.0038 498.9185
+4@ = 1019.1328
+5@ = 1019.1328
+end    
+
+if
+0@ == 29
+then
+0208: 2@ = random_float_in_ranges -2023.5005 -2023.5566 
+0208: 3@ = random_float_in_ranges 589.673 450.4922
+4@ = 1019.1328
+5@ = 1019.1406
+end    
+
+if
+0@ == 30
+then
+0208: 2@ = random_float_in_ranges -2023.5122 -2023.6263 
+0208: 3@ = random_float_in_ranges 442.1764 432.7869
+4@ = 1012.2501
+5@ = 1012.0875
+end    
+
+if
+0@ == 31
+then
+0208: 2@ = random_float_in_ranges -2023.6689 -2023.6976 
+0208: 3@ = random_float_in_ranges 424.6427 415.0527
+4@ = 1005.1908
+5@ = 1004.9875
+end  
+
+if
+0@ == 32
+then
+0208: 2@ = random_float_in_ranges -2023.7457 -2023.7161 
+0208: 3@ = random_float_in_ranges 406.9346 397.7415
+4@ = 998.0812
+5@ = 997.9275
+end
+
+if
+0@ == 33
+then
+0208: 2@ = random_float_in_ranges -2019.5415 -2021.3094 
+0208: 3@ = random_float_in_ranges 590.2524 598.5227
+4@ = 1019.5
+5@ = 1019.5
+end
+
+if
+0@ == 34
+then
+0208: 2@ = random_float_in_ranges -2027.5001 -2025.7019 
+0208: 3@ = random_float_in_ranges 590.2578 598.684
+4@ = 1019.5
+5@ = 1019.5
+end    
+
+if
+0@ == 35
+then
+0208: 2@ = random_float_in_ranges -1829.5778 -1884.7504 
+0208: 3@ = random_float_in_ranges 632.4327 600.6616
+4@ = 1019.1328
+5@ = 1019.125
+end    
+
+if
+0@ == 36
+then
+0208: 2@ = random_float_in_ranges -1794.3735 -1794.3037 
+0208: 3@ = random_float_in_ranges 849.4027 973.9941
+4@ = 1018.5037
+5@ = 1018.4958
+end  
+
+if
+0@ == 37
+then
+0208: 2@ = random_float_in_ranges -1794.3037 -1819.2279 
+0208: 3@ = random_float_in_ranges 973.9941 973.9708
+4@ = 1018.4958
+5@ = 1018.5037
+end
+
+if
+0@ == 38
+then
+0208: 2@ = random_float_in_ranges -1825.2948 -1820.2341 
+0208: 3@ = random_float_in_ranges 972.1963 980.043
+4@ = 1017.949
+5@ = 1017.949
+end   
+
+if
+0@ == 39
+then
+0208: 2@ = random_float_in_ranges -1825.7897 -1841.4269 
+0208: 3@ = random_float_in_ranges 975.4341 975.3903
+4@ = 1018.4958
+5@ = 1018.5352
+end  
+
+if
+0@ == 40
+then
+0208: 2@ = random_float_in_ranges -1814.6233 -1814.7214 
+0208: 3@ = random_float_in_ranges 1015.6916 1037.8987
+4@ = 1017.4227
+5@ = 1017.4242
+end  
+
+if
+0@ == 41
+then
+0208: 2@ = random_float_in_ranges -1809.0937 -1794.5728 
+0208: 3@ = random_float_in_ranges 1041.1399 1041.3239
+4@ = 1018.5037
+5@ = 1018.4958
+end
+
+/////////////////////////////////////////////////////////////////////
+
+if
+0@ > 22
+then
+4@ += 1.5
+5@ -= 1.5
+end
+
+6@ = 0
+gosub @CANALS_COORD_SET
+
+return
+
+:CANALS_COORD_SET 
+0D3A: get_collision_between_poitns 2@ 3@ 4@ and 2@ 3@ 5@ flags 1 0 0 0 0 0 0 0 ignore_entity 0 store_point_to 2@ 3@ 4@ entity_to 5@ colpoint_data_to 1 // IF and SET
+if and
+8AE2: 30@ = random_vehicle_near_point 2@ 3@ 4@ in_radius 5.0 find_next 0 pass_wrecked 1 //IF and SET
+8AE1: 31@ = random_actor_near_point 2@ 3@ 4@ in_radius 2.0 find_next 0 pass_deads 0
+4@ > 900.0
+0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos 2@ 3@ 4@ radius 350.0 
+jf @CANALS_COORD_SET_FAIL
+if or 
+80C2: not  sphere_onscreen 2@ 3@ 4@ radius 1.0
+8EEA: not locate_char_distance_to_coordinates PLAYER_ACTOR pos 2@ 3@ 4@ radius 100.0
+CANALS_BOSS_FIGHT_FLAG == 1
+jf @CANALS_COORD_SET_FAIL
+return
+
+:CANALS_COORD_SET_FAIL
+6@ = 1
+return
+
+:CANALS_COORD_SET2 
+0D3A: get_collision_between_poitns 2@ 3@ 4@ and 2@ 3@ 5@ flags 1 0 0 0 0 0 0 0 ignore_entity 0 store_point_to 2@ 3@ 4@ entity_to 5@ colpoint_data_to 1 // IF and SET
+if and
+8AE2: 30@ = random_vehicle_near_point 2@ 3@ 4@ in_radius 5.0 find_next 0 pass_wrecked 1 //IF and SET
+8AE1: 31@ = random_actor_near_point 2@ 3@ 4@ in_radius 2.0 find_next 0 pass_deads 0
+80C2: not  sphere_onscreen 2@ 3@ 4@ radius 1.0
+4@ > 900.0
+0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos 2@ 3@ 4@ radius 200.0 
+jf @CANALS_COORD_SET2_FAIL
+if or 
+80C2: not  sphere_onscreen 2@ 3@ 4@ radius 1.0
+8EEA: not locate_char_distance_to_coordinates PLAYER_ACTOR pos 2@ 3@ 4@ radius 100.0
+jf @CANALS_COORD_SET2_FAIL
+return
+
+:CANALS_COORD_SET2_FAIL
+6@ = 1
+return 
+
+:CANNIBAL_AI_PROCESS
+
+random_int 11@ 0 5
+gosub @RANDOM_CANNIBAL_ATTACK_PEOPLE1
+
+////////////////////////////////////////////////Заставляем кровавых балванов перелезать препятствия////////////////////////////////////////////////    
+
+random_int 1@ 0 25    
+if and
+056D:   actor $ARMY69_2[0@] defined
+1@ == 12
+    then
+    if
+    0EE4: locate_char_distance_to_char $ARMY69_2[0@] char PLAYER_ACTOR radius 10.0
+        then    
+        if and
+        0184:   actor $ARMY69_2[0@] health > 0
+        874F: not  actor $ARMY69_2[0@] ped_event == 33  
+        8818: not  actor $ARMY69_2[0@] in_air    
+        8E47: not is_char_fighting $ARMY69_2[0@]     
+            then    
+            if and
+            not actor.Animation($ARMY69_2[0@]) == "CLIMB_idle"
+            not actor.Animation($ARMY69_2[0@]) == "CLIMB_jump"
+            not actor.Animation($ARMY69_2[0@]) == "CLIMB_jump2fall"
+            not actor.Animation($ARMY69_2[0@]) == "CLIMB_jump_B"
+            not actor.Animation($ARMY69_2[0@]) == "CLIMB_Pull" 
+            not actor.Animation($ARMY69_2[0@]) == "CLIMB_Stand"
+            not actor.Animation($ARMY69_2[0@]) == "CLIMB_Stand_finish"                     
+                then
+                if or
+                actor.Animation($ARMY69_2[0@]) == "run_civi"  
+                actor.Animation($ARMY69_2[0@]) == "sprint_civi"   
+                actor.Animation($ARMY69_2[0@]) == "swat_run"
+                actor.Animation($ARMY69_2[0@]) == "Swim_Breast"
+                actor.Animation($ARMY69_2[0@]) == "Swim_Tread"
+                actor.Animation($ARMY69_2[0@]) == "Swim_Under"     
+                    then
+                    if or
+                    0364:   actor $ARMY69_2[0@] spotted_actor PLAYER_ACTOR
+                    0364:   actor PLAYER_ACTOR spotted_actor $ARMY69_2[0@]
+                    0457:   player 0 aiming_at_actor $ARMY69_2[0@]
+                    02CB:   actor $ARMY69_2[0@] bounding_sphere_visible
+                        then   
+                        04C4: store_coords_to 3@ 4@ 5@ from_actor $ARMY69_2[0@] with_offset 0.0 0.0 0.0 
+                        04C4: store_coords_to 27@ 28@ 29@ from_actor $ARMY69_2[0@] with_offset 0.0 0.5 0.5
+                        gosub @CANNIBAL_ATTACK_SYSTEM_FIRING_CHECK                                 
+                        if and                        
+                        86BD: not no_obstacles_between 27@ 28@ 29@ and 3@ 4@ 5@ solid 1 car 0 actor 0 object 1 particle 0
+                        19@ == 0   
+                            then      
+                            0687: clear_actor $ARMY69_2[0@] task
+                            wait 100
+                            if
+                            056D:   actor $ARMY69_2[0@] defined
+                                then                                                                                                                                                   
+                                078F: AS_actor $ARMY69_2[0@] climb 1
+    //                            0AD1: show_formatted_text_highpriority "STENA CLIMB" time 2000
+                                wait 200
+                                if
+                                056D:   actor $ARMY69_2[0@] defined
+                                    then        
+                                    actor.StorePos($ARMY69_2[0@], 27@, 28@, 29@)
+                                    
+                                    if
+                                    82F2: not  actor $ARMY69_2[0@] model == 14732
+                                    then 
+                                    04C4: store_coords_to 2@ 3@ 4@ from_actor $ARMY69_2[0@] with_offset 0.0 0.0 5.0
+                                    else
+                                    04C4: store_coords_to 2@ 3@ 4@ from_actor $ARMY69_2[0@] with_offset 0.0 5.0 25.0
+                                    end
+                                    
+                                    0063: 2@ -= 27@  // (float) 
+                                    0063: 3@ -= 28@  // (float) 
+                                    0063: 4@ -= 29@  // (float) 
+                                    083C: set_actor $ARMY69_2[0@] velocity_in_direction_XYZ 2@ 3@ 4@
+                                    end
+                                end
+                            else
+                            :CANNIBAL_PERILA_CHECK
+                            04C4: store_coords_to 3@ 4@ 5@ from_actor $ARMY69_2[0@] with_offset 0.0 0.0 -0.2
+                            04C4: store_coords_to 27@ 28@ 29@ from_actor $ARMY69_2[0@] with_offset 0.0 0.5 -0.2                              
+                            if                        
+                            86BD: not no_obstacles_between 3@ 4@ 5@ and 27@ 28@ 29@ solid 1 car 0 actor 0 object 0 particle 0
+                                then
+                                04C4: store_coords_to 3@ 4@ 5@ from_actor $ARMY69_2[0@] with_offset 0.0 0.0 0.0 
+                                04C4: store_coords_to 27@ 28@ 29@ from_actor $ARMY69_2[0@] with_offset 0.0 0.5 0.5      
+                                if                        
+                                06BD: no_obstacles_between 3@ 4@ 5@ and 27@ 28@ 29@ solid 1 car 0 actor 0 object 0 particle 0
+                                    then
+                                    0687: clear_actor $ARMY69_2[0@] task
+                                    wait 100
+                                    if
+                                    056D:   actor $ARMY69_2[0@] defined
+                                        then                                                                                                                                                   
+                                        05BC: AS_actor $ARMY69_2[0@] jump 1
+    //                                    0AD1: show_formatted_text_highpriority "PERILA JUMP" time 2000
+                                        wait 200
+                                        if
+                                        056D:   actor $ARMY69_2[0@] defined
+                                            then        
+                                            actor.StorePos($ARMY69_2[0@], 27@, 28@, 29@)
+                                            
+                                            if
+                                            82F2: not  actor $ARMY69_2[0@] model == 14732
+                                            then 
+                                            04C4: store_coords_to 2@ 3@ 4@ from_actor $ARMY69_2[0@] with_offset 0.0 1.0 1.0
+                                            else
+                                            04C4: store_coords_to 2@ 3@ 4@ from_actor $ARMY69_2[0@] with_offset 0.0 2.0 25.0
+                                            end
+                                            
+                                            0063: 2@ -= 27@  // (float) 
+                                            0063: 3@ -= 28@  // (float) 
+                                            0063: 4@ -= 29@  // (float) 
+                                            083C: set_actor $ARMY69_2[0@] velocity_in_direction_XYZ 2@ 3@ 4@
+                                            end
+                                        end 
+                                    end   
+                                end                                                                                                  
+                            end
+                        else
+                        jump to @CANNIBAL_PERILA_CHECK
+                        end    
+                    end                                            
+                end 
+            end
+        end
+    end
+        
+/////////////////////////////////////////////////////////////////////////////////        
+        
+gosub @CANNIBAL_ATTACK_SYSTEM
+
+/////////////////////////////////////////////////////////////////////////////////
+
+if
+8491: not  actor $ARMY69_2[0@] has_weapon 43
+then
+2@ = 400.0
+else
+2@ = 230.0
+end
+
+if or
+8EE4: not locate_char_distance_to_char PLAYER_ACTOR char $ARMY69_2[0@] radius 2@
+CANNIBALS_SHIELD_FLAG > 0
+    then
+            
+    if
+    075C:   marker $ARMY69_2_MARKER[0@] enabled
+    then
+    marker.Disable($ARMY69_2_MARKER[0@])
+    $ARMY69_2_MARKER[0@] = 0
+    end
+    
+    if and
+    SWEET_SPAWN_FLAG == 666
+    not $ARMY69_2_MARKER_FLAG[0@] == -1
+    then
+    Audiostream.PerformAction($ARMY69_2_MARKER_FLAG[0@],STOP)
+    Audiostream.Release($ARMY69_2_MARKER_FLAG[0@])
+    $ARMY69_2_MARKER_FLAG[0@] = -1
+    end
+            
+    actor.DestroyInstantly($ARMY69_2[0@])
+    $ARMY69_2[0@] = -69
+    end
+
+/////////////////////////////////////////////////////////////////////////////////
+
+if
+056D:   actor $ARMY69_2[0@] defined
+    then    
+    if and
+    actor.Dead($ARMY69_2[0@])
+    075C:   marker $ARMY69_2_MARKER[0@] enabled 
+        then
+        
+        create_thread @ANTKUKL $ARMY69_2[0@]
+        
+        marker.Disable($ARMY69_2_MARKER[0@])
+        $ARMY69_2_MARKER[0@] = 0                
+        
+        if
+        $CANALS_CHALLENGE_FLAG == 1
+        then
+        gosub @LOOT_DROP_CANNIBAL
+        end
+        
+        0A96: 3@ = actor $ARMY69_2[0@] struct
+        0A8E: 3@ = 3@ + 0x764
+        0A8D: 1@ = read_memory 3@ size 2 virtual_protect 1
+        0A8D: 2@ = read_memory 0xB6F5F0 size 2 virtual_protect 1
+        
+        if
+        0800:   in_two_players_mode
+        then
+        0A8D: 3@ = read_memory 0xB7CF28 size 2 virtual_protect 1
+        else
+        3@ = -69
+        end
+        
+        if
+        02F2:   actor $ARMY69_2[0@] model == 14732
+        then
+        1@ = 0
+        2@ = 1
+        3@ = 2
+        end
+        
+        if or
+        003B:   1@ == 2@  // (int)
+        003B:   1@ == 3@  // (int)
+        then               
+        
+        0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_CANNIBALS_KILLED"    
+                
+        if
+        $CHEATED_FLAG == 0 
+        then                  
+        1@ += 1   
+        end
+        
+        0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_CANNIBALS_KILLED"
+        
+        0AF0: 3@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT111_GOT"    
+        
+        if and
+        3@ == 0
+        1@ >= 300
+        then
+        v$ACHIEVEMNT = "ACH111"
+        $ACHIEVEMENT_GOT_FLAG = 1        
+        0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT111_GOT"        
+        end
+                
+        $CANNIBALS_KILLED += 1
+        $TEMP_XP = CANNIBAL_XP_PLUS
+        008D: $TEMP_XP = integer $TEMP_XP to_float
+        0069: $TEMP_XP *= $XP_COEFF // (float)
+        008C: $TEMP_XP = float $TEMP_XP to_integer
+        0058: $PLAYER_XP += $TEMP_XP // (int)
+        
+        end
+        
+        if and
+        SWEET_SPAWN_FLAG == 666
+        not $ARMY69_2_MARKER_FLAG[0@] == -1
+        then
+        Audiostream.PerformAction($ARMY69_2_MARKER_FLAG[0@],STOP)
+        Audiostream.Release($ARMY69_2_MARKER_FLAG[0@])
+        $ARMY69_2_MARKER_FLAG[0@] = -1
+        end
+        
+        actor.RemoveReferences($ARMY69_2[0@])
+        $ARMY69_2[0@] = -69                                
+        
+        end        
+    end    
+
+/////////////////////////////////////////////////////////////////////////////////        
+
+return
+
+:RANDOM_CANNIBAL_ATTACK_PEOPLE1
+
+092B: 3@ = group PLAYER_GROUP member 11@
+
+if
+07D6:   3@ == COOP_ACTOR // @ == $ (int)
+then
+return
+end
+
+if
+056D:  actor 3@ defined
+jf @RANDOM_CANNIBAL_ATTACK_PEOPLE_NOPE
+
+if
+056D:   actor $ARMY69_2[0@] defined
+jf @RANDOM_CANNIBAL_ATTACK_PEOPLE_NOPE
+
+if
+$MISSION14_ACTIVE == 1
+    then
+    if
+    not 11@ == 1
+    jf @RANDOM_CANNIBAL_ATTACK_PEOPLE_NOPE
+    end    
+
+if
+056D:   actor 3@ defined
+jf @RANDOM_CANNIBAL_ATTACK_PEOPLE_NOPE 
+
+if and 
+not actor.Driving(PLAYER_ACTOR)
+$RANDOM_CAR_FLAG == 0  
+89DE:   actor 3@ entering_car  
+80DF:   actor 3@ in_a_car
+jf @RANDOM_CANNIBAL_ATTACK_PEOPLE_NOPE
+actor.StorePos($ARMY69_2[0@],4@,1@,2@)
+
+if or
+0364:   actor 3@ spotted_actor $ARMY69_2[0@]
+0364:   actor $ARMY69_2[0@] spotted_actor 3@
+jf @RANDOM_CANNIBAL_ATTACK_PEOPLE_NOPE
+:AABC_SPOTTED_CHECK_SKIP_CANNIBAL
+if
+00F2:   actor 3@ near_actor $ARMY69_2[0@] radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+jf @RANDOM_CANNIBAL_ATTACK_PEOPLE_NOPE
+if and
+$HUNTER_ON_PLAYER == 0
+$PEOPLE_DONT_ATTACK == 0
+$COMMAND_STAY_IN_CAR == 0
+jf @RANDOM_CANNIBAL_ATTACK_PEOPLE_NOPE
+if
+not actor.Animation(3@) == "FLOOR_hit"
+jf @RANDOM_CANNIBAL_ATTACK_PEOPLE_NOPE
+if
+$HUNTER_ON_GROUP == 0
+jf @RANDOM_CANNIBAL_ATTACK_PEOPLE_NOPE  
+if
+044B:   actor 3@ on_foot
+jf @RANDOM_CANNIBAL_ATTACK_PEOPLE_NOPE  
+if
+82E0: not actor 3@ firing_weapon
+jf @RANDOM_CANNIBAL_ATTACK_PEOPLE_NOPE
+062E: get_actor 3@ task 1506 status_store_to 1@ // ret 7 if not found
+if 
+1@ == 7
+jf @RANDOM_CANNIBAL_ATTACK_PEOPLE_NOPE  
+if and
+not actor.Animation(3@) == "colt45_fire_2hands"
+not actor.Animation(3@) == "python_fire" 
+not actor.Animation(3@) == "shotgun_fire" 
+not actor.Animation(3@) == "buddy_fire" 
+not actor.Animation(3@) == "UZI_fire"
+not actor.Animation(3@) == "RIFLE_fire" 
+jf @RANDOM_CANNIBAL_ATTACK_PEOPLE_NOPE  
+if and
+not actor.Animation(3@) == "FLAME_fire" 
+not actor.Animation(3@) == "RocketFire" 
+not actor.Animation(3@) == "WEAPON_sniper" 
+not actor.Animation(3@) == "WEAPON_throw"   
+jf @RANDOM_CANNIBAL_ATTACK_PEOPLE_NOPE       
+if and
+not actor.Animation(3@) == "colt45_crouchfire"
+not actor.Animation(3@) == "python_crouchfire" 
+not actor.Animation(3@) == "shotgun_crouchfire" 
+not actor.Animation(3@) == "buddy_crouchfire" 
+not actor.Animation(3@) == "UZI_crouchfire"
+not actor.Animation(3@) == "RIFLE_crouchfire" 
+jf @RANDOM_CANNIBAL_ATTACK_PEOPLE_NOPE
+if and
+not actor.Animation(3@) == "colt45_reload"
+not actor.Animation(3@) == "python_reload" 
+not actor.Animation(3@) == "shotgun_reload" 
+not actor.Animation(3@) == "buddy_reload" 
+not actor.Animation(3@) == "UZI_reload"
+not actor.Animation(3@) == "RIFLE_load" 
+jf @RANDOM_CANNIBAL_ATTACK_PEOPLE_NOPE
+if and
+not actor.Animation(3@) == "colt45_crouchreload"
+not actor.Animation(3@) == "python_crouchreload" 
+not actor.Animation(3@) == "shotgun_crouchreload" 
+not actor.Animation(3@) == "buddy_crouchreload" 
+not actor.Animation(3@) == "UZI_crouchreload"
+not actor.Animation(3@) == "RIFLE_crouchload" 
+jf @RANDOM_CANNIBAL_ATTACK_PEOPLE_NOPE   
+if and
+not actor.Animation(3@) == "GunMove_BWD"
+not actor.Animation(3@) == "GunMove_FWD"
+not actor.Animation(3@) == "GunMove_L"
+not actor.Animation(3@) == "GunMove_R"
+not actor.Animation(3@) == "Gun_2_IDLE"
+not actor.Animation(3@) == "GUN_BUTT"
+not actor.Animation(3@) == "GUN_BUTT_crouch"
+not actor.Animation(3@) == "Gun_stand" 
+jf @RANDOM_CANNIBAL_ATTACK_PEOPLE_NOPE
+if and
+not actor.Animation(3@) == "CLIMB_idle"
+not actor.Animation(3@) == "CLIMB_jump"
+not actor.Animation(3@) == "CLIMB_jump2fall"
+not actor.Animation(3@) == "CLIMB_jump_B"
+not actor.Animation(3@) == "CLIMB_Pull"
+not actor.Animation(3@) == "CLIMB_Stand"
+not actor.Animation(3@) == "CLIMB_Stand_finish" 
+jf @RANDOM_CANNIBAL_ATTACK_PEOPLE_NOPE
+if and
+not actor.Animation(3@) == "Crouch_Roll_L"
+not actor.Animation(3@) == "Crouch_Roll_R"
+not actor.Animation(3@) == "gas_cwr"
+not actor.Animation(3@) == "getup"
+not actor.Animation(3@) == "getup_front"
+not actor.Animation(3@) == "GunCrouchBwd"
+not actor.Animation(3@) == "GunCrouchFwd"
+8E47: not is_char_fighting 3@
+jf @RANDOM_CANNIBAL_ATTACK_PEOPLE_NOPE
+05C1: AS_actor 3@ speak_from_audio_table $PEOPLE_ZOMBIE_ATTACK_AUDIO_TABLE
+if
+056D:   actor 3@ defined
+jf @RANDOM_CANNIBAL_ATTACK_PEOPLE_NOPE 
+if and
+not actor.Driving(PLAYER_ACTOR)
+89DE:   actor PLAYER_ACTOR entering_car
+80DF:   actor PLAYER_ACTOR in_a_car
+80DF:   actor 3@ in_a_car
+not actor.Dead(3@)
+not actor.Dead($ARMY69_2[0@])
+874F: not  actor 3@ ped_event == 63
+874F: not  actor 3@ ped_event == 25
+jf @RANDOM_CANNIBAL_ATTACK_PEOPLE_NOPE
+//0647: AS_actor 3@ clear_look_task
+//05B9: AS_actor 3@ stay_idle 50 ms 
+wait 50
+if
+056D:   actor 3@ defined  
+then
+05E2: AS_actor 3@ kill_actor $ARMY69_2[0@]
+end    
+
+jump @RANDOM_CANNIBAL_ATTACK_PEOPLE_NOPE
+
+:RANDOM_CANNIBAL_ATTACK_PEOPLE_NOPE
+return
+
+:CANNIBAL_ATTACK_SYSTEM       
+
+if
+$VAGINA_FLAG[0@] == 1
+    then
+    $VAGINA_TIME[0@] += 1
+    end
+
+/////////////////Поиск цели бойцом///////////////////// 
+
+if and
+056D:   actor $ARMY69_2[0@] defined
+$VAGINA_FLAG[0@] == 0  
+    then
+    random_int 2@ 0 3
+    if
+    2@ == 1    
+        then                
+                
+        ZONES_SPOT_FLAG_AI = 0
+        
+        ZONES_SPOT_INT_AI += 1
+        if
+        ZONES_SPOT_INT_AI > 39
+        then
+        ZONES_SPOT_INT_AI = 0
+        end
+                                
+        if
+        056D:   actor $ARMY69_2[ZONES_SPOT_INT_AI] defined
+            then
+            if or
+            0364:   actor $ARMY69_2[ZONES_SPOT_INT_AI] spotted_actor $ARMY69_2[0@]            
+            0104:  actor $ARMY69_2[ZONES_SPOT_INT_AI] near_actor $ARMY69_2[0@] radius 25.0 25.0 15.0 sphere 0
+                then                                                                                
+                if
+                0364:   actor $ARMY69_2[ZONES_SPOT_INT_AI] spotted_actor PLAYER_ACTOR            
+                    then
+                    :CANNIBAL_ATTACK_SYSTEM_PLAYER_SET
+                    ZONES_SPOT_FLAG_AI = 1
+                    //0AD1: show_formatted_text_highpriority "BOEC IS GOT MESSAGE FROM ANOTHER BOEC O IGROKE" time 2000
+                    end                
+                end
+            end                
+                
+        ////////////////////////////////////////////////////////////////////////        
+        
+        if and
+        0104:  actor PLAYER_ACTOR near_actor $ARMY69_2[0@] radius 40.0 40.0 15.0 sphere 0
+        02E0:  actor PLAYER_ACTOR firing_weapon
+        02A0:   actor $ARMY69_2[0@] stopped
+        then
+        ZONES_SPOT_FLAG_AI = 1
+        //0AD1: show_formatted_text_highpriority "PLAYER IG GACHING" time 2000
+        end
+        
+        ////////////////////////////////////////////////////////////////////////
+        
+        if or
+        0364:  actor $ARMY69_2[0@] spotted_actor PLAYER_ACTOR  
+        0364:  actor PLAYER_ACTOR spotted_actor $ARMY69_2[0@]     
+        051A:   actor $ARMY69_2[0@] damaged_by_actor PLAYER_ACTOR
+        ZONES_SPOT_FLAG_AI == 1
+            then
+            if and
+            $ACTOR_DEAD == 0    
+            $SPECTATING_FLAG == 0
+            not $IGNOREALL_FLAG == 1 
+            00F2:  actor $ARMY69_2[0@] near_actor PLAYER_ACTOR radius 220.0 220.0 sphere 0
+                then                                                      
+                //0AD1: show_formatted_text_highpriority "BOEC NOMER %d ATAKA IGORKA" time 2000 0@ 
+                008B: $VAGINA[0@] = PLAYER_ACTOR // (int)                
+                $VAGINA_FLAG[0@] = 1
+                $VAGINA_TIME[0@] = 0                    
+                gosub @CANNIBAL_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST                                                             
+                end
+            end   
+        else   
+        gosub @CANNIBAL_ATTACK_SYSTEM_TARGET_FIND
+        if
+        25@ == 1
+            then            
+            if and
+            not actor.Dead($VAGINA[0@])            
+            803A: not  $VAGINA[0@] == $ARMY69_2[0@] // (int)                  
+                then                                
+                if or
+                0364:  actor $ARMY69_2[0@] spotted_actor $VAGINA[0@]
+                0364:  actor $VAGINA[0@] spotted_actor $ARMY69_2[0@]
+                051A:   actor $ARMY69_2[0@] damaged_by_actor $VAGINA[0@]
+                    then                                                                 
+                    $VAGINA_FLAG[0@] = 1
+                    $VAGINA_TIME[0@] = 0                        
+                    gosub @CANNIBAL_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST    
+                    end                                                                                  
+                end 
+            end
+        end               
+    end
+
+/////////////////Проверка на бездействие бойца если цель найдена/////////////////////     
+
+if
+056D:   actor $ARMY69_2[0@] defined
+    then     
+    if
+    0184:   actor $ARMY69_2[0@] health > 0 
+        then
+        if
+        $VAGINA_FLAG[0@] == 1
+            then
+            if
+            056D:   actor $VAGINA[0@] defined
+                then
+                062E: get_actor $ARMY69_2[0@] task 1506 status_store_to 1@ // ret 7 if not found
+                gosub @CANNIBAL_ATTACK_SYSTEM_FIRING_CHECK 
+                if and
+                1@ == 7
+                19@ == 0
+                not actor.Animation($ARMY69_2[0@]) == "Crouch_Roll_L"
+                not actor.Animation($ARMY69_2[0@]) == "Crouch_Roll_R" 
+                    then
+//                    0AD1: show_formatted_text_highpriority "BOEC %d IS STRADAET HYINEY TRYING TO DO SOME USEFUL" time 400 0@
+                    //0ACE: show_formatted_text_box "BOEC %d IS STRADAET HYINEY TRYING TO DO SOME USEFUL" 0@                     
+                    gosub @CANNIBAL_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST
+                    wait 500  
+                    end
+                end
+            end
+        end
+    end 
+     
+/////////////////Проверка на наличие цели атаки///////////////////// 
+
+if and
+056D:   actor $ARMY69_2[0@] defined
+$VAGINA_FLAG[0@] == 1 
+    then
+    if
+    056D:   actor $VAGINA[0@] defined
+        then 
+        if or
+        8184:   actor $VAGINA[0@] health < 1  
+        80F2: not  actor $ARMY69_2[0@] near_actor $VAGINA[0@] radius 230.0 230.0 sphere 0
+        $VAGINA_TIME[0@] > 560        
+            then
+            if and
+            $VAGINA_TIME[0@] > 560
+            0364:   actor $ARMY69_2[0@] spotted_actor $VAGINA[0@]
+                then
+                //0AD1: show_formatted_text_highpriority "VAGINA TIME IS BIG\VAGINA DEAD BUT BOEC CAN SEE ENEMY" time 2000
+                else
+                if and
+                02A0:   actor $ARMY69_2[0@] stopped
+                80F2: not  actor $ARMY69_2[0@] near_actor $VAGINA[0@] radius 6.5 6.5 sphere 0
+                    then
+                    //0AD1: show_formatted_text_highpriority "VAGINA TIME IS BIG\VAGINA DEAD AND BOEC IS NOT NEAR HIS VICTIM" time 2000 
+                    $VAGINA_FLAG[0@] = 0
+                    $VAGINA_TIME[0@] = 0
+                    gosub @CANNIBAL_GET_BACK_TO_POS                                      
+                    end
+                end
+            end
+        else
+        //0AD1: show_formatted_text_highpriority "BOEC IS NOT EXISTS" time 2000
+        $VAGINA_FLAG[0@] = 0
+        $VAGINA_TIME[0@] = 0
+        gosub @CANNIBAL_GET_BACK_TO_POS
+        end
+    end
+    
+/////////////////Заставляем каннибалов безцельно ходить по канализациям/////////////////////
+
+if and
+056D:   actor $ARMY69_2[0@] defined
+$VAGINA_FLAG[0@] == 0
+    then
+    if
+    02A0:   actor $ARMY69_2[0@] stopped
+        then
+        1@ = actor.Angle($ARMY69_2[0@])
+        actor.StorePos($ARMY69_2[0@],2@,3@,4@)
+        0EF0: get_coord_from_angled_distance 2@ 3@ angle 1@ dist 5.0 store_to 5@ 6@
+        if
+        06BD:   no_obstacles_between 2@ 3@ 4@ and 5@ 6@ 4@ solid 1 car 0 actor 0 object 0 particle 0
+            then
+            05D3: AS_actor $ARMY69_2[0@] goto_point 5@ 6@ 4@ mode 7 time 999999 ms // versionA
+            else
+            random_float 1@ 0.0 360.0
+            actor.StorePos($ARMY69_2[0@],2@,3@,4@)
+            0EF0: get_coord_from_angled_distance 2@ 3@ angle 1@ dist 5.0 store_to 5@ 6@
+            if
+            06BD:   no_obstacles_between 2@ 3@ 4@ and 5@ 6@ 4@ solid 1 car 0 actor 0 object 0 particle 0
+                then
+                05D3: AS_actor $ARMY69_2[0@] goto_point 5@ 6@ 4@ mode 7 time 999999 ms // versionA
+                end
+            end
+        end
+    end                 
+
+return
+
+/////////////////////////////////////////////////////////////////////////////////
+
+:CANNIBAL_GET_BACK_TO_POS
+
+0085: 1@ = 0@ // (int)
+1@ += 50
+if or
+$WPN_Z[1@] > 400.0
+856D: not  actor $ARMY69_2[0@] defined
+then
+//0AD1: show_formatted_text_highpriority "BOEC NOMER %d GET BACK TO POS CANCEL" time 2000 0@
+return
+end
+
+if            
+0184:   actor $ARMY69_2[0@] health > 0
+then
+            
+///////////////////////////////////////////////////////////////////////
+            
+if
+80FE: not  actor $ARMY69_2[0@] sphere 0 in_sphere $WPN_X[0@] $WPN_Y[0@] $WPN_Z[0@] radius 1.0 1.0 1.0
+then
+
+0085: 1@ = 0@ // (int)
+1@ += 50
+                            
+0615: define_AS_pack_begin 2@  
+05D3: AS_actor -1 goto_point $WPN_X[0@] $WPN_Y[0@] $WPN_Z[0@] mode 7 time 10000 ms // versionA
+05D4: AS_actor -1 rotate_angle $WPN_Z[1@]              
+0616: define_AS_pack_end 2@
+0618: assign_actor $ARMY69_2[0@] to_AS_pack 2@
+061B: remove_references_to_AS_pack 2@
+
+//0AD1: show_formatted_text_highpriority "GOTO %f %f %f, ROTATE %f" time 2000 $WPN_X[0@] $WPN_Y[0@] $WPN_Z[0@] $WPN_Z[0@]
+$WPN_Z[1@] = 960.0
+            
+else
+0085: 1@ = 0@ // (int)
+1@ += 50
+05D4: AS_actor $ARMY69_2[0@] rotate_angle $WPN_Z[1@]
+//0AD1: show_formatted_text_highpriority "ROTATE %f" time 2000 $WPN_Z[0@]
+$WPN_Z[1@] = 960.0
+end
+                              
+end
+            
+///////////////////////////////////////////////////////////////////////
+
+return
+
+:CANNIBAL_ATTACK_SYSTEM_TARGET_FIND
+
+25@ = 0
+
+if
+0E4D: random_percent 80
+then
+random_int 1@ 41 46
+else
+1@ = 0
+end
+
+0084: $VAGINA[0@] = $CREATURE[1@] // (int)
+
+if
+056D:   actor $VAGINA[0@] defined
+    then      
+    if
+    00F2:   actor $ARMY69_2[0@] near_actor $VAGINA[0@] radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+        then 
+        25@ = 1
+        end
+    end
+
+return
+
+:CANNIBAL_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST     
+
+if 
+$VAGINA_FLAG[0@] == 1
+    then 
+    if
+    056D:   actor $VAGINA[0@] defined
+        then            
+        0687: clear_actor $ARMY69_2[0@] task            
+        wait 100
+        if
+        056D:   actor $VAGINA[0@] defined 
+            then
+            
+            0085: 1@ = 0@ // (int)
+            1@ += 50
+            if
+            $WPN_Z[1@] > 360.0
+            then
+            actor.StorePos($ARMY69_2[0@],$WPN_X[0@],$WPN_Y[0@],$WPN_Z[0@])
+            $WPN_Z[1@] = actor.Angle($ARMY69_2[0@])
+//            0AD1: show_formatted_text_highpriority "GET POS %f %f %f, ANGLE %f" time 2000 $WPN_X[0@] $WPN_Y[0@] $WPN_Z[0@] $WPN_Z[0@]
+            end
+            
+            Actor.SetWalkStyle($ARMY69_2[0@], "surv5")
+                                      
+            05E2: AS_actor $ARMY69_2[0@] kill_actor $VAGINA[0@]                                                      
+            return           
+            end
+        end
+    end   
+    
+return      
+
+/////////////////////////////////////////////////////////////////////////////////        
+
+:CANNIBAL_ATTACK_SYSTEM_FIRING_CHECK
+19@ = 0
+
+if and
+not actor.Animation($ARMY69_2[0@]) == "knife_1"
+not actor.Animation($ARMY69_2[0@]) == "knife_2"
+not actor.Animation($ARMY69_2[0@]) == "knife_3"
+not actor.Animation($ARMY69_2[0@]) == "knife_4"
+not actor.Animation($ARMY69_2[0@]) == "knife_block"
+not actor.Animation($ARMY69_2[0@]) == "knife_IDLE"
+not actor.Animation($ARMY69_2[0@]) == "WEAPON_knifeidle"
+jf @CANNIBAL_ATTACK_SYSTEM_FIRING_CHECK2
+
+if and
+not actor.Animation($ARMY69_2[0@]) == "bat_1"
+not actor.Animation($ARMY69_2[0@]) == "bat_2"
+not actor.Animation($ARMY69_2[0@]) == "bat_3"
+not actor.Animation($ARMY69_2[0@]) == "bat_4"
+not actor.Animation($ARMY69_2[0@]) == "bat_block"
+not actor.Animation($ARMY69_2[0@]) == "bat_IDLE"
+jf @CANNIBAL_ATTACK_SYSTEM_FIRING_CHECK2
+
+if and
+not actor.Animation($ARMY69_2[0@]) == "DILDO_1"
+not actor.Animation($ARMY69_2[0@]) == "DILDO_2"
+not actor.Animation($ARMY69_2[0@]) == "DILDO_3"
+not actor.Animation($ARMY69_2[0@]) == "DILDO_G"
+not actor.Animation($ARMY69_2[0@]) == "DILDO_block"
+not actor.Animation($ARMY69_2[0@]) == "DILDO_IDLE"
+jf @CANNIBAL_ATTACK_SYSTEM_FIRING_CHECK2
+
+if and
+not actor.Animation($ARMY69_2[0@]) == "SWORD_1"
+not actor.Animation($ARMY69_2[0@]) == "SWORD_2"
+not actor.Animation($ARMY69_2[0@]) == "SWORD_3"
+not actor.Animation($ARMY69_2[0@]) == "SWORD_4"
+not actor.Animation($ARMY69_2[0@]) == "SWORD_block"
+not actor.Animation($ARMY69_2[0@]) == "SWORD_IDLE"
+jf @CANNIBAL_ATTACK_SYSTEM_FIRING_CHECK2
+
+if and
+not actor.Animation($ARMY69_2[0@]) == "CSAW_1"
+not actor.Animation($ARMY69_2[0@]) == "CSAW_2"
+not actor.Animation($ARMY69_2[0@]) == "CSAW_3"
+jf @CANNIBAL_ATTACK_SYSTEM_FIRING_CHECK2
+  
+return
+
+:CANNIBAL_ATTACK_SYSTEM_FIRING_CHECK2
+19@ = 1
+return
+
+:LOOT_DROP_CANNIBAL
+
+////////////////////////////////////////////////////
+
+actor.StorePos($ARMY69_2[0@],1@,2@,3@)
+06C3: get_number_of_fires_within_sphere_at 1@ 2@ 3@ radius 3.0 store_to 28@
+if
+28@ > 0
+then
+jump to @LOOT_DROP_CANNIBAL_END
+end
+
+////////////////////////////////////////////////////
+
+actor.StorePos($ARMY69_2[0@],1@,2@,3@) 
+000F: 1@ -= 5.0
+000F: 2@ -= 5.0
+000F: 3@ -= 5.0
+actor.StorePos($ARMY69_2[0@],4@,5@,6@) 
+000F: 4@ -= -5.0
+000F: 5@ -= -5.0
+000F: 6@ -= -5.0
+
+if
+0356:   explosion_type -1 in_cube_cornerA 1@ 2@ 3@ cornerB 4@ 5@ 6@
+then
+jump to @LOOT_DROP_CANNIBAL_END
+end
+
+////////////////////////////////////////////////////    
+
+25@ = 0    
+if
+0E4D: random_percent 50
+    then
+    25@ = 1 
+    end            
+
+if
+25@ > 0
+    then
+    
+    28@ = 0
+    
+    32@ = 0 
+    
+        repeat           
+        wait 0
+        28@ += 1
+        
+        //////////////////////////////Создание пикапа пакета с едой//////////////////////////////
+        
+        random_float 4@ -1.0 1.0
+        random_float 5@ 1.0 -1.0
+                        
+        04C4: store_coords_to 1@ 2@ 3@ from_actor $ARMY69_2[0@] with_offset 4@ 5@ 0.0
+        
+        02CE: 3@ = ground_z_at 1@ 2@ 3@
+        
+        3@ += 1.0
+                        
+        $FOOD_PICKUP_NUM += 1
+                        
+        if
+        $FOOD_PICKUP_NUM > 28
+        then 
+        $FOOD_PICKUP_NUM = 0                      
+        end            
+        
+        if
+        09D1:   pickup $FOOD_PICKUP[$FOOD_PICKUP_NUM] created
+            then   
+            pickup.Destroy($FOOD_PICKUP[$FOOD_PICKUP_NUM]) 
+            end 
+                        
+        $FOOD_PICKUP[$FOOD_PICKUP_NUM] = pickup.Create(18168,3,1@,2@,3@) 
+        
+        if or                                                  
+        002D:   28@ >= 25@ // (int)  
+        32@ > 1000
+        $SAVESTATUS_TRUE == 1
+        then
+        break
+        end
+        
+        until 002D:   28@ >= 25@ // (int)                  
+                    
+    end
+    
+25@ = 0    
+if
+0E4D: random_percent 45
+    then
+    25@ = 1 
+    end    
+
+if
+25@ > 0
+    then
+    
+    28@ = 0
+    
+    32@ = 0 
+    
+        repeat 
+        wait 0
+        28@ += 1
+        
+        //////////////////////////////Создание пикапа бинта//////////////////////////////
+                
+        random_float 4@ -1.0 1.0
+        random_float 5@ 1.0 -1.0
+                        
+        04C4: store_coords_to 1@ 2@ 3@ from_actor $ARMY69_2[0@] with_offset 4@ 5@ 0.0
+        
+        02CE: 3@ = ground_z_at 1@ 2@ 3@
+        
+        3@ += 1.0
+                    
+        $BINT_PICKUP_NUM += 1
+                    
+        if
+        $BINT_PICKUP_NUM > 28
+        then 
+        $BINT_PICKUP_NUM = 0                         
+        end         
+        
+        if
+        09D1:   pickup $BINT_PICKUP[$BINT_PICKUP_NUM] created
+            then  
+            pickup.Destroy($BINT_PICKUP[$BINT_PICKUP_NUM])
+            end  
+                    
+        $BINT_PICKUP[$BINT_PICKUP_NUM] = pickup.Create(#pain_killer,3,1@,2@,3@)
+        
+        if or
+        002D:   28@ >= 25@ // (int)
+        32@ > 1000
+        $SAVESTATUS_TRUE == 1
+        then
+        break
+        end
+        
+        until 002D:   28@ >= 25@ // (int)                   
+                    
+    end
+    
+25@ = 0    
+if
+0E4D: random_percent 50
+    then
+    25@ = 1 
+    end    
+
+if
+25@ > 0
+    then
+    
+    28@ = 0
+    
+    32@ = 0 
+    
+        repeat 
+        wait 0
+        28@ += 1
+        
+        //////////////////////////////Создание пикапа отмычки//////////////////////////////
+                
+        random_float 4@ -1.0 1.0
+        random_float 5@ 1.0 -1.0
+                        
+        04C4: store_coords_to 1@ 2@ 3@ from_actor $ARMY69_2[0@] with_offset 4@ 5@ 0.0
+        
+        02CE: 3@ = ground_z_at 1@ 2@ 3@
+        
+        3@ += 1.0
+                    
+        $JIMMY_PICKUP_NUM += 1
+                    
+        if
+        $JIMMY_PICKUP_NUM > 28
+        then 
+        $JIMMY_PICKUP_NUM = 0                                 
+        end             
+        
+        if
+        09D1:   pickup $JIMMY_PICKUP[$RADIO_PICKUP_NUM] created
+            then    
+            pickup.Destroy($JIMMY_PICKUP[$RADIO_PICKUP_NUM])
+            end 
+                    
+        $JIMMY_PICKUP[$JIMMY_PICKUP_NUM] = pickup.Create(#drug_red,3,1@,2@,3@)
+        
+        if or
+        002D:   28@ >= 25@ // (int)
+        32@ > 1000
+        $SAVESTATUS_TRUE == 1
+        then
+        break
+        end
+        
+        until 002D:   28@ >= 25@ // (int)                   
+                    
+    end            
+
+:LOOT_DROP_CANNIBAL_END
+
+return
+
+:CANALS_BOSSES_CHECK
+
+if and
+CANALS_BOSS1_DONE == 0
+$ONMISSION == 0
+$SAVESTATUS == 0
+CANNIBALS_SHIELD_FLAG == -1
+then
+if
+00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA -2146.2612 576.635 1018.5052 cornerB -2164.5242 585.2153 1025.5052
+    then
+    
+    CANALS_BOSS_FIGHT_FLAG = 1
+    CANALS_BOSS1_DONE = 2
+    
+    ////////////////////////////////////////////
+    
+    for 0@ = 0 to 39
+    
+    if
+    056D:   actor $ARMY69_2[0@] defined
+    then
+    actor.DestroyWithFade($ARMY69_2[0@])
+    $ARMY69_2[0@] = -69
+    end
+    
+    end
+    
+    ////////////////////////////////////////////
+    
+    $TRADER_SAVE_USLUGA = object.Create(16798,-2145.48,578.1,1018.62)
+    object.Angle($TRADER_SAVE_USLUGA) = 270.0
+    0566: link_object $TRADER_SAVE_USLUGA to_interior 1
+    
+    CANALS_MUSIC_PLAY_FLAG = 0
+    
+    /////////////////////Плавное затухание/////////////////////
+
+    $MUSIC_FADE_NUMBER += 1
+    if
+    $MUSIC_FADE_NUMBER > 4
+        then
+        $MUSIC_FADE_NUMBER = 0 
+        end    
+            
+    0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+    $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+            
+    $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1
+    $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+    $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+    create_thread @MUS_FAD
+            
+    wait 1
+                                    
+    //////////////////////////////////////////////////////////
+    
+    $MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\OTHER\CANALS\BOSSES\episkop.mp3")
+            
+    Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
+    Audiostream.Loop($MUSIC_ASSHOLE, 1)
+    Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+            
+    /////////////////////Плавное нарастание/////////////////////
+            
+    $MUSIC_FADE_NUMBER += 1
+    if
+    $MUSIC_FADE_NUMBER > 4
+        then
+        $MUSIC_FADE_NUMBER = 0 
+        end    
+            
+    0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
+    0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+            
+    $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+    $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+    $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+    create_thread @MUS_FAD
+            
+    wait 1
+            
+    //////////////////////////////////////////////////////////
+    
+    while not model.Available(14973)
+    wait 0
+    model.Load(14973)
+    mload
+    end
+    
+    if
+    CARMA_VERY_BAD_FLAG == 0
+    then
+    $ARMY69_2[0] = actor.Create(29,14973,-2161.1094, 583.3445, 1018.5052)
+    else
+    $ARMY69_2[0] = actor.Create(26,14973,-2161.1094, 583.3445, 1018.5052)
+    end
+    
+    actor.Angle($ARMY69_2[0]) = 358.406
+    
+    if
+    model.Available(14973)
+    then
+    //model.Destroy(0@)
+    end
+    
+    0E24: fix_char $ARMY69_2[0] ground 0 brightness DO_ACTORS_BRIGHT_CORR and_fade_in 1            
+    0D10: set_actor $ARMY69_2[0] alpha 255 // IF and SET
+    09F4: set_actor $ARMY69_2[0] ignore_height_difference_following_nodes $Z_IGNORE_HEIGHT    
+    Actor.WeaponAccuracy($ARMY69_2[0]) = 200
+    
+    1@ = 10000
+    if
+    AUTOLEVELING_ON_FLAG == 1
+    then
+    for 0@ = 1 to $PLAYER_LEVEL
+    1@ += 350
+    end
+    end
+    
+    Actor.Health($ARMY69_2[0]) = 1@     
+    Actor.SetWalkStyle($ARMY69_2[0], "SURV5")
+    0446: set_actor $ARMY69_2[0] dismemberment_possible 0
+    060B: set_actor $ARMY69_2[0] decision_maker_to $DEC_PCAMP
+    07DD: set_actor $ARMY69_2[0] attack_rate 100 // previously known as temper_to
+    081A: set_actor $ARMY69_2[0] weapon_skill_to 2  
+    060F: set_actor $ARMY69_2[0] melee_accuracy_to 999.0
+    0946: set_actor $ARMY69_2[0] actions_uninterupted_by_weapon_fire 1
+    094E: set_actor $ARMY69_2[0] mute_pain_audio 1
+    07FE: set_actor $ARMY69_2[0] fighting_style_to 6 moves 6
+    0ED9: set_char_ignore_damage_anims $ARMY69_2[0] 1
+    
+    MISSION_CHECKPOINT = marker.CreateAboveActor($ARMY69_2[0])
+    marker.SetIconSize(MISSION_CHECKPOINT,2)
+    
+    if
+    PLAYER_HOLDING_CHAINSAW_FLAG == 0
+    then
+    03C4: set_vagina_text $TIM_HEALTH type 1 GXT 'GME1016' // global_variable  // Score ~1~
+    SUPPLY_TEXT_FLAG = 1
+    else
+    04F7: vagina_text $TIM_HEALTH type 1 line 2 GXT 'GME1016'
+    end
+                
+    //////////////////////////////////////////////////////////
+    
+    32@ = 0
+    
+    while true
+    wait 0
+    
+    if
+    actor.Animation($ARMY69_2[0]) == "FightC_block"
+    then
+    02AB: set_actor $ARMY69_2[0] immunities BP 1 FP 1 EP 0 CP 0 MP 0
+    else
+    02AB: set_actor $ARMY69_2[0] immunities BP 0 FP 1 EP 0 CP 0 MP 0
+    end
+    
+    if
+    32@ > 500
+    then
+    
+    if and
+    not USER_TAPE_TURNED_ON_FLAG == 1
+    not $READING_NOTE_FLAG == 1
+    then
+    Audiostream.Volume($MUSIC_ASSHOLE) = $MUSIC_VOLUME
+    else
+    Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+    end
+    
+    end
+    
+    /////////////////////////////////////
+    
+    if
+    056D:   actor $ARMY69_2[0] defined
+    then
+    
+    5@ = 10000    
+    if
+    AUTOLEVELING_ON_FLAG == 1
+    then
+    for 1@ = 1 to $PLAYER_LEVEL
+    5@ += 350
+    end
+    end
+    
+    1@ = actor.Health($ARMY69_2[0])
+                        
+    0085: 2@ = 1@ // (int)
+    0093: 2@ = integer 2@ to_float
+    0085: 4@ = 5@ // (int)
+    0093: 4@ = integer 4@ to_float                                                
+    4@ /= 100.0                     
+    0073: 2@ /= 4@ // (float)
+    0092: 2@ = float 2@ to_integer
+            
+    008A: $TIM_HEALTH = 2@ // (int)
+    end
+            
+    /////////////////////////////////////
+    
+    if and
+    075C:   marker MISSION_CHECKPOINT enabled
+    actor.Dead($ARMY69_2[0])
+        then
+        marker.Disable(MISSION_CHECKPOINT)
+        0151: remove_vagina_text $TIM_HEALTH
+        SUPPLY_TEXT_FLAG = 0
+        
+        v$PHRASE3 = "SALO8"
+                    
+        v$2NAME3 = "GAME840"
+                                
+        09FD: get_gxt_string v$PHRASE3 width_to 29@
+        0093: 29@ = integer 29@ to_float
+        29@ *= 8.0
+        0092: 29@ = float 29@ to_integer                            
+                                                                       
+        00BC: show_text_highpriority GXT v$PHRASE3 time 29@ 1
+        
+        end
+        
+    /////////////////////////////////////    
+    
+    if and
+    0E45: frame_mod 90
+    not actor.Dead($ARMY69_2[0])
+        then
+        
+        gosub @RANDOM_DIALOG_EPISKOP
+                    
+        v$2NAME3 = "GAME840"
+                                
+        09FD: get_gxt_string v$PHRASE3 width_to 29@
+        0093: 29@ = integer 29@ to_float
+        29@ *= 8.0
+        0092: 29@ = float 29@ to_integer                            
+                                                                       
+        00BC: show_text_highpriority GXT v$PHRASE3 time 29@ 1                                    
+        
+        end
+        
+    /////////////////////////////////////   
+    
+    if
+    not DO_NOT_SPAWN_CANNIBALS == 1
+    then
+    random_int CANALS_CANNIBAL_COUNTER_IS 0 5                
+    gosub @CANNIBAL_CREATE
+    end
+    
+    /////////////////////////////////////
+    
+    if
+    actor.Dead($ARMY69_2[0])
+    then
+    DO_NOT_SPAWN_CANNIBALS = 1
+    end
+    
+    for 0@ = 0 to 39
+        
+    if
+    056D:   actor $ARMY69_2[0@] defined
+    then       
+    gosub @CANNIBAL_AI_PROCESS                       
+    end                            
+    
+    end                        
+    
+    /////////////////////////////////////
+    
+    1@ = 0
+    
+    for 0@ = 0 to 39
+    
+    if
+    056D:   actor $ARMY69_2[0@] defined
+        then
+        if
+        not actor.Dead($ARMY69_2[0@])
+            then
+            1@ = 1
+            end
+        end
+    
+    end
+    
+    if
+    1@ == 0
+        then
+        break
+        end
+    
+    end
+    
+    /////////////////////////////////////
+    
+    if and
+    075C:   marker MISSION_CHECKPOINT enabled
+    actor.Dead($ARMY69_2[0])
+        then
+        marker.Disable(MISSION_CHECKPOINT)
+        0151: remove_vagina_text $TIM_HEALTH
+        SUPPLY_TEXT_FLAG = 0
+        
+        v$PHRASE3 = "SALO8"
+                    
+        v$2NAME3 = "GAME840"
+                                
+        09FD: get_gxt_string v$PHRASE3 width_to 29@
+        0093: 29@ = integer 29@ to_float
+        29@ *= 8.0
+        0092: 29@ = float 29@ to_integer                            
+                                                                       
+        00BC: show_text_highpriority GXT v$PHRASE3 time 29@ 1
+        
+        end
+        
+    /////////////////////////////////////    
+            
+    object.Destroy($TRADER_SAVE_USLUGA)
+    $TRADER_SAVE_USLUGA = 0
+    
+    while not model.Available(19138)
+    wait 0
+    model.Load(19138)
+    mload
+    end
+    
+    if
+    CARMA_VERY_BAD_FLAG == 0
+    then
+    $ARMY69_2[1] = actor.Create(29,19138,-2144.8523, 577.0902, 1018.5052)
+    else
+    $ARMY69_2[1] = actor.Create(26,19138,-2144.8523, 577.0902, 1018.5052)
+    end
+    
+    actor.Angle($ARMY69_2[1]) = 69.4304
+    
+    if
+    model.Available(19138)
+    then
+    //model.Destroy(0@)
+    end
+    
+    0E24: fix_char $ARMY69_2[1] ground 0 brightness DO_ACTORS_BRIGHT_CORR and_fade_in 1            
+    0D10: set_actor $ARMY69_2[1] alpha 255 // IF and SET
+    09F4: set_actor $ARMY69_2[1] ignore_height_difference_following_nodes $Z_IGNORE_HEIGHT    
+    Actor.WeaponAccuracy($ARMY69_2[1]) = 200
+    Actor.Health($ARMY69_2[1]) = 2500     
+    Actor.SetWalkStyle($ARMY69_2[1], "SURV5")
+    0446: set_actor $ARMY69_2[1] dismemberment_possible 0
+    060B: set_actor $ARMY69_2[1] decision_maker_to $DEC_PCAMP
+    07DD: set_actor $ARMY69_2[1] attack_rate 100 // previously known as temper_to
+    081A: set_actor $ARMY69_2[1] weapon_skill_to 2  
+    060F: set_actor $ARMY69_2[1] melee_accuracy_to 999.0
+    0946: set_actor $ARMY69_2[1] actions_uninterupted_by_weapon_fire 1
+    094E: set_actor $ARMY69_2[1] mute_pain_audio 1
+    087E: set_actor $ARMY69_2[1] weapon_droppable 0        
+    
+    1@ = 218
+    
+    0781: get_weapon_with_ID 1@ model_to 0@
+    while not model.Available(0@)
+    wait 0
+    model.Load(0@)
+    mload
+    end    
+    actor.GiveWeaponAndAmmo($ARMY69_2[1],1@,1)        
+    
+    CANALS_BOSS_FIGHT_FLAG = 0
+    CANALS_BOSS1_DONE = 1
+    
+    gosub @CANALS_BOSSES_ACH_CHECK
+    
+    $TEMP_XP = 5000
+    008D: $TEMP_XP = integer $TEMP_XP to_float
+    0069: $TEMP_XP *= $XP_COEFF // (float)
+    if
+    PERK_CHARISMA == 2
+    then
+    $TEMP_XP *= CHARISMA_LEVEL2_XP_COEFF
+    end
+    008C: $TEMP_XP = float $TEMP_XP to_integer
+    0058: $PLAYER_XP += $TEMP_XP // (int)
+    
+    /////////////////////Плавное затухание/////////////////////
+
+    $MUSIC_FADE_NUMBER += 1
+    if
+    $MUSIC_FADE_NUMBER > 4
+        then
+        $MUSIC_FADE_NUMBER = 0 
+        end    
+            
+    0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+    $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+            
+    $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1
+    $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+    $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+    create_thread @MUS_FAD
+            
+    wait 1
+                                    
+    //////////////////////////////////////////////////////////
+    
+    random_int 17@ 0 4
+    if
+    17@ == 0
+    then
+    $MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\OTHER\CANALS\ost1.wav")
+    end
+    if
+    17@ == 1
+    then
+    $MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\OTHER\CANALS\ost2.wav")
+    end
+    if
+    17@ == 2
+    then
+    $MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\OTHER\CANALS\ost3.wav")
+    end
+    if
+    17@ == 3
+    then
+    $MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\OTHER\CANALS\ost4.wav")
+    end
+    
+    Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
+    Audiostream.Loop($MUSIC_ASSHOLE, 1)
+    if
+    not USER_TAPE_TURNED_ON_FLAG == 1
+    then
+    Audiostream.Volume($MUSIC_ASSHOLE) = $MUSIC_VOLUME
+    else
+    Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+    end
+    
+    CANALS_MUSIC_PLAY_FLAG = 1
+    
+    DO_NOT_SPAWN_CANNIBALS = 0
+    
+    return
+    
+    end
+    
+end    
+    
+if and
+CANALS_BOSS2_DONE == 0
+$ONMISSION == 0
+$SAVESTATUS == 0
+CANNIBALS_SHIELD_FLAG == -1
+then
+if
+00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA -2540.7671 1261.7496 990.4841 cornerB -2630.0686 1300.0485 1000.4869
+    then                            
+    
+    while not model.Available(14974)
+    wait 0
+    model.Load(14974)
+    mload
+    end
+    
+    if
+    0E4D: random_percent 50
+    then
+    
+    if
+    CARMA_VERY_BAD_FLAG == 0
+    then
+    $ARMY69_2[0] = actor.Create(29,14974,-2586.3831, 1300.0522, 995.4869)
+    else
+    $ARMY69_2[0] = actor.Create(26,14974,-2586.3831, 1300.0522, 995.4869)
+    end
+    
+    else
+    
+    if
+    CARMA_VERY_BAD_FLAG == 0
+    then
+    $ARMY69_2[0] = actor.Create(29,14974,-2579.8699, 1300.0607, 995.4869)
+    else
+    $ARMY69_2[0] = actor.Create(26,14974,-2579.8699, 1300.0607, 995.4869)
+    end
+    
+    end
+    
+    actor.Angle($ARMY69_2[0]) = 177.657
+    
+    if
+    model.Available(14973)
+    then
+    //model.Destroy(0@)
+    end
+    
+    0E24: fix_char $ARMY69_2[0] ground 0 brightness DO_ACTORS_BRIGHT_CORR and_fade_in 1            
+    0D10: set_actor $ARMY69_2[0] alpha 255 // IF and SET
+    09F4: set_actor $ARMY69_2[0] ignore_height_difference_following_nodes $Z_IGNORE_HEIGHT    
+    Actor.WeaponAccuracy($ARMY69_2[0]) = 200
+    
+    1@ = 10000
+    if
+    AUTOLEVELING_ON_FLAG == 1
+    then
+    for 0@ = 1 to $PLAYER_LEVEL
+    1@ += 350
+    end
+    end
+    
+    Actor.Health($ARMY69_2[0]) = 1@     
+    Actor.SetWalkStyle($ARMY69_2[0], "SURV5")
+    0446: set_actor $ARMY69_2[0] dismemberment_possible 0
+    060B: set_actor $ARMY69_2[0] decision_maker_to $DEC_PCAMP
+    07DD: set_actor $ARMY69_2[0] attack_rate 100 // previously known as temper_to
+    081A: set_actor $ARMY69_2[0] weapon_skill_to 2  
+    060F: set_actor $ARMY69_2[0] melee_accuracy_to 999.0
+    0946: set_actor $ARMY69_2[0] actions_uninterupted_by_weapon_fire 1
+    094E: set_actor $ARMY69_2[0] mute_pain_audio 1
+    0ED9: set_char_ignore_damage_anims $ARMY69_2[0] 1    
+    
+    1@ = 9
+    
+    0781: get_weapon_with_ID 1@ model_to 0@
+    while not model.Available(0@)
+    wait 0
+    model.Load(0@)
+    mload
+    end    
+    actor.GiveWeaponAndAmmo($ARMY69_2[0],1@,1)
+        
+    CANALS_MUSIC_PLAY_FLAG = 0
+    
+    repeat
+    wait 0
+    
+    if or
+    80A4: not  actor PLAYER_ACTOR sphere 0 in_cube_cornerA -2540.7671 1261.7496 990.4841 cornerB -2630.0686 1300.0485 1000.4869
+    $SAVESTATUS == 1
+    then
+    if or
+    0364:   actor PLAYER_ACTOR spotted_actor $ARMY69_2[0]
+    0364:   actor $ARMY69_2[0] spotted_actor PLAYER_ACTOR
+        then
+        //ass
+        else
+        if or
+        8EE4: not locate_char_distance_to_char PLAYER_ACTOR char $ARMY69_2[0] radius 100.0
+        $SAVESTATUS == 1
+            then
+            text.ClearAll()
+            actor.DestroyInstantly($ARMY69_2[0])
+            jump to @CANALS_BOSS2_EXIT_JUMP
+            end
+        end
+    end
+    
+    if and
+    0364:  actor PLAYER_ACTOR spotted_actor $ARMY69_2[0]
+    0364:  actor $ARMY69_2[0] spotted_actor PLAYER_ACTOR
+        then
+        break
+        end
+    
+    until false       
+    
+    /////////////////////Плавное затухание/////////////////////
+
+    $MUSIC_FADE_NUMBER += 1
+    if
+    $MUSIC_FADE_NUMBER > 4
+        then
+        $MUSIC_FADE_NUMBER = 0 
+        end    
+            
+    0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+    $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+            
+    $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1
+    $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+    $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+    create_thread @MUS_FAD
+            
+    wait 1
+                                    
+    //////////////////////////////////////////////////////////
+    
+    $MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\OTHER\CANALS\BOSSES\judge.mp3")
+            
+    Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
+    Audiostream.Loop($MUSIC_ASSHOLE, 1)
+    Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+            
+    /////////////////////Плавное нарастание/////////////////////
+            
+    $MUSIC_FADE_NUMBER += 1
+    if
+    $MUSIC_FADE_NUMBER > 4
+        then
+        $MUSIC_FADE_NUMBER = 0 
+        end    
+            
+    0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
+    0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+            
+    $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+    $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+    $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+    create_thread @MUS_FAD
+            
+    wait 1
+            
+    //////////////////////////////////////////////////////////
+    
+    DO_NOT_SPAWN_CANNIBALS = 0
+    CANALS_BOSS_FIGHT_FLAG = 1
+    CANALS_BOSS2_DONE = 2
+    
+    MISSION_CHECKPOINT = marker.CreateAboveActor($ARMY69_2[0])
+    marker.SetIconSize(MISSION_CHECKPOINT,2)    
+    
+    if
+    PLAYER_HOLDING_CHAINSAW_FLAG == 0
+    then
+    03C4: set_vagina_text $TIM_HEALTH type 1 GXT 'GME1017' // global_variable  // Score ~1~
+    SUPPLY_TEXT_FLAG = 1
+    else
+    04F7: vagina_text $TIM_HEALTH type 1 line 2 GXT 'GME1017'
+    end
+    
+    32@ = 0    
+                
+    //////////////////////////////////////////////////////////
+    
+    while true
+    wait 0
+    
+    if
+    actor.Animation($ARMY69_2[0]) == "FightA_block"
+    then
+    02AB: set_actor $ARMY69_2[0] immunities BP 1 FP 1 EP 0 CP 0 MP 0
+    else
+    02AB: set_actor $ARMY69_2[0] immunities BP 0 FP 1 EP 0 CP 0 MP 0
+    end
+    
+    if or
+    80A4: not  actor PLAYER_ACTOR sphere 0 in_cube_cornerA -2540.7671 1261.7496 990.4841 cornerB -2630.0686 1300.0485 1000.4869
+    $SAVESTATUS == 1
+    then
+    if and
+    8364: not  actor PLAYER_ACTOR spotted_actor $ARMY69_2[0]
+    8364: not  actor $ARMY69_2[0] spotted_actor PLAYER_ACTOR
+        then
+        text.ClearAll()
+        marker.Disable(MISSION_CHECKPOINT)
+        0151: remove_vagina_text $TIM_HEALTH
+        SUPPLY_TEXT_FLAG = 0
+        actor.DestroyInstantly($ARMY69_2[0])
+        jump to @CANALS_BOSS2_EXIT_JUMP
+        end
+    end
+    
+    if
+    0611: actor $ARMY69_2[0] performing_animation "run_civi"
+        then
+        0393: actor $ARMY69_2[0] perform_animation "run_civi" at 2.0 times_normal_rate
+        end
+    
+    if
+    0611: actor $ARMY69_2[0] performing_animation "sprint_civi"
+        then
+        0393: actor $ARMY69_2[0] perform_animation "sprint_civi" at 2.0 times_normal_rate
+        end
+    
+    if
+    32@ > 500
+    then
+    
+    if and
+    not USER_TAPE_TURNED_ON_FLAG == 1
+    not $READING_NOTE_FLAG == 1
+    then
+    Audiostream.Volume($MUSIC_ASSHOLE) = $MUSIC_VOLUME
+    else
+    Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+    end
+    
+    end
+    
+    /////////////////////////////////////
+    
+    5@ = 10000    
+    if
+    AUTOLEVELING_ON_FLAG == 1
+    then
+    for 1@ = 1 to $PLAYER_LEVEL
+    5@ += 350
+    end
+    end
+    
+    1@ = actor.Health($ARMY69_2[0])
+                        
+    0085: 2@ = 1@ // (int)
+    0093: 2@ = integer 2@ to_float
+    0085: 4@ = 5@ // (int)
+    0093: 4@ = integer 4@ to_float                                                
+    4@ /= 100.0                     
+    0073: 2@ /= 4@ // (float)
+    0092: 2@ = float 2@ to_integer
+            
+    008A: $TIM_HEALTH = 2@ // (int)
+            
+    /////////////////////////////////////    
+    
+    if and
+    0E45: frame_mod 90
+    not actor.Dead($ARMY69_2[0])
+        then
+        
+        gosub @RANDOM_DIALOG_JUDGE
+                    
+        v$2NAME3 = "GAME840"
+                                
+        09FD: get_gxt_string v$PHRASE3 width_to 29@
+        0093: 29@ = integer 29@ to_float
+        29@ *= 8.0
+        0092: 29@ = float 29@ to_integer                            
+                                                                       
+        00BC: show_text_highpriority GXT v$PHRASE3 time 29@ 1                                    
+        
+        end
+        
+    /////////////////////////////////////   
+    
+    if
+    not DO_NOT_SPAWN_CANNIBALS == 1
+    then
+    random_int CANALS_CANNIBAL_COUNTER_IS 0 40                
+    gosub @CANNIBAL_CREATE
+    end
+    
+    /////////////////////////////////////    
+    
+    for 0@ = 0 to 39
+        
+    if
+    056D:   actor $ARMY69_2[0@] defined
+    then       
+    gosub @CANNIBAL_AI_PROCESS                       
+    end                            
+    
+    end                        
+    
+    /////////////////////////////////////    
+    
+    if
+    actor.Dead($ARMY69_2[0])
+        then
+        break
+        end
+    
+    end
+    
+    marker.Disable(MISSION_CHECKPOINT)
+    0151: remove_vagina_text $TIM_HEALTH
+    SUPPLY_TEXT_FLAG = 0
+    
+    v$PHRASE3 = "SALO17"
+                    
+    v$2NAME3 = "GAME840"
+                                
+    09FD: get_gxt_string v$PHRASE3 width_to 29@
+    0093: 29@ = integer 29@ to_float
+    29@ *= 8.0
+    0092: 29@ = float 29@ to_integer                            
+                                                                       
+    00BC: show_text_highpriority GXT v$PHRASE3 time 29@ 1            
+    
+    CANALS_BOSS_FIGHT_FLAG = 0
+    CANALS_BOSS2_DONE = 1
+    
+    gosub @CANALS_BOSSES_ACH_CHECK
+    
+    $TEMP_XP = 5000
+    008D: $TEMP_XP = integer $TEMP_XP to_float
+    0069: $TEMP_XP *= $XP_COEFF // (float)
+    if
+    PERK_CHARISMA == 2
+    then
+    $TEMP_XP *= CHARISMA_LEVEL2_XP_COEFF
+    end
+    008C: $TEMP_XP = float $TEMP_XP to_integer
+    0058: $PLAYER_XP += $TEMP_XP // (int)
+    
+    :CANALS_BOSS2_EXIT_JUMP
+    
+    for 0@ = 0 to 39
+    
+    if
+    075C:   marker $ARMY69_2_MARKER[0@] enabled
+    then
+    marker.Disable($ARMY69_2_MARKER[0@])
+    $ARMY69_2_MARKER[0@] = 0
+    end
+    
+    end
+    
+    /////////////////////Плавное затухание/////////////////////
+
+    $MUSIC_FADE_NUMBER += 1
+    if
+    $MUSIC_FADE_NUMBER > 4
+        then
+        $MUSIC_FADE_NUMBER = 0 
+        end    
+            
+    0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+    $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+            
+    $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1
+    $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+    $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+    create_thread @MUS_FAD
+            
+    wait 1
+                                    
+    //////////////////////////////////////////////////////////
+    
+    random_int 17@ 0 4
+    if
+    17@ == 0
+    then
+    $MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\OTHER\CANALS\ost1.wav")
+    end
+    if
+    17@ == 1
+    then
+    $MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\OTHER\CANALS\ost2.wav")
+    end
+    if
+    17@ == 2
+    then
+    $MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\OTHER\CANALS\ost3.wav")
+    end
+    if
+    17@ == 3
+    then
+    $MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\OTHER\CANALS\ost4.wav")
+    end
+    
+    Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
+    Audiostream.Loop($MUSIC_ASSHOLE, 1)
+    if
+    not USER_TAPE_TURNED_ON_FLAG == 1
+    then
+    Audiostream.Volume($MUSIC_ASSHOLE) = $MUSIC_VOLUME
+    else
+    Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+    end
+    
+    CANALS_MUSIC_PLAY_FLAG = 1
+    
+    DO_NOT_SPAWN_CANNIBALS = 0
+    
+    return
+    
+    end    
+    
+end
+
+if and
+CANALS_BOSS3_DONE == 0
+$ONMISSION == 0
+$SAVESTATUS == 0
+CANNIBALS_SHIELD_FLAG == -1
+then
+if
+00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA -1728.7581 494.99 1014.506 cornerB -1799.7783 539.1411 1025.5
+    then                            
+    
+    while not model.Available(14975)
+    wait 0
+    model.Load(14975)
+    mload
+    end
+    
+    if
+    8EEA: not locate_char_distance_to_coordinates PLAYER_ACTOR pos -1798.3712 529.823 1019.1328 radius 5.0
+    then
+    
+    if
+    CARMA_VERY_BAD_FLAG == 0
+    then
+    $ARMY69_2[0] = actor.Create(29,14975,-1728.7867, 502.2739, 1018.506)
+    else
+    $ARMY69_2[0] = actor.Create(26,14975,-1728.7867, 502.2739, 1018.506)
+    end
+    
+    else
+    
+    if
+    CARMA_VERY_BAD_FLAG == 0
+    then
+    $ARMY69_2[0] = actor.Create(29,14975,-1738.9396, 509.0758, 1017.1953)
+    else
+    $ARMY69_2[0] = actor.Create(26,14975,-1738.9396, 509.0758, 1017.1953)
+    end
+    
+    end
+    
+    actor.Angle($ARMY69_2[0]) = 89.8814
+    
+    if
+    model.Available(14973)
+    then
+    //model.Destroy(0@)
+    end
+    
+    0E24: fix_char $ARMY69_2[0] ground 0 brightness DO_ACTORS_BRIGHT_CORR and_fade_in 1            
+    0D10: set_actor $ARMY69_2[0] alpha 255 // IF and SET
+    09F4: set_actor $ARMY69_2[0] ignore_height_difference_following_nodes $Z_IGNORE_HEIGHT    
+    Actor.WeaponAccuracy($ARMY69_2[0]) = 200
+    
+    1@ = 10000
+    if
+    AUTOLEVELING_ON_FLAG == 1
+    then
+    for 0@ = 1 to $PLAYER_LEVEL
+    1@ += 350
+    end
+    end
+    
+    Actor.Health($ARMY69_2[0]) = 1@     
+    Actor.SetWalkStyle($ARMY69_2[0], "SURV5")
+    0446: set_actor $ARMY69_2[0] dismemberment_possible 0
+    060B: set_actor $ARMY69_2[0] decision_maker_to $DEC_PCAMP
+    07DD: set_actor $ARMY69_2[0] attack_rate 100 // previously known as temper_to
+    081A: set_actor $ARMY69_2[0] weapon_skill_to 2  
+    060F: set_actor $ARMY69_2[0] melee_accuracy_to 999.0
+    0946: set_actor $ARMY69_2[0] actions_uninterupted_by_weapon_fire 1
+    094E: set_actor $ARMY69_2[0] mute_pain_audio 1
+    02A9: set_actor $ARMY69_2[0] immune_to_nonplayer 1
+    02AB: set_actor $ARMY69_2[0] immunities BP 0 FP 0 EP 1 CP 0 MP 0
+    087E: set_actor $ARMY69_2[0] weapon_droppable 0   
+    
+    1@ = 102
+    
+    0781: get_weapon_with_ID 1@ model_to 0@
+    while not model.Available(0@)
+    wait 0
+    model.Load(0@)
+    mload
+    end    
+    actor.GiveWeaponAndAmmo($ARMY69_2[0],1@,99999)
+    
+    1@ = 93
+    
+    0781: get_weapon_with_ID 1@ model_to 0@
+    while not model.Available(0@)
+    wait 0
+    model.Load(0@)
+    mload
+    end    
+    actor.GiveWeaponAndAmmo($ARMY69_2[0],1@,99999)
+    
+    DO_NOT_SPAWN_CANNIBALS = 1
+    
+    repeat
+    wait 0
+    
+    for 0@ = 1 to 39
+        
+    if
+    056D:   actor $ARMY69_2[0@] defined
+    then       
+    gosub @CANNIBAL_AI_PROCESS                       
+    end                            
+    
+    end
+    
+    if
+    80A4: not  actor PLAYER_ACTOR sphere 0 in_cube_cornerA -1728.7581 494.99 1014.506 cornerB -1799.7783 539.1411 1025.5
+        then
+        actor.DestroyInstantly($ARMY69_2[0])
+        $ARMY69_2[0] = -69
+        DO_NOT_SPAWN_CANNIBALS = 0
+        return
+        end
+    
+    until 0364:   actor $ARMY69_2[0] spotted_actor PLAYER_ACTOR
+    
+    CANALS_MUSIC_PLAY_FLAG = 0
+    
+    /////////////////////Плавное затухание/////////////////////
+
+    $MUSIC_FADE_NUMBER += 1
+    if
+    $MUSIC_FADE_NUMBER > 4
+        then
+        $MUSIC_FADE_NUMBER = 0 
+        end    
+            
+    0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+    $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+            
+    $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1
+    $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+    $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+    create_thread @MUS_FAD
+            
+    wait 1
+                                    
+    //////////////////////////////////////////////////////////
+    
+    $MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\OTHER\CANALS\BOSSES\gercog.mp3")
+            
+    Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
+    Audiostream.Loop($MUSIC_ASSHOLE, 1)
+    Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+            
+    /////////////////////Плавное нарастание/////////////////////
+            
+    $MUSIC_FADE_NUMBER += 1
+    if
+    $MUSIC_FADE_NUMBER > 4
+        then
+        $MUSIC_FADE_NUMBER = 0 
+        end    
+            
+    0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
+    0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+            
+    $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+    $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+    $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+    create_thread @MUS_FAD
+            
+    wait 1
+            
+    //////////////////////////////////////////////////////////
+    
+    DO_NOT_SPAWN_CANNIBALS = 0
+    CANALS_BOSS_FIGHT_FLAG = 1
+    
+    MISSION_CHECKPOINT = marker.CreateAboveActor($ARMY69_2[0])
+    marker.SetIconSize(MISSION_CHECKPOINT,2)    
+    
+    if
+    PLAYER_HOLDING_CHAINSAW_FLAG == 0
+    then
+    03C4: set_vagina_text $TIM_HEALTH type 1 GXT 'GME1018' // global_variable  // Score ~1~
+    SUPPLY_TEXT_FLAG = 1
+    else
+    04F7: vagina_text $TIM_HEALTH type 1 line 2 GXT 'GME1018'
+    end
+    
+    32@ = 0
+                
+    //////////////////////////////////////////////////////////
+    
+    while true
+    wait 0
+    
+    if or
+    80A4: not  actor PLAYER_ACTOR sphere 0 in_cube_cornerA -1728.7581 494.99 1014.506 cornerB -1799.7783 539.1411 1025.5
+    $SAVESTATUS == 1
+    then
+    if or
+    0364:   actor PLAYER_ACTOR spotted_actor $ARMY69_2[0]
+    0364:   actor $ARMY69_2[0] spotted_actor PLAYER_ACTOR
+        then
+        //ass
+        else
+        if or
+        8EE4: not locate_char_distance_to_char PLAYER_ACTOR char $ARMY69_2[0] radius 100.0
+        $SAVESTATUS == 1
+            then
+            text.ClearAll()
+            actor.DestroyInstantly($ARMY69_2[0])
+            marker.Disable(MISSION_CHECKPOINT)
+            0151: remove_vagina_text $TIM_HEALTH
+            SUPPLY_TEXT_FLAG = 0
+            jump to @CANALS_BOSS3_EXIT_JUMP
+            end
+        end
+    end
+    
+    if
+    0EE4: locate_char_distance_to_char PLAYER_ACTOR char $ARMY69_2[0] radius 10.0
+    then
+    01B9: set_actor $ARMY69_2[0] armed_weapon_to 102
+    07DD: set_actor $ARMY69_2[0] attack_rate 100 // previously known as temper_to
+    else
+    01B9: set_actor $ARMY69_2[0] armed_weapon_to 93
+    07DD: set_actor $ARMY69_2[0] attack_rate 60 // previously known as temper_to
+    end
+    
+    if
+    32@ > 500
+    then
+    
+    if and
+    not USER_TAPE_TURNED_ON_FLAG == 1
+    not $READING_NOTE_FLAG == 1
+    then
+    Audiostream.Volume($MUSIC_ASSHOLE) = $MUSIC_VOLUME
+    else
+    Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+    end
+    
+    end
+    
+    /////////////////////////////////////
+    
+    5@ = 10000
+    if
+    AUTOLEVELING_ON_FLAG == 1
+    then
+    for 1@ = 1 to $PLAYER_LEVEL
+    5@ += 350
+    end
+    end
+    
+    1@ = actor.Health($ARMY69_2[0])
+                        
+    0085: 2@ = 1@ // (int)
+    0093: 2@ = integer 2@ to_float
+    0085: 4@ = 5@ // (int)
+    0093: 4@ = integer 4@ to_float                                                
+    4@ /= 100.0                     
+    0073: 2@ /= 4@ // (float)
+    0092: 2@ = float 2@ to_integer
+            
+    008A: $TIM_HEALTH = 2@ // (int)
+            
+    /////////////////////////////////////    
+    
+    if and
+    0E45: frame_mod 90
+    not actor.Dead($ARMY69_2[0])
+        then
+        
+        gosub @RANDOM_DIALOG_GERCOG
+                    
+        v$2NAME3 = "GAME840"
+                                
+        09FD: get_gxt_string v$PHRASE3 width_to 29@
+        0093: 29@ = integer 29@ to_float
+        29@ *= 8.0
+        0092: 29@ = float 29@ to_integer                            
+                                                                       
+        00BC: show_text_highpriority GXT v$PHRASE3 time 29@ 1                                    
+        
+        end
+        
+    /////////////////////////////////////   
+    
+    if
+    not DO_NOT_SPAWN_CANNIBALS == 1
+    then
+    random_int CANALS_CANNIBAL_COUNTER_IS 0 40                
+    gosub @CANNIBAL_CREATE
+    end
+    
+    /////////////////////////////////////    
+    
+    for 0@ = 0 to 39
+        
+    if
+    056D:   actor $ARMY69_2[0@] defined
+    then       
+    gosub @CANNIBAL_AI_PROCESS                       
+    end                            
+    
+    end                        
+    
+    /////////////////////////////////////    
+    
+    if
+    actor.Dead($ARMY69_2[0])
+        then
+        break
+        end
+    
+    end
+    
+    v$PHRASE3 = "SALO26"
+                    
+    v$2NAME3 = "GAME840"
+                                
+    09FD: get_gxt_string v$PHRASE3 width_to 29@
+    0093: 29@ = integer 29@ to_float
+    29@ *= 8.0
+    0092: 29@ = float 29@ to_integer                            
+                                                                       
+    00BC: show_text_highpriority GXT v$PHRASE3 time 29@ 1
+    
+    marker.Disable(MISSION_CHECKPOINT)
+    0151: remove_vagina_text $TIM_HEALTH
+    SUPPLY_TEXT_FLAG = 0            
+    
+    CANALS_BOSS_FIGHT_FLAG = 0
+    CANALS_BOSS3_DONE = 1
+    
+    gosub @CANALS_BOSSES_ACH_CHECK
+    
+    $TEMP_XP = 5000
+    008D: $TEMP_XP = integer $TEMP_XP to_float
+    0069: $TEMP_XP *= $XP_COEFF // (float)
+    if
+    PERK_CHARISMA == 2
+    then
+    $TEMP_XP *= CHARISMA_LEVEL2_XP_COEFF
+    end
+    008C: $TEMP_XP = float $TEMP_XP to_integer
+    0058: $PLAYER_XP += $TEMP_XP // (int)
+    
+    :CANALS_BOSS3_EXIT_JUMP
+    
+    /////////////////////Плавное затухание/////////////////////
+
+    $MUSIC_FADE_NUMBER += 1
+    if
+    $MUSIC_FADE_NUMBER > 4
+        then
+        $MUSIC_FADE_NUMBER = 0 
+        end    
+            
+    0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+    $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+            
+    $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1
+    $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+    $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+    create_thread @MUS_FAD
+            
+    wait 1
+                                    
+    //////////////////////////////////////////////////////////
+    
+    random_int 17@ 0 4
+    if
+    17@ == 0
+    then
+    $MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\OTHER\CANALS\ost1.wav")
+    end
+    if
+    17@ == 1
+    then
+    $MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\OTHER\CANALS\ost2.wav")
+    end
+    if
+    17@ == 2
+    then
+    $MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\OTHER\CANALS\ost3.wav")
+    end
+    if
+    17@ == 3
+    then
+    $MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\OTHER\CANALS\ost4.wav")
+    end
+    
+    Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
+    Audiostream.Loop($MUSIC_ASSHOLE, 1)
+    if
+    not USER_TAPE_TURNED_ON_FLAG == 1
+    then
+    Audiostream.Volume($MUSIC_ASSHOLE) = $MUSIC_VOLUME
+    else
+    Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+    end
+    
+    CANALS_MUSIC_PLAY_FLAG = 1
+    
+    DO_NOT_SPAWN_CANNIBALS = 0
+    
+    return
+    
+    end    
+    
+end
+
+if and
+CANALS_BOSS4_DONE == 0
+$ONMISSION == 0
+$SAVESTATUS == 0
+CANNIBALS_SHIELD_FLAG == -1
+then
+if
+00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA 2301.9207 -1126.9565 1048.0062 cornerB 2348.0452 -1156.7485 1058.3586
+    then
+    
+    DO_NOT_SPAWN_CANNIBALS = 1
+    
+    for 0@ = 0 to 39
+    
+    if
+    056D:   actor $ARMY69_2[0@] defined
+    then
+    actor.DestroyWithFade($ARMY69_2[0@])
+    $ARMY69_2[0@] = -69
+    end
+    
+    end                            
+    
+    while not model.Available(15011)
+    wait 0
+    model.Load(15011)
+    mload
+    end
+    
+    CANALS_BOSS4_DONE = 2
+    
+    if
+    CARMA_VERY_BAD_FLAG == 0
+    then
+    $ARMY69_2[0] = actor.Create(29,15011,2324.4451, -1140.5276, 1050.499)
+    else
+    $ARMY69_2[0] = actor.Create(26,15011,2324.4451, -1140.5276, 1050.499)
+    end
+    
+    actor.Angle($ARMY69_2[0]) = 89.8814
+    
+    if
+    model.Available(15011)
+    then
+    //model.Destroy(0@)
+    end
+    
+    0E24: fix_char $ARMY69_2[0] ground 0 brightness DO_ACTORS_BRIGHT_CORR and_fade_in 1            
+    0D10: set_actor $ARMY69_2[0] alpha 255 // IF and SET    
+    Actor.WeaponAccuracy($ARMY69_2[0]) = 200
+    
+    1@ = 10000
+    if
+    AUTOLEVELING_ON_FLAG == 1
+    then
+    for 0@ = 1 to $PLAYER_LEVEL
+    1@ += 350
+    end
+    end
+    
+    Actor.Health($ARMY69_2[0]) = 1@     
+    Actor.SetWalkStyle($ARMY69_2[0], "SURV5")
+    0446: set_actor $ARMY69_2[0] dismemberment_possible 0
+    060B: set_actor $ARMY69_2[0] decision_maker_to $DEC_PCAMP
+    07DD: set_actor $ARMY69_2[0] attack_rate 100 // previously known as temper_to
+    081A: set_actor $ARMY69_2[0] weapon_skill_to 2  
+    060F: set_actor $ARMY69_2[0] melee_accuracy_to 999.0
+    0946: set_actor $ARMY69_2[0] actions_uninterupted_by_weapon_fire 1
+    094E: set_actor $ARMY69_2[0] mute_pain_audio 1
+    04EB: AS_actor $ARMY69_2[0] crouch 1
+    02A9: set_actor $ARMY69_2[0] immune_to_nonplayer 1
+    02AB: set_actor $ARMY69_2[0] immunities BP 0 FP 1 EP 0 CP 0 MP 0
+    099F: AS_actor $ARMY69_2[0] ignore_weapon_range 1
+    0856: set_actor $ARMY69_2[0] enable_crouch 0
+    0648: unknown_actor $ARMY69_2[0] task_set 150.0 // float
+    0ED9: set_char_ignore_damage_anims $ARMY69_2[0] 1    
+    
+    1@ = 35
+    
+    0781: get_weapon_with_ID 1@ model_to 0@
+    while not model.Available(0@)
+    wait 0
+    model.Load(0@)
+    mload
+    end    
+    actor.GiveWeaponAndAmmo($ARMY69_2[0],1@,99999)
+    
+    1@ = 37
+    
+    0781: get_weapon_with_ID 1@ model_to 0@
+    while not model.Available(0@)
+    wait 0
+    model.Load(0@)
+    mload
+    end    
+    actor.GiveWeaponAndAmmo($ARMY69_2[0],1@,99999)
+    
+    DO_NOT_SPAWN_CANNIBALS = 1
+    
+    repeat
+    wait 0
+    
+    08E7: disable_entrance_markers 1
+    
+    for 0@ = 1 to 39
+        
+    if
+    056D:   actor $ARMY69_2[0@] defined
+    then       
+    gosub @CANNIBAL_AI_PROCESS                       
+    end                            
+    
+    end
+    
+    if
+    80A4: not  actor PLAYER_ACTOR sphere 0 in_cube_cornerA 2301.9207 -1126.9565 1048.0062 cornerB 2348.0452 -1156.7485 1058.3586
+        then
+        actor.DestroyInstantly($ARMY69_2[0])
+        $ARMY69_2[0] = -69
+        DO_NOT_SPAWN_CANNIBALS = 0
+        
+        for 0@ = 0 to 39
+    
+        if
+        056D:   actor $ARMY69_2[0@] defined
+        then
+        actor.DestroyWithFade($ARMY69_2[0@])
+        $ARMY69_2[0@] = -69
+        end
+        
+        end
+        
+        return
+        end
+    
+    until 0364:   actor $ARMY69_2[0] spotted_actor PLAYER_ACTOR
+    
+    DO_NOT_SPAWN_CANNIBALS = 0
+    
+    CANALS_MUSIC_PLAY_FLAG = 0
+    
+    /////////////////////Плавное затухание/////////////////////
+
+    $MUSIC_FADE_NUMBER += 1
+    if
+    $MUSIC_FADE_NUMBER > 4
+        then
+        $MUSIC_FADE_NUMBER = 0 
+        end    
+            
+    0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+    $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+            
+    $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1
+    $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+    $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+    create_thread @MUS_FAD
+            
+    wait 1
+                                    
+    //////////////////////////////////////////////////////////
+    
+    $MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\OTHER\CANALS\BOSSES\predisent.mp3")
+            
+    Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
+    Audiostream.Loop($MUSIC_ASSHOLE, 1)
+    Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+            
+    /////////////////////Плавное нарастание/////////////////////
+            
+    $MUSIC_FADE_NUMBER += 1
+    if
+    $MUSIC_FADE_NUMBER > 4
+        then
+        $MUSIC_FADE_NUMBER = 0 
+        end    
+            
+    0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
+    0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+            
+    $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+    $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+    $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+    create_thread @MUS_FAD
+            
+    wait 1
+            
+    //////////////////////////////////////////////////////////
+    
+    DO_NOT_SPAWN_CANNIBALS = 0
+    CANALS_BOSS_FIGHT_FLAG = 1
+    
+    MISSION_CHECKPOINT = marker.CreateAboveActor($ARMY69_2[0])
+    marker.SetIconSize(MISSION_CHECKPOINT,2)    
+    
+    if
+    PLAYER_HOLDING_CHAINSAW_FLAG == 0
+    then
+    03C4: set_vagina_text $TIM_HEALTH type 1 GXT 'GME1019' // global_variable  // Score ~1~
+    SUPPLY_TEXT_FLAG = 1
+    else
+    04F7: vagina_text $TIM_HEALTH type 1 line 2 GXT 'GME1019'
+    end
+    
+    32@ = 0
+                
+    //////////////////////////////////////////////////////////
+    
+    while true
+    wait 0
+    
+    if
+    32@ > 500
+    then
+    
+    if and
+    not USER_TAPE_TURNED_ON_FLAG == 1
+    not $READING_NOTE_FLAG == 1
+    then
+    Audiostream.Volume($MUSIC_ASSHOLE) = $MUSIC_VOLUME
+    else
+    Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+    end
+    
+    end
+    
+    08E7: disable_entrance_markers 1
+    
+    /////////////////////////////////////
+    
+    5@ = 10000
+    if
+    AUTOLEVELING_ON_FLAG == 1
+    then
+    for 1@ = 1 to $PLAYER_LEVEL
+    5@ += 350
+    end
+    end
+    
+    1@ = actor.Health($ARMY69_2[0])
+                        
+    0085: 2@ = 1@ // (int)
+    0093: 2@ = integer 2@ to_float
+    0085: 4@ = 5@ // (int)
+    0093: 4@ = integer 4@ to_float                                                
+    4@ /= 100.0                     
+    0073: 2@ /= 4@ // (float)
+    0092: 2@ = float 2@ to_integer
+            
+    008A: $TIM_HEALTH = 2@ // (int)
+            
+    /////////////////////////////////////    
+    
+    if
+    0E45: frame_mod 15
+        then
+        actor.StorePos(PLAYER_ACTOR,1@,2@,3@)
+        0668: AS_actor $ARMY69_2[0] rotate_and_shoot_at 1@ 2@ 3@ 2000 ms
+        end
+        
+    if and
+    051A:   actor $ARMY69_2[0] damaged_by_actor PLAYER_ACTOR
+    0E45: frame_mod 30
+        then
+        054E: clear_actor $ARMY69_2[0] damage
+        0687: clear_actor $ARMY69_2[0] task
+        
+        1@ = 16
+    
+        0781: get_weapon_with_ID 1@ model_to 0@
+        while not model.Available(0@)
+        wait 0
+        model.Load(0@)
+        mload
+        end    
+        actor.GiveWeaponAndAmmo($ARMY69_2[0],1@,99999)
+        
+        32@ = 0
+        
+        05E2: AS_actor $ARMY69_2[0] kill_actor PLAYER_ACTOR
+        
+        repeat
+        wait 0            
+        until 32@ > 2500
+        
+        1@ = 37
+    
+        0781: get_weapon_with_ID 1@ model_to 0@
+        while not model.Available(0@)
+        wait 0
+        model.Load(0@)
+        mload
+        end    
+        actor.GiveWeaponAndAmmo($ARMY69_2[0],1@,99999)
+        
+        054E: clear_actor $ARMY69_2[0] damage
+        
+        end    
+    
+    if and
+    0E45: frame_mod 90
+    not actor.Dead($ARMY69_2[0])
+        then
+        
+        gosub @RANDOM_DIALOG_PRESIDENT
+                    
+        v$2NAME3 = "GAME840"
+                                
+        09FD: get_gxt_string v$PHRASE3 width_to 29@
+        0093: 29@ = integer 29@ to_float
+        29@ *= 8.0
+        0092: 29@ = float 29@ to_integer                            
+                                                                       
+        00BC: show_text_highpriority GXT v$PHRASE3 time 29@ 1                                    
+        
+        end
+        
+    /////////////////////////////////////   
+    
+    if
+    not DO_NOT_SPAWN_CANNIBALS == 1
+    then
+    random_int CANALS_CANNIBAL_COUNTER_IS 0 40                
+    gosub @CANNIBAL_CREATE
+    end
+    
+    /////////////////////////////////////    
+    
+    for 0@ = 1 to 39
+        
+    if
+    056D:   actor $ARMY69_2[0@] defined
+    then
+    0648: unknown_actor $ARMY69_2[0@] task_set 150.0 // float       
+    gosub @CANNIBAL_AI_PROCESS                       
+    end                            
+    
+    end                        
+    
+    /////////////////////////////////////    
+    
+    if
+    actor.Dead($ARMY69_2[0])
+        then
+        break
+        end
+    
+    end
+    
+    v$PHRASE3 = "SALO35"
+                    
+    v$2NAME3 = "GAME840"
+                                
+    09FD: get_gxt_string v$PHRASE3 width_to 29@
+    0093: 29@ = integer 29@ to_float
+    29@ *= 8.0
+    0092: 29@ = float 29@ to_integer                            
+                                                                       
+    00BC: show_text_highpriority GXT v$PHRASE3 time 29@ 1
+    
+    marker.Disable(MISSION_CHECKPOINT)
+    0151: remove_vagina_text $TIM_HEALTH
+    SUPPLY_TEXT_FLAG = 0
+    
+    08E7: disable_entrance_markers 0            
+    
+    CANALS_BOSS_FIGHT_FLAG = 0
+    CANALS_BOSS4_DONE = 1
+    
+    gosub @CANALS_BOSSES_ACH_CHECK
+    
+    $TEMP_XP = 5000
+    008D: $TEMP_XP = integer $TEMP_XP to_float
+    0069: $TEMP_XP *= $XP_COEFF // (float)
+    if
+    PERK_CHARISMA == 2
+    then
+    $TEMP_XP *= CHARISMA_LEVEL2_XP_COEFF
+    end
+    008C: $TEMP_XP = float $TEMP_XP to_integer
+    0058: $PLAYER_XP += $TEMP_XP // (int)
+    
+    /////////////////////Плавное затухание/////////////////////
+
+    $MUSIC_FADE_NUMBER += 1
+    if
+    $MUSIC_FADE_NUMBER > 4
+        then
+        $MUSIC_FADE_NUMBER = 0 
+        end    
+            
+    0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+    $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+            
+    $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1
+    $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+    $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+    create_thread @MUS_FAD
+            
+    wait 1
+                                    
+    //////////////////////////////////////////////////////////
+    
+    random_int 17@ 0 4
+    if
+    17@ == 0
+    then
+    $MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\OTHER\CANALS\ost1.wav")
+    end
+    if
+    17@ == 1
+    then
+    $MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\OTHER\CANALS\ost2.wav")
+    end
+    if
+    17@ == 2
+    then
+    $MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\OTHER\CANALS\ost3.wav")
+    end
+    if
+    17@ == 3
+    then
+    $MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\OTHER\CANALS\ost4.wav")
+    end
+    
+    Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
+    Audiostream.Loop($MUSIC_ASSHOLE, 1)
+    if
+    not USER_TAPE_TURNED_ON_FLAG == 1
+    then
+    Audiostream.Volume($MUSIC_ASSHOLE) = $MUSIC_VOLUME
+    else
+    Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+    end
+    
+    CANALS_MUSIC_PLAY_FLAG = 1
+    
+    DO_NOT_SPAWN_CANNIBALS = 0
+    
+    return
+    
+    end    
+    
+end             
+    
+return
+
+:RANDOM_DIALOG_EPISKOP    
+random_int 30@ 0 8
+v$PHRASE1 = "SALO"
+0AD3: v$PHRASE2 = format "%d" 30@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+return
+
+:RANDOM_DIALOG_JUDGE    
+random_int 30@ 9 17
+v$PHRASE1 = "SALO"
+0AD3: v$PHRASE2 = format "%d" 30@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+return
+
+:RANDOM_DIALOG_GERCOG    
+random_int 30@ 18 26
+v$PHRASE1 = "SALO"
+0AD3: v$PHRASE2 = format "%d" 30@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+return
+
+:RANDOM_DIALOG_PRESIDENT    
+random_int 30@ 27 35
+v$PHRASE1 = "SALO"
+0AD3: v$PHRASE2 = format "%d" 30@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+return
+
+:CANALS_BOSSES_ACH_CHECK
+
+0AF0: 29@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT116_GOT"
+if and
+CANALS_BOSS1_DONE == 1
+CANALS_BOSS2_DONE == 1
+CANALS_BOSS3_DONE == 1
+CANALS_BOSS4_DONE == 1
+29@ == 0
+$CHEATED_FLAG == 0
+    then                            
+    v$ACHIEVEMNT = "ACH116"
+    $ACHIEVEMENT_GOT_FLAG = 1                                    
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT116_GOT"
+    end
+
+return
+
+:NVS_GGL
+thread 'NVS_GGL'
+
+repeat
+wait 0
+until $INT_ENTERING_FLAG == 1
+
+repeat
+wait 0
+until $INT_ENTERING_FLAG == 0
+
+09EB: remove_player_goggles 0 use_anim 1
+
+repeat 
+wait 0
+until actor.Animation(PLAYER_ACTOR) == "goggles_put_on"
+
+0470: 9@ = actor PLAYER_ACTOR current_weapon
+06AB: set_actor PLAYER_ACTOR all_weapons_hidden 1
+0992: set_player PLAYER_CHAR weapons_scrollable 0
+
+while actor.Animation(PLAYER_ACTOR) == "goggles_put_on"
+wait 0
+end
+
+0992: set_player PLAYER_CHAR weapons_scrollable 1
+06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0        
+01B9: set_actor PLAYER_ACTOR armed_weapon_to 9@
+
+end_thread    
