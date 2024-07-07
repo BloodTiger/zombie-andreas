@@ -1,0 +1,3744 @@
+const
+CRG_WALK_SOUND = 10@
+CRG_YELL_SOUND_FLAG = 12@
+CRG_PAIN_SOUND_FLAG = 13@
+CRG_ATTACK_SOUND_FLAG = 14@
+CRG_ALERT_SOUND_FLAG = 15@    
+CRG_SPAWN_SOUND_FLAG = 8@
+end
+    
+const
+CHARGER_JUMP_TIMER = $CHARGER_JUMP_TIMER[24@] 
+CHARGER_JUMP_TIME2 = $CHARGER_JUMP_TIME2[24@] 
+CRG_BURNING_FLAG = $CRG_BURNING_FLAG[24@] 
+CHARGER_TASK_WAIT_TIME_MIN = 95
+CHARGER_TASK_WAIT_TIME_MAX = 100
+CHARGER_TASK_CRAZY_MULT = 5
+CHARGER_TASK_CRAZY_MULT2 = 5
+CHARGER_PROCENT_MINUS = 0.065
+CHARGER_SPEED_MULTIPLIER = 9@
+CHARGER_LOC_MARKER_POINTER = 23@
+CHARGER_IDLING_TIMER = 16@
+CHARGER_CLOSEST_PED_VAR = 27@
+end
+
+:CHARGER
+if
+0@ == 0
+then
+thread 'CHARGER'
+else
+gosub @CHARGER_NUM_GET
+end
+
+0085: 24@ = 0@ // (int)              
+
+:CHARGER_SPAWN_TIMER_START    
+0209: 0@ = random_int_in_ranges $CHARGER_WAIT_SPAWN_MIN $CHARGER_WAIT_SPAWN_MAX   
+32@ = 0 
+
+0209: 1@ = random_int_in_ranges 50 100
+wait 1@   
+
+:ZOMBIE_CHARGER_WAIT_CHECK
+wait 0
+
+//0AD1: show_formatted_text_highpriority "CHARGER TIMER: %d/%d" time 2000 32@ 0@
+
+while $ALLOW_CHARGER == 0
+wait 0
+end
+
+while 001F:  24@ > CHARGERS_TO_SPAWN_COUNT // (int)
+wait 0
+end
+
+//////////////////////////////////////////////////////////////////////////////
+
+if
+GLOBAL_SPAWN_TIMER_RANDOM_RESET_CHARGER == 1
+then
+
+repeat
+wait 0
+0209: 0@ = random_int_in_ranges $CHARGER_WAIT_SPAWN_MIN $CHARGER_WAIT_SPAWN_MAX
+0209: 30@ = random_int_in_ranges $CHARGER_WAIT_SPAWN_MIN $CHARGER_WAIT_SPAWN_MAX
+
+if
+$FREEMODE == 0
+then
+0209: 1@ = random_int_in_ranges TIMER_RESET_LONG_ADD_MIN TIMER_RESET_LONG_ADD_MAX
+else
+0209: 1@ = random_int_in_ranges TIMER_RESET_LONG_ADD2_MIN TIMER_RESET_LONG_ADD2_MAX
+end
+
+0062: 30@ -= 1@  // (int)
+until 801D: not  30@ > 0@  // (int)
+
+0085: 32@ = 30@ // (int)
+0AF1: write_int 30@ to_ini_file "saves\ZACM.set" section "SCR" key "CHARGER_NEW_TIMER_AFTER_SAVE"
+0AF1: write_int 0@ to_ini_file "saves\ZACM.set" section "SCR" key "CHARGER_SPAWN_TIMER"
+ 
+GLOBAL_SPAWN_TIMER_RANDOM_RESET_CHARGER = 0
+end
+
+//////////////////////////////////////////////////////////////////////////////
+
+077E: get_active_interior_to 1@
+
+if and
+$GAMEMODE_EDITOR == 1
+not ZAME_DO_SPAWN_SPECINF_AS_RANDOM == 1
+then
+32@ = 0
+end
+
+if or
+$GAMEMODE_HOLD == 1
+$CHARGER_INTERIOR_SPAWN == 1
+    then
+    1@ = 0
+    end
+
+if and
+$SAVESTATUS == 0
+$SPECIAL_INFECTED_NOT_SPAWN_FLAG == 0
+$ACTOR_DEAD == 0
+$INFECTED_CHARGER == 0
+$CHARGER_NOTSPAWN_FLAG == 0
+$SOUND_EFFECT1_FLAG == 0
+$SAVEPLACE_ON == 0
+1@ == 0
+    then
+    if
+    $ZOMBIE_CHARGER_SPAWN_TIMER_RESTART == 0
+    jf @CHARGER_SPAWN_TIMER_START
+    
+    if or
+    SURVIVAL_CUSTOM_WEAPON_NABOR == 1
+    SURVIVAL_CUSTOM_WEAPON_NABOR == 8
+    then
+    0085: 31@ = 0@ // (int)
+    31@ -= 15000
+    0085: 30@ = 0@ // (int)
+    30@ -= 14000
+//    0AD1: show_formatted_text_highpriority "%d > %d~n~ %d < %d" time 100 32@ 31@ 32@ 30@
+    if and
+    001D:   32@ > 31@  // (int)
+    801D:   32@ < 30@  // (int)
+    PLAYER_IN_NEST_FLAG == 0
+    PLAYER_IN_CANALS_FLAG == 0
+        then                
+        gosub @CHARGER_ORIGIN_SPOTTED_PHRASE  
+        32@ += 1100      
+        end
+    end
+    
+    if or 
+    001D:   32@ > 0@  // (int)
+    $SPAWN_CHARGER_FLAG == 1
+    jf @ZOMBIE_CHARGER_WAIT_CHECK
+    32@ = 0
+    
+    if and
+    $SPAWN_CHARGER_FLAG == 0
+    $CUSTOM_MODE == 1
+    $GAMEMODE_EDITOR == 1
+    then
+    jump to @CHARGER_SPAWN_EDITOR_OWNGAME
+    end
+    
+    if and
+    not $GAMEMODE_CRAZY == 1
+    not $GAMEMODE_EDITOR == 1
+    not $CUSTOM_MODE == 1
+    not SPEC_INF_ONLY_ONE_INSTANSE_SPAWN_FLAG == -1
+    then
+    
+    random_int 0@ 0 to 10
+    if
+    0@ == 4
+    then
+    CHARGERS_TO_SPAWN_COUNT = 1
+    else
+    CHARGERS_TO_SPAWN_COUNT = 0
+    end
+    
+    random_int 0@ 0 to 10
+    if
+    0@ == 4
+    then
+    CHARGERS_TO_SPAWN_COUNT = 2
+    end       
+    
+    end        
+    
+    if and
+    $CUSTOM_MODE == 1
+    not SPEC_INF_ONLY_ONE_INSTANSE_SPAWN_FLAG == -1
+    then
+    
+    if
+    not $GAMEMODE_EDITOR == 1
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/owngame/owngame.ini" section "DIFF" key "MINIMUM_CHARGERS_TO_SPAWN"
+    0AF0: 1@ = get_int_from_ini_file "saves/owngame/owngame.ini" section "DIFF" key "MAXIMUM_CHARGERS_TO_SPAWN"
+    else
+    :CHARGER_SPAWN_EDITOR_OWNGAME
+    0AD3: 2@v = format "me\ms%d.ini" $RNDM_HOUSE_BANKA[122]
+    0AF0: 0@ = get_int_from_ini_file 2@v section "DIFF" key "MINIMUM_CHARGERS_TO_SPAWN"
+    0AF0: 1@ = get_int_from_ini_file 2@v section "DIFF" key "MAXIMUM_CHARGERS_TO_SPAWN"
+    end
+    
+    0@ -= 1
+    random_int CHARGERS_TO_SPAWN_COUNT 0@ 1@
+    jump to @ZOMBIE_CHARGER_SPAWN_START
+    end
+    
+    //owngame.ini moment
+    
+    if
+    SPEC_INF_ONLY_ONE_INSTANSE_SPAWN_FLAG == 1
+    then
+    CHARGERS_TO_SPAWN_COUNT = 0
+    end
+    
+    if
+    CURRENT_USHER_TUTORIAL_NUM == -444666
+    then
+    CHARGERS_TO_SPAWN_COUNT = 14
+    end
+    
+    jump to @ZOMBIE_CHARGER_SPAWN_START
+    
+    else
+    
+    0085: 30@ = 32@ // (int)
+
+    :ZOMBIE_CHARGER_TIMER_PAUSE
+    wait 0    
+    if
+    $ZOMBIE_CHARGER_SPAWN_TIMER_RESTART == 0
+    jf @CHARGER_SPAWN_TIMER_START
+    
+    077E: get_active_interior_to 1@
+    
+    if or
+    $GAMEMODE_HOLD == 1
+    $CHARGER_INTERIOR_SPAWN == 1
+        then
+        1@ = 0
+        end
+    
+    if and
+    $SAVESTATUS == 0
+    $SPECIAL_INFECTED_NOT_SPAWN_FLAG == 0
+    $ACTOR_DEAD == 0
+    $INFECTED_CHARGER == 0
+    $CHARGER_NOTSPAWN_FLAG == 0
+    $SOUND_EFFECT1_FLAG == 0
+    $SAVEPLACE_ON == 0
+    1@ == 0
+        then
+        0085: 32@ = 30@ // (int)
+        jump to @ZOMBIE_CHARGER_WAIT_CHECK
+        else
+        jump @ZOMBIE_CHARGER_TIMER_PAUSE 
+        end   
+    end
+    
+/////////////////////Спавн громилы/////////////////////            
+
+:ZOMBIE_CHARGER_SPAWN_START
+wait 0
+if and
+$SAVESTATUS == 0
+$SPECIAL_INFECTED_NOT_SPAWN_FLAG == 0
+$ACTOR_DEAD == 0
+$INFECTED_CHARGER == 0
+$ZOMBIES_PROCENT > 0.0 
+jf @ZOMBIE_CHARGER_SPAWN_START
+if or
+$STARTING_THEME_FLAG == 0
+$GAMEMODE_EDITOR == 1
+jf @ZOMBIE_CHARGER_SPAWN_START
+if and
+$CHARGER_INTERIOR_SPAWN == 1
+$SPAWN_CHARGER_FLAG == 0
+then
+if and
+not OOS_MARK == 999666
+not OOS_MARK == 223366
+not OOS_MARK == 223367
+not OOS_MARK == 999668
+    then
+    jump to @CHARGER_SPAWN_TIMER_START
+    end
+end
+
+//Вычисление координат для спавна
+31@ = 0
+gosub @CHARGER_COORD_SET
+if
+31@ == 999888666
+then
+jump to @CHARGER_SPAWN_TIMER_START
+end
+
+if and
+$CHARGER_INTERIOR_SPAWN == 1
+$SPAWN_CHARGER_FLAG == 0
+then
+if and
+not OOS_MARK == 999666
+not OOS_MARK == 223366
+not OOS_MARK == 223367
+not OOS_MARK == 999668
+    then
+    jump to @CHARGER_SPAWN_TIMER_START
+    end
+end
+
+$CHARGER_SPAWNED = 1
+
+1@ = #ZCHARGER
+
+if
+CURRENT_USHER_TUTORIAL_NUM == -444666
+then
+1@ = 3143
+end
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+
+//Спавн на координатах     
+                                                  
+$CHARGER[24@] = actor.Create($ZOMBIE_SET_PEDTYPE,1@,2@,3@,4@)
+
+if
+model.Available(1@)
+then
+//model.Destroy(1@)
+end
+
+0860: link_actor $CHARGER[24@] to_interior $ACTIVE_INTERIOR
+
+if
+$GAMEMODE_VERSUS == 1
+then
+0D10: set_actor $CHARGER[24@] alpha 255 // IF and SET
+end
+
+if or
+OOS_MARK == 999668
+OOS_MARK == 223366
+then
+0D10: set_actor $CHARGER[24@] alpha 155 // IF and SET
+end
+
+if
+$ACTIVE_INTERIOR == 0
+then
+0E24: fix_char $CHARGER[24@] ground 1 brightness DO_ACTORS_BRIGHT_CORR and_fade_in 1
+else
+0E24: fix_char $CHARGER[24@] ground 0 brightness DO_ACTORS_BRIGHT_CORR and_fade_in 1
+end
+
+if
+CURRENT_USHER_TUTORIAL_NUM == -444666
+then
+if
+00A4:  actor $CHARGER[24@] sphere 0 in_cube_cornerA 244.1333 -22.2583 1041.0 cornerB 199.0778 -105.5705 1142.0
+    then
+    actor.DestroyInstantly($CHARGER[24@])
+    jump to @ZOMBIE_CHARGER_SPAWN_START
+    end
+end
+
+//Случайный угол поворота
+
+if
+$GAMEMODE_HOLD == 1
+then
+actor.StorePos(PLAYER_ACTOR,4@,5@,0@)
+0E27: get_angle_from_two_coords 2@ 3@ and 4@ 5@ to 0@
+actor.Angle($CHARGER[24@]) = 0@
+else
+random_int 0@ 0.0 360.0
+actor.Angle($CHARGER[24@]) = 0@
+end
+
+//Даем танку член если активирован чит-код на это
+if
+DICKMODE == 1
+then
+
+while not model.Available(6532)
+wait 0
+model.Load(6532)
+mload
+end
+
+0E2E: create_render_object_to_char_bone $CHARGER[24@] model 6532 bone 0 offset 0.1 -0.05 0.025 rotation 0.0 60.0 0.0 store_to 0@
+0E37: set_render_object_scale 0@ 1.5 1.5 1.5
+
+end
+
+//Стиль походки, молчание, двигание рта, неуязвимость к урону от падения
+
+Actor.SetWalkStyle($CHARGER[24@],"CHARGER") 
+actor.SetImmunities($CHARGER[24@],0,0,0,1,0)
+0A09: set_actor $CHARGER[24@] muted 1 // versionB
+
+//Установление ХП
+
+008B: 0@ = $CHARGER_HEALTH // (int)
+if
+$GAMEMODE_VERSUS == 0
+then
+0093: 0@ = integer 0@ to_float
+random_float 1@ 0.85 1.25 
+006B: 0@ *= 1@  // (float)  
+0092: 0@ = float 0@ to_integer
+end
+
+actor.Health($CHARGER[24@]) = 0@
+08AF: set_actor $CHARGER[24@] max_health_to 0@ 
+
+//Установление остальных параметров
+
+0446: set_actor $CHARGER[24@] dismemberment_possible 0
+060F: set_actor $CHARGER[24@] melee_accuracy_to 150.0
+060B: set_actor $CHARGER[24@] decision_maker_to $DEC_ZOMBIE  
+0946: set_actor $CHARGER[24@] actions_uninterupted_by_weapon_fire 1
+07FE: set_actor $CHARGER[24@] fighting_style_to 5 moves 6
+07DD: set_actor $CHARGER[24@] attack_rate $ZOMBIE_ATTACK_RATE // previously known as temper_to
+09F4: set_actor $CHARGER[24@] ignore_height_difference_following_nodes $Z_IGNORE_HEIGHT
+03FE: set_actor $CHARGER[24@] money 0
+0770: set_actor $CHARGER[24@] target_priority 1
+0ED9: set_char_ignore_damage_anims $CHARGER[24@] 1
+
+if and
+$GAMEMODE_HOLD == 0
+$ZOMBIE_DERBY_FLAG == 0
+$SALVATION_FLAG == 0
+then
+0648: unknown_actor $CHARGER[24@] task_set 100.0 // float
+else
+
+if
+$HOLD_Z_TASK_SET > 0.0
+then
+0648: unknown_actor $CHARGER[24@] task_set $HOLD_Z_TASK_SET // float
+else
+0648: unknown_actor $CHARGER[24@] task_set 100.0 // float
+end
+
+end    
+
+//Установление скорости поворота
+
+0A96: 0@ = actor $CHARGER[24@] struct
+0A8E: 0@ = 0@ + 1376
+0A8C: write_memory 0@ size 4 value $ZOMBIE_ROTATE_SPEED virtual_protect 1
+
+//Загрузка звука бега громилы
+      
+CRG_WALK_SOUND = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_walk.mp3") 
+Audiostream.LinkToActor(CRG_WALK_SOUND, $CHARGER[24@])
+audiostream.Volume(CRG_WALK_SOUND) = 0.0
+Audiostream.Loop(CRG_WALK_SOUND,1)
+Audiostream.PerformAction(CRG_WALK_SOUND, PLAY)
+
+$CRG_TARGET[24@] = -69
+$CRG_TARGET_FINDED[24@] = 0
+$CRG_TARGET_PLAYER[24@] = 0  
+
+//Проигрывания звука бактерии громилы
+
+if and
+$GAMEMODE_INF == 0
+$GAMEMODE_CRAZY == 0
+$READING_NOTE_FLAG == 0
+then                     
+
+if or
+$SALVATION_FLAG == 1
+$GAMEMODE_HOLD == 1 
+then
+
+random_int 0@ 0 to 2
+
+if
+0@ == 0
+then
+18@ = Audiostream.Load("AUDIO\SOUNDS\infected_sounds\charger_sounds\chargerbacteria.wav")
+else
+18@ = Audiostream.Load("AUDIO\SOUNDS\infected_sounds\charger_sounds\chargerbacterias.wav")
+end
+
+Audiostream.PerformAction(18@, PLAY)
+Audiostream.Volume(18@) = $SOUNDS_VOLUME
+
+CRG_SPAWN_SOUND_FLAG = 1
+
+else
+
+random_int 0@ 0 to 2
+
+if
+0@ == 0
+then
+18@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\charger_sounds\chargerbacteria.wav")
+else
+18@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\charger_sounds\chargerbacterias.wav")
+end
+
+Audiostream.LinkToActor(18@, $CHARGER[24@])
+Audiostream.PerformAction(18@, PLAY)
+Audiostream.Volume(18@) = $SOUNDS_VOLUME
+
+CRG_SPAWN_SOUND_FLAG = 1
+
+end
+
+end
+
+//Установление флагов для звука
+
+CRG_YELL_SOUND_FLAG = 0
+CRG_PAIN_SOUND_FLAG = 0
+CRG_ATTACK_SOUND_FLAG = 0
+CRG_ALERT_SOUND_FLAG = 0
+
+//Таймеры
+
+33@ = 0  
+32@ = 0
+
+CRG_BURNING_FLAG = 0
+CHARGER_JUMP_TIMER = 0
+CHARGER_IDLING_TIMER = 0
+
+0084: CHARGER_JUMP_TIME2 = $CHARGER_JUMP_TIME // (int) 
+008D: CHARGER_JUMP_TIME2 = integer CHARGER_JUMP_TIME2 to_float
+random_int 0@ $CHARGER_JUMP1_MIN $CHARGER_JUMP1_MAX
+006D: CHARGER_JUMP_TIME2 *= 0@ // (float)     
+008C: CHARGER_JUMP_TIME2 = float CHARGER_JUMP_TIME2 to_integer
+
+//Создание маркера при необходимости
+
+if
+$GAMEMODE_EDITOR == 0
+then
+0@ = 1
+else
+0@ = 13
+end
+
+if or
+$GAMEMODE_VERSUS == 1
+$GAMEMODE_CRAZY == 1
+003C:   SPEC_INFECTED_MARKER_FLAG == 0@  // (int)
+    then
+    CHARGER_LOC_MARKER_POINTER = marker.CreateAboveActor($CHARGER[24@])
+    
+    if
+    $GAMEMODE_CRAZY == 1
+    then
+    marker.SetIconSize(CHARGER_LOC_MARKER_POINTER,2)
+    else
+    marker.SetIconSize(CHARGER_LOC_MARKER_POINTER,2)
+    end
+    
+    07E0: set_marker CHARGER_LOC_MARKER_POINTER type_to $SPECIAL_INF_MARKER_TYPE    
+    
+    end
+    
+//Запрещаем целится с автоаима если мы играем за зараженных в сражении    
+    
+if
+$INF_SIDE == 1
+    then
+    0568: set_actor $CHARGER[24@] untargetable 1
+    end
+    
+//Вырубаем скриптовый призыв спеца (если он был так вызван) с задержкой в 1 кадр чтобы правильно отработать спавн нескольких    
+
+if
+$SPAWN_CHARGER_FLAG == 1
+then    
+wait 0
+$SPAWN_CHARGER_FLAG = 0
+end        
+
+//Рандомизация множителя скорости
+    
+random_float CHARGER_SPEED_MULTIPLIER 0.9 1.2 
+
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "CHARGER_SPAWNED"
+
+if
+$ZOMBIES_HORDE == 1
+then
+gosub @CHARGER_CHECK_ATTACK_TARGET_EXSIST
+end
+
+//////////////////////////////////////////ОСНОВНОЙ ЛУП AI ГРОМИЛЫ//////////////////////////////////////////  
+
+WHILE TRUE 
+
+/////////////////////Функция атаки громилы союзниками/////////////////////
+random_int 0@ 0 5     
+gosub @CHARGER1_ATTACK_PEOPLE1  
+
+if and
+not $GAME_SPEED == 0.0
+not $GAME_SPEED == 0.2
+then
+CHARGER_JUMP_TIMER += 1
+CHARGER_IDLING_TIMER += 1
+end
+
+/////////////////////Установка скорости для анимаций/////////////////////
+
+0089: 0@ = $CHARGER_RUN_SPEED // (float)
+006B: 0@ *= CHARGER_SPEED_MULTIPLIER  // (float)
+
+//Бег
+
+if
+0611: actor $CHARGER[24@] performing_animation "charger_run"
+    then
+    0393: actor $CHARGER[24@] perform_animation "charger_run" at 0@ times_normal_rate  
+    end     
+
+/////////////////////Анти-приседание громилы/////////////////////  
+
+if
+056D:   actor $CHARGER[24@] defined
+    then    
+    if and
+    0184:   actor $CHARGER[24@] health > 0
+    0597:   actor $CHARGER[24@] crouching
+        then
+        0687: clear_actor $CHARGER[24@] task
+        random_int 0@ CHARGER_TASK_WAIT_TIME_MIN CHARGER_TASK_WAIT_TIME_MAX
+        if
+        $GAMEMODE_CRAZY == 1
+        then
+        0@ *= CHARGER_TASK_CRAZY_MULT
+        0085: 1@ = 24@ // (int)
+        1@ *= CHARGER_TASK_CRAZY_MULT2
+        wait 1@
+        end
+        wait 0@
+        wait 24@    
+        04EB: AS_actor $CHARGER[24@] crouch 0
+        end
+    end  
+    
+/////////////////////Анти-EV_step зомби/////////////////////  
+
+if
+056D:   actor $CHARGER[24@] defined
+    then
+    if and
+    0184:   actor $CHARGER[24@] health > 0
+    actor.Animation($CHARGER[24@]) == "EV_step"
+        then
+        0687: clear_actor $CHARGER[24@] task
+        random_int 0@ CHARGER_TASK_WAIT_TIME_MIN CHARGER_TASK_WAIT_TIME_MAX
+        if
+        $GAMEMODE_CRAZY == 1
+        then
+        0@ *= CHARGER_TASK_CRAZY_MULT
+        0085: 1@ = 24@ // (int)
+        1@ *= CHARGER_TASK_CRAZY_MULT2
+        wait 1@
+        end
+        wait 0@
+        wait 24@  
+        05B9: AS_actor $CHARGER[24@] stay_idle 1 ms
+        end
+    end         
+
+/////////////////////Удаление громилы из-за отдаленности от игрока/////////////////////  
+
+if and 
+$SALVATION_FLAG == 1
+not $GAMEMODE_HOLD == 1
+    then
+    if or
+    00A4:   actor $CHARGER[24@] sphere 0 in_cube_cornerA 2073.3845 2380.2268 0.0182 cornerB 2128.3105 2453.5974 71.0182
+    00A4:   actor $CHARGER[24@] sphere 0 in_cube_cornerA -677.2523 2188.7173 0.6579 cornerB -1122.2512 2575.1035 140.6579
+    00A4:   actor $CHARGER[24@] sphere 0 in_cube_cornerA -224.533 1412.8806 0.9365 cornerB -403.4329 1613.0549 73.9365
+    00A4:   actor $CHARGER[24@] sphere 0 in_cube_cornerA 1844.0953 -2359.5444 0.9365 cornerB 1657.6227 -2198.2236 22.5234
+    00A4:   actor $CHARGER[24@] sphere 0 in_cube_cornerA 344.3076 -551.4876 0.9204 cornerB 269.9119 -592.1495 24.298
+        then        
+        jump to @CRG_REM
+        end
+    end
+    
+if
+$CHARGER_REMOVE_FLAG == 1
+    then
+    jump to @CRG_REM
+    end    
+
+if and
+$ACTIVE_INTERIOR == 0
+not $INT_ENTERING_FLAG == 1
+not $CHARGER_INTERIOR_SPAWN == 1
+    then    
+    if and
+    $CHARGER_REMOVE_FLAG == 0
+    $SAVESTATUS == 0
+    $SAVESTATUS_TRUE == 0 
+    0104:   actor $CHARGER[24@] near_actor PLAYER_ACTOR radius 180.0 180.0 180.0 sphere 0
+        then 
+        else
+    
+        :CRG_REM
+        
+        0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "CHARGER_SPAWNED"
+    
+        gosub @CHARGER_SHUT_UP
+        
+        gosub @CHARGER_SPAWN_SOUND_RELEASE
+        
+        audiostream.PerformAction(CRG_WALK_SOUND, STOP)
+        audiostream.Release(CRG_WALK_SOUND)
+        
+        if
+        075C:   marker CHARGER_LOC_MARKER_POINTER enabled
+        then
+        marker.Disable(CHARGER_LOC_MARKER_POINTER)
+        end
+         
+        actor.DestroyWithFade($CHARGER[24@])
+        $CHARGER[24@] = -69                
+        
+        ////////////////////////
+        
+        1@ = 0
+        
+        for 0@ = 0 to 19
+        
+        if
+        056D:   actor $CHARGER[0@] defined
+        then
+        1@ = 1
+        end
+        
+        end
+        
+        ////////////////////////
+        
+        if
+        1@ == 0
+        then
+        $CHARGER_SPAWNED = 0    
+        end
+        
+        ////////////////////////
+        
+        if and
+        not $GAMEMODE_CRAZY == 1
+        CHARGERS_TO_SPAWN_COUNT > 0
+        then
+        CHARGERS_TO_SPAWN_COUNT = 0
+        end
+        
+        $HORDE_ON_TIMER_COUNTER += 20000
+        $HORDE_OFF_TIMER_COUNTER += 10000
+        jump to @CHARGER_SPAWN_TIMER_START
+        
+        end
+    end
+
+if or
+$SAVESTATUS == 1
+$SAVESTATUS_TRUE == 1
+then
+jump to @CRG_REM
+end   
+
+/////////////////////Удаление громилы при его смерти/////////////////////  
+
+if or
+actor.Dead($CHARGER[24@])
+8184:   actor $CHARGER[24@] health < 1
+    then
+    
+    create_thread @ANTKUKL $CHARGER[24@]
+    
+    ///////////////////////////////////////////////////          
+
+    if or
+    0818:  actor $CHARGER[24@] in_air 
+    CRG_BURNING_FLAG == 1 
+    then
+    0687: clear_actor $CHARGER[24@] task
+    05BE: AS_actor $CHARGER[24@] die
+    end
+    
+    0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "CHARGER_SPAWNED"          
+    
+    gosub @CHARGER_SPAWN_SOUND_RELEASE
+    
+    0A96: 0@ = actor $CHARGER[24@] struct
+    0A8E: 0@ = 0@ + 0x764
+    0A8D: 1@ = read_memory 0@ size 2 virtual_protect 1
+    0A8D: 2@ = read_memory 0xB6F5F0 size 2 virtual_protect 1
+    
+    audiostream.PerformAction(CRG_WALK_SOUND, STOP)
+    audiostream.Release(CRG_WALK_SOUND)    
+    
+    if
+    075C:   marker CHARGER_LOC_MARKER_POINTER enabled
+    then
+    marker.Disable(CHARGER_LOC_MARKER_POINTER)
+    end    
+      
+    $HORDE_ON_TIMER_COUNTER += 20000
+    $HORDE_OFF_TIMER_COUNTER += 10000     
+    
+    if
+    $FREEMODE == 1
+    then
+    $ZOMBIES_PROCENT -= CHARGER_PROCENT_MINUS    
+    end
+    
+    ///////////////////////////////////////////////////
+    
+    if or
+    051A:   actor $CHARGER[24@] damaged_by_actor PLAYER_ACTOR
+    CRG_BURNING_FLAG == 1
+    then
+    
+    if or
+    031D:   actor $CHARGER[24@] hit_by_weapon 18
+    031D:   actor $CHARGER[24@] hit_by_weapon 118
+    031D:   actor $CHARGER[24@] hit_by_weapon 134
+    031D:   actor $CHARGER[24@] hit_by_weapon 179
+    031D:   actor $CHARGER[24@] hit_by_weapon 209    
+    then
+    0085: 1@ = 2@ // (int)
+    end
+    
+    if or    
+    031D:   actor $CHARGER[24@] hit_by_weapon 37
+    031D:   actor $CHARGER[24@] hit_by_weapon 114
+    031D:   actor $CHARGER[24@] hit_by_weapon 148
+    031D:   actor $CHARGER[24@] hit_by_weapon 180
+    031D:   actor $CHARGER[24@] hit_by_weapon 210
+    then
+    0085: 1@ = 2@ // (int)
+    end
+        
+    end        
+    
+    ///////////////////////////////////////////////////
+    
+    if
+    0800:   in_two_players_mode
+    then
+    0A8D: 0@ = read_memory 0xB7CF28 size 2 virtual_protect 1
+    else
+    0@ = -69
+    end
+    
+    if or
+    003B:   1@ == 2@  // (int)
+    003B:   1@ == 0@  // (int)
+    then
+    
+    $CHARGER_KILLED += 1
+    $TEMP_XP = CHARGER_XP_PLUS
+//    0068: $TEMP_XP *= $PLAYER_LEVEL // (int)
+    008D: $TEMP_XP = integer $TEMP_XP to_float
+    0069: $TEMP_XP *= $XP_COEFF // (float)
+    008C: $TEMP_XP = float $TEMP_XP to_integer
+    0058: $PLAYER_XP += $TEMP_XP // (int)
+    
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_CHARGER_KILLED"    
+    
+    if and
+    $CHEATED_FLAG == 0 
+    $GAMEMODE_CRAZY == 0
+    then             
+    0@ += 1
+    end                
+     
+    0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_CHARGER_KILLED"            
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT38_GOT"    
+    
+    if and
+    1@ == 0
+    0@ >= 400
+    then
+    v$ACHIEVEMNT = "ACH38"
+    $ACHIEVEMENT_GOT_FLAG = 1        
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT38_GOT"        
+    end
+        
+    end
+    
+    ///////////////////////////////////////////////////
+    
+    if
+    89A8: not  actor $CHARGER[24@] headshoted
+    then 
+    gosub @CHARGER_DIE_SOUND
+    else
+    gosub @CHARGER_SHUT_UP
+    end
+    
+    actor.RemoveReferences($CHARGER[24@])
+    $CHARGER[24@] = -69
+    
+    ///////////////////////////////////////////////////
+    
+    1@ = 0
+    
+    for 0@ = 0 to 19
+    
+    if
+    056D:   actor $CHARGER[0@] defined
+    then
+    1@ = 1
+    end
+    
+    end
+    
+    ///////////////////////////////////////////////////
+    
+    if
+    1@ == 0
+    then
+    $CHARGER_SPAWNED = 0    
+    end                
+        
+    ///////////////////////////////////////////////////    
+    
+    if
+    $GAMEMODE_INF == 1
+    then
+        
+    if
+    075C:   marker CHARGER_LOC_MARKER_POINTER enabled
+    then
+    marker.Disable(CHARGER_LOC_MARKER_POINTER)
+    end
+        
+    $SURVIVERS_SCORE += 10
+    
+    00BA: show_text_styled GXT 'G_INF13' time 2500 style 5
+    
+    end
+    
+    ///////////////////////////////////////////////////
+    
+    jump to @CHARGER_SPAWN_TIMER_START
+         
+    end       
+
+///////////////////Выгрузка звуков YELL///////////////////    
+    
+if
+CRG_YELL_SOUND_FLAG == 1
+    then
+    0AB9: get_mp3 11@ state_to 0@
+    if or
+    0@ == -1
+    not $GAME_SPEED == 1.0
+        then
+        audiostream.Release(11@)
+        CRG_YELL_SOUND_FLAG = 0
+        end
+    end
+
+///////////////////Выгрузка звуков PAIN///////////////////  
+    
+if
+CRG_PAIN_SOUND_FLAG == 1
+    then
+    0AB9: get_mp3 11@ state_to 0@
+    if or
+    0@ == -1
+    not $GAME_SPEED == 1.0
+        then
+        audiostream.Release(11@)
+        CRG_PAIN_SOUND_FLAG = 0
+        end
+    end
+    
+///////////////////Выгрузка звуков ATTACK///////////////////  
+
+if
+CRG_ATTACK_SOUND_FLAG == 1
+    then
+    0AB9: get_mp3 11@ state_to 0@
+    if or
+    0@ == -1
+    not $GAME_SPEED == 1.0
+        then
+        audiostream.Release(11@)
+        CRG_ATTACK_SOUND_FLAG = 0
+        end
+    end
+    
+///////////////////Выгрузка звуков ALERT///////////////////  
+
+if
+CRG_ALERT_SOUND_FLAG == 1
+    then
+    0AB9: get_mp3 11@ state_to 0@
+    if or
+    0@ == -1
+    not $GAME_SPEED == 1.0
+        then
+        audiostream.Release(11@)
+        CRG_ALERT_SOUND_FLAG = 0
+        end
+    end    
+    
+///////////////////Выгрузка звуков SPAWN///////////////////  
+    
+if
+CRG_SPAWN_SOUND_FLAG == 1
+    then
+    0AB9: get_mp3 18@ state_to 0@
+    if or
+    0@ == -1
+    not $GAME_SPEED == 1.0
+        then
+        audiostream.Release(18@)
+        CRG_SPAWN_SOUND_FLAG = 0
+        end        
+    end    
+    
+///////////////////Воспроизведение звука PAIN///////////////////    
+    
+if and        
+CRG_PAIN_SOUND_FLAG == 0
+$GAME_SPEED == 1.0
+    then
+    28@ = Actor.Health($CHARGER[24@])
+    wait 10
+    29@ = Actor.Health($CHARGER[24@]) 
+    if or
+    803B: not  28@ == 29@ // (int)  
+    CRG_BURNING_FLAG == 1
+        then
+        gosub @CHARGER_SHUT_UP        
+        gosub @CHARGER_RANDOM_PAIN_SOUND
+        Audiostream.LinkToActor(11@, $CHARGER[24@])
+        Audiostream.PerformAction(11@, PLAY)
+        Audiostream.Volume(11@) = $SOUNDS_VOLUME
+        CRG_PAIN_SOUND_FLAG = 1
+        
+        if
+        031D:   actor $CHARGER[24@] hit_by_weapon 109
+        then
+        create_thread @TSPC_IN $CHARGER[24@] 140
+        end
+        
+        end
+    else
+    wait 10
+    
+    if
+    031D:   actor $CHARGER[24@] hit_by_weapon 109
+    then
+    create_thread @TSPC_IN $CHARGER[24@] 140
+    end
+    
+    end
+    
+///////////////////Поджигаем громилу если он потушился///////////////////    
+    
+if and
+CRG_BURNING_FLAG == 0  
+074F:  actor $CHARGER[24@] ped_event == 58  
+84AD: not  actor $CHARGER[24@] in_water
+    then      
+    random_int 0@ CHARGER_TASK_WAIT_TIME_MIN CHARGER_TASK_WAIT_TIME_MAX
+    if
+    $GAMEMODE_CRAZY == 1
+    then
+    0@ *= CHARGER_TASK_CRAZY_MULT
+    0085: 1@ = 24@ // (int)
+    1@ *= CHARGER_TASK_CRAZY_MULT2
+    wait 1@
+    end
+    wait 0@
+    wait 24@           
+    CRG_BURNING_FLAG = 1 
+    0792: disembark_instantly_actor $CHARGER[24@]
+    actor.SetImmunities($CHARGER[24@],0,1,0,1,0)
+    0326: 21@ = create_actor $CHARGER[24@] fire    
+    end
+    
+if and
+CRG_BURNING_FLAG == 1
+8973: not  fire 21@ exists
+84AD: not  actor $CHARGER[24@] in_water
+    then
+    random_int 0@ CHARGER_TASK_WAIT_TIME_MIN CHARGER_TASK_WAIT_TIME_MAX
+    if
+    $GAMEMODE_CRAZY == 1
+    then
+    0@ *= CHARGER_TASK_CRAZY_MULT
+    0085: 1@ = 24@ // (int)
+    1@ *= CHARGER_TASK_CRAZY_MULT2
+    wait 1@
+    end
+    wait 0@
+    wait 24@  
+    CRG_BURNING_FLAG = 1 
+    actor.SetImmunities($CHARGER[24@],0,1,0,1,0)
+    0326: 21@ = create_actor $CHARGER[24@] fire
+    end  
+    
+if and
+CRG_BURNING_FLAG == 1
+not BLACK_MENU_OPENED_FLAG == 1
+    then
+    if or
+    $GAME_SPEED == 1.0
+    $GAME_SPEED == 0.2
+    $GAME_SPEED == 0.99
+        then
+        0@ = actor.Health($CHARGER[24@])
+        
+        if
+        0@ < 1
+        then
+        05BE: AS_actor $CHARGER[24@] die
+        end
+        
+        0D39: 1@ = actor $CHARGER[24@] max_health
+        1@ /= 500.0
+        0092: 1@ = float 1@ to_integer
+        
+        0062: 0@ -= 1@  // (int)
+        actor.Health($CHARGER[24@]) = 0@
+        end    
+    end  
+    
+///////////////////Воспроизведение звука YELL///////////////////    
+    
+if and
+CRG_PAIN_SOUND_FLAG == 0
+CRG_YELL_SOUND_FLAG == 0
+CRG_ALERT_SOUND_FLAG == 0
+CRG_BURNING_FLAG == 0
+$GAME_SPEED == 1.0 
+874F: not actor $CHARGER[24@] ped_event == 58
+    then
+    0209: 31@ = random_int_in_ranges 0 10
+    if and
+    00F2:   actor $CHARGER[24@] near_actor PLAYER_ACTOR radius 100.0 100.0 0
+    31@ == 5
+    82A0: not  actor $CHARGER[24@] stopped   
+    not actor.Animation($CHARGER[24@]) == "FightA_M"
+        then        
+        gosub @CHARGER_SHUT_UP        
+        gosub @CHARGER_RANDOM_YELL_SOUND
+        Audiostream.LinkToActor(11@, $CHARGER[24@])
+        Audiostream.PerformAction(11@, PLAY)
+        Audiostream.Volume(11@) = $SOUNDS_VOLUME
+        CRG_YELL_SOUND_FLAG = 1
+        end
+    end
+    
+/////////////////////Проверка на то, видит ли громила свою цель/////////////////////
+
+if and
+CHARGER_IDLING_TIMER > 52
+$CRG_TARGET_FINDED[24@] == 1
+    then                
+    CHARGER_IDLING_TIMER = 0
+    if
+    056D:   actor $CRG_TARGET[24@] defined
+        then                
+        if
+        0364:   actor $CHARGER[24@] spotted_actor $CRG_TARGET[24@]
+            then
+            0648: unknown_actor $CHARGER[24@] task_set 100.0 // float
+            else
+            0648: unknown_actor $CHARGER[24@] task_set 50.0 // float
+            end
+        end                
+    end    
+    
+/////////////////////Проверка на бездействие громилы/////////////////////     
+
+if or
+$ACTIVE_INTERIOR == 0
+$CHARGER_INTERIOR_SPAWN == 1
+then
+if and    
+not actor.Animation($CHARGER[24@]) == "charger_run"
+0E45: frame_mod 30    
+    then
+    06AC: 0@ = actor $CHARGER[24@] movement_speed    
+    if or
+    0@ < 0.001   
+    actor.Animation($CHARGER[24@]) == "charger_idle"
+    actor.Animation($CHARGER[24@]) == "flee_lkaround_01"
+        then     
+        gosub @CHARGER_CHECK_ATTACK_TARGET_EXSIST               
+        end
+    end
+end            
+    
+/////////////////////Проверка на наличие цели атаки///////////////////// 
+
+if and
+056D:   actor $CHARGER[24@] defined
+$CRG_TARGET_FINDED[24@] == 1
+    then   
+    if
+    056D:   actor $CRG_TARGET[24@] defined
+        then        
+        
+        if
+        DEBUG_OPPCODE_FLAG == 1
+        then
+        
+        DEBUG_STRING_NUMBER += 1
+        0AD3: v$DEBUG_FILE9 = format "CH%d" DEBUG_STRING_NUMBER
+        if
+        DEBUG_STRING_NUMBER > DEBUG_STRING_NUMBER_MAX
+        then
+        0B00: delete_file "debug\debug.ini"  // IF and SET
+        DEBUG_STRING_NUMBER = 0
+        end
+        0AF1: write_int $CRG_TARGET[24@] to_ini_file "debug\debug.ini" section "OPPCODE" key v$DEBUG_FILE9
+        
+        end
+        
+        if or
+        8184:   actor $CRG_TARGET[24@] health < 1
+        80F2: not  actor $CHARGER[24@] near_actor $CRG_TARGET[24@] radius 110.0 110.0 sphere 0
+        actor.Dead($CRG_TARGET[24@])   
+        04AD:  actor $CRG_TARGET[24@] in_water     
+        33@ > 60000
+            then
+            $CRG_TARGET[24@] = -69 
+            $CRG_TARGET_FINDED[24@] = 0
+            $CRG_TARGET_PLAYER[24@] = 0
+            33@ = 0  
+            end
+        else
+        $CRG_TARGET[24@] = -69
+        $CRG_TARGET_FINDED[24@] = 0
+        $CRG_TARGET_PLAYER[24@] = 0
+        33@ = 0 
+        end
+    end          
+    
+/////////////////////Проверка на близость цели не игрока/////////////////////
+ 
+if
+$CRG_TARGET_FINDED[24@] == 1
+    then
+    if
+    $CRG_TARGET_PLAYER[24@] == 0
+        then
+        if and
+        056D:   actor $CRG_TARGET[24@] defined
+        056D:   actor $CHARGER[24@] defined  
+            then   
+            if
+            0104: actor $CRG_TARGET[24@] near_actor $CHARGER[24@] radius 2.0 2.0 2.0 sphere 0
+                then
+                gosub @CHARGER_CLIMB_CHECK
+                if and
+                0364:   actor $CHARGER[24@] spotted_actor $CRG_TARGET[24@]
+                8E48: not is_char_fallen_on_ground $CHARGER[24@]
+                not 0@ == 1
+                    then
+                    
+                    if and
+                    UNITED_MAP == 0
+                    actor.DrivingVehicleType($CRG_TARGET[24@],15426)
+                    then
+                    jump to @CHARGER_QUAD3_SA_JUMP1
+                    end
+                    
+                    if or
+                    not actor.Driving($CRG_TARGET[24@])
+                    047A:   actor $CRG_TARGET[24@] driving_bike
+                    actor.DrivingVehicleType($CRG_TARGET[24@],#QUAD)
+                    actor.DrivingVehicleType($CRG_TARGET[24@],15558)
+                        then
+                        :CHARGER_QUAD3_SA_JUMP1
+                        if and
+                        89DE: not  actor $CRG_TARGET[24@] entering_car
+                        0184:   actor $CHARGER[24@] health > 0
+                        32@ > 1000
+                            then
+                            32@ = 0
+                            
+                            if
+                            003A:   $CRG_TARGET[24@] == COOP_ACTOR // (int)
+                            then
+                            gosub @DISEMB_JETP_CHECK_2P
+                            end
+                                                    
+                            0792: disembark_instantly_actor $CRG_TARGET[24@]                          
+                            0687: clear_actor $CHARGER[24@] task
+                            random_int 0@ CHARGER_TASK_WAIT_TIME_MIN CHARGER_TASK_WAIT_TIME_MAX
+                            wait 0@
+                            wait 24@
+                            if
+                            056D:   actor $CRG_TARGET[24@] defined 
+                                then
+                                audiostream.Volume(CRG_WALK_SOUND) = 0.0     
+                                0A1A: actor $CHARGER[24@] perform_walk_animation "FIGHT22" IFP "ped" framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF 1 -1 ms // versionC
+                                
+                                if
+                                003A:   $CRG_TARGET[24@] == COOP_ACTOR // (int)
+                                then
+                                008B: 0@ = $CHARGER_DAMAGE // (int)
+                                else
+                                008B: 0@ = $CHARGER_PEOPLE_DAMAGE // (int)
+                                end
+                                
+                                0093: 0@ = integer 0@ to_float
+                                random_float 1@ 0.85 1.15 
+                                006B: 0@ *= 1@  // (float)  
+                                0092: 0@ = float 0@ to_integer 
+                                
+                                0851: set_actor $CRG_TARGET[24@] decrease_health_by 0@ affect_armour 1 
+                                
+                                05C1: AS_actor $CRG_TARGET[24@] speak_from_audio_table 346
+                                
+                                05BB: AS_actor $CRG_TARGET[24@] fall_down 0 time_on_ground 100
+                                09F1: play_audio_at_actor $CRG_TARGET[24@] event 1130
+                                
+                                gosub @CHARGER_SHUT_UP
+                    
+                                if
+                                $GAME_SPEED == 1.0
+                                then
+                                gosub @CHARGER_RANDOM_ATTACK_SOUND
+                                Audiostream.LinkToActor(11@, $CHARGER[24@])
+                                Audiostream.PerformAction(11@, PLAY)
+                                Audiostream.Volume(11@) = $SOUNDS_VOLUME
+                                CRG_ATTACK_SOUND_FLAG = 1
+                                end
+                                
+                                actor.StorePos($CRG_TARGET[24@], 1@, 2@, 3@) 
+                                04C4: store_coords_to 4@ 5@ 6@ from_actor $CRG_TARGET[24@] with_offset 0.0 -12.0 12.0 
+                                0063: 4@ -= 1@  // (float) 
+                                0063: 5@ -= 2@  // (float) 
+                                0063: 6@ -= 3@  // (float) 
+                                083C: set_actor $CRG_TARGET[24@] velocity_in_direction_XYZ 4@ 5@ 6@   
+                                
+                                $CRG_TARGET[24@] = -69
+                                $CRG_TARGET_FINDED[24@] = 0
+                                $CRG_TARGET_PLAYER[24@] = 0
+                                
+                                33@ = 0
+                            
+                                repeat
+                                wait 0
+                                        
+                                if or
+                                actor.Dead($CHARGER[24@])
+                                $SAVESTATUS == 1
+                                then
+                                break
+                                end
+                                        
+                                until 33@ > 670
+                                
+                                33@ = 0
+                                
+                                05B9: AS_actor $CHARGER[24@] stay_idle 1 ms
+                                
+                                gosub @CHARGER_CHECK_ATTACK_TARGET_EXSIST  
+                                end                    
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+/////////////////////Проверка на близость любой сущности/////////////////////
+ 
+if and
+0E45: frame_mod 5
+056D:   $CHARGER[24@] defined
+    then
+    actor.StorePos($CHARGER[24@],0@,1@,2@)
+    0AE1: CHARGER_CLOSEST_PED_VAR = random_actor_near_point 0@ 1@ 2@ in_radius 5.0 find_next 1 pass_deads 0
+    if
+    056D:   actor CHARGER_CLOSEST_PED_VAR defined
+        then
+        089F: get_actor CHARGER_CLOSEST_PED_VAR pedtype_to 0@
+        
+        if
+        $ZOMBIEORGY_MODE_FLAG == 1
+        then
+        0@ = 0
+        end
+        
+        if and        
+        056D:   actor $CHARGER[24@] defined
+        not 0@ == 23
+        87D6: not  CHARGER_CLOSEST_PED_VAR == PLAYER_ACTOR // @ == $ (int)
+        87D6: not  CHARGER_CLOSEST_PED_VAR == $VOICE_ACTOR // @ == $ (int)
+        87D6: not  CHARGER_CLOSEST_PED_VAR == $CHARGER[24@] // @ == $ (int)
+        not actor.Dead(CHARGER_CLOSEST_PED_VAR)  
+            then   
+            if
+            0104: actor CHARGER_CLOSEST_PED_VAR near_actor $CHARGER[24@] radius 2.0 2.0 2.0 sphere 0
+                then
+                gosub @CHARGER_CLIMB_CHECK
+                if and
+                0364:   actor $CHARGER[24@] spotted_actor CHARGER_CLOSEST_PED_VAR
+                not actor.Animation(CHARGER_CLOSEST_PED_VAR) == "FLOOR_hit"
+                not actor.Animation(CHARGER_CLOSEST_PED_VAR) == "FLOOR_hit_f"
+                not actor.Animation($CHARGER[24@]) == "FLOOR_hit"
+                not actor.Animation($CHARGER[24@]) == "FLOOR_hit_f"
+                8E48: not is_char_fallen_on_ground $CHARGER[24@]
+                not 0@ == 1
+                    then
+                    
+                    if and
+                    UNITED_MAP == 0
+                    actor.DrivingVehicleType(CHARGER_CLOSEST_PED_VAR,15426)
+                    then
+                    jump to @CHARGER_QUAD3_SA_JUMP2
+                    end
+                    
+                    if or
+                    not actor.Driving(CHARGER_CLOSEST_PED_VAR)
+                    047A:   actor CHARGER_CLOSEST_PED_VAR driving_bike
+                    actor.DrivingVehicleType(CHARGER_CLOSEST_PED_VAR,#QUAD)
+                    actor.DrivingVehicleType(CHARGER_CLOSEST_PED_VAR,15558)
+                        then
+                        :CHARGER_QUAD3_SA_JUMP2
+                        if and
+                        89DE: not  actor CHARGER_CLOSEST_PED_VAR entering_car
+                        0184:   actor $CHARGER[24@] health > 0
+                            then
+                            
+                            if
+                            07D6:   CHARGER_CLOSEST_PED_VAR == COOP_ACTOR // @ == $ (int)
+                            then
+                            gosub @DISEMB_JETP_CHECK_2P
+                            end
+                                                    
+                            0792: disembark_instantly_actor CHARGER_CLOSEST_PED_VAR                          
+                            0687: clear_actor $CHARGER[24@] task
+                            random_int 0@ CHARGER_TASK_WAIT_TIME_MIN CHARGER_TASK_WAIT_TIME_MAX
+                            wait 0@
+                            wait 24@
+                            if
+                            056D:   actor CHARGER_CLOSEST_PED_VAR defined 
+                                then
+                                audiostream.Volume(CRG_WALK_SOUND) = 0.0     
+                                0A1A: actor $CHARGER[24@] perform_walk_animation "FIGHT22" IFP "ped" framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF 1 -1 ms // versionC
+                                
+                                if
+                                07D6:   CHARGER_CLOSEST_PED_VAR == COOP_ACTOR // @ == $ (int)
+                                then
+                                008B: 0@ = $CHARGER_DAMAGE // (int)
+                                else
+                                008B: 0@ = $CHARGER_PEOPLE_DAMAGE // (int)
+                                end
+                                
+                                0093: 0@ = integer 0@ to_float
+                                random_float 1@ 0.85 1.15 
+                                006B: 0@ *= 1@  // (float)  
+                                0092: 0@ = float 0@ to_integer 
+                                
+                                0851: set_actor CHARGER_CLOSEST_PED_VAR decrease_health_by 0@ affect_armour 1 
+                                
+                                05C1: AS_actor CHARGER_CLOSEST_PED_VAR speak_from_audio_table 346
+                                
+                                05BB: AS_actor CHARGER_CLOSEST_PED_VAR fall_down 0 time_on_ground 100
+                                09F1: play_audio_at_actor CHARGER_CLOSEST_PED_VAR event 1130
+                                
+                                gosub @CHARGER_SHUT_UP
+                    
+                                if
+                                $GAME_SPEED == 1.0
+                                then
+                                gosub @CHARGER_RANDOM_ATTACK_SOUND
+                                Audiostream.LinkToActor(11@, $CHARGER[24@])
+                                Audiostream.PerformAction(11@, PLAY)
+                                Audiostream.Volume(11@) = $SOUNDS_VOLUME
+                                CRG_ATTACK_SOUND_FLAG = 1
+                                end
+                                
+                                actor.StorePos(CHARGER_CLOSEST_PED_VAR, 1@, 2@, 3@) 
+                                04C4: store_coords_to 4@ 5@ 6@ from_actor CHARGER_CLOSEST_PED_VAR with_offset 0.0 -12.0 12.0 
+                                0063: 4@ -= 1@  // (float) 
+                                0063: 5@ -= 2@  // (float) 
+                                0063: 6@ -= 3@  // (float) 
+                                083C: set_actor CHARGER_CLOSEST_PED_VAR velocity_in_direction_XYZ 4@ 5@ 6@                                   
+                                
+                                33@ = 0
+                            
+                                repeat
+                                wait 0
+                                        
+                                if or
+                                actor.Dead($CHARGER[24@])
+                                $SAVESTATUS == 1
+                                then
+                                break
+                                end
+                                        
+                                until 33@ > 670
+                                
+                                33@ = 0
+                                
+                                05B9: AS_actor $CHARGER[24@] stay_idle 1 ms
+                                
+                                gosub @CHARGER_CHECK_ATTACK_TARGET_EXSIST  
+                                end                    
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end                    
+    
+/////////////////////Проверка на близость цели игрока////////////////////
+ 
+if and
+056D:   actor PLAYER_ACTOR defined
+056D:   actor $CHARGER[24@] defined
+$INF_SIDE == 0
+$ZOMBIE_DONT_ATTACK_PLAYER == 0  
+    then   
+    if and
+    0104: actor PLAYER_ACTOR near_actor $CHARGER[24@] radius 2.0 2.0 2.0 sphere 0
+    not actor.Dead(PLAYER_ACTOR)
+        then
+        gosub @CHARGER_CLIMB_CHECK
+        if and
+        0364:   actor $CHARGER[24@] spotted_actor PLAYER_ACTOR
+        8E48: not is_char_fallen_on_ground $CHARGER[24@]
+        not 0@ == 1       
+            then
+            
+            if and
+            UNITED_MAP == 0
+            actor.DrivingVehicleType(PLAYER_ACTOR,15426)
+            then
+            jump to @CHARGER_QUAD3_SA_JUMP3
+            end
+            
+            if or
+            not actor.Driving(PLAYER_ACTOR)
+            047A:   actor PLAYER_ACTOR driving_bike
+            actor.DrivingVehicleType(PLAYER_ACTOR,#QUAD)
+            actor.DrivingVehicleType(PLAYER_ACTOR,15558)
+                then
+                :CHARGER_QUAD3_SA_JUMP3
+                if and
+                89DE: not  actor PLAYER_ACTOR entering_car
+                8A32: not actor PLAYER_ACTOR on_turret_of_car
+                0184:   actor $CHARGER[24@] health > 0
+                32@ > 1000
+                    then
+                    32@ = 0   
+                            
+                    0687: clear_actor $CHARGER[24@] task
+                    random_int 0@ CHARGER_TASK_WAIT_TIME_MIN CHARGER_TASK_WAIT_TIME_MAX
+                    wait 0@
+                    wait 24@
+                    audiostream.Volume(CRG_WALK_SOUND) = 0.0 
+                    0A1A: actor $CHARGER[24@] perform_walk_animation "FIGHT22" IFP "ped" framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF 0 -1 ms // versionC
+                            
+                    gosub @CHARGER_SHUT_UP
+                
+                    if
+                    $GAME_SPEED == 1.0
+                    then
+                    gosub @CHARGER_RANDOM_ATTACK_SOUND
+                    Audiostream.LinkToActor(11@, $CHARGER[24@])
+                    Audiostream.PerformAction(11@, PLAY)
+                    Audiostream.Volume(11@) = $SOUNDS_VOLUME
+                    CRG_ATTACK_SOUND_FLAG = 1
+                    end                        
+                                                            
+                    if
+                    056D:   actor $VOICE_ACTOR defined
+                    then                
+                    
+                    if
+                    not $RANDOM_MODE_MODEL == 0
+                    then
+                    05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 346
+                    else
+                    05C1: AS_actor PLAYER_ACTOR speak_from_audio_table 346
+                    end
+                    
+                    end                        
+                    
+                    008F: 0@ = integer $CHARGER_DAMAGE to_float
+                    008F: 1@ = integer $CHARGER_DAMAGE to_float
+                    006F: 1@ *= PLAYER_RESIST_MULT // (float)
+                    0063: 0@ -= 1@  // (float)
+                    0092: 0@ = float 0@ to_integer
+                    
+                    if
+                    $GODMODE_FLAG == 1
+                    then
+                    jump to @CHARHER_LAST_CHANCE_PLAYER_AFTERDAMAGE_JUMP
+                    end
+                    
+                    1@ = actor.Health(PLAYER_ACTOR)
+                    0062: 1@ -= 0@  // (int)
+                    if and
+                    PERK_LASTCHANCE == 1
+                    LAST_CHANCE_FLAG == 0
+                    LAST_CHANCE_TIMER == 0
+                    1@ < 1
+                    then
+                    actor.Health(PLAYER_ACTOR) = 30
+                    0003: shake_camera 200
+                    09F1: play_audio_at_actor $CHARGER[24@] event 1130
+                    create_thread @LST_CHN
+                    jump to @CHARHER_LAST_CHANCE_PLAYER_AFTERDAMAGE_JUMP
+                    end
+                            
+                    0851: set_actor PLAYER_ACTOR decrease_health_by 0@ affect_armour 1                    
+                    
+                    0332: set_actor PLAYER_ACTOR bleeding 1                            
+                            
+                    if
+                    056D:   actor $VOICE_ACTOR defined
+                    then
+                    
+                    if
+                    not $RANDOM_MODE_MODEL == 0
+                    then
+                    05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 346
+                    else
+                    05C1: AS_actor PLAYER_ACTOR speak_from_audio_table 346
+                    end
+                    
+                    end
+                            
+                            
+                    0003: shake_camera 200
+                    09F1: play_audio_at_actor $CHARGER[24@] event 1130
+                    gosub @DISEMB_JETP_CHECK
+                    0792: disembark_instantly_actor PLAYER_ACTOR
+    //                player.CanMove(PLAYER_CHAR) = false
+                    0E68: set_player_control_pad 0 1 
+                    0E69: set_player_control_pad_movement 0 0
+                    05BB: AS_actor PLAYER_ACTOR fall_down 0 time_on_ground 100
+                    wait 1                                        
+                            
+                    if
+                    056D:   actor $VOICE_ACTOR defined
+                    then
+                    
+                    if
+                    not $RANDOM_MODE_MODEL == 0
+                    then
+                    05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 346
+                    else
+                    05C1: AS_actor PLAYER_ACTOR speak_from_audio_table 346
+                    end
+                    
+                    end                        
+                            
+                    actor.StorePos(PLAYER_ACTOR, 1@, 2@, 3@) 
+                    04C4: store_coords_to 4@ 5@ 6@ from_actor PLAYER_ACTOR with_offset 0.0 -19.0 12.0 
+                    0063: 4@ -= 1@  // (float) 
+                    0063: 5@ -= 2@  // (float) 
+                    0063: 6@ -= 3@  // (float) 
+                    083C: set_actor PLAYER_ACTOR velocity_in_direction_XYZ 4@ 5@ 6@
+    //                player.CanMove(PLAYER_CHAR) = true
+                    0E68: set_player_control_pad 1 1 
+                    0E69: set_player_control_pad_movement 0 1
+                    0332: set_actor PLAYER_ACTOR bleeding 0
+                    wait 100    
+                            
+                    if
+                    8184:   actor PLAYER_ACTOR health < 1
+                    then
+                    05BE: AS_actor PLAYER_ACTOR die
+                    end
+                    
+                    :CHARHER_LAST_CHANCE_PLAYER_AFTERDAMAGE_JUMP             
+                    
+                    $CRG_TARGET[24@] = -69        
+                    $CRG_TARGET_FINDED[24@] = 0
+                    $CRG_TARGET_PLAYER[24@] = 0
+                    
+                    33@ = 0
+                            
+                    repeat
+                    wait 0
+                                        
+                    if or
+                    actor.Dead($CHARGER[24@])
+                    $SAVESTATUS == 1
+                    then
+                    break
+                    end
+                                        
+                    until 33@ > 670
+                                
+                    33@ = 0
+                    
+                    05B9: AS_actor $CHARGER[24@] stay_idle 1 ms                   
+                            
+                    gosub @CHARGER_CHECK_ATTACK_TARGET_EXSIST                
+                    end
+                end
+            end
+        end
+    end              
+    
+    
+/////////////////////Поиск цели-игрока громилой///////////////////// 
+
+if and
+056D:   actor $CHARGER[24@] defined
+$CRG_TARGET_FINDED[24@] == 0  
+    then
+    04DD: 1@ = actor $CHARGER[24@] armour
+    random_int 0@ 0 $CHARGER_AGRO_MAX
+    if and
+    07D6:   0@ == $CHARGER_AGRO_SET // @ == $ (int)
+    $CHARGER_DONT_ATTACK_PLAYER == 0
+    $HUNTER_ON_PLAYER == 0
+    $ZOMBIEORGY_MODE_FLAG == 0
+    not 1@ == 1 
+        then      
+        if and
+        $INF_SIDE == 0
+        $ACTOR_DEAD == 0
+        $SPECTATING_FLAG == 0
+        00F2:  actor $CHARGER[24@] near_actor PLAYER_ACTOR radius 100.0 100.0 sphere 0 
+        84AD: not actor PLAYER_ACTOR in_water
+        not actor.Dead(PLAYER_ACTOR)                          
+            then 
+            0084: $CRG_TARGET[24@] = PLAYER_ACTOR // (int)                
+            $CRG_TARGET_FINDED[24@] = 1
+            $CRG_TARGET_PLAYER[24@] = 1
+            
+            33@ = 0
+            
+            gosub @CHARGER_ATTACK_TARGET
+            
+            if
+            $GAME_SPEED == 1.0
+            then                                                                               
+            gosub @CHARGER_SHUT_UP                                                          
+            gosub @CHARGER_RANDOM_ALERT_SOUND
+            Audiostream.LinkToActor(11@, $CHARGER[24@])
+            Audiostream.PerformAction(11@, PLAY)
+            Audiostream.Volume(11@) = $SOUNDS_VOLUME
+            CRG_ALERT_SOUND_FLAG = 1
+            end
+                                 
+            end  
+        else
+        gosub @CHARGER_ATTACK_SYSTEM_TARGET_FIND
+        if and       
+        25@ == 1
+        056D:   actor $CRG_TARGET[24@] defined     
+            then
+            089F: get_actor $CRG_TARGET[24@] pedtype_to 0@
+            
+            if
+            DEBUG_OPPCODE_FLAG == 1
+            then
+            
+            DEBUG_STRING_NUMBER += 1
+            0AD3: v$DEBUG_FILE9 = format "CH%d" DEBUG_STRING_NUMBER
+            if
+            DEBUG_STRING_NUMBER > DEBUG_STRING_NUMBER_MAX
+            then
+            0B00: delete_file "debug\debug.ini"  // IF and SET
+            DEBUG_STRING_NUMBER = 0
+            end
+            0AF1: write_int $CRG_TARGET[24@] to_ini_file "debug\debug.ini" section "OPPCODE" key v$DEBUG_FILE9
+            
+            end
+            
+            if and
+            not actor.Dead($CRG_TARGET[24@])            
+            0184:   actor $CRG_TARGET[24@] health > 0       
+            87D6: not  0@ == $VOICE_SET_PEDTYPE // @ == $ (int)
+            803A: not  $CRG_TARGET[24@] == $CHARGER[24@] // (int)  
+            84AD: not  actor $CRG_TARGET[24@] in_water  
+            84C8: not  actor $CRG_TARGET[24@] driving_flying_vehicle
+            8A32: not  actor $CRG_TARGET[24@] on_turret_of_car
+                then  
+                if or
+                87D6: not  0@ == $ZOMBIE_SET_PEDTYPE // @ == $ (int)
+                $ZOMBIEORGY_MODE_FLAG == 1  
+                    then                                      
+                        
+                    $CRG_TARGET_FINDED[24@] = 1
+                    $CRG_TARGET_PLAYER[24@] = 0
+                    33@ = 0
+                    
+                    gosub @CHARGER_ATTACK_TARGET
+                    
+                    if
+                    $GAME_SPEED == 1.0
+                    then                                                                                                     
+                    gosub @CHARGER_SHUT_UP                                                
+                    gosub @CHARGER_RANDOM_ALERT_SOUND
+                    Audiostream.LinkToActor(11@, $CHARGER[24@])
+                    Audiostream.PerformAction(11@, PLAY)
+                    Audiostream.Volume(11@) = $SOUNDS_VOLUME
+                    CRG_ALERT_SOUND_FLAG = 1
+                    end
+                                                                                          
+                    end 
+                end
+            end
+        end               
+    end
+    
+////////////////////////Высокий прыжок громилы////////////////////////
+
+if
+056D:   actor $CHARGER[24@] defined
+    then
+    04DD: 0@ = actor $CHARGER[24@] armour
+    if and
+    0184:   actor $CHARGER[24@] health > 0
+    32@ >= 3000
+    actor.Animation($CHARGER[24@]) == "charger_run"
+    $CRG_TARGET_FINDED[24@] == 1
+    056D:   actor $CRG_TARGET[24@] defined
+    $GAMEMODE_CRAZY == 0
+    not 0@ == 1
+        then
+        32@ = 0
+        04C4: store_coords_to 27@ 28@ 29@ from_actor $CHARGER[24@] with_offset 0.0 3.0 0.3 
+        Actor.StorePos($CHARGER[24@],2@,3@,4@)
+        if 
+        86BD:   not no_obstacles_between 27@ 28@ 29@ and 2@ 3@ 4@ solid 1 car 0 actor 0 object 0 particle 0
+            then
+            if or
+            0364:   actor $CHARGER[24@] spotted_actor $CRG_TARGET[24@] 
+            00F2:   actor $CHARGER[24@] near_actor $CRG_TARGET[24@] radius 10.0 15.0 0 
+                then
+                0687: clear_actor $CHARGER[24@] task
+                random_int 0@ CHARGER_TASK_WAIT_TIME_MIN CHARGER_TASK_WAIT_TIME_MAX
+                if
+                $GAMEMODE_CRAZY == 1
+                then
+                0@ *= CHARGER_TASK_CRAZY_MULT
+                0085: 1@ = 24@ // (int)
+                1@ *= CHARGER_TASK_CRAZY_MULT2
+                wait 1@
+                end
+                wait 0@
+                wait 24@
+                if
+                056D:   actor $CRG_TARGET[24@] defined
+                    then
+                    078F: AS_actor $CHARGER[24@] climb 1          
+                     
+                    wait 100                              
+                    actor.StorePos($CHARGER[24@], 27@, 28@, 29@) 
+                    04C4: store_coords_to 2@ 3@ 4@ from_actor $CHARGER[24@] with_offset 0.0 8.0 10.0
+                    0063: 2@ -= 27@  // (float) 
+                    0063: 3@ -= 28@  // (float) 
+                    0063: 4@ -= 29@  // (float) 
+                    083C: set_actor $CHARGER[24@] velocity_in_direction_XYZ 2@ 3@ 4@  
+                    
+                    if
+                    $GAME_SPEED == 1.0
+                    then
+                    gosub @CHARGER_SHUT_UP                
+                    gosub @CHARGER_RANDOM_ALERT_SOUND
+                    Audiostream.LinkToActor(11@, $CHARGER[24@])
+                    Audiostream.PerformAction(11@, PLAY)
+                    Audiostream.Volume(11@) = $SOUNDS_VOLUME
+                    CRG_ALERT_SOUND_FLAG = 1
+                    end
+                    
+                    wait 150                              
+                    actor.StorePos($CHARGER[24@], 27@, 28@, 29@) 
+                    04C4: store_coords_to 2@ 3@ 4@ from_actor $CHARGER[24@] with_offset 0.0 15.0 10.0
+                    0063: 2@ -= 27@  // (float) 
+                    0063: 3@ -= 28@  // (float) 
+                    0063: 4@ -= 29@  // (float) 
+                    083C: set_actor $CHARGER[24@] velocity_in_direction_XYZ 2@ 3@ 4@
+                    gosub @CHARGER_CHECK_ATTACK_TARGET_EXSIST          
+                    end
+                end
+            end
+        end
+    end
+    
+////////////////////////Высокий прыжок громилы в безумии////////////////////////       
+
+if
+056D:   actor $CHARGER[24@] defined
+    then    
+    if and
+    0184:   actor $CHARGER[24@] health > 0
+    actor.Animation($CHARGER[24@]) == "charger_run"
+    $CRG_TARGET_FINDED[24@] == 1
+    $GAMEMODE_CRAZY == 1
+    0E45: frame_mod 60
+        then
+        04C4: store_coords_to 27@ 28@ 29@ from_actor $CHARGER[24@] with_offset 0.0 3.0 0.0 
+        Actor.StorePos($CHARGER[24@],2@,3@,4@)
+        if 
+        86BD:   not no_obstacles_between 27@ 28@ 29@ and 2@ 3@ 4@ solid 1 car 0 actor 0 object 0 particle 0 
+            then
+            
+            0687: clear_actor $CHARGER[24@] task
+            random_int 0@ CHARGER_TASK_WAIT_TIME_MIN CHARGER_TASK_WAIT_TIME_MAX
+            if
+            $GAMEMODE_CRAZY == 1
+            then
+            0@ *= CHARGER_TASK_CRAZY_MULT
+            0085: 1@ = 24@ // (int)
+            1@ *= CHARGER_TASK_CRAZY_MULT2
+            wait 1@
+            end
+            wait 0@
+            wait 24@
+            if
+            8E92: not is_char_really_in_air $CHARGER[24@]
+            then
+            078F: AS_actor $CHARGER[24@] climb 1
+            end
+             
+            wait 100                              
+            actor.StorePos($CHARGER[24@], 27@, 28@, 29@) 
+            04C4: store_coords_to 2@ 3@ 4@ from_actor $CHARGER[24@] with_offset 0.0 8.0 20.0
+            0063: 2@ -= 27@  // (float) 
+            0063: 3@ -= 28@  // (float) 
+            0063: 4@ -= 29@  // (float) 
+            083C: set_actor $CHARGER[24@] velocity_in_direction_XYZ 2@ 3@ 4@  
+            
+            if
+            $GAME_SPEED == 1.0
+            then
+            gosub @CHARGER_SHUT_UP        
+            gosub @CHARGER_RANDOM_ALERT_SOUND
+            Audiostream.LinkToActor(11@, $CHARGER[24@])
+            Audiostream.PerformAction(11@, PLAY)
+            Audiostream.Volume(11@) = $SOUNDS_VOLUME
+            CRG_ALERT_SOUND_FLAG = 1
+            end
+            
+            wait 150
+            wait 24@                              
+            actor.StorePos($CHARGER[24@], 27@, 28@, 29@) 
+            04C4: store_coords_to 2@ 3@ 4@ from_actor $CHARGER[24@] with_offset 0.0 15.0 40.0
+            0063: 2@ -= 27@  // (float) 
+            0063: 3@ -= 28@  // (float) 
+            0063: 4@ -= 29@  // (float) 
+            083C: set_actor $CHARGER[24@] velocity_in_direction_XYZ 2@ 3@ 4@  
+            gosub @CHARGER_CHECK_ATTACK_TARGET_EXSIST        
+            end
+        end
+    end    
+    
+/////////////////////Запрыгивание на машины/////////////////////  
+
+if
+056D:   actor $CHARGER[24@] defined
+    then        
+    if and
+    0184:   actor $CHARGER[24@] health > 0
+    874F: not  actor $CHARGER[24@] ped_event == 33  
+    8818: not  actor $CHARGER[24@] in_air
+    not $Z_DONT_CLIMB_FLAG == 1
+    actor.Animation($CHARGER[24@]) == "charger_run"
+    $CRG_TARGET_FINDED[24@] == 1
+    0E45: frame_mod 90
+        then
+        if
+        056D:   actor $CRG_TARGET[24@] defined
+            then
+            if or
+            0364:   actor $CHARGER[24@] spotted_actor $CRG_TARGET[24@] 
+            00F2:   actor $CHARGER[24@] near_actor $CRG_TARGET[24@] radius 10.0 15.0 sphere 0
+            $ZOMBIES_HORDE == 1
+                then
+                actor.StorePos($CHARGER[24@], 3@, 4@, 5@) 
+                04C4: store_coords_to 27@ 28@ 29@ from_actor $CHARGER[24@] with_offset 0.0 3.0 0.3 
+                if
+                86BD: not no_obstacles_between 27@ 28@ 29@ and 3@ 4@ 5@ solid 0 car 1 actor 0 object 0 particle 0
+                    then
+                    0687: clear_actor $CHARGER[24@] task
+                    random_int 0@ CHARGER_TASK_WAIT_TIME_MIN CHARGER_TASK_WAIT_TIME_MAX
+                    if
+                    $GAMEMODE_CRAZY == 1
+                    then
+                    0@ *= CHARGER_TASK_CRAZY_MULT
+                    0085: 1@ = 24@ // (int)
+                    1@ *= CHARGER_TASK_CRAZY_MULT2
+                    wait 1@
+                    end
+                    wait 0@
+                    wait 24@    
+                    05BC: AS_actor $CHARGER[24@] jump 1
+                    wait 50                              
+                    actor.StorePos($CHARGER[24@], 27@, 28@, 29@) 
+                    04C4: store_coords_to 3@ 4@ 5@ from_actor $CHARGER[24@] with_offset 0.0 $ZOMBIE_JUMP_Y $ZOMBIE_JUMP_Z
+                    0063: 3@ -= 27@  // (float) 
+                    0063: 4@ -= 28@  // (float) 
+                    0063: 5@ -= 29@  // (float) 
+                    083C: set_actor $CHARGER[24@] velocity_in_direction_XYZ 3@ 4@ 5@
+                    gosub @CHARGER_CHECK_ATTACK_TARGET_EXSIST
+                    end 
+                end
+            end
+        end
+    end
+    
+if and
+056D:   actor $CRG_TARGET[24@] defined
+056D:   actor $CHARGER[24@] defined
+    then
+    if    
+    00F2:   actor $CHARGER[24@] near_actor $CRG_TARGET[24@] radius 10.0 15.0 sphere 0
+        then
+        if
+        0364:   actor $CHARGER[24@] spotted_actor $CRG_TARGET[24@]
+            then
+            jump to @CHARGER_JUMP_LONG_SKIP
+            end
+        end
+    end    
+        
+////////////////////////Прыжок вперед громилы////////////////////////
+
+if
+056D:   actor $CHARGER[24@] defined
+    then
+    04DD: 0@ = actor $CHARGER[24@] armour
+    if and
+    0184:   actor $CHARGER[24@] health > 0
+    001C:   CHARGER_JUMP_TIMER > CHARGER_JUMP_TIME2 // (int)
+    actor.Animation($CHARGER[24@]) == "CHARGER_run"
+    $CRG_TARGET_FINDED[24@] == 1
+    $ALLOW_SPEC_INF_JUMPS == 1
+    044B:   actor $CHARGER[24@] on_foot
+    8818:  actor $CHARGER[24@] in_air
+    not 0@ == 1
+        then
+        if and
+        056D:   actor $CRG_TARGET[24@] defined
+        not actor.Animation($CHARGER[24@]) == "FLOOR_hit_f"
+        not actor.Animation($CHARGER[24@]) == "FLOOR_hit"
+        8E48: not is_char_fallen_on_ground $CHARGER[24@]
+            then        
+            32@ = 0
+            04C4: store_coords_to 27@ 28@ 29@ from_actor $CHARGER[24@] with_offset 0.0 3.0 0.3 
+            Actor.StorePos($CHARGER[24@],2@,3@,4@)                           
+            0687: clear_actor $CHARGER[24@] task    
+            random_int 0@ CHARGER_TASK_WAIT_TIME_MIN CHARGER_TASK_WAIT_TIME_MAX
+            if
+            $GAMEMODE_CRAZY == 1
+            then
+            0085: 1@ = 24@ // (int)
+            1@ *= CHARGER_TASK_CRAZY_MULT2
+            wait 1@
+            end
+            wait 0@
+            wait 24@
+            if and
+            056D:   actor $CRG_TARGET[24@] defined
+            not actor.Animation($CHARGER[24@]) == "FLOOR_hit_f"
+            not actor.Animation($CHARGER[24@]) == "FLOOR_hit"
+            8E48: not is_char_fallen_on_ground $CHARGER[24@] 
+                then    
+                078F: AS_actor $CHARGER[24@] climb 1
+                        
+                CHARGER_JUMP_TIMER = 0
+                
+                0084: CHARGER_JUMP_TIME2 = $CHARGER_JUMP_TIME // (int) 
+                008D: CHARGER_JUMP_TIME2 = integer CHARGER_JUMP_TIME2 to_float
+                random_int 0@ $CHARGER_JUMP1_MIN $CHARGER_JUMP1_MAX
+                006D: CHARGER_JUMP_TIME2 *= 0@ // (float)     
+                008C: CHARGER_JUMP_TIME2 = float CHARGER_JUMP_TIME2 to_integer
+                         
+                wait 5                              
+                actor.StorePos($CHARGER[24@], 27@, 28@, 29@) 
+                04C4: store_coords_to 2@ 3@ 4@ from_actor $CHARGER[24@] with_offset 0.0 8.0 10.0
+                0063: 2@ -= 27@  // (float) 
+                0063: 3@ -= 28@  // (float) 
+                0063: 4@ -= 29@  // (float) 
+                083C: set_actor $CHARGER[24@] velocity_in_direction_XYZ 2@ 3@ 4@  
+                
+                if
+                $GAME_SPEED == 1.0
+                then        
+                gosub @CHARGER_SHUT_UP                
+                gosub @CHARGER_RANDOM_ALERT_SOUND
+                Audiostream.LinkToActor(11@, $CHARGER[24@])
+                Audiostream.PerformAction(11@, PLAY)
+                Audiostream.Volume(11@) = $SOUNDS_VOLUME
+                CRG_ALERT_SOUND_FLAG = 1
+                end
+                    
+                wait 150                              
+                actor.StorePos($CHARGER[24@], 27@, 28@, 29@) 
+                04C4: store_coords_to 2@ 3@ 4@ from_actor $CHARGER[24@] with_offset 0.0 25.0 5.0
+                0063: 2@ -= 27@  // (float) 
+                0063: 3@ -= 28@  // (float) 
+                0063: 4@ -= 29@  // (float) 
+                083C: set_actor $CHARGER[24@] velocity_in_direction_XYZ 2@ 3@ 4@
+                gosub @CHARGER_CHECK_ATTACK_TARGET_EXSIST     
+                end
+            end
+        end
+    end
+    
+:CHARGER_JUMP_LONG_SKIP                
+
+if
+056D:   actor $CHARGER[24@] defined
+    then
+    04DD: 0@ = actor $CHARGER[24@] armour    
+    if and
+    actor.Animation($CHARGER[24@]) == "charger_run"
+    not actor.Animation($CHARGER[24@]) == "FLOOR_hit_f"
+    not actor.Animation($CHARGER[24@]) == "FLOOR_hit"
+    044B:   actor $CHARGER[24@] on_foot
+    82A0: not  actor $CHARGER[24@] stopped
+    8818: not actor $CHARGER[24@] in_air
+    $GAME_SPEED >= 1.0
+    not 0@ == 1
+        then
+        audiostream.Volume(CRG_WALK_SOUND) = $SOUNDS_VOLUME
+        else
+        audiostream.Volume(CRG_WALK_SOUND) = 0.0
+        end
+    end
+
+if
+056D:   actor $CHARGER[24@] defined
+    then
+    if or
+    actor.Animation($CHARGER[24@]) == "FALL_collapse"
+    actor.Animation($CHARGER[24@]) == "FALL_land"
+    actor.Animation($CHARGER[24@]) == "getup"
+    actor.Animation($CHARGER[24@]) == "FLOOR_hit"
+    actor.Animation($CHARGER[24@]) == "KO_skid_front"
+    actor.Animation($CHARGER[24@]) == "HitB_1"
+    actor.Animation($CHARGER[24@]) == "HitB_2"
+    actor.Animation($CHARGER[24@]) == "HitB_3"
+        then
+        if
+        0184:   actor $CHARGER[24@] health > 0
+            then
+            0792: disembark_instantly_actor $CHARGER[24@]
+            gosub @CHARGER_CHECK_ATTACK_TARGET_EXSIST
+            end
+        end
+    end      
+
+END 
+
+:CHARGER_ATTACK_SYSTEM_TARGET_FIND
+
+25@ = 0
+
+//////////////////////////////////////////////////
+
+if or //OOS BUNKER TANKS MOMENT TARGETS
+ZAME_PROTECT_THE_OBJECT_FLAG == 2
+OOS_MARK == 223366
+OOS_MARK == 223367
+OOS_MARK == 999668
+OOS_MARK == 999666
+    then
+    
+    if
+    0E4D: random_percent 10
+    then
+    random_int 27@ 41 46
+    else
+    
+    random_int 27@ 0 3
+    if
+    27@ == 0 //Фермеры
+        then
+        random_int 0@ 26 34
+        0084: $CRG_TARGET[24@] = $RNDM_HOUSE_WEAPON[0@] // (int)
+        jump to @CHARGER_TARGET_CUCUMBER_SKIP
+        end
+    
+    if
+    27@ == 1 //Энкер, Гарнет
+        then
+        random_int 0@ 23 26
+        0084: $CRG_TARGET[24@] = $RNDM_HOUSE_WEAPON[0@] // (int)
+        jump to @CHARGER_TARGET_CUCUMBER_SKIP
+        end
+        
+    if
+    27@ == 2 //Артемис, Дэниел
+        then
+        random_int 0@ 38 40
+        0084: $CRG_TARGET[24@] = $RNDM_HOUSE_WEAPON[0@] // (int)
+        jump to @CHARGER_TARGET_CUCUMBER_SKIP
+        end         
+    
+    end
+    
+    end
+
+//////////////////////////////////////////////////
+
+if
+$ZOMBIEORGY_MODE_FLAG == 1
+then
+random_int 27@ 1 25
+else
+
+if and
+$ACTIVE_INTERIOR == 0
+not $GAMEMODE_HOLD == 1
+then
+008B: 27@ = $CREATURE_RANDOM2 // (int)
+else
+random_int 27@ 41 46
+end
+
+end
+
+if or
+$GAMEMODE_VERSUS == 1
+$GAMEMODE_CRAZY == 1
+then
+
+if and
+COOP_ACTIVE_FLAG == 1
+not $INF_SIDE == 1
+then
+if
+0E4D: random_percent 80
+    then
+    random_int 1@ 25 44
+    else
+    0084: $CRG_TARGET[24@] = COOP_ACTOR // (int)
+    jump to @CHARGER_TARGET_CUCUMBER_SKIP
+    end
+else
+random_int 27@ 25 44
+end
+
+end
+
+//////////////////////////////////////////////////
+
+0084: $CRG_TARGET[24@] = $CREATURE[27@] // (int)
+
+:CHARGER_TARGET_CUCUMBER_SKIP
+
+if and
+056D:   actor $CRG_TARGET[24@] defined
+not 27@ == PLAYER_CREATURE_NUMBER
+    then      
+    if
+    0104:   actor $CHARGER[24@] near_actor $CRG_TARGET[24@] radius 180.0 180.0 180.0 sphere 0
+        then 
+        25@ = 1
+        else
+        $CRG_TARGET[24@] = -69
+        end
+    else
+    $CRG_TARGET[24@] = -69
+    end
+
+return
+
+/////////////////////Союзники атакуют зомби которых увидили///////////////
+
+:CHARGER1_ATTACK_PEOPLE1
+
+if 
+$SIMULATING_FLAG == 1
+then
+return
+end
+
+if
+$GAMEMODE_VERSUS == 1
+then
+return
+end
+
+if
+056D:   actor $CHARGER[24@] defined
+jf @CHARGER1_ATTACK_PEOPLE_BEGIN
+092B: 3@ = group PLAYER_GROUP member 0@
+
+if
+07D6:   3@ == COOP_ACTOR // @ == $ (int)
+then
+return
+end
+
+if
+not 3@ == -1
+jf @CHARGER1_ATTACK_PEOPLE_BEGIN   
+if
+056D:   actor 3@ defined
+jf @CHARGER1_ATTACK_PEOPLE_BEGIN
+
+if
+$MISSION14_ACTIVE == 1
+    then
+    if
+    not actor.Model(3@) == 250
+    jf @CHARGER1_ATTACK_PEOPLE_BEGIN
+    end
+    
+if
+$QUEST_TYPE == 9
+    then
+    if
+    87D6: not  3@ == $VERSUS_PEOPLE[1] // @ == $ (int)
+    jf @CHARGER1_ATTACK_PEOPLE_BEGIN
+    end
+
+if or
+00DF:   actor 3@ driving
+0449:   actor 3@ in_a_car
+    then
+    if 
+    $HUNTER_ON_PLAYER == 0
+    //$PEOPLE_DONT_ATTACK == 0
+    //$COMMAND_STAY_IN_CAR == 0  
+        then                     
+        gosub @CHARGER1_ATTACK_PEOPLE_IN_CAR
+        end
+    end
+
+if and 
+not actor.Driving(PLAYER_ACTOR)
+$RANDOM_CAR_FLAG == 0  
+89DE:   actor 3@ entering_car  
+jf @CHARGER1_ATTACK_PEOPLE_BEGIN
+if
+00F2:   actor 3@ near_actor $CHARGER[24@] radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+jf @CHARGER1_ATTACK_PEOPLE_BEGIN
+if and
+$HUNTER_ON_PLAYER == 0
+$PEOPLE_DONT_ATTACK == 0
+jf @CHARGER1_ATTACK_PEOPLE_BEGIN
+if
+not actor.Animation(3@) == "FLOOR_hit"
+jf @CHARGER1_ATTACK_PEOPLE_BEGIN
+if
+$HUNTER_ON_GROUP == 0
+jf @CHARGER1_ATTACK_PEOPLE_BEGIN  
+if
+044B:   actor 3@ on_foot
+jf @CHARGER1_ATTACK_PEOPLE_BEGIN  
+if
+82E0: not actor 3@ firing_weapon
+jf @CHARGER1_ATTACK_PEOPLE_BEGIN
+062E: get_actor 3@ task 1506 status_store_to 1@ // ret 7 if not found
+if 
+1@ == 7
+jf @CHARGER1_ATTACK_PEOPLE_BEGIN  
+if and
+not actor.Animation(3@) == "colt45_fire_2hands"
+not actor.Animation(3@) == "python_fire" 
+not actor.Animation(3@) == "shotgun_fire" 
+not actor.Animation(3@) == "buddy_fire" 
+not actor.Animation(3@) == "UZI_fire"
+not actor.Animation(3@) == "RIFLE_fire" 
+jf @CHARGER1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "FLAME_fire" 
+not actor.Animation(3@) == "RocketFire" 
+not actor.Animation(3@) == "WEAPON_sniper" 
+not actor.Animation(3@) == "WEAPON_throw"
+not actor.Animation(3@) == "BOM_PLANT"
+jf @CHARGER1_ATTACK_PEOPLE_BEGIN    
+if and
+not actor.Animation(3@) == "colt45_crouchfire"
+not actor.Animation(3@) == "python_crouchfire" 
+not actor.Animation(3@) == "shotgun_crouchfire" 
+not actor.Animation(3@) == "buddy_crouchfire" 
+not actor.Animation(3@) == "UZI_crouchfire"
+not actor.Animation(3@) == "RIFLE_crouchfire" 
+jf @CHARGER1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "colt45_reload"
+not actor.Animation(3@) == "python_reload" 
+not actor.Animation(3@) == "shotgun_reload" 
+not actor.Animation(3@) == "buddy_reload" 
+not actor.Animation(3@) == "UZI_reload"
+not actor.Animation(3@) == "RIFLE_load" 
+jf @CHARGER1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "colt45_crouchreload"
+not actor.Animation(3@) == "python_crouchreload" 
+not actor.Animation(3@) == "shotgun_crouchreload" 
+not actor.Animation(3@) == "buddy_crouchreload" 
+not actor.Animation(3@) == "UZI_crouchreload"
+not actor.Animation(3@) == "RIFLE_crouchload" 
+jf @CHARGER1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "GunMove_BWD"
+not actor.Animation(3@) == "GunMove_FWD"
+not actor.Animation(3@) == "GunMove_L"
+not actor.Animation(3@) == "GunMove_R"
+not actor.Animation(3@) == "Gun_2_IDLE"
+not actor.Animation(3@) == "GUN_BUTT"
+not actor.Animation(3@) == "GUN_BUTT_crouch"
+not actor.Animation(3@) == "Gun_stand" 
+jf @CHARGER1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "CLIMB_idle"
+not actor.Animation(3@) == "CLIMB_jump"
+not actor.Animation(3@) == "CLIMB_jump2fall"
+not actor.Animation(3@) == "CLIMB_jump_B"
+not actor.Animation(3@) == "CLIMB_Pull"
+not actor.Animation(3@) == "CLIMB_Stand"
+not actor.Animation(3@) == "CLIMB_Stand_finish" 
+jf @CHARGER1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "Crouch_Roll_L"
+not actor.Animation(3@) == "Crouch_Roll_R"
+not actor.Animation(3@) == "gas_cwr"
+not actor.Animation(3@) == "getup"
+not actor.Animation(3@) == "getup_front"
+not actor.Animation(3@) == "GunCrouchBwd"
+not actor.Animation(3@) == "GunCrouchFwd"
+8E47: not is_char_fighting 3@
+jf @CHARGER1_ATTACK_PEOPLE_BEGIN  
+if or
+0364:   actor 3@ spotted_actor $CHARGER[24@]
+0364:   actor $CHARGER[24@] spotted_actor 3@
+GROUP_COMMAND_GO_ATTACK == 2
+jf @CHARGER1_ATTACK_PEOPLE_BEGIN
+05C1: AS_actor 3@ speak_from_audio_table $PEOPLE_ZOMBIE_ATTACK_AUDIO_TABLE
+if
+056D:   actor 3@ defined
+jf @CHARGER1_ATTACK_PEOPLE_BEGIN 
+if and
+not actor.Driving(PLAYER_ACTOR)
+89DE:   actor PLAYER_ACTOR entering_car
+80DF:   actor PLAYER_ACTOR in_a_car
+80DF:   actor 3@ in_a_car
+not actor.Dead(3@)
+jf @CHARGER1_ATTACK_PEOPLE_BEGIN
+//0647: AS_actor 3@ clear_look_task
+//05B9: AS_actor 3@ stay_idle 50 ms 
+wait 50
+if
+056D:   actor 3@ defined  
+then
+05E2: AS_actor 3@ kill_actor $CHARGER[24@]
+end
+
+jump @CHARGER1_ATTACK_PEOPLE_BEGIN   
+
+:CHARGER1_ATTACK_PEOPLE_IN_CAR 
+if
+00DF:   actor PLAYER_ACTOR in_a_car  
+jf @CHARGER1_ATTACK_PEOPLE_IN_CAR_RETURN 
+if and
+not actor.Animation(3@) == "Gang_DrivebyLHS"
+not actor.Animation(3@) == "Gang_DrivebyLHS_Bwd"
+not actor.Animation(3@) == "Gang_DrivebyLHS_Fwd"
+not actor.Animation(3@) == "Gang_DrivebyRHS"
+not actor.Animation(3@) == "Gang_DrivebyRHS_Bwd"
+not actor.Animation(3@) == "Gang_DrivebyRHS_Fwd" 
+jf @CHARGER1_ATTACK_PEOPLE_IN_CAR_RETURN 
+if and
+not actor.Animation(3@) == "Gang_DrivebyTop_LHS"
+not actor.Animation(3@) == "Gang_DrivebyTop_RHS" 
+jf @CHARGER1_ATTACK_PEOPLE_IN_CAR_RETURN 
+if 
+00F2:   actor 3@ near_actor $CHARGER[24@] radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+jf @CHARGER1_ATTACK_PEOPLE_IN_CAR_RETURN
+if or
+0364:   actor 3@ spotted_actor $CHARGER[24@]
+0364:   actor $CHARGER[24@] spotted_actor 3@
+jf @CHARGER1_ATTACK_PEOPLE_IN_CAR_RETURN
+
+///////////////////////////////////////////////////////////////////////////
+if and
+0@ == 0
+TEAMMATE1_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @CHARGER1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 1
+TEAMMATE2_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @CHARGER1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 2
+TEAMMATE3_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @CHARGER1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 3
+TEAMMATE4_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @CHARGER1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 4
+TEAMMATE5_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @CHARGER1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+///////////////////////////////////////////////////////////////////////////
+
+if and
+8E42: not is_char_doing_task_id 3@ 243
+not $COMMAND_STAY_IN_CAR == 1
+then
+06C9: remove_actor 3@ from_group
+0631: put_actor 3@ in_group PLAYER_GROUP
+end
+0713: actor 3@ driveby_actor $CHARGER[24@] car -1 point 0.0 0.0 0.0 radius 180.0 8 1 firing_rate 360
+
+///////////////////////////////////////////////////////////////////////////
+if
+0@ == 0
+    then
+    TEAMMATE1_ATTACK_TIMER = 0
+    end
+if
+0@ == 1
+    then
+    TEAMMATE2_ATTACK_TIMER = 0
+    end
+if
+0@ == 2
+    then
+    TEAMMATE3_ATTACK_TIMER = 0
+    end
+if
+0@ == 3
+    then
+    TEAMMATE4_ATTACK_TIMER = 0
+    end
+if
+0@ == 4
+    then
+    TEAMMATE5_ATTACK_TIMER = 0
+    end
+///////////////////////////////////////////////////////////////////////////
+   
+return
+
+:CHARGER1_ATTACK_PEOPLE_IN_CAR_RETURN
+return
+
+:CHARGER1_ATTACK_PEOPLE_BEGIN
+return
+
+:CHARGER_CHECK_ATTACK_TARGET_EXSIST 
+
+if and
+actor.Animation($CHARGER[24@]) == "charger_run"  
+not actor.Animation($CHARGER[24@]) == "FightA_M" 
+8184:   actor $CHARGER[24@] health < 1 
+    then
+    return
+    end      
+
+if 
+$CRG_TARGET_FINDED[24@] == 1
+    then
+    :CRG_TRGT
+    if
+    056D:   actor $CRG_TARGET[24@] defined
+        then                 
+        0687: clear_actor $CHARGER[24@] task
+        random_int 0@ CHARGER_TASK_WAIT_TIME_MIN CHARGER_TASK_WAIT_TIME_MAX
+        if
+        $GAMEMODE_CRAZY == 1
+        then
+        0@ *= CHARGER_TASK_CRAZY_MULT
+        0085: 1@ = 24@ // (int)
+        1@ *= CHARGER_TASK_CRAZY_MULT2
+        wait 1@
+        end
+        wait 0@
+        wait 24@ 
+        if and
+        056D:   actor $CRG_TARGET[24@] defined 
+        not $CRG_TARGET[24@] == -69
+            then  
+            if
+            not actor.Dead($CRG_TARGET[24@])
+                then
+                if
+                056D:   actor $CRG_TARGET[24@] defined
+                    then
+                    if
+                    80DF: not  actor $CRG_TARGET[24@] in_a_car
+                        then         
+                        05D9: AS_actor $CHARGER[24@] run_to_actor $CRG_TARGET[24@] timelimit -1 stop_within_radius 0.001
+                        return   
+                        else
+                        0@ = actor.CurrentCar($CRG_TARGET[24@])                    
+                        0672: AS_actor $CHARGER[24@] attack_car 0@
+                        
+                        33@ = 0
+                        
+                        repeat
+                        wait 0
+                                    
+                        if or
+                        actor.Dead($CHARGER[24@])
+                        $SAVESTATUS == 1
+                        then
+                        break
+                        end
+                                    
+                        until 33@ > 999
+                        
+                        33@ = 0
+                         
+                        return
+                        end
+                    else
+                    $CRG_TARGET_FINDED[24@] = 1
+                    $CRG_TARGET_PLAYER[24@] = 1
+                    $CRG_TARGET[24@] = -69
+                    jump to @CHARGER_VERSUS_WALK_JUMP
+                    end
+                else
+                $CRG_TARGET_FINDED[24@] = 1
+                $CRG_TARGET_PLAYER[24@] = 1
+                $CRG_TARGET[24@] = -69
+                jump to @CHARGER_VERSUS_WALK_JUMP                             
+                end
+            else
+            $CRG_TARGET_FINDED[24@] = 1
+            $CRG_TARGET_PLAYER[24@] = 1
+            $CRG_TARGET[24@] = -69
+            jump to @CHARGER_VERSUS_WALK_JUMP 
+            end
+        else
+        $CRG_TARGET_FINDED[24@] = 1
+        $CRG_TARGET_PLAYER[24@] = 1
+        $CRG_TARGET[24@] = -69
+        jump to @CHARGER_VERSUS_WALK_JUMP  
+        end 
+    end
+    
+/////////////////////////////////////////////////////////////////////////////////
+        
+28@ = 0
+        
+random_int 27@ 0 $CHARGER_AGRO_MAX
+if and
+07D6:   27@ == $CHARGER_AGRO_SET // @ == $ (int)
+$INF_SIDE == 0
+$ZOMBIEORGY_MODE_FLAG == 0
+$ZOMBIE_DONT_ATTACK_PLAYER == 0
+84AD: not  actor PLAYER_ACTOR in_water
+84C8: not  actor PLAYER_ACTOR driving_flying_vehicle
+then
+0084: $CRG_TARGET[24@] = PLAYER_ACTOR // (int)
+$CRG_TARGET_FINDED[24@] = 1
+$CRG_TARGET_PLAYER[24@] = 1
+jump to @CRG_TRGT
+end
+
+//////////////////////////////////////////////////
+
+if or //OOS BUNKER TANKS MOMENT TARGETS
+ZAME_PROTECT_THE_OBJECT_FLAG == 2
+OOS_MARK == 223366
+OOS_MARK == 223367
+OOS_MARK == 999668
+OOS_MARK == 999666
+    then
+            
+    if
+    0E4D: random_percent 70 //С 70% шансом заставляет бомжей атаковать не игрока
+        then
+                
+        if
+        0E4D: random_percent 10 //Наши союзники
+        then
+        random_int 0@ 41 46
+        0084: $CRG_TARGET[24@] = $CREATURE[0@] // (int)
+        $CRG_TARGET_FINDED[24@] = 1
+        $CRG_TARGET_PLAYER[24@] = 0                      
+        jump to @CRG_TRGT
+        else
+                
+        random_int 27@ 0 3
+        if
+        27@ == 0 //Фермеры
+            then
+            random_int 0@ 26 34
+            0084: $CRG_TARGET[24@] = $RNDM_HOUSE_WEAPON[0@] // (int)
+            $CRG_TARGET_FINDED[24@] = 1
+            $CRG_TARGET_PLAYER[24@] = 0                       
+            jump to @CRG_TRGT
+            end
+                
+        if
+        27@ == 1 //Энкер, Гарнет
+            then
+            random_int 0@ 23 26
+            0084: $CRG_TARGET[24@] = $RNDM_HOUSE_WEAPON[0@] // (int)
+            $CRG_TARGET_FINDED[24@] = 1 
+            $CRG_TARGET_PLAYER[24@] = 0                      
+            jump to @CRG_TRGT
+            end
+                    
+        if
+        27@ == 2 //Артемис, Дэниел
+            then
+            random_int 0@ 38 40
+            0084: $CRG_TARGET[24@] = $RNDM_HOUSE_WEAPON[0@] // (int)
+            $CRG_TARGET_FINDED[24@] = 1
+            $CRG_TARGET_PLAYER[24@] = 0                       
+            jump to @CRG_TRGT
+            end
+                    
+        end             
+            
+        end
+            
+    end
+        
+//////////////////////////////////////////////////
+
+:CHARGER_VERSUS_TARGET_FIND_AGAIN
+        
+while 856D: not  actor $CRG_TARGET[24@] defined
+28@ += 1
+        
+if or
+$SAVESTATUS == 1
+28@ > 128
+    then
+    
+    if and
+    $GAMEMODE_VERSUS == 0
+    $ZOMBIEORGY_MODE_FLAG == 0
+    $ZOMBIE_DONT_ATTACK_PLAYER == 0
+    84AD: not  actor PLAYER_ACTOR in_water
+    84C8: not  actor PLAYER_ACTOR driving_flying_vehicle
+    $ACTOR_DEAD == 0
+    $INF_SIDE == 0
+    then
+    0084: $CRG_TARGET[24@] = PLAYER_ACTOR // (int)
+    $CRG_TARGET_FINDED[24@] = 1
+    $CRG_TARGET_PLAYER[24@] = 1
+    jump to @CRG_TRGT
+    else
+    
+    if or
+    $SAVESTATUS == 1
+    8104: not  actor $CHARGER[24@] near_actor PLAYER_ACTOR radius 180.0 180.0 180.0 sphere 0
+    then
+    0084: $CRG_TARGET[24@] = PLAYER_ACTOR // (int)
+    $CRG_TARGET_FINDED[24@] = 1
+    $CRG_TARGET_PLAYER[24@] = 1
+    jump to @CRG_TRGT
+    end            
+    
+    jump to @CHARGER_VERSUS_WALK_JUMP
+    end
+        
+    end
+        
+gosub @CHARGER_ATTACK_SYSTEM_TARGET_FIND
+end
+
+$CRG_TARGET_FINDED[24@] = 1        
+jump to @CRG_TRGT
+
+/////////////////////////////////////////////////////////////////////////////////            
+
+:CHARGER_VERSUS_WALK_JUMP
+0687: clear_actor $CHARGER[24@] task
+random_int 0@ CHARGER_TASK_WAIT_TIME_MIN CHARGER_TASK_WAIT_TIME_MAX
+if
+$GAMEMODE_CRAZY == 1
+then
+0@ *= CHARGER_TASK_CRAZY_MULT
+0085: 1@ = 24@ // (int)
+1@ *= CHARGER_TASK_CRAZY_MULT2
+wait 1@
+end
+wait 0@
+wait 24@   
+
+if and
+$SPECTATING_FLAG == 0
+$INF_SIDE == 0
+$ZOMBIE_DONT_ATTACK_PLAYER == 0
+then
+05D9: AS_actor $CHARGER[24@] run_to_actor PLAYER_ACTOR timelimit -1 stop_within_radius 1.0
+else
+05DE: AS_actor $CHARGER[24@] walk_around_ped_path
+end  
+    
+return
+
+:CHARGER_ATTACK_TARGET
+
+0687: clear_actor $CHARGER[24@] task
+random_int 0@ CHARGER_TASK_WAIT_TIME_MIN CHARGER_TASK_WAIT_TIME_MAX
+if
+$GAMEMODE_CRAZY == 1
+then
+0@ *= CHARGER_TASK_CRAZY_MULT
+0085: 1@ = 24@ // (int)
+1@ *= CHARGER_TASK_CRAZY_MULT2
+wait 1@
+end
+wait 0@
+wait 24@ 
+if and
+056D:   actor $CRG_TARGET[24@] defined 
+not $CRG_TARGET[24@] == -69
+    then  
+    if
+    not actor.Dead($CRG_TARGET[24@])
+        then  
+        if 
+        80DF: not  actor $CRG_TARGET[24@] in_a_car    
+            then        
+            05D9: AS_actor $CHARGER[24@] run_to_actor $CRG_TARGET[24@] timelimit -1 stop_within_radius 0.001
+            else
+            0@ = actor.CurrentCar($CRG_TARGET[24@])                    
+            0672: AS_actor $CHARGER[24@] attack_car 0@
+            
+            33@ = 0
+                        
+            repeat
+            wait 0
+                        
+            if
+            actor.Dead($CHARGER[24@])
+            then
+            break
+            end
+                        
+            until 33@ > 999
+            
+            33@ = 0
+              
+            end  
+        end  
+     end 
+    
+return
+
+
+/////////////////////Вычисление координат громилы/////////////////////
+
+:CHARGER_COORD_SET
+wait 0
+if
+not OOS_MARK == 999668
+jf @CHARGER_COORD_SET_INTERIOR_BUNKER
+if
+not CURRENT_USHER_TUTORIAL_NUM == -444666
+jf @ZOMBIE_COORD_USHER4_INT
+
+if
+$SPAWN_CHARGER_ON_COORD == 1   
+then
+0089: 2@ = $CHARGER_X // (float)
+0089: 3@ = $CHARGER_Y // (float)
+0089: 4@ = $CHARGER_Z // (float)
+
+if
+not CHARGERS_TO_SPAWN_COUNT == 0
+then
+
+if
+$ACTIVE_INTERIOR == 0
+then
+0208: 30@ = random_float_in_ranges -2.0 2.0 
+005B: 2@ += 30@ // (float)
+0208: 30@ = random_float_in_ranges 2.0 -2.0 
+005B: 3@ += 30@ // (float)
+else
+0208: 30@ = random_float_in_ranges -0.5 0.5 
+005B: 2@ += 30@ // (float)
+0208: 30@ = random_float_in_ranges 0.5 -0.5 
+005B: 3@ += 30@ // (float)
+end
+
+end
+   
+return
+end
+
+if
+$SPECIAL_INFECTED_SPAWN_OZC_FLAG == 1
+then
+random_int 0@ 0 $ZOMBIE_COORD_MAX
+0089: 2@ = $ZOMBIE_X[0@] // (float)
+0089: 3@ = $ZOMBIE_Y[0@] // (float)
+0089: 4@ = $ZOMBIE_Z[0@] // (float)
+0208: 30@ = random_float_in_ranges -2.0 2.0 
+005B: 2@ += 30@ // (float)
+0208: 30@ = random_float_in_ranges 2.0 -2.0 
+005B: 3@ += 30@ // (float)
+return
+end
+
+if
+$ACTIVE_INTERIOR == 0
+jf @CHARGER_COORD_SET_INTERIOR
+
+0208: 27@ = random_float_in_ranges 100.0 -100.0 
+0208: 28@ = random_float_in_ranges -100.0 100.0   
+ 
+04C4: store_coords_to 2@ 3@ 4@ from_actor PLAYER_ACTOR with_offset 27@ 28@ 0.0 
+02CE: 4@ = ground_z_at 2@ 3@ 4@
+
+if and
+$GAMEMODE_CRAZY == 1
+SNOW_ADDON_INSTALLED_FLAG == 1
+then
+//ice ass skip
+else
+
+if
+not QUEST_NEST_NUMBER == 15
+then
+
+if
+UNITED_MAP == 0
+then
+if or
+4@ > 0.25
+00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA 860.55 1031.71 -100.0 cornerB 337.24 710.84 0.0
+jf @CHARGER_COORD_SET
+else
+if
+4@ > 0.25
+jf @CHARGER_COORD_SET
+end
+
+end
+
+end 
+
+Actor.StorePos(PLAYER_ACTOR, 27@, 28@, 29@)
+050A: 30@ = distance_between_XYZ 2@ 3@ 4@ and_XYZ 27@ 28@ 29@ 
+0092: 30@ = float 30@ to_integer
+if and
+30@ > 90 
+not 30@ > 120
+jf @CHARGER_COORD_SET
+050A: 30@ = distance_between_XYZ 27@ 28@ 4@ and_XYZ 27@ 28@ 29@
+0092: 30@ = float 30@ to_integer
+
+if and
+$GAMEMODE_CRAZY == 1
+SNOW_ADDON_INSTALLED_FLAG == 1
+then
+//ice ass skip
+else
+
+if
+UNITED_MAP == 0
+then
+if or
+not 4@ < 0.0
+00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA 860.55 1031.71 -100.0 cornerB 337.24 710.84 0.0
+jf @CHARGER_COORD_SET
+else
+if
+not 4@ < 0.0
+jf @CHARGER_COORD_SET
+end
+
+end
+
+gosub @CHARGER_ZONE_CHECK        
+
+if 
+0@ == 1
+jf @CHARGER_COORD_SET  
+
+if and
+8AE2: 30@ = random_vehicle_near_point 2@ 3@ 4@ in_radius 10.0 find_next 0 pass_wrecked 1 //IF and SET
+8AE1: 31@ = random_actor_near_point 2@ 3@ 4@ in_radius 5.0 find_next 0 pass_deads 0 //IF and SET 
+jf @CHARGER_COORD_SET
+4@ = -100.0
+
+return  
+
+:CHARGER_COORD_SET_INTERIOR
+wait 0
+0208: 27@ = random_float_in_ranges 50.0 -10.0 
+0208: 28@ = random_float_in_ranges -10.0 50.0   
+04C4: store_coords_to 2@ 3@ 4@ from_actor PLAYER_ACTOR with_offset 27@ 28@ 0.0 
+02CE: 4@ = ground_z_at 2@ 3@ 4@
+Actor.StorePos(PLAYER_ACTOR, 27@, 28@, 29@)
+
+050A: 30@ = distance_between_XYZ 27@ 28@ 4@ and_XYZ 27@ 28@ 29@ 
+0092: 30@ = float 30@ to_integer
+if
+not 30@ > 3
+jf @CHARGER_COORD_SET_INTERIOR
+
+Actor.StorePos(PLAYER_ACTOR, 27@, 28@, 29@)
+050A: 30@ = distance_between_XYZ 2@ 3@ 4@ and_XYZ 27@ 28@ 29@ 
+0092: 30@ = float 30@ to_integer
+if and
+  30@ > 3 
+   not 30@ > 60
+jf @CHARGER_COORD_SET_INTERIOR
+if
+not 4@ < 0.0
+jf @CHARGER_COORD_SET_INTERIOR
+if and
+8AE2: 30@ = random_vehicle_near_point 2@ 3@ 4@ in_radius 5.0 find_next 0 pass_wrecked 1 //IF and SET
+8AE1: 31@ = random_actor_near_point 2@ 3@ 4@ in_radius 2.0 find_next 0 pass_deads 0 
+jf @CHARGER_COORD_SET_INTERIOR
+if
+$GAMEMODE_EDITOR == 1
+then
+31@ = 999888666
+end
+
+return
+
+:CHARGER_COORD_SET_INTERIOR_BUNKER
+0208: 27@ = random_float_in_ranges 25.0 -25.0 
+0208: 28@ = random_float_in_ranges 30.0 30.0   
+04C4: store_coords_to 2@ 3@ 4@ from_actor PLAYER_ACTOR with_offset 27@ 28@ 50.0
+02CE: 4@ = ground_z_at 2@ 3@ 4@
+4@ -= 4.5325 
+if or
+4@ < 1061.8314
+4@ > 1063.2881
+then
+if
+not 4@ < 1000.0
+    then
+    4@ = 1061.8314
+    end
+end
+
+Actor.StorePos(PLAYER_ACTOR, 27@, 28@, 29@)
+050A: 30@ = distance_between_XYZ 27@ 28@ 4@ and_XYZ 27@ 28@ 29@ 
+if
+not 30@ > 3.0
+jf @CHARGER_COORD_SET
+Actor.StorePos(PLAYER_ACTOR, 27@, 28@, 29@)
+050A: 30@ = distance_between_XYZ 2@ 3@ 4@ and_XYZ 27@ 28@ 29@ 
+0092: 30@ = float 30@ to_integer
+if and
+30@ > 35 
+not 30@ > 55
+jf @CHARGER_COORD_SET
+if
+not 4@ < 0.0
+jf @CHARGER_COORD_SET
+if and
+8AE2: 30@ = random_vehicle_near_point 2@ 3@ 4@ in_radius 5.0 find_next 0 pass_wrecked 1 //IF and SET
+8AE1: 31@ = random_actor_near_point 2@ 3@ 4@ in_radius 0.5 find_next 0 pass_deads 0 
+jf @CHARGER_COORD_SET
+4@ += 0.5
+
+if
+83CA: not  object DUMMY_OBJECT exists
+then
+DUMMY_OBJECT = object.Init(321,2@,3@,4@)
+0750: set_object DUMMY_OBJECT visibility 0
+0382: set_object DUMMY_OBJECT collision_detection 0
+object.Indestructibility(DUMMY_OBJECT,true)
+object.KeepInMemory(DUMMY_OBJECT,true)
+else
+object.PutAt(DUMMY_OBJECT,2@,3@,4@)
+end
+
+if
+84EA: not object DUMMY_OBJECT in_cube_cornerA 1302.038 -679.0218 1055.0 cornerB 1286.9321 -695.6371 1095.0 flag 0
+jf @CHARGER_COORD_SET
+
+return   
+
+:CHARGER_ZONE_CHECK
+0@ = 1  
+
+{$INCLUDE zone_check/Infected Spawn Zone Check.txt}                    
+
+return
+
+:CHARGER_DIE_SOUND
+gosub @CHARGER_SHUT_UP
+gosub @CHARGER_RANDOM_DIE_SOUND
+
+Audiostream.LinkToActor(11@, $CHARGER[24@])
+Audiostream.Volume(11@) = 0.0
+Audiostream.PerformAction(11@, PLAY)
+
+Audiostream.LinkToActor(25@, $CHARGER[24@])
+Audiostream.Volume(25@) = 0.0
+Audiostream.PerformAction(25@, PLAY)
+
+0AB9: get_mp3 11@ state_to 0@
+
+while not 0@ == -1
+0AB9: get_mp3 11@ state_to 0@
+wait 0
+
+0A96: 2@ = actor $CHARGER[24@] struct
+2@ += 0x754
+0A8D: 1@ = read_memory 2@ size 4 virtual_protect 0
+if
+1@ == 0x02
+    then
+    break
+    end
+
+if
+$GAME_SPEED == 1.0
+then
+Audiostream.Volume(11@) = $SOUNDS_VOLUME
+Audiostream.Volume(25@) = 0.0
+else
+Audiostream.Volume(11@) = 0.0
+Audiostream.Volume(25@) = $SOUNDS_VOLUME
+end
+
+end
+
+audiostream.Release(11@)
+audiostream.Release(25@)
+
+return
+
+:CHARGER_SHUT_UP
+
+gosub @CHARGER_YELL_SOUND_RELEASE
+gosub @CHARGER_PAIN_SOUND_RELEASE
+gosub @CHARGER_ATTACK_SOUND_RELEASE  
+gosub @CHARGER_ALERT_SOUND_RELEASE 
+
+return
+
+:CHARGER_YELL_SOUND_RELEASE
+
+    if
+    CRG_YELL_SOUND_FLAG == 1
+    then
+    audiostream.Release(11@)
+    CRG_YELL_SOUND_FLAG = 0
+    end
+
+return
+
+:CHARGER_PAIN_SOUND_RELEASE
+
+    if
+    CRG_PAIN_SOUND_FLAG == 1
+    then
+    audiostream.Release(11@)
+    CRG_PAIN_SOUND_FLAG = 0
+    end
+
+return
+
+:CHARGER_ATTACK_SOUND_RELEASE
+
+    if
+    CRG_ATTACK_SOUND_FLAG == 1
+    then
+    audiostream.Release(11@)
+    CRG_ATTACK_SOUND_FLAG = 0
+    end
+
+return
+
+:CHARGER_ALERT_SOUND_RELEASE
+
+    if
+    CRG_ALERT_SOUND_FLAG == 1
+    then
+    audiostream.Release(11@)
+    CRG_ALERT_SOUND_FLAG = 0
+    end
+
+return  
+
+:CHARGER_SPAWN_SOUND_RELEASE
+
+    if
+    CRG_SPAWN_SOUND_FLAG == 1
+    then
+    audiostream.Release(18@)
+    CRG_SPAWN_SOUND_FLAG = 0
+    end
+
+return  
+
+             
+:CHARGER_RANDOM_YELL_SOUND
+random_int 0@ 0 23
+
+if
+0@ == 0
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_YELL1.wav")
+end 
+
+if
+0@ == 1
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_YELL2.wav")
+end 
+
+if
+0@ == 2
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_YELL3.wav")
+end 
+
+if
+0@ == 3
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_YELL4.wav")
+end 
+
+if
+0@ == 4
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_YELL5.wav")
+end 
+
+if
+0@ == 5
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_YELL6.wav")
+end 
+
+if
+0@ == 6
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_YELL7.wav")
+end 
+
+if
+0@ == 7
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_YELL8.wav")
+end 
+
+if
+0@ == 8
+then                                      
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_YELL9.wav")
+end 
+
+if
+0@ == 9
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_YELL10.wav")
+end 
+
+if
+0@ == 10
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_YELL11.wav")
+end 
+
+if
+0@ == 11
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_YELL12.wav")
+end   
+
+if
+0@ == 12
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_YELL13.wav")
+end   
+
+if
+0@ == 13
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_YELL14.wav")
+end   
+
+if
+0@ == 14
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_YELL15.wav")
+end   
+
+if
+0@ == 15
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_YELL16.wav")
+end   
+
+if
+0@ == 16
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_YELL17.wav")
+end   
+
+if
+0@ == 17
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_YELL18.wav")
+end   
+
+if
+0@ == 18
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_YELL19.wav")
+end   
+
+if
+0@ == 19
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_YELL20.wav")
+end   
+
+if
+0@ == 20
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_YELL21.wav")
+end   
+
+if
+0@ == 21
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_YELL22.wav")
+end   
+
+if
+0@ == 22
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_YELL23.wav")
+end      
+
+return
+
+
+:CHARGER_RANDOM_PAIN_SOUND
+random_int 0@ 0 6
+
+if
+0@ == 0
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_PAIN1.wav")
+end 
+
+if
+0@ == 1
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_PAIN2.wav")
+end 
+
+if
+0@ == 2
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_PAIN3.wav")
+end 
+
+if
+0@ == 3
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_PAIN4.wav")
+end 
+
+if
+0@ == 4
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_PAIN5.wav")
+end 
+
+if
+0@ == 5
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_PAIN6.wav")
+end 
+
+return
+
+            
+:CHARGER_RANDOM_ATTACK_SOUND
+random_int 0@ 0 4
+
+if
+0@ == 0
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_ATTACK1.wav")
+end 
+
+if
+0@ == 1
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_ATTACK2.wav")
+end 
+
+if
+0@ == 2
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_ATTACK3.wav")
+end 
+
+if
+0@ == 3
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_ATTACK4.wav")
+end 
+
+return
+
+:CHARGER_RANDOM_ALERT_SOUND
+random_int 0@ 0 5
+
+if
+0@ == 0
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_ALERT1.wav")
+end 
+
+if
+0@ == 1
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_ALERT2.wav")
+end 
+
+if
+0@ == 2
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_ALERT3.wav")
+end 
+
+if
+0@ == 3
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_ALERT4.wav")
+end 
+
+if
+0@ == 4
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_ALERT5.wav")
+end 
+
+return
+
+:CHARGER_RANDOM_DIE_SOUND
+random_int 0@ 0 3 
+
+if
+0@ == 0
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_DIE1.wav")
+25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_DIE1_SLOW.wav")
+end 
+
+if
+0@ == 1
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_DIE2.wav")
+25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_DIE2_SLOW.wav")
+end 
+
+if
+0@ == 2
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_DIE3.wav")
+25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_DIE3_SLOW.wav")
+end 
+
+return
+
+:DISEMB_JETP_CHECK
+
+if and
+0A0C:   player PLAYER_CHAR on_jetpack
+not $GAMEMODE_CRAZY == 1
+    then
+    actor.StorePos(PLAYER_ACTOR,TEMP_JETPACK_X,TEMP_JETPACK_Y,TEMP_JETPACK_Z)
+    02CE: TEMP_JETPACK_Z = ground_z_at TEMP_JETPACK_X TEMP_JETPACK_Y TEMP_JETPACK_Z
+    TEMP_JETPACK_Z += 1.0
+    032B: IREN_FUCK_ACTOR = create_weapon_pickup #JETPACK type 3 ammo 0 at TEMP_JETPACK_X TEMP_JETPACK_Y TEMP_JETPACK_Z    
+    03DC: IREN_FUCK_ACTOR = create_marker_above_pickup IREN_FUCK_ACTOR
+    end
+    
+return
+
+:DISEMB_JETP_CHECK_2P
+
+if and
+0A0C:   player 1 on_jetpack
+not $GAMEMODE_CRAZY == 1
+    then
+    actor.StorePos(COOP_ACTOR,TEMP_JETPACK_X,TEMP_JETPACK_Y,TEMP_JETPACK_Z)
+    02CE: TEMP_JETPACK_Z = ground_z_at TEMP_JETPACK_X TEMP_JETPACK_Y TEMP_JETPACK_Z
+    TEMP_JETPACK_Z += 1.0
+    032B: IREN_FUCK_ACTOR = create_weapon_pickup #JETPACK type 3 ammo 0 at TEMP_JETPACK_X TEMP_JETPACK_Y TEMP_JETPACK_Z    
+    03DC: IREN_FUCK_ACTOR = create_marker_above_pickup IREN_FUCK_ACTOR
+    end
+    
+return
+
+:CHARGER_CLIMB_CHECK
+0@ = 0
+if or
+actor.Animation($CHARGER[24@]) == "CLIMB_idle"
+actor.Animation($CHARGER[24@]) == "CLIMB_jump"
+actor.Animation($CHARGER[24@]) == "CLIMB_jump2fall"
+actor.Animation($CHARGER[24@]) == "CLIMB_jump_B"
+actor.Animation($CHARGER[24@]) == "CLIMB_Pull" 
+actor.Animation($CHARGER[24@]) == "CLIMB_Stand"    
+then
+0@ = 1
+end
+
+return
+
+:CHARGER_ORIGIN_SPOTTED_PHRASE
+
+repeat
+wait 0
+until ORIGIN_SPOTTED_SOME_SHIT == 0
+
+ORIGIN_SPOTTED_SOME_SHIT = 1
+
+if
+SURVIVAL_CUSTOM_WEAPON_NABOR == 1
+then
+gosub @RANDOM_DIALOG_BTRAPPER_SPOTTED_CHARGER
+else
+gosub @RANDOM_DIALOG_DCD_SPOTTED_CHARGER
+end
+
+09FD: get_gxt_string v$PHRASE3 width_to 1@
+0093: 1@ = integer 1@ to_float
+1@ *= 8.0
+0092: 1@ = float 1@ to_integer
+
+33@ = 0
+008B: 31@ = $PHRASES_OFF_FLAG // (int)                    
+                    
+repeat
+wait 0
+$PHRASES_OFF_FLAG = 1  
+        
+0384: show_text_1string GXT v$PHRASE3 string v$NAME3 time 99 1
+            
+if or
+$SAVESTATUS_TRUE == 1
+$SAVESTATUS == 1
+GAME_OVER_FLAG == 1
+    then 
+    break
+    end
+            
+until 002D:   33@ >= 1@  // (int)
+
+008A: $PHRASES_OFF_FLAG = 31@ // (int)
+
+ORIGIN_SPOTTED_SOME_SHIT = 0
+
+return   
+
+:RANDOM_DIALOG_DCD_SPOTTED_CHARGER
+    
+for 1@ = 0 to 200
+
+v$PHRASE1 = "DC12_"
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 30@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "DC12_"
+0AD3: v$PHRASE2 = format "%d" 30@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return        
+
+:RANDOM_DIALOG_BTRAPPER_SPOTTED_CHARGER
+    
+for 1@ = 0 to 200
+
+v$PHRASE1 = "HN12_"
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 30@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "HN12_"
+0AD3: v$PHRASE2 = format "%d" 30@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return
+
+:CHARGER_NUM_GET
+
+if
+0@ == 1
+then
+thread 'CHARGE1'
+end
+
+if
+0@ == 2
+then
+thread 'CHARGE2'
+end
+
+if
+0@ == 3
+then
+thread 'CHARGE3'
+end
+
+if
+0@ == 4
+then
+thread 'CHARGE4'
+end
+
+if
+0@ == 5
+then
+thread 'CHARGE5'
+end
+
+if
+0@ == 6
+then
+thread 'CHARGE6'
+end
+
+if
+0@ == 7
+then
+thread 'CHARGE7'
+end
+
+if
+0@ == 8
+then
+thread 'CHARGE9'
+end
+
+if
+0@ == 9
+then
+thread 'CHARG10'
+end
+
+if
+0@ == 10
+then
+thread 'CHARG11'
+end
+
+if
+0@ == 11
+then
+thread 'CHARG12'
+end
+
+if
+0@ == 12
+then
+thread 'CHARG13'
+end
+
+if
+0@ == 13
+then
+thread 'CHARG14'
+end
+
+if
+0@ == 14
+then
+thread 'CHARG15'
+end
+
+if
+0@ == 15
+then
+thread 'CHARG16'
+end
+
+if
+0@ == 16
+then
+thread 'CHARG17'
+end
+
+if
+0@ == 17
+then
+thread 'CHARG18'
+end
+
+if
+0@ == 18
+then
+thread 'CHARG19'
+end
+
+if
+0@ == 19
+then
+thread 'CHARG20'
+end
+
+return

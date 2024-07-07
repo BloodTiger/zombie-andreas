@@ -1,0 +1,62 @@
+:INF_EFF
+thread 'INF_EFF'
+    
+$INF_EFF_END = 0            
+gosub @INFECTED_EFFECT_ON 
+
+:INF_WEAPON_CHECK
+wait 0   
+03F0: enable_text_draw 1
+038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA $INF_MODE_COLOR_R $INF_MODE_COLOR_G $INF_MODE_COLOR_B $INF_MODE_COLOR_A
+if
+$INF_EFF_END == 0
+jf @INF_WEAPON_END_THREAD 
+if
+$GAMEMODE_INF == 1
+then
+if
+02D8:   actor PLAYER_ACTOR current_weapon == 221
+jf @INF_WEAPON_CHECK_FIRST
+end
+jump @INF_WEAPON_CHECK
+
+:INF_WEAPON_CHECK_FIRST
+048F: actor PLAYER_ACTOR remove_weapons
+
+while not model.Available(12551)
+wait 0
+model.Load(12551)
+mload
+end
+
+actor.GiveWeaponAndAmmo(PLAYER_ACTOR,221,1)
+jump @INF_WEAPON_CHECK
+
+:INF_WEAPON_END_THREAD
+gosub @INFECTED_EFFECT_OFF
+03F0: enable_text_draw 0
+end_thread
+
+:INFECTED_EFFECT_ON
+INF_MODE_COLOR_A = 0
+:INFECTED_EFFECT_ON_IDLE
+wait 1
+INF_MODE_COLOR_A += 1  
+03F0: enable_text_draw 1
+038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA $INF_MODE_COLOR_R $INF_MODE_COLOR_G $INF_MODE_COLOR_B $INF_MODE_COLOR_A 
+if
+003A:   INF_MODE_COLOR_A == $INF_MODE_COLOR_A // (int)
+jf @INFECTED_EFFECT_ON_IDLE
+return
+
+:INFECTED_EFFECT_OFF
+0084: INF_MODE_COLOR_A = $INF_MODE_COLOR_A // (int)
+:INFECTED_EFFECT_OFF_IDLE
+wait 1
+INF_MODE_COLOR_A -= 1
+03F0: enable_text_draw 1
+038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA $INF_MODE_COLOR_R $INF_MODE_COLOR_G $INF_MODE_COLOR_B $INF_MODE_COLOR_A
+if
+INF_MODE_COLOR_A == 0
+jf @INFECTED_EFFECT_OFF_IDLE
+return

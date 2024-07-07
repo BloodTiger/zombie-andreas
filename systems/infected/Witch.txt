@@ -1,0 +1,4083 @@
+const
+WTH_CRY_SOUND_FLAG = 12@
+WTH_RAGE_SOUND_FLAG = 13@
+WTH_PAIN_SOUND_FLAG = 14@
+WTH_ATTACK_SOUND_FLAG = 15@
+WTH_ALERT_SOUND_FLAG = 16@
+WTH_FIRE_SOUND_FLAG = 18@
+WTH_DANGER_SOUND_FLAG = 22@ 
+WTH_DANGER_SOUND = 19@
+end
+
+const
+WITCH = $WITCH[24@]
+WTH_TARGET = $WTH_TARGET[24@]
+WTH_TARGET_FINDED = $WTH_TARGET_FINDED[24@]  
+WTH_TARGET_PLAYER = $WTH_TARGET_PLAYER[24@]
+WTH_AGRED_FLAG = $WTH_AGRED_FLAG[24@]
+WTH_BURNING_FLAG = $WTH_BURNING_FLAG[24@]
+WITCH_LOC_MARKER_POINTER = 23@
+WTH_JUMPS_COUNT = 10@
+WITCH_CLOSEST_PED_VAR = 27@
+WITCH_TEMP_SPAWN_ON_ROAD_FLAG = 26@
+end
+
+const
+WITCH_TASK_WAIT_TIME_MIN = 95
+WITCH_TASK_WAIT_TIME_MAX = 100
+WITCH_TASK_CRAZY_MULT = 5
+WITCH_TASK_CRAZY_MULT2 = 5
+WITCH_PROCENT_MINUS = 0.065
+end
+
+:WITCH     
+if
+0@ == 0
+then
+thread 'WITCH'
+else
+gosub @WITCH_NUM_GET
+end
+
+0085: 24@ = 0@ // (int) 
+
+:WITCH_SPAWN_TIMER_START   
+0209: 0@ = random_int_in_ranges $WITCH_WAIT_SPAWN_MIN $WITCH_WAIT_SPAWN_MAX   
+32@ = 0 
+
+0209: 1@ = random_int_in_ranges 50 100
+wait 1@   
+                 
+:ZOMBIE_WITCH_WAIT_CHECK
+wait 0
+
+while $ALLOW_WITCH == 0
+wait 0
+end
+
+while 001F:  24@ > WITCHES_TO_SPAWN_COUNT // (int)
+wait 0
+end
+
+//////////////////////////////////////////////////////////////////////////////
+
+if
+GLOBAL_SPAWN_TIMER_RANDOM_RESET_WITCH == 1
+then
+
+repeat
+wait 0
+0209: 0@ = random_int_in_ranges $WITCH_WAIT_SPAWN_MIN $WITCH_WAIT_SPAWN_MAX
+0209: 30@ = random_int_in_ranges $WITCH_WAIT_SPAWN_MIN $WITCH_WAIT_SPAWN_MAX
+
+if
+$FREEMODE == 0
+then
+0209: 1@ = random_int_in_ranges TIMER_RESET_LONG_ADD_MIN TIMER_RESET_LONG_ADD_MAX
+else
+0209: 1@ = random_int_in_ranges TIMER_RESET_LONG_ADD2_MIN TIMER_RESET_LONG_ADD2_MAX
+end
+
+0062: 30@ -= 1@  // (int)
+until 801D: not  30@ > 0@  // (int)
+
+0085: 32@ = 30@ // (int)
+0AF1: write_int 30@ to_ini_file "saves\ZACM.set" section "SCR" key "WITCH_NEW_TIMER_AFTER_SAVE"
+0AF1: write_int 0@ to_ini_file "saves\ZACM.set" section "SCR" key "WITCH_SPAWN_TIMER"
+ 
+GLOBAL_SPAWN_TIMER_RANDOM_RESET_WITCH = 0
+end
+
+//////////////////////////////////////////////////////////////////////////////
+
+077E: get_active_interior_to 1@
+
+if and
+$GAMEMODE_EDITOR == 1
+not ZAME_DO_SPAWN_SPECINF_AS_RANDOM == 1
+then
+32@ = 0
+end
+
+if or
+$GAMEMODE_HOLD == 1
+$WITCH_INTERIOR_SPAWN == 1
+    then
+    1@ = 0
+    end
+    
+if and
+$SAVESTATUS == 0
+$SPECIAL_INFECTED_NOT_SPAWN_FLAG == 0
+$ACTOR_DEAD == 0
+$WITCH_NOTSPAWN_FLAG == 0 
+$SOUND_EFFECT1_FLAG == 0
+$MUTATION_ACTIVE == 16
+$SAVEPLACE_ON == 0
+1@ == 0
+    then
+    jump to @WITCHVILLE_MUTATION_SALVATION_CHECK_SKIP
+    end             
+
+if and
+$SAVESTATUS == 0
+$SPECIAL_INFECTED_NOT_SPAWN_FLAG == 0
+$ACTOR_DEAD == 0
+$WITCH_NOTSPAWN_FLAG == 0 
+$SOUND_EFFECT1_FLAG == 0
+$SALVATION_FLAG == 0
+$SAVEPLACE_ON == 0
+1@ == 0
+    then
+    :WITCHVILLE_MUTATION_SALVATION_CHECK_SKIP
+    if
+    $ZOMBIE_WITCH_SPAWN_TIMER_RESTART == 0
+    jf @WITCH_SPAWN_TIMER_START
+    
+    if or
+    SURVIVAL_CUSTOM_WEAPON_NABOR == 1
+    SURVIVAL_CUSTOM_WEAPON_NABOR == 8
+    then
+    0085: 31@ = 0@ // (int)
+    31@ -= 30000
+    0085: 30@ = 0@ // (int)
+    30@ -= 29000
+    if and
+    001D:   32@ > 31@  // (int)
+    801D:   32@ < 30@  // (int)
+    PLAYER_IN_NEST_FLAG == 0
+    PLAYER_IN_CANALS_FLAG == 0
+        then        
+        gosub @WITCH_ORIGIN_SPOTTED_PHRASE
+        32@ += 1100        
+        end
+    end
+    
+    if or 
+    001D:   32@ > 0@  // (int)
+    $SPAWN_WITCH_FLAG == 1
+    jf @ZOMBIE_WITCH_WAIT_CHECK
+    32@ = 0
+    
+    if and
+    $SPAWN_WITCH_FLAG == 0
+    $CUSTOM_MODE == 1
+    $GAMEMODE_EDITOR == 1
+    then
+    jump to @WITH_SPAWN_EDITOR_OWNGAME
+    end
+    
+    if and
+    not $GAMEMODE_CRAZY == 1
+    not $GAMEMODE_EDITOR == 1
+    not $CUSTOM_MODE == 1
+    not $MUTATION_ACTIVE == 16
+    not SPEC_INF_ONLY_ONE_INSTANSE_SPAWN_FLAG == -1
+    then 
+
+    random_int 0@ 0 to 7
+    if
+    0@ == 3
+    then
+    WITCHES_TO_SPAWN_COUNT = 1
+    else
+    WITCHES_TO_SPAWN_COUNT = 0
+    end
+    
+    random_int 0@ 0 to 7
+    if
+    0@ == 3
+    then
+    WITCHES_TO_SPAWN_COUNT = 2
+    end
+    
+    random_int 0@ 0 to 7
+    if
+    0@ == 3
+    then
+    WITCHES_TO_SPAWN_COUNT = 3
+    end        
+    
+    end
+    
+    if and
+    $CUSTOM_MODE == 1
+    not SPEC_INF_ONLY_ONE_INSTANSE_SPAWN_FLAG == -1
+    then  
+    
+    if
+    not $GAMEMODE_EDITOR == 1
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/owngame/owngame.ini" section "DIFF" key "MINIMUM_WITCHES_TO_SPAWN"
+    0AF0: 1@ = get_int_from_ini_file "saves/owngame/owngame.ini" section "DIFF" key "MAXIMUM_WITCHES_TO_SPAWN"
+    else
+    :WITH_SPAWN_EDITOR_OWNGAME
+    0AD3: 2@v = format "me\ms%d.ini" $RNDM_HOUSE_BANKA[122]
+    0AF0: 0@ = get_int_from_ini_file 2@v section "DIFF" key "MINIMUM_WITCHES_TO_SPAWN"
+    0AF0: 1@ = get_int_from_ini_file 2@v section "DIFF" key "MAXIMUM_WITCHES_TO_SPAWN"
+    end
+    
+    0@ -= 1
+    random_int WITCHES_TO_SPAWN_COUNT 0@ 1@
+    jump to @ZOMBIE_WITCH_SPAWN_START
+    end
+    
+    //owngame.ini moment        
+    
+    if
+    SPEC_INF_ONLY_ONE_INSTANSE_SPAWN_FLAG == 1
+    then
+    WITCHES_TO_SPAWN_COUNT = 0
+    end
+    
+    if
+    SPEC_INF_ONLY_ONE_INSTANSE_SPAWN_FLAG == 2
+    then
+    WITCHES_TO_SPAWN_COUNT = 1
+    end
+    
+    if
+    CURRENT_USHER_TUTORIAL_NUM == -444666
+    then
+    WITCHES_TO_SPAWN_COUNT = 20
+    end    
+
+    jump to @ZOMBIE_WITCH_SPAWN_START
+    
+    else
+    
+    0085: 30@ = 32@ // (int)
+
+    :ZOMBIE_WITCH_TIMER_PAUSE
+    wait 0         
+    if
+    $ZOMBIE_WITCH_SPAWN_TIMER_RESTART == 0
+    jf @WITCH_SPAWN_TIMER_START
+    
+    077E: get_active_interior_to 1@
+    
+    if or
+    $GAMEMODE_HOLD == 1
+    $WITCH_INTERIOR_SPAWN == 1
+        then
+        1@ = 0
+        end
+        
+    if and
+    $SAVESTATUS == 0
+    $SPECIAL_INFECTED_NOT_SPAWN_FLAG == 0
+    $ACTOR_DEAD == 0
+    $WITCH_NOTSPAWN_FLAG == 0 
+    $SOUND_EFFECT1_FLAG == 0
+    $MUTATION_ACTIVE == 16
+    $SAVEPLACE_ON == 0
+    1@ == 0
+        then
+        jump to @WITCHVILLE_MUTATION_SALVATION_CHECK_SKIP
+        end    
+    
+    if and
+    $SAVESTATUS == 0
+    $SPECIAL_INFECTED_NOT_SPAWN_FLAG == 0
+    $ACTOR_DEAD == 0
+    $WITCH_NOTSPAWN_FLAG == 0 
+    $SOUND_EFFECT1_FLAG == 0
+    $SALVATION_FLAG == 0
+    $SAVEPLACE_ON == 0
+    1@ == 0
+        then
+        0085: 32@ = 30@ // (int)
+        jump to @ZOMBIE_WITCH_WAIT_CHECK
+        else
+        jump @ZOMBIE_WITCH_TIMER_PAUSE 
+        end   
+    end        
+
+:ZOMBIE_WITCH_SPAWN_START
+wait 0
+
+if
+PLAYER_IN_NEST_FLAG == 0
+then
+if
+$INFECTED_WITCH == 0
+jf @ZOMBIE_WITCH_SPAWN_START
+end
+ 
+if and
+$SAVESTATUS == 0
+$SPECIAL_INFECTED_NOT_SPAWN_FLAG == 0
+$ACTOR_DEAD == 0
+$ZOMBIES_PROCENT > 0.0
+jf @ZOMBIE_WITCH_SPAWN_START
+if or
+$STARTING_THEME_FLAG == 0
+$GAMEMODE_EDITOR == 1
+jf @ZOMBIE_WITCH_SPAWN_START
+if and
+$WITCH_INTERIOR_SPAWN == 1
+$SPAWN_WITCH_FLAG == 0
+then
+jump to @WITCH_SPAWN_TIMER_START
+end  
+
+//Вычисление координат для спавна
+if
+PLAYER_IN_NEST_FLAG == 1
+then
+wait 24@
+WTH_JUMPS_COUNT = 28692869
+else
+WTH_JUMPS_COUNT = 0
+end
+31@ = 0
+gosub @WITCH_COORD_SET
+if
+31@ == 999888666
+then
+jump to @WITCH_SPAWN_TIMER_START
+end
+
+if and
+$WITCH_INTERIOR_SPAWN == 1
+$SPAWN_WITCH_FLAG == 0
+then
+jump to @WITCH_SPAWN_TIMER_START
+end
+
+if
+0@ == 28
+then
+$SPAWN_WITCH_FLAG = 0
+jump to @WITCH_SPAWN_TIMER_START
+end
+
+$WITCH_SPAWNED = 1
+
+1@ = #ZWITCH
+
+if
+$WITCHID_FLAG == 14734
+    then
+    1@ = 14734    
+//    0AF0: 1@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\New Selectable Skins\CONFIG\EXTRASKINS.ini" section "EXTRASKINS" key "WITCH_ID"          
+    end
+    
+if
+CURRENT_USHER_TUTORIAL_NUM == -444666
+then
+1@ = 3144
+end    
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+
+//Спавн на координатах     
+                                                  
+WITCH = actor.Create($ZOMBIE_SET_PEDTYPE,1@,2@,3@,4@)
+
+if
+model.Available(1@)
+then
+//model.Destroy(1@)
+end
+
+0860: link_actor WITCH to_interior $ACTIVE_INTERIOR
+
+if
+$GAMEMODE_VERSUS == 1
+then
+0D10: set_actor WITCH alpha 255 // IF and SET
+end
+
+if
+$ACTIVE_INTERIOR == 0
+then
+0E24: fix_char WITCH ground 1 brightness DO_ACTORS_BRIGHT_CORR and_fade_in 1
+else
+0E24: fix_char WITCH ground 0 brightness DO_ACTORS_BRIGHT_CORR and_fade_in 1
+end
+
+//Случайный угол поворота
+
+if
+$GAMEMODE_HOLD == 1
+then
+actor.StorePos(PLAYER_ACTOR,4@,5@,0@)
+0E27: get_angle_from_two_coords 2@ 3@ and 4@ 5@ to 0@
+actor.Angle(WITCH) = 0@
+else
+random_int 0@ 0.0 360.0
+actor.Angle(WITCH) = 0@
+end
+
+//Даем ведьме член если активирован чит-код на это
+if
+DICKMODE == 1
+then
+
+while not model.Available(6532)
+wait 0
+model.Load(6532)
+mload
+end
+
+0E2E: create_render_object_to_char_bone WITCH model 6532 bone 0 offset 0.05 -0.05 0.075 rotation 0.0 60.0 0.0 store_to 0@
+0E37: set_render_object_scale 0@ 1.5 1.5 1.5
+
+end
+
+//Стиль походки, молчание, двигание рта, неуязвимость к урону от падения    
+
+if and
+not $GAMEMODE_CRAZY == 1
+not $GAMEMODE_VERSUS == 1
+then 
+Actor.SetWalkStyle(WITCH,"WITCH")
+else
+Actor.SetWalkStyle(WITCH,"WITCH2")
+end
+ 
+actor.SetImmunities(WITCH,0,0,0,1,0)
+0A09: set_actor WITCH muted 1 // versionB
+0967: actor WITCH move_mouth 99999999 ms
+
+//Установление ХП
+008B: 0@ = $WITCH_HEALTH // (int)
+if
+$GAMEMODE_VERSUS == 0
+then
+0093: 0@ = integer 0@ to_float
+random_float 1@ 0.85 1.25 
+006B: 0@ *= 1@  // (float)  
+0092: 0@ = float 0@ to_integer
+end
+
+actor.Health(WITCH) = 0@
+08AF: set_actor WITCH max_health_to 0@
+
+//Установление остальных параметров 
+
+0446: set_actor WITCH dismemberment_possible 0
+060F: set_actor WITCH melee_accuracy_to 150.0
+060B: set_actor WITCH decision_maker_to $DEC_ZOMBIE  
+0946: set_actor WITCH actions_uninterupted_by_weapon_fire 1
+07FE: set_actor WITCH fighting_style_to 5 moves 6
+07DD: set_actor WITCH attack_rate $ZOMBIE_ATTACK_RATE // previously known as temper_to
+03FE: set_actor WITCH money 0
+09F4: set_actor WITCH ignore_height_difference_following_nodes $Z_IGNORE_HEIGHT
+0770: set_actor WITCH target_priority 1
+
+if and
+$GAMEMODE_HOLD == 0
+$ZOMBIE_DERBY_FLAG == 0
+$SALVATION_FLAG == 0
+then
+0648: unknown_actor WITCH task_set 100.0 // float
+else
+
+if
+$HOLD_Z_TASK_SET > 0.0
+then
+0648: unknown_actor WITCH task_set $HOLD_Z_TASK_SET // float
+else
+0648: unknown_actor WITCH task_set 100.0 // float
+end
+
+end    
+
+//Установление скорости поворота
+
+0A96: 0@ = actor WITCH struct
+0A8E: 0@ = 0@ + 1376
+0A8C: write_memory 0@ size 4 value $ZOMBIE_ROTATE_SPEED virtual_protect 1
+
+//Установление флагов для звука
+
+WTH_CRY_SOUND_FLAG = 0
+WTH_RAGE_SOUND_FLAG = 0
+WTH_PAIN_SOUND_FLAG = 0
+WTH_ATTACK_SOUND_FLAG = 0
+WTH_ALERT_SOUND_FLAG = 0
+WTH_FIRE_SOUND_FLAG = 0
+
+//Создание маркера при необходимости
+
+if
+$GAMEMODE_EDITOR == 0
+then
+0@ = 1
+else
+0@ = 12
+end
+
+if or
+$GAMEMODE_VERSUS == 1
+$GAMEMODE_CRAZY == 1
+003C:   SPEC_INFECTED_MARKER_FLAG == 0@  // (int)
+    then
+    WITCH_LOC_MARKER_POINTER = marker.CreateAboveActor(WITCH)
+    
+    if
+    $GAMEMODE_CRAZY == 1
+    then
+    marker.SetIconSize(WITCH_LOC_MARKER_POINTER,2)
+    else
+    marker.SetIconSize(WITCH_LOC_MARKER_POINTER,2)
+    end
+    
+    07E0: set_marker WITCH_LOC_MARKER_POINTER type_to $SPECIAL_INF_MARKER_TYPE    
+    
+    end
+    
+//Запрещаем целится с автоаима если мы играем за зараженных в сражении    
+    
+if
+$INF_SIDE == 1
+    then
+    0568: set_actor WITCH untargetable 1
+    end    
+    
+//Таймеры и флаги    
+
+32@ = 0
+33@ = 0
+
+WTH_TARGET = -69
+WTH_TARGET_FINDED = 0 
+WTH_TARGET_PLAYER = 0  
+WTH_AGRED_FLAG = 0
+WTH_BURNING_FLAG = 0
+WTH_JUMPS_COUNT = 0
+WTH_DANGER_SOUND_FLAG = 0
+
+if
+$WITCH_INSTANT_AGR == 1
+    then
+    WTH_AGRED_FLAG = 1
+    Actor.SetWalkStyle(WITCH,"WITCH2")             
+    end
+    
+//Вырубаем скриптовый призыв спеца (если он был так вызван) с задержкой в 1 кадр чтобы правильно отработать спавн нескольких    
+
+if
+$SPAWN_WITCH_FLAG == 1
+then
+wait 0    
+$SPAWN_WITCH_FLAG = 0
+end    
+    
+//Рандомизация множителя скорости    
+
+random_float 9@ 0.9 1.2
+
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "WITCH_SPAWNED"
+
+if and
+$ZOMBIES_HORDE == 1
+not $GAMEMODE_WAR == 1
+then
+gosub @WITCH_CHECK_ATTACK_TARGET_EXSIST
+end
+
+if or
+PLAYER_IN_NEST_FLAG == 1
+WITCH_CRY_FLAG == 1
+PLAYER_IN_CANALS_FLAG == 1
+then
+if
+$GAMEMODE_VERSUS == 0
+    then
+    random_float 0@ 0.0 360.0
+    actor.Angle(WITCH) = 0@
+    0812: AS_actor WITCH perform_animation "witch_crying" IFP "PED" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time -1  // versionB
+    end
+end
+
+if
+WITCH_TEMP_SPAWN_ON_ROAD_FLAG == 1
+    then
+    WITCH_TEMP_SPAWN_ON_ROAD_FLAG = 0
+    random_float 0@ 0.0 360.0
+    actor.Angle(WITCH) = 0@
+    0812: AS_actor WITCH perform_animation "witch_crying" IFP "PED" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time -1  // versionB
+    end            
+
+//////////////////////////////////////////ОСНОВНОЙ ЛУП AI ВЕДЬМЫ//////////////////////////////////////////        
+
+WHILE TRUE
+
+/////////////////////Функция атаки ведьмы союзниками/////////////////////
+random_int 0@ 0 5         
+gosub @WITCH1_ATTACK_PEOPLE1
+
+/////////////////////Ускорение некоторых анимаций/////////////////////
+
+0089: 0@ = $WITCH_RUN_SPEED // (float)
+006B: 0@ *= 9@  // (float)                       
+
+if
+0611: actor WITCH performing_animation "WITCH_run"
+    then
+    0393: actor WITCH perform_animation "WITCH_run" at 0@ times_normal_rate  
+    end
+
+/////////////////////Злой. Звук. Ведьмы./////////////////////
+
+if and
+WTH_AGRED_FLAG == 1
+WTH_DANGER_SOUND_FLAG == 1
+then
+WTH_DANGER_SOUND = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\witchroast.mp3")
+Audiostream.LinkToActor(WTH_DANGER_SOUND, WITCH)
+Audiostream.Loop(WTH_DANGER_SOUND,1)
+Audiostream.Volume(WTH_DANGER_SOUND) = $SOUNDS_VOLUME
+Audiostream.PerformAction(WTH_DANGER_SOUND, PLAY)
+WTH_DANGER_SOUND_FLAG = -1
+end
+
+if
+WTH_DANGER_SOUND_FLAG == -1
+then
+Audiostream.Volume(WTH_DANGER_SOUND) = $SOUNDS_VOLUME
+end     
+
+/////////////////////Анти-приседание ведьмы/////////////////////  
+
+if
+056D:   actor WITCH defined
+    then    
+    if and
+    0184:   actor WITCH health > 0
+    0597:   actor WITCH crouching
+        then
+        0687: clear_actor WITCH task    
+        random_int 0@ WITCH_TASK_WAIT_TIME_MIN WITCH_TASK_WAIT_TIME_MAX
+        if
+        $GAMEMODE_CRAZY == 1
+        then
+        0@ *= WITCH_TASK_CRAZY_MULT
+        0085: 1@ = 24@ // (int)
+        1@ *= WITCH_TASK_CRAZY_MULT2
+        wait 1@
+        end
+        wait 0@
+        wait 24@     
+        04EB: AS_actor WITCH crouch 0
+        end
+    end                
+
+/////////////////////Удаление ведьмы из-за отдаленности от игрока/////////////////////  
+
+if and 
+$SALVATION_FLAG == 1
+not $GAMEMODE_HOLD == 1
+    then
+    if or
+    00A4:   actor WITCH sphere 0 in_cube_cornerA 2073.3845 2380.2268 0.0182 cornerB 2128.3105 2453.5974 71.0182
+    00A4:   actor WITCH sphere 0 in_cube_cornerA -677.2523 2188.7173 0.6579 cornerB -1122.2512 2575.1035 140.6579
+    00A4:   actor WITCH sphere 0 in_cube_cornerA -224.533 1412.8806 0.9365 cornerB -403.4329 1613.0549 73.9365
+    00A4:   actor WITCH sphere 0 in_cube_cornerA 1844.0953 -2359.5444 0.9365 cornerB 1657.6227 -2198.2236 22.5234
+        then        
+        jump to @WTH_REM
+        end
+    end
+    
+if
+$WITCH_REMOVE_FLAG == 1
+    then
+    jump to @WTH_REM
+    end    
+
+if and
+$ACTIVE_INTERIOR == 0
+not $INT_ENTERING_FLAG == 1
+not $QUEST_TYPE == 21
+not $WITCH_INTERIOR_SPAWN == 1
+    then    
+    if and
+    $WITCH_REMOVE_FLAG == 0
+    $SAVESTATUS == 0
+    $SAVESTATUS_TRUE == 0
+    0104:   actor WITCH near_actor PLAYER_ACTOR radius 180.0 180.0 180.0 sphere 0
+        then 
+        else
+        
+        :WTH_REM
+        
+        0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "WITCH_SPAWNED"
+               
+        gosub @WITCH_SHUT_UP 
+        
+        if
+        075C:   marker WITCH_LOC_MARKER_POINTER enabled
+        then
+        marker.Disable(WITCH_LOC_MARKER_POINTER)
+        end  
+        
+        audiostream.Release(WTH_DANGER_SOUND) 
+        actor.DestroyWithFade(WITCH)
+        WITCH = -69
+            
+        ////////////////////////
+        
+        1@ = 0
+        
+        for 0@ = 0 to 19
+        
+        if and
+        056D:   actor $WITCH[0@] defined        
+        not $WITCH[0@] == -69
+        then        
+        
+        if or
+        $WTH_AGRED_FLAG[0@] == 1
+        $GAMEMODE_EDITOR == 1
+            then
+            1@ = 1
+            end
+            
+        end
+        
+        end
+        
+        ////////////////////////
+        
+        if
+        1@ == 0
+        then
+        $WITCH_SPAWNED = 0        
+        end
+        
+        WTH_AGRED_FLAG = 0
+        
+        ////////////////////////
+        
+        if and
+        not $GAMEMODE_CRAZY == 1
+        WITCHES_TO_SPAWN_COUNT > 0
+        then
+        WITCHES_TO_SPAWN_COUNT = 0
+        end    
+            
+        jump to @WITCH_SPAWN_TIMER_START
+        
+        end    
+    end
+
+if or
+$SAVESTATUS == 1
+$SAVESTATUS_TRUE == 1
+then
+jump to @WTH_REM
+end       
+
+/////////////////////Удаление ведьмы при её смерти/////////////////////  
+
+if or
+actor.Dead(WITCH)  
+8184:   actor WITCH health < 1  
+    then
+    
+    create_thread @ANTKUKL WITCH
+    
+    ///////////////////////////////////////////////////   
+    
+    if or
+    0818:  actor WITCH in_air 
+    WTH_BURNING_FLAG == 1 
+    then
+    0687: clear_actor WITCH task
+    05BE: AS_actor WITCH die
+    end
+    
+    0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "WITCH_SPAWNED"
+    
+    if
+    075C:   marker WITCH_LOC_MARKER_POINTER enabled
+    then
+    marker.Disable(WITCH_LOC_MARKER_POINTER)
+    end        
+    
+    0A96: 0@ = actor WITCH struct
+    0A8E: 0@ = 0@ + 0x764
+    0A8D: 1@ = read_memory 0@ size 2 virtual_protect 1
+    0A8D: 2@ = read_memory 0xB6F5F0 size 2 virtual_protect 1
+    
+    audiostream.Release(WTH_DANGER_SOUND)        
+    
+    if and
+    not $GAMEMODE_CRAZY == 1
+    WITCHES_TO_SPAWN_COUNT > 0
+    then
+    WITCHES_TO_SPAWN_COUNT = 0
+    end                     
+    
+    if
+    $FREEMODE == 1
+    then
+    $ZOMBIES_PROCENT -= WITCH_PROCENT_MINUS    
+    end    
+    
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    if
+    not $GAMEMODE_CRAZY == 1
+    then
+    0085: 1@ = 2@ // (int)
+    end
+    
+    if
+    0800:   in_two_players_mode
+    then
+    0A8D: 0@ = read_memory 0xB7CF28 size 2 virtual_protect 1
+    else
+    0@ = -69
+    end
+    
+    if or
+    003B:   1@ == 2@  // (int)
+    003B:   1@ == 0@  // (int)
+    then
+    
+    $WITCH_KILLED += 1
+    $TEMP_XP = WITCH_XP_PLUS
+//    0068: $TEMP_XP *= $PLAYER_LEVEL // (int)
+    008D: $TEMP_XP = integer $TEMP_XP to_float
+    0069: $TEMP_XP *= $XP_COEFF // (float)
+    008C: $TEMP_XP = float $TEMP_XP to_integer
+    0058: $PLAYER_XP += $TEMP_XP // (int)
+    
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_WITCH_KILLED"    
+    
+    if and
+    $CHEATED_FLAG == 0 
+    $GAMEMODE_CRAZY == 0
+    then             
+    0@ += 1
+    end                
+     
+    0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_WITCH_KILLED"
+    
+    end
+    
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////// 
+    
+    if and
+    WTH_BURNING_FLAG == 1
+    051A:   actor WITCH damaged_by_actor PLAYER_ACTOR
+    not $GAMEMODE_CRAZY == 1
+    then
+    $WITCHS_BURNED += 1    
+    
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_WITCHS_BURNED"    
+    
+    if
+    $CHEATED_FLAG == 0 
+    then             
+    0@ += 1
+    end                
+     
+    0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_WITCHS_BURNED"        
+    end
+    
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////      
+    
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_WITCH_KILLED"                   
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT37_GOT"    
+    
+    if and
+    1@ == 0
+    0@ >= 350
+    then
+    v$ACHIEVEMNT = "ACH37"
+    $ACHIEVEMENT_GOT_FLAG = 1        
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT37_GOT"        
+    end             
+    
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT6_GOT"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_WITCHS_BURNED"    
+    
+    if and
+    0@ == 0
+    1@ >= 50
+    $CHEATED_FLAG == 0
+    then
+    v$ACHIEVEMNT = "ACH6"
+    $ACHIEVEMENT_GOT_FLAG = 1        
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT6_GOT"        
+    end
+    
+    if
+    89A8: not  actor WITCH headshoted
+    then
+    gosub @WITCH_DIE_SOUND
+    else
+    gosub @WITCH_SHUT_UP
+    end
+        
+    actor.RemoveReferences(WITCH)
+    WITCH = -69
+    
+    ////////////////////////
+    
+    1@ = 0
+    
+    for 0@ = 0 to 19
+    
+    if and
+    056D:   actor $WITCH[0@] defined        
+    not $WITCH[0@] == -69
+    then        
+        
+    if or
+    $WTH_AGRED_FLAG[0@] == 1
+    $GAMEMODE_EDITOR == 1
+        then
+        1@ = 1
+        end
+            
+    end
+    
+    end
+    
+    ////////////////////////
+    
+    if
+    1@ == 0
+    then
+    $WITCH_SPAWNED = 0       
+    end
+    
+    WTH_AGRED_FLAG = 0     
+    
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////    
+        
+    if
+    $GAMEMODE_INF == 1
+    then
+        
+    if
+    075C:   marker WITCH_LOC_MARKER_POINTER enabled
+    then
+    marker.Disable(WITCH_LOC_MARKER_POINTER)
+    end
+        
+    $SURVIVERS_SCORE += 10
+    
+    00BA: show_text_styled GXT 'G_INF15' time 2500 style 5
+    
+    end      
+    
+    jump to @WITCH_SPAWN_TIMER_START     
+    end       
+
+///////////////////Выгрузка звуков CRY///////////////////    
+    
+if
+WTH_CRY_SOUND_FLAG == 1
+    then
+    0AB9: get_mp3 11@ state_to 0@
+    if or
+    0@ == -1
+    not $GAME_SPEED == 1.0
+        then
+        audiostream.Release(11@)
+        WTH_CRY_SOUND_FLAG = 0
+        end
+    end
+
+///////////////////Выгрузка звуков RAGE///////////////////    
+    
+if
+WTH_RAGE_SOUND_FLAG == 1
+    then
+    0AB9: get_mp3 11@ state_to 0@
+    if or
+    0@ == -1
+    not $GAME_SPEED == 1.0
+        then
+        audiostream.Release(11@)
+        WTH_RAGE_SOUND_FLAG = 0
+        end
+    end
+
+///////////////////Выгрузка звуков PAIN///////////////////  
+    
+if
+WTH_PAIN_SOUND_FLAG == 1
+    then
+    0AB9: get_mp3 11@ state_to 0@
+    if or
+    0@ == -1
+    not $GAME_SPEED == 1.0
+        then
+        audiostream.Release(11@)
+        WTH_PAIN_SOUND_FLAG = 0
+        end
+    end
+    
+///////////////////Выгрузка звуков FIRE///////////////////  
+    
+if
+WTH_FIRE_SOUND_FLAG == 1
+    then
+    0AB9: get_mp3 11@ state_to 0@
+    if or
+    0@ == -1
+    not $GAME_SPEED == 1.0
+        then
+        audiostream.Release(11@)
+        WTH_FIRE_SOUND_FLAG = 0
+        end
+    end
+    
+///////////////////Выгрузка звуков ATTACK///////////////////  
+
+if
+WTH_ATTACK_SOUND_FLAG == 1
+    then
+    0AB9: get_mp3 11@ state_to 0@
+    if or
+    0@ == -1
+    not $GAME_SPEED == 1.0
+        then
+        audiostream.Release(11@)
+        WTH_ATTACK_SOUND_FLAG = 0
+        end
+    end
+    
+///////////////////Выгрузка звуков ALERT///////////////////  
+
+if
+WTH_ALERT_SOUND_FLAG == 1
+    then
+    0AB9: get_mp3 11@ state_to 0@
+    if or
+    0@ == -1
+    not $GAME_SPEED == 1.0
+        then
+        audiostream.Release(11@)
+        WTH_ALERT_SOUND_FLAG = 0
+        end
+    end    
+    
+///////////////////Воспроизведение звука FIRE///////////////////    
+    
+if and
+WTH_FIRE_SOUND_FLAG == 0
+WTH_BURNING_FLAG == 1
+$GAME_SPEED == 1.0
+    then    
+    gosub @WITCH_SHUT_UP    
+    gosub @WITCH_RANDOM_FIRE_SOUND
+    Audiostream.LinkToActor(11@, WITCH)
+    Audiostream.PerformAction(11@, PLAY)
+    Audiostream.Volume(11@) = $SOUNDS_VOLUME     
+    WTH_FIRE_SOUND_FLAG = 1                  
+    end
+    
+///////////////////Поджигаем ведьму если она потушилась///////////////////    
+    
+if and
+WTH_BURNING_FLAG == 0  
+//074F:  actor WITCH ped_event == 58  
+0EA4: is_char_on_fire WITCH
+84AD: not  actor WITCH in_water
+    then
+    random_int 0@ WITCH_TASK_WAIT_TIME_MIN WITCH_TASK_WAIT_TIME_MAX
+    if
+    $GAMEMODE_CRAZY == 1
+    then
+    0@ *= WITCH_TASK_CRAZY_MULT
+    0085: 1@ = 24@ // (int)
+    1@ *= WITCH_TASK_CRAZY_MULT2
+    wait 1@
+    end
+    wait 0@
+    wait 24@  
+    WTH_BURNING_FLAG = 1 
+    0792: disembark_instantly_actor WITCH
+    actor.SetImmunities(WITCH,0,1,0,1,0)
+    0326: 21@ = create_actor WITCH fire    
+    end
+    
+if and
+WTH_BURNING_FLAG == 1
+8973: not  fire 21@ exists
+84AD: not  actor WITCH in_water
+    then  
+    random_int 0@ WITCH_TASK_WAIT_TIME_MIN WITCH_TASK_WAIT_TIME_MAX
+    if
+    $GAMEMODE_CRAZY == 1
+    then
+    0@ *= WITCH_TASK_CRAZY_MULT
+    0085: 1@ = 24@ // (int)
+    1@ *= WITCH_TASK_CRAZY_MULT2
+    wait 1@
+    end
+    wait 0@
+    wait 24@    
+    WTH_BURNING_FLAG = 1     
+    actor.SetImmunities(WITCH,0,1,0,1,0)
+    0326: 21@ = create_actor WITCH fire
+    end   
+    
+if and
+WTH_BURNING_FLAG == 1
+not BLACK_MENU_OPENED_FLAG == 1
+    then
+    if or
+    $GAME_SPEED == 1.0
+    $GAME_SPEED == 0.2
+    $GAME_SPEED == 0.99
+        then
+        0@ = actor.Health(WITCH)
+        
+        if
+        0@ < 1
+        then
+        05BE: AS_actor WITCH die
+        end
+        
+        0D39: 1@ = actor WITCH max_health
+        1@ /= 500.0
+        0092: 1@ = float 1@ to_integer
+        
+        0062: 0@ -= 1@  // (int)
+        actor.Health(WITCH) = 0@
+        end
+    end   
+    
+///////////////////Воспроизведение звука PAIN///////////////////    
+    
+if and
+WTH_PAIN_SOUND_FLAG == 0
+WTH_ALERT_SOUND_FLAG == 0
+WTH_BURNING_FLAG == 0
+$GAME_SPEED == 1.0
+    then
+    28@ = Actor.Health(WITCH)
+    wait 10
+    29@ = Actor.Health(WITCH) 
+    if
+    803B: not  28@ == 29@ // (int)  
+        then          
+        gosub @WITCH_SHUT_UP         
+        gosub @WITCH_RANDOM_PAIN_SOUND
+        Audiostream.LinkToActor(11@, WITCH)
+        Audiostream.PerformAction(11@, PLAY)
+        Audiostream.Volume(11@) = $SOUNDS_VOLUME
+        WTH_PAIN_SOUND_FLAG = 1
+        
+        if
+        031D:   actor WITCH hit_by_weapon 109
+        then
+        create_thread @TSPC_IN WITCH 140
+        end
+        
+        end
+    else
+    wait 10
+    
+    if
+    031D:   actor WITCH hit_by_weapon 109
+    then
+    create_thread @TSPC_IN WITCH 140
+    end
+    
+    end
+    
+///////////////////Воспроизведение звука CRY///////////////////    
+    
+if and   
+WTH_CRY_SOUND_FLAG == 0
+WTH_RAGE_SOUND_FLAG == 0
+WTH_BURNING_FLAG == 0
+WTH_AGRED_FLAG == 0
+$GAME_SPEED == 1.0
+874F:  actor WITCH ped_event == 58
+    then
+    0209: 0@ = random_int_in_ranges 0 10
+    if and
+    00F2:   actor WITCH near_actor PLAYER_ACTOR radius 100.0 100.0 0
+    0@ == 5       
+    not actor.Animation(WITCH) == "FightA_M"
+        then
+        if or
+        82A0: not  actor WITCH stopped
+        actor.Animation(WITCH) == "witch_crying"
+            then
+            gosub @WITCH_SHUT_UP        
+            gosub @WITCH_RANDOM_CRY_SOUND
+            Audiostream.LinkToActor(11@, WITCH)
+            Audiostream.PerformAction(11@, PLAY)
+            Audiostream.Volume(11@) = $SOUNDS_VOLUME
+            WTH_CRY_SOUND_FLAG = 1
+            end
+        end
+    end
+    
+///////////////////Воспроизведение звука RAGE///////////////////    
+    
+if and
+WTH_PAIN_SOUND_FLAG == 0
+WTH_RAGE_SOUND_FLAG == 0  
+WTH_BURNING_FLAG == 0
+WTH_AGRED_FLAG == 1    
+WTH_ALERT_SOUND_FLAG == 0
+$GAME_SPEED == 1.0
+874F: not actor WITCH ped_event == 58
+    then
+    if and
+    00F2:   actor WITCH near_actor PLAYER_ACTOR radius 100.0 100.0 0
+    82A0:   actor WITCH stopped   
+    not actor.Animation(WITCH) == "FightA_M"
+        then
+        gosub @WITCH_SHUT_UP        
+        gosub @WITCH_RANDOM_RAGE_SOUND
+        Audiostream.LinkToActor(11@, WITCH)
+        Audiostream.PerformAction(11@, PLAY)
+        Audiostream.Volume(11@) = $SOUNDS_VOLUME
+        WTH_RAGE_SOUND_FLAG = 1
+        end
+    end
+    
+/////////////////////Проверка на бездействие ведьмы/////////////////////     
+
+if or
+$ACTIVE_INTERIOR == 0
+$WITCH_INTERIOR_SPAWN == 1
+then
+
+if and
+WTH_AGRED_FLAG == 0
+PLAYER_IN_NEST_FLAG == 1
+$GAMEMODE_VERSUS == 0
+0E45: frame_mod 60
+    then    
+    actor.StorePos(WITCH,0@,1@,2@)
+    06C3: get_number_of_fires_within_sphere_at 0@ 1@ 2@ radius 5.0 store_to 3@
+    if
+    3@ > 0
+        then
+        jump to @WITCH_ANGRY_NEAR_PED2
+        end    
+    end
+
+if and
+not actor.Animation(WITCH) == "witch_run"
+not actor.Animation(WITCH) == "witch_crying"       
+0E45: frame_mod 30   
+    then
+    
+    if and
+    WTH_AGRED_FLAG == 0
+    PLAYER_IN_NEST_FLAG == 1
+    $GAMEMODE_VERSUS == 0
+    then
+    jump to @WITCH_SKIP_IDLE_CHECK
+    end
+    
+    06AC: 0@ = actor WITCH movement_speed
+    
+    if and
+    0@ > 0.001
+    actor.Animation(WITCH) == "witch_idle"
+    then
+    jump to @WITCH_SKIP_IDLE_CHECK
+    end        
+    
+    if or
+    0@ < 0.001   
+    actor.Animation(WITCH) == "witch_idle"
+    actor.Animation(WITCH) == "flee_lkaround_01"
+    02A0:   actor WITCH stopped
+        then                     
+        gosub @WITCH_CHECK_ATTACK_TARGET_EXSIST                               
+        end        
+    end
+end
+    
+:WITCH_SKIP_IDLE_CHECK           
+    
+/////////////////////Проверка на наличие цели атаки игрока///////////////////// 
+
+if and
+056D:   actor WITCH defined
+WTH_TARGET_FINDED == 1
+    then
+    if
+    WTH_TARGET_PLAYER == 1
+        then
+        if
+        056D:   actor PLAYER_ACTOR defined
+            then
+            if or
+            actor.Dead(PLAYER_ACTOR)
+            80F2: not  actor WITCH near_actor PLAYER_ACTOR radius 210.0 210.0 sphere 0
+            33@ > 60000
+            04AD:  actor PLAYER_ACTOR in_water    
+            $SPECTATING_FLAG == 1 
+                then
+                WTH_TARGET = -69 
+                WTH_TARGET_FINDED = 0
+                WTH_TARGET_PLAYER = 0
+                33@ = 0  
+                end
+            else
+            WTH_TARGET = -69
+            WTH_TARGET_FINDED = 0
+            WTH_TARGET_PLAYER = 0
+            33@ = 0  
+            end
+        end
+    end          
+    
+/////////////////////Проверка на наличие цели атаки не игрока///////////////////// 
+
+if and
+056D:   actor WITCH defined
+WTH_TARGET_FINDED == 1
+    then
+    if
+    WTH_TARGET_PLAYER == 0
+        then
+        if
+        056D:   actor WTH_TARGET defined
+            then
+            if or
+            actor.Dead(WTH_TARGET)
+            80F2: not  actor WITCH near_actor WTH_TARGET radius 210.0 210.0 sphere 0        
+            33@ > 60000
+            04AD:  actor WTH_TARGET in_water 
+                then
+                WTH_TARGET = -69 
+                WTH_TARGET_FINDED = 0
+                WTH_TARGET_PLAYER = 0
+                33@ = 0  
+                end
+            else
+            WTH_TARGET = -69
+            WTH_TARGET_FINDED = 0
+            WTH_TARGET_PLAYER = 0
+            33@ = 0  
+            end
+        end
+    end          
+    
+/////////////////////Проверка на близость цели не игрока/////////////////////
+ 
+if and
+WTH_TARGET_FINDED == 1
+0E45: frame_mod 5
+    then
+    if
+    WTH_TARGET_PLAYER == 0
+        then
+        if
+        056D:   actor WTH_TARGET defined  
+            then
+            
+            if and
+            $QUEST_TYPE == 21
+            003A:   WTH_TARGET == $RNDM_HOUSE_WEAPON[27] // (int)
+            then
+            jump to @WITCH_SKIP_NEAR_PED_CHECK_JUMP
+            end
+               
+            if and
+            0104: actor WTH_TARGET near_actor WITCH radius 1.75 1.75 1.0 sphere 0
+            803A: not  WTH_TARGET == PLAYER_ACTOR // (int)
+                then                
+                gosub @WITCH_CLIMB_CHECK                
+                if and
+                89DE: not  actor WTH_TARGET entering_car
+                0364:   actor WITCH spotted_actor WTH_TARGET
+                not actor.Animation(WITCH) == "FLOOR_hit"
+                not actor.Animation(WITCH) == "FLOOR_hit_f"
+                8E48: not is_char_fallen_on_ground WITCH
+                not 0@ == 1
+                    then
+                    
+                    if and
+                    UNITED_MAP == 0
+                    actor.DrivingVehicleType(WTH_TARGET,15426)
+                    then
+                    jump to @WITCH_QUAD3_SA_JUMP1
+                    end
+                    
+                    if
+                    actor.Driving(WTH_TARGET)
+                    then
+                    0@ = actor.CurrentCar(WTH_TARGET)
+                    if
+                    056E:   car 0@ defined
+                        then
+                        if
+                        0EFB: is_car_double_convertible 0@
+                            then
+                            jump to @WITCH_QUAD3_SA_JUMP1
+                            end
+                        end
+                    end
+                    
+                    if or
+                    not actor.Driving(WTH_TARGET)
+                    047A:   actor WTH_TARGET driving_bike
+                    actor.DrivingVehicleType(WTH_TARGET,#QUAD)
+                    actor.DrivingVehicleType(WTH_TARGET,15558)                   
+                        then
+                        :WITCH_QUAD3_SA_JUMP1
+                        0792: disembark_instantly_actor WTH_TARGET                          
+                        0687: clear_actor WITCH task    
+                        if
+                        056D:   actor WTH_TARGET defined 
+                            then   
+                            0A1A: actor WITCH perform_walk_animation "FIGHT22" IFP "ped" framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF 1 -1 ms // versionC
+                                                        
+                            0851: set_actor WTH_TARGET decrease_health_by 9999 affect_armour 1 
+                            09F1: play_audio_at_actor WTH_TARGET event 1130
+                            
+                            if
+                            $GAME_SPEED == 1.0
+                            then                            
+                            gosub @WITCH_SHUT_UP                
+                            gosub @WITCH_RANDOM_ATTACK_SOUND                            
+                            Audiostream.LinkToActor(11@, WITCH)
+                            Audiostream.PerformAction(11@, PLAY)
+                            Audiostream.Volume(11@) = $SOUNDS_VOLUME
+                            WTH_ATTACK_SOUND_FLAG = 1
+                            end                                                                                                         
+                            
+                            0A96: 0@ = actor WTH_TARGET struct
+                            0@ += 0x754
+                            0A8D: 1@ = read_memory 0@ size 4 virtual_protect 0
+                            
+                            if and
+                            8449: not  actor WTH_TARGET in_a_car
+                            not 1@ == 0x02
+                            then
+                            0A96: 0@ = actor WTH_TARGET struct
+                            0@ += 0x46D
+                            0A8C: write_memory 0@ size 4 value 0xA0 virtual_protect 0
+                            0@ -= 0x46D
+                            0@ += 0x754
+                            0A8C: write_memory 0@ size 4 value 0x02 virtual_protect 0
+                            0321: AS_actor WTH_TARGET die_headshotted                                                                                    
+                            end
+                            
+                            if
+                            0D0B: get_actor WTH_TARGET bone 6 matrix_pointer_to 3@ // IF and SET
+                            then  
+                            0D0A: store_coords_to 0@ 1@ 2@ from_matrix 3@ with_offsets 0.0 0.0 0.0        
+                            09B8: create_blood_gush_at 0@ 1@ 2@ with_offset 0.0 0.0 0.0 density 400 on_actor WTH_TARGET
+                            end
+                            
+                            33@ = 0
+                        
+                            repeat
+                            wait 0
+                            
+                            //0AD1: show_formatted_text_highpriority "witch %d is DOING ZALOOPA 1" time 2000 24@
+                                    
+                            if or
+                            actor.Dead(WITCH)
+                            $SAVESTATUS == 1
+                            then
+                            break
+                            end
+                                    
+                            until 33@ > 670
+                            
+                            WTH_AGRED_FLAG = 1
+                            Actor.SetWalkStyle(WITCH,"WITCH2")
+                            
+                            33@ = 0
+                            
+                            gosub @WITCH_RADIKULIT_PROTECTION
+                            
+                            gosub @WITCH_CHECK_ATTACK_TARGET_EXSIST
+                                                                                                                     
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+:WITCH_SKIP_NEAR_PED_CHECK_JUMP    
+    
+/////////////////////Проверка на близость любой сущности/////////////////////
+ 
+if and
+0E45: frame_mod 5
+056D:   WITCH defined
+    then
+    actor.StorePos(WITCH,0@,1@,2@)
+    0AE1: WITCH_CLOSEST_PED_VAR = random_actor_near_point 0@ 1@ 2@ in_radius 5.0 find_next 1 pass_deads 0
+    if
+    056D:   actor WITCH_CLOSEST_PED_VAR defined
+        then
+        
+        if and
+        $ZOMBIE_DONT_ATTACK_PLAYER == 1
+        07D6:   WITCH_CLOSEST_PED_VAR == PLAYER_ACTOR // @ == $ (int)
+        then
+        jump to @WITCH_SKIP_NEAR_PED_CHECK_JUMP2
+        end
+        
+        if and
+        $ZOMBIE_DONT_ATTACK_PLAYER == 1
+        07D6:   WITCH_CLOSEST_PED_VAR == COOP_ACTOR // @ == $ (int)
+        then
+        jump to @WITCH_SKIP_NEAR_PED_CHECK_JUMP2
+        end
+        
+        if and
+        $QUEST_TYPE == 21
+        07D6:   WITCH_CLOSEST_PED_VAR == $RNDM_HOUSE_WEAPON[27] // @ == $ (int)
+        then
+        jump to @WITCH_SKIP_NEAR_PED_CHECK_JUMP2
+        end
+        
+        089F: get_actor WITCH_CLOSEST_PED_VAR pedtype_to 0@
+        
+        if
+        $ZOMBIEORGY_MODE_FLAG == 1
+        then
+        0@ = 0
+        end
+        
+        if and        
+        056D:   actor WITCH defined
+        not 0@ == 23
+        not 0@ == 5
+        87D6: not  WITCH_CLOSEST_PED_VAR == PLAYER_ACTOR // @ == $ (int)
+        87D6: not  WITCH_CLOSEST_PED_VAR == $VOICE_ACTOR // @ == $ (int)
+        87D6: not  WITCH_CLOSEST_PED_VAR == WITCH // @ == $ (int)
+        not actor.Dead(WITCH_CLOSEST_PED_VAR)
+            then   
+            if
+            0104: actor WITCH_CLOSEST_PED_VAR near_actor WITCH radius 1.75 1.75 1.0 sphere 0
+                then                
+                gosub @WITCH_CLIMB_CHECK                 
+                if and
+                89DE: not  actor WITCH_CLOSEST_PED_VAR entering_car
+                0364:   actor WITCH spotted_actor WITCH_CLOSEST_PED_VAR
+                not actor.Animation(WITCH_CLOSEST_PED_VAR) == "FLOOR_hit"
+                not actor.Animation(WITCH_CLOSEST_PED_VAR) == "FLOOR_hit_f"
+                not actor.Animation(WITCH) == "FLOOR_hit"
+                not actor.Animation(WITCH) == "FLOOR_hit_f"
+                8E48: not is_char_fallen_on_ground WITCH
+                not 0@ == 1
+                    then
+                    
+                    if and
+                    UNITED_MAP == 0
+                    actor.DrivingVehicleType(WITCH_CLOSEST_PED_VAR,15426)
+                    then
+                    jump to @WITCH_QUAD3_SA_JUMP2
+                    end
+                    
+                    if
+                    actor.Driving(WITCH_CLOSEST_PED_VAR)
+                    then
+                    0@ = actor.CurrentCar(WITCH_CLOSEST_PED_VAR)
+                    if
+                    056E:   car 0@ defined
+                        then
+                        if
+                        0EFB: is_car_double_convertible 0@
+                            then
+                            jump to @WITCH_QUAD3_SA_JUMP2
+                            end
+                        end
+                    end
+                    
+                    if or
+                    not actor.Driving(WITCH_CLOSEST_PED_VAR)
+                    047A:   actor WITCH_CLOSEST_PED_VAR driving_bike
+                    actor.DrivingVehicleType(WITCH_CLOSEST_PED_VAR,#QUAD)
+                    actor.DrivingVehicleType(WITCH_CLOSEST_PED_VAR,15558)
+                        then
+                        :WITCH_QUAD3_SA_JUMP2
+                        0792: disembark_instantly_actor WITCH_CLOSEST_PED_VAR                          
+                        0687: clear_actor WITCH task    
+                        if
+                        056D:   actor WITCH_CLOSEST_PED_VAR defined 
+                            then   
+                            0A1A: actor WITCH perform_walk_animation "FIGHT22" IFP "ped" framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF 1 -1 ms // versionC
+                                                        
+                            0851: set_actor WITCH_CLOSEST_PED_VAR decrease_health_by 9999 affect_armour 1 
+                            09F1: play_audio_at_actor WITCH_CLOSEST_PED_VAR event 1130
+                            
+                            if
+                            $GAME_SPEED == 1.0
+                            then                            
+                            gosub @WITCH_SHUT_UP                
+                            gosub @WITCH_RANDOM_ATTACK_SOUND                            
+                            Audiostream.LinkToActor(11@, WITCH)
+                            Audiostream.PerformAction(11@, PLAY)
+                            Audiostream.Volume(11@) = $SOUNDS_VOLUME
+                            WTH_ATTACK_SOUND_FLAG = 1
+                            end                                                                                                         
+                            
+                            0A96: 0@ = actor WITCH_CLOSEST_PED_VAR struct
+                            0@ += 0x754
+                            0A8D: 1@ = read_memory 0@ size 4 virtual_protect 0
+                            
+                            if and
+                            8449: not  actor WITCH_CLOSEST_PED_VAR in_a_car
+                            not 1@ == 0x02
+                            then
+                            0A96: 0@ = actor WITCH_CLOSEST_PED_VAR struct
+                            0@ += 0x46D
+                            0A8C: write_memory 0@ size 4 value 0xA0 virtual_protect 0
+                            0@ -= 0x46D
+                            0@ += 0x754
+                            0A8C: write_memory 0@ size 4 value 0x02 virtual_protect 0
+                            0321: AS_actor WITCH_CLOSEST_PED_VAR die_headshotted
+                            end
+                            
+                            if
+                            0D0B: get_actor WITCH_CLOSEST_PED_VAR bone 6 matrix_pointer_to 3@ // IF and SET
+                            then  
+                            0D0A: store_coords_to 0@ 1@ 2@ from_matrix 3@ with_offsets 0.0 0.0 0.0        
+                            09B8: create_blood_gush_at 0@ 1@ 2@ with_offset 0.0 0.0 0.0 density 400 on_actor WITCH_CLOSEST_PED_VAR
+                            end
+                            
+                            33@ = 0
+                        
+                            repeat
+                            wait 0
+                            
+                            //0AD1: show_formatted_text_highpriority "witch %d is DOING ZALOOPA 2" time 2000 24@
+                                    
+                            if or
+                            actor.Dead(WITCH)
+                            $SAVESTATUS == 1
+                            then
+                            break
+                            end
+                                    
+                            until 33@ > 670
+                            
+                            WTH_AGRED_FLAG = 1
+                            Actor.SetWalkStyle(WITCH,"WITCH2")
+                                                        
+                            33@ = 0
+                            
+                            gosub @WITCH_RADIKULIT_PROTECTION
+                            
+                            gosub @WITCH_CHECK_ATTACK_TARGET_EXSIST
+                                                                                                                     
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+:WITCH_SKIP_NEAR_PED_CHECK_JUMP2                    
+    
+/////////////////////Проверка на близость цели игрока//////////////////// 
+
+if and
+056D:   actor PLAYER_ACTOR defined
+$INF_SIDE == 0
+$ZOMBIE_DONT_ATTACK_PLAYER == 0
+WTH_AGRED_FLAG == 1  
+    then   
+    if
+    0104: actor PLAYER_ACTOR near_actor WITCH radius 1.75 1.75 1.0 sphere 0
+        then        
+        gosub @WITCH_CLIMB_CHECK         
+        if and                
+        not actor.Dead(PLAYER_ACTOR)
+        89DE: not  actor PLAYER_ACTOR entering_car
+        0364:   actor WITCH spotted_actor PLAYER_ACTOR
+        not actor.Animation(WITCH) == "FLOOR_hit"
+        not actor.Animation(WITCH) == "FLOOR_hit_f"
+        8E48: not is_char_fallen_on_ground WITCH
+        not 0@ == 1
+            then
+            
+            if and
+            UNITED_MAP == 0
+            actor.DrivingVehicleType(PLAYER_ACTOR,15426)
+            then
+            jump to @WITCH_QUAD3_SA_JUMP3
+            end
+            
+            if
+            actor.Driving(PLAYER_ACTOR)
+                then
+                0@ = actor.CurrentCar(PLAYER_ACTOR)
+                if
+                056E:   car 0@ defined
+                    then
+                    if
+                    0EFB: is_car_double_convertible 0@
+                        then
+                        jump to @WITCH_QUAD3_SA_JUMP3
+                        end
+                    end
+                end
+            
+            if or
+            not actor.Driving(PLAYER_ACTOR)
+            047A:   actor PLAYER_ACTOR driving_bike
+            actor.DrivingVehicleType(PLAYER_ACTOR,#QUAD)
+            actor.DrivingVehicleType(PLAYER_ACTOR,15558)
+                then  
+                :WITCH_QUAD3_SA_JUMP3    
+                0687: clear_actor WITCH task    
+                random_int 0@ WITCH_TASK_WAIT_TIME_MIN WITCH_TASK_WAIT_TIME_MAX
+                wait 0@
+                wait 24@
+                0A1A: actor WITCH perform_walk_animation "FIGHT22" IFP "ped" framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF 0 -1 ms // versionC
+                
+                if
+                $GAME_SPEED == 1.0
+                then        
+                gosub @WITCH_SHUT_UP            
+                gosub @WITCH_RANDOM_ATTACK_SOUND                        
+                Audiostream.LinkToActor(11@, WITCH)
+                Audiostream.PerformAction(11@, PLAY)
+                Audiostream.Volume(11@) = $SOUNDS_VOLUME
+                WTH_ATTACK_SOUND_FLAG = 1
+                end
+                
+                if and
+                PERK_LASTCHANCE == 1
+                LAST_CHANCE_FLAG == 0
+                LAST_CHANCE_TIMER == 0
+                then
+                actor.Health(PLAYER_ACTOR) = 30
+                0003: shake_camera 50
+                09F1: play_audio_at_actor WITCH event 1130
+                create_thread @LST_CHN
+                jump to @WITH_LAST_CHANCE_PLAYER_AFTERDAMAGE_JUMP
+                end
+                        
+                if
+                $GODMODE_FLAG == 0
+                    then
+                                                
+                    0851: set_actor PLAYER_ACTOR decrease_health_by 9999 affect_armour 1
+                    0332: set_actor PLAYER_ACTOR bleeding 1
+                    0003: shake_camera 50
+                    09F1: play_audio_at_actor WITCH event 1130
+                            
+                    /////////////////////////////// 
+                
+                    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_DEATHS_BY_WITCH"                                    
+                                    
+                    $STATS_DEATHS_BY_WITCH += 1        
+                                            
+                    if
+                    $CHEATED_FLAG == 0 
+                    then   
+                    0@ += 1
+                    end                                        
+                                         
+                    0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_DEATHS_BY_WITCH"                               
+                    0AF0: 3@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT56_GOT"
+                
+                    if and
+                    3@ == 0
+                    0@ >= 50
+                    $CHEATED_FLAG == 0
+                        then
+                        v$ACHIEVEMNT = "ACH56"
+                        $ACHIEVEMENT_GOT_FLAG = 1                                
+                        0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT56_GOT"
+                        end   
+                                        
+                    /////////////////////////////// 
+                            
+                    if
+                    $ALLOW_HEADSHOOT == 1
+                        then
+                        
+                        0A96: 0@ = actor PLAYER_ACTOR struct
+                        0@ += 0x754
+                        0A8D: 1@ = read_memory 0@ size 4 virtual_protect 0                                                            
+                        
+                        if and
+                        8449: not  actor PLAYER_ACTOR in_a_car
+                        not 1@ == 0x02
+                        then
+                        0A96: 0@ = actor PLAYER_ACTOR struct
+                        0@ += 0x46D
+                        0A8C: write_memory 0@ size 4 value 0xA0 virtual_protect 0
+                        0@ -= 0x46D
+                        0@ += 0x754
+                        0A8C: write_memory 0@ size 4 value 0x02 virtual_protect 0
+                        end
+                        
+                        if
+                        0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 3@ // IF and SET
+                        then  
+                        0D0A: store_coords_to 0@ 1@ 2@ from_matrix 3@ with_offsets 0.0 0.0 0.0        
+                        09B8: create_blood_gush_at 0@ 1@ 2@ with_offset 0.0 0.0 0.0 density 400 on_actor PLAYER_ACTOR
+                        end
+                        
+                        05DE: AS_actor WITCH walk_around_ped_path
+                        
+                        :WITH_LAST_CHANCE_PLAYER_AFTERDAMAGE_JUMP
+                        
+                        33@ = 0                        
+                                    
+                        while 8184:  actor PLAYER_ACTOR health < 1
+                        wait 0
+                        
+                        if or
+                        actor.Dead(WITCH)
+                        $SAVESTATUS == 1
+                        then
+                        break
+                        end
+                        
+                        //0AD1: show_formatted_text_highpriority "witch %d is DOING ZALOOPA 3" time 2000 24@
+                        end
+                                                
+                        wait 0
+                        0332: set_actor PLAYER_ACTOR bleeding 0            
+                        0A96: 0@ = actor PLAYER_ACTOR struct
+                        0@ += 0x46D   
+                        if
+                        00DF:   actor PLAYER_ACTOR driving
+                        then
+                        0A8C: write_memory 0@ size 1 value 0x21 virtual_protect 0  //0x21 on vehicle
+                        else                                                                                                                    
+                        0A8C: write_memory 0@ size 1 value 0x20 virtual_protect 0  //0x21 on vehicle  
+                        end                               
+                        0@ -= 0x46D
+                        0@ += 0x754                                                                                      
+                        0A8C: write_memory 0@ size 1 value 0xFF virtual_protect 0    
+                        
+                        33@ = 0
+                        
+                        repeat
+                        wait 0
+                        
+                        //0AD1: show_formatted_text_highpriority "witch %d is DOING ZALOOPA 4" time 2000 24@
+                                    
+                        if or
+                        actor.Dead(WITCH)
+                        $SAVESTATUS == 1
+                        then
+                        break
+                        end
+                                    
+                        until 33@ > 670                        
+                            
+                        33@ = 0
+                        
+                        gosub @WITCH_RADIKULIT_PROTECTION
+                            
+                        gosub @WITCH_CHECK_ATTACK_TARGET_EXSIST
+                          
+                        end
+                    else
+                    jump to @WITH_LAST_CHANCE_PLAYER_AFTERDAMAGE_JUMP                                                      
+                    end
+                end                                                                                             
+            end
+        end
+    end              
+    
+    
+/////////////////////Поиск цели-игрока ведьмой///////////////////// 
+
+if and
+056D:   actor WITCH defined
+WTH_TARGET_FINDED == 0  
+WTH_AGRED_FLAG == 1
+    then
+    04DD: 0@ = actor WITCH armour
+    random_int 2@ 0 $WITCH_AGRO_MAX
+    if and
+    07D6:   2@ == $WITCH_AGRO_MAX // @ == $ (int)
+    $WITCH_DONT_ATTACK_PLAYER == 0  
+    $ZOMBIEORGY_MODE_FLAG == 0
+    not 0@ == 1
+        then     
+        if and
+        $INF_SIDE == 0
+        $ACTOR_DEAD == 0
+        $SPECTATING_FLAG == 0
+        00F2:  actor WITCH near_actor PLAYER_ACTOR radius 200.0 200.0 sphere 0
+        84AD: not actor PLAYER_ACTOR in_water
+        84C8: not  actor PLAYER_ACTOR driving_flying_vehicle
+        not actor.Dead(PLAYER_ACTOR)
+            then               
+            0084: WTH_TARGET = PLAYER_ACTOR // (int)                                            
+            WTH_TARGET_FINDED = 1
+            WTH_TARGET_PLAYER = 1
+            33@ = 0            
+            gosub @WITCH_CHECK_ATTACK_TARGET_EXSIST
+            
+            if
+            $GAME_SPEED == 1.0
+            then                    
+            gosub @WITCH_SHUT_UP                    
+            gosub @WITCH_RANDOM_ALERT_SOUND
+            Audiostream.LinkToActor(11@, WITCH)
+            Audiostream.PerformAction(11@, PLAY)
+            Audiostream.Volume(11@) = $SOUNDS_VOLUME
+            WTH_ALERT_SOUND_FLAG = 1
+            end
+                                      
+            end   
+        else   
+        26@ = 200.0
+        gosub @WITCH_ATTACK_SYSTEM_TARGET_FIND
+        if and
+        25@ == 1
+        056D:   actor WTH_TARGET defined
+            then
+            089F: get_actor WTH_TARGET pedtype_to 0@
+            
+            if
+            DEBUG_OPPCODE_FLAG == 1
+            then
+            
+            DEBUG_STRING_NUMBER += 1
+            0AD3: v$DEBUG_FILE11 = format "W%d" DEBUG_STRING_NUMBER
+            if
+            DEBUG_STRING_NUMBER > DEBUG_STRING_NUMBER_MAX
+            then
+            0B00: delete_file "debug\debug.ini"  // IF and SET
+            DEBUG_STRING_NUMBER = 0
+            end
+            0AF1: write_int WTH_TARGET to_ini_file "debug\debug.ini" section "OPPCODE" key v$DEBUG_FILE11
+            
+            end
+            
+            if and
+            not actor.Dead(WTH_TARGET)
+            0184:   actor WTH_TARGET health > 0              
+            87D6: not  0@ == $VOICE_SET_PEDTYPE // @ == $ (int)
+            84AD: not actor WTH_TARGET in_water
+            84C8: not  actor WTH_TARGET driving_flying_vehicle
+            8A32: not  actor WTH_TARGET on_turret_of_car
+            803A: not  WTH_TARGET == WITCH // (int)  
+                then
+                if or
+                87D6: not  0@ == $ZOMBIE_SET_PEDTYPE // @ == $ (int)
+                $ZOMBIEORGY_MODE_FLAG == 1  
+                    then                                                                 
+                    WTH_TARGET_FINDED = 1
+                    WTH_TARGET_PLAYER = 0
+                    33@ = 0                    
+                    gosub @WITCH_CHECK_ATTACK_TARGET_EXSIST
+                    
+                    if
+                    $GAME_SPEED == 1.0
+                    then                        
+                    gosub @WITCH_SHUT_UP                            
+                    gosub @WITCH_RANDOM_ALERT_SOUND
+                    Audiostream.LinkToActor(11@, WITCH)
+                    Audiostream.PerformAction(11@, PLAY)
+                    Audiostream.Volume(11@) = $SOUNDS_VOLUME
+                    WTH_ALERT_SOUND_FLAG = 1
+                    end
+                                      
+                    end 
+                end
+            end
+        end               
+    end
+
+/////////////////////Агр ведьмы на педа///////////////////// 
+    
+if and
+WTH_TARGET_FINDED == 0 
+WTH_TARGET_PLAYER == 0
+WTH_AGRED_FLAG == 0
+not $GAMEMODE_WAR == 1
+$ZOMBIEORGY_MODE_FLAG == 0
+    then
+    26@ = 100.0       
+    gosub @WITCH_ATTACK_SYSTEM_TARGET_FIND
+    if
+    25@ == 1
+        then
+        089F: get_actor WTH_TARGET pedtype_to 0@
+        if and
+        not actor.Dead(WTH_TARGET)                        
+        87D6: not  0@ == $VOICE_SET_PEDTYPE // @ == $ (int)
+        803A: not  WTH_TARGET == WITCH // (int)  
+            then
+            if or
+            87D6: not  0@ == $ZOMBIE_SET_PEDTYPE // @ == $ (int)
+            $ZOMBIEORGY_MODE_FLAG == 1  
+                then
+                
+                if
+                0104:   actor WTH_TARGET near_actor WITCH radius 7.0 7.0 7.0 sphere 0                
+                then
+                if
+                0364:   actor WITCH spotted_actor WTH_TARGET
+                    then
+                    jump to @WITCH_ANGRY_NEAR_PED2
+                    end
+                end
+                
+                if or
+                051A:   actor WITCH damaged_by_actor WTH_TARGET
+                WTH_BURNING_FLAG == 1
+                $WITCH_INSTANT_AGR == 1
+                $ZOMBIES_HORDE == 1
+                $WITCH_ANGRY_INST_FLAG == 1
+                    then
+                    :WITCH_ANGRY_NEAR_PED2                                                                            
+                    WTH_TARGET_FINDED = 1
+                    WTH_TARGET_PLAYER = 0
+                    WTH_AGRED_FLAG = 1
+                    Actor.SetWalkStyle(WITCH,"WITCH2")                         
+                    $WITCH_AGRED += 1        
+        
+                    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_WITCH_AGRED"        
+                        
+                    if
+                    $CHEATED_FLAG == 0
+                    then        
+                    0@ += 1
+                    end        
+                             
+                    0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_WITCH_AGRED"                                               
+                            
+                    WTH_DANGER_SOUND_FLAG = 1
+                    33@ = 0
+                        
+                    gosub @WITCH_CHECK_ATTACK_TARGET_EXSIST
+                    
+                    if
+                    $GAME_SPEED == 1.0
+                    then                            
+                    gosub @WITCH_SHUT_UP                                
+                    gosub @WITCH_RANDOM_ALERT_SOUND
+                    Audiostream.LinkToActor(11@, WITCH)
+                    Audiostream.PerformAction(11@, PLAY)
+                    Audiostream.Volume(11@) = $SOUNDS_VOLUME
+                    WTH_ALERT_SOUND_FLAG = 1
+                    end
+                               
+                    end  
+                end     
+            end 
+        end
+    end
+    
+/////////////////////Агр ведьмы на педа 2/////////////////////    
+    
+if and
+WTH_TARGET_FINDED == 0 
+WTH_TARGET_PLAYER == 0
+WTH_AGRED_FLAG == 0
+$GAMEMODE_WAR == 1
+$ZOMBIEORGY_MODE_FLAG == 0
+    then
+    26@ = 100.0       
+    gosub @WITCH_ATTACK_SYSTEM_TARGET_FIND
+    if
+    25@ == 1
+        then
+        089F: get_actor WTH_TARGET pedtype_to 0@
+        if and
+        not actor.Dead(WTH_TARGET)                        
+        87D6: not  0@ == $VOICE_SET_PEDTYPE // @ == $ (int)
+        803A: not  WTH_TARGET == WITCH // (int)  
+            then
+            if or
+            87D6: not  0@ == $ZOMBIE_SET_PEDTYPE // @ == $ (int)
+            $ZOMBIEORGY_MODE_FLAG == 1  
+                then
+                
+                if
+                0104:   actor WTH_TARGET near_actor WITCH radius 7.0 7.0 7.0 sphere 0                
+                then
+                if
+                0364:   actor WITCH spotted_actor WTH_TARGET
+                    then
+                    jump to @WITCH_ANGRY_NEAR_PED
+                    end
+                end
+                
+                if or
+                051A:   actor WITCH damaged_by_actor WTH_TARGET                
+                WTH_BURNING_FLAG == 1
+                $WITCH_INSTANT_AGR == 1
+                    then
+                    :WITCH_ANGRY_NEAR_PED                                                                            
+                    WTH_TARGET_FINDED = 1
+                    WTH_TARGET_PLAYER = 0
+                    WTH_AGRED_FLAG = 1
+                    Actor.SetWalkStyle(WITCH,"WITCH2")                         
+                    $WITCH_AGRED += 1        
+        
+                    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_WITCH_AGRED"        
+                        
+                    if
+                    $CHEATED_FLAG == 0
+                    then        
+                    0@ += 1
+                    end        
+                             
+                    0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_WITCH_AGRED"                                               
+                            
+                    WTH_DANGER_SOUND_FLAG = 1
+                    33@ = 0
+                        
+                    gosub @WITCH_CHECK_ATTACK_TARGET_EXSIST
+                    
+                    if
+                    $GAME_SPEED == 1.0
+                    then                            
+                    gosub @WITCH_SHUT_UP                                
+                    gosub @WITCH_RANDOM_ALERT_SOUND
+                    Audiostream.LinkToActor(11@, WITCH)
+                    Audiostream.PerformAction(11@, PLAY)
+                    Audiostream.Volume(11@) = $SOUNDS_VOLUME
+                    WTH_ALERT_SOUND_FLAG = 1
+                    end
+                               
+                    end  
+                end     
+            end 
+        end
+    end      
+
+/////////////////////Агр ведьмы на игрока/////////////////////                 
+        
+if and
+WTH_TARGET_FINDED == 0 
+WTH_TARGET_PLAYER == 0
+WTH_AGRED_FLAG == 0
+$ZOMBIEORGY_MODE_FLAG == 0
+$ZOMBIE_DONT_ATTACK_PLAYER == 0
+not $GAMEMODE_WAR == 1
+    then
+    
+    if    
+    0104:   actor PLAYER_ACTOR near_actor WITCH radius 7.0 7.0 7.0 sphere 0
+    then
+    if
+    0364:   actor WITCH spotted_actor PLAYER_ACTOR
+        then
+        jump to @WITCH_AGRO_PLAYER_SET
+        end
+    end
+    
+    if or
+    051A:   actor WITCH damaged_by_actor PLAYER_ACTOR        
+    WTH_BURNING_FLAG == 1
+    $WITCH_INSTANT_AGR == 1
+    $ZOMBIES_HORDE == 1
+    $WITCH_ANGRY_INST_FLAG == 1
+        then
+        :WITCH_AGRO_PLAYER_SET
+        
+        if
+        031D:   actor WITCH hit_by_weapon 109
+        then        
+        create_thread @TSPC_IN WITCH 140
+        end
+                
+        0467: clear_actor WITCH last_weapon_damage                       
+        0084: WTH_TARGET = PLAYER_ACTOR // (int)                                        
+        WTH_TARGET_FINDED = 1
+        WTH_TARGET_PLAYER = 1
+        WTH_AGRED_FLAG = 1
+        Actor.SetWalkStyle(WITCH,"WITCH2")
+        
+        gosub @WITCH_CHECK_ATTACK_TARGET_EXSIST
+        
+        $WITCH_AGRED += 1        
+        
+        0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_WITCH_AGRED"        
+        
+        if
+        $CHEATED_FLAG == 0
+        then        
+        0@ += 1
+        end        
+             
+        0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_WITCH_AGRED"        
+                
+        WTH_DANGER_SOUND_FLAG = 1
+        33@ = 0
+        
+        if
+        $GAME_SPEED == 1.0
+        then        
+        gosub @WITCH_SHUT_UP                    
+        gosub @WITCH_RANDOM_ALERT_SOUND
+        Audiostream.LinkToActor(11@, WITCH)
+        Audiostream.PerformAction(11@, PLAY)
+        Audiostream.Volume(11@) = $SOUNDS_VOLUME
+        WTH_ALERT_SOUND_FLAG = 1
+        end
+                   
+        end
+    end
+    
+if and
+WTH_TARGET_FINDED == 0 
+WTH_TARGET_PLAYER == 0
+WTH_AGRED_FLAG == 0
+$ZOMBIEORGY_MODE_FLAG == 0
+$GAMEMODE_WAR == 1
+    then
+    
+    if    
+    0104:   actor PLAYER_ACTOR near_actor WITCH radius 7.0 7.0 7.0 sphere 0
+    then
+    if
+    0364:   actor WITCH spotted_actor PLAYER_ACTOR
+        then
+        jump to @WITCH_AGRO_PLAYER_SET2
+        end
+    end
+    
+    if or
+    051A:   actor WITCH damaged_by_actor PLAYER_ACTOR        
+    WTH_BURNING_FLAG == 1
+    $WITCH_INSTANT_AGR == 1
+        then
+        :WITCH_AGRO_PLAYER_SET2
+        
+        if
+        031D:   actor WITCH hit_by_weapon 109
+        then        
+        create_thread @TSPC_IN WITCH 140
+        end
+                
+        0467: clear_actor WITCH last_weapon_damage                       
+        0084: WTH_TARGET = PLAYER_ACTOR // (int)                                        
+        WTH_TARGET_FINDED = 1
+        WTH_TARGET_PLAYER = 1
+        WTH_AGRED_FLAG = 1
+        Actor.SetWalkStyle(WITCH,"WITCH2")
+        
+        gosub @WITCH_CHECK_ATTACK_TARGET_EXSIST
+        
+        $WITCH_AGRED += 1        
+        
+        0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_WITCH_AGRED"        
+        
+        if
+        $CHEATED_FLAG == 0
+        then        
+        0@ += 1
+        end        
+             
+        0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_WITCH_AGRED"        
+                
+        WTH_DANGER_SOUND_FLAG = 1
+        33@ = 0
+        
+        if
+        $GAME_SPEED == 1.0
+        then        
+        gosub @WITCH_SHUT_UP                    
+        gosub @WITCH_RANDOM_ALERT_SOUND
+        Audiostream.LinkToActor(11@, WITCH)
+        Audiostream.PerformAction(11@, PLAY)
+        Audiostream.Volume(11@) = $SOUNDS_VOLUME
+        WTH_ALERT_SOUND_FLAG = 1
+        end
+                   
+        end
+    end                          
+    
+////////////////////////Высокий прыжок ведьмы////////////////////////
+
+////0AD1: show_formatted_text_highpriority "WTH_JUMPS_COUNT: %d" time 2000 WTH_JUMPS_COUNT
+
+if
+WTH_JUMPS_COUNT == 10
+then
+WTH_JUMPS_COUNT = 140
+end
+
+if
+WTH_JUMPS_COUNT > 10
+then
+WTH_JUMPS_COUNT -= 1
+end
+
+if
+WTH_JUMPS_COUNT == 12
+then
+WTH_JUMPS_COUNT = 0
+end
+
+if and
+056D:   actor WITCH defined
+$ACTIVE_INTERIOR == 0
+    then
+    if and
+    0184:   actor WITCH health > 0
+    0E45: frame_mod 15
+    actor.Animation(WITCH) == "WITCH_run"
+    WTH_TARGET_FINDED == 1
+    WTH_AGRED_FLAG == 1
+    not WTH_JUMPS_COUNT > 10
+    $GAMEMODE_CRAZY == 0
+        then
+        gosub @WITCH_ROOF_CHECK
+        04C4: store_coords_to 27@ 28@ 29@ from_actor WITCH with_offset 0.0 3.0 0.0 
+        Actor.StorePos(WITCH,2@,3@,4@)
+        if and
+        86BD:   not no_obstacles_between 27@ 28@ 29@ and 2@ 3@ 4@ solid 1 car 0 actor 0 object 0 particle 0
+        1@ == 0 
+            then
+            078F: AS_actor WITCH climb 1         
+            wait 100                              
+            actor.StorePos(WITCH, 27@, 28@, 29@) 
+            04C4: store_coords_to 2@ 3@ 4@ from_actor WITCH with_offset 0.0 8.0 10.0
+            0063: 2@ -= 27@  // (float) 
+            0063: 3@ -= 28@  // (float) 
+            0063: 4@ -= 29@  // (float) 
+            083C: set_actor WITCH velocity_in_direction_XYZ 2@ 3@ 4@
+            
+            if
+            $GAME_SPEED == 1.0
+            then          
+            gosub @WITCH_SHUT_UP        
+            gosub @WITCH_RANDOM_ALERT_SOUND
+            Audiostream.LinkToActor(11@, WITCH)
+            Audiostream.PerformAction(11@, PLAY)
+            Audiostream.Volume(11@) = $SOUNDS_VOLUME
+            WTH_ALERT_SOUND_FLAG = 1
+            end
+                    
+            wait 150                              
+            actor.StorePos(WITCH, 27@, 28@, 29@) 
+            04C4: store_coords_to 2@ 3@ 4@ from_actor WITCH with_offset 0.0 15.0 10.0
+            0063: 2@ -= 27@  // (float) 
+            0063: 3@ -= 28@  // (float) 
+            0063: 4@ -= 29@  // (float) 
+            083C: set_actor WITCH velocity_in_direction_XYZ 2@ 3@ 4@
+            
+            WTH_JUMPS_COUNT += 1
+                      
+            end
+        end
+    end
+    
+////////////////////////Высокий прыжок ведьмы в безумии////////////////////////
+
+if and
+056D:   actor WITCH defined
+$ACTIVE_INTERIOR == 0
+    then
+    if and
+    0184:   actor WITCH health > 0
+    0E45: frame_mod 60
+    actor.Animation(WITCH) == "WITCH_run"
+    WTH_TARGET_FINDED == 1
+    WTH_AGRED_FLAG == 1
+    $GAMEMODE_CRAZY == 1
+        then
+        04C4: store_coords_to 27@ 28@ 29@ from_actor WITCH with_offset 0.0 3.0 0.0 
+        Actor.StorePos(WITCH,2@,3@,4@)
+        if
+        86BD:   not no_obstacles_between 27@ 28@ 29@ and 2@ 3@ 4@ solid 1 car 0 actor 0 object 0 particle 0 
+            then
+            0687: clear_actor WITCH task
+            random_int 0@ WITCH_TASK_WAIT_TIME_MIN WITCH_TASK_WAIT_TIME_MAX
+            if
+            $GAMEMODE_CRAZY == 1
+            then
+            0@ *= WITCH_TASK_CRAZY_MULT
+            0085: 1@ = 24@ // (int)
+            1@ *= WITCH_TASK_CRAZY_MULT2
+            wait 1@
+            end
+            wait 0@
+            wait 24@            
+            if
+            8E92: not is_char_really_in_air WITCH
+            then
+            078F: AS_actor WITCH climb 1
+            end
+                     
+            wait 100                                          
+            actor.StorePos(WITCH, 27@, 28@, 29@) 
+            04C4: store_coords_to 2@ 3@ 4@ from_actor WITCH with_offset 0.0 8.0 20.0
+            0063: 2@ -= 27@  // (float) 
+            0063: 3@ -= 28@  // (float) 
+            0063: 4@ -= 29@  // (float) 
+            083C: set_actor WITCH velocity_in_direction_XYZ 2@ 3@ 4@
+            
+            if
+            $GAME_SPEED == 1.0
+            then          
+            gosub @WITCH_SHUT_UP        
+            gosub @WITCH_RANDOM_ALERT_SOUND
+            Audiostream.LinkToActor(11@, WITCH)
+            Audiostream.PerformAction(11@, PLAY)
+            Audiostream.Volume(11@) = $SOUNDS_VOLUME
+            WTH_ALERT_SOUND_FLAG = 1
+            end
+                    
+            wait 150
+            wait 24@                              
+            actor.StorePos(WITCH, 27@, 28@, 29@) 
+            04C4: store_coords_to 2@ 3@ 4@ from_actor WITCH with_offset 0.0 15.0 40.0
+            0063: 2@ -= 27@  // (float) 
+            0063: 3@ -= 28@  // (float) 
+            0063: 4@ -= 29@  // (float) 
+            083C: set_actor WITCH velocity_in_direction_XYZ 2@ 3@ 4@
+                                  
+            end
+        end
+    end    
+    
+/////////////////////Запрыгивание на машины/////////////////////  
+
+if
+056D:   actor WITCH defined
+    then        
+    if and
+    0184:   actor WITCH health > 0
+    874F: not  actor WITCH ped_event == 33  
+    8818: not  actor WITCH in_air
+    not $Z_DONT_CLIMB_FLAG == 1
+    actor.Animation(WITCH) == "WITCH_run"
+    WTH_TARGET_FINDED == 1
+    056D:   actor WTH_TARGET defined
+    0E45: frame_mod 90
+        then
+        if or
+        0364:   actor WITCH spotted_actor WTH_TARGET 
+        00F2:   actor WITCH near_actor WTH_TARGET radius 10.0 15.0 sphere 0
+        $ZOMBIES_HORDE == 1
+            then
+            actor.StorePos(WITCH, 3@, 4@, 5@) 
+            04C4: store_coords_to 27@ 28@ 29@ from_actor WITCH with_offset 0.0 3.0 0.3 
+            if
+            86BD: not no_obstacles_between 27@ 28@ 29@ and 3@ 4@ 5@ solid 0 car 1 actor 0 object 0 particle 0
+                then
+                05BC: AS_actor WITCH jump 1
+                wait 50                              
+                actor.StorePos(WITCH, 27@, 28@, 29@) 
+                04C4: store_coords_to 3@ 4@ 5@ from_actor WITCH with_offset 0.0 $ZOMBIE_JUMP_Y $ZOMBIE_JUMP_Z
+                0063: 3@ -= 27@  // (float) 
+                0063: 4@ -= 28@  // (float) 
+                0063: 5@ -= 29@  // (float) 
+                083C: set_actor WITCH velocity_in_direction_XYZ 3@ 4@ 5@ 
+                end
+            end
+        end
+    end
+
+if
+056D:   actor WITCH defined
+    then
+    if or
+    actor.Animation(WITCH) == "FALL_collapse"
+    actor.Animation(WITCH) == "FALL_land"
+    actor.Animation(WITCH) == "getup"
+    actor.Animation(WITCH) == "FLOOR_hit"
+    actor.Animation(WITCH) == "KO_skid_front"
+    actor.Animation(WITCH) == "HitB_1"
+    actor.Animation(WITCH) == "HitB_2"
+    actor.Animation(WITCH) == "HitB_3"
+        then
+        if
+        0184:   actor WITCH health > 0
+            then
+            0792: disembark_instantly_actor WITCH
+            gosub @WITCH_CHECK_ATTACK_TARGET_EXSIST
+            end
+        end
+    end         
+
+END
+
+:WITCH_RADIKULIT_PROTECTION
+if
+8818: not  actor WITCH in_air
+then
+0792: disembark_instantly_actor WITCH
+end
+return 
+
+:WITCH_ATTACK_SYSTEM_TARGET_FIND
+
+25@ = 0
+
+//////////////////////////////////////////////////
+
+if
+$ZOMBIEORGY_MODE_FLAG == 1
+then
+random_int 27@ 1 25
+else
+
+if and
+$ACTIVE_INTERIOR == 0
+not $GAMEMODE_HOLD == 1
+then
+008B: 27@ = $CREATURE_RANDOM2 // (int)
+else
+random_int 27@ 41 46
+end
+
+end
+
+if or
+$GAMEMODE_VERSUS == 1
+$GAMEMODE_CRAZY == 1
+then
+
+if and
+COOP_ACTIVE_FLAG == 1
+not $INF_SIDE == 1
+then
+if
+0E4D: random_percent 80
+    then
+    random_int 27@ 25 44
+    else
+    0084: WTH_TARGET = COOP_ACTOR // (int)
+    jump to @WITH_TARGET_REDIFNE_JUMP
+    end
+else
+random_int 1@ 25 44
+end
+
+end
+
+if
+$QUEST_TYPE == 21
+then
+random_int 27@ 23 40
+0084: WTH_TARGET = $RNDM_HOUSE_WEAPON[27@] // (int)
+jump to @WITH_TARGET_REDIFNE_JUMP
+end
+
+//////////////////////////////////////////////////
+
+0084: WTH_TARGET = $CREATURE[27@] // (int)
+
+:WITH_TARGET_REDIFNE_JUMP
+
+if and
+056D:   actor WTH_TARGET defined
+not 27@ == PLAYER_CREATURE_NUMBER
+    then      
+    if
+    0104:   actor WITCH near_actor WTH_TARGET radius 180.0 180.0 180.0 sphere 0
+        then 
+        25@ = 1
+        else
+        WTH_TARGET = -69
+        end
+    else
+    WTH_TARGET = -69
+    end
+
+return
+
+/////////////////////Союзники атакуют зомби которых увидили///////////////
+
+:WITCH1_ATTACK_PEOPLE1
+
+if 
+$SIMULATING_FLAG == 1
+then
+return
+end
+
+if
+WTH_AGRED_FLAG == 0
+then
+return
+end
+
+if
+$GAMEMODE_VERSUS == 1
+then
+return
+end
+
+if
+056D:   actor WITCH defined
+jf @WITCH1_ATTACK_PEOPLE_BEGIN
+092B: 3@ = group PLAYER_GROUP member 0@
+
+if
+07D6:   3@ == COOP_ACTOR // @ == $ (int)
+then
+return
+end
+
+if
+not 3@ == -1
+jf @WITCH1_ATTACK_PEOPLE_BEGIN   
+if
+056D:   actor 3@ defined
+jf @WITCH1_ATTACK_PEOPLE_BEGIN
+
+if
+$MISSION14_ACTIVE == 1
+    then
+    if
+    not actor.Model(3@) == 250
+    jf @WITCH1_ATTACK_PEOPLE_BEGIN
+    end
+    
+if
+$QUEST_TYPE == 9
+    then
+    if
+    87D6: not  3@ == $VERSUS_PEOPLE[1] // @ == $ (int)
+    jf @WITCH1_ATTACK_PEOPLE_BEGIN
+    end
+
+if or
+00DF:   actor 3@ driving
+0449:   actor 3@ in_a_car
+    then
+    if
+    $HUNTER_ON_PLAYER == 0
+//    $PEOPLE_DONT_ATTACK == 0
+//    $COMMAND_STAY_IN_CAR == 0  
+        then                     
+        gosub @WITCH1_ATTACK_PEOPLE_IN_CAR
+        end
+    end
+
+if and 
+not actor.Driving(PLAYER_ACTOR)
+$RANDOM_CAR_FLAG == 0  
+89DE:   actor 3@ entering_car  
+jf @WITCH1_ATTACK_PEOPLE_BEGIN
+if or
+0364:   actor 3@ spotted_actor WITCH
+0364:   actor WITCH spotted_actor 3@
+GROUP_COMMAND_GO_ATTACK == 2
+jf @WITCH1_ATTACK_PEOPLE_BEGIN
+if
+00F2:   actor 3@ near_actor WITCH radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+jf @WITCH1_ATTACK_PEOPLE_BEGIN
+if and
+$HUNTER_ON_PLAYER == 0
+$PEOPLE_DONT_ATTACK == 0
+jf @WITCH1_ATTACK_PEOPLE_BEGIN
+if
+not actor.Animation(3@) == "FLOOR_hit"
+jf @WITCH1_ATTACK_PEOPLE_BEGIN
+if
+$HUNTER_ON_GROUP == 0
+jf @WITCH1_ATTACK_PEOPLE_BEGIN  
+if
+044B:   actor 3@ on_foot
+jf @WITCH1_ATTACK_PEOPLE_BEGIN  
+if
+82E0: not actor 3@ firing_weapon
+jf @WITCH1_ATTACK_PEOPLE_BEGIN
+062E: get_actor 3@ task 1506 status_store_to 1@ // ret 7 if not found
+if 
+1@ == 7
+jf @WITCH1_ATTACK_PEOPLE_BEGIN  
+if and
+not actor.Animation(3@) == "colt45_fire_2hands"
+not actor.Animation(3@) == "python_fire" 
+not actor.Animation(3@) == "shotgun_fire" 
+not actor.Animation(3@) == "buddy_fire" 
+not actor.Animation(3@) == "UZI_fire"
+not actor.Animation(3@) == "RIFLE_fire" 
+jf @WITCH1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "FLAME_fire" 
+not actor.Animation(3@) == "RocketFire" 
+not actor.Animation(3@) == "WEAPON_sniper" 
+not actor.Animation(3@) == "WEAPON_throw"
+not actor.Animation(3@) == "BOM_PLANT"
+jf @WITCH1_ATTACK_PEOPLE_BEGIN   
+if and
+not actor.Animation(3@) == "colt45_crouchfire"
+not actor.Animation(3@) == "python_crouchfire" 
+not actor.Animation(3@) == "shotgun_crouchfire" 
+not actor.Animation(3@) == "buddy_crouchfire" 
+not actor.Animation(3@) == "UZI_crouchfire"
+not actor.Animation(3@) == "RIFLE_crouchfire" 
+jf @WITCH1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "colt45_reload"
+not actor.Animation(3@) == "python_reload" 
+not actor.Animation(3@) == "shotgun_reload" 
+not actor.Animation(3@) == "buddy_reload" 
+not actor.Animation(3@) == "UZI_reload"
+not actor.Animation(3@) == "RIFLE_load" 
+jf @WITCH1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "colt45_crouchreload"
+not actor.Animation(3@) == "python_crouchreload" 
+not actor.Animation(3@) == "shotgun_crouchreload" 
+not actor.Animation(3@) == "buddy_crouchreload" 
+not actor.Animation(3@) == "UZI_crouchreload"
+not actor.Animation(3@) == "RIFLE_crouchload" 
+jf @WITCH1_ATTACK_PEOPLE_BEGIN  
+if and
+not actor.Animation(3@) == "GunMove_BWD"
+not actor.Animation(3@) == "GunMove_FWD"
+not actor.Animation(3@) == "GunMove_L"
+not actor.Animation(3@) == "GunMove_R"
+not actor.Animation(3@) == "Gun_2_IDLE"
+not actor.Animation(3@) == "GUN_BUTT"
+not actor.Animation(3@) == "GUN_BUTT_crouch"
+not actor.Animation(3@) == "Gun_stand" 
+jf @WITCH1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "CLIMB_idle"
+not actor.Animation(3@) == "CLIMB_jump"
+not actor.Animation(3@) == "CLIMB_jump2fall"
+not actor.Animation(3@) == "CLIMB_jump_B"
+not actor.Animation(3@) == "CLIMB_Pull"
+not actor.Animation(3@) == "CLIMB_Stand"
+not actor.Animation(3@) == "CLIMB_Stand_finish" 
+jf @WITCH1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "Crouch_Roll_L"
+not actor.Animation(3@) == "Crouch_Roll_R"
+not actor.Animation(3@) == "gas_cwr"
+not actor.Animation(3@) == "getup"
+not actor.Animation(3@) == "getup_front"
+not actor.Animation(3@) == "GunCrouchBwd"
+not actor.Animation(3@) == "GunCrouchFwd"
+8E47: not is_char_fighting 3@
+jf @WITCH1_ATTACK_PEOPLE_BEGIN
+05C1: AS_actor 3@ speak_from_audio_table $PEOPLE_ZOMBIE_ATTACK_AUDIO_TABLE
+if
+056D:   actor 3@ defined
+jf @WITCH1_ATTACK_PEOPLE_BEGIN 
+if and
+not actor.Driving(PLAYER_ACTOR)
+89DE:   actor PLAYER_ACTOR entering_car
+80DF:   actor PLAYER_ACTOR in_a_car
+80DF:   actor 3@ in_a_car
+not actor.Dead(3@)
+jf @WITCH1_ATTACK_PEOPLE_BEGIN
+//0647: AS_actor 3@ clear_look_task
+//05B9: AS_actor 3@ stay_idle 50 ms 
+wait 50
+if
+056D:   actor 3@ defined  
+then
+05E2: AS_actor 3@ kill_actor WITCH
+end
+
+jump @WITCH1_ATTACK_PEOPLE_BEGIN   
+
+:WITCH1_ATTACK_PEOPLE_IN_CAR  
+if and
+not actor.Animation(3@) == "Gang_DrivebyLHS"
+not actor.Animation(3@) == "Gang_DrivebyLHS_Bwd"
+not actor.Animation(3@) == "Gang_DrivebyLHS_Fwd"
+not actor.Animation(3@) == "Gang_DrivebyRHS"
+not actor.Animation(3@) == "Gang_DrivebyRHS_Bwd"
+not actor.Animation(3@) == "Gang_DrivebyRHS_Fwd" 
+jf @WITCH1_ATTACK_PEOPLE_IN_CAR_RETURN 
+if and
+not actor.Animation(3@) == "Gang_DrivebyTop_LHS"
+not actor.Animation(3@) == "Gang_DrivebyTop_RHS" 
+jf @WITCH1_ATTACK_PEOPLE_IN_CAR_RETURN 
+if 
+00F2:   actor 3@ near_actor WITCH radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+jf @WITCH1_ATTACK_PEOPLE_IN_CAR_RETURN
+if or
+0364:   actor 3@ spotted_actor WITCH
+0364:   actor WITCH spotted_actor 3@
+jf @WITCH1_ATTACK_PEOPLE_IN_CAR_RETURN
+
+///////////////////////////////////////////////////////////////////////////
+if and
+0@ == 0
+TEAMMATE1_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @WITCH1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 1
+TEAMMATE2_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @WITCH1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 2
+TEAMMATE3_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @WITCH1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 3
+TEAMMATE4_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @WITCH1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 4
+TEAMMATE5_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @WITCH1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+///////////////////////////////////////////////////////////////////////////
+
+if and
+8E42: not is_char_doing_task_id 3@ 243
+not $COMMAND_STAY_IN_CAR == 1
+then
+06C9: remove_actor 3@ from_group
+0631: put_actor 3@ in_group PLAYER_GROUP
+end
+0713: actor 3@ driveby_actor WITCH car -1 point 0.0 0.0 0.0 radius 180.0 8 1 firing_rate 360
+
+///////////////////////////////////////////////////////////////////////////
+if
+0@ == 0
+    then
+    TEAMMATE1_ATTACK_TIMER = 0
+    end
+if
+0@ == 1
+    then
+    TEAMMATE2_ATTACK_TIMER = 0
+    end
+if
+0@ == 2
+    then
+    TEAMMATE3_ATTACK_TIMER = 0
+    end
+if
+0@ == 3
+    then
+    TEAMMATE4_ATTACK_TIMER = 0
+    end
+if
+0@ == 4
+    then
+    TEAMMATE5_ATTACK_TIMER = 0
+    end
+///////////////////////////////////////////////////////////////////////////
+   
+return
+
+:WITCH1_ATTACK_PEOPLE_IN_CAR_RETURN
+return
+
+:WITCH1_ATTACK_PEOPLE_BEGIN
+return
+
+:WITCH_CHECK_ATTACK_TARGET_EXSIST
+
+if
+8184:   actor WITCH health < 1
+    then
+    return
+    end        
+
+if 
+WTH_TARGET_FINDED == 1
+    then
+    :WTH_TRGT
+    if
+    056D:   actor WTH_TARGET defined
+        then                         
+        0687: clear_actor WITCH task
+        random_int 0@ WITCH_TASK_WAIT_TIME_MIN WITCH_TASK_WAIT_TIME_MAX
+        if
+        $GAMEMODE_CRAZY == 1
+        then
+        0@ *= WITCH_TASK_CRAZY_MULT
+        0085: 1@ = 24@ // (int)
+        1@ *= WITCH_TASK_CRAZY_MULT2
+        wait 1@
+        end                
+        wait 0@
+        wait 24@ 
+        if and
+        056D:   actor WTH_TARGET defined
+        not WTH_TARGET == -69
+            then 
+            if
+            not actor.Dead(WTH_TARGET)
+                then
+                if
+                056D:   actor WTH_TARGET defined
+                    then      
+                    if 
+                    80DF: not  actor WTH_TARGET in_a_car            
+                        then                                                                   
+                        05D9: AS_actor WITCH run_to_actor WTH_TARGET timelimit -1 stop_within_radius 0.001
+                        return           
+                        else                        
+                        0@ = actor.CurrentCar(WTH_TARGET)                    
+                        0672: AS_actor WITCH attack_car 0@                                         
+                        
+                        33@ = 0
+                        
+                        repeat
+                        wait 0
+                                    
+                        if or
+                        actor.Dead(WITCH)
+                        $SAVESTATUS == 1
+                        then
+                        break
+                        end
+                                    
+                        until 33@ > 999
+                        
+                        33@ = 0
+                        
+                        return  
+                        end
+                    else
+                    WTH_TARGET_PLAYER = 0
+                    WTH_TARGET_FINDED = 0
+                    WTH_TARGET = -69
+                    jump to @WITCH_VERSUS_WALK_JUMP
+                    end
+                else
+                WTH_TARGET_PLAYER = 0
+                WTH_TARGET_FINDED = 0
+                WTH_TARGET = -69
+                jump to @WITCH_VERSUS_WALK_JUMP 
+                end
+            else
+            WTH_TARGET_PLAYER = 0
+            WTH_TARGET_FINDED = 0
+            WTH_TARGET = -69
+            jump to @WITCH_VERSUS_WALK_JUMP
+            end
+        else
+        WTH_TARGET_PLAYER = 0
+        WTH_TARGET_FINDED = 0
+        WTH_TARGET = -69
+        jump to @WITCH_VERSUS_WALK_JUMP
+        end   
+    end
+    
+/////////////////////////////////////////////////////////////////////////////////
+
+if
+WTH_AGRED_FLAG == 1
+    then        
+        
+    28@ = 0
+        
+    random_int 27@ 0 $WITCH_AGRO_MAX
+    if and
+    07D6:   27@ == $WITCH_AGRO_SET // @ == $ (int)
+    $INF_SIDE == 0
+    $ZOMBIEORGY_MODE_FLAG == 0
+    $ZOMBIE_DONT_ATTACK_PLAYER == 0
+    84AD: not  actor PLAYER_ACTOR in_water
+    84C8: not  actor PLAYER_ACTOR driving_flying_vehicle
+    then
+    0084: WTH_TARGET = PLAYER_ACTOR // (int)
+    WTH_TARGET_PLAYER = 1
+    WTH_TARGET_FINDED = 1
+    jump to @WTH_TRGT
+    end
+    
+    :WITCH_VERSUS_TARGET_FIND_AGAIN
+        
+    while 856D: not  actor WTH_TARGET defined
+    28@ += 1
+    
+    //0AD1: show_formatted_text_highpriority "witch %d is DOING ZALOOPA 6" time 2000 24@        
+        
+    if or
+    $SAVESTATUS == 1
+    28@ > 128
+        then
+        
+        if and
+        $GAMEMODE_VERSUS == 0        
+        $ZOMBIEORGY_MODE_FLAG == 0
+        $ZOMBIE_DONT_ATTACK_PLAYER == 0
+        84AD: not  actor PLAYER_ACTOR in_water
+        84C8: not  actor PLAYER_ACTOR driving_flying_vehicle
+        $ACTOR_DEAD == 0
+        $INF_SIDE == 0
+        then
+        0084: WTH_TARGET = PLAYER_ACTOR // (int)
+        WTH_TARGET_PLAYER = 1
+        WTH_TARGET_FINDED = 1
+        jump to @WTH_TRGT
+        else
+        
+        if or
+        $SAVESTATUS == 1
+        8104: not  actor WITCH near_actor PLAYER_ACTOR radius 180.0 180.0 180.0 sphere 0
+        then
+        0084: WTH_TARGET = PLAYER_ACTOR // (int)
+        WTH_TARGET_PLAYER = 1
+        WTH_TARGET_FINDED = 1
+        jump to @WTH_TRGT
+        end                        
+        
+        jump to @WITCH_VERSUS_WALK_JUMP
+        end
+                
+        end
+        
+    gosub @WITCH_ATTACK_SYSTEM_TARGET_FIND
+    end
+    
+    WTH_TARGET_PLAYER = 0
+    WTH_TARGET_FINDED = 1    
+    jump to @WTH_TRGT
+    end
+
+/////////////////////////////////////////////////////////////////////////////////        
+
+:WITCH_VERSUS_WALK_JUMP
+
+if
+$GAMEMODE_VERSUS == 0
+then
+
+//////////////////////////////////////
+    
+0208: 27@ = random_float_in_ranges 100.0 -50.0 
+0208: 28@ = random_float_in_ranges -50.0 100.0
+
+04C4: store_coords_to 27@ 28@ 29@ from_actor WITCH with_offset 27@ 28@ 0.0
+
+02CE: 29@ = ground_z_at 27@ 28@ 29@
+
+random_float 0@ 0.0 360.0
+    
+0687: clear_actor WITCH task
+random_int 0@ WITCH_TASK_WAIT_TIME_MIN WITCH_TASK_WAIT_TIME_MAX
+if
+$GAMEMODE_CRAZY == 1
+then
+0@ *= WITCH_TASK_CRAZY_MULT
+0085: 1@ = 24@ // (int)
+1@ *= WITCH_TASK_CRAZY_MULT2
+wait 1@
+end
+wait 0@
+wait 24@ 
+07CD: AS_actor WITCH walk_to 27@ 28@ 29@ stop_with_angle 0@ within_radius 1.0
+
+//////////////////////////////////////
+
+else
+
+//////////////////////////////////////
+
+0687: clear_actor WITCH task
+random_int 0@ WITCH_TASK_WAIT_TIME_MIN WITCH_TASK_WAIT_TIME_MAX
+if
+$GAMEMODE_CRAZY == 1
+then
+0@ *= WITCH_TASK_CRAZY_MULT
+0085: 1@ = 24@ // (int)
+1@ *= WITCH_TASK_CRAZY_MULT2
+wait 1@
+end
+wait 0@
+wait 24@   
+
+if and
+$SPECTATING_FLAG == 0
+$INF_SIDE == 0
+$ZOMBIE_DONT_ATTACK_PLAYER == 0
+then
+05D9: AS_actor WITCH run_to_actor PLAYER_ACTOR timelimit -1 stop_within_radius 1.0
+else
+05DE: AS_actor WITCH walk_around_ped_path
+end
+
+//////////////////////////////////////  
+
+end
+    
+return 
+
+/////////////////////Вычисление координат ведьмы/////////////////////
+
+:WITCH_COORD_SET
+wait 0
+if
+not CURRENT_USHER_TUTORIAL_NUM == -444666
+jf @ZOMBIE_COORD_USHER4_INT
+
+//0AD1: show_formatted_text_highpriority "witch %d is DOING ZALOOPA 6" time 2000 24@
+
+if and
+$SPAWN_WITCH_FLAG == 0
+$SPAWN_WITCH_ON_COORD == 0
+0E4D: random_percent 30
+PLAYER_IN_NEST_FLAG == 0
+not WITCH_TEMP_SPAWN_ON_ROAD_FLAG == 1
+$ZOMBIES_HORDE == 0
+$WITCH_INSTANT_AGR == 0
+then
+WITCH_TEMP_SPAWN_ON_ROAD_FLAG = 1
+end
+
+if
+WITCH_SPAWN_ON_ROAD == 1
+then
+wait 150
+WITCH_SPAWN_ON_ROAD = 0
+WITCH_TEMP_SPAWN_ON_ROAD_FLAG = 1
+end
+
+if
+$ACTIVE_INTERIOR == 0
+jf @WITCH_COORD_SET_INTERIOR
+
+if
+PLAYER_IN_NEST_FLAG == 1
+then
+:NEST_COORD_SET
+wait 24@
+
+//0AD1: show_formatted_text_highpriority "witch %d is DOING ZALOOPA 7" time 2000 24@
+
+if
+PLAYER_IN_NEST_FLAG == 0
+then
+0@ = 28
+return
+end
+
+if
+CURRENT_NEST_NUMBER == 16
+then
+//////////////////////////////////////
+
+008B: 30@ = CURRENT_NEST_NUMBER2 // (int)
+30@ += 1
+random_int 0@ 0 30@ 
+//0AD3: v$NEST3_FILE = format "NEST%d_DS" 0@
+//0AF0: 2@ = get_int_from_ini_file "data/nest.ini" section v$NEST_FILE key v$NEST3_FILE
+if
+075C:   marker $BANDIT_MARKER[0@] enabled
+//not 2@ == 1
+jf @NEST_COORD_SET
+//0AD3: v$NEST3_FILE = format "NEST%d_X" 0@
+//0AF2: 2@ = get_float_from_ini_file "data/nest.ini" section v$NEST_FILE key v$NEST3_FILE
+//0AD3: v$NEST3_FILE = format "NEST%d_Y" 0@ 
+//0AF2: 3@ = get_float_from_ini_file "data/nest.ini" section v$NEST_FILE key v$NEST3_FILE
+//0AD3: v$NEST3_FILE = format "NEST%d_Z" 0@ 
+//0AF2: 4@ = get_float_from_ini_file "data/nest.ini" section v$NEST_FILE key v$NEST3_FILE
+0089: 2@ = $WPN_X[0@] // (float)
+0089: 3@ = $WPN_Y[0@] // (float)
+0089: 4@ = $WPN_Z[0@] // (float)
+
+Actor.StorePos(PLAYER_ACTOR, 27@, 28@, 29@)
+050A: 30@ = distance_between_XYZ 2@ 3@ 4@ and_XYZ 27@ 28@ 29@ 
+0092: 30@ = float 30@ to_integer
+
+06C3: get_number_of_fires_within_sphere_at 2@ 3@ 4@ radius 5.0 store_to 1@
+
+if and
+30@ < 175
+30@ > 30
+1@ < 1
+8AE1: not 1@ = random_actor_near_point 2@ 3@ 4@ in_radius 2.0 find_next 0 pass_deads 1
+then
+return
+else
+jump to @NEST_COORD_SET
+end
+
+//////////////////////////////////////
+end
+
+//0AD3: v$NEST3_FILE = format "NEST%d_DS" 24@
+//0AF0: 2@ = get_int_from_ini_file "data/nest.ini" section v$NEST_FILE key v$NEST3_FILE
+if
+075C:   marker $BANDIT_MARKER[24@] enabled
+//not 2@ == 1
+jf @NEST_COORD_SET
+//0AD3: v$NEST3_FILE = format "NEST%d_X" 24@
+//0AF2: 2@ = get_float_from_ini_file "data/nest.ini" section v$NEST_FILE key v$NEST3_FILE
+//0AD3: v$NEST3_FILE = format "NEST%d_Y" 24@ 
+//0AF2: 3@ = get_float_from_ini_file "data/nest.ini" section v$NEST_FILE key v$NEST3_FILE
+//0AD3: v$NEST3_FILE = format "NEST%d_Z" 24@ 
+//0AF2: 4@ = get_float_from_ini_file "data/nest.ini" section v$NEST_FILE key v$NEST3_FILE
+0089: 2@ = $WPN_X[24@] // (float)
+0089: 3@ = $WPN_Y[24@] // (float)
+0089: 4@ = $WPN_Z[24@] // (float)
+
+Actor.StorePos(PLAYER_ACTOR, 27@, 28@, 29@)
+050A: 30@ = distance_between_XYZ 2@ 3@ 4@ and_XYZ 27@ 28@ 29@ 
+0092: 30@ = float 30@ to_integer
+
+06C3: get_number_of_fires_within_sphere_at 2@ 3@ 4@ radius 5.0 store_to 1@
+
+if and
+30@ < 175
+30@ > 30
+1@ < 1
+then
+return
+else
+jump to @NEST_COORD_SET
+end
+
+end
+
+if
+WTH_JUMPS_COUNT == 28692869
+then
+0@ = 28
+return
+end
+
+if
+$SPAWN_WITCH_ON_COORD == 1   
+then
+0089: 2@ = $WITCH_X // (float)
+0089: 3@ = $WITCH_Y // (float)
+0089: 4@ = $WITCH_Z // (float)
+
+if
+not WITCHES_TO_SPAWN_COUNT == 0
+then
+
+if
+$ACTIVE_INTERIOR == 0
+then
+0208: 30@ = random_float_in_ranges -2.0 2.0 
+005B: 2@ += 30@ // (float)
+0208: 30@ = random_float_in_ranges 2.0 -2.0 
+005B: 3@ += 30@ // (float)
+else
+0208: 30@ = random_float_in_ranges -0.5 0.5 
+005B: 2@ += 30@ // (float)
+0208: 30@ = random_float_in_ranges 0.5 -0.5 
+005B: 3@ += 30@ // (float)
+end
+
+end
+
+return
+end
+
+if
+$SPECIAL_INFECTED_SPAWN_OZC_FLAG == 1
+then
+random_int 0@ 0 $ZOMBIE_COORD_MAX
+0089: 2@ = $ZOMBIE_X[0@] // (float)
+0089: 3@ = $ZOMBIE_Y[0@] // (float)
+0089: 4@ = $ZOMBIE_Z[0@] // (float)
+0208: 30@ = random_float_in_ranges -2.0 2.0 
+005B: 2@ += 30@ // (float)
+0208: 30@ = random_float_in_ranges 2.0 -2.0 
+005B: 3@ += 30@ // (float)
+return
+end    
+
+0208: 27@ = random_float_in_ranges 100.0 -100.0 
+0208: 28@ = random_float_in_ranges -100.0 100.0   
+ 
+04C4: store_coords_to 2@ 3@ 4@ from_actor PLAYER_ACTOR with_offset 27@ 28@ 0.0 
+02CE: 4@ = ground_z_at 2@ 3@ 4@
+if
+WITCH_TEMP_SPAWN_ON_ROAD_FLAG == 1
+then
+02C1: store_to 2@ 3@ 4@ car_path_coords_closest_to 2@ 3@ 4@
+end
+
+if and
+$GAMEMODE_CRAZY == 1
+SNOW_ADDON_INSTALLED_FLAG == 1
+then
+//ice ass skip
+else
+
+if
+not QUEST_NEST_NUMBER == 15
+then
+
+if
+UNITED_MAP == 0
+then
+if or
+4@ > 0.25
+00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA 860.55 1031.71 -100.0 cornerB 337.24 710.84 0.0
+jf @WITCH_COORD_SET
+else
+if
+4@ > 0.25
+jf @WITCH_COORD_SET
+end
+
+end
+
+end 
+
+Actor.StorePos(PLAYER_ACTOR, 27@, 28@, 29@)
+050A: 30@ = distance_between_XYZ 2@ 3@ 4@ and_XYZ 27@ 28@ 29@ 
+0092: 30@ = float 30@ to_integer
+if and
+30@ > 90 
+not 30@ > 120
+jf @WITCH_COORD_SET
+050A: 30@ = distance_between_XYZ 27@ 28@ 4@ and_XYZ 27@ 28@ 29@
+0092: 30@ = float 30@ to_integer
+
+if and
+$GAMEMODE_CRAZY == 1
+SNOW_ADDON_INSTALLED_FLAG == 1
+then
+//ice ass skip
+else
+
+if
+UNITED_MAP == 0
+then
+if or
+not 4@ < 0.0
+00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA 860.55 1031.71 -100.0 cornerB 337.24 710.84 0.0
+jf @WITCH_COORD_SET
+else
+if
+not 4@ < 0.0
+jf @WITCH_COORD_SET
+end
+
+end
+
+gosub @WITCH_ZONE_CHECK       
+
+if 
+0@ == 1
+jf @WITCH_COORD_SET  
+
+if and
+8AE2: 30@ = random_vehicle_near_point 2@ 3@ 4@ in_radius 10.0 find_next 0 pass_wrecked 0 //IF and SET
+8AE1: 31@ = random_actor_near_point 2@ 3@ 4@ in_radius 5.0 find_next 0 pass_deads 0 //IF and SET 
+jf @WITCH_COORD_SET
+4@ = -100.0
+
+if
+WTH_JUMPS_COUNT == 28692869
+then
+0@ = 28
+return
+end
+
+return  
+
+:WITCH_COORD_SET_INTERIOR
+
+if
+$SPAWN_WITCH_ON_COORD == 1   
+then
+0089: 2@ = $WITCH_X // (float)
+0089: 3@ = $WITCH_Y // (float)
+0089: 4@ = $WITCH_Z // (float)
+
+if
+not WITCHES_TO_SPAWN_COUNT == 0
+then
+
+if
+$ACTIVE_INTERIOR == 0
+then
+0208: 30@ = random_float_in_ranges -2.0 2.0 
+005B: 2@ += 30@ // (float)
+0208: 30@ = random_float_in_ranges 2.0 -2.0 
+005B: 3@ += 30@ // (float)
+else
+0208: 30@ = random_float_in_ranges -0.5 0.5 
+005B: 2@ += 30@ // (float)
+0208: 30@ = random_float_in_ranges 0.5 -0.5 
+005B: 3@ += 30@ // (float)
+end
+
+end
+
+return
+end
+
+wait 0
+//0AD1: show_formatted_text_highpriority "witch %d is DOING ZALOOPA 9" time 2000 24@
+0208: 27@ = random_float_in_ranges 100.0 -100.0 
+0208: 28@ = random_float_in_ranges -100.0 100.0   
+04C4: store_coords_to 2@ 3@ 4@ from_actor PLAYER_ACTOR with_offset 27@ 28@ 0.0 
+02CE: 4@ = ground_z_at 2@ 3@ 4@
+Actor.StorePos(PLAYER_ACTOR, 27@, 28@, 29@)
+
+050A: 30@ = distance_between_XYZ 27@ 28@ 4@ and_XYZ 27@ 28@ 29@ 
+0092: 30@ = float 30@ to_integer
+if
+not 30@ > 2
+jf @WITCH_COORD_SET_INTERIOR
+
+Actor.StorePos(PLAYER_ACTOR, 27@, 28@, 29@)
+050A: 30@ = distance_between_XYZ 2@ 3@ 4@ and_XYZ 27@ 28@ 29@ 
+0092: 30@ = float 30@ to_integer
+if and
+30@ > 90 
+not 30@ > 120
+80C2: not  sphere_onscreen 2@ 3@ 4@ radius 1.0
+jf @WITCH_COORD_SET_INTERIOR
+if
+not 4@ < 0.0
+jf @WITCH_COORD_SET_INTERIOR
+if and
+8AE2: 30@ = random_vehicle_near_point 2@ 3@ 4@ in_radius 5.0 find_next 0 pass_wrecked 0 //IF and SET
+8AE1: 31@ = random_actor_near_point 2@ 3@ 4@ in_radius 2.0 find_next 0 pass_deads 0 
+jf @WITCH_COORD_SET_INTERIOR
+if
+$GAMEMODE_EDITOR == 1
+then
+31@ = 999888666
+end
+
+return   
+
+:WITCH_ZONE_CHECK
+0@ = 1  
+
+{$INCLUDE zone_check/Infected Spawn Zone Check.txt}                    
+
+return
+
+:WITCH_DIE_SOUND
+gosub @WITCH_SHUT_UP
+gosub @WITCH_RANDOM_DIE_SOUND
+
+Audiostream.LinkToActor(11@, WITCH)
+Audiostream.Volume(11@) = 0.0
+Audiostream.PerformAction(11@, PLAY)
+
+Audiostream.LinkToActor(25@, WITCH)
+Audiostream.Volume(25@) = 0.0
+Audiostream.PerformAction(25@, PLAY)
+
+0AB9: get_mp3 11@ state_to 0@
+
+while not 0@ == -1
+0AB9: get_mp3 11@ state_to 0@
+wait 0
+
+0A96: 2@ = actor WITCH struct
+2@ += 0x754
+0A8D: 1@ = read_memory 2@ size 4 virtual_protect 0
+if
+1@ == 0x02
+    then
+    break
+    end
+
+//0AD1: show_formatted_text_highpriority "witch %d is DOING ZALOOPA 10" time 2000 24@
+
+if
+$GAME_SPEED == 1.0
+then
+Audiostream.Volume(11@) = $SOUNDS_VOLUME
+Audiostream.Volume(25@) = 0.0
+else
+Audiostream.Volume(11@) = 0.0
+Audiostream.Volume(25@) = $SOUNDS_VOLUME
+end
+
+end
+
+audiostream.Release(11@)
+audiostream.Release(25@)
+
+return
+
+:WITCH_SHUT_UP
+gosub @WITCH_CRY_SOUND_RELEASE
+gosub @WITCH_RAGE_SOUND_RELEASE
+gosub @WITCH_PAIN_SOUND_RELEASE
+gosub @WITCH_ATTACK_SOUND_RELEASE  
+gosub @WITCH_ALERT_SOUND_RELEASE 
+gosub @WITCH_FIRE_SOUND_RELEASE
+return
+
+:WITCH_CRY_SOUND_RELEASE
+
+if
+WTH_CRY_SOUND_FLAG == 1
+then
+audiostream.Release(11@)
+WTH_CRY_SOUND_FLAG = 0
+end
+
+return
+
+:WITCH_RAGE_SOUND_RELEASE
+
+if
+WTH_RAGE_SOUND_FLAG == 1
+then
+audiostream.Release(11@)
+WTH_RAGE_SOUND_FLAG = 0
+end
+
+return
+
+:WITCH_PAIN_SOUND_RELEASE
+
+if
+WTH_PAIN_SOUND_FLAG == 1
+then
+audiostream.Release(11@)
+WTH_PAIN_SOUND_FLAG = 0
+end
+
+return
+
+:WITCH_FIRE_SOUND_RELEASE
+
+if
+WTH_FIRE_SOUND_FLAG == 1
+then
+audiostream.Release(11@)
+WTH_FIRE_SOUND_FLAG = 0
+end
+
+return
+
+:WITCH_ATTACK_SOUND_RELEASE
+
+if
+WTH_ATTACK_SOUND_FLAG == 1
+then
+audiostream.Release(11@)
+WTH_ATTACK_SOUND_FLAG = 0
+end
+
+return
+
+:WITCH_ALERT_SOUND_RELEASE
+
+if
+WTH_ALERT_SOUND_FLAG == 1
+then
+audiostream.Release(11@)
+WTH_ALERT_SOUND_FLAG = 0
+end
+
+return  
+
+:WITCH_RANDOM_CRY_SOUND
+
+if
+actor.Animation(WITCH) == "witch_crying"
+then
+
+random_int 0@ 0 8
+
+if
+0@ == 0
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\lost_little_witch_01a.wav")
+end 
+
+if
+0@ == 1
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\lost_little_witch_01b.wav")
+end 
+
+if
+0@ == 2
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\lost_little_witch_02a.wav")
+end 
+
+if
+0@ == 3
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\lost_little_witch_02b.wav")
+end 
+
+if
+0@ == 4
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\lost_little_witch_03a.wav")
+end 
+
+if
+0@ == 5
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\lost_little_witch_03b.wav")
+end 
+
+if
+0@ == 6
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\lost_little_witch_04a.wav")
+end 
+
+if
+0@ == 7
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\lost_little_witch_04b.wav")
+end 
+
+return
+end
+
+random_int 0@ 0 8
+
+if
+0@ == 0
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_CRY1.wav")
+end 
+
+if
+0@ == 1
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_CRY2.wav")
+end 
+
+if
+0@ == 2
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_CRY3.wav")
+end 
+
+if
+0@ == 3
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_CRY4.wav")
+end 
+
+if
+0@ == 4
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_CRY5.wav")
+end 
+
+if
+0@ == 5
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_CRY6.wav")
+end 
+
+if
+0@ == 6
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_CRY7.wav")
+end 
+
+if
+0@ == 7
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_CRY8.wav")
+end 
+
+return
+             
+:WITCH_RANDOM_RAGE_SOUND
+random_int 0@ 0 3
+
+if
+0@ == 0
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_RAGE1.wav")
+end 
+
+if
+0@ == 1
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_RAGE2.wav")
+end 
+
+if
+0@ == 2
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_RAGE3.wav")
+end 
+
+return
+
+:WITCH_RANDOM_PAIN_SOUND
+random_int 0@ 0 3
+
+if
+0@ == 0
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_PAIN1.wav")
+end 
+
+if
+0@ == 1
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_PAIN2.wav")
+end 
+
+if
+0@ == 2
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_PAIN3.wav")
+end 
+
+return
+            
+:WITCH_RANDOM_ATTACK_SOUND
+random_int 0@ 0 2
+
+if
+0@ == 0
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_ATTACK1.wav")
+end 
+
+if
+0@ == 1
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_ATTACK2.wav")
+end 
+
+if
+0@ == 2
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_ATTACK3.wav")
+end 
+
+if
+0@ == 3
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_ATTACK4.wav")
+end 
+
+return
+
+:WITCH_RANDOM_ALERT_SOUND
+random_int 0@ 0 2
+
+if
+0@ == 0
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_ALERT1.wav")
+end 
+
+if
+0@ == 1
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_ALERT2.wav")
+end 
+
+return
+
+:WITCH_RANDOM_FIRE_SOUND
+random_int 0@ 0 4
+
+if
+0@ == 0
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_FIRE1.wav")
+end 
+
+if
+0@ == 1
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_FIRE2.wav")
+end 
+
+if
+0@ == 2
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_FIRE3.wav")
+end 
+
+if
+0@ == 3
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_FIRE4.wav")
+end 
+
+return
+
+:WITCH_RANDOM_DIE_SOUND
+random_int 0@ 0 3 
+
+if
+0@ == 0
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_DIE1.wav")
+25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_DIE1_SLOW.wav")
+end 
+
+if
+0@ == 1
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_DIE2.wav")
+25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_DIE2_SLOW.wav")
+end 
+
+if
+0@ == 2
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_DIE3.wav")
+25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_DIE3_SLOW.wav")
+end 
+
+return
+
+:WITCH_ROOF_CHECK
+
+1@ = 1
+
+actor.StorePos(WITCH, 2@, 3@, 4@) 
+04C4: store_coords_to 27@ 28@ 29@ from_actor WITCH with_offset 0.0 0.0 10.0 
+if
+86BD: not no_obstacles_between 27@ 28@ 29@ and 2@ 3@ 4@ solid 1 car 0 actor 0 object 0 particle 0
+    then
+    1@ = 0
+    end   
+
+return
+
+:WITCH_CLIMB_CHECK
+0@ = 0
+if or
+actor.Animation(WITCH) == "CLIMB_idle"
+actor.Animation(WITCH) == "CLIMB_jump"
+actor.Animation(WITCH) == "CLIMB_jump2fall"
+actor.Animation(WITCH) == "CLIMB_jump_B"
+actor.Animation(WITCH) == "CLIMB_Pull" 
+actor.Animation(WITCH) == "CLIMB_Stand"     
+then
+0@ = 1
+end
+
+return
+
+:WITCH_ORIGIN_SPOTTED_PHRASE
+
+repeat
+wait 0
+until ORIGIN_SPOTTED_SOME_SHIT == 0
+
+ORIGIN_SPOTTED_SOME_SHIT = 1
+
+if
+SURVIVAL_CUSTOM_WEAPON_NABOR == 1
+then
+gosub @RANDOM_DIALOG_BTRAPPER_SPOTTED_WITCH
+else
+gosub @RANDOM_DIALOG_DCD_SPOTTED_WITCH
+end
+
+09FD: get_gxt_string v$PHRASE3 width_to 1@
+0093: 1@ = integer 1@ to_float
+1@ *= 8.0
+0092: 1@ = float 1@ to_integer
+
+33@ = 0
+008B: 31@ = $PHRASES_OFF_FLAG // (int)                    
+                    
+repeat
+wait 0
+$PHRASES_OFF_FLAG = 1  
+        
+0384: show_text_1string GXT v$PHRASE3 string v$NAME3 time 99 1
+            
+if or
+$SAVESTATUS_TRUE == 1
+$SAVESTATUS == 1
+GAME_OVER_FLAG == 1
+    then 
+    break
+    end
+            
+until 002D:   33@ >= 1@  // (int)
+
+008A: $PHRASES_OFF_FLAG = 31@ // (int)
+
+ORIGIN_SPOTTED_SOME_SHIT = 0
+
+return   
+
+:RANDOM_DIALOG_DCD_SPOTTED_WITCH
+    
+for 1@ = 0 to 200
+
+v$PHRASE1 = "DC11_"
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 30@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "DC11_"
+0AD3: v$PHRASE2 = format "%d" 30@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return
+
+:RANDOM_DIALOG_BTRAPPER_SPOTTED_WITCH
+    
+for 1@ = 0 to 200
+
+v$PHRASE1 = "HN11_"
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 30@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "HN11_"
+0AD3: v$PHRASE2 = format "%d" 30@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return
+
+:WITCH_NUM_GET
+
+if
+0@ == 1
+then
+thread 'WITCH1'
+end
+
+if
+0@ == 2
+then
+thread 'WITCH2'
+end
+
+if
+0@ == 3
+then
+thread 'WITCH3'
+end
+
+if
+0@ == 4
+then
+thread 'WITCH4'
+end
+
+if
+0@ == 5
+then
+thread 'WITCH5'
+end
+
+if
+0@ == 6
+then
+thread 'WITCH6'
+end
+
+if
+0@ == 7
+then
+thread 'WITCH7'
+end
+
+if
+0@ == 8
+then
+thread 'WITCH9'
+end
+
+if
+0@ == 9
+then
+thread 'WITCH10'
+end
+
+if
+0@ == 10
+then
+thread 'WITCH11'
+end
+
+if
+0@ == 11
+then
+thread 'WITCH12'
+end
+
+if
+0@ == 12
+then
+thread 'WITCH13'
+end
+
+if
+0@ == 13
+then
+thread 'WITCH14'
+end
+
+if
+0@ == 14
+then
+thread 'WITCH15'
+end
+
+if
+0@ == 15
+then
+thread 'WITCH16'
+end
+
+if
+0@ == 16
+then
+thread 'WITCH17'
+end
+
+if
+0@ == 17
+then
+thread 'WITCH18'
+end
+
+if
+0@ == 18
+then
+thread 'WITCH19'
+end
+
+if
+0@ == 19
+then
+thread 'WITCH20'
+end
+
+return

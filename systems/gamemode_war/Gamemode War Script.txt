@@ -1,0 +1,874 @@
+const
+HINT_SHOWED_FLAG = 29@
+WAR_SAVE_WAIT_TIME = 100
+ARMY_PROCENT_MINUS_AFTERBASES = 5.0
+BANDITS_PROCENT_MINUS_AFTERBASES = 10.0
+SURV_PROCENT_MINUS_AFTERBASES = 5.0
+ZOMBIES_PROCENT_MINUS_AFTERBASES = 45.0
+end
+
+:WAR_MOD
+thread 'WAR_MOD'
+32@ = 0
+
+08DD: lose_stuff_after_wasted 0
+if
+UNITED_MAP == 0
+then
+016C: restart_if_wasted_at 0.0 0.0 5.0 angle 0.0 town_number 0
+else           
+
+if
+$UNITED_III_SPAWN == 1
+then
+016C: restart_if_wasted_at -2911.9546 826.0009 10.8185 angle 0.0 town_number 0
+else
+016C: restart_if_wasted_at 410.3191 -2295.98 9.3281 angle 0.0 town_number 0
+end
+  
+end
+
+AIR_ROCKET_TIME_MIN = 25000
+AIR_ROCKET_TIME_MAX = 45000
+create_thread @RND_RCK
+create_thread @ZN_SAVE
+
+if and
+$PLAYER_ARMY_SIDE == 1
+UNITED_MAP == 0
+then
+create_thread @ARMY_CL
+end
+
+if and
+$GAMEMODE_WAR == 1
+UNITED_MAP == 1
+then
+$CAMP_SAVE_X[0] = -460.787
+$CAMP_SAVE_Y[0] = 1494.1963
+$CAMP_SAVE_Z[0] = 8.5801
+$CAMP_SAVE_TP_X[0] = -464.4686
+$CAMP_SAVE_TP_Y[0] = 1492.7595
+$CAMP_SAVE_TP_Z[0] = 8.5274
+$CAMP_SAVE_TP_A[0] = 90.5708
+end
+
+/////////////////////////////////////
+
+PERK_WEAPON_SKILL = 3
+
+0AF2: 0@ = get_float_from_ini_file "moonloader/Weapon Recoil.ini" section "Other_Settings" key "nGlobalRecoilMultiplier"    
+if
+not 0@ == 1.155
+then
+0AF3: write_float 1.155 to_ini_file "moonloader/Weapon Recoil.ini" section "Other_Settings" key "nGlobalRecoilMultiplier"
+end
+
+1@ = 1000.0
+062A: change_float_stat 69 to 1@
+062A: change_float_stat 70 to 1@
+062A: change_float_stat 71 to 1@
+062A: change_float_stat 72 to 1@
+062A: change_float_stat 73 to 1@
+062A: change_float_stat 74 to 1@  
+062A: change_float_stat 75 to 1@  
+062A: change_float_stat 76 to 1@
+062A: change_float_stat 77 to 1@
+062A: change_float_stat 78 to 1@
+062A: change_float_stat 79 to 1@
+
+/////////////////////////////////////
+
+//04F7: vagina_text $ARMY_KILLED type 0 line 1 GXT 'GME1560' // global_variable  // Score     
+//04F7: vagina_text $INFECTED_SCORE type 0 line 2 GXT 'GME1561' // global_variable  // Score
+//04F7: vagina_text $BANDITS_KILLED type 0 line 3 GXT 'GME1562' // global_variable  // Score
+//04F7: vagina_text $ZOMBIE_KILLED type 0 line 4 GXT 'GME1563' // global_variable  // Score
+
+/////////////////////////////////////
+
+AMMO_AIRDROP_NOT_RANDOM_COEFF *= 2.0
+
+:WAR_MODE_LOOP
+wait 0
+
+//////////////////////////////////////////////////////////////
+
+//if and
+//$SAVESTATUS_TRUE == 1
+//$SAVING_DELAY == 1
+//then
+//
+//0151: remove_status_text $ARMY_KILLED
+//0151: remove_status_text $INFECTED_SCORE
+//0151: remove_status_text $BANDITS_KILLED
+//0151: remove_status_text $ZOMBIE_KILLED
+//
+//while $SAVESTATUS_TRUE == 1
+//wait 0
+//end
+//
+//while $SAVING_DELAY == 1
+//wait 0
+//end
+//
+//04F7: vagina_text $ARMY_KILLED type 0 line 1 GXT 'GME1560' // global_variable  // Score     
+//04F7: vagina_text $INFECTED_SCORE type 0 line 2 GXT 'GME1561' // global_variable  // Score
+//04F7: vagina_text $BANDITS_KILLED type 0 line 3 GXT 'GME1562' // global_variable  // Score
+//04F7: vagina_text $ZOMBIE_KILLED type 0 line 4 GXT 'GME1563' // global_variable  // Score
+//
+//end
+
+//////////////////////////////////////////////////////////////
+
+if
+$CHEAT_TYPE_FLAG == 1
+    then
+    if
+    0ADC:   test_cheat "WINNER"
+        then
+        $CHEAT_CODE_ACTIVATED = 1
+        jump to @WAR_MODE_WIN
+        end
+    end
+
+if
+$ARMY_PROCENT < 0.0
+then
+$ARMY_PROCENT = 0
+end
+
+if
+$SURV_PROCENT < 0.0
+then
+$SURV_PROCENT = 0
+end
+
+if
+$BANDITS_PROCENT < 0.0
+then
+$BANDITS_PROCENT = 0
+end
+
+if
+$ZOMBIES_PROCENT < 0.0
+then
+$ZOMBIES_PROCENT = 0
+end       
+
+if
+$ARMY_PROCENT < 0.0
+then
+$ARMY_PROCENT = 0
+end
+
+if
+$SURV_PROCENT < 0.0
+then
+$SURV_PROCENT = 0
+end
+
+if
+$BANDITS_PROCENT < 0.0
+then
+$BANDITS_PROCENT = 0
+end
+
+if
+$ZOMBIES_PROCENT < 0.0
+then
+$ZOMBIES_PROCENT = 0
+end
+
+if and
+$PLAYER_ARMY_SIDE == 1
+$ARMY_PROCENT <= 0.0
+then
+jump to @WAR_MODE_LOSE
+end
+
+if and
+$PLAYER_BANDIT_SIDE == 1
+$BANDITS_PROCENT <= 0.0
+then
+jump to @WAR_MODE_LOSE
+end
+
+if and
+$PLAYER_FERMERS_SIDE == 1
+$SURV_PROCENT <= 0.0
+then
+jump to @WAR_MODE_LOSE
+end
+
+if and
+$PLAYER_SWAT_SIDE == 1
+$SURV_PROCENT <= 0.0
+then
+jump to @WAR_MODE_LOSE
+end       
+
+if
+UNITED_MAP == 0
+then
+
+if
+$PLAYER_ARMY_SIDE == 1
+    then
+    if and
+    $CAMP_DEAD_FLAG[0] == 1
+    $CAMP_DEAD_FLAG[1] == 1
+    $CAMP_DEAD_FLAG[2] == 1
+    $CAMP_DEAD_FLAG[3] == 1
+    $CAMP_DEAD_FLAG[4] == 1
+    $BANDITS_ZONE1_CAPTURED == 1
+    $BANDITS_ZONE2_CAPTURED == 1
+    $BANDITS_ZONE3_CAPTURED == 1    
+        then
+        if
+        $BANDITS_ZONE4_CAPTURED == 1        
+            then
+            if and
+            $CAMP_DEAD_FLAG[5] == 1
+            $CAMP_DEAD_FLAG[6] == 1
+            $CAMP_DEAD_FLAG[7] == 1
+            $CAMP_DEAD_FLAG[8] == 1
+            $CAMP_DEAD_FLAG[9] == 1
+            $CAMP_DEAD_FLAG[10] == 1
+            $CAMP_DEAD_FLAG[11] == 1
+                then
+                if and
+                $CAMP_DEAD_FLAG[12] == 1
+                $CAMP_DEAD_FLAG[13] == 1
+                $CAMP_DEAD_FLAG[14] == 1
+                    then
+                    
+                    if
+                    HINT_SHOWED_FLAG == 0
+                    then
+                    text.RemoveTextBox()
+                    text.ShowTextBox('GAME469')
+                    HINT_SHOWED_FLAG = 1
+                    $SURV_PROCENT -= SURV_PROCENT_MINUS_AFTERBASES
+                    $BANDITS_PROCENT -= BANDITS_PROCENT_MINUS_AFTERBASES
+                    $ZOMBIES_PROCENT -= ZOMBIES_PROCENT_MINUS_AFTERBASES
+                    gosub @FRACTION_WAR_TIMERS_AFRTERBASE_SET
+                    end
+                    
+                    if and
+                    $SURV_PROCENT == 0.0
+                    $BANDITS_PROCENT == 0.0
+                    $ZOMBIES_PROCENT <= 30.0
+                        then
+                        jump to @WAR_MODE_WIN
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+else
+
+if
+$UNITED_VC_FLAG == 0
+then
+
+if
+$PLAYER_ARMY_SIDE == 1
+    then
+    if and
+    $CAMP_DEAD_FLAG[0] == 1
+    $CAMP_DEAD_FLAG[1] == 1
+    $CAMP_DEAD_FLAG[4] == 1
+    $CAMP_DEAD_FLAG[7] == 1
+    $CAMP_DEAD_FLAG[8] == 1
+    $CAMP_DEAD_FLAG[9] == 1
+    $BANDITS_ZONE1_CAPTURED == 1
+    $BANDITS_ZONE3_CAPTURED == 1        
+        then
+        if
+        $BANDITS_ZONE4_CAPTURED == 1
+            then
+        
+            if
+            HINT_SHOWED_FLAG == 0
+            then
+            text.RemoveTextBox()
+            text.ShowTextBox('GAME469')
+            HINT_SHOWED_FLAG = 1
+            $SURV_PROCENT -= SURV_PROCENT_MINUS_AFTERBASES
+            $BANDITS_PROCENT -= BANDITS_PROCENT_MINUS_AFTERBASES
+            $ZOMBIES_PROCENT -= ZOMBIES_PROCENT_MINUS_AFTERBASES
+            gosub @FRACTION_WAR_TIMERS_AFRTERBASE_SET
+            end
+            
+            if and
+            $SURV_PROCENT == 0.0
+            $BANDITS_PROCENT == 0.0
+            $ZOMBIES_PROCENT <= 30.0
+                then                                    
+                jump to @WAR_MODE_WIN
+                end
+            end
+        end 
+    end
+
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+    then
+    if and
+    $CAMP_DEAD_FLAG[5] == 1
+    $CAMP_DEAD_FLAG[6] == 1
+    $CAMP_DEAD_FLAG[2] == 1
+    $CAMP_DEAD_FLAG[3] == 1
+    $BANDITS_ZONE2_CAPTURED == 1
+    $BANDITS_ZONE5_CAPTURED == 1
+    $BANDITS_ZONE6_CAPTURED == 1        
+        then
+        
+        if
+        HINT_SHOWED_FLAG == 0
+        then
+        text.RemoveTextBox()
+        text.ShowTextBox('GAME469')
+        HINT_SHOWED_FLAG = 1
+        $SURV_PROCENT -= SURV_PROCENT_MINUS_AFTERBASES
+        $BANDITS_PROCENT -= BANDITS_PROCENT_MINUS_AFTERBASES
+        $ZOMBIES_PROCENT -= ZOMBIES_PROCENT_MINUS_AFTERBASES
+        gosub @FRACTION_WAR_TIMERS_AFRTERBASE_SET
+        end
+        
+        if and
+        $SURV_PROCENT == 0.0
+        $BANDITS_PROCENT == 0.0
+        $ZOMBIES_PROCENT <= 30.0
+            then
+            jump to @WAR_MODE_WIN
+            end
+        end
+    end
+
+end
+
+end    
+
+if
+$PLAYER_FERMERS_SIDE == 1
+    then
+    if and    
+    $BANDITS_ZONE1_CAPTURED == 1
+    $BANDITS_ZONE2_CAPTURED == 1
+    $BANDITS_ZONE3_CAPTURED == 1 
+    $BANDITS_ZONE4_CAPTURED == 1   
+        then
+        if and
+        $ZONE69_CAPTURED == 1
+        $ZONE2_CAPTURED == 1
+        $ZONE3_CAPTURED == 1
+        $ZONE4_CAPTURED == 1        
+            then
+            
+            if
+            HINT_SHOWED_FLAG == 0
+            then
+            text.RemoveTextBox()
+            text.ShowTextBox('GAME469')
+            HINT_SHOWED_FLAG = 1
+            $ARMY_PROCENT -= ARMY_PROCENT_MINUS_AFTERBASES
+            $BANDITS_PROCENT -= BANDITS_PROCENT_MINUS_AFTERBASES
+            $ZOMBIES_PROCENT -= ZOMBIES_PROCENT_MINUS_AFTERBASES
+            gosub @FRACTION_WAR_TIMERS_AFRTERBASE_SET
+            end
+            
+            if and
+            $ARMY_PROCENT == 0.0
+            $BANDITS_PROCENT == 0.0
+            $ZOMBIES_PROCENT <= 30.0
+                then
+                jump to @WAR_MODE_WIN
+                end
+            end
+        end
+    end
+    
+if
+UNITED_MAP == 0
+then    
+
+if
+$PLAYER_BANDIT_SIDE == 1
+    then
+    if and
+    $CAMP_DEAD_FLAG[0] == 1
+    $CAMP_DEAD_FLAG[1] == 1
+    $CAMP_DEAD_FLAG[2] == 1
+    $CAMP_DEAD_FLAG[3] == 1
+    $CAMP_DEAD_FLAG[4] == 1
+    $ZONE69_CAPTURED == 1
+    $ZONE2_CAPTURED == 1
+    $ZONE3_CAPTURED == 1    
+        then
+        if
+        $ZONE4_CAPTURED == 1        
+            then
+            if and
+            $CAMP_DEAD_FLAG[5] == 1
+            $CAMP_DEAD_FLAG[6] == 1
+            $CAMP_DEAD_FLAG[7] == 1
+            $CAMP_DEAD_FLAG[8] == 1
+            $CAMP_DEAD_FLAG[9] == 1
+            $CAMP_DEAD_FLAG[10] == 1
+            $CAMP_DEAD_FLAG[11] == 1
+                then
+                if and
+                $CAMP_DEAD_FLAG[12] == 1
+                $CAMP_DEAD_FLAG[13] == 1
+                $CAMP_DEAD_FLAG[14] == 1
+                    then
+                    
+                    if
+                    HINT_SHOWED_FLAG == 0
+                    then
+                    text.RemoveTextBox()
+                    text.ShowTextBox('GAME469')
+                    HINT_SHOWED_FLAG = 1
+                    $ARMY_PROCENT -= ARMY_PROCENT_MINUS_AFTERBASES
+                    $SURV_PROCENT -= SURV_PROCENT_MINUS_AFTERBASES
+                    $ZOMBIES_PROCENT -= ZOMBIES_PROCENT_MINUS_AFTERBASES
+                    gosub @FRACTION_WAR_TIMERS_AFRTERBASE_SET
+                    end
+                    
+                    if and
+                    $ARMY_PROCENT == 0.0
+                    $SURV_PROCENT == 0.0
+                    $ZOMBIES_PROCENT <= 30.0
+                        then
+                        jump to @WAR_MODE_WIN
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+else
+
+if
+$UNITED_VC_FLAG == 0
+then
+
+if
+$PLAYER_BANDIT_SIDE == 1
+    then
+    if and
+    $CAMP_DEAD_FLAG[0] == 1
+    $CAMP_DEAD_FLAG[1] == 1
+    $CAMP_DEAD_FLAG[4] == 1
+    $CAMP_DEAD_FLAG[7] == 1
+    $CAMP_DEAD_FLAG[8] == 1
+    $CAMP_DEAD_FLAG[9] == 1            
+        then
+        if and
+        $ZONE_ARMY_LC_CAPTURED == 1
+        $ZONE_ARMY2_LC_CAPTURED == 1
+        $ZONE_ARMY3_LC_CAPTURED == 1
+            then
+        
+            if
+            HINT_SHOWED_FLAG == 0
+            then
+            text.RemoveTextBox()
+            text.ShowTextBox('GAME469')
+            HINT_SHOWED_FLAG = 1
+            $ARMY_PROCENT -= ARMY_PROCENT_MINUS_AFTERBASES
+            $SURV_PROCENT -= SURV_PROCENT_MINUS_AFTERBASES
+            $ZOMBIES_PROCENT -= ZOMBIES_PROCENT_MINUS_AFTERBASES
+            gosub @FRACTION_WAR_TIMERS_AFRTERBASE_SET
+            end
+            
+            if and
+            $ARMY_PROCENT == 0.0
+            $SURV_PROCENT == 0.0
+            $ZOMBIES_PROCENT <= 30.0
+                then
+                jump to @WAR_MODE_WIN
+                end
+            end
+        end
+    end
+
+else
+
+if
+$PLAYER_BANDIT_SIDE == 1
+    then
+    if and
+    $CAMP_DEAD_FLAG[5] == 1
+    $CAMP_DEAD_FLAG[6] == 1
+    $CAMP_DEAD_FLAG[2] == 1
+    $CAMP_DEAD_FLAG[3] == 1
+    $ZONE_ARMY_VC_CAPTURED == 1
+    $ZONE_ARMY2_VC_CAPTURED == 1
+    $ZONE_ARMY3_VC_CAPTURED == 1        
+        then
+        
+        if
+        HINT_SHOWED_FLAG == 0
+        then
+        text.RemoveTextBox()
+        text.ShowTextBox('GAME469')
+        HINT_SHOWED_FLAG = 1
+        $ARMY_PROCENT -= ARMY_PROCENT_MINUS_AFTERBASES
+        $SURV_PROCENT -= SURV_PROCENT_MINUS_AFTERBASES
+        $ZOMBIES_PROCENT -= ZOMBIES_PROCENT_MINUS_AFTERBASES
+        gosub @FRACTION_WAR_TIMERS_AFRTERBASE_SET
+        end
+        
+        if and
+        $ARMY_PROCENT == 0.0
+        $SURV_PROCENT == 0.0
+        $ZOMBIES_PROCENT <= 30.0
+            then
+            jump to @WAR_MODE_WIN
+            end
+        end
+    end
+
+end
+
+end    
+
+if
+UNITED_MAP == 0
+then
+
+if
+$PLAYER_SWAT_SIDE == 1
+    then
+    if and    
+    $BANDITS_ZONE1_CAPTURED == 1
+    $BANDITS_ZONE2_CAPTURED == 1
+    $BANDITS_ZONE3_CAPTURED == 1 
+    $BANDITS_ZONE4_CAPTURED == 1   
+        then
+        if and
+        $ZONE69_CAPTURED == 1
+        $ZONE2_CAPTURED == 1
+        $ZONE3_CAPTURED == 1
+        $ZONE4_CAPTURED == 1        
+            then
+            
+            if
+            HINT_SHOWED_FLAG == 0
+            then
+            text.RemoveTextBox()
+            text.ShowTextBox('GAME469')
+            HINT_SHOWED_FLAG = 1
+            $ARMY_PROCENT -= ARMY_PROCENT_MINUS_AFTERBASES
+            $BANDITS_PROCENT -= BANDITS_PROCENT_MINUS_AFTERBASES
+            $ZOMBIES_PROCENT -= ZOMBIES_PROCENT_MINUS_AFTERBASES
+            gosub @FRACTION_WAR_TIMERS_AFRTERBASE_SET
+            end
+            
+            if and
+            $ARMY_PROCENT == 0.0
+            $BANDITS_PROCENT == 0.0
+            $ZOMBIES_PROCENT <= 30.0
+                then
+                jump to @WAR_MODE_WIN
+                end
+            end
+        end
+    end
+    
+else
+
+if
+$UNITED_VC_FLAG == 0
+then
+
+if
+$PLAYER_SWAT_SIDE == 1
+    then
+    if and    
+    $ZONE_ARMY_LC_CAPTURED == 1
+    $ZONE_ARMY2_LC_CAPTURED == 1
+    $ZONE_ARMY3_LC_CAPTURED == 1
+    $BANDITS_ZONE1_CAPTURED == 1
+    $BANDITS_ZONE3_CAPTURED == 1
+    $BANDITS_ZONE4_CAPTURED == 1   
+        then
+        
+        if
+        HINT_SHOWED_FLAG == 0
+        then
+        text.RemoveTextBox()
+        text.ShowTextBox('GAME469')
+        HINT_SHOWED_FLAG = 1
+        $ARMY_PROCENT -= ARMY_PROCENT_MINUS_AFTERBASES
+        $BANDITS_PROCENT -= BANDITS_PROCENT_MINUS_AFTERBASES
+        $ZOMBIES_PROCENT -= ZOMBIES_PROCENT_MINUS_AFTERBASES
+        gosub @FRACTION_WAR_TIMERS_AFRTERBASE_SET
+        end
+        
+        if and
+        $ARMY_PROCENT == 0.0
+        $BANDITS_PROCENT == 0.0
+        $ZOMBIES_PROCENT <= 30.0
+            then
+            jump to @WAR_MODE_WIN
+            end
+        end
+    end
+
+else
+
+if
+$PLAYER_SWAT_SIDE == 1
+    then
+    if and    
+    $ZONE_ARMY_VC_CAPTURED == 1
+    $ZONE_ARMY2_VC_CAPTURED == 1
+    $ZONE_ARMY3_VC_CAPTURED == 1
+    $BANDITS_ZONE2_CAPTURED == 1
+    $BANDITS_ZONE5_CAPTURED == 1
+    $BANDITS_ZONE6_CAPTURED == 1   
+        then
+        
+        if
+        HINT_SHOWED_FLAG == 0
+        then
+        text.RemoveTextBox()
+        text.ShowTextBox('GAME469')
+        HINT_SHOWED_FLAG = 1
+        $ARMY_PROCENT -= ARMY_PROCENT_MINUS_AFTERBASES
+        $BANDITS_PROCENT -= BANDITS_PROCENT_MINUS_AFTERBASES
+        $ZOMBIES_PROCENT -= ZOMBIES_PROCENT_MINUS_AFTERBASES
+        gosub @FRACTION_WAR_TIMERS_AFRTERBASE_SET 
+        end
+        
+        if and
+        $ARMY_PROCENT == 0.0
+        $BANDITS_PROCENT == 0.0
+        $ZOMBIES_PROCENT <= 30.0
+            then
+            jump to @WAR_MODE_WIN
+            end
+        end
+    end
+
+end
+
+end                                                                        
+
+jump to @WAR_MODE_LOOP
+
+:WAR_MODE_WIN
+text.ClearAll()
+
+$STATS_SHOW_GAMEMODE = 5
+create_thread @STS_SHW 
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_FRACTION_WAR_COMPLETED"
+
+if
+$CHEATED_FLAG == 0 
+then               
+0@ += 1 
+end                   
+ 
+0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_FRACTION_WAR_COMPLETED"
+0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT31_GOT"
+
+if and
+1@ == 0
+0@ >= 10
+$CHEATED_FLAG == 0
+    then
+    v$ACHIEVEMNT = "ACH31"
+    $ACHIEVEMENT_GOT_FLAG = 1    
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT31_GOT"    
+    end               
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT19_GOT"
+    
+if and
+0@ == 0    
+$CHEATED_FLAG == 0
+    then
+    v$ACHIEVEMNT = "ACH19"
+    $ACHIEVEMENT_GOT_FLAG = 1    
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT19_GOT"    
+    end  
+
+32@ = 0
+    
+while 32@ < 4000
+wait 0
+
+if
+$PLAYER_ARMY_SIDE == 1
+    then
+    text.ShowH('GMD_S66',100,1)
+    end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+    then
+    text.ShowH('GMD_S67',100,1)
+    end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+    then
+    text.ShowH('GMD_S68',100,1)
+    end
+
+if
+$PLAYER_SWAT_SIDE == 1
+    then
+    text.ShowH('GMD_S69',100,1)
+    end
+
+end        
+
+player.CanMove(PLAYER_CHAR) = false
+$SPEED_004_FLAG = 1
+015D: set_gamespeed 0.04
+create_thread @MIS_CMP
+00BA: show_text_styled GXT "GAME120" time 5000 style 5  // Beefy Baron
+wait 150
+actor.Health(PLAYER_ACTOR) = 200
+$HUD_REMOVE = 1
+cinema.Radar(0)
+fade 0 50 
+wait 50       
+cinema.Radar(1)
+$SPEED_004_FLAG = 0  
+015D: set_gamespeed 1.0 
+$SAVESTATUS = 1
+$SAVESTATUS_TRUE = 1
+
+fade 0 0
+03F0: enable_text_draw 0
+wait 1      
+
+wait 2000
+
+while $ACHIEVEMENT_GOT_FLAG == 1
+wait 0
+fade 0 0
+end   
+
+$LOADING_THEME = Audiostream.Load("AUDIO\SOUNDS\loading_theme.wav") 
+    
+Audiostream.PerformAction($LOADING_THEME, PLAY)
+Audiostream.Loop($LOADING_THEME, 1)
+0086: $MUSIC_VOLUME22 = $MUSIC_VOLUME // (float)
+$MUSIC_VOLUME22 *= 0.5
+Audiostream.Volume($LOADING_THEME) = $MUSIC_VOLUME22
+
+0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "NO_INIT_TEXT_FLAG"
+0A8C: write_memory 0x0440F73 size 1 value 255 virtual_protect 1
+0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME  
+end_thread
+
+:WAR_MODE_LOSE
+text.ClearAll()
+
+32@ = 0
+    
+while 32@ < 4000
+wait 0
+
+if
+$PLAYER_ARMY_SIDE == 1
+    then
+    text.ShowH('GMD_S96',100,1)
+    end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+    then
+    text.ShowH('GMD_S97',100,1)
+    end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+    then
+    text.ShowH('GMD_S98',100,1)
+    end
+
+if
+$PLAYER_SWAT_SIDE == 1
+    then
+    text.ShowH('GMD_S99',100,1)
+    end
+
+end        
+
+player.CanMove(PLAYER_CHAR) = false
+$SPEED_004_FLAG = 1
+015D: set_gamespeed 0.04
+create_thread @GM_OVS
+00BA: show_text_styled GXT "GAME459" time 5000 style 5  // Beefy Baron
+wait 150
+actor.Health(PLAYER_ACTOR) = 200
+$HUD_REMOVE = 1
+cinema.Radar(0)
+fade 0 50 
+wait 50       
+cinema.Radar(1)
+$SPEED_004_FLAG = 0  
+015D: set_gamespeed 1.0 
+$SAVESTATUS = 1
+$SAVESTATUS_TRUE = 1
+
+fade 0 0
+03F0: enable_text_draw 0
+wait 1      
+
+wait 2000
+
+while $ACHIEVEMENT_GOT_FLAG == 1
+wait 0
+fade 0 0
+end   
+
+$LOADING_THEME = Audiostream.Load("AUDIO\SOUNDS\loading_theme.wav") 
+    
+Audiostream.PerformAction($LOADING_THEME, PLAY)
+Audiostream.Loop($LOADING_THEME, 1)
+0086: $MUSIC_VOLUME22 = $MUSIC_VOLUME // (float)
+$MUSIC_VOLUME22 *= 0.5
+Audiostream.Volume($LOADING_THEME) = $MUSIC_VOLUME22
+
+0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "NO_INIT_TEXT_FLAG"
+0A8C: write_memory 0x0440F73 size 1 value 255 virtual_protect 1
+0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME  
+end_thread
+
+:FRACTION_WAR_TIMERS_AFRTERBASE_SET
+
+$BANDITS_SPAWN_MIN = 1
+$BANDITS_SPAWN_MAX = 3                        
+$ARMY_SPAWN_MIN = 1
+$ARMY_SPAWN_MAX = 3                        
+$FERMER_SPAWN_MIN = 1
+$FERMER_SPAWN_MAX = 3                                
+$SWAT_SPAWN_MIN = 1
+$SWAT_SPAWN_MAX = 3
+$ARMY_RHINO_SPAWN_MIN = 10
+$ARMY_RHINO_SPAWN_MAX = 20
+$ARMY_HUNTER_SPAWN_MIN = 1
+$ARMY_HUNTER_SPAWN_MAX = 3   
+$BANDIT_HELI_SPAWN_MIN = 1
+$BANDIT_HELI_SPAWN_MAX = 3
+$SWAT_HELI_SPAWN_MIN = 1
+$SWAT_HELI_SPAWN_MAX = 3
+$FERMERS_HELI_SPAWN_MIN = 1
+$FERMERS_HELI_SPAWN_MAX = 3
+
+return

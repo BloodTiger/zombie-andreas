@@ -1,0 +1,2496 @@
+:INF_WVS
+thread 'INF_WVS'
+
+if
+$INF_PLAYER_TEAM == 0
+then
+0629: change_integer_stat 259 to 1
+else
+0629: change_integer_stat 259 to 2
+end        
+        
+062A: change_float_stat 69 to 999.0
+062A: change_float_stat 70 to 999.0
+062A: change_float_stat 71 to 999.0
+062A: change_float_stat 72 to 999.0
+062A: change_float_stat 73 to 999.0
+062A: change_float_stat 74 to 999.0
+062A: change_float_stat 75 to 999.0
+062A: change_float_stat 76 to 999.0
+062A: change_float_stat 77 to 999.0
+062A: change_float_stat 78 to 999.0
+062A: change_float_stat 79 to 999.0
+
+//0915: sync_weather_with_time_and_location_instantly
+$WEATHER_SYNC_FLAG = 1
+03E6: remove_text_box
+
+if
+COOP_ACTIVE_FLAG == 1
+then
+0@ = actor.Health(PLAYER_ACTOR)
+1@ = actor.Health(COOP_ACTOR)
+005A: 1@ += 0@  // (int)
+actor.Health(COOP_ACTOR) = 1@
+end
+
+$INF_EFF_END = 0
+SURVIVAL_STARTED_FULLY_FLAG = 1
+wait 0
+create_thread @REFR_3D
+fade 1 1000
+057E: set_radar_grey 0
+
+$SPAWN_TANK_FLAG = 1
+
+//////////////////////////////////////////////////////////////////////////////
+
+if
+$INF_SIDE == 1
+then
+
+0AB9: get_mp3 $MENU_GUITARRIFF_SOUND state_to 0@
+
+if
+0@ == -1
+then
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_GUITARRIFF_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_GUITARRIFF_SOUND, 0)
+Audiostream.PerformAction($MENU_GUITARRIFF_SOUND, PLAY)
+end
+ 
+else
+
+0AB9: get_mp3 $MENU_SCIFI_SOUND state_to 0@
+if
+0@ == -1
+then
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+end
+ 
+end
+
+//////////////////////////////////////////////////////////////////////////////
+
+$HUD_REMOVE = 0 
+gosub @INF_EFF_CHECK
+$TIME2 += 150000
+0084: $TIME = $TIME2 // (int)
+$ROUND += 1   
+03C3: set_timer_to $TIME type 1 GXT 'BB_19' // global_variable  // Time
+04F7: vagina_text $ROUND type 0 line 2 GXT 'G_INF5' // global_variable  // Score     
+04F7: vagina_text $INFECTED_SCORE type 0 line 3 GXT 'G_INF0' // global_variable  // Score
+04F7: vagina_text $SURVIVERS_SCORE type 0 line 4 GXT 'G_INF1' // global_variable  // Score
+01E3: show_text_1number_styled GXT "G_INF8" number $ROUND time 2000 style 5  // NEW HIGH SCORE!!~n~~w~~1~
+wait 2000
+
+if
+$INF_SIDE == 0
+then
+
+0629: change_integer_stat 262 to 2
+
+if
+$INF_PLAYER_TEAM == 0
+then
+00BA: show_text_styled GXT "GAME155" time 2000 style 5  // Beefy Baron
+else
+00BA: show_text_styled GXT "GAME156" time 2000 style 5  // Beefy Baron
+end
+
+else
+
+0629: change_integer_stat 262 to 1
+
+if
+$INF_PLAYER_TEAM == 0
+then
+00BA: show_text_styled GXT "GAME709" time 2000 style 5  // Beefy Baron
+else
+00BA: show_text_styled GXT "GAME710" time 2000 style 5  // Beefy Baron
+end
+
+end
+
+:INF_WVS_CHECK
+wait 0
+$ZOMBIES_HORDE = 1
+$TANK_SPAWNED = 0
+$CHARGER_SPAWNED = 0
+$HUNTER_SPAWNED = 0
+$WITCH_SPAWNED = 0
+if and
+$TIME < 1
+not actor.Dead(PLAYER_ACTOR)
+816B: not  fading
+jf @INF_WVS_CHECK
+audiostream.Release(1@)
+014F: stop_timer $TIME
+0151: remove_status_text $ROUND
+0151: remove_status_text $INFECTED_SCORE
+0151: remove_status_text $SURVIVERS_SCORE
+gosub @SCORE_SET
+$INFECTED_SCORE = 0
+$SURVIVERS_SCORE = 0
+$ROUND_ENDED = 1
+$CASETTE_PLAYING_FLAG = 1
+if
+not $ROUND == 5
+jf @INF_WVS_END   
+
+player.CanMove(PLAYER_CHAR) = false
+if
+COOP_ACTIVE_FLAG == 1
+    then
+    player.CanMove(1) = false
+    end
+015D: set_gamespeed 0.04
+$SPEED_004_FLAG = 1
+$PLAY_TANK_MUSIC_FLAG = 0
+create_thread @MIS_CMP  
+01E3: show_text_1number_styled GXT "G_INF7" number $ROUND time 150 style 5  // NEW HIGH SCORE!!~n~~w~~1~     
+
+if
+not $CHEATS_ON == 1
+then
+32@ = 49
+else
+32@ = 149
+end
+
+while 32@ < 150
+wait 0
+
+gosub @VERSUS_DEATH_AFTER_ROUND_END_CHECK
+
+if
+$INF_PLAYER_TEAM == 0
+then
+02FD: show_text_2numbers_lowpriority GXT 'G_INF14' numbers $INFECTED_GENERAL_SCORE $SURVIVERS_GENERAL_SCORE time 150 flag 1  // ~b~1 Pointer!~s~ Distance ~1~.~1~m
+else
+02FD: show_text_2numbers_lowpriority GXT 'G_INF6' numbers $INFECTED_GENERAL_SCORE $SURVIVERS_GENERAL_SCORE time 150 flag 1  // ~b~1 Pointer!~s~ Distance ~1~.~1~m
+end
+
+end
+
+actor.Health(PLAYER_ACTOR) = 200
+$HUD_REMOVE = 1
+cinema.Radar(0) 
+
+//if
+//not $CHEATS_ON == 1
+//then
+fade 0 50 
+wait 50
+//end      
+
+gosub @VERSUS_DEATH_AFTER_ROUND_END_CHECK
+ 
+cinema.Radar(1)    
+$INF_EFF_END = 1
+$INFECTED_TANK = 0
+$INFECTED_HUNTER = 0  
+$INFECTED_CHARGER = 0
+$INFECTED_WITCH = 0 
+
+$SPEED_004_FLAG = 0 
+015D: set_gamespeed 1.0
+
+$ROUND_ENDED = 0
+$CASETTE_PLAYING_FLAG = 0
+$SAVESTATUS = 1
+$END_ROUND_INF = 1
+
+if
+$FP_ACTIVATED == 1
+then
+0D10: set_actor PLAYER_ACTOR alpha 255 // IF and SET
+end
+
+if
+not $CHEATS_ON == 1
+then
+wait 3000
+else
+wait 500
+end    
+
+$END_ROUND_INF = 0
+$INF_EFF_END = 0
+gosub @INF_SIDE_CHECK
+create_thread @GMD_INF
+gosub @2INFECTED_SIDE_SET
+gosub @3CHECKING_PLACE
+0209: 10@ = random_int_in_ranges 0 20
+0209: 11@ = random_int_in_ranges 0 59
+00C0: set_current_time_hours_to 10@ minutes_to 11@
+random_int 11@ 1 8
+0A8C: write_memory 0xB7014E size 1 value 11@ virtual_protect 1
+031A: remove_all_fires
+04DD: 0@ = actor PLAYER_ACTOR armour
+0@ -= 1000
+actor.AddArmour(PLAYER_ACTOR,0@)
+if
+COOP_ACTIVE_FLAG == 1
+    then
+    04DD: 0@ = actor COOP_ACTOR armour
+    0@ -= 1000
+    actor.AddArmour(COOP_ACTOR,0@)
+    end
+if
+not $CHEATS_ON == 1
+then
+wait 2000
+else
+wait 500
+end
+$SAVESTATUS = 0
+player.CanMove(PLAYER_CHAR) = true
+if
+COOP_ACTIVE_FLAG == 1
+    then
+    player.CanMove(1) = true
+    end
+camera.Restore_WithJumpCut()
+
+if
+COOP_ACTIVE_FLAG == 1
+then
+0@ = actor.Health(PLAYER_ACTOR)
+1@ = actor.Health(COOP_ACTOR)
+005A: 1@ += 0@  // (int)
+actor.Health(COOP_ACTOR) = 1@
+end
+
+if
+$INF_SIDE == 0
+then
+create_thread @DED_PEP
+else
+create_thread @DED_ZOM
+end
+
+wait 0
+create_thread @REFR_3D
+fade 1 1000
+
+$SPAWN_TANK_FLAG = 1
+
+//////////////////////////////////////////////////////////////////////////////
+
+if
+$INF_SIDE == 1
+then
+
+0AB9: get_mp3 $MENU_GUITARRIFF_SOUND state_to 0@
+
+if
+0@ == -1
+then
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_GUITARRIFF_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_GUITARRIFF_SOUND, 0)
+Audiostream.PerformAction($MENU_GUITARRIFF_SOUND, PLAY)
+end
+ 
+else
+
+0AB9: get_mp3 $MENU_SCIFI_SOUND state_to 0@
+if
+0@ == -1
+then
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+end
+ 
+end
+
+//////////////////////////////////////////////////////////////////////////////
+
+$HUD_REMOVE = 0
+gosub @INF_EFF_CHECK
+wait 1000
+$TIME2 += 90000
+0084: $TIME = $TIME2 // (int)
+$ROUND += 1
+$INFECTED_SCORE = 0
+$SURVIVERS_SCORE = 0
+03C3: set_timer_to $TIME type 1 GXT 'BB_19' // global_variable  // Time
+04F7: vagina_text $ROUND type 0 line 2 GXT 'G_INF5' // global_variable  // Score     
+04F7: vagina_text $INFECTED_SCORE type 0 line 3 GXT 'G_INF0' // global_variable  // Score
+04F7: vagina_text $SURVIVERS_SCORE type 0 line 4 GXT 'G_INF1' // global_variable  // Score
+01E3: show_text_1number_styled GXT "G_INF8" number $ROUND time 2000 style 5  // NEW HIGH SCORE!!~n~~w~~1~
+
+wait 2000
+
+if
+$INF_SIDE == 0
+then
+
+if
+$INF_PLAYER_TEAM == 0
+then
+00BA: show_text_styled GXT "GAME155" time 2000 style 5  // Beefy Baron
+else
+00BA: show_text_styled GXT "GAME156" time 2000 style 5  // Beefy Baron
+end
+
+else
+
+if
+$INF_PLAYER_TEAM == 0
+then
+00BA: show_text_styled GXT "GAME709" time 2000 style 5  // Beefy Baron
+else
+00BA: show_text_styled GXT "GAME710" time 2000 style 5  // Beefy Baron
+end
+
+end
+
+jump @INF_WVS_CHECK
+
+:INF_EFF_CHECK
+if
+$INF_SIDE == 1
+jf @INF_EFF_CHECK_RETURN     
+$INF_MODE_COLOR_A = 25
+create_thread @INF_EFF
+return
+
+:INF_EFF_CHECK_RETURN
+return
+
+:VERSUS_DEATH_AFTER_ROUND_END_CHECK
+
+if
+actor.Dead(PLAYER_ACTOR)
+then
+
+$SPEED_004_FLAG = 0 
+015D: set_gamespeed 1.0
+fade 0 250
+
+while 016B:   fading
+wait 0
+end
+
+while actor.Dead(PLAYER_ACTOR)
+wait 0
+fade 0 0
+end
+
+repeat
+wait 0
+fade 0 0
+until $ZOMBIE_DEAD == 0
+
+015D: set_gamespeed 0.04
+$SPEED_004_FLAG = 1
+
+end
+
+return
+
+:3CHECKING_PLACE
+
+random_int 2@ 0 32000
+random_int 3@ 0 32000                                            
+
+if
+UNITED_MAP == 0
+then    
+0EBD: generate_random_float_in_range_with_seed 2@ min -2747.2507 max 2833.0591 store_to 20@
+0EBD: generate_random_float_in_range_with_seed 3@ min 2680.6458 max -2172.8049 store_to 21@   
+else
+
+if
+LCVC_MAP_NUM == 0
+then
+0EBD: generate_random_float_in_range_with_seed 2@ min -2711.3311 max 45.7344 store_to 20@
+0EBD: generate_random_float_in_range_with_seed 3@ min -160.5908 max 2375.3311 store_to 21@
+else     
+0EBD: generate_random_float_in_range_with_seed 2@ min 605.8673 max 2540.8437 store_to 20@
+0EBD: generate_random_float_in_range_with_seed 3@ min -2719.9036 max 675.8437 store_to 21@
+end
+
+end   
+
+Actor.PutAt(PLAYER_ACTOR, 20@, 21@, 0.0)
+renderer 20@ 21@
+renderer2 20@ 21@ 0.0
+02CE: 22@ = ground_z_at 20@ 21@ 300.0
+Actor.PutAt(PLAYER_ACTOR, 20@, 21@, 22@)
+if
+22@ > 1.0
+jf @3CHECKING_PLACE
+
+if and
+84AD: not  actor PLAYER_ACTOR in_water
+8818: not  actor PLAYER_ACTOR in_air
+jf @3CHECKING_PLACE
+
+///////////////////////////////////////
+
+gosub @SPAWN_ZONE_CHECK
+if
+6@ == 1
+jf @3CHECKING_PLACE
+
+////////////////////////////////////
+
+wait 1
+actor.StorePos(PLAYER_ACTOR,0@,1@,2@)
+if
+2@ > 0.0
+jf @3CHECKING_PLACE
+Actor.StorePos(PLAYER_ACTOR, 2@, 3@, 4@)
+02C1: store_to 2@ 3@ 4@ car_path_coords_closest_to 2@ 3@ 4@
+Actor.StorePos(PLAYER_ACTOR, 27@, 28@, 29@)
+050A: 30@ = distance_between_XYZ 27@ 28@ 4@ and_XYZ 27@ 28@ 29@
+0092: 31@ = float 30@ to_integer
+if
+31@ < 3
+jf @3CHECKING_PLACE_ANOTHER_CHANCE_FOR_PED_PATHS
+//0915: sync_weather_with_time_and_location_instantly
+$WEATHER_SYNC_FLAG = 1
+0395: clear_area 2@ 3@ 4@ radius 0.5 clear_particles 1
+return
+
+:3CHECKING_PLACE_ANOTHER_CHANCE_FOR_PED_PATHS
+Actor.StorePos(PLAYER_ACTOR, 2@, 3@, 4@)
+02C0: store_to 2@ 3@ 4@ ped_path_coords_closest_to 2@ 3@ 4@
+Actor.StorePos(PLAYER_ACTOR, 27@, 28@, 29@)
+050A: 30@ = distance_between_XYZ 27@ 28@ 4@ and_XYZ 27@ 28@ 29@
+0092: 31@ = float 30@ to_integer
+if
+31@ < 3
+jf @RANDOM_PLACE
+//0915: sync_weather_with_time_and_location_instantly
+$WEATHER_SYNC_FLAG = 1
+0395: clear_area 2@ 3@ 4@ radius 0.5 clear_particles 1
+return
+
+:INF_WVS_END
+if
+$INF_PLAYER_TEAM == 0
+jf @INF_WVS_END2
+if
+001C:   $INFECTED_GENERAL_SCORE > $SURVIVERS_GENERAL_SCORE // (int)
+jf @INF_WVS_TEAM1_LOSE
+
+:GAMEMODE_INF_WIN
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_VERSUS_COMPLETED"
+
+if
+$CHEATED_FLAG == 0 
+then                 
+0@ += 1
+end                
+ 
+0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_VERSUS_COMPLETED" 
+
+player.CanMove(PLAYER_CHAR) = false
+if
+COOP_ACTIVE_FLAG == 1
+    then
+    player.CanMove(1) = false
+    end
+015D: set_gamespeed 0.04
+$SPEED_004_FLAG = 1
+create_thread @MIS_CMP
+
+if
+$INF_SIDE == 0
+then
+036D: show_text_2numbers_styled GXT "G_INF9" numbers $SURVIVERS_GENERAL_SCORE $INFECTED_GENERAL_SCORE time 150 style 5
+else
+036D: show_text_2numbers_styled GXT "G_INF9" numbers $INFECTED_GENERAL_SCORE $SURVIVERS_GENERAL_SCORE time 150 style 5
+end
+
+$STATS_SHOW_GAMEMODE = 2
+create_thread @STS_SHW 
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_VERSUS_COMPLETED"
+
+wait 150
+$ROUND_ENDED = 1
+$HUD_REMOVE = 1
+cinema.Radar(0)
+
+fade 0 50
+wait 50
+cinema.Radar(1)
+$SPEED_004_FLAG = 0
+015D: set_gamespeed 1.0
+$INF_EFF_END = 1
+$SAVESTATUS = 1
+$SAVESTATUS_TRUE = 1
+$END_ROUND_INF = 1
+05BE: AS_actor PLAYER_ACTOR die           
+
+0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT33_GOT"
+
+if and
+1@ == 0
+0@ >= 10    
+$CHEATED_FLAG == 0
+    then
+    v$ACHIEVEMNT = "ACH33"
+    $ACHIEVEMENT_GOT_FLAG = 1    
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT33_GOT"    
+    end   
+    
+while $ACHIEVEMENT_GOT_FLAG == 1
+wait 0
+fade 0 0
+end
+
+wait 2500  
+
+fade 0 0
+03F0: enable_text_draw 0
+wait 1
+
+while $ACHIEVEMENT_GOT_FLAG == 1
+wait 0
+fade 0 0
+end      
+
+0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "NO_INIT_TEXT_FLAG"
+0A8C: write_memory 0x0440F73 size 1 value 255 virtual_protect 1
+0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
+end_thread
+
+
+:INF_WVS_TEAM1_LOSE
+
+player.CanMove(PLAYER_CHAR) = false
+if
+COOP_ACTIVE_FLAG == 1
+    then
+    player.CanMove(1) = false
+    end
+$SPEED_004_FLAG = 1
+015D: set_gamespeed 0.04
+create_thread @GM_OVS
+
+if
+$INF_SIDE == 0
+then
+036D: show_text_2numbers_styled GXT "G_INF10" numbers $SURVIVERS_GENERAL_SCORE $INFECTED_GENERAL_SCORE time 150 style 5
+else
+036D: show_text_2numbers_styled GXT "G_INF10" numbers $INFECTED_GENERAL_SCORE $SURVIVERS_GENERAL_SCORE time 150 style 5
+end
+
+$STATS_SHOW_GAMEMODE = 2
+create_thread @STS_SHW
+wait 150
+$ROUND_ENDED = 1
+fade 0 100
+wait 100
+$SPEED_004_FLAG = 0
+015D: set_gamespeed 1.0
+$INF_EFF_END = 1
+$SAVESTATUS = 1
+$SAVESTATUS_TRUE = 1
+$END_ROUND_INF = 1
+
+wait 2500
+
+$LOADING_THEME = Audiostream.Load("AUDIO\SOUNDS\loading_theme.wav") 
+    
+Audiostream.PerformAction($LOADING_THEME, PLAY)
+Audiostream.Loop($LOADING_THEME, 1)
+0086: $MUSIC_VOLUME22 = $MUSIC_VOLUME // (float)
+$MUSIC_VOLUME22 *= 0.5
+Audiostream.Volume($LOADING_THEME) = $MUSIC_VOLUME22
+
+0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "NO_INIT_TEXT_FLAG"
+0A8C: write_memory 0x0440F73 size 1 value 255 virtual_protect 1
+0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
+end_thread
+
+:INF_WVS_END2
+if
+001C:   $SURVIVERS_GENERAL_SCORE > $INFECTED_GENERAL_SCORE // (int)
+jf @INF_WVS_TEAM2_LOSE
+
+jump @GAMEMODE_INF_WIN
+
+:INF_WVS_TEAM2_LOSE
+
+player.CanMove(PLAYER_CHAR) = false
+if
+COOP_ACTIVE_FLAG == 1
+    then
+    player.CanMove(1) = false
+    end
+$SPEED_004_FLAG = 1
+015D: set_gamespeed 0.04
+create_thread @GM_OVS
+
+036D: show_text_2numbers_styled GXT "G_INF10" numbers $SURVIVERS_GENERAL_SCORE $INFECTED_GENERAL_SCORE time 5000 style 5
+
+$STATS_SHOW_GAMEMODE = 2
+create_thread @STS_SHW
+
+wait 150
+$ROUND_ENDED = 1
+fade 0 100
+wait 100
+$SPEED_004_FLAG = 0
+015D: set_gamespeed 1.0
+$INF_EFF_END = 1
+$SAVESTATUS = 1
+$SAVESTATUS_TRUE = 1
+$END_ROUND_INF = 1  
+
+wait 2500
+
+$LOADING_THEME = Audiostream.Load("AUDIO\SOUNDS\loading_theme.wav") 
+    
+Audiostream.PerformAction($LOADING_THEME, PLAY)
+Audiostream.Loop($LOADING_THEME, 1)
+0086: $MUSIC_VOLUME22 = $MUSIC_VOLUME // (float)
+$MUSIC_VOLUME22 *= 0.5
+Audiostream.Volume($LOADING_THEME) = $MUSIC_VOLUME22
+
+0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "NO_INIT_TEXT_FLAG"
+0A8C: write_memory 0x0440F73 size 1 value 255 virtual_protect 1
+0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
+end_thread
+
+:SCORE_SET
+if
+$INF_PLAYER_TEAM == 0
+jf @SCORE_SET2
+if
+$INF_SIDE == 1
+jf @SCORE_2SET2
+0058: $INFECTED_GENERAL_SCORE += $INFECTED_SCORE // (int)
+0058: $SURVIVERS_GENERAL_SCORE += $SURVIVERS_SCORE // (int)
+return
+
+:SCORE_2SET2
+0058: $INFECTED_GENERAL_SCORE += $SURVIVERS_SCORE // (int)
+0058: $SURVIVERS_GENERAL_SCORE += $INFECTED_SCORE // (int)
+return
+
+:SCORE_SET2
+if
+$INF_SIDE == 1
+jf @SCORE_2SET22
+0058: $INFECTED_GENERAL_SCORE += $SURVIVERS_SCORE // (int)
+0058: $SURVIVERS_GENERAL_SCORE += $INFECTED_SCORE // (int)
+return
+
+:SCORE_2SET22
+0058: $INFECTED_GENERAL_SCORE += $INFECTED_SCORE // (int)
+0058: $SURVIVERS_GENERAL_SCORE += $SURVIVERS_SCORE // (int)
+return
+
+:INF_SIDE_CHECK
+if
+$INF_SIDE == 0
+then
+$INF_SIDE = 1
+else
+$INF_SIDE = 0
+end
+
+if
+$INF_SIDE == 0
+then
+$PLAYER_SURVIVOR_SIDE = 1
+else
+$PLAYER_SURVIVOR_SIDE = 0
+end
+
+return
+
+:2INFECTED_SIDE_SET
+07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 0
+082A: set_player PLAYER_CHAR able_to_use_crouch_button 1
+$TANK_VOLUME_MULTIPLIER = 0.8
+actor.SetImmunities(PLAYER_ACTOR,0,0,0,1,1)
+if
+COOP_ACTIVE_FLAG == 1
+    then
+    07CC: set_player 1 can_enter_exit_vehicles 0
+    082A: set_player 1 able_to_use_crouch_button 1
+    $TANK_VOLUME_MULTIPLIER = 0.8
+    actor.SetImmunities(COOP_ACTOR,0,0,0,1,1)
+    end
+if
+$INF_SIDE == 1
+jf @2INFECTED_SIDE_SET2
+
+create_thread @INF_SEL   
+048F: actor PLAYER_ACTOR remove_weapons 
+06AB: set_actor PLAYER_ACTOR all_weapons_hidden 1 
+0992: set_player PLAYER_CHAR weapons_scrollable 0
+0330: set_player PLAYER_CHAR infinite_run 1
+07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 0
+1@ = -1
+
+:HP_REGEN22
+wait 0  
+1@ += 1 
+0@ = Actor.Health(PLAYER_ACTOR)
+0@ += 40 
+Actor.Health(PLAYER_ACTOR) = 0@  
+if
+1@ == 10
+jf @HP_REGEN22
+
+082A: set_player PLAYER_CHAR able_to_use_crouch_button 0
+
+if
+COOP_ACTIVE_FLAG == 1
+    then
+    048F: actor COOP_ACTOR remove_weapons 
+    06AB: set_actor COOP_ACTOR all_weapons_hidden 1 
+    0992: set_player 1 weapons_scrollable 0
+    0330: set_player 1 infinite_run 1
+    07CC: set_player 1 can_enter_exit_vehicles 0
+    1@ = -1
+    
+    :HP_REGEN22_COOP
+    wait 0  
+    1@ += 1 
+    0@ = Actor.Health(COOP_ACTOR)
+    0@ += 40 
+    Actor.Health(COOP_ACTOR) = 0@  
+    if
+    1@ == 10
+    jf @HP_REGEN22_COOP
+    
+    082A: set_player 1 able_to_use_crouch_button 0
+    end
+  
+create_thread @FCHE_Z
+create_thread @INFAFIX
+if
+COOP_ACTIVE_FLAG == 1
+then
+create_thread @INFCFIX
+end
+create_thread @LCK_DR
+return
+
+:2INFECTED_SIDE_SET2
+$TANK_VOLUME_MULTIPLIER = 0.8
+actor.SetImmunities(PLAYER_ACTOR,0,1,1,0,0)
+06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0
+0992: set_player PLAYER_CHAR weapons_scrollable 1
+0A8C: write_memory 0xB793E0 size 4 value 1000.0 virtual_protect 1
+
+if and
+COOP_ACTIVE_FLAG == 1
+8800: not  in_two_players_mode
+    then    
+    actor.StorePos(PLAYER_ACTOR,1@,2@,3@)
+    COOP_ACTOR = actor.Create(26,0,1@,2@,3@)
+    create_thread @PED_BKP COOP_ACTOR 371
+    0631: put_actor COOP_ACTOR in_group PLAYER_GROUP
+    0EA0: set_actor_second_player COOP_ACTOR enable_camera 1 separate_cars 0
+    0084: $SURV_IN_CAR = COOP_ACTOR // (int)                                                                   
+    end
+
+if
+COOP_ACTIVE_FLAG == 1
+    then
+    28@ = 69
+    actor.SetImmunities(COOP_ACTOR,0,1,1,0,0)
+    06AB: set_actor COOP_ACTOR all_weapons_hidden 0
+    0992: set_player 1 weapons_scrollable 1
+    0A8C: write_memory 0xB793E0 size 4 value 1000.0 virtual_protect 1
+    end    
+
+:3CHECKING_MODEL
+wait 0                      
+
+if
+UNITED_MAP == 0
+then
+0209: $RANDOM_MODE_MODEL = random_int_in_ranges 7 285
+else
+
+if
+LCVC_MAP_NUM == 1
+then
+
+if
+STORIES_MAP == 0
+then
+0209: $RANDOM_MODE_MODEL = random_int_in_ranges MINID_VC_SKIN MAXID_VC_SKIN
+else
+0209: $RANDOM_MODE_MODEL = random_int_in_ranges MINID_VCS_SKIN MAXID_VCS_SKIN
+end
+
+else
+
+if
+STORIES_MAP == 0
+then
+0209: $RANDOM_MODE_MODEL = random_int_in_ranges MINID_III_SKIN MAXID_III_SKIN
+else
+0209: $RANDOM_MODE_MODEL = random_int_in_ranges MINID_LCS_SKIN MAXID_LCS_SKIN
+end
+
+end
+
+end
+
+///////////////////////////
+
+random_int 0@ = MIN_SKIN2_GEN MAX_SKIN2_GEN
+if and
+0@ == SKIN2_GEN_SET    
+UNITED_MAP == 0
+    then
+                    
+    :3CHECKING_MODEL_NEWSKINS
+    if
+    0E4D: random_percent NEWSKINS2_GEN_PERCENT
+    then
+    random_int $RANDOM_MODE_MODEL $MIN_SKIN2 $MAX_SKIN2
+    else
+    random_int $RANDOM_MODE_MODEL $MIN_SKIN $MAX_SKIN
+    end
+    
+    if or
+    $FP_ON == 1
+    $MUTATION_ACTIVE == 3
+    then
+    0AD3: v$FP_FILE = format "%d" $RANDOM_MODE_MODEL
+    0AF0: 1@ = get_int_from_ini_file "data/skins.ini" section "SKINS" key v$FP_FILE
+    if or
+    not 1@ == 1
+    FP_DEACTIVATED == 1
+    jf @3CHECKING_MODEL_NEWSKINS
+    end    
+    
+    0AD3: v$FP_FILE = format "%d" $RANDOM_MODE_MODEL
+    0AF0: 0@ = get_int_from_ini_file "data\skins.ini" section "BODYTYPE" key v$FP_FILE
+    create_thread @FAT_SWC 0@
+    
+    if
+    not 28@ == 68
+    then
+    
+    while not model.Available($RANDOM_MODE_MODEL)    
+    model.Load($RANDOM_MODE_MODEL)
+    mload
+    if
+    not model.Available($RANDOM_MODE_MODEL)
+        then
+        wait 0
+        model.Load($RANDOM_MODE_MODEL)
+        mload
+        end    
+    end
+     
+    09C7: change_player PLAYER_CHAR model_to $RANDOM_MODE_MODEL
+    
+    0D10: set_actor PLAYER_ACTOR alpha 255 // IF and SET
+     
+    v$NAME1 = "N_ME" // v$ // Sunday
+    0665: get_actor PLAYER_ACTOR model_to 1@ 
+    if
+    1@ > 10000
+    then
+    05A9: v$NAME1 = "N_" // v$ // Sunday
+    end
+    0AD3: v$NAME2 = format "%d" 1@
+    098B: v$NAME3 = v$NAME1 + v$NAME2 // all string variables
+    
+    if
+    FREEMODE_CUSTOM_NAME == 1 
+    then
+    06D1: v$NAME3 = "F_NAME" // v$ = string
+    end
+    
+    else
+    
+    while not model.Available($RANDOM_MODE_MODEL)    
+    model.Load($RANDOM_MODE_MODEL)
+    mload
+    if
+    not model.Available($RANDOM_MODE_MODEL)
+        then
+        wait 0
+        model.Load($RANDOM_MODE_MODEL)
+        mload
+        end    
+    end
+     
+    09C7: change_player 1 model_to $RANDOM_MODE_MODEL
+    0D10: set_actor COOP_ACTOR alpha 255 // IF and SET    
+    end
+    
+    if and
+    COOP_ACTIVE_FLAG == 1
+    28@ == 69
+        then
+        28@ = 68
+        jump @3CHECKING_MODEL 
+        end
+        
+    3@ = 0
+    
+    if
+    COOP_ACTIVE_FLAG == 1
+        then
+        28@ = 69
+        end
+    
+    jump @3CHECKING_WEAPON    
+                
+    end
+
+///////////////////////////
+ 
+if
+07DE:   model $RANDOM_MODE_MODEL exists  // versionB
+jf @3CHECKING_MODEL
+
+0AD3: v$FP_FILE = format "%d" $RANDOM_MODE_MODEL
+0AF0: 1@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key v$FP_FILE
+if
+not 1@ == 1
+jf @3CHECKING_MODEL
+
+if or
+$FP_ON == 1
+$MUTATION_ACTIVE == 3
+then
+0AD3: v$FP_FILE = format "%d" $RANDOM_MODE_MODEL
+0AF0: 1@ = get_int_from_ini_file "data/skins.ini" section "SKINS" key v$FP_FILE
+if or
+not 1@ == 1
+FP_DEACTIVATED == 1
+jf @3CHECKING_MODEL
+end
+
+if
+not 28@ == 68
+then
+
+while not model.Available($RANDOM_MODE_MODEL)    
+model.Load($RANDOM_MODE_MODEL)
+mload
+if
+not model.Available($RANDOM_MODE_MODEL)
+    then
+    wait 0
+    model.Load($RANDOM_MODE_MODEL)
+    mload
+    end    
+end
+
+09C7: change_player PLAYER_CHAR model_to $RANDOM_MODE_MODEL
+0D10: set_actor PLAYER_ACTOR alpha 255 // IF and SET
+
+v$NAME1 = "N_ME" // v$ // Sunday
+0665: get_actor PLAYER_ACTOR model_to 1@
+if
+1@ > 10000
+then
+05A9: v$NAME2 = "N_" // v$ // Sunday
+end
+0AD3: v$NAME2 = format "%d" 1@
+098B: v$NAME3 = v$NAME1 + v$NAME2 // all string variables
+
+if
+FREEMODE_CUSTOM_NAME == 1 
+then
+06D1: v$NAME3 = "F_NAME" // v$ = string
+end
+
+else
+
+while not model.Available($RANDOM_MODE_MODEL)    
+model.Load($RANDOM_MODE_MODEL)
+mload
+if
+not model.Available($RANDOM_MODE_MODEL)
+    then
+    wait 0
+    model.Load($RANDOM_MODE_MODEL)
+    mload
+    end    
+end
+            
+09C7: change_player 1 model_to $RANDOM_MODE_MODEL
+0D10: set_actor COOP_ACTOR alpha 255 // IF and SET
+
+end
+
+if and
+COOP_ACTIVE_FLAG == 1
+28@ == 69
+    then
+    28@ = 68
+    jump @3CHECKING_MODEL 
+    end
+    
+3@ = 0
+
+if
+COOP_ACTIVE_FLAG == 1
+    then
+    28@ = 69
+    end
+
+jump @3CHECKING_WEAPON
+
+:3CHECKING_WEAPON 
+
+if
+UNITED_MAP == 0
+then
+random_int 11@ MIN_WEAP_GEN to MAX_WEAP_GEN
+end
+
+if and
+not 11@ == WEAP_GEN_SET
+UNITED_MAP == 0
+then
+0209: $RANDOM_WEAPON = random_int_in_ranges 22 35 
+else
+0209: $RANDOM_WEAPON = random_int_in_ranges MIN_WEAPON_NUM MAX_WEAPON_NUM
+end
+
+if
+UNITED_MAP == 1
+then
+
+if 
+LCVC_MAP_NUM == 1
+then
+
+if
+STORIES_MAP == 0
+then
+0209: $RANDOM_WEAPON = random_int_in_ranges MINID_VC_WEAP MAXID_VC_WEAP
+
+if
+$RANDOM_WEAPON == 142
+    then
+    if
+    0E4D: random_percent 50
+        then
+        $RANDOM_WEAPON = 28
+        end
+    end
+
+else
+0209: $RANDOM_WEAPON = random_int_in_ranges 195 207
+
+if
+$RANDOM_WEAPON == 198
+    then
+    if
+    0E4D: random_percent 50
+        then
+        $RANDOM_WEAPON = 28
+        end
+    end
+
+end
+
+else
+
+if
+STORIES_MAP == 0
+then
+0209: $RANDOM_WEAPON = random_int_in_ranges MINID_III_WEAP MAXID_III_WEAP
+else
+0209: $RANDOM_WEAPON = random_int_in_ranges 165 177
+
+if
+$RANDOM_WEAPON == 168
+    then
+    if
+    0E4D: random_percent 50
+        then
+        $RANDOM_WEAPON = 28
+        end
+    end
+
+end
+
+end
+
+end
+
+if and
+not $RANDOM_WEAPON == 19 
+not $RANDOM_WEAPON == 20 
+not $RANDOM_WEAPON == 21 
+not $RANDOM_WEAPON == 10 
+not $RANDOM_WEAPON == 11 
+not $RANDOM_WEAPON == 12 
+not $RANDOM_WEAPON == 13 
+jf @3CHECKING_WEAPON
+if and
+not $RANDOM_WEAPON == 7 
+not $RANDOM_WEAPON == 8 
+not $RANDOM_WEAPON == 2 
+not $RANDOM_WEAPON == 1    
+jf @3CHECKING_WEAPON
+if and
+not $RANDOM_WEAPON == 119
+not $RANDOM_WEAPON == 115
+not $RANDOM_WEAPON == 114
+not $RANDOM_WEAPON == 118
+not $RANDOM_WEAPON == 132
+not $RANDOM_WEAPON == 133
+not $RANDOM_WEAPON == 134
+not $RANDOM_WEAPON == 135
+jf @3CHECKING_WEAPON
+if and
+not $RANDOM_WEAPON == 148
+not $RANDOM_WEAPON == 149
+not $RANDOM_WEAPON == 150
+not $RANDOM_WEAPON == 92
+not $RANDOM_WEAPON == 93
+not $RANDOM_WEAPON == 94
+jf @3CHECKING_WEAPON
+
+0781: get_weapon_with_ID $RANDOM_WEAPON model_to 11@ 
+if
+07DE:   model 11@ exists  // versionB
+jf @3CHECKING_WEAPON
+
+if
+not 28@ == 68
+then
+
+048F: actor PLAYER_ACTOR remove_weapons
+
+create_thread @PED_BKP PLAYER_ACTOR 371
+
+while not model.Available(11@)    
+model.Load(11@)
+mload
+if
+not model.Available(11@)
+    then
+    wait 0
+    model.Load(11@)
+    mload
+    end    
+end
+
+Actor.GiveWeaponAndAmmo(PLAYER_ACTOR, $RANDOM_WEAPON, 99999)
+
+gosub @RANDOM_MELEE22
+gosub @RANDOM_THROWING_WEAPON22
+
+else
+
+048F: actor COOP_ACTOR remove_weapons
+
+create_thread @PED_BKP COOP_ACTOR 371
+
+while not model.Available(11@)    
+model.Load(11@)
+mload
+if
+not model.Available(11@)
+    then
+    wait 0
+    model.Load(11@)
+    mload
+    end    
+end
+
+Actor.GiveWeaponAndAmmo(COOP_ACTOR, $RANDOM_WEAPON, 99999)
+
+gosub @RANDOM_MELEE22
+gosub @RANDOM_THROWING_WEAPON22
+
+end
+
+if and
+COOP_ACTIVE_FLAG == 1
+28@ == 69
+    then
+    28@ = 68
+    jump @3CHECKING_WEAPON 
+    end    
+
+if
+COOP_ACTIVE_FLAG == 1
+    then
+    28@ = 69
+    end
+
+jump @3CHECKING_STATS
+
+:RANDOM_MELEE22
+wait 0 
+if
+UNITED_MAP == 0
+then
+0209: $RANDOM_MELEE_WEAPON = random_int_in_ranges 2 16 
+else
+
+if
+$UNITED_VC_FLAG == 1
+then
+
+if
+STORIES_MAP == 0
+then
+0209: $RANDOM_MELEE_WEAPON = random_int_in_ranges 122 131
+else
+0209: $RANDOM_MELEE_WEAPON = random_int_in_ranges 185 194
+end
+
+else
+
+if
+STORIES_MAP == 0
+then
+$RANDOM_MELEE_WEAPON = 110
+else
+0209: $RANDOM_MELEE_WEAPON = random_int_in_ranges 155 164
+end
+
+end
+
+end
+0781: get_weapon_with_ID $RANDOM_MELEE_WEAPON model_to 11@ 
+if and
+07DE:   model 11@ exists  // versionB  
+not $RANDOM_MELEE_WEAPON == 14      
+jf @RANDOM_MELEE22 
+
+while not model.Available(11@)    
+model.Load(11@)
+mload
+if
+not model.Available(11@)
+    then
+    wait 0
+    model.Load(11@)
+    mload
+    end    
+end
+
+if
+not 28@ == 68
+then
+Actor.GiveWeaponAndAmmo(PLAYER_ACTOR, $RANDOM_MELEE_WEAPON, 1)
+else
+Actor.GiveWeaponAndAmmo(COOP_ACTOR, $RANDOM_MELEE_WEAPON, 1)
+end
+
+return
+
+:RANDOM_THROWING_WEAPON22
+
+if
+UNITED_MAP == 0
+then 
+0209: $RANDOM_THROWING_WEAPON = random_int_in_ranges 16 19
+else
+
+if
+$UNITED_VC_FLAG == 1
+then
+
+if
+STORIES_MAP == 0
+then
+0209: $RANDOM_THROWING_WEAPON = random_int_in_ranges 132 135
+else
+0209: $RANDOM_THROWING_WEAPON = random_int_in_ranges 207 209 
+end
+
+else
+
+if
+STORIES_MAP == 0
+then
+0209: $RANDOM_THROWING_WEAPON = random_int_in_ranges 115 119
+else
+0209: $RANDOM_THROWING_WEAPON = random_int_in_ranges 177 180
+end
+
+end
+
+end
+ 
+if or
+$RANDOM_THROWING_WEAPON == 16 
+$RANDOM_THROWING_WEAPON == 18
+$RANDOM_THROWING_WEAPON == 132
+$RANDOM_THROWING_WEAPON == 134
+$RANDOM_THROWING_WEAPON == 115
+$RANDOM_THROWING_WEAPON == 118
+    then
+    else
+    if or
+    $RANDOM_THROWING_WEAPON == 177 
+    $RANDOM_THROWING_WEAPON == 179
+    $RANDOM_THROWING_WEAPON == 207
+    $RANDOM_THROWING_WEAPON == 209
+        then
+        else
+        jump to @RANDOM_THROWING_WEAPON22
+        end
+    end
+
+0781: get_weapon_with_ID $RANDOM_THROWING_WEAPON model_to 11@ 
+if
+07DE:   model 11@ exists  // versionB
+jf @RANDOM_THROWING_WEAPON22 
+gosub @CHECKING_AMMO22
+
+while not model.Available(11@)    
+model.Load(11@)
+mload
+if
+not model.Available(11@)
+    then
+    wait 0
+    model.Load(11@)
+    mload
+    end    
+end
+
+if
+not 28@ == 68
+then
+Actor.GiveWeaponAndAmmo(PLAYER_ACTOR, $RANDOM_THROWING_WEAPON, 12@)
+else
+Actor.GiveWeaponAndAmmo(COOP_ACTOR, $RANDOM_THROWING_WEAPON, 12@)
+end
+
+return
+
+:CHECKING_AMMO22
+
+if or    
+$RANDOM_THROWING_WEAPON == 16
+$RANDOM_THROWING_WEAPON == 132
+$RANDOM_THROWING_WEAPON == 115
+$RANDOM_THROWING_WEAPON == 177
+$RANDOM_THROWING_WEAPON == 207
+$RANDOM_THROWING_WEAPON == 133
+    then
+    0209: 12@ = random_int_in_ranges $MIN_AMMO $MAX_AMMO   
+    0093: 12@ = integer 12@ to_float   
+    random_float 13@ 0.05 0.25
+    006B: 12@ *= 13@  // (float) 
+    0092: 12@ = float 12@ to_integer
+    return
+    end
+    
+if or    
+$RANDOM_THROWING_WEAPON == 18
+$RANDOM_THROWING_WEAPON == 134
+$RANDOM_THROWING_WEAPON == 118
+$RANDOM_THROWING_WEAPON == 179
+$RANDOM_THROWING_WEAPON == 209
+$RANDOM_THROWING_WEAPON == 178
+$RANDOM_THROWING_WEAPON == 208
+    then
+    0209: 12@ = random_int_in_ranges $MIN_AMMO $MAX_AMMO   
+    0093: 12@ = integer 12@ to_float   
+    random_float 13@ 0.05 0.25
+    006B: 12@ *= 13@  // (float) 
+    0092: 12@ = float 12@ to_integer
+    return
+    end   
+    
+return    
+
+:3CHECKING_STATS
+0208: 10@ = random_int_in_ranges 0.0 999.0
+062A: change_float_stat 69 to 10@
+0208: 10@ = random_int_in_ranges 0.0 999.0
+062A: change_float_stat 70 to 10@
+0208: 10@ = random_int_in_ranges 0.0 999.0
+062A: change_float_stat 71 to 10@
+0208: 10@ = random_int_in_ranges 0.0 999.0
+062A: change_float_stat 72 to 10@
+0208: 10@ = random_int_in_ranges 0.0 999.0
+062A: change_float_stat 73 to 10@
+0208: 10@ = random_int_in_ranges 0.0 999.0
+062A: change_float_stat 74 to 10@
+0208: 10@ = random_int_in_ranges 0.0 999.0
+062A: change_float_stat 75 to 10@
+0208: 10@ = random_int_in_ranges 0.0 999.0
+062A: change_float_stat 76 to 10@
+0208: 10@ = random_int_in_ranges 0.0 999.0
+062A: change_float_stat 77 to 10@
+0208: 10@ = random_int_in_ranges 0.0 999.0
+062A: change_float_stat 78 to 10@
+0208: 10@ = random_int_in_ranges 0.0 999.0
+062A: change_float_stat 79 to 10@
+03E6: remove_text_box
+actor.Health(PLAYER_ACTOR) = 200 
+actor.SetImmunities(PLAYER_ACTOR,0,1,1,0,0)
+if
+COOP_ACTIVE_FLAG == 1
+    then
+    actor.Health(COOP_ACTOR) = 200 
+    actor.SetImmunities(COOP_ACTOR,0,1,1,0,0)
+    end
+jump @3CREATE_PLAYER
+
+:3CREATE_PLAYER
+//0915: sync_weather_with_time_and_location_instantly
+$WEATHER_SYNC_FLAG = 1
+$TANK_MUSIC_PLAY = 1
+01B9: set_actor PLAYER_ACTOR armed_weapon_to $RANDOM_WEAPON
+0208: $RANDOM_ANGLE = random_float_in_ranges 0.0 360.0
+actor.Angle(PLAYER_ACTOR) = $RANDOM_ANGLE
+if
+COOP_ACTIVE_FLAG == 1
+    then
+    01B9: set_actor COOP_ACTOR armed_weapon_to $RANDOM_WEAPON
+    0208: $RANDOM_ANGLE = random_float_in_ranges 0.0 360.0
+    actor.Angle(COOP_ACTOR) = $RANDOM_ANGLE
+    end
+create_thread @REFR_3D
+0581: toggle_radar 1 
+0826: enable_hud 1 
+camera.Restore_WithJumpCut()
+0A8C: write_memory 0x96916C size 1 value 0 virtual_protect 0
+07FE: set_actor PLAYER_ACTOR fighting_style_to 4 moves 6
+0@ = 0x609A4E 
+0A8C: write_memory 0@ size 4 value 81036937 virtual_protect 1 
+0@ += 4 
+0A8C: write_memory 0@ size 2 value 0 virtual_protect 1
+actor.SetWalkStyle(PLAYER_ACTOR,"player")
+06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0
+0992: set_player PLAYER_CHAR weapons_scrollable 1
+if
+COOP_ACTIVE_FLAG == 1
+    then
+    07FE: set_actor COOP_ACTOR fighting_style_to 4 moves 6
+    0@ = 0x609A4E 
+    0A8C: write_memory 0@ size 4 value 81036937 virtual_protect 1 
+    0@ += 4 
+    0A8C: write_memory 0@ size 2 value 0 virtual_protect 1
+    actor.SetWalkStyle(COOP_ACTOR,"player")
+    06AB: set_actor COOP_ACTOR all_weapons_hidden 0
+    0992: set_player COOP_ACTOR weapons_scrollable 1
+    end
+return
+
+:DED_ZOM 
+thread 'DED_ZOM'
+
+$FIST_HUD_ALWAYS = 1
+
+:DEAD_ZOMBIE_START
+
+repeat
+wait 0
+
+if or
+$END_ROUND_INF == 0
+$INF_SIDE == 0
+jf @DEAD_ZOMBIE_END_THREAD
+
+if or
+actor.Dead(PLAYER_ACTOR)
+0117:   player PLAYER_CHAR wasted
+    then
+    break
+    end
+    
+if
+COOP_ACTIVE_FLAG == 1
+    then
+    
+    if
+    8184:   actor COOP_ACTOR health < 1
+        then
+        05BE: AS_actor COOP_ACTOR die
+        end
+        
+    if
+    04AD:  actor COOP_ACTOR in_water
+        then
+        
+        if or
+        actor.Animation(COOP_ACTOR) == "Swim_Tread"
+        actor.Animation(COOP_ACTOR) == "Swim_Breast"
+        actor.Animation(COOP_ACTOR) == "SWIM_crawl"
+        actor.Animation(COOP_ACTOR) == "Swim_Dive_Under"
+        actor.Animation(COOP_ACTOR) == "Swim_Glide"
+        actor.Animation(COOP_ACTOR) == "Swim_jumpout"
+        actor.Animation(COOP_ACTOR) == "Swim_Under"
+        then
+//        0851: set_actor COOP_ACTOR decrease_health_by 400 affect_armour 1
+        0829: actor COOP_ACTOR perform_animation "DROWN" IFP_file "PED" rate 4.0 time 0 and_dies
+        end
+        
+        end    
+    
+    if or
+    actor.Dead(COOP_ACTOR)
+    0117:   player 1 wasted
+        then
+        break
+        end
+    end    
+    
+if
+8184:   actor PLAYER_ACTOR health < 1
+    then
+    05BE: AS_actor PLAYER_ACTOR die
+    end
+    
+if
+04AD:  actor PLAYER_ACTOR in_water
+    then
+    
+    if or
+    actor.Animation(PLAYER_ACTOR) == "Swim_Tread"
+    actor.Animation(PLAYER_ACTOR) == "Swim_Breast"
+    actor.Animation(PLAYER_ACTOR) == "SWIM_crawl"
+    actor.Animation(PLAYER_ACTOR) == "Swim_Dive_Under"
+    actor.Animation(PLAYER_ACTOR) == "Swim_Glide"
+    actor.Animation(PLAYER_ACTOR) == "Swim_jumpout"
+    actor.Animation(PLAYER_ACTOR) == "Swim_Under"
+    then
+//    0851: set_actor PLAYER_ACTOR decrease_health_by 400 affect_armour 1
+    0829: actor PLAYER_ACTOR perform_animation "DROWN" IFP_file "PED" rate 4.0 time 0 and_dies
+    end
+    
+    end        
+
+until false
+
+if
+COOP_ACTIVE_FLAG == 1
+then
+06C9: remove_actor COOP_ACTOR from_group
+0EA1: disable_second_player_restore_camera 1
+end
+
+cinema.Widescreen(1)
+$HUD_REMOVE = 1
+$HUD_OFF_INST = 1
+$PLAY_TANK_MUSIC_FLAG = 0
+
+Audiostream.Volume($MENU_ENTER05_SOUND) = $SOUNDS_VOLUME 
+Audiostream.Loop($MENU_ENTER05_SOUND, 0)
+Audiostream.PerformAction($MENU_ENTER05_SOUND, PLAY)   
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_INFECTED_DEATHS"
+
+if
+$CHEATED_FLAG == 0 
+then                 
+0@ += 1
+end                
+ 
+0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_INFECTED_DEATHS"  
+0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT45_GOT"
+    
+if and
+1@ == 0
+0@ >= 100
+    then
+    v$ACHIEVEMNT = "ACH45"
+    $ACHIEVEMENT_GOT_FLAG = 1    
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT45_GOT"    
+    end          
+
+$ZOMBIE_DEAD = 1
+$HUD_REMOVE = 1
+$CASETTE_PLAYING_FLAG = 1   
+
+text.ClearAll()
+
+if
+$INFECTED_TANK == 1
+then
+$SURVIVERS_SCORE += 20
+text.Show1Number('G_INF3',20,2500,1)
+end
+
+if
+$INFECTED_HUNTER == 1
+then
+$SURVIVERS_SCORE += 10
+text.Show1Number('G_INF3',10,2500,1)
+end
+
+if or
+$INFECTED_CHARGER == 1
+$INFECTED_WITCH == 1
+then
+$SURVIVERS_SCORE += 15
+text.Show1Number('G_INF3',15,2500,1)
+end
+
+$VERSUS_DEAD_COUNT += 1
+
+gosub @INFECTED_DIE_SOUND
+
+Audiostream.LinkToActor(25@, PLAYER_ACTOR)
+Audiostream.PerformAction(25@, PLAY)
+Audiostream.Volume(25@) = $SOUNDS_VOLUME  
+
+if
+actor.Dead(PLAYER_ACTOR)
+then
+0970: teleport_in_override_restart // 016Eh
+else
+fade 0 250
+wait 250
+jump to @CHECKING_PLACE_RESPAWN
+end
+
+:DEAD_ZOMBIE2
+wait 0
+if 
+00FE:   actor PLAYER_ACTOR sphere 0 in_sphere 28.0 28.0 2800.0 radius 15.0 15.0 15.0
+jf @DEAD_ZOMBIE2
+fade 0 0
+text.ClearAll()
+
+:CHECKING_PLACE_RESPAWN
+wait 0
+
+//GET SEEDS
+0376: 0@ = create_random_actor_at 0.0 0.0 0.0
+0E0B: mark_char_as_needed 0@
+0EC8: get_char_random_seed 0@ store_to 2@
+actor.DestroyInstantly(0@)
+0376: 0@ = create_random_actor_at 0.0 0.0 0.0
+0E0B: mark_char_as_needed 0@
+0EC8: get_char_random_seed 0@ store_to 3@
+actor.DestroyInstantly(0@)
+
+if
+UNITED_MAP == 0
+then    
+//0208: 20@ = random_float_in_ranges -2747.2507 2833.0591 
+//0208: 21@ = random_float_in_ranges 2680.6458 -2172.8049
+0EBD: generate_random_float_in_range_with_seed 2@ min -2747.2507 max 2833.0591 store_to 20@
+0EBD: generate_random_float_in_range_with_seed 3@ min 2680.6458 max -2172.8049 store_to 21@   
+else
+
+if
+LCVC_MAP_NUM == 0
+then
+//0208: 20@ = random_float_in_ranges -1491.6094 45.7344 
+//0208: 21@ = random_float_in_ranges -160.5908 2375.3311
+0EBD: generate_random_float_in_range_with_seed 2@ min -1491.6094 max 45.7344 store_to 20@
+0EBD: generate_random_float_in_range_with_seed 3@ min -160.5908 max 2375.3311 store_to 21@
+else     
+//0208: 20@ = random_float_in_ranges 605.8673 2540.8437 
+//0208: 21@ = random_float_in_ranges -2719.9036 675.8437
+0EBD: generate_random_float_in_range_with_seed 2@ min 605.8673 max 2540.8437 store_to 20@
+0EBD: generate_random_float_in_range_with_seed 3@ min -2719.9036 max 675.8437 store_to 21@
+end
+
+end 
+
+Actor.PutAt(PLAYER_ACTOR,20@, 21@, -100.0)
+04E4: refresh_game_renderer_at 20@ 21@
+wait 1
+22@ = -100.0
+Actor.PutAt(PLAYER_ACTOR,20@, 21@, -100.0)
+wait 1
+actor.StorePos(PLAYER_ACTOR,20@,21@,22@)
+03CB: set_rendering_origin_at 20@ 21@ 22@
+create_thread @REFR_3D
+
+if
+UNITED_MAP == 0
+then
+if and
+8583: not  player PLAYER_CHAR in_zone "ARMY1"
+8583: not  player PLAYER_CHAR in_zone "ARMY2"
+8583: not  player PLAYER_CHAR in_zone "ARMY3"
+8583: not  player PLAYER_CHAR in_zone "ARMY4"
+8583: not  player PLAYER_CHAR in_zone "BNTDZN1"
+8583: not  player PLAYER_CHAR in_zone "BNTDZN2"
+8583: not  player PLAYER_CHAR in_zone "BNTDZN3"
+8583: not  player PLAYER_CHAR in_zone "BNTDZN4"
+jf @CHECKING_PLACE_RESPAWN
+if and
+8583: not  player PLAYER_CHAR in_zone "MTCHI1"
+8583: not  player PLAYER_CHAR in_zone "MTCHI2"
+8583: not  player PLAYER_CHAR in_zone "MTCHI3"
+8583: not  player PLAYER_CHAR in_zone "MTCHI4"
+8583: not  player PLAYER_CHAR in_zone "VAIR1"
+8583: not  player PLAYER_CHAR in_zone "VAIR2"
+8583: not  player PLAYER_CHAR in_zone "SFAIR1"
+8583: not  player PLAYER_CHAR in_zone "SFAIR2"
+jf @CHECKING_PLACE_RESPAWN
+if and
+8583: not  player PLAYER_CHAR in_zone "SFAIR3"
+8583: not  player PLAYER_CHAR in_zone "SFAIR4"
+8583: not  player PLAYER_CHAR in_zone "SFAIR5"
+8583: not  player PLAYER_CHAR in_zone "LAIR1"
+8583: not  player PLAYER_CHAR in_zone "LAIR2b"
+8583: not  player PLAYER_CHAR in_zone "LAIR2a"
+jf @CHECKING_PLACE_RESPAWN  
+if and
+84AD: not  actor PLAYER_ACTOR in_water
+8818: not  actor PLAYER_ACTOR in_air
+jf @CHECKING_PLACE_RESPAWN 
+else
+if and
+8583: not  player PLAYER_CHAR in_zone "APORTN"
+8583: not  player PLAYER_CHAR in_zone "APORTS"
+8583: not  player PLAYER_CHAR in_zone "ARMYBAS"
+8583: not  player PLAYER_CHAR in_zone "DOCKS"
+8583: not  player PLAYER_CHAR in_zone "GOLFC"
+84AD: not  actor PLAYER_ACTOR in_water
+8818: not  actor PLAYER_ACTOR in_air
+jf @CHECKING_PLACE_RESPAWN
+if and
+8583: not  player PLAYER_CHAR in_zone "AIRPOR1"
+8583: not  player PLAYER_CHAR in_zone "AIRPOR2"
+8583: not  player PLAYER_CHAR in_zone "AIRPORT"
+jf @CHECKING_PLACE_RESPAWN
+end
+
+actor.StorePos(PLAYER_ACTOR,0@,1@,2@)
+if
+2@ > 0.0
+jf @CHECKING_PLACE_RESPAWN
+Actor.StorePos(PLAYER_ACTOR, 2@, 3@, 4@)
+02C1: store_to 2@ 3@ 4@ car_path_coords_closest_to 2@ 3@ 4@
+Actor.StorePos(PLAYER_ACTOR, 27@, 28@, 29@)
+050A: 30@ = distance_between_XYZ 27@ 28@ 4@ and_XYZ 27@ 28@ 29@
+0092: 31@ = float 30@ to_integer
+if
+31@ < 20
+jf @CHECKING_PLACE_RESPAWN
+jump @RANDOM_TIME_RESPAWN
+
+:DEAD_ZOMBIE22
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @DEAD_ZOMBIE_START
+if
+84AD: not  actor PLAYER_ACTOR in_water
+jf @DEAD_ZOMBIE_WATER
+$SLOW_BAR_MAX = 38.1
+0395: clear_area 2@ 3@ 4@ radius 0.5 clear_particles 1
+audiostream.Release(25@)
+jump @DEAD_ZOMBIE_START
+
+:DEAD_ZOMBIE_WATER
+
+if or
+actor.Animation(PLAYER_ACTOR) == "Swim_Tread"
+actor.Animation(PLAYER_ACTOR) == "Swim_Breast"
+actor.Animation(PLAYER_ACTOR) == "SWIM_crawl"
+actor.Animation(PLAYER_ACTOR) == "Swim_Dive_Under"
+actor.Animation(PLAYER_ACTOR) == "Swim_Glide"
+actor.Animation(PLAYER_ACTOR) == "Swim_jumpout"
+actor.Animation(PLAYER_ACTOR) == "Swim_Under"
+then
+0851: set_actor PLAYER_ACTOR decrease_health_by 400 affect_armour 1
+end
+
+if
+COOP_ACTIVE_FLAG == 1
+then
+if or
+actor.Animation(COOP_ACTOR) == "Swim_Tread"
+actor.Animation(COOP_ACTOR) == "Swim_Breast"
+actor.Animation(COOP_ACTOR) == "SWIM_crawl"
+actor.Animation(COOP_ACTOR) == "Swim_Dive_Under"
+actor.Animation(COOP_ACTOR) == "Swim_Glide"
+actor.Animation(COOP_ACTOR) == "Swim_jumpout"
+actor.Animation(COOP_ACTOR) == "Swim_Under"
+    then
+    0851: set_actor COOP_ACTOR decrease_health_by 400 affect_armour 1
+    end
+end
+
+jump @DED_ZOM
+
+:INFECTED_DIE_SOUND
+
+if
+$INFECTED_TANK == 1
+    then
+    
+    random_int 0@ 0 7 
+    
+    if
+    0@ == 0
+    then
+    25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\TANK_sounds\TANK_DIE1.wav")
+    end 
+    
+    if
+    0@ == 1
+    then
+    25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\TANK_sounds\TANK_DIE2.wav")
+    end 
+    
+    if
+    0@ == 2
+    then
+    25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\TANK_sounds\TANK_DIE3.wav")
+    end 
+    
+    if
+    0@ == 3
+    then
+    25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\TANK_sounds\TANK_DIE4.wav")
+    end 
+    
+    if
+    0@ == 4
+    then
+    25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\TANK_sounds\TANK_DIE5.wav")
+    end 
+    
+    if
+    0@ == 5
+    then
+    25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\TANK_sounds\TANK_DIE6.wav")
+    end 
+    
+    if
+    0@ == 6
+    then
+    25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\TANK_sounds\TANK_DIE7.wav")
+    end
+    
+    end
+
+if
+$INFECTED_HUNTER == 1
+    then
+    
+    random_int 0@ 0 5
+    
+    if
+    0@ == 0
+    then
+    25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_die1.wav")
+    end 
+    
+    if
+    0@ == 1
+    then
+    25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_die2.wav")
+    end 
+    
+    if
+    0@ == 2
+    then
+    25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_die3.wav")
+    end 
+    
+    if
+    0@ == 3
+    then
+    25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_die4.wav")
+    end 
+    
+    if
+    0@ == 4
+    then
+    25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_die5.wav")
+    end
+    
+    end
+
+if
+$INFECTED_CHARGER == 1
+    then
+    
+    random_int 0@ 0 3     
+    
+    if
+    0@ == 0
+    then
+    25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_DIE1.wav")
+    end 
+    
+    if
+    0@ == 1
+    then
+    25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_DIE2.wav")
+    end 
+    
+    if
+    0@ == 2
+    then
+    25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\CHARGER_sounds\CHARGER_DIE3.wav")
+    end
+    
+    end
+
+if
+$INFECTED_WITCH == 1
+    then
+    
+    random_int 0@ 0 3 
+    
+    if
+    0@ == 0
+    then
+    25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_DIE1.wav")
+    end 
+    
+    if
+    0@ == 1
+    then
+    25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_DIE2.wav")
+    end 
+    
+    if
+    0@ == 2
+    then
+    25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\WITCH_sounds\WITCH_DIE3.wav")
+    end
+    
+    end
+
+return  
+
+:RANDOM_TIME_RESPAWN
+$SAVESTATUS = 0
+
+if
+COOP_ACTIVE_FLAG == 1
+then
+008B: 0@ = COOP_ACTOR // (int)
+actor.StorePos(PLAYER_ACTOR,1@,2@,3@) 
+COOP_ACTOR = actor.Create(26,0,1@,2@,3@)
+create_thread @PED_BKP COOP_ACTOR 371
+0631: put_actor COOP_ACTOR in_group PLAYER_GROUP
+0EA0: set_actor_second_player COOP_ACTOR enable_camera 1 separate_cars 0
+0084: $SURV_IN_CAR = COOP_ACTOR // (int)
+wait 0
+actor.DestroyInstantly(0@)
+
+if
+$INFECTED_TANK == 1
+    then
+    
+    while not model.Available(#ZTANK)
+    wait 0
+    model.Load(#ZTANK)
+    mload
+    end
+    
+    09C7: change_player 1 model_to #ZTANK
+    0A8C: write_memory 0x96916C size 1 value 0 virtual_protect 0
+    07FE: set_actor COOP_ACTOR fighting_style_to 5 moves 6
+    
+    048F: actor COOP_ACTOR remove_weapons 
+    0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "PISI" 
+    01B4: toggle_player 1 can_move 1 
+    0@ = 0x609A4E 
+    0A8C: write_memory 0@ size 4 value -1869574000 virtual_protect 1 
+    0@ += 4 
+    0A8C: write_memory 0@ size 2 value 37008 virtual_protect 1
+    actor.SetWalkStyle(COOP_ACTOR,"tank")
+    $ANIM_INF = 1
+    $INFECTED_TANK = 1
+    0A8C: write_memory 0xB793E0 size 4 value 1450.0 virtual_protect 1
+    end
+    
+if
+$INFECTED_HUNTER == 1
+    then
+    
+    while not model.Available(#ZHUNTER)
+    wait 0
+    model.Load(#ZHUNTER)
+    mload
+    end
+    
+    09C7: change_player 1 model_to #ZHUNTER
+    0A8C: write_memory 0x96916C size 1 value 1 virtual_protect 0
+    07FE: set_actor COOP_ACTOR fighting_style_to 5 moves 6
+    
+    048F: actor COOP_ACTOR remove_weapons
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "PISI" 
+    01B4: toggle_player 1 can_move 1 
+    0@ = 0x609A4E 
+    0A8C: write_memory 0@ size 4 value -1869574000 virtual_protect 1 
+    0@ += 4 
+    0A8C: write_memory 0@ size 2 value 37008 virtual_protect 1
+    actor.SetWalkStyle(COOP_ACTOR,"hunter2")
+    0A8C: write_memory 0xB793E0 size 4 value 800.0 virtual_protect 1
+    $ANIM_INF = 2
+    $INFECTED_HUNTER = 1
+    end
+    
+if
+$INFECTED_CHARGER == 1
+    then
+    
+    while not model.Available(#ZCHARGER)
+    wait 0
+    model.Load(#ZCHARGER)
+    mload
+    end
+    
+    09C7: change_player 1 model_to #ZCHARGER
+    0A8C: write_memory 0x96916C size 1 value 0 virtual_protect 0
+    07FE: set_actor COOP_ACTOR fighting_style_to 5 moves 6
+    
+    048F: actor COOP_ACTOR remove_weapons
+    0AF1: write_int 2 to_ini_file "saves/ZACM.set" section "SCR" key "PISI" 
+    01B4: toggle_player 1 can_move 1 
+    0@ = 0x609A4E 
+    0A8C: write_memory 0@ size 4 value -1869574000 virtual_protect 1 
+    0@ += 4 
+    0A8C: write_memory 0@ size 2 value 37008 virtual_protect 1
+    actor.SetWalkStyle(COOP_ACTOR,"charger")
+    0A8C: write_memory 0xB793E0 size 4 value 1000.0 virtual_protect 1
+    $ANIM_INF = 3
+    $INFECTED_CHARGER = 1
+    end
+    
+if
+$INFECTED_WITCH == 1
+    then
+    
+    while not model.Available(#ZWITCH)
+    wait 0
+    model.Load(#ZWITCH)
+    mload
+    end
+    
+    09C7: change_player 1 model_to #ZWITCH
+    0A8C: write_memory 0x96916C size 1 value 0 virtual_protect 0
+    07FE: set_actor COOP_ACTOR fighting_style_to 5 moves 6
+    
+    048F: actor COOP_ACTOR remove_weapons
+    0AF1: write_int 3 to_ini_file "saves/ZACM.set" section "SCR" key "PISI" 
+    01B4: toggle_player 1 can_move 1 
+    0@ = 0x609A4E 
+    0A8C: write_memory 0@ size 4 value -1869574000 virtual_protect 1 
+    0@ += 4 
+    0A8C: write_memory 0@ size 2 value 37008 virtual_protect 1
+    actor.SetWalkStyle(COOP_ACTOR,"witch2")
+    0A8C: write_memory 0xB793E0 size 4 value 1000.0 virtual_protect 1
+    $ANIM_INF = 4
+    $INFECTED_WITCH = 1
+    end                    
+                                                   
+end
+
+SAVE_PRE_TP_TEAMMATES_FLAG = 1
+
+wait 1000
+gosub @ANIM_SET
+cinema.Widescreen(0)
+$HUD_OFF_INST = 0
+camera.Restore_WithJumpCut()
+
+if
+COOP_ACTIVE_FLAG == 1
+then
+0@ = actor.Health(PLAYER_ACTOR)
+1@ = actor.Health(COOP_ACTOR)
+005A: 1@ += 0@  // (int)
+actor.Health(COOP_ACTOR) = 1@
+end
+
+wait 0
+create_thread @REFR_3D
+if
+not $ROUND_ENDED == 1
+then
+fade 1 1000  
+$HUD_REMOVE = 0
+$SPAWN_TANK_FLAG = 1
+end
+
+0AB9: get_mp3 $MENU_GUITARRIFF_SOUND state_to 0@
+if
+0@ == -1
+then
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_GUITARRIFF_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_GUITARRIFF_SOUND, 0)
+
+if
+not $ROUND_ENDED == 1
+then
+Audiostream.PerformAction($MENU_GUITARRIFF_SOUND, PLAY)
+end
+
+end   
+ 
+$HUD_REMOVE = 0  
+$ZOMBIE_DEAD = 0
+
+if
+not $ROUND_ENDED == 1
+then
+$CASETTE_PLAYING_FLAG = 0
+end
+
+jump @DEAD_ZOMBIE_START
+
+:DEAD_ZOMBIE_END_THREAD
+$FIST_HUD_ALWAYS = 0
+end_thread
+
+:ANIM_SET
+if 
+not $ANIM_INF == 1
+jf @ANIM_SET1
+if
+not $ANIM_INF == 2
+jf @ANIM_SET2
+if
+not $ANIM_INF == 3
+jf @ANIM_SET3
+if
+not $ANIM_INF == 4
+jf @ANIM_SET4
+
+:ANIM_SET1
+0@ = 0x609A4E 
+0A8C: write_memory 0@ size 4 value -1869574000 virtual_protect 1 
+0@ += 4 
+0A8C: write_memory 0@ size 2 value 37008 virtual_protect 1
+actor.SetWalkStyle(PLAYER_ACTOR,"tank")
+0A8C: write_memory 0xB793E0 size 4 value 1450.0 virtual_protect 1
+return
+
+:ANIM_SET2
+0@ = 0x609A4E 
+0A8C: write_memory 0@ size 4 value -1869574000 virtual_protect 1 
+0@ += 4 
+0A8C: write_memory 0@ size 2 value 37008 virtual_protect 1
+actor.SetWalkStyle(PLAYER_ACTOR,"hunter2")
+0A8C: write_memory 0xB793E0 size 4 value 800.0 virtual_protect 1
+return   
+
+:ANIM_SET3
+0@ = 0x609A4E 
+0A8C: write_memory 0@ size 4 value -1869574000 virtual_protect 1 
+0@ += 4 
+0A8C: write_memory 0@ size 2 value 37008 virtual_protect 1
+actor.SetWalkStyle(PLAYER_ACTOR,"charger")
+return
+
+:ANIM_SET4
+0@ = 0x609A4E 
+0A8C: write_memory 0@ size 4 value -1869574000 virtual_protect 1 
+0@ += 4 
+0A8C: write_memory 0@ size 2 value 37008 virtual_protect 1
+actor.SetWalkStyle(PLAYER_ACTOR,"witch2")
+return   
+
+:DED_PEP
+thread 'DED_PEP'
+
+:DEAD_PEOPLE_START
+
+wait 1000
+
+repeat
+wait 0
+
+if or
+$END_ROUND_INF == 0
+$INF_SIDE == 1
+jf @DEAD_PEOPLE_END_THREAD
+
+if
+0800:   in_two_players_mode
+    then
+    
+    if
+    04AD:  actor COOP_ACTOR in_water
+        then
+        
+        if or
+        actor.Animation(COOP_ACTOR) == "Swim_Tread"
+        actor.Animation(COOP_ACTOR) == "Swim_Breast"
+        actor.Animation(COOP_ACTOR) == "SWIM_crawl"
+        actor.Animation(COOP_ACTOR) == "Swim_Dive_Under"
+        actor.Animation(COOP_ACTOR) == "Swim_Glide"
+        actor.Animation(COOP_ACTOR) == "Swim_jumpout"
+        actor.Animation(COOP_ACTOR) == "Swim_Under"
+        then
+//        0851: set_actor COOP_ACTOR decrease_health_by 400 affect_armour 1
+        0829: actor COOP_ACTOR perform_animation "DROWN" IFP_file "PED" rate 4.0 time 0 and_dies
+        end
+        
+        end
+    
+    if or
+    actor.Dead(COOP_ACTOR)
+    0117:   player 1 wasted
+        then
+        break
+        end
+    
+    end
+
+if
+04AD:  actor PLAYER_ACTOR in_water
+    then
+    
+    if or
+    actor.Animation(PLAYER_ACTOR) == "Swim_Tread"
+    actor.Animation(PLAYER_ACTOR) == "Swim_Breast"
+    actor.Animation(PLAYER_ACTOR) == "SWIM_crawl"
+    actor.Animation(PLAYER_ACTOR) == "Swim_Dive_Under"
+    actor.Animation(PLAYER_ACTOR) == "Swim_Glide"
+    actor.Animation(PLAYER_ACTOR) == "Swim_jumpout"
+    actor.Animation(PLAYER_ACTOR) == "Swim_Under"
+    then
+//    0851: set_actor PLAYER_ACTOR decrease_health_by 400 affect_armour 1
+    0829: actor PLAYER_ACTOR perform_animation "DROWN" IFP_file "PED" rate 4.0 time 0 and_dies
+    end
+    
+    end
+
+if or
+actor.Dead(PLAYER_ACTOR)
+0117:   player PLAYER_CHAR wasted
+    then
+    break
+    end
+
+until false
+
+if
+COOP_ACTIVE_FLAG == 1
+then
+
+if
+0800:   in_two_players_mode
+then
+create_thread @2P_PREV COOP_ACTOR
+end
+
+06C9: remove_actor COOP_ACTOR from_group
+0EA1: disable_second_player_restore_camera 1
+end
+
+cinema.Widescreen(1)
+$HUD_REMOVE = 1 
+$HUD_OFF_INST = 1
+$PLAY_TANK_MUSIC_FLAG = 0
+
+Audiostream.Volume($MENU_ENTER05_SOUND) = $SOUNDS_VOLUME 
+Audiostream.Loop($MENU_ENTER05_SOUND, 0)
+Audiostream.PerformAction($MENU_ENTER05_SOUND, PLAY) 
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_PEOPLE_DEATHS"
+
+if
+$CHEATED_FLAG == 0 
+then                 
+0@ += 1
+end                
+ 
+0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_PEOPLE_DEATHS"  
+
+$INFECTED_SCORE += 15
+$HUD_REMOVE = 1
+$VERSUS_DEAD_COUNT += 1
+$ZOMBIE_DEAD = 2
+$CASETTE_PLAYING_FLAG = 1
+
+text.ClearAll()
+text.ShowH('G_INF4',2500,1)    
+
+if
+actor.Dead(PLAYER_ACTOR)
+then
+0970: teleport_in_override_restart // 016Eh
+else
+fade 0 250
+wait 250
+jump to @CHECKING_PLACE_RESPAWN2
+end
+
+:DEAD_PEOPLE2
+wait 0
+if 
+00FE:   actor PLAYER_ACTOR sphere 0 in_sphere 28.0 28.0 2800.0 radius 15.0 15.0 15.0
+jf @DEAD_PEOPLE2
+fade 0 0
+text.ClearAll()
+
+:CHECKING_PLACE_RESPAWN2
+
+random_int 2@ 0 32000
+random_int 3@ 0 32000
+
+if
+UNITED_MAP == 0
+then    
+0EBD: generate_random_float_in_range_with_seed 2@ min -2747.2507 max 2833.0591 store_to 20@
+0EBD: generate_random_float_in_range_with_seed 3@ min 2680.6458 max -2172.8049 store_to 21@   
+else
+
+if
+LCVC_MAP_NUM == 0
+then
+0EBD: generate_random_float_in_range_with_seed 2@ min -1491.6094 max 45.7344 store_to 20@
+0EBD: generate_random_float_in_range_with_seed 3@ min -160.5908 max 2375.3311 store_to 21@
+else     
+0EBD: generate_random_float_in_range_with_seed 2@ min 605.8673 max 2540.8437 store_to 20@
+0EBD: generate_random_float_in_range_with_seed 3@ min -2719.9036 max 675.8437 store_to 21@
+end
+
+end 
+
+Actor.PutAt(PLAYER_ACTOR, 20@, 21@, 0.0)
+renderer 20@ 21@
+renderer2 20@ 21@ 0.0
+02CE: 22@ = ground_z_at 20@ 21@ 300.0
+Actor.PutAt(PLAYER_ACTOR, 20@, 21@, 22@)
+if
+22@ > 1.0
+jf @CHECKING_PLACE_RESPAWN2
+
+///////////////////////////////////////
+
+gosub @SPAWN_ZONE_CHECK
+if
+6@ == 1
+jf @CHECKING_PLACE_RESPAWN2
+
+////////////////////////////////////
+
+actor.StorePos(PLAYER_ACTOR,0@,1@,2@)
+if
+2@ > 0.0
+jf @CHECKING_PLACE_RESPAWN2
+Actor.StorePos(PLAYER_ACTOR, 2@, 3@, 4@)
+02C1: store_to 2@ 3@ 4@ car_path_coords_closest_to 2@ 3@ 4@
+Actor.StorePos(PLAYER_ACTOR, 27@, 28@, 29@)
+050A: 30@ = distance_between_XYZ 27@ 28@ 4@ and_XYZ 27@ 28@ 29@
+0092: 31@ = float 30@ to_integer
+if
+31@ < 20
+jf @CHECKING_PLACE_RESPAWN2
+jump @RANDOM_TIME_RESPAWN2  
+
+:RANDOM_TIME_RESPAWN2
+
+$SAVESTATUS = 0
+gosub @2INFECTED_SIDE_SET2
+
+SAVE_PRE_TP_TEAMMATES_FLAG = 1
+  
+wait 1000
+0332: set_actor PLAYER_ACTOR bleeding 0
+if
+COOP_ACTIVE_FLAG == 1
+    then
+    0332: set_actor COOP_ACTOR bleeding 0
+    end
+$SLOW_BAR_MAX = 38.1
+cinema.Widescreen(0)
+01B9: set_actor PLAYER_ACTOR armed_weapon_to $RANDOM_WEAPON
+if
+COOP_ACTIVE_FLAG == 1
+    then
+    01B9: set_actor COOP_ACTOR armed_weapon_to $RANDOM_WEAPON    
+    end
+$HUD_REMOVE = 0 
+$HUD_OFF_INST = 0
+camera.Restore_WithJumpCut()
+actor.StorePos(PLAYER_ACTOR,2@,3@,4@)
+0395: clear_area 2@ 3@ 4@ radius 0.5 clear_particles 1
+wait 0
+
+if
+COOP_ACTIVE_FLAG == 1
+then
+0@ = actor.Health(PLAYER_ACTOR)
+1@ = actor.Health(COOP_ACTOR)
+005A: 1@ += 0@  // (int)
+actor.Health(COOP_ACTOR) = 1@
+end
+
+create_thread @REFR_3D
+if
+not $ROUND_ENDED == 1
+then
+fade 1 1000
+$HUD_REMOVE = 0  
+end  
+
+if
+not $ROUND_ENDED == 1
+then
+$SPAWN_TANK_FLAG = 1
+$CASETTE_PLAYING_FLAG = 0
+end  
+
+0AB9: get_mp3 $MENU_SCIFI_SOUND state_to 0@
+if
+0@ == -1
+then 
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+
+if
+not $ROUND_ENDED == 1
+then
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+end
+
+end      
+
+$ZOMBIE_DEAD = 0
+  
+jump @DEAD_PEOPLE_START
+
+:DEAD_PEOPLE_END_THREAD
+end_thread
+
+:2P_PREV
+thread '2P_PREV'
+
+repeat
+wait 0
+
+if and
+056D:   actor COOP_ACTOR defined
+87D6: not  0@ == COOP_ACTOR // @ == $ (int)
+0800:   in_two_players_mode
+    then
+    break
+    end
+
+until false
+
+actor.DestroyInstantly(0@)
+
+end_thread

@@ -1,0 +1,4897 @@
+const
+HNT_STALK_SOUND_FLAG = 13@
+HNT_PAIN_SOUND_FLAG = 14@
+HNT_RAGE_SOUND_FLAG = 15@
+HNT_ATTACK_SOUND_FLAG = 18@
+HNT_ALERT_SOUND_FLAG = 20@ 
+HNT_POUNCE_SOUND_FLAG = 7@ 
+HNT_SPAWN_SOUND_FLAG = 10@
+HNT_ATTACK_SOUND_SLOW = 21@ 
+HUNTER_TASK_WAIT_TIME_MIN = 95
+HUNTER_TASK_WAIT_TIME_MAX = 100
+HUNTER_TASK_CRAZY_MULT = 5
+HUNTER_TASK_CRAZY_MULT2 = 5
+HUNTER_PROCENT_MINUS = 0.065
+HUNTER_TARGET_ACTOR = 22@
+HUNTER_LOC_MARKER_POINTER = 23@
+HNT_JUMPS_COUNT = 17@
+end
+
+:HUNTER
+if
+0@ == 0
+then
+thread 'HUNTER'
+else
+gosub @HUNTER_NUM_GET
+end
+
+0085: 24@ = 0@ // (int)          
+  
+$HUNTER_BLOOD_Z_OFSSET = -3.0
+$HUNTER_BLOOD_COUNT = 400
+
+:HUNTER_SPAWN_TIMER_START       
+0209: 0@ = random_int_in_ranges $HUNTER_WAIT_SPAWN_MIN $HUNTER_WAIT_SPAWN_MAX
+32@ = 0 
+
+0209: 1@ = random_int_in_ranges 50 100
+wait 1@   
+
+:ZOMBIE_HUNTER_WAIT_CHECK
+wait 0
+
+//0AD1: show_formatted_text_highpriority "HUNTER TIMER: %d/%d" time 2000 32@ 0@
+
+while $ALLOW_HUNTER == 0
+wait 0
+end
+
+while 001F:  24@ > HUNTERS_TO_SPAWN_COUNT // (int)
+wait 0
+end
+
+//////////////////////////////////////////////////////////////////////////////
+
+if
+GLOBAL_SPAWN_TIMER_RANDOM_RESET_HUNTER == 1
+then
+
+repeat
+wait 0
+0209: 0@ = random_int_in_ranges $HUNTER_WAIT_SPAWN_MIN $HUNTER_WAIT_SPAWN_MAX
+0209: 30@ = random_int_in_ranges $HUNTER_WAIT_SPAWN_MIN $HUNTER_WAIT_SPAWN_MAX
+
+if
+$FREEMODE == 0
+then
+0209: 1@ = random_int_in_ranges TIMER_RESET_LONG_ADD_MIN TIMER_RESET_LONG_ADD_MAX
+else
+0209: 1@ = random_int_in_ranges TIMER_RESET_LONG_ADD2_MIN TIMER_RESET_LONG_ADD2_MAX
+end
+
+0062: 30@ -= 1@  // (int)
+until 801D: not  30@ > 0@  // (int)
+
+0085: 32@ = 30@ // (int)
+0AF1: write_int 30@ to_ini_file "saves\ZACM.set" section "SCR" key "HUNTER_NEW_TIMER_AFTER_SAVE"
+0AF1: write_int 0@ to_ini_file "saves\ZACM.set" section "SCR" key "HUNTER_SPAWN_TIMER"
+ 
+GLOBAL_SPAWN_TIMER_RANDOM_RESET_HUNTER = 0
+end
+
+//////////////////////////////////////////////////////////////////////////////
+
+077E: get_active_interior_to 1@
+
+if and
+$GAMEMODE_EDITOR == 1
+not ZAME_DO_SPAWN_SPECINF_AS_RANDOM == 1
+then
+32@ = 0
+end
+
+if or
+$GAMEMODE_HOLD == 1
+$HUNTER_INTERIOR_SPAWN == 1
+    then
+    1@ = 0
+    end
+
+if and
+$SAVESTATUS == 0
+$SPECIAL_INFECTED_NOT_SPAWN_FLAG == 0
+$ACTOR_DEAD == 0
+$INFECTED_HUNTER == 0
+$HUNTER_NOTSPAWN_FLAG == 0  
+$SOUND_EFFECT1_FLAG == 0  
+$SAVEPLACE_ON == 0 
+1@ == 0
+    then
+    if
+    $ZOMBIE_HUNTER_SPAWN_TIMER_RESTART == 0
+    jf @HUNTER_SPAWN_TIMER_START
+    
+    if or
+    SURVIVAL_CUSTOM_WEAPON_NABOR == 1
+    SURVIVAL_CUSTOM_WEAPON_NABOR == 8
+    then
+    0085: 31@ = 0@ // (int)
+    31@ -= 10000
+    0085: 30@ = 0@ // (int)
+    30@ -= 9000
+    if and
+    001D:   32@ > 31@  // (int)
+    801D:   32@ < 30@  // (int)
+    PLAYER_IN_NEST_FLAG == 0
+    PLAYER_IN_CANALS_FLAG == 0
+        then        
+        gosub @HUNTER_ORIGIN_SPOTTED_PHRASE  
+        32@ += 1100       
+        end
+    end
+        
+    if or 
+    001D:   32@ > 0@  // (int)
+    $SPAWN_HUNTER_FLAG == 1
+    jf @ZOMBIE_HUNTER_WAIT_CHECK
+//    0AD1: show_formatted_text_highpriority "32@ %d > 0@ %d~n~ $SPAWN_HUNTER_FLAG (%d) == 1" time 5000 32@ 0@ $SPAWN_HUNTER_FLAG
+    32@ = 0
+    
+    if and
+    $SPAWN_HUNTER_FLAG == 0
+    $CUSTOM_MODE == 1
+    $GAMEMODE_EDITOR == 1
+    then
+    jump to @HUNTER_SPAWN_EDITOR_OWNGAME
+    end
+    
+    if and
+    not $GAMEMODE_CRAZY == 1
+    not $MUTATION_ACTIVE == 13
+    not $GAMEMODE_EDITOR == 1
+    not $CUSTOM_MODE == 1
+    not SPEC_INF_ONLY_ONE_INSTANSE_SPAWN_FLAG == -1
+    then
+    
+    random_int 0@ 0 to 10
+    if
+    0@ == 4
+    then
+    HUNTERS_TO_SPAWN_COUNT = 1
+    else
+    HUNTERS_TO_SPAWN_COUNT = 0
+    end
+    
+    random_int 0@ 0 to 10
+    if
+    0@ == 4
+    then
+    HUNTERS_TO_SPAWN_COUNT = 2
+    end            
+    
+    end        
+    
+    if and
+    $CUSTOM_MODE == 1
+    not SPEC_INF_ONLY_ONE_INSTANSE_SPAWN_FLAG == -1
+    then
+    
+    if
+    not $GAMEMODE_EDITOR == 1
+    then
+    0AF0: 0@ = get_int_from_ini_file "saves/owngame/owngame.ini" section "DIFF" key "MINIMUM_HUNTERS_TO_SPAWN"
+    0AF0: 1@ = get_int_from_ini_file "saves/owngame/owngame.ini" section "DIFF" key "MAXIMUM_HUNTERS_TO_SPAWN"
+    else
+    :HUNTER_SPAWN_EDITOR_OWNGAME
+    0AD3: 2@v = format "me\ms%d.ini" $RNDM_HOUSE_BANKA[122]
+    0AF0: 0@ = get_int_from_ini_file 2@v section "DIFF" key "MINIMUM_HUNTERS_TO_SPAWN"
+    0AF0: 1@ = get_int_from_ini_file 2@v section "DIFF" key "MAXIMUM_HUNTERS_TO_SPAWN"
+    end
+    
+    0@ -= 1
+    random_int HUNTERS_TO_SPAWN_COUNT 0@ 1@ 
+    jump to @ZOMBIE_HUNTER_SPAWN_START 
+    end
+    
+    //owngame.ini moment
+    
+    if
+    SPEC_INF_ONLY_ONE_INSTANSE_SPAWN_FLAG == 1
+    then
+    HUNTERS_TO_SPAWN_COUNT = 0
+    end
+    
+    if
+    SPEC_INF_ONLY_ONE_INSTANSE_SPAWN_FLAG == 2
+    then
+    HUNTERS_TO_SPAWN_COUNT = 2
+    end
+    
+    if and
+    CANT_CAPTURE_SHIT == 1
+    PLAYER_IN_NEST_FLAG == 1
+    then
+    random_int HUNTERS_TO_SPAWN_COUNT 5 19
+    end
+                
+    if and
+    CURRENT_NEST_NUMBER == 16
+    PLAYER_IN_NEST_FLAG == 1
+    NEST16_CAN_BE_KILLED == 0
+    then
+    random_int HUNTERS_TO_SPAWN_COUNT 5 19
+    end        
+    
+    jump to @ZOMBIE_HUNTER_SPAWN_START
+    
+    else
+    
+    0085: 30@ = 32@ // (int)
+
+    :ZOMBIE_HUNTER_TIMER_PAUSE
+    wait 0            
+    if
+    $ZOMBIE_HUNTER_SPAWN_TIMER_RESTART == 0
+    jf @HUNTER_SPAWN_TIMER_START
+        
+    077E: get_active_interior_to 1@
+
+    if or
+    $GAMEMODE_HOLD == 1
+    $HUNTER_INTERIOR_SPAWN == 1
+        then
+        1@ = 0
+        end
+    
+    if and
+    $SAVESTATUS == 0
+    $SPECIAL_INFECTED_NOT_SPAWN_FLAG == 0
+    $ACTOR_DEAD == 0
+    $INFECTED_HUNTER == 0
+    $HUNTER_NOTSPAWN_FLAG == 0  
+    $SOUND_EFFECT1_FLAG == 0 
+    $SAVEPLACE_ON == 0    
+    1@ == 0
+        then
+        0085: 32@ = 30@ // (int)
+        jump to @ZOMBIE_HUNTER_WAIT_CHECK
+        else
+        jump @ZOMBIE_HUNTER_TIMER_PAUSE 
+        end   
+    end        
+
+:ZOMBIE_HUNTER_SPAWN_START
+wait 0
+if and
+$SAVESTATUS == 0
+$SPECIAL_INFECTED_NOT_SPAWN_FLAG == 0
+$ACTOR_DEAD == 0
+$INFECTED_HUNTER == 0
+$ZOMBIES_PROCENT > 0.0
+jf @ZOMBIE_HUNTER_SPAWN_START 
+if or
+$STARTING_THEME_FLAG == 0
+$GAMEMODE_EDITOR == 1
+jf @ZOMBIE_HUNTER_SPAWN_START
+if and
+$HUNTER_INTERIOR_SPAWN == 1
+$SPAWN_HUNTER_FLAG == 0
+then
+if and
+not OOS_MARK == 999666
+not OOS_MARK == 223366
+not OOS_MARK == 223367
+not OOS_MARK == 999668
+    then
+    jump to @HUNTER_SPAWN_TIMER_START
+    end
+end     
+
+//Вычисление координат для спавна
+gosub @HUNTER_COORD_SET
+
+if and
+$HUNTER_INTERIOR_SPAWN == 1
+$SPAWN_HUNTER_FLAG == 0
+then
+if and
+not OOS_MARK == 999666
+not OOS_MARK == 223366
+not OOS_MARK == 223367
+not OOS_MARK == 999668
+    then
+    jump to @HUNTER_SPAWN_TIMER_START
+    end
+end
+
+$HUNTER_SPAWNED = 1
+
+1@ = #ZHUNTER
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+
+//Спавн на координатах     
+
+$HUNTER[24@] = actor.Create($ZOMBIE_SET_PEDTYPE,1@,2@,3@,4@)
+
+if
+model.Available(1@)
+then
+//model.Destroy(1@)
+end
+
+0860: link_actor $HUNTER[24@] to_interior $ACTIVE_INTERIOR
+
+if
+$GAMEMODE_VERSUS == 1
+then
+0D10: set_actor $HUNTER[24@] alpha 255 // IF and SET
+end
+
+if or
+OOS_MARK == 999668
+OOS_MARK == 223366
+then
+0D10: set_actor $HUNTER[24@] alpha 155 // IF and SET
+end
+
+if
+$ACTIVE_INTERIOR == 0
+then
+0E24: fix_char $HUNTER[24@] ground 1 brightness DO_ACTORS_BRIGHT_CORR and_fade_in 1
+else
+0E24: fix_char $HUNTER[24@] ground 0 brightness DO_ACTORS_BRIGHT_CORR and_fade_in 1
+end
+
+//Случайный угол поворота
+
+if
+$GAMEMODE_HOLD == 1
+then
+actor.StorePos(PLAYER_ACTOR,4@,5@,0@)
+0E27: get_angle_from_two_coords 2@ 3@ and 4@ 5@ to 0@
+actor.Angle($HUNTER[24@]) = 0@
+else
+random_int 0@ 0.0 360.0
+actor.Angle($HUNTER[24@]) = 0@
+end
+
+//Даем охотнику член если активирован чит-код на это
+if
+DICKMODE == 1
+then
+
+while not model.Available(6532)
+wait 0
+model.Load(6532)
+mload
+end
+
+0E2E: create_render_object_to_char_bone $HUNTER[24@] model 6532 bone 0 offset 0.1 -0.05 0.025 rotation 0.0 60.0 0.0 store_to 0@
+0E37: set_render_object_scale 0@ 1.25 1.25 1.25
+
+end
+
+//Стиль походки, молчание, двигание рта, неуязвимость к урону от падения
+
+if
+$GAMEMODE_HOLD == 0
+then
+actor.SetImmunities($HUNTER[24@], 0, 0, 0, 1, 0)
+else
+actor.SetImmunities($HUNTER[24@], 0, 1, 0, 1, 0)
+end
+
+Actor.SetWalkStyle($HUNTER[24@],"HUNTER2")
+0A09: set_actor $HUNTER[24@] muted 1 // versionB
+0967: actor $HUNTER[24@] move_mouth 99999999 ms
+
+//Установление остальных параметров
+
+0446: set_actor $HUNTER[24@] dismemberment_possible 0
+060B: set_actor $HUNTER[24@] decision_maker_to $DEC_ZOMBIE 
+0946: set_actor $HUNTER[24@] actions_uninterupted_by_weapon_fire 1
+060F: set_actor $HUNTER[24@] melee_accuracy_to 150.0
+07DD: set_actor $HUNTER[24@] attack_rate $ZOMBIE_ATTACK_RATE // previously known as temper_to
+09F4: set_actor $HUNTER[24@] ignore_height_difference_following_nodes $Z_IGNORE_HEIGHT
+07FE: set_actor $HUNTER[24@] fighting_style_to 5 moves 6
+03FE: set_actor $HUNTER[24@] money 0
+0648: unknown_actor $HUNTER[24@] task_set 500.0 // float
+0770: set_actor $HUNTER[24@] target_priority 1
+
+//Установление ХП
+
+008B: 0@ = $HUNTER_HEALTH // (int)
+if
+$GAMEMODE_VERSUS == 0
+then
+0093: 0@ = integer 0@ to_float
+random_float 1@ 0.85 1.25 
+006B: 0@ *= 1@  // (float)  
+0092: 0@ = float 0@ to_integer
+end
+
+if and
+CANT_CAPTURE_SHIT == 1
+PLAYER_IN_NEST_FLAG == 1
+then
+0@ *= 5
+end
+
+if and
+CURRENT_NEST_NUMBER == 16
+PLAYER_IN_NEST_FLAG == 1
+NEST16_CAN_BE_KILLED == 0
+then
+0@ *= 5
+end
+
+actor.Health($HUNTER[24@]) = 0@
+08AF: set_actor $HUNTER[24@] max_health_to 0@       
+
+//Установление скорости поворота
+
+0A96: 0@ = actor $HUNTER[24@] struct
+0A8E: 0@ = 0@ + 1376
+0A8C: write_memory 0@ size 4 value 2056.0 virtual_protect 1
+
+//Проигрывания звука бактерии охотника   
+
+if and
+$GAMEMODE_INF == 0
+$GAMEMODE_CRAZY == 0
+$READING_NOTE_FLAG == 0
+then                     
+
+if or
+$SALVATION_FLAG == 1
+$GAMEMODE_HOLD == 1 
+then
+
+random_int 0@ 0 to 2
+
+if
+0@ == 0
+then
+8@ = Audiostream.Load("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTERbacteria.wav")     
+else
+8@ = Audiostream.Load("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTERbacterias.wav")   
+end
+
+Audiostream.PerformAction(8@, PLAY)
+Audiostream.Volume(8@) = $SOUNDS_VOLUME
+
+HNT_SPAWN_SOUND_FLAG = 1
+
+else
+
+random_int 0@ 0 to 2
+
+if
+0@ == 0
+then
+8@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTERbacteria.wav")     
+else
+8@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTERbacterias.wav")   
+end
+
+Audiostream.LinkToActor(8@, $HUNTER[24@])
+Audiostream.PerformAction(8@, PLAY)
+Audiostream.Volume(8@) = $SOUNDS_VOLUME
+
+HNT_SPAWN_SOUND_FLAG = 1
+
+end
+
+end
+
+//Установление флагов для звука
+
+HNT_STALK_SOUND_FLAG = 0
+HNT_PAIN_SOUND_FLAG = 0
+HNT_RAGE_SOUND_FLAG = 0
+HNT_ATTACK_SOUND_FLAG = 0
+HNT_ALERT_SOUND_FLAG = 0 
+HNT_POUNCE_SOUND_FLAG = 0
+HNT_JUMPS_COUNT = 0
+
+//Таймеры
+
+32@ = 0
+33@ = 0
+
+//Создание маркера при необходимости 
+
+if
+$GAMEMODE_EDITOR == 0
+then
+0@ = 1
+else
+0@ = 11
+end
+
+if or
+$GAMEMODE_VERSUS == 1
+$GAMEMODE_CRAZY == 1
+003C:   SPEC_INFECTED_MARKER_FLAG == 0@  // (int)
+    then
+    HUNTER_LOC_MARKER_POINTER = marker.CreateAboveActor($HUNTER[24@])
+    
+    if
+    $GAMEMODE_CRAZY == 1
+    then
+    marker.SetIconSize(HUNTER_LOC_MARKER_POINTER,2)
+    else
+    marker.SetIconSize(HUNTER_LOC_MARKER_POINTER,2)
+    end
+    
+    07E0: set_marker HUNTER_LOC_MARKER_POINTER type_to $SPECIAL_INF_MARKER_TYPE    
+    end
+    
+//Запрещаем целится с автоаима если мы играем за зараженных в сражении    
+    
+if
+$INF_SIDE == 1
+    then
+    0568: set_actor $HUNTER[24@] untargetable 1
+    end
+    
+//Вырубаем скриптовый призыв спеца (если он был так вызван) с задержкой в 1 кадр чтобы правильно отработать спавн нескольких  
+
+if
+$SPAWN_HUNTER_FLAG == 1
+then    
+wait 0
+$SPAWN_HUNTER_FLAG = 0
+end        
+
+//Рандомизация множителя скорости
+    
+random_float 9@ 0.9 1.2  
+
+0687: clear_actor $HUNTER[24@] task
+random_int 0@ HUNTER_TASK_WAIT_TIME_MIN HUNTER_TASK_WAIT_TIME_MAX
+if
+$GAMEMODE_CRAZY == 1
+then
+0@ *= HUNTER_TASK_CRAZY_MULT
+0085: 1@ = 24@ // (int)
+1@ *= HUNTER_TASK_CRAZY_MULT2
+wait 1@
+end
+wait 0@
+wait 24@
+
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "HUNTER_SPAWNED"   
+
+//////////////////////////////////////////ОСНОВНОЙ ЛУП AI ОХОТНИКА//////////////////////////////////////////
+
+:HUNTER_STALK_CHECK
+
+WHILE TRUE
+
+/////////////////////Функция атаки охотника союзниками/////////////////////
+random_int 0@ 0 5        
+gosub @HUNTER1_ATTACK_PEOPLE1   
+
+0089: 0@ = $WITCH_RUN_SPEED // (float)
+006B: 0@ *= 9@  // (float)
+
+/////////////////////Ускорение некоторых анимаций/////////////////////  
+
+if
+0611: actor $HUNTER[24@] performing_animation "HUNTER_walk"
+    then
+    0393: actor $HUNTER[24@] perform_animation "HUNTER_walk" at 0@ times_normal_rate  
+end   
+
+if
+0611: actor $HUNTER[24@] performing_animation "HUNTER_run"
+    then
+    0393: actor $HUNTER[24@] perform_animation "HUNTER_run" at 0@ times_normal_rate  
+end     
+
+/////////////////////Анти-приседание охотника/////////////////////  
+
+if
+056D:   actor $HUNTER[24@] defined
+    then    
+    if and
+    0184:   actor $HUNTER[24@] health > 0
+    0597:   actor $HUNTER[24@] crouching
+        then
+        0687: clear_actor $HUNTER[24@] task    
+        wait 100   
+        04EB: AS_actor $HUNTER[24@] crouch 0
+        end
+    end               
+
+if
+056D:   actor $HUNTER[24@] defined
+    then    
+    if
+    8184:   actor $HUNTER[24@] health < 1
+        then
+        05BE: AS_actor $HUNTER[24@] die
+        end
+    end
+
+///////////////////Выгрузка звуков STALK///////////////////    
+    
+if
+HNT_STALK_SOUND_FLAG == 1
+    then
+    0AB9: get_mp3 11@ state_to 0@
+    if or
+    0@ == -1
+    not $GAME_SPEED == 1.0
+        then
+        audiostream.Release(11@)
+        HNT_STALK_SOUND_FLAG = 0
+        end
+    end
+
+///////////////////Выгрузка звуков PAIN///////////////////  
+    
+if
+HNT_PAIN_SOUND_FLAG == 1
+    then
+    0AB9: get_mp3 11@ state_to 0@
+    if or
+    0@ == -1
+    not $GAME_SPEED == 1.0
+        then
+        audiostream.Release(11@)
+        HNT_PAIN_SOUND_FLAG = 0
+        end
+    end
+    
+///////////////////Выгрузка звуков RAGE///////////////////  
+
+if
+HNT_RAGE_SOUND_FLAG == 1
+    then
+    0AB9: get_mp3 11@ state_to 0@
+    if or
+    0@ == -1
+    not $GAME_SPEED == 1.0
+        then
+        audiostream.Release(11@)
+        HNT_RAGE_SOUND_FLAG = 0
+        end
+    end
+    
+///////////////////Выгрузка звуков ATTACK///////////////////  
+
+if
+HNT_ATTACK_SOUND_FLAG == 1
+    then
+    0AB9: get_mp3 11@ state_to 0@
+    if or
+    0@ == -1
+    not $GAME_SPEED == 1.0
+        then
+        audiostream.Release(11@)
+        audiostream.Release(21@)
+        HNT_ATTACK_SOUND_FLAG = 0
+        end
+    end
+    
+///////////////////Выгрузка звуков ALERT///////////////////  
+
+if
+HNT_ALERT_SOUND_FLAG == 1
+    then
+    0AB9: get_mp3 11@ state_to 0@
+    if or
+    0@ == -1
+    not $GAME_SPEED == 1.0
+        then
+        audiostream.Release(11@)
+        HNT_ALERT_SOUND_FLAG = 0
+        end
+    end        
+    
+///////////////////Выгрузка звуков SPAWN///////////////////  
+    
+if
+HNT_SPAWN_SOUND_FLAG == 1
+    then
+    0AB9: get_mp3 8@ state_to 0@
+    if
+    0@ == -1
+        then
+        audiostream.Release(8@)
+        HNT_SPAWN_SOUND_FLAG = 0
+        end        
+    end        
+    
+///////////////////Выгрузка звуков POUNCE///////////////////  
+    
+if
+HNT_POUNCE_SOUND_FLAG == 1
+    then
+    0AB9: get_mp3 11@ state_to 0@
+    if
+    0@ == -1
+        then
+        audiostream.Release(11@)
+        HNT_POUNCE_SOUND_FLAG = 0
+        end        
+    end        
+    
+///////////////////Воспроизведение звука PAIN/////////////////// 
+    
+if and
+HNT_PAIN_SOUND_FLAG == 0
+$GAME_SPEED == 1.0
+    then
+    28@ = Actor.Health($HUNTER[24@])
+    wait 10 
+    29@ = Actor.Health($HUNTER[24@]) 
+    if
+    803B: not  28@ == 29@ // (int)  
+        then
+        gosub @HUNTER_SHUT_UP                
+        gosub @HUNTER_RANDOM_PAIN_SOUND
+        Audiostream.LinkToActor(11@, $HUNTER[24@])
+        Audiostream.PerformAction(11@, PLAY)
+        Audiostream.Volume(11@) = $SOUNDS_VOLUME
+        HNT_PAIN_SOUND_FLAG = 1
+        
+        if
+        031D:   actor $HUNTER[24@] hit_by_weapon 109
+        then
+        create_thread @TSPC_IN $HUNTER[24@] 140
+        end
+        
+        end
+    else
+    wait 10
+    
+    if
+    031D:   actor $HUNTER[24@] hit_by_weapon 109
+    then
+    create_thread @TSPC_IN $HUNTER[24@] 140
+    end
+    
+    end         
+    
+///////////////////Воспроизведение звука RAGE/////////////////// 
+    
+if and
+HNT_RAGE_SOUND_FLAG == 0
+HNT_PAIN_SOUND_FLAG == 0
+$GAME_SPEED == 1.0
+874F: not  actor $HUNTER[24@] ped_event == 58
+    then
+    if and
+    00F2:   actor $HUNTER[24@] near_actor PLAYER_ACTOR radius 100.0 100.0 0   
+    02A0:   actor $HUNTER[24@] stopped   
+    not actor.Animation($HUNTER[24@]) == "FightA_1"
+    not actor.Animation($HUNTER[24@]) == "FightA_2"
+    not actor.Animation($HUNTER[24@]) == "FightA_3"
+    not actor.Animation($HUNTER[24@]) == "FightA_block"
+    not actor.Animation($HUNTER[24@]) == "FightA_G"     
+        then
+        gosub @HUNTER_SHUT_UP                        
+        gosub @HUNTER_RANDOM_RAGE_SOUND
+        Audiostream.LinkToActor(11@, $HUNTER[24@])
+        Audiostream.PerformAction(11@, PLAY)
+        Audiostream.Volume(11@) = $SOUNDS_VOLUME
+        HNT_RAGE_SOUND_FLAG = 1
+        end
+    end
+    
+///////////////////Воспроизведение звука STALK/////////////////// 
+
+if and
+HNT_STALK_SOUND_FLAG == 0   
+HNT_RAGE_SOUND_FLAG == 0
+HNT_PAIN_SOUND_FLAG == 0
+$GAME_SPEED == 1.0 
+874F: not  actor $HUNTER[24@] ped_event == 58
+    then
+    0209: 31@ = random_int_in_ranges 0 25
+    if and
+    00F2:   actor $HUNTER[24@] near_actor PLAYER_ACTOR radius 100.0 100.0 0
+    31@ == 10
+    82A0:   actor $HUNTER[24@] stopped   
+    not actor.Animation($HUNTER[24@]) == "FightA_1"
+    not actor.Animation($HUNTER[24@]) == "FightA_2"
+    not actor.Animation($HUNTER[24@]) == "FightA_3"
+    not actor.Animation($HUNTER[24@]) == "FightA_block"
+    not actor.Animation($HUNTER[24@]) == "FightA_G" 
+        then
+        gosub @HUNTER_SHUT_UP            
+        gosub @HUNTER_RANDOM_STALK_SOUND
+        Audiostream.LinkToActor(11@, $HUNTER[24@])
+        Audiostream.PerformAction(11@, PLAY)
+        Audiostream.Volume(11@) = $SOUNDS_VOLUME
+        HNT_STALK_SOUND_FLAG = 1
+        end
+    end
+
+/////////////////////Удаление охотника из-за отдаленности от игрока/////////////////////  
+
+if
+$HUNTER_REMOVE_FLAG == 1
+    then
+    jump to @HNT_REM
+    end
+
+if and
+$HUNTER_INTERIOR_SPAWN == 1
+$SAVESTATUS == 0
+    then
+    jump to @HNT_REM_SKIP
+    end      
+
+if and
+$ACTIVE_INTERIOR == 0
+not $INT_ENTERING_FLAG == 1
+not $HUNTER_INTERIOR_SPAWN == 1
+    then    
+    if and
+    $SAVESTATUS == 0
+    $SAVESTATUS_TRUE == 0 
+    0104:   actor $HUNTER[24@] near_actor PLAYER_ACTOR radius 180.0 180.0 180.0 sphere 0
+        then 
+        else
+        
+        :HNT_REM
+            
+        0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "HUNTER_SPAWNED"
+            
+        gosub @HUNTER_SHUT_UP    
+        gosub @HUNTER_SPAWN_SOUND_RELEASE
+        
+        if
+        075C:   marker HUNTER_LOC_MARKER_POINTER enabled
+        then
+        marker.Disable(HUNTER_LOC_MARKER_POINTER)
+        end
+            
+        actor.DestroyWithFade($HUNTER[24@])
+        $HUNTER[24@] = -69                    
+            
+        ////////////////////////
+            
+        1@ = 0
+            
+        for 0@ = 0 to 19
+            
+        if
+        056D:   actor $HUNTER[0@] defined
+        then
+        1@ = 1
+        end
+            
+        end
+            
+        ////////////////////////
+            
+        if
+        1@ == 0
+        then
+        $HUNTER_SPAWNED = 0    
+        end
+            
+        ////////////////////////
+            
+        if and
+        not $GAMEMODE_CRAZY == 1
+        not $MUTATION_ACTIVE == 13
+        HUNTERS_TO_SPAWN_COUNT > 0
+        then
+        HUNTERS_TO_SPAWN_COUNT = 0
+        end
+            
+        $HORDE_TIMER_COUNTER += 10000
+        jump to @HUNTER_SPAWN_TIMER_START
+            
+        end    
+    end
+
+if or
+$SAVESTATUS == 1
+$SAVESTATUS_TRUE == 1
+then
+jump to @HNT_REM
+end
+
+:HNT_REM_SKIP   
+
+/////////////////////Удаление охотника при его смерти/////////////////////  
+
+if or
+actor.Dead($HUNTER[24@])
+8184:   actor $HUNTER[24@] health < 1
+    then
+    
+    create_thread @ANTKUKL $HUNTER[24@]
+    
+    ///////////////////////////////////////////////////    
+    
+    0687: clear_actor $HUNTER[24@] task
+    05BE: AS_actor $HUNTER[24@] die
+    
+    0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "HUNTER_SPAWNED"
+    
+    if
+    075C:   marker HUNTER_LOC_MARKER_POINTER enabled
+    then
+    marker.Disable(HUNTER_LOC_MARKER_POINTER)
+    end          
+    
+    gosub @HUNTER_SPAWN_SOUND_RELEASE          
+    
+    0A96: 0@ = actor $HUNTER[24@] struct
+    0A8E: 0@ = 0@ + 0x764
+    0A8D: 1@ = read_memory 0@ size 2 virtual_protect 1
+    0A8D: 2@ = read_memory 0xB6F5F0 size 2 virtual_protect 1                
+    
+    $HORDE_TIMER_COUNTER += 10000
+    
+    ////////////////////////     
+    
+    if
+    $FREEMODE == 1
+    then
+    $ZOMBIES_PROCENT -= HUNTER_PROCENT_MINUS    
+    end
+    
+    if
+    051A:   actor $HUNTER[24@] damaged_by_actor PLAYER_ACTOR
+    then
+    
+    if or
+    031D:   actor $HUNTER[24@] hit_by_weapon 18
+    031D:   actor $HUNTER[24@] hit_by_weapon 118
+    031D:   actor $HUNTER[24@] hit_by_weapon 134
+    031D:   actor $HUNTER[24@] hit_by_weapon 179
+    031D:   actor $HUNTER[24@] hit_by_weapon 209    
+    then
+    0085: 1@ = 2@ // (int)
+    end
+    
+    if or    
+    031D:   actor $HUNTER[24@] hit_by_weapon 37
+    031D:   actor $HUNTER[24@] hit_by_weapon 114
+    031D:   actor $HUNTER[24@] hit_by_weapon 148
+    031D:   actor $HUNTER[24@] hit_by_weapon 180
+    031D:   actor $HUNTER[24@] hit_by_weapon 210
+    then
+    0085: 1@ = 2@ // (int)
+    end
+        
+    end
+    
+    ////////////////////////
+    
+    if
+    0800:   in_two_players_mode
+    then
+    0A8D: 0@ = read_memory 0xB7CF28 size 2 virtual_protect 1
+    else
+    0@ = -69
+    end
+    
+    if or
+    003B:   1@ == 2@  // (int)
+    003B:   1@ == 0@  // (int)
+    then
+    
+    $HUNTER_KILLED += 1
+    $TEMP_XP = HUNTER_XP_PLUS
+//    0068: $TEMP_XP *= $PLAYER_LEVEL // (int)
+    008D: $TEMP_XP = integer $TEMP_XP to_float
+    0069: $TEMP_XP *= $XP_COEFF // (float)
+    008C: $TEMP_XP = float $TEMP_XP to_integer
+    0058: $PLAYER_XP += $TEMP_XP // (int)
+    
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_HUNTER_KILLED"    
+    
+    if and
+    $CHEATED_FLAG == 0 
+    $GAMEMODE_CRAZY == 0
+    then             
+    0@ += 1
+    end                
+     
+    0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_HUNTER_KILLED"            
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT36_GOT"    
+    
+    if and
+    1@ == 0
+    0@ >= 300
+    then
+    v$ACHIEVEMNT = "ACH36"
+    $ACHIEVEMENT_GOT_FLAG = 1        
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT36_GOT"        
+    end
+        
+    end
+    
+    ////////////////////////
+    
+    if
+    89A8: not  actor $HUNTER[24@] headshoted
+    then
+    gosub @HUNTER_DIE_SOUND
+    else
+    gosub @HUNTER_SHUT_UP
+    end
+    
+    actor.RemoveReferences($HUNTER[24@])
+    $HUNTER[24@] = -69
+    
+    ////////////////////////
+    
+    1@ = 0
+    
+    for 0@ = 0 to 19
+    
+    if
+    056D:   actor $HUNTER[0@] defined
+    then
+    1@ = 1
+    end
+    
+    end
+    
+    ////////////////////////
+    
+    if
+    1@ == 0
+    then
+    $HUNTER_SPAWNED = 0    
+    end                
+        
+    ////////////////////////    
+    
+    if
+    $GAMEMODE_INF == 1
+    then
+    
+    $SURVIVERS_SCORE += 10
+    
+    00BA: show_text_styled GXT 'G_INF11' time 2500 style 5
+        
+    if
+    075C:   marker HUNTER_LOC_MARKER_POINTER enabled
+    then
+    marker.Disable(HUNTER_LOC_MARKER_POINTER)
+    end        
+        
+    end
+    
+    ////////////////////////
+    
+    if and
+    not $GAMEMODE_CRAZY == 1
+    not $MUTATION_ACTIVE == 13
+    HUNTERS_TO_SPAWN_COUNT > 0
+    then
+    HUNTERS_TO_SPAWN_COUNT = 0
+    end    
+    
+    jump to @HUNTER_SPAWN_TIMER_START         
+    end
+    
+/////////////////////Проверка на бездействие охотника/////////////////////     
+
+if or
+$ACTIVE_INTERIOR == 0
+$HUNTER_INTERIOR_SPAWN == 1
+then
+if and    
+not actor.Animation($HUNTER[24@]) == "HUNTER_walk"
+not actor.Animation($HUNTER[24@]) == "HUNTER_run"
+0E45: frame_mod 30      
+    then
+    06AC: 0@ = actor $HUNTER[24@] movement_speed    
+    if or
+    02A0:   actor $HUNTER[24@] stopped
+    0@ < 0.001   
+    actor.Animation($HUNTER[24@]) == "hunter_idle"
+    actor.Animation($HUNTER[24@]) == "flee_lkaround_01"
+        then  
+        if and
+        not actor.Animation($HUNTER[24@]) == "FightB_1"
+        not actor.Animation($HUNTER[24@]) == "FightB_2"
+        not actor.Animation($HUNTER[24@]) == "FightB_3"
+        not actor.Animation($HUNTER[24@]) == "FightB_block"
+        not actor.Animation($HUNTER[24@]) == "FightB_G"
+        not actor.Animation($HUNTER[24@]) == "FightShB"   
+            then
+            if and
+            not actor.Animation($HUNTER[24@]) == "FightShF"
+            not actor.Animation($HUNTER[24@]) == "FightSh_BWD"
+            not actor.Animation($HUNTER[24@]) == "FightSh_FWD"
+            not actor.Animation($HUNTER[24@]) == "FightSh_Left"
+            not actor.Animation($HUNTER[24@]) == "FightSh_Right"   
+                then
+                random_int 0@ HUNTER_TASK_WAIT_TIME_MIN HUNTER_TASK_WAIT_TIME_MAX
+                if
+                $GAMEMODE_CRAZY == 1
+                then
+                0@ *= HUNTER_TASK_CRAZY_MULT
+                0085: 1@ = 24@ // (int)
+                1@ *= HUNTER_TASK_CRAZY_MULT2
+                wait 1@
+                end
+                wait 0@
+                wait 24@ 
+                0687: clear_actor $HUNTER[24@] task                     
+                if
+                84AD: not  actor PLAYER_ACTOR in_water
+                    then 
+                                
+                    if and
+                    $SPECTATING_FLAG == 0
+                    $INF_SIDE == 0
+                    $ZOMBIE_DONT_ATTACK_PLAYER == 0
+                    then
+                    05E2: AS_actor $HUNTER[24@] kill_actor PLAYER_ACTOR  
+                    else
+                    05DE: AS_actor $HUNTER[24@] walk_around_ped_path
+                    end
+                    
+                    else  
+                       
+                    if and
+                    $SPECTATING_FLAG == 0
+                    $INF_SIDE == 0
+                    then               
+                    05D9: AS_actor $HUNTER[24@] run_to_actor PLAYER_ACTOR timelimit 60000 stop_within_radius 1.0
+                    else
+                    05DE: AS_actor $HUNTER[24@] walk_around_ped_path
+                    end
+                                                      
+                    end     
+                end   
+            end 
+        end
+    end
+end          
+
+////////////////////////Высокий прыжок охтника////////////////////////
+
+//0AD1: show_formatted_text_highpriority "HNT_JUMPS_COUNT: %d" time 2000 HNT_JUMPS_COUNT
+
+if
+HNT_JUMPS_COUNT == 10
+then
+HNT_JUMPS_COUNT = 140
+end
+
+if
+HNT_JUMPS_COUNT > 10
+then
+HNT_JUMPS_COUNT -= 1
+end
+
+if
+HNT_JUMPS_COUNT == 12
+then
+HNT_JUMPS_COUNT = 0
+end
+
+if
+056D:   actor $HUNTER[24@] defined
+    then
+    if and
+    0184:   actor $HUNTER[24@] health > 0
+//    33@ >= 1000
+    0E45: frame_mod 15
+    not HNT_JUMPS_COUNT > 10
+    $GAMEMODE_CRAZY == 0
+    $ACTIVE_INTERIOR == 0
+        then
+//        33@ = 0
+        04C4: store_coords_to 27@ 28@ 29@ from_actor $HUNTER[24@] with_offset 0.0 3.0 0.0 
+        Actor.StorePos($HUNTER[24@],2@,3@,4@)
+        if 
+        86BD:   not no_obstacles_between 27@ 28@ 29@ and 2@ 3@ 4@ solid 1 car 0 actor 0 object 0 particle 0 
+            then
+            0687: clear_actor $HUNTER[24@] task    
+            random_int 0@ HUNTER_TASK_WAIT_TIME_MIN HUNTER_TASK_WAIT_TIME_MAX
+            if
+            $GAMEMODE_CRAZY == 1
+            then
+            0@ *= HUNTER_TASK_CRAZY_MULT
+            0085: 1@ = 24@ // (int)
+            1@ *= HUNTER_TASK_CRAZY_MULT2
+            wait 1@
+            end
+            wait 0@
+            wait 24@ 
+            078F: AS_actor $HUNTER[24@] climb 0
+            wait 100                              
+            actor.StorePos($HUNTER[24@], 27@, 28@, 29@) 
+            04C4: store_coords_to 2@ 3@ 4@ from_actor $HUNTER[24@] with_offset 0.0 8.0 40.0
+            0063: 2@ -= 27@  // (float) 
+            0063: 3@ -= 28@  // (float) 
+            0063: 4@ -= 29@  // (float) 
+            083C: set_actor $HUNTER[24@] velocity_in_direction_XYZ 2@ 3@ 4@
+            wait 100                              
+            actor.StorePos($HUNTER[24@], 27@, 28@, 29@) 
+            04C4: store_coords_to 2@ 3@ 4@ from_actor $HUNTER[24@] with_offset 0.0 15.0 40.0
+            0063: 2@ -= 27@  // (float) 
+            0063: 3@ -= 28@  // (float) 
+            0063: 4@ -= 29@  // (float) 
+            083C: set_actor $HUNTER[24@] velocity_in_direction_XYZ 2@ 3@ 4@
+            HNT_JUMPS_COUNT += 1
+            end
+        end
+    end
+    
+////////////////////////Высокий прыжок охтника в безумии////////////////////////
+
+if
+056D:   actor $HUNTER[24@] defined
+    then
+    if and
+    0184:   actor $HUNTER[24@] health > 0
+    0E45: frame_mod 60
+    $GAMEMODE_CRAZY == 1
+        then
+        04C4: store_coords_to 27@ 28@ 29@ from_actor $HUNTER[24@] with_offset 0.0 3.0 0.0 
+        Actor.StorePos($HUNTER[24@],2@,3@,4@)
+        if 
+        86BD:   not no_obstacles_between 27@ 28@ 29@ and 2@ 3@ 4@ solid 1 car 0 actor 0 object 0 particle 0 
+            then
+            0687: clear_actor $HUNTER[24@] task    
+            random_int 0@ HUNTER_TASK_WAIT_TIME_MIN HUNTER_TASK_WAIT_TIME_MAX
+            if
+            $GAMEMODE_CRAZY == 1
+            then
+            0@ *= HUNTER_TASK_CRAZY_MULT
+            0085: 1@ = 24@ // (int)
+            1@ *= HUNTER_TASK_CRAZY_MULT2
+            wait 1@
+            end
+            wait 0@
+            wait 24@ 
+            078F: AS_actor $HUNTER[24@] climb 0
+            wait 100                              
+            actor.StorePos($HUNTER[24@], 27@, 28@, 29@) 
+            04C4: store_coords_to 2@ 3@ 4@ from_actor $HUNTER[24@] with_offset 0.0 8.0 80.0
+            0063: 2@ -= 27@  // (float) 
+            0063: 3@ -= 28@  // (float) 
+            0063: 4@ -= 29@  // (float) 
+            083C: set_actor $HUNTER[24@] velocity_in_direction_XYZ 2@ 3@ 4@
+            wait 100                              
+            actor.StorePos($HUNTER[24@], 27@, 28@, 29@) 
+            04C4: store_coords_to 2@ 3@ 4@ from_actor $HUNTER[24@] with_offset 0.0 15.0 80.0
+            0063: 2@ -= 27@  // (float) 
+            0063: 3@ -= 28@  // (float) 
+            0063: 4@ -= 29@  // (float) 
+            083C: set_actor $HUNTER[24@] velocity_in_direction_XYZ 2@ 3@ 4@
+            HNT_JUMPS_COUNT += 1
+            end
+        end
+    end    
+
+/////////////////////Поиск цели-педа охотником///////////////////// 
+
+if
+056D:   actor $HUNTER[24@] defined
+    then
+    04DD: 0@ = actor $HUNTER[24@] armour
+    if and
+    0184:   actor $HUNTER[24@] health > 0
+    not actor.Dead($HUNTER[24@])
+    not actor.Animation($HUNTER[24@]) == "FALL_skyDive"
+    not 0@ == 1
+        then      
+        0208: 0@ = random_float_in_ranges $HUNTER_AGRO_MIN $HUNTER_AGRO_MAX
+        if 
+        0037:   0@ >= $HUNTER_AGRO_GREATER  // (float)
+            then      
+            gosub @HUNTER_ONFOOT_ATTACK_SYSTEM_TARGET_FIND
+            if and
+            25@ == 1
+            056D:   actor HUNTER_TARGET_ACTOR defined
+                then  
+                gosub @HUNTER_ROOF_CHECK
+                if or
+                1@ == 1
+                0104:   actor $HUNTER[24@] near_actor HUNTER_TARGET_ACTOR radius 2.0 2.0 2.0 sphere 0
+                    then    
+                    089F: get_actor HUNTER_TARGET_ACTOR pedtype_to 0@
+                    if and
+                    0364:   actor $HUNTER[24@] spotted_actor HUNTER_TARGET_ACTOR            
+                    87D6: not  0@ == $VOICE_SET_PEDTYPE // @ == $ (int)
+                    84AD: not  actor HUNTER_TARGET_ACTOR in_water 
+                    84C8: not  actor HUNTER_TARGET_ACTOR driving_flying_vehicle
+                    8A32: not  actor HUNTER_TARGET_ACTOR on_turret_of_car
+                    87D6: not  HUNTER_TARGET_ACTOR == $HUNTER[24@] // @ == $ (int)  
+                        then  
+                        if or
+                        87D6: not  0@ == $ZOMBIE_SET_PEDTYPE // @ == $ (int)  
+                        $ZOMBIEORGY_MODE_FLAG == 1  
+                            then 
+                            if and
+                            not actor.Dead($HUNTER[24@])
+                            0184:   actor $HUNTER[24@] health > 0
+                                then
+                                19@ = 6.8
+                                16@ = 5.8
+                                if and   
+                                0818:  actor $HUNTER[24@] in_air
+                                84AD:  not actor $HUNTER[24@] in_water
+                                    then                            
+                                    19@ = -6.8
+                                    16@ = -5.8
+                                    jump @2AIR_CHECK_NO 
+                                    else
+                                    jump @2AIR_CHECK_NO
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end                    
+            else
+            if and
+            0184:   actor $HUNTER[24@] health > 0
+            not actor.Dead($HUNTER[24@])
+            not actor.Animation($HUNTER[24@]) == "FALL_skyDive"
+            $INF_SIDE == 0    
+            $SPECTATING_FLAG == 0
+            $SIMULATING_FLAG == 0  
+            $ZOMBIEORGY_MODE_FLAG == 0
+                then
+                if and
+                not actor.Animation(PLAYER_ACTOR) == "getup"
+                not actor.Animation(PLAYER_ACTOR) == "FLOOR_hit"
+                not actor.Animation(PLAYER_ACTOR) == "KO_skid_front"
+                not actor.Animation(PLAYER_ACTOR) == "HitB_1"
+                not actor.Animation(PLAYER_ACTOR) == "HitB_2"
+                not actor.Animation(PLAYER_ACTOR) == "HitB_3"
+                    then
+                    if and
+                    0184:   actor $HUNTER[24@] health > 0
+                    00F2:   actor $HUNTER[24@] near_actor PLAYER_ACTOR radius 180.0 180.0 sphere 0
+                    0364:   actor $HUNTER[24@] spotted_actor PLAYER_ACTOR
+                    not actor.Dead(PLAYER_ACTOR)
+                    84C8: not  actor PLAYER_ACTOR driving_flying_vehicle
+                    84AD: not  actor PLAYER_ACTOR in_water
+                        then
+                        gosub @HUNTER_ROOF_CHECK
+                        if or
+                        1@ == 1
+                        0104:   actor $HUNTER[24@] near_actor PLAYER_ACTOR radius 2.0 2.0 2.0 sphere 0
+                            then
+                            19@ = 6.8
+                            16@ = 5.8
+                            if and
+                            0818:  actor $HUNTER[24@] in_air
+                            84AD:  not actor $HUNTER[24@] in_water  
+                                then                        
+                                19@ = -6.8
+                                16@ = -5.8
+                                jump @3AIR_CHECK_NO                          
+                                else
+                                jump @3AIR_CHECK_NO
+                                end
+                            end 
+                        end                  
+                    end
+                end    
+            end  
+        end
+    end             
+
+END       
+
+:HUNTER_ONFOOT_ATTACK_SYSTEM_TARGET_FIND
+
+25@ = 0
+
+//////////////////////////////////////////////////
+
+if or //OOS BUNKER TANKS MOMENT TARGETS
+ZAME_PROTECT_THE_OBJECT_FLAG == 2
+OOS_MARK == 223366
+OOS_MARK == 223367
+OOS_MARK == 999668
+OOS_MARK == 999666
+    then
+    
+    if
+    0E4D: random_percent 10
+    then
+    random_int 27@ 41 46
+    else
+    
+    random_int 27@ 0 3
+    if
+    27@ == 0 //Фермеры
+        then
+        random_int 0@ 26 34
+        0084: HUNTER_TARGET_ACTOR = $RNDM_HOUSE_WEAPON[0@] // (int)
+        jump to @HUNTER_TARGET_CUCUMBER_SKIP
+        end
+    
+    if
+    27@ == 1 //Энкер, Гарнет
+        then
+        random_int 0@ 23 26
+        0084: HUNTER_TARGET_ACTOR = $RNDM_HOUSE_WEAPON[0@] // (int)
+        jump to @HUNTER_TARGET_CUCUMBER_SKIP
+        end
+        
+    if
+    27@ == 2 //Артемис, Дэниел
+        then
+        random_int 0@ 38 40
+        0084: HUNTER_TARGET_ACTOR = $RNDM_HOUSE_WEAPON[0@] // (int)
+        jump to @HUNTER_TARGET_CUCUMBER_SKIP
+        end         
+    
+    end
+    
+    end
+
+//////////////////////////////////////////////////
+
+if
+$ZOMBIEORGY_MODE_FLAG == 1
+then
+random_int 1@ 1 25
+else
+
+if and
+$ACTIVE_INTERIOR == 0
+not $GAMEMODE_HOLD == 1
+then
+008B: 1@ = $CREATURE_RANDOM2 // (int)
+else
+random_int 1@ 41 46
+end
+
+end
+
+if or
+$GAMEMODE_VERSUS == 1
+$GAMEMODE_CRAZY == 1
+then
+
+if and
+COOP_ACTIVE_FLAG == 1
+not $INF_SIDE == 1
+then
+if
+0E4D: random_percent 80
+    then
+    random_int 1@ 25 44
+    else
+    0084: HUNTER_TARGET_ACTOR = COOP_ACTOR // (int)
+    jump to @HUNTER_TARGET_CUCUMBER_SKIP
+    end
+else
+random_int 1@ 25 44
+end
+
+end
+
+//////////////////////////////////////////////////
+
+008B: HUNTER_TARGET_ACTOR = $CREATURE[1@] // (int)
+
+:HUNTER_TARGET_CUCUMBER_SKIP
+
+if and
+056D:   actor HUNTER_TARGET_ACTOR defined
+not 1@ == PLAYER_CREATURE_NUMBER
+    then      
+    if
+    0104:   actor $HUNTER[24@] near_actor HUNTER_TARGET_ACTOR radius 180.0 180.0 500.0 sphere 0
+        then 
+        25@ = 1
+        else
+        HUNTER_TARGET_ACTOR = -1
+        end
+    else
+    HUNTER_TARGET_ACTOR = -1
+    end
+
+return
+
+/////////////////////Прыжок на педа/////////////////////  
+
+:2AIR_CHECK_NO
+wait 0
+
+if
+$HUNTER_REMOVE_FLAG == 1
+    then
+    jump to @HNT_REM
+    end
+
+if
+031D:   actor $HUNTER[24@] hit_by_weapon 109
+then
+create_thread @TSPC_IN $HUNTER[24@] 140
+jump to @HUNTER_STALK_CHECK
+end
+
+if
+056D:   actor HUNTER_TARGET_ACTOR defined
+    then
+    if
+    actor.Dead(HUNTER_TARGET_ACTOR)
+        then
+        Actor.SetWalkStyle($HUNTER[24@],"HUNTER2")
+        jump to @HUNTER_STALK_CHECK
+        end
+    end
+
+if or
+856D: not  actor HUNTER_TARGET_ACTOR defined
+actor.Dead($HUNTER[24@])
+8184:   actor $HUNTER[24@] health < 1
+$SAVESTATUS == 1
+    then
+    Actor.SetWalkStyle($HUNTER[24@],"HUNTER2")
+    jump to @HUNTER_STALK_CHECK
+    end
+
+if and
+056D:   actor HUNTER_TARGET_ACTOR defined
+056D:   actor $HUNTER[24@] defined 
+    then
+    actor.StorePos(HUNTER_TARGET_ACTOR,25@,26@,27@)
+    actor.StorePos($HUNTER[24@],28@,29@,30@)
+    050A: 12@ = distance_between_XYZ 25@ 26@ 27@ and_XYZ 28@ 29@ 30@
+    0092: 12@ = float 12@ to_integer 
+    if and
+    12@ <= 200
+    12@ >= 0
+        then
+        if and
+        not actor.Dead($HUNTER[24@])
+        0184:   actor $HUNTER[24@] health > 0
+        not actor.Dead(HUNTER_TARGET_ACTOR)        
+            then
+            if and 
+            8A32: not actor HUNTER_TARGET_ACTOR on_turret_of_car
+            84AD: not  actor HUNTER_TARGET_ACTOR in_water
+                then
+                Actor.SetWalkStyle($HUNTER[24@],"HUNTER")
+                0A96: 0@ = actor $HUNTER[24@] struct
+                0A8E: 0@ = 0@ + 1376
+                0A8C: write_memory 0@ size 4 value 2056.0 virtual_protect 1  
+                0792: disembark_instantly_actor $HUNTER[24@]
+                077A: set_actor $HUNTER[24@] acquaintance 0 to_actors_pedtype 0 // see ped.dat
+                077A: set_actor $HUNTER[24@] acquaintance 0 to_actors_pedtype 25 // see ped.dat
+                077A: set_actor $HUNTER[24@] acquaintance 0 to_actors_pedtype 26 // see ped.dat
+                077A: set_actor $HUNTER[24@] acquaintance 0 to_actors_pedtype 27 // see ped.dat   
+                077A: set_actor $HUNTER[24@] acquaintance 0 to_actors_pedtype 28 // see ped.dat                
+                0687: clear_actor $HUNTER[24@] task    
+                random_int 0@ HUNTER_TASK_WAIT_TIME_MIN HUNTER_TASK_WAIT_TIME_MAX
+                if
+                $GAMEMODE_CRAZY == 1
+                then
+                0@ *= HUNTER_TASK_CRAZY_MULT
+                0085: 1@ = 24@ // (int)
+                1@ *= HUNTER_TASK_CRAZY_MULT2
+                wait 1@
+                end
+                wait 0@
+                wait 24@ 
+                if
+                056D:   actor HUNTER_TARGET_ACTOR defined   
+                    then
+                    05E2: AS_actor $HUNTER[24@] kill_actor HUNTER_TARGET_ACTOR
+                    
+                    if
+                    $GAME_SPEED == 1.0
+                    then                    
+                    gosub @HUNTER_SHUT_UP                            
+                    gosub @HUNTER_RANDOM_ALERT_SOUND
+                    Audiostream.LinkToActor(11@, $HUNTER[24@])
+                    Audiostream.PerformAction(11@, PLAY)
+                    Audiostream.Volume(11@) = $SOUNDS_VOLUME
+                    HNT_ALERT_SOUND_FLAG = 1
+                    end 
+                    
+                    008B: 0@ = $ZOMBIE_HUNTER_JUMP_TIME // (int)
+                    0093: 0@ = integer 0@ to_float
+                    random_float 1@ 0.75 1.25 
+                    006B: 0@ *= 1@  // (float)  
+                    0092: 0@ = float 0@ to_integer
+                    
+                    if and
+                    CANT_CAPTURE_SHIT == 1
+                    PLAYER_IN_NEST_FLAG == 1
+                    then
+                    0@ = 0
+                    end
+                    
+                    if and
+                    CURRENT_NEST_NUMBER == 16
+                    PLAYER_IN_NEST_FLAG == 1
+                    NEST16_CAN_BE_KILLED == 0
+                    then
+                    0@ = 0
+                    end 
+                    
+                    gosub @HUNTER_ROOF_CHECK
+                    
+                    if 
+                    1@ == 1  
+                    then
+                    
+                    ////////////////////////////////////////////////////
+                                                          
+                    32@ = 0                    
+                    repeat
+                    wait 0
+                    
+                    if
+                    $HUNTER_REMOVE_FLAG == 1
+                        then
+                        jump to @HNT_REM
+                        end
+                    
+                    if or
+                    $SAVESTATUS == 1
+                    $SAVESTATUS_TRUE == 1
+                    8184:   actor $HUNTER[24@] health < 1
+                    actor.Dead($HUNTER[24@])
+                    856D: not  actor HUNTER_TARGET_ACTOR defined
+                        then
+                        break
+                        end
+                                                    
+                    until 001D:   32@ > 0@  // (int)
+                    
+                    ////////////////////////////////////////////////////
+                     
+                    end                  
+                    
+                    0@ = actor.Health($HUNTER[24@])
+                    if and
+                    not 0@ == 0
+                    056D:   actor HUNTER_TARGET_ACTOR defined
+                        then
+                        077A: set_actor $HUNTER[24@] acquaintance 4 to_actors_pedtype 0 // see ped.dat
+                        077A: set_actor $HUNTER[24@] acquaintance 4 to_actors_pedtype 25 // see ped.dat
+                        077A: set_actor $HUNTER[24@] acquaintance 4 to_actors_pedtype 26 // see ped.dat
+                        077A: set_actor $HUNTER[24@] acquaintance 4 to_actors_pedtype 27 // see ped.dat
+                        077A: set_actor $HUNTER[24@] acquaintance 4 to_actors_pedtype 28 // see ped.dat    
+                        0792: disembark_instantly_actor $HUNTER[24@]
+                        0687: clear_actor $HUNTER[24@] task    
+                        random_int 0@ HUNTER_TASK_WAIT_TIME_MIN HUNTER_TASK_WAIT_TIME_MAX
+                        if
+                        $GAMEMODE_CRAZY == 1
+                        then
+                        0@ *= HUNTER_TASK_CRAZY_MULT
+                        0085: 1@ = 24@ // (int)
+                        1@ *= HUNTER_TASK_CRAZY_MULT2
+                        wait 1@
+                        end
+                        wait 0@
+                        wait 24@ 
+                        if
+                        056D:   actor HUNTER_TARGET_ACTOR defined   
+                            then                        
+                            05BC: AS_actor $HUNTER[24@] jump 1                                                        
+                            wait 100        
+                            actor.StorePos($HUNTER[24@], 27@, 28@, 29@) 
+                            04C4: store_coords_to 2@ 3@ 4@ from_actor $HUNTER[24@] with_offset 0.0 0.0 40.0
+                            0063: 2@ -= 27@  // (float) 
+                            0063: 3@ -= 28@  // (float) 
+                            0063: 4@ -= 29@  // (float) 
+                            083C: set_actor $HUNTER[24@] velocity_in_direction_XYZ 2@ 3@ 4@                            
+                            if
+                            not ZOMBIE_KARATIST_CHEAT == 1
+                            then
+                            0812: AS_actor $HUNTER[24@] perform_animation "FALL_skyDive" IFP "PED" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time -1  // versionB
+                            else
+                            0812: AS_actor $HUNTER[24@] perform_animation "FightC_M" IFP "FIGHT_C" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time -1  // versionB
+                            0612: set_actor $HUNTER[24@] animation "FightC_M" paused 0
+                            0614: set_actor $HUNTER[24@] animation "FightC_M" progress_to 0.35 // 0.0 to 1.0
+                            end
+                            
+                            gosub @HUNTER_SHUT_UP                                                                                    
+                            gosub @HUNTER_RANDOM_ATTACK_SOUND
+                            Audiostream.LinkToActor(11@, $HUNTER[24@])
+                            Audiostream.PerformAction(11@, PLAY)
+                            Audiostream.Volume(11@) = $SOUNDS_VOLUME
+                            HNT_ATTACK_SOUND_FLAG = 1
+                                                         
+                            32@ = 0                                                        
+                            33@ = 0
+                    
+                            repeat
+                            wait 0
+                            
+                            if
+                            $HUNTER_REMOVE_FLAG == 1
+                                then
+                                audiostream.Release(11@)
+                                audiostream.Release(21@)
+                                jump to @HNT_REM
+                                end
+                            
+                            if
+                            $GAME_SPEED == 1.0
+                            then
+                            Audiostream.Volume(11@) = $SOUNDS_VOLUME
+                            Audiostream.Volume(21@) = 0.0
+                            else
+                            Audiostream.Volume(11@) = 0.0
+                            Audiostream.Volume(21@) = $SOUNDS_VOLUME
+                            end
+                            
+                            until 33@ > 100
+                            33@ = 0
+                                                        
+                            if
+                            056D:   actor HUNTER_TARGET_ACTOR defined 
+                                then                             
+                                actor.storepos($HUNTER[24@], 26@, 27@, 28@)   
+                                actor.StorePos(HUNTER_TARGET_ACTOR, 2@, 3@, 4@)  
+                                0063: 2@ -= 26@  // (float) 
+                                0063: 3@ -= 27@  // (float) 
+                                0063: 4@ -= 28@  // (float)
+                                if
+                                12@ > 30 
+                                    then
+                                    0017: 2@ /= 0.79
+                                    0017: 3@ /= 0.79
+                                    083C: set_actor $HUNTER[24@] velocity_in_direction_XYZ 2@ 3@ 19@
+                                    
+                                    33@ = 0                    
+                                    repeat
+                                    wait 0
+                                    
+                                    if
+                                    $HUNTER_REMOVE_FLAG == 1
+                                        then
+                                        audiostream.Release(11@)
+                                        audiostream.Release(21@)
+                                        jump to @HNT_REM
+                                        end
+                                    
+                                    if
+                                    $GAME_SPEED == 1.0
+                                    then
+                                    Audiostream.Volume(11@) = $SOUNDS_VOLUME
+                                    Audiostream.Volume(21@) = 0.0
+                                    else
+                                    Audiostream.Volume(11@) = 0.0
+                                    Audiostream.Volume(21@) = $SOUNDS_VOLUME
+                                    end
+                                    
+                                    until 33@ > 200
+                                    33@ = 0
+                                    
+                                    083C: set_actor $HUNTER[24@] velocity_in_direction_XYZ 2@ 3@ 19@
+                                    jump to @HUNTER_JUMP1_CHECK_DAMAGE 
+                                    else
+                                    0017: 2@ /= 0.52
+                                    0017: 3@ /= 0.52
+                                    083C: set_actor $HUNTER[24@] velocity_in_direction_XYZ 2@ 3@ 16@
+                                    
+                                    33@ = 0                    
+                                    repeat
+                                    wait 0
+                                    
+                                    if
+                                    $HUNTER_REMOVE_FLAG == 1
+                                        then
+                                        audiostream.Release(11@)
+                                        audiostream.Release(21@)
+                                        jump to @HNT_REM
+                                        end
+                                    
+                                    if
+                                    $GAME_SPEED == 1.0
+                                    then
+                                    Audiostream.Volume(11@) = $SOUNDS_VOLUME
+                                    Audiostream.Volume(21@) = 0.0
+                                    else
+                                    Audiostream.Volume(11@) = 0.0
+                                    Audiostream.Volume(21@) = $SOUNDS_VOLUME
+                                    end
+                                    
+                                    until 33@ > 200
+                                    33@ = 0
+                                    
+                                    083C: set_actor $HUNTER[24@] velocity_in_direction_XYZ 2@ 3@ 16@
+                                    jump to @HUNTER_JUMP1_CHECK_DAMAGE 
+                                    end
+                                end
+                            end
+                        end
+                    end                  
+                end
+            end
+        end 
+    end    
+    
+jump to @2AIR_CHECK_NO  
+
+/////////////////////Прыжок на игрока/////////////////////  
+
+:3AIR_CHECK_NO
+wait 0
+
+if
+$HUNTER_REMOVE_FLAG == 1
+    then
+    jump to @HNT_REM
+    end
+
+if
+056D:   actor $HUNTER[24@] defined
+    then
+    if
+    031D:   actor $HUNTER[24@] hit_by_weapon 109
+        then
+        create_thread @TSPC_IN $HUNTER[24@] 140
+        jump to @HUNTER_STALK_CHECK
+        end
+    end
+
+if or
+856D: not  actor $HUNTER[24@] defined
+$SAVESTATUS == 1
+$HUNTER_DONT_ATTACK_PLAYER == 1
+    then
+    jump to @HUNTER_STALK_CHECK
+    end  
+
+0819: 2@ = actor PLAYER_ACTOR distance_from_ground
+
+if and
+056D:   actor PLAYER_ACTOR defined
+056D:   actor $HUNTER[24@] defined
+$HUNTER_DONT_ATTACK_PLAYER == 0
+not 2@ > 5.0
+    then
+    actor.StorePos(PLAYER_ACTOR,25@,26@,27@)
+    actor.StorePos($HUNTER[24@],28@,29@,30@)
+    050A: 12@ = distance_between_XYZ 25@ 26@ 27@ and_XYZ 28@ 29@ 30@
+    0092: 12@ = float 12@ to_integer 
+    if and
+    12@ <= 200
+    12@ >= 0
+        then
+        if and
+        not actor.Dead($HUNTER[24@])  
+        0184:   actor $HUNTER[24@] health > 0
+        not actor.Dead(PLAYER_ACTOR)
+        8A32: not actor PLAYER_ACTOR on_turret_of_car
+            then
+            if
+            84AD: not  actor PLAYER_ACTOR in_water
+                then      
+                Actor.SetWalkStyle($HUNTER[24@],"HUNTER") 
+                0A96: 0@ = actor $HUNTER[24@] struct
+                0A8E: 0@ = 0@ + 1376
+                0A8C: write_memory 0@ size 4 value 2056.0 virtual_protect 1  
+                0792: disembark_instantly_actor $HUNTER[24@]
+                077A: set_actor $HUNTER[24@] acquaintance 0 to_actors_pedtype 0 // see ped.dat
+                077A: set_actor $HUNTER[24@] acquaintance 0 to_actors_pedtype 25 // see ped.dat
+                077A: set_actor $HUNTER[24@] acquaintance 0 to_actors_pedtype 26 // see ped.dat
+                077A: set_actor $HUNTER[24@] acquaintance 0 to_actors_pedtype 27 // see ped.dat   
+                077A: set_actor $HUNTER[24@] acquaintance 0 to_actors_pedtype 28 // see ped.dat                
+                0687: clear_actor $HUNTER[24@] task    
+                random_int 0@ HUNTER_TASK_WAIT_TIME_MIN HUNTER_TASK_WAIT_TIME_MAX
+                if
+                $GAMEMODE_CRAZY == 1
+                then
+                0@ *= HUNTER_TASK_CRAZY_MULT
+                0085: 1@ = 24@ // (int)
+                1@ *= HUNTER_TASK_CRAZY_MULT2
+                wait 1@
+                end
+                wait 0@
+                wait 24@    
+                05E2: AS_actor $HUNTER[24@] kill_actor PLAYER_ACTOR
+                
+                if
+                $GAME_SPEED == 1.0
+                then                
+                gosub @HUNTER_SHUT_UP                        
+                gosub @HUNTER_RANDOM_ALERT_SOUND
+                Audiostream.LinkToActor(11@, $HUNTER[24@])
+                Audiostream.PerformAction(11@, PLAY)
+                Audiostream.Volume(11@) = $SOUNDS_VOLUME
+                HNT_ALERT_SOUND_FLAG = 1
+                end
+                                 
+                008B: 0@ = $ZOMBIE_HUNTER_JUMP_TIME // (int)
+                0093: 0@ = integer 0@ to_float
+                random_float 1@ 0.75 1.25 
+                006B: 0@ *= 1@  // (float)  
+                0092: 0@ = float 0@ to_integer
+                
+                if and
+                CANT_CAPTURE_SHIT == 1
+                PLAYER_IN_NEST_FLAG == 1
+                then
+                0@ = 0
+                end
+                
+                if and
+                CURRENT_NEST_NUMBER == 16
+                PLAYER_IN_NEST_FLAG == 1
+                NEST16_CAN_BE_KILLED == 0
+                then
+                0@ = 0
+                end
+                                
+                gosub @HUNTER_ROOF_CHECK                                
+                
+                if 
+                1@ == 1  
+                then
+                                  
+                ////////////////////////////////////////////////////
+                                                          
+                32@ = 0                    
+                repeat
+                wait 0
+                
+                if
+                $HUNTER_REMOVE_FLAG == 1
+                    then
+                    jump to @HNT_REM
+                    end
+                
+                if or
+                $SAVESTATUS == 1
+                $SAVESTATUS_TRUE == 1
+                8184:   actor $HUNTER[24@] health < 1
+                actor.Dead($HUNTER[24@])
+                actor.Dead(PLAYER_ACTOR)
+                    then
+                    break
+                    end
+                                                    
+                until 001D:   32@ > 0@  // (int)
+                    
+                ////////////////////////////////////////////////////
+                 
+                end  
+                
+                0@ = actor.Health($HUNTER[24@])
+                if
+                not 0@ == 0
+                    then
+                    077A: set_actor $HUNTER[24@] acquaintance 4 to_actors_pedtype 0 // see ped.dat
+                    077A: set_actor $HUNTER[24@] acquaintance 4 to_actors_pedtype 25 // see ped.dat
+                    077A: set_actor $HUNTER[24@] acquaintance 4 to_actors_pedtype 26 // see ped.dat
+                    077A: set_actor $HUNTER[24@] acquaintance 4 to_actors_pedtype 27 // see ped.dat
+                    077A: set_actor $HUNTER[24@] acquaintance 4 to_actors_pedtype 28 // see ped.dat
+                    0792: disembark_instantly_actor $HUNTER[24@]
+                    0687: clear_actor $HUNTER[24@] task    
+                    random_int 0@ HUNTER_TASK_WAIT_TIME_MIN HUNTER_TASK_WAIT_TIME_MAX
+                    if
+                    $GAMEMODE_CRAZY == 1
+                    then
+                    0@ *= HUNTER_TASK_CRAZY_MULT
+                    0085: 1@ = 24@ // (int)
+                    1@ *= HUNTER_TASK_CRAZY_MULT2
+                    wait 1@
+                    end
+                    
+                    gosub @HUNTER_ROOF_CHECK
+                    if 
+                    1@ == 1  
+                    then                  
+                    wait 0@
+                    wait 24@ 
+                    end  
+                     
+                    05BC: AS_actor $HUNTER[24@] jump 1    
+                    wait 100
+                    actor.StorePos($HUNTER[24@], 27@, 28@, 29@) 
+                    04C4: store_coords_to 2@ 3@ 4@ from_actor $HUNTER[24@] with_offset 0.0 0.0 40.0
+                    0063: 2@ -= 27@  // (float) 
+                    0063: 3@ -= 28@  // (float) 
+                    0063: 4@ -= 29@  // (float) 
+                    083C: set_actor $HUNTER[24@] velocity_in_direction_XYZ 2@ 3@ 4@
+                    if
+                    not ZOMBIE_KARATIST_CHEAT == 1
+                    then
+                    0812: AS_actor $HUNTER[24@] perform_animation "FALL_skyDive" IFP "PED" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time -1  // versionB
+                    else
+                    0812: AS_actor $HUNTER[24@] perform_animation "FightC_M" IFP "FIGHT_C" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time -1  // versionB
+                    0612: set_actor $HUNTER[24@] animation "FightC_M" paused 0
+                    0614: set_actor $HUNTER[24@] animation "FightC_M" progress_to 0.35 // 0.0 to 1.0
+                    end
+                                       
+                    gosub @HUNTER_SHUT_UP                        
+                    gosub @HUNTER_RANDOM_ATTACK_SOUND
+                    Audiostream.LinkToActor(11@, $HUNTER[24@])
+                    Audiostream.Volume(11@) = 0.0
+                    Audiostream.PerformAction(11@, PLAY)
+                    
+                    Audiostream.LinkToActor(21@, $HUNTER[24@])
+                    Audiostream.Volume(21@) = 0.0
+                    Audiostream.PerformAction(21@, PLAY)                    
+                    HNT_ATTACK_SOUND_FLAG = 1
+                                         
+                    32@ = 0                    
+                    33@ = 0
+                    
+                    repeat
+                    wait 0
+                    
+                    if
+                    $HUNTER_REMOVE_FLAG == 1
+                        then
+                        audiostream.Release(11@)
+                        audiostream.Release(21@)
+                        jump to @HNT_REM
+                        end
+                    
+                    if
+                    $GAME_SPEED == 1.0
+                    then
+                    Audiostream.Volume(11@) = $SOUNDS_VOLUME
+                    Audiostream.Volume(21@) = 0.0
+                    else
+                    Audiostream.Volume(11@) = 0.0
+                    Audiostream.Volume(21@) = $SOUNDS_VOLUME
+                    end
+                    
+                    until 33@ > 100
+                    33@ = 0
+                                                             
+                    actor.storepos($HUNTER[24@], 26@, 27@, 28@)   
+                    if
+                    056D:   actor PLAYER_ACTOR defined
+                        then
+                        actor.StorePos(PLAYER_ACTOR, 2@, 3@, 4@)  
+                        0063: 2@ -= 26@  // (float) 
+                        0063: 3@ -= 27@  // (float) 
+                        0063: 4@ -= 28@  // (float)
+                        if
+                        12@ > 30 
+                            then
+                            0017: 2@ /= 0.79
+                            0017: 3@ /= 0.79
+                            083C: set_actor $HUNTER[24@] velocity_in_direction_XYZ 2@ 3@ 19@
+                            
+                            33@ = 0                    
+                            repeat
+                            wait 0
+                            
+                            if
+                            $HUNTER_REMOVE_FLAG == 1
+                                then
+                                audiostream.Release(11@)
+                                audiostream.Release(21@)
+                                jump to @HNT_REM
+                                end
+                            
+                            if
+                            $GAME_SPEED == 1.0
+                            then
+                            Audiostream.Volume(11@) = $SOUNDS_VOLUME
+                            Audiostream.Volume(21@) = 0.0
+                            else
+                            Audiostream.Volume(11@) = 0.0
+                            Audiostream.Volume(21@) = $SOUNDS_VOLUME
+                            end
+                            
+                            until 33@ > 200
+                            33@ = 0
+                            
+                            083C: set_actor $HUNTER[24@] velocity_in_direction_XYZ 2@ 3@ 19@
+                            jump to @HUNTER_JUMP2_CHECK_DAMAGE                             
+                            else
+                            0017: 2@ /= 0.52
+                            0017: 3@ /= 0.52
+                            083C: set_actor $HUNTER[24@] velocity_in_direction_XYZ 2@ 3@ 16@
+                            
+                            33@ = 0                    
+                            repeat
+                            wait 0
+                            
+                            if
+                            $HUNTER_REMOVE_FLAG == 1
+                                then
+                                audiostream.Release(11@)
+                                audiostream.Release(21@)
+                                jump to @HNT_REM
+                                end
+                            
+                            if
+                            $GAME_SPEED == 1.0
+                            then
+                            Audiostream.Volume(11@) = $SOUNDS_VOLUME
+                            Audiostream.Volume(21@) = 0.0
+                            else
+                            Audiostream.Volume(11@) = 0.0
+                            Audiostream.Volume(21@) = $SOUNDS_VOLUME
+                            end
+                            
+                            until 33@ > 200
+                            33@ = 0
+                            
+                            083C: set_actor $HUNTER[24@] velocity_in_direction_XYZ 2@ 3@ 16@
+                            jump to @HUNTER_JUMP2_CHECK_DAMAGE                             
+                            end
+                        end
+                    end                 
+                end
+            else
+            jump to @HUNTER_STALK_CHECK
+            end
+        end
+    end  
+                
+jump to @3AIR_CHECK_NO
+
+:HUNTER_DONT_PRESS1
+05C1: AS_actor HUNTER_TARGET_ACTOR speak_from_audio_table 346 
+
+if
+056D:   actor HUNTER_TARGET_ACTOR defined
+then
+if
+06EE:   actor HUNTER_TARGET_ACTOR in_group PLAYER_GROUP
+    then  
+    $HUNTER_ON_GROUP = 0
+    end
+end
+
+if
+07D6:  HUNTER_TARGET_ACTOR == COOP_ACTOR // @ == $ (int)
+    then
+    $HUNTER_ON_PLAYER_2P = 0
+    end
+ 
+0851: set_actor HUNTER_TARGET_ACTOR decrease_health_by 100 affect_armour 0
+0792: disembark_instantly_actor HUNTER_TARGET_ACTOR 
+0619: enable_actor HUNTER_TARGET_ACTOR collision_detection 1    
+0332: set_actor HUNTER_TARGET_ACTOR bleeding 0 
+Actor.StorePos(HUNTER_TARGET_ACTOR, 27@, 28@, 29@)
+random_float 0@ -30.0 30.0 
+random_float 18@ 30.0 -30.0 
+04C4: store_coords_to 3@ 4@ 5@ from_actor HUNTER_TARGET_ACTOR with_offset 0@ 18@ 10.0 
+0063: 3@ -= 27@ // (float) 
+0063: 4@ -= 28@ // (float) 
+0063: 5@ -= 29@ // (float) 
+083C: set_actor HUNTER_TARGET_ACTOR velocity_in_direction_XYZ 3@ 4@ 5@ 
+
+0687: clear_actor $HUNTER[24@] task    
+random_int 0@ HUNTER_TASK_WAIT_TIME_MIN HUNTER_TASK_WAIT_TIME_MAX
+if
+$GAMEMODE_CRAZY == 1
+then
+0@ *= HUNTER_TASK_CRAZY_MULT
+0085: 1@ = 24@ // (int)
+1@ *= HUNTER_TASK_CRAZY_MULT2
+wait 1@
+end
+wait 0@
+wait 24@    
+if
+056D:   actor HUNTER_TARGET_ACTOR defined   
+    then
+    05E2: AS_actor $HUNTER[24@] kill_actor HUNTER_TARGET_ACTOR
+    end  
+
+jump to @HUNTER_STALK_CHECK
+
+:HUNTER_DONT_PRESS2
+0619: enable_actor PLAYER_ACTOR collision_detection 1
+008F: 3@ = integer $HUNTER_DAMAGE2 to_float
+008F: 1@ = integer $HUNTER_DAMAGE2 to_float
+006F: 1@ *= PLAYER_RESIST_MULT // (float)
+0063: 3@ -= 1@  // (float)
+0092: 3@ = float 3@ to_integer 
+0851: set_actor PLAYER_ACTOR decrease_health_by 3@ affect_armour 1
+//05BB: AS_actor PLAYER_ACTOR fall_down 1 time_on_ground 100 
+0332: set_actor PLAYER_ACTOR bleeding 0 
+Actor.StorePos(PLAYER_ACTOR, 27@, 28@, 29@)
+random_float 0@ -30.0 30.0 
+random_float 18@ 30.0 -30.0 
+04C4: store_coords_to 3@ 4@ 5@ from_actor PLAYER_ACTOR with_offset 0@ 18@ 10.0 
+0063: 3@ -= 27@ // (float) 
+0063: 4@ -= 28@ // (float) 
+0063: 5@ -= 29@ // (float) 
+083C: set_actor PLAYER_ACTOR velocity_in_direction_XYZ 3@ 4@ 5@ 
+//Player.CanMove(PLAYER_CHAR) = True
+0E68: set_player_control_pad 1 1 
+0E69: set_player_control_pad_movement 0 1
+
+0687: clear_actor $HUNTER[24@] task    
+random_int 0@ HUNTER_TASK_WAIT_TIME_MIN HUNTER_TASK_WAIT_TIME_MAX
+if
+$GAMEMODE_CRAZY == 1
+then
+0@ *= HUNTER_TASK_CRAZY_MULT
+0085: 1@ = 24@ // (int)
+1@ *= HUNTER_TASK_CRAZY_MULT2
+wait 1@
+end
+wait 0@
+wait 24@    
+05E2: AS_actor $HUNTER[24@] kill_actor PLAYER_ACTOR
+
+jump @HUNTER_STALK_CHECK 
+
+/////////////////////Союзники атакуют охотника///////////////
+
+:HUNTER1_ATTACK_PEOPLE1
+
+if 
+$SIMULATING_FLAG == 1
+then
+return
+end
+
+if
+$GAMEMODE_VERSUS == 1
+then
+return
+end
+ 
+if
+056D:   actor $HUNTER[24@] defined
+jf @HUNTER1_ATTACK_PEOPLE_BEGIN
+092B: 3@ = group PLAYER_GROUP member 0@
+
+if
+07D6:   3@ == COOP_ACTOR // @ == $ (int)
+then
+return
+end
+
+if
+not 3@ == -1
+jf @HUNTER1_ATTACK_PEOPLE_BEGIN   
+if
+056D:   actor 3@ defined
+jf @HUNTER1_ATTACK_PEOPLE_BEGIN
+
+if
+$MISSION14_ACTIVE == 1
+    then
+    if
+    not actor.Model(3@) == 250
+    jf @HUNTER1_ATTACK_PEOPLE_BEGIN
+    end
+    
+if
+$QUEST_TYPE == 9
+    then
+    if
+    87D6: not  3@ == $VERSUS_PEOPLE[1] // @ == $ (int)
+    jf @HUNTER1_ATTACK_PEOPLE_BEGIN
+    end
+
+if or
+00DF:   actor 3@ driving
+0449:   actor 3@ in_a_car
+    then
+    if
+    $HUNTER_ON_PLAYER == 0
+//    $PEOPLE_DONT_ATTACK == 0
+//    $COMMAND_STAY_IN_CAR == 0  
+        then                     
+        gosub @HUNTER1_ATTACK_PEOPLE_IN_CAR
+        end
+    end        
+  
+if and 
+not actor.Driving(PLAYER_ACTOR)
+$RANDOM_CAR_FLAG == 0  
+89DE:   actor 3@ entering_car  
+jf @HUNTER1_ATTACK_PEOPLE_BEGIN
+if
+00F2:   actor 3@ near_actor $HUNTER[24@] radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+jf @HUNTER1_ATTACK_PEOPLE_BEGIN
+
+if
+$HUNTER_ON_PLAYER == 0
+then
+if 
+$PEOPLE_DONT_ATTACK == 0
+jf @HUNTER1_ATTACK_PEOPLE_BEGIN
+end
+
+if
+not actor.Animation(3@) == "FLOOR_hit"
+jf @HUNTER1_ATTACK_PEOPLE_BEGIN
+if
+044B:   actor 3@ on_foot
+jf @HUNTER1_ATTACK_PEOPLE_BEGIN  
+if
+82E0: not actor 3@ firing_weapon
+jf @HUNTER1_ATTACK_PEOPLE_BEGIN
+062E: get_actor 3@ task 1506 status_store_to 1@ // ret 7 if not found
+if 
+1@ == 7
+jf @HUNTER1_ATTACK_PEOPLE_BEGIN  
+if and
+not actor.Animation(3@) == "colt45_fire_2hands"
+not actor.Animation(3@) == "python_fire" 
+not actor.Animation(3@) == "shotgun_fire" 
+not actor.Animation(3@) == "buddy_fire" 
+not actor.Animation(3@) == "UZI_fire"
+not actor.Animation(3@) == "RIFLE_fire" 
+jf @HUNTER1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "FLAME_fire" 
+not actor.Animation(3@) == "RocketFire" 
+not actor.Animation(3@) == "WEAPON_sniper" 
+not actor.Animation(3@) == "WEAPON_throw"
+not actor.Animation(3@) == "BOM_PLANT"
+jf @HUNTER1_ATTACK_PEOPLE_BEGIN    
+if and
+not actor.Animation(3@) == "colt45_crouchfire"
+not actor.Animation(3@) == "python_crouchfire" 
+not actor.Animation(3@) == "shotgun_crouchfire" 
+not actor.Animation(3@) == "buddy_crouchfire" 
+not actor.Animation(3@) == "UZI_crouchfire"
+not actor.Animation(3@) == "RIFLE_crouchfire" 
+jf @HUNTER1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "colt45_reload"
+not actor.Animation(3@) == "python_reload" 
+not actor.Animation(3@) == "shotgun_reload" 
+not actor.Animation(3@) == "buddy_reload" 
+not actor.Animation(3@) == "UZI_reload"
+not actor.Animation(3@) == "RIFLE_load" 
+jf @HUNTER1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "colt45_crouchreload"
+not actor.Animation(3@) == "python_crouchreload" 
+not actor.Animation(3@) == "shotgun_crouchreload" 
+not actor.Animation(3@) == "buddy_crouchreload" 
+not actor.Animation(3@) == "UZI_crouchreload"
+not actor.Animation(3@) == "RIFLE_crouchload" 
+jf @HUNTER1_ATTACK_PEOPLE_BEGIN  
+if and
+not actor.Animation(3@) == "GunMove_BWD"
+not actor.Animation(3@) == "GunMove_FWD"
+not actor.Animation(3@) == "GunMove_L"
+not actor.Animation(3@) == "GunMove_R"
+not actor.Animation(3@) == "Gun_2_IDLE"
+not actor.Animation(3@) == "GUN_BUTT"
+not actor.Animation(3@) == "GUN_BUTT_crouch"
+not actor.Animation(3@) == "Gun_stand" 
+jf @HUNTER1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "CLIMB_idle"
+not actor.Animation(3@) == "CLIMB_jump"
+not actor.Animation(3@) == "CLIMB_jump2fall"
+not actor.Animation(3@) == "CLIMB_jump_B"
+not actor.Animation(3@) == "CLIMB_Pull"
+not actor.Animation(3@) == "CLIMB_Stand"
+not actor.Animation(3@) == "CLIMB_Stand_finish" 
+jf @HUNTER1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "Crouch_Roll_L"
+not actor.Animation(3@) == "Crouch_Roll_R"
+not actor.Animation(3@) == "gas_cwr"
+not actor.Animation(3@) == "getup"
+not actor.Animation(3@) == "getup_front"
+not actor.Animation(3@) == "GunCrouchBwd"
+not actor.Animation(3@) == "GunCrouchFwd"
+8E47: not is_char_fighting 3@
+jf @HUNTER1_ATTACK_PEOPLE_BEGIN
+if or
+0364:   actor 3@ spotted_actor $HUNTER[24@]
+0364:   actor $HUNTER[24@] spotted_actor 3@
+GROUP_COMMAND_GO_ATTACK == 2
+jf @HUNTER1_ATTACK_PEOPLE_BEGIN
+05C1: AS_actor 3@ speak_from_audio_table $PEOPLE_ZOMBIE_ATTACK_AUDIO_TABLE
+if
+056D:   actor 3@ defined
+jf @HUNTER1_ATTACK_PEOPLE_BEGIN 
+if and
+not actor.Driving(PLAYER_ACTOR)
+89DE:   actor PLAYER_ACTOR entering_car
+80DF:   actor PLAYER_ACTOR in_a_car
+80DF:   actor 3@ in_a_car
+not actor.Dead(3@)
+jf @HUNTER1_ATTACK_PEOPLE_BEGIN
+//0647: AS_actor 3@ clear_look_task
+//05B9: AS_actor 3@ stay_idle 50 ms 
+wait 50
+if
+056D:   actor 3@ defined  
+then
+05E2: AS_actor 3@ kill_actor $HUNTER[24@]
+end
+
+jump @HUNTER1_ATTACK_PEOPLE_BEGIN   
+
+:HUNTER1_ATTACK_PEOPLE_IN_CAR  
+if and
+not actor.Animation(3@) == "Gang_DrivebyLHS"
+not actor.Animation(3@) == "Gang_DrivebyLHS_Bwd"
+not actor.Animation(3@) == "Gang_DrivebyLHS_Fwd"
+not actor.Animation(3@) == "Gang_DrivebyRHS"
+not actor.Animation(3@) == "Gang_DrivebyRHS_Bwd"
+not actor.Animation(3@) == "Gang_DrivebyRHS_Fwd" 
+jf @HUNTER1_ATTACK_PEOPLE_IN_CAR_RETURN 
+if and
+not actor.Animation(3@) == "Gang_DrivebyTop_LHS"
+not actor.Animation(3@) == "Gang_DrivebyTop_RHS" 
+jf @HUNTER1_ATTACK_PEOPLE_IN_CAR_RETURN 
+if 
+00F2:   actor 3@ near_actor $HUNTER[24@] radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+jf @HUNTER1_ATTACK_PEOPLE_IN_CAR_RETURN
+if or
+0364:   actor 3@ spotted_actor $HUNTER[24@]
+0364:   actor $HUNTER[24@] spotted_actor 3@
+jf @HUNTER1_ATTACK_PEOPLE_IN_CAR_RETURN
+
+///////////////////////////////////////////////////////////////////////////
+if and
+0@ == 0
+TEAMMATE1_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @HUNTER1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 1
+TEAMMATE2_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @HUNTER1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 2
+TEAMMATE3_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @HUNTER1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 3
+TEAMMATE4_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @HUNTER1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 4
+TEAMMATE5_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @HUNTER1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+///////////////////////////////////////////////////////////////////////////
+
+if and
+8E42: not is_char_doing_task_id 3@ 243
+not $COMMAND_STAY_IN_CAR == 1
+then
+06C9: remove_actor 3@ from_group
+0631: put_actor 3@ in_group PLAYER_GROUP
+end
+0713: actor 3@ driveby_actor $HUNTER[24@] car -1 point 0.0 0.0 0.0 radius 180.0 8 1 firing_rate 360
+
+///////////////////////////////////////////////////////////////////////////
+if
+0@ == 0
+    then
+    TEAMMATE1_ATTACK_TIMER = 0
+    end
+if
+0@ == 1
+    then
+    TEAMMATE2_ATTACK_TIMER = 0
+    end
+if
+0@ == 2
+    then
+    TEAMMATE3_ATTACK_TIMER = 0
+    end
+if
+0@ == 3
+    then
+    TEAMMATE4_ATTACK_TIMER = 0
+    end
+if
+0@ == 4
+    then
+    TEAMMATE5_ATTACK_TIMER = 0
+    end
+///////////////////////////////////////////////////////////////////////////
+   
+return
+
+:HUNTER1_ATTACK_PEOPLE_IN_CAR_RETURN
+return
+
+:HUNTER1_ATTACK_PEOPLE_BEGIN
+return
+
+/////////////////////Проверка на набрасывание на педа/////////////////////  
+
+:HUNTER_JUMP1_CHECK_DAMAGE
+wait 0
+
+if
+$HUNTER_REMOVE_FLAG == 1
+    then
+    jump to @HNT_REM
+    end
+
+if
+031D:   actor $HUNTER[24@] hit_by_weapon 109
+then
+create_thread @TSPC_IN $HUNTER[24@] 140
+jump to @HUNTER_STALK_CHECK
+end
+
+if or
+$SAVESTATUS == 1
+856D: not  actor HUNTER_TARGET_ACTOR defined
+then
+Actor.SetWalkStyle($HUNTER[24@],"HUNTER2")
+jump to @HUNTER_STALK_CHECK
+end
+
+random_int 0@ 0 5        
+gosub @HUNTER1_ATTACK_PEOPLE1  
+
+if
+not actor.Animation($HUNTER[24@]) == "FALL_skyDive"
+then
+if
+not ZOMBIE_KARATIST_CHEAT == 1
+    then
+    0812: AS_actor $HUNTER[24@] perform_animation "FALL_skyDive" IFP "PED" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time -1  // versionB
+    else
+    if
+    not actor.Animation($HUNTER[24@]) == "FightC_M"
+        then
+        0812: AS_actor $HUNTER[24@] perform_animation "FightC_M" IFP "FIGHT_C" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time -1  // versionB
+        0612: set_actor $HUNTER[24@] animation "FightC_M" paused 0
+        0614: set_actor $HUNTER[24@] animation "FightC_M" progress_to 0.35 // 0.0 to 1.0
+        end
+    end   
+end
+
+if
+056D:   actor $HUNTER[24@] defined
+    then
+    
+    if and
+    not actor.Dead($HUNTER[24@])
+    0184:   actor $HUNTER[24@] health > 0
+    $SAVESTATUS == 0
+    $GAMEMODE_EDITOR == 1  
+        then
+        jump to @HNT_INTSKIP1_ZAME
+        end
+    
+    if and
+    not actor.Dead($HUNTER[24@])
+    0184:   actor $HUNTER[24@] health > 0
+    $SAVESTATUS == 0     
+        then
+        if
+        056D:   actor HUNTER_TARGET_ACTOR defined
+            then
+            :HNT_INTSKIP1_ZAME
+            
+            if
+            12@ < 3
+            then
+            1@ = 1
+            else
+            gosub @HUNTER_TARGET_ROOF_CHECK
+            end
+            
+            if
+            07D6:  HUNTER_TARGET_ACTOR == COOP_ACTOR // @ == $ (int)
+                then
+                if
+                0A0C:  player 1 on_jetpack
+                    then
+                    jump to @HUNTER_SKIP_2P_JETPACK
+                    end
+                end
+            
+            0819: 2@ = actor HUNTER_TARGET_ACTOR distance_from_ground
+            if and
+            00F2:   actor $HUNTER[24@] near_actor HUNTER_TARGET_ACTOR radius 1.0 1.0 0
+            not actor.Dead(HUNTER_TARGET_ACTOR)
+            not actor.Dead($HUNTER[24@])
+            044B:   actor HUNTER_TARGET_ACTOR on_foot
+            89DE: not  actor HUNTER_TARGET_ACTOR entering_car
+            84AD: not  actor HUNTER_TARGET_ACTOR in_water
+            not 2@ > 5.0
+            1@ == 1 
+                then
+                               
+                if
+                $HUNTER_DONT_PRESS == 0
+                jf @HUNTER_DONT_PRESS1
+                
+                if
+                07D6:  HUNTER_TARGET_ACTOR == COOP_ACTOR // @ == $ (int)
+                then
+                008B: 0@ = $HUNTER_DAMAGE // (int)
+                else
+                008B: 0@ = $HUNTER_PEOPLE_DAMAGE1 // (int)
+                end
+                
+                0093: 0@ = integer 0@ to_float
+                random_float 1@ 0.75 1.25 
+                006B: 0@ *= 1@  // (float)  
+                0092: 0@ = float 0@ to_integer                   
+                
+                if
+                07D6:  HUNTER_TARGET_ACTOR == COOP_ACTOR // @ == $ (int)
+                then    
+                0851: set_actor HUNTER_TARGET_ACTOR decrease_health_by 0@ affect_armour 1
+                else
+                0851: set_actor HUNTER_TARGET_ACTOR decrease_health_by 0@ affect_armour 0
+                end
+                
+                if
+                87D6: not  HUNTER_TARGET_ACTOR == COOP_ACTOR // @ == $ (int)
+                then
+                actor.AddArmour(HUNTER_TARGET_ACTOR,1)
+                end
+                                                 
+                05BB: AS_actor HUNTER_TARGET_ACTOR fall_down 1 time_on_ground -1
+                0332: set_actor HUNTER_TARGET_ACTOR bleeding 1 
+                0619: enable_actor HUNTER_TARGET_ACTOR collision_detection 0
+                actor.StorePos(HUNTER_TARGET_ACTOR, 1@, 2@, 3@) 
+                04C4: store_coords_to 4@ 5@ 6@ from_actor $HUNTER[24@] with_offset 0.0 0.0 -90.0 
+                0063: 4@ -= 1@  // (float) 
+                0063: 5@ -= 2@  // (float) 
+                0063: 6@ -= 3@  // (float) 
+                083C: set_actor $HUNTER[24@] velocity_in_direction_XYZ 4@ 5@ 6@
+                
+                if
+                07D6:  HUNTER_TARGET_ACTOR == COOP_ACTOR // @ == $ (int)
+                then
+                $HUNTER_ON_PLAYER_2P = 1
+                end
+                
+                32@ = 0                 
+                25@ = Audiostream.Load3d("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_killing.mp3")
+                Audiostream.Loop(25@, 1)
+                audiostream.Volume(25@) = $SOUNDS_VOLUME
+                Audiostream.LinkToActor(25@,$HUNTER[24@])
+                Audiostream.PerformAction(25@, PLAY)  
+                
+                :FUCK
+                wait 0   
+                
+                if
+                056D:   actor HUNTER_TARGET_ACTOR defined
+                then
+                
+                04DD: 0@ = actor HUNTER_TARGET_ACTOR armour
+                if and
+                0@ == 0
+                87D6: not HUNTER_TARGET_ACTOR == COOP_ACTOR // @ == $ (int)
+                then
+                actor.AddArmour(HUNTER_TARGET_ACTOR,1)
+                end 
+                 
+                end
+                
+                0819: 0@ = actor $HUNTER[24@] distance_from_ground 
+                if or
+                0@ < 1.5
+                $SAVESTATUS == 1
+                856D: not  actor HUNTER_TARGET_ACTOR defined
+                32@ > 2000
+                jf @FUCK                                       
+                        
+                0792: disembark_instantly_actor $HUNTER[24@] 
+                
+                if
+                056D:   actor HUNTER_TARGET_ACTOR defined
+                    then                     
+                                                       
+                    0639: AS_actor $HUNTER[24@] rotate_to_actor HUNTER_TARGET_ACTOR
+                    
+                    if or
+                    02D8:   actor HUNTER_TARGET_ACTOR current_weapon == 37
+                    02D8:   actor HUNTER_TARGET_ACTOR current_weapon == 114
+                    02D8:   actor HUNTER_TARGET_ACTOR current_weapon == 148
+                    02D8:   actor HUNTER_TARGET_ACTOR current_weapon == 180
+                    02D8:   actor HUNTER_TARGET_ACTOR current_weapon == 210
+                    then
+                    0605: actor HUNTER_TARGET_ACTOR perform_animation "FLOOR_hit" IFP "PED" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time 999999
+                    wait 1000
+                    end
+                                        
+                    wait 1                                          
+                    0605: actor $HUNTER[24@] perform_animation "HUNTER_attack" IFP "PED" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time 999999
+                    
+                    if
+                    056D:   actor HUNTER_TARGET_ACTOR defined
+                    jf @HUNTER2_CANCEL
+                    
+                    09F1: play_audio_at_actor HUNTER_TARGET_ACTOR event 1130
+                    0812: AS_actor HUNTER_TARGET_ACTOR perform_animation "FLOOR_hit" IFP "PED" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 999999  // versionB                                
+                    wait 1
+                    
+                    if
+                    056D:   actor HUNTER_TARGET_ACTOR defined
+                    jf @HUNTER2_CANCEL
+                    
+                    ///////////////////////////////////////////////////////////////////////////////
+
+                    if
+                    not $ENTERED_CAMP_NUMBER == -1
+                    then
+                    
+                    for 0@ = 0 to 9
+                    if and
+                    056D:   actor $CAMP_ACTOR[0@] defined
+                    07D6:   HUNTER_TARGET_ACTOR == $CAMP_ACTOR[0@] // @ == $ (int)
+                        then
+                        
+                        for 1@ = 0 to 9
+                        if and
+                        056D:   actor $CAMP_ACTOR[1@] defined
+                        87D6: not  HUNTER_TARGET_ACTOR == $CAMP_ACTOR[1@] // @ == $ (int)
+                            then
+                            05E2: AS_actor $CAMP_ACTOR[1@] kill_actor $HUNTER[24@]
+//                            0AD1: show_formatted_text_highpriority "CAMP SURV %d ATTACK HUNTER!" time 500 1@
+                            end
+                        end
+                        
+                        end
+                    end
+                    
+                    end
+                    
+                    ///////////////////////////////////////////////////////////////////////////////
+                    
+                    092B: 4@ = group PLAYER_GROUP member 0
+                    092B: 5@ = group PLAYER_GROUP member 1
+                    092B: 6@ = group PLAYER_GROUP member 2
+                    092B: 26@ = group PLAYER_GROUP member 3
+                    092B: 27@ = group PLAYER_GROUP member 4
+                    
+                    ///////////////////////////////////////////////////////////////////////////////                    
+                    
+                    if and
+                    $MISSION14_ACTIVE == 1
+                    07D6:   4@ == $SURVIVER[0] // @ == $ (int)
+                    then
+                    4@ = -69
+                    end
+                                    
+                    if and
+                    $MISSION14_ACTIVE == 2
+                    07D6:   4@ == $SURVIVER[0] // @ == $ (int)
+                    then
+                    4@ = -69
+                    end
+                    
+                    if and
+                    $MISSION14_ACTIVE == 1
+                    07D6:   5@ == $SURVIVER[0] // @ == $ (int)
+                    then
+                    5@ = -69
+                    end
+                                    
+                    if and
+                    $MISSION14_ACTIVE == 2
+                    07D6:   5@ == $SURVIVER[0] // @ == $ (int)
+                    then
+                    5@ = -69
+                    end
+                    
+                    if and
+                    $MISSION14_ACTIVE == 1
+                    07D6:   6@ == $SURVIVER[0] // @ == $ (int)
+                    then
+                    6@ = -69
+                    end
+                                    
+                    if and
+                    $MISSION14_ACTIVE == 2
+                    07D6:   6@ == $SURVIVER[0] // @ == $ (int)
+                    then
+                    6@ = -69
+                    end
+                    
+                    if and
+                    $MISSION14_ACTIVE == 1
+                    07D6:   26@ == $SURVIVER[0] // @ == $ (int)
+                    then
+                    26@ = -69
+                    end
+                                    
+                    if and
+                    $MISSION14_ACTIVE == 2
+                    07D6:   26@ == $SURVIVER[0] // @ == $ (int)
+                    then
+                    26@ = -69
+                    end
+                    
+                    if and
+                    $MISSION14_ACTIVE == 1
+                    07D6:   27@ == $SURVIVER[0] // @ == $ (int)
+                    then
+                    27@ = -69
+                    end
+                                    
+                    if and
+                    $MISSION14_ACTIVE == 2
+                    07D6:   27@ == $SURVIVER[0] // @ == $ (int)
+                    then
+                    27@ = -69
+                    end
+                    
+                    ///////////////////////////////////////////////////////////////////////////////
+                    
+                    if
+                    056D:   actor HUNTER_TARGET_ACTOR defined
+                    then
+                    
+                    if
+                    06EE:   actor HUNTER_TARGET_ACTOR in_group PLAYER_GROUP
+                    then
+                    audiostream.Loop($EXENTERATIONHIT_SOUND,0)
+                    audiostream.Volume($EXENTERATIONHIT_SOUND) = $SOUNDS_VOLUME
+                    audiostream.PerformAction($EXENTERATIONHIT_SOUND,PLAY)
+                    end
+                    
+                    end
+    
+                    if and
+                    056D:   actor 4@ defined
+                    87D6: not  4@ == COOP_ACTOR // @ == $ (int)
+                    then
+                    
+                    if
+                    not actor.Driving(4@)
+                    then    
+                    05E2: AS_actor 4@ kill_actor $HUNTER[24@]
+                    else
+                    0713: actor 4@ driveby_actor $HUNTER[24@] car -1 point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+                    end
+                    
+                    end
+                    
+                    if and
+                    056D:   actor 5@ defined
+                    87D6: not  5@ == COOP_ACTOR // @ == $ (int)
+                    then
+                    
+                    if
+                    not actor.Driving(5@)
+                    then    
+                    05E2: AS_actor 5@ kill_actor $HUNTER[24@]
+                    else
+                    0713: actor 5@ driveby_actor $HUNTER[24@] car -1 point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+                    end
+                    
+                    end
+                    
+                    if and
+                    056D:   actor 6@ defined
+                    87D6: not  6@ == COOP_ACTOR // @ == $ (int)
+                    then
+                    
+                    if
+                    not actor.Driving(6@)
+                    then    
+                    05E2: AS_actor 6@ kill_actor $HUNTER[24@]
+                    else
+                    0713: actor 6@ driveby_actor $HUNTER[24@] car -1 point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+                    end
+                    
+                    end
+                    
+                    if and
+                    056D:   actor 26@ defined
+                    87D6: not  26@ == COOP_ACTOR // @ == $ (int)
+                    then
+                    
+                    if
+                    not actor.Driving(26@)
+                    then    
+                    05E2: AS_actor 26@ kill_actor $HUNTER[24@]
+                    else
+                    0713: actor 26@ driveby_actor $HUNTER[24@] car -1 point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+                    end
+                    
+                    end
+                    
+                    if and
+                    056D:   actor 27@ defined
+                    87D6: not  27@ == COOP_ACTOR // @ == $ (int)
+                    then
+                    
+                    if
+                    not actor.Driving(27@)
+                    then    
+                    05E2: AS_actor 27@ kill_actor $HUNTER[24@]
+                    else
+                    0713: actor 27@ driveby_actor $HUNTER[24@] car -1 point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+                    end
+                    
+                    end
+                    
+                    32@ = 0                            
+                    
+                    :HUNTER_ATTACK_OTHER_PEOPLE_CHECK   
+                    wait 0
+                    
+                    gosub @POUNCE_SOUND_CHECK                     
+                    random_int 0@ 0 5    
+        
+                    gosub @HUNTER1_ATTACK_PEOPLE1   
+                    
+                    if
+                    056D:   actor HUNTER_TARGET_ACTOR defined
+                    jf @HUNTER2_CANCEL  
+                    
+                    04DD: 0@ = actor HUNTER_TARGET_ACTOR armour
+                    if and
+                    0@ == 0
+                    87D6: not HUNTER_TARGET_ACTOR == COOP_ACTOR // @ == $ (int)
+                    then
+                    actor.AddArmour(HUNTER_TARGET_ACTOR,1)
+                    end                    
+                    
+                    0812: AS_actor HUNTER_TARGET_ACTOR perform_animation "FLOOR_hit" IFP "PED" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 999999  // versionB
+                                    
+                    if
+                    056D:   actor HUNTER_TARGET_ACTOR defined
+                    jf @HUNTER2_CANCEL
+                                        
+                    0605: actor $HUNTER[24@] perform_animation "HUNTER_attack" IFP "PED" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time 999999
+                    
+                    if and
+                    00F2:   actor $HUNTER[24@] near_actor HUNTER_TARGET_ACTOR radius 1.0 1.0 sphere 0   
+                    $SAVESTATUS == 0
+                    jf @HUNTER2_CANCEL
+                    
+                    0@ = actor.Health($HUNTER[24@])
+                    if
+                    0@ > 0
+                        then                    
+                        if
+                        not actor.Dead(HUNTER_TARGET_ACTOR)
+                            then                           
+                            if
+                            32@ > 1000
+                            jf @HUNTER_ATTACK_OTHER_PEOPLE_CHECK       
+                            if
+                            actor.Animation($HUNTER[24@]) == "HUNTER_attack" 
+                                then
+                                0605: actor $HUNTER[24@] perform_animation "HUNTER_attack" IFP "PED" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time 99999                                                              
+                                
+                                if
+                                07D6:  HUNTER_TARGET_ACTOR == COOP_ACTOR // @ == $ (int)
+                                then
+                                008B: 0@ = $HUNTER_DAMAGE2 // (int)
+                                else
+                                008B: 0@ = $HUNTER_PEOPLE_DAMAGE2 // (int)
+                                end
+                                
+                                0093: 0@ = integer 0@ to_float
+                                random_float 1@ 0.75 1.25 
+                                006B: 0@ *= 1@  // (float)  
+                                0092: 0@ = float 0@ to_integer
+                                if
+                                07D6:  HUNTER_TARGET_ACTOR == COOP_ACTOR // @ == $ (int)
+                                then                               
+                                0851: set_actor HUNTER_TARGET_ACTOR decrease_health_by 0@ affect_armour 1
+                                else
+                                0851: set_actor HUNTER_TARGET_ACTOR decrease_health_by 0@ affect_armour 0
+                                end
+                                                            
+                                09F1: play_audio_at_actor HUNTER_TARGET_ACTOR event 1130
+                                actor.StorePos(HUNTER_TARGET_ACTOR, 29@, 30@, 31@)
+                                09B8: create_blood_gush_at 29@ 30@ 31@ with_offset $HUNTER_BLOOD_X_OFSSET $HUNTER_BLOOD_Y_OFSSET $HUNTER_BLOOD_Z_OFSSET density $HUNTER_BLOOD_COUNT on_actor HUNTER_TARGET_ACTOR
+                                05C1: AS_actor HUNTER_TARGET_ACTOR speak_from_audio_table 346
+                                32@ = 0
+                                jump to @HUNTER_ATTACK_OTHER_PEOPLE_CHECK                                 
+                                else  
+                                                                                      
+                                if
+                                056D:   actor HUNTER_TARGET_ACTOR defined
+                                then
+                                if
+                                06EE:   actor HUNTER_TARGET_ACTOR in_group PLAYER_GROUP
+                                    then  
+                                    $HUNTER_ON_GROUP = 0
+                                    end
+                                end
+                                
+                                if
+                                07D6:  HUNTER_TARGET_ACTOR == COOP_ACTOR // @ == $ (int)
+                                    then
+                                    $HUNTER_ON_PLAYER_2P = 0
+                                    end
+                                
+                                gosub @HUNTER_SHUT_UP
+                                audiostream.PerformAction(25@,STOP)
+                                audiostream.Release(25@) 
+                                if
+                                056D:   actor HUNTER_TARGET_ACTOR defined
+                                jf @HUNTER_STALK_CHECK                                                              
+                                0792: disembark_instantly_actor HUNTER_TARGET_ACTOR
+                                
+                                04DD: 0@ = actor HUNTER_TARGET_ACTOR armour
+                                if and
+                                0@ == 1
+                                87D6: not HUNTER_TARGET_ACTOR == COOP_ACTOR // @ == $ (int)
+                                then
+                                actor.AddArmour(HUNTER_TARGET_ACTOR,-1)
+                                end
+                                
+                                0812: AS_actor HUNTER_TARGET_ACTOR perform_animation "getup" IFP "PED" framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF 0 time -1  // versionB
+                                0619: enable_actor HUNTER_TARGET_ACTOR collision_detection 1
+                                0605: actor $HUNTER[24@] perform_animation "HUNTER_attack" IFP "PED" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time 1
+                                0332: set_actor HUNTER_TARGET_ACTOR bleeding 0                         
+                                jump @HUNTER_STALK_CHECK       
+                                end                         
+                            else 
+                                                   
+                            if
+                            056D:   actor HUNTER_TARGET_ACTOR defined
+                            then
+                            if
+                            06EE:   actor HUNTER_TARGET_ACTOR in_group PLAYER_GROUP
+                                then  
+                                $HUNTER_ON_GROUP = 0
+                                end
+                            end
+                            
+                            if
+                            07D6:  HUNTER_TARGET_ACTOR == COOP_ACTOR // @ == $ (int)
+                                then
+                                $HUNTER_ON_PLAYER_2P = 0
+                                end
+                            
+                            gosub @HUNTER_SHUT_UP 
+                            audiostream.PerformAction(25@,STOP)
+                            audiostream.Release(25@)
+                            0792: disembark_instantly_actor $HUNTER[24@]
+                            if 
+                            056D:   actor HUNTER_TARGET_ACTOR defined                        
+                            jf @HUNTER_STALK_CHECK       
+                            0619: enable_actor HUNTER_TARGET_ACTOR collision_detection 1
+                            0321: AS_actor HUNTER_TARGET_ACTOR die_headshotted
+                            if
+                            $SPECTATING_FLAG == 0
+                                then
+                                0A96: 0@ = actor HUNTER_TARGET_ACTOR struct
+                                0@ += 0x46D
+                                0A8C: write_memory 0@ size 4 value 0xA0 virtual_protect 0
+                                0@ -= 0x46D
+                                0@ += 0x754
+                                0A8C: write_memory 0@ size 4 value 0x02 virtual_protect 0   
+                                end                                             
+                            end                                        
+                        else
+                                             
+                        if
+                        056D:   actor HUNTER_TARGET_ACTOR defined
+                        then
+                        if
+                        06EE:   actor HUNTER_TARGET_ACTOR in_group PLAYER_GROUP
+                            then  
+                            $HUNTER_ON_GROUP = 0
+                            end
+                        end
+                        
+                        if
+                        07D6:  HUNTER_TARGET_ACTOR == COOP_ACTOR // @ == $ (int)
+                            then
+                            $HUNTER_ON_PLAYER_2P = 0
+                            end
+                        
+                        gosub @HUNTER_SHUT_UP 
+                        audiostream.PerformAction(25@,STOP)
+                        audiostream.Release(25@)
+                        0792: disembark_instantly_actor $HUNTER[24@]  
+                        05BE: AS_actor $HUNTER[24@] die
+                        if
+                        056D:   actor HUNTER_TARGET_ACTOR defined
+                        jf @HUNTER_STALK_CHECK        
+                        0792: disembark_instantly_actor HUNTER_TARGET_ACTOR
+                        
+                        04DD: 0@ = actor HUNTER_TARGET_ACTOR armour
+                        if and
+                        0@ == 1
+                        87D6: not HUNTER_TARGET_ACTOR == COOP_ACTOR // @ == $ (int)
+                        then
+                        actor.AddArmour(HUNTER_TARGET_ACTOR,-1)
+                        end
+                        
+                        0619: enable_actor HUNTER_TARGET_ACTOR collision_detection 1
+                        0812: AS_actor HUNTER_TARGET_ACTOR perform_animation "getup" IFP "PED" framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF 0 time -1  // versionB
+                        0332: set_actor HUNTER_TARGET_ACTOR bleeding 0                      
+                        end
+                    end               
+                else
+                0819: 0@ = actor $HUNTER[24@] distance_from_ground
+                if
+                0@ < 1.5
+                jf @HUNTER_JUMP1_CHECK_DAMAGE
+                0792: disembark_instantly_actor $HUNTER[24@]
+                0687: clear_actor $HUNTER[24@] task    
+                random_int 0@ HUNTER_TASK_WAIT_TIME_MIN HUNTER_TASK_WAIT_TIME_MAX
+                if
+                $GAMEMODE_CRAZY == 1
+                then
+                0@ *= HUNTER_TASK_CRAZY_MULT
+                0085: 1@ = 24@ // (int)
+                1@ *= HUNTER_TASK_CRAZY_MULT2
+                wait 1@
+                end
+                wait 0@
+                wait 24@ 
+                if
+                056D:   actor HUNTER_TARGET_ACTOR defined
+                    then
+                    05E2: AS_actor $HUNTER[24@] kill_actor HUNTER_TARGET_ACTOR
+                    end      
+                end
+            else
+            Actor.SetWalkStyle($HUNTER[24@],"HUNTER2")
+            jump to @HUNTER_STALK_CHECK
+            end             
+        end
+    end
+    
+:HUNTER_SKIP_2P_JETPACK      
+    
+Actor.SetWalkStyle($HUNTER[24@],"HUNTER2")           
+jump to @HUNTER_STALK_CHECK 
+
+:HUNTER2_CANCEL
+
+if
+056D:   actor HUNTER_TARGET_ACTOR defined
+then
+if
+06EE:   actor HUNTER_TARGET_ACTOR in_group PLAYER_GROUP
+    then  
+    $HUNTER_ON_GROUP = 0
+    end
+end
+
+if
+07D6:  HUNTER_TARGET_ACTOR == COOP_ACTOR // @ == $ (int)
+    then
+    $HUNTER_ON_PLAYER_2P = 0
+    end
+
+gosub @HUNTER_SHUT_UP
+audiostream.PerformAction(25@,STOP)
+audiostream.Release(25@) 
+if
+056D:   actor HUNTER_TARGET_ACTOR defined
+jf @HUNTER_STALK_CHECK         
+0792: disembark_instantly_actor HUNTER_TARGET_ACTOR
+
+04DD: 0@ = actor HUNTER_TARGET_ACTOR armour
+if and
+0@ == 1
+87D6: not HUNTER_TARGET_ACTOR == COOP_ACTOR // @ == $ (int)
+then
+actor.AddArmour(HUNTER_TARGET_ACTOR,-1)
+end
+
+0812: AS_actor HUNTER_TARGET_ACTOR perform_animation "getup" IFP "PED" framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF 0 time -1  // versionB
+0619: enable_actor HUNTER_TARGET_ACTOR collision_detection 1
+0605: actor $HUNTER[24@] perform_animation "HUNTER_attack" IFP "PED" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time 1
+0332: set_actor HUNTER_TARGET_ACTOR bleeding 0 
+jump @HUNTER_STALK_CHECK  
+
+:HUNTER2_CANCEL2    
+player.SetDrunkVisuals(PLAYER_CHAR,0)
+
+if and
+$FP_ACTIVATED == 0
+8800: not  in_two_players_mode
+then
+camera.Restore_WithJumpCut()
+else
+//player.CanMove(PLAYER_CHAR,true)
+0E68: set_player_control_pad 1 1 
+0E69: set_player_control_pad_movement 0 1   
+end 
+                            
+text.ClearAll()
+text.RemoveTextBox() 
+
+if
+$HUNTER_ON_PLAYER == 1
+then
+$HUNTER_ON_PLAYER = 0
+end
+
+gosub @HUNTER_SHUT_UP   
+0792: disembark_instantly_actor PLAYER_ACTOR
+0619: enable_actor PLAYER_ACTOR collision_detection 1
+
+06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0
+01B9: set_actor PLAYER_ACTOR armed_weapon_to $PLAYER_PREV_WEAPON_HUNTER  
+0992: set_player PLAYER_CHAR weapons_scrollable 1   
+
+0812: AS_actor PLAYER_ACTOR perform_animation "getup" IFP "PED" framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF 0 time -1  // versionB
+0332: set_actor PLAYER_ACTOR bleeding 0 
+jump @HUNTER_STALK_CHECK  
+
+/////////////////////Проверка на набрасывание на игрока///////////////////// 
+
+:HUNTER_JUMP2_CHECK_DAMAGE
+wait 0
+
+if
+$HUNTER_REMOVE_FLAG == 1
+    then
+    jump to @HNT_REM
+    end
+
+if
+031D:   actor $HUNTER[24@] hit_by_weapon 109
+then
+create_thread @TSPC_IN $HUNTER[24@] 140
+jump to @HUNTER_STALK_CHECK
+end                 
+
+random_int 0@ 0 5        
+gosub @HUNTER1_ATTACK_PEOPLE1  
+
+if
+not actor.Animation($HUNTER[24@]) == "FALL_skyDive"
+then
+if
+not ZOMBIE_KARATIST_CHEAT == 1
+    then
+    0812: AS_actor $HUNTER[24@] perform_animation "FALL_skyDive" IFP "PED" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time -1  // versionB
+    else
+    if
+    not actor.Animation($HUNTER[24@]) == "FightC_M"
+        then
+        0812: AS_actor $HUNTER[24@] perform_animation "FightC_M" IFP "FIGHT_C" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time -1  // versionB
+        0612: set_actor $HUNTER[24@] animation "FightC_M" paused 0
+        0614: set_actor $HUNTER[24@] animation "FightC_M" progress_to 0.35 // 0.0 to 1.0
+        end
+    end   
+end
+
+if
+056D:   actor $HUNTER[24@] defined
+    then
+    
+    if and
+    not actor.Dead($HUNTER[24@])
+    0184:   actor $HUNTER[24@] health > 0
+    8A32: not actor PLAYER_ACTOR on_turret_of_car
+    8A0C: not  player PLAYER_CHAR on_jetpack
+    $SAVESTATUS == 0
+    $GAMEMODE_EDITOR == 1
+    not $END_SAVING == 1  
+        then
+        jump to @HNT_INTSKIP2_ZAME
+        end
+    
+    if and
+    not actor.Dead($HUNTER[24@])
+    0184:   actor $HUNTER[24@] health > 0
+    8A32: not actor PLAYER_ACTOR on_turret_of_car
+    8A0C: not  player PLAYER_CHAR on_jetpack
+    $SAVESTATUS == 0
+    not $END_SAVING == 1
+    $ZOMBIE_DONT_ATTACK_PLAYER == 0
+        then
+        if
+        056D:   actor PLAYER_ACTOR defined
+            then
+            :HNT_INTSKIP2_ZAME
+            
+            if
+            12@ < 3
+            then
+            1@ = 1
+            else
+            gosub @HUNTER_TARGET_PLAYER_ROOF_CHECK
+            end
+            
+            if and
+            00F2:   actor $HUNTER[24@] near_actor PLAYER_ACTOR radius 1.0 1.0 0
+            not actor.Dead(PLAYER_ACTOR)
+            not actor.Dead($HUNTER[24@])
+            044B:   actor PLAYER_ACTOR on_foot
+            89DE: not  actor PLAYER_ACTOR entering_car
+            84AD: not  actor PLAYER_ACTOR in_water
+            1@ == 1
+            $HUNTER_ON_PLAYER == 0
+                then   
+                
+                if
+                $HUNTER_DONT_PRESS == 0
+                jf @HUNTER_DONT_PRESS2 
+                             
+                05BB: AS_actor PLAYER_ACTOR fall_down 1 time_on_ground -1
+                0332: set_actor PLAYER_ACTOR bleeding 1 
+                0619: enable_actor PLAYER_ACTOR collision_detection 0
+                actor.StorePos(PLAYER_ACTOR, 1@, 2@, 3@) 
+                04C4: store_coords_to 4@ 5@ 6@ from_actor $HUNTER[24@] with_offset 0.0 0.0 -90.0 
+                0063: 4@ -= 1@  // (float) 
+                0063: 5@ -= 2@  // (float) 
+                0063: 6@ -= 3@  // (float) 
+                083C: set_actor $HUNTER[24@] velocity_in_direction_XYZ 4@ 5@ 6@
+                
+                $HUNTER_ON_PLAYER = 1 
+                
+                32@ = 0 
+                
+                :FUCK2
+                wait 0             
+                0819: 0@ = actor $HUNTER[24@] distance_from_ground 
+                if or
+                0@ < 1.5
+                $SAVESTATUS == 1
+                32@ > 2000            
+                jf @FUCK2 
+                
+                0470: $PLAYER_PREV_WEAPON_HUNTER = actor PLAYER_ACTOR current_weapon
+                01B9: set_actor PLAYER_ACTOR armed_weapon_to 0
+                0992: set_player PLAYER_CHAR weapons_scrollable 0                                                          
+                0792: disembark_instantly_actor $HUNTER[24@] 
+                
+                if
+                056D:   actor PLAYER_ACTOR defined
+                    then                
+                                                   
+                    008B: 0@ = $HUNTER_DAMAGE2 // (int)
+                    0093: 0@ = integer 0@ to_float
+                    random_float 1@ 0.85 1.15 
+                    006B: 0@ *= 1@  // (float)  
+                                        
+                    008F: 1@ = integer $HUNTER_DAMAGE2 to_float
+                    006F: 1@ *= PLAYER_RESIST_MULT // (float)
+                    0063: 0@ -= 1@  // (float)
+                    0092: 0@ = float 0@ to_integer 
+                    
+                    1@ = actor.Health(PLAYER_ACTOR)
+                    0062: 1@ -= 0@  // (int)
+                    if and
+                    PERK_LASTCHANCE == 1
+                    LAST_CHANCE_FLAG == 0
+                    LAST_CHANCE_TIMER == 0
+                    1@ < 1
+                    then
+                    //ass
+                    else                 
+                    0851: set_actor PLAYER_ACTOR decrease_health_by 0@ affect_armour 1
+                    end
+                    
+                    if
+                    0A4B:   controls_set_to_joystick
+                    then
+                    015B: shake_player_controller 0 time 1000 intensity 255
+                    end                
+                    04DD: 0@ = actor PLAYER_ACTOR armour
+                    
+                    if and
+                    $PLAYER_BLEEDING == 0  
+                    $PLAYER_DYING == 0
+                    $GAMEMODE_VERSUS == 0
+                    0@ == 0
+                    then
+                    create_thread @BLEEDIN   
+                    end
+                    
+                    0639: AS_actor $HUNTER[24@] rotate_to_actor PLAYER_ACTOR
+                    
+                    if or
+                    02D8:   actor PLAYER_ACTOR current_weapon == 37
+                    02D8:   actor PLAYER_ACTOR current_weapon == 114
+                    02D8:   actor PLAYER_ACTOR current_weapon == 148
+                    02D8:   actor PLAYER_ACTOR current_weapon == 180
+                    02D8:   actor PLAYER_ACTOR current_weapon == 210
+                    then
+                    0605: actor PLAYER_ACTOR perform_animation "FLOOR_hit" IFP "PED" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time 999999
+                    wait 1000
+                    end
+                    
+                    wait 1
+                   
+                    09F1: play_audio_at_actor PLAYER_ACTOR event 1130  
+                    0605: actor $HUNTER[24@] perform_animation "HUNTER_attack" IFP "PED" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time 999999
+                    
+                    0812: AS_actor PLAYER_ACTOR perform_animation "FLOOR_hit" IFP "PED" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 999999  // versionB
+                    0612: set_actor PLAYER_ACTOR animation "FLOOR_hit" paused 0
+                    0612: set_actor PLAYER_ACTOR animation "FLOOR_hit" paused 1
+                    wait 1
+                    0612: set_actor PLAYER_ACTOR animation "FLOOR_hit" paused 0
+                    
+                    32@ = 0                                
+                    
+                    $POLOSA = 0.0                              
+    
+                    04C4: store_coords_to $HUNTER_CAMERA_X $HUNTER_CAMERA_Y $HUNTER_CAMERA_Z from_actor PLAYER_ACTOR with_offset 0.0 -2.0 1.5
+    
+                    if and
+                    $FP_ACTIVATED == 0
+                    8800: not  in_two_players_mode
+                    then
+                    camera.SetPosition($HUNTER_CAMERA_X,$HUNTER_CAMERA_Y,$HUNTER_CAMERA_Z,0.0,0.0,0.0)
+                    camera.OnPed(PLAYER_ACTOR,15,2)
+                    else
+//                    player.CanMove(PLAYER_CHAR,false)
+                    0E68: set_player_control_pad 0 1 
+                    0E69: set_player_control_pad_movement 0 0   
+                    end                        
+                    
+                    :HUNTER_ATTACK_PLAYER_CHECK   
+                    wait 0
+                    
+                    gosub @POUNCE_SOUND_CHECK                
+                    random_int 0@ 0 5    
+        
+                    gosub @HUNTER1_ATTACK_PEOPLE1                   
+                    
+                    if
+                    0A4B:   controls_set_to_joystick
+                    then
+                    
+                    if
+                    8A2A: not  text_box 'HINT5B' displayed
+                    then
+                    0512: show_permanent_text_box 'HINT5B' 
+                    end
+                    
+                    else
+                    
+                    if
+                    8A2A: not  text_box 'HINT5' displayed
+                    then
+                    0512: show_permanent_text_box 'HINT5' 
+                    end
+                    
+                    end                    
+                    
+                    if
+                    8A4B: not  controls_set_to_joystick
+                    then
+                    0A4A: store_joystick_X_offset_to 1@ Y_offset_to 2@
+                    else
+                    0494: get_joystick 0 data_to 1@ 2@ $HUNTER_CAMERA_X $HUNTER_CAMERA_Y
+                    2@ /= -2
+                    2@ *= 2
+                    1@ *= 5
+                    2@ *= 5
+                    0093: 1@ = integer 1@ to_float
+                    0093: 2@ = integer 2@ to_float                    
+                    end                    
+                    
+                    0A8D: 0@ = read_memory 0xB6EC1C size 4 virtual_protect 1
+                    0@ *= 480.0
+                    
+                    006B: 1@ *= 0@  // (float)
+                    006B: 2@ *= 0@  // (float)  
+                    
+                    0812: AS_actor PLAYER_ACTOR perform_animation "FLOOR_hit" IFP "PED" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 999999  // versionB
+                    0612: set_actor PLAYER_ACTOR animation "FLOOR_hit" paused 0
+                    0612: set_actor PLAYER_ACTOR animation "FLOOR_hit" paused 1
+                    wait 1
+                    0612: set_actor PLAYER_ACTOR animation "FLOOR_hit" paused 0
+                    
+                    if or
+                    1@ > 30.0
+                    -30.0 > 1@ 
+                    then
+                    $POLOSA += 0.7            
+                    end   
+                    
+                    if or
+                    2@ > 30.0
+                    -30.0 > 2@ 
+                    then
+                    $POLOSA += 0.7            
+                    end      
+                    
+                    $POLOSA -= 0.1                                       
+                                                                                      
+                    if
+                    056D:   actor PLAYER_ACTOR defined
+                    jf @HUNTER2_CANCEL2  
+                                        
+                    0605: actor $HUNTER[24@] perform_animation "HUNTER_attack" IFP "PED" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time 999999
+                    player.SetDrunkVisuals(PLAYER_CHAR,50)
+                    0003: shake_camera 20                
+                    
+                    if and
+                    00F2:   actor $HUNTER[24@] near_actor PLAYER_ACTOR radius 1.2 1.2 sphere 0   
+                    $SAVESTATUS == 0
+                    jf @HUNTER2_CANCEL2
+                    
+                    if
+                    LAST_CHANCE_FLAG == 1
+                    then
+                    actor.Health(PLAYER_ACTOR) = 30
+                    0003: shake_camera 50
+                    jump to @HUNTER_LAST_CHANCE_PLAYER_AFTERDAMAGE_JUMP
+                    end
+                    
+                    0@ = actor.Health($HUNTER[24@])
+                    if
+                    0@ > 1
+                        then                    
+                        if
+                        not actor.Dead(PLAYER_ACTOR)
+                            then  
+                             
+                            if
+                            32@ > 1000
+                            jf @HUNTER_ATTACK_PLAYER_CHECK                                                                  
+                            
+                            if and
+                            actor.Animation($HUNTER[24@]) == "HUNTER_attack" 
+                            $POLOSA < 50.0
+                                then
+                                0605: actor $HUNTER[24@] perform_animation "HUNTER_attack" IFP "PED" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time 99999                                                          
+                                
+                                008B: 0@ = $HUNTER_DAMAGE // (int)
+                                0093: 0@ = integer 0@ to_float
+                                random_float 1@ 0.85 1.15 
+                                006B: 0@ *= 1@  // (float)  
+                                
+                                008F: 1@ = integer $HUNTER_DAMAGE to_float
+                                006F: 1@ *= PLAYER_RESIST_MULT // (float)
+                                0063: 0@ -= 1@  // (float)
+                                0092: 0@ = float 0@ to_integer 
+                                
+                                1@ = actor.Health(PLAYER_ACTOR)
+                                0062: 1@ -= 0@  // (int)
+                                if and
+                                PERK_LASTCHANCE == 1
+                                LAST_CHANCE_FLAG == 0
+                                LAST_CHANCE_TIMER == 0
+                                1@ < 1
+                                then
+                                actor.Health(PLAYER_ACTOR) = 30
+                                0003: shake_camera 50
+                                create_thread @LST_CHN
+                                jump to @HUNTER_LAST_CHANCE_PLAYER_AFTERDAMAGE_JUMP
+                                else
+                                0851: set_actor PLAYER_ACTOR decrease_health_by 0@ affect_armour 1
+                                end
+                                
+                                if
+                                0A4B:   controls_set_to_joystick
+                                then
+                                0085: 29@ = 0@ // (int)
+                                29@ *= 3
+                                015B: shake_player_controller 0 time 500 intensity 29@
+                                end                            
+                                09F1: play_audio_at_actor PLAYER_ACTOR event 1130
+                                actor.StorePos(PLAYER_ACTOR, 29@, 30@, 31@)
+                                09B8: create_blood_gush_at 29@ 30@ 31@ with_offset $HUNTER_BLOOD_X_OFSSET $HUNTER_BLOOD_Y_OFSSET $HUNTER_BLOOD_Z_OFSSET density $HUNTER_BLOOD_COUNT on_actor PLAYER_ACTOR
+                                                                                
+                                if
+                                056D:   actor $VOICE_ACTOR defined
+                                then
+                                
+                                if
+                                not $RANDOM_MODE_MODEL == 0
+                                then
+                                05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 346
+                                else
+                                05C1: AS_actor PLAYER_ACTOR speak_from_audio_table 346
+                                end
+                                
+                                end                            
+                                
+                                32@ = 0                            
+                                         
+                                jump to @HUNTER_ATTACK_PLAYER_CHECK     
+                                else
+                                
+                                :HUNTER_LAST_CHANCE_PLAYER_AFTERDAMAGE_JUMP
+                                player.SetDrunkVisuals(PLAYER_CHAR,0)
+                                
+                                text.ClearAll()
+                                text.RemoveTextBox()
+                                
+                                if
+                                $HUNTER_ON_PLAYER == 1
+                                then
+                                $HUNTER_ON_PLAYER = 0
+                                end
+                                
+                                gosub @HUNTER_SHUT_UP
+                                 
+                                if
+                                056D:   actor PLAYER_ACTOR defined
+                                jf @HUNTER_STALK_CHECK
+                                 
+                                0792: disembark_instantly_actor PLAYER_ACTOR
+                                0812: AS_actor PLAYER_ACTOR perform_animation "getup" IFP "PED" framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF 0 time -1  // versionB
+                                0619: enable_actor PLAYER_ACTOR collision_detection 1
+                                
+                                06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0
+                                01B9: set_actor PLAYER_ACTOR armed_weapon_to $PLAYER_PREV_WEAPON_HUNTER  
+                                0992: set_player PLAYER_CHAR weapons_scrollable 1   
+                                
+                                0605: actor $HUNTER[24@] perform_animation "HUNTER_attack" IFP "PED" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time 1
+                                0332: set_actor PLAYER_ACTOR bleeding 0                                                                                                  
+                                
+                                05BB: AS_actor $HUNTER[24@] fall_down 0 time_on_ground 500
+                                                            
+                                actor.StorePos(PLAYER_ACTOR,2@,3@,4@)
+                                
+                                3@ += 1.0
+                                
+                                actor.PutAtNoOffset($HUNTER[24@],2@,3@,4@)
+                                                                                                              
+                                actor.StorePos($HUNTER[24@],2@,3@,4@)
+                                
+                                if and
+                                $FP_ACTIVATED == 0
+                                8800: not  in_two_players_mode
+                                then                                                     
+                                camera.Restore_WithJumpCut()
+                                else
+//                                player.CanMove(PLAYER_CHAR,true)
+                                0E68: set_player_control_pad 1 1 
+                                0E69: set_player_control_pad_movement 0 1
+                                end
+                                
+                                wait 1
+                                
+                                0687: clear_actor PLAYER_ACTOR task    
+                                random_int 0@ HUNTER_TASK_WAIT_TIME_MIN HUNTER_TASK_WAIT_TIME_MAX
+                                if
+                                $GAMEMODE_CRAZY == 1
+                                then
+                                0@ *= HUNTER_TASK_CRAZY_MULT
+                                0085: 1@ = 24@ // (int)
+                                1@ *= HUNTER_TASK_CRAZY_MULT2
+                                wait 1@
+                                end
+                                wait 0@
+                                wait 24@ 
+    
+                                32@ = 0
+                                
+                                repeat
+                                wait 0
+                                if or
+                                $SAVESTATUS == 1
+                                $SAVESTATUS_TRUE == 1
+                                    then
+                                    break
+                                    end
+                                    
+                                until 001F:   32@ > $ZOMBIE_HUNTER_JUMP_TIME2 // (int)                                                                                                                             
+                                
+                                jump @HUNTER_STALK_CHECK                                   
+                                end                         
+                            else
+                                                    
+                            player.SetDrunkVisuals(PLAYER_CHAR,0)
+                            
+                            if and
+                            $FP_ACTIVATED == 0
+                            8800: not  in_two_players_mode
+                            then
+                            camera.Restore_WithJumpCut()
+                            else
+//                            player.CanMove(PLAYER_CHAR,true)
+                            0E68: set_player_control_pad 1 1 
+                            0E69: set_player_control_pad_movement 0 1
+                            end
+                                
+                            text.ClearAll()
+                            text.RemoveTextBox()
+                            
+                            if
+                            $HUNTER_ON_PLAYER == 1
+                            then
+                            $HUNTER_ON_PLAYER = 0
+                            end
+                             
+                            gosub @HUNTER_SHUT_UP 
+                            0792: disembark_instantly_actor $HUNTER[24@]
+                            
+                            if
+                            056D:   actor PLAYER_ACTOR defined
+                            jf @HUNTER_STALK_CHECK
+                                   
+                            0619: enable_actor PLAYER_ACTOR collision_detection 1
+                            
+                            06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0
+                            01B9: set_actor PLAYER_ACTOR armed_weapon_to $PLAYER_PREV_WEAPON_HUNTER  
+                            0992: set_player PLAYER_CHAR weapons_scrollable 1
+                            
+                            if
+                            $ALLOW_HEADSHOOT == 1
+                                then                                                
+                                0321: AS_actor PLAYER_ACTOR die_headshotted
+                                0A96: 0@ = actor PLAYER_ACTOR struct
+                                0@ += 0x46D
+                                0A8D: 1@ = read_memory 0@ size 4 virtual_protect 0
+                                0A8C: write_memory 0@ size 4 value 0xA0 virtual_protect 0
+                                0@ -= 0x46D
+                                0@ += 0x754
+                                0A8D: 11@ = read_memory 0@ size 4 virtual_protect 0
+                                0A8C: write_memory 0@ size 4 value 0x02 virtual_protect 0
+                                
+                                while 8184:  actor PLAYER_ACTOR health < 1
+                                wait 0
+                                end
+                                
+                                0A96: 0@ = actor PLAYER_ACTOR struct
+                                0@ += 0x46D
+                                0A8C: write_memory 0@ size 4 value 1@ virtual_protect 0
+                                0@ -= 0x46D
+                                0@ += 0x754
+                                0A8C: write_memory 0@ size 4 value 11@ virtual_protect 0                                                
+                                end   
+                            end                                     
+                        else 
+                        
+                        player.SetDrunkVisuals(PLAYER_CHAR,0)
+                        
+                        if and
+                        $FP_ACTIVATED == 0
+                        8800: not  in_two_players_mode
+                        then
+                        camera.Restore_WithJumpCut()
+                        else
+//                        player.CanMove(PLAYER_CHAR,true)
+                        0E68: set_player_control_pad 1 1 
+                        0E69: set_player_control_pad_movement 0 1
+                        end
+                                
+                        text.ClearAll()
+                        text.RemoveTextBox()
+                        
+                        if
+                        $HUNTER_ON_PLAYER == 1
+                        then
+                        $HUNTER_ON_PLAYER = 0
+                        end
+                        
+                        gosub @HUNTER_SHUT_UP 
+                        0792: disembark_instantly_actor $HUNTER[24@]  
+                        05BE: AS_actor $HUNTER[24@] die
+                        
+                        if
+                        056D:   actor PLAYER_ACTOR defined
+                        jf @HUNTER_STALK_CHECK
+                                
+                        0792: disembark_instantly_actor PLAYER_ACTOR
+                        0619: enable_actor PLAYER_ACTOR collision_detection 1
+                        
+                        06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0
+                        01B9: set_actor PLAYER_ACTOR armed_weapon_to $PLAYER_PREV_WEAPON_HUNTER  
+                        0992: set_player PLAYER_CHAR weapons_scrollable 1
+                        
+                        0812: AS_actor PLAYER_ACTOR perform_animation "getup" IFP "PED" framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF 0 time -1  // versionB
+                        0332: set_actor PLAYER_ACTOR bleeding 0                      
+                        end
+                    end               
+                else                                    
+    
+                actor.StorePos($HUNTER[24@],25@,26@,27@)
+                if 
+                0AE2: 1@ = random_vehicle_near_point 25@ 26@ 27@ in_radius 2.5 find_next 0 pass_wrecked 1 //IF and SET
+                then
+                0792: disembark_instantly_actor $HUNTER[24@]
+                0687: clear_actor $HUNTER[24@] task    
+                random_int 0@ HUNTER_TASK_WAIT_TIME_MIN HUNTER_TASK_WAIT_TIME_MAX
+                if
+                $GAMEMODE_CRAZY == 1
+                then
+                0@ *= HUNTER_TASK_CRAZY_MULT
+                0085: 1@ = 24@ // (int)
+                1@ *= HUNTER_TASK_CRAZY_MULT2
+                wait 1@
+                end
+                wait 0@
+                wait 24@ 
+                05E2: AS_actor $HUNTER[24@] kill_actor PLAYER_ACTOR
+                jump to @FUCKME     
+                end  
+                
+                actor.StorePos($HUNTER[24@],25@,26@,27@)
+                
+//                if
+//                27@ <= 1.0
+//                then
+//                092E: get_water_height_at 25@ 26@ ignore_waves 0 store_to 27@
+//                if
+//                0EEA: locate_char_distance_to_coordinates $HUNTER[24@] pos 25@ 26@ 27@ radius 1.0
+//                    then
+//                    0792: disembark_instantly_actor $HUNTER[24@]
+//                    0687: clear_actor $HUNTER[24@] task    
+//                    random_int 0@ HUNTER_TASK_WAIT_TIME_MIN HUNTER_TASK_WAIT_TIME_MAX
+//                    wait 0@ 
+//                    05E2: AS_actor $HUNTER[24@] kill_actor PLAYER_ACTOR
+//                    jump to @FUCKME
+//                    end
+//                end
+
+                if
+                04AD:   actor $HUNTER[24@] in_water
+                then
+                0792: disembark_instantly_actor $HUNTER[24@]
+                0687: clear_actor $HUNTER[24@] task    
+                random_int 0@ HUNTER_TASK_WAIT_TIME_MIN HUNTER_TASK_WAIT_TIME_MAX
+                if
+                $GAMEMODE_CRAZY == 1
+                then
+                0@ *= HUNTER_TASK_CRAZY_MULT
+                0085: 1@ = 24@ // (int)
+                1@ *= HUNTER_TASK_CRAZY_MULT2
+                wait 1@
+                end
+                wait 0@
+                wait 24@ 
+                05E2: AS_actor $HUNTER[24@] kill_actor PLAYER_ACTOR
+                jump to @FUCKME
+                end
+                
+                if 
+                0AE3: 0@ = random_object_near_point 25@ 26@ 27@ in_radius 2.5 find_next 1 //IF and SET          
+                then
+                if
+                03CA:   object 0@ exists
+                    then 
+                    0984: 25@ = object 0@ model
+                    gosub @GRENADE_MODEL_CHECK_HUNTER
+                    if
+                    not 26@ == 1
+                        then
+                        0792: disembark_instantly_actor $HUNTER[24@]
+                        0687: clear_actor $HUNTER[24@] task    
+                        random_int 0@ HUNTER_TASK_WAIT_TIME_MIN HUNTER_TASK_WAIT_TIME_MAX
+                        if
+                        $GAMEMODE_CRAZY == 1
+                        then
+                        0@ *= HUNTER_TASK_CRAZY_MULT
+                        0085: 1@ = 24@ // (int)
+                        1@ *= HUNTER_TASK_CRAZY_MULT2
+                        wait 1@
+                        end
+                        wait 0@
+                        wait 24@ 
+                        05E2: AS_actor $HUNTER[24@] kill_actor PLAYER_ACTOR
+                        jump to @FUCKME     
+                        end
+                    end
+                end  
+                
+                actor.StorePos($HUNTER[24@],4@,5@,6@)
+                if                     
+                6@ < 0.2
+                then
+                jump to @FUCKME   
+                end
+                
+                0819: 0@ = actor $HUNTER[24@] distance_from_ground                     
+                
+                if
+                0@ < 1.5
+                jf @HUNTER_JUMP2_CHECK_DAMAGE
+                0792: disembark_instantly_actor $HUNTER[24@]
+                0687: clear_actor $HUNTER[24@] task    
+                random_int 0@ HUNTER_TASK_WAIT_TIME_MIN HUNTER_TASK_WAIT_TIME_MAX
+                if
+                $GAMEMODE_CRAZY == 1
+                then
+                0@ *= HUNTER_TASK_CRAZY_MULT
+                0085: 1@ = 24@ // (int)
+                1@ *= HUNTER_TASK_CRAZY_MULT2
+                wait 1@
+                end
+                wait 0@
+                wait 24@ 
+                05E2: AS_actor $HUNTER[24@] kill_actor PLAYER_ACTOR
+                
+                if
+                $HUNTER_ON_PLAYER == 1
+                then
+                $HUNTER_ON_PLAYER = 0
+                end                  
+                    
+                end
+            end             
+        end
+    end   
+    
+:FUCKME  
+
+Actor.SetWalkStyle($HUNTER[24@],"HUNTER2")    
+                             
+jump to @HUNTER_STALK_CHECK
+
+:GRENADE_MODEL_CHECK_HUNTER
+
+26@ = 0
+
+if or
+25@ == 342  
+25@ == 343
+25@ == 344
+25@ == 12445
+25@ == 12448
+25@ == 12445
+25@ == 12462
+25@ == 12463
+    then
+    26@ = 1
+    end
+
+if or   
+25@ == 12464
+25@ == 12507
+25@ == 12508
+25@ == 12509
+25@ == 12537
+25@ == 12538
+25@ == 12539
+    then
+    26@ = 1
+    end
+
+return   
+
+:HUNTER_DIE_SOUND
+gosub @HUNTER_SHUT_UP  
+gosub @HUNTER_RANDOM_DIE_SOUND
+
+Audiostream.LinkToActor(11@, $HUNTER[24@])
+Audiostream.Volume(11@) = 0.0
+Audiostream.PerformAction(11@, PLAY)
+
+Audiostream.LinkToActor(25@, $HUNTER[24@])
+Audiostream.Volume(25@) = 0.0
+Audiostream.PerformAction(25@, PLAY)
+
+0AB9: get_mp3 11@ state_to 0@
+
+while not 0@ == -1
+0AB9: get_mp3 11@ state_to 0@
+wait 0
+
+0A96: 2@ = actor $HUNTER[24@] struct
+2@ += 0x754
+0A8D: 1@ = read_memory 2@ size 4 virtual_protect 0
+if
+1@ == 0x02
+    then
+    break
+    end
+
+if
+$GAME_SPEED == 1.0
+then
+Audiostream.Volume(11@) = $SOUNDS_VOLUME
+Audiostream.Volume(25@) = 0.0
+else
+Audiostream.Volume(11@) = 0.0
+Audiostream.Volume(25@) = $SOUNDS_VOLUME
+end
+
+end
+
+audiostream.Release(11@)
+audiostream.Release(25@)
+
+return
+
+:HUNTER_SHUT_UP
+gosub @HUNTER_STALK_SOUND_RELEASE
+gosub @HUNTER_PAIN_SOUND_RELEASE 
+gosub @HUNTER_RAGE_SOUND_RELEASE
+gosub @HUNTER_ATTACK_SOUND_RELEASE
+gosub @HUNTER_ALERT_SOUND_RELEASE 
+gosub @HUNTER_POUNCE_SOUND_RELEASE  
+return  
+
+:HUNTER_STALK_SOUND_RELEASE
+
+if
+HNT_STALK_SOUND_FLAG == 1
+then
+audiostream.Release(11@)
+HNT_STALK_SOUND_FLAG = 0
+end
+
+return
+
+:HUNTER_PAIN_SOUND_RELEASE
+
+if
+HNT_PAIN_SOUND_FLAG == 1
+then
+audiostream.Release(11@)
+HNT_PAIN_SOUND_FLAG = 0
+end
+
+return
+
+:HUNTER_RAGE_SOUND_RELEASE
+
+if
+HNT_RAGE_SOUND_FLAG == 1
+then
+audiostream.Release(11@)
+HNT_RAGE_SOUND_FLAG = 0
+end
+
+return
+
+:HUNTER_ATTACK_SOUND_RELEASE
+
+if
+HNT_ATTACK_SOUND_FLAG == 1
+then
+audiostream.Release(11@)
+HNT_ATTACK_SOUND_FLAG = 0
+end
+
+return
+
+:HUNTER_ALERT_SOUND_RELEASE
+
+if
+HNT_ALERT_SOUND_FLAG == 1
+then
+audiostream.Release(11@)
+HNT_ALERT_SOUND_FLAG = 0
+end
+
+return
+
+:HUNTER_POUNCE_SOUND_RELEASE
+
+if
+HNT_POUNCE_SOUND_FLAG == 1
+then
+audiostream.Release(11@)
+HNT_POUNCE_SOUND_FLAG = 0
+end
+
+return
+
+:HUNTER_SPAWN_SOUND_RELEASE
+
+if
+HNT_SPAWN_SOUND_FLAG == 1
+then
+audiostream.Release(8@)
+HNT_SPAWN_SOUND_FLAG = 0
+end
+
+return
+
+/////////////////////Вычисление координат охотника/////////////////////
+
+:HUNTER_COORD_SET
+wait 0
+if
+not OOS_MARK == 999668
+jf @HUNTER_COORD_SET_INTERIOR_BUNKER
+
+if   
+$SPAWN_HUNTER_ON_COORD == 1   
+then
+0089: 2@ = $HUNTER_X // (float)
+0089: 3@ = $HUNTER_Y // (float)
+0089: 4@ = $HUNTER_Z // (float)
+
+if
+not HUNTERS_TO_SPAWN_COUNT == 0
+then
+
+if
+$ACTIVE_INTERIOR == 0
+then
+0208: 30@ = random_float_in_ranges -2.0 2.0 
+005B: 2@ += 30@ // (float)
+0208: 30@ = random_float_in_ranges 2.0 -2.0 
+005B: 3@ += 30@ // (float)
+else
+0208: 30@ = random_float_in_ranges -0.5 0.5 
+005B: 2@ += 30@ // (float)
+0208: 30@ = random_float_in_ranges 0.5 -0.5 
+005B: 3@ += 30@ // (float)
+end
+
+end
+
+return
+end
+
+if
+$SPECIAL_INFECTED_SPAWN_OZC_FLAG == 1
+then
+random_int 0@ 0 $ZOMBIE_COORD_MAX
+0089: 2@ = $ZOMBIE_X[0@] // (float)
+0089: 3@ = $ZOMBIE_Y[0@] // (float)
+0089: 4@ = $ZOMBIE_Z[0@] // (float)
+0208: 30@ = random_float_in_ranges -2.0 2.0 
+005B: 2@ += 30@ // (float)
+0208: 30@ = random_float_in_ranges 2.0 -2.0 
+005B: 3@ += 30@ // (float)
+return
+end
+
+0208: 27@ = random_float_in_ranges 100.0 -100.0 
+0208: 28@ = random_float_in_ranges -100.0 100.0   
+   
+04C4: store_coords_to 2@ 3@ 4@ from_actor PLAYER_ACTOR with_offset 27@ 28@ 0.0 
+02CE: 4@ = ground_z_at 2@ 3@ 4@
+
+if and
+$GAMEMODE_CRAZY == 1
+SNOW_ADDON_INSTALLED_FLAG == 1
+then
+//ice ass skip
+else
+
+if
+not QUEST_NEST_NUMBER == 15
+then
+
+if
+UNITED_MAP == 0
+then
+if or
+4@ > 0.25
+00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA 860.55 1031.71 -100.0 cornerB 337.24 710.84 0.0
+jf @CHARGER_COORD_SET
+else
+if
+4@ > 0.25
+jf @CHARGER_COORD_SET
+end
+
+end
+
+end 
+
+Actor.StorePos(PLAYER_ACTOR, 27@, 28@, 29@)
+050A: 30@ = distance_between_XYZ 2@ 3@ 4@ and_XYZ 27@ 28@ 29@ 
+0092: 30@ = float 30@ to_integer
+if and
+30@ > 90 
+not 30@ > 120
+jf @HUNTER_COORD_SET
+050A: 30@ = distance_between_XYZ 27@ 28@ 4@ and_XYZ 27@ 28@ 29@
+0092: 30@ = float 30@ to_integer
+
+if and
+$GAMEMODE_CRAZY == 1
+SNOW_ADDON_INSTALLED_FLAG == 1
+then
+//ice ass skip
+else
+
+if
+UNITED_MAP == 0
+then
+if or
+not 4@ < 0.0
+00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA 860.55 1031.71 -100.0 cornerB 337.24 710.84 0.0
+jf @HUNTER_COORD_SET
+else
+if
+not 4@ < 0.0
+jf @HUNTER_COORD_SET
+end
+
+end
+
+gosub @HUNTER_ZONE_CHECK        
+
+if 
+0@ == 1
+jf @HUNTER_COORD_SET  
+
+if and
+8AE2: 30@ = random_vehicle_near_point 2@ 3@ 4@ in_radius 10.0 find_next 0 pass_wrecked 1 //IF and SET
+8AE1: 31@ = random_actor_near_point 2@ 3@ 4@ in_radius 5.0 find_next 0 pass_deads 0 //IF and SET 
+jf @HUNTER_COORD_SET
+4@ = -100.0
+
+return
+
+:HUNTER_COORD_SET_INTERIOR_BUNKER
+0208: 27@ = random_float_in_ranges 25.0 -25.0 
+0208: 28@ = random_float_in_ranges 30.0 30.0   
+04C4: store_coords_to 2@ 3@ 4@ from_actor PLAYER_ACTOR with_offset 27@ 28@ 50.0
+02CE: 4@ = ground_z_at 2@ 3@ 4@
+4@ -= 4.5325
+if or
+4@ < 1061.8314
+4@ > 1063.2881
+then
+if
+not 4@ < 1000.0
+    then
+    4@ = 1061.8314
+    end
+end
+ 
+Actor.StorePos(PLAYER_ACTOR, 27@, 28@, 29@)
+050A: 30@ = distance_between_XYZ 27@ 28@ 4@ and_XYZ 27@ 28@ 29@ 
+if
+not 30@ > 3.0
+jf @HUNTER_COORD_SET
+Actor.StorePos(PLAYER_ACTOR, 27@, 28@, 29@)
+050A: 30@ = distance_between_XYZ 2@ 3@ 4@ and_XYZ 27@ 28@ 29@ 
+0092: 30@ = float 30@ to_integer
+if and
+30@ > 35 
+not 30@ > 55
+jf @HUNTER_COORD_SET
+if
+not 4@ < 0.0
+jf @HUNTER_COORD_SET
+if and
+8AE2: 30@ = random_vehicle_near_point 2@ 3@ 4@ in_radius 5.0 find_next 0 pass_wrecked 1 //IF and SET
+8AE1: 31@ = random_actor_near_point 2@ 3@ 4@ in_radius 0.5 find_next 0 pass_deads 0 
+jf @HUNTER_COORD_SET
+4@ += 0.5
+
+if
+83CA: not  object DUMMY_OBJECT exists
+then
+DUMMY_OBJECT = object.Init(321,2@,3@,4@)
+0750: set_object DUMMY_OBJECT visibility 0
+0382: set_object DUMMY_OBJECT collision_detection 0
+object.Indestructibility(DUMMY_OBJECT,true)
+object.KeepInMemory(DUMMY_OBJECT,true)
+else
+object.PutAt(DUMMY_OBJECT,2@,3@,4@)
+end
+
+if
+84EA: not object DUMMY_OBJECT in_cube_cornerA 1302.038 -679.0218 1055.0 cornerB 1286.9321 -695.6371 1095.0 flag 0
+jf @HUNTER_COORD_SET
+
+return     
+
+:HUNTER_ZONE_CHECK
+0@ = 1  
+
+{$INCLUDE zone_check/Infected Spawn Zone Check.txt}                    
+
+return  
+
+:POUNCE_SOUND_CHECK
+
+if and
+HNT_POUNCE_SOUND_FLAG == 0
+$GAME_SPEED == 1.0
+then
+gosub @HUNTER_SHUT_UP                            
+gosub @HUNTER_RANDOM_POUNCE_SOUND
+Audiostream.LinkToActor(11@, $HUNTER[24@])
+Audiostream.PerformAction(11@, PLAY)
+Audiostream.Volume(11@) = $SOUNDS_VOLUME
+HNT_POUNCE_SOUND_FLAG = 1 
+end
+
+///////////////////Выгрузка звуков POUNCE///////////////////  
+    
+if
+HNT_POUNCE_SOUND_FLAG == 1
+    then
+    0AB9: get_mp3 11@ state_to 0@
+    if or
+    0@ == -1
+    not $GAME_SPEED == 1.0
+        then
+        audiostream.Release(11@)
+        HNT_POUNCE_SOUND_FLAG = 0
+        end        
+    end    
+    
+return    
+
+:HUNTER_ROOF_CHECK
+
+1@ = 1
+
+actor.StorePos($HUNTER[24@], 2@, 3@, 4@)
+
+if
+$ACTIVE_INTERIOR > 0
+then
+04C4: store_coords_to 27@ 28@ 29@ from_actor $HUNTER[24@] with_offset 0.0 0.0 5.0
+else 
+04C4: store_coords_to 27@ 28@ 29@ from_actor $HUNTER[24@] with_offset 0.0 0.0 10.0
+end
+ 
+if
+86BD: not no_obstacles_between 27@ 28@ 29@ and 2@ 3@ 4@ solid 1 car 0 actor 0 object 0 particle 0
+    then
+    1@ = 0
+    end   
+
+return
+
+:HUNTER_TARGET_ROOF_CHECK
+
+1@ = 1
+
+if
+056D:   actor HUNTER_TARGET_ACTOR defined
+    then
+    actor.StorePos(HUNTER_TARGET_ACTOR, 2@, 3@, 4@)
+    
+    if
+    $ACTIVE_INTERIOR > 0
+    then
+    04C4: store_coords_to 27@ 28@ 29@ from_actor HUNTER_TARGET_ACTOR with_offset 0.0 0.0 5.0
+    else 
+    04C4: store_coords_to 27@ 28@ 29@ from_actor HUNTER_TARGET_ACTOR with_offset 0.0 0.0 20.0
+    end
+     
+    if
+    86BD: not no_obstacles_between 27@ 28@ 29@ and 2@ 3@ 4@ solid 1 car 0 actor 0 object 0 particle 0
+        then
+        1@ = 0
+        end
+    end   
+
+return
+
+:HUNTER_TARGET_PLAYER_ROOF_CHECK
+
+1@ = 1
+
+actor.StorePos(PLAYER_ACTOR, 2@, 3@, 4@)
+
+if
+$ACTIVE_INTERIOR > 0
+then
+04C4: store_coords_to 27@ 28@ 29@ from_actor PLAYER_ACTOR with_offset 0.0 0.0 5.0  
+else
+04C4: store_coords_to 27@ 28@ 29@ from_actor PLAYER_ACTOR with_offset 0.0 0.0 20.0 
+end
+
+if
+86BD: not no_obstacles_between 27@ 28@ 29@ and 2@ 3@ 4@ solid 1 car 0 actor 0 object 0 particle 0
+    then
+    1@ = 0
+    end   
+
+return
+
+:HUNTER_RANDOM_STALK_SOUND
+random_int 0@ 0 7
+
+if
+0@ == 0
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_stalk1.wav")
+end 
+
+if
+0@ == 1
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_stalk2.wav")
+end 
+
+if
+0@ == 2
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_stalk3.wav")
+end 
+
+if
+0@ == 3
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_stalk4.wav")
+end 
+
+if
+0@ == 4
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_stalk5.wav")
+end 
+
+if
+0@ == 5
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_stalk6.wav")
+end 
+
+if
+0@ == 6
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_stalk7.wav")
+end 
+
+return
+
+:HUNTER_RANDOM_RAGE_SOUND
+random_int 0@ 0 5
+
+if
+0@ == 0
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_rage1.wav")
+end 
+
+if
+0@ == 1
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_rage2.wav")
+end 
+
+if
+0@ == 2
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_rage3.wav")
+end 
+
+if
+0@ == 3
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_rage4.wav")
+end 
+
+if
+0@ == 4
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_rage5.wav")
+end     
+
+return
+
+:HUNTER_RANDOM_DIE_SOUND
+random_int 0@ 0 5
+
+if
+0@ == 0
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_die1.wav")
+25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_die1_slow.wav")
+end 
+
+if
+0@ == 1
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_die2.wav")
+25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_die2_slow.wav")
+end 
+
+if
+0@ == 2
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_die3.wav")
+25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_die3_slow.wav")
+end 
+
+if
+0@ == 3
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_die4.wav")
+25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_die4_slow.wav")
+end 
+
+if
+0@ == 4
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_die5.wav")
+25@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_die5_slow.wav")
+end  
+
+return
+
+:HUNTER_RANDOM_PAIN_SOUND
+random_int 0@ 0 6
+
+if
+0@ == 0
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_pain1.wav")
+end 
+
+if
+0@ == 1
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_pain2.wav")
+end 
+
+if
+0@ == 2
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_pain3.wav")
+end 
+
+if
+0@ == 3
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_pain4.wav")
+end 
+
+if
+0@ == 4
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_pain5.wav")
+end 
+
+if
+0@ == 5
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_pain6.wav")
+end 
+
+return
+
+:HUNTER_RANDOM_ATTACK_SOUND
+random_int 0@ 0 4
+
+if
+0@ == 0
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_attack1.wav")
+21@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_attack1_slow.wav")
+end 
+
+if
+0@ == 1
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_ATTACK2.wav")
+21@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_attack2_slow.wav")
+end 
+
+if
+0@ == 2
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_ATTACK3.wav")
+21@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_attack3_slow.wav")
+end 
+
+if
+0@ == 3
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_ATTACK4.wav")
+21@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_attack4_slow.wav")
+end 
+
+return       
+
+:HUNTER_RANDOM_ALERT_SOUND
+random_int 0@ 0 5
+
+if
+0@ == 0
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_ALERT1.wav")
+end 
+
+if
+0@ == 1
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_ALERT2.wav")
+end 
+
+if
+0@ == 2
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_ALERT3.wav")
+end 
+
+if
+0@ == 3
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_ALERT4.wav")
+end 
+
+if
+0@ == 4
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_ALERT5.wav")
+end 
+
+return       
+
+:HUNTER_RANDOM_POUNCE_SOUND
+random_int 0@ 0 11
+
+if
+0@ == 0
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_POUNCE1.wav")
+end 
+
+if
+0@ == 1
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_POUNCE2.wav")
+end 
+
+if
+0@ == 2
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_POUNCE3.wav")
+end 
+
+if
+0@ == 3
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_POUNCE4.wav")
+end 
+
+if
+0@ == 4
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_POUNCE5.wav")
+end 
+
+if
+0@ == 5
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_POUNCE6.wav")
+end 
+
+if
+0@ == 6
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_POUNCE7.wav")
+end 
+
+if
+0@ == 7
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_POUNCE8.wav")
+end 
+
+if
+0@ == 8
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_POUNCE9.wav")
+end 
+
+if
+0@ == 9
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_POUNCE10.wav")
+end 
+
+if
+0@ == 10
+then
+11@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\HUNTER_sounds\HUNTER_POUNCE11.wav")
+end 
+
+return
+
+:HUNTER_ORIGIN_SPOTTED_PHRASE
+
+repeat
+wait 0
+until ORIGIN_SPOTTED_SOME_SHIT == 0
+
+ORIGIN_SPOTTED_SOME_SHIT = 1
+
+if
+SURVIVAL_CUSTOM_WEAPON_NABOR == 1
+then
+gosub @RANDOM_DIALOG_BTRAPPER_SPOTTED_HUNTER
+else
+gosub @RANDOM_DIALOG_DCD_SPOTTED_HUNTER
+end
+
+09FD: get_gxt_string v$PHRASE3 width_to 1@
+0093: 1@ = integer 1@ to_float
+1@ *= 8.0
+0092: 1@ = float 1@ to_integer
+
+33@ = 0
+008B: 31@ = $PHRASES_OFF_FLAG // (int)                    
+                    
+repeat
+wait 0
+$PHRASES_OFF_FLAG = 1  
+        
+0384: show_text_1string GXT v$PHRASE3 string v$NAME3 time 99 1
+            
+if or
+$SAVESTATUS_TRUE == 1
+$SAVESTATUS == 1
+GAME_OVER_FLAG == 1
+    then 
+    break
+    end
+            
+until 002D:   33@ >= 1@  // (int)
+
+008A: $PHRASES_OFF_FLAG = 31@ // (int)
+
+ORIGIN_SPOTTED_SOME_SHIT = 0
+
+return   
+
+:RANDOM_DIALOG_DCD_SPOTTED_HUNTER
+    
+for 1@ = 0 to 200
+
+v$PHRASE1 = "DC10_"
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 30@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "DC10_"
+0AD3: v$PHRASE2 = format "%d" 30@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return
+
+:RANDOM_DIALOG_BTRAPPER_SPOTTED_HUNTER
+    
+for 1@ = 0 to 200
+
+v$PHRASE1 = "HN10_"
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 30@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "HN10_"
+0AD3: v$PHRASE2 = format "%d" 30@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return
+
+:HUNTER_NUM_GET
+
+if
+0@ == 1
+then
+thread 'HUNTER1'
+end
+
+if
+0@ == 2
+then
+thread 'HUNTER2'
+end
+
+if
+0@ == 3
+then
+thread 'HUNTER3'
+end
+
+if
+0@ == 4
+then
+thread 'HUNTER4'
+end
+
+if
+0@ == 5
+then
+thread 'HUNTER5'
+end
+
+if
+0@ == 6
+then
+thread 'HUNTER6'
+end
+
+if
+0@ == 7
+then
+thread 'HUNTER7'
+end
+
+if
+0@ == 8
+then
+thread 'HUNTER9'
+end
+
+if
+0@ == 9
+then
+thread 'HUNTE10'
+end
+
+if
+0@ == 10
+then
+thread 'HUNTE11'
+end
+
+if
+0@ == 11
+then
+thread 'HUNTE12'
+end
+
+if
+0@ == 12
+then
+thread 'HUNTE13'
+end
+
+if
+0@ == 13
+then
+thread 'HUNTE14'
+end
+
+if
+0@ == 14
+then
+thread 'HUNTE15'
+end
+
+if
+0@ == 15
+then
+thread 'HUNTE16'
+end
+
+if
+0@ == 16
+then
+thread 'HUNTE17'
+end
+
+if
+0@ == 17
+then
+thread 'HUNTE18'
+end
+
+if
+0@ == 18
+then
+thread 'HUNTE19'
+end
+
+if
+0@ == 19
+then
+thread 'HUNTE20'
+end
+
+return       

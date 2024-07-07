@@ -1,0 +1,176 @@
+:TNK_MSC
+thread 'TNK_MSC'                
+$TANK_MUSIC_PLAY = 0
+
+:TNK_MSC_START
+wait 0
+if and
+$END_ROUND_INF == 0
+$ROUND_ENDED == 0
+$INF_SIDE == 1
+$TANK_MUSIC_MUTE == 0
+jf @TANK_MUSIC_END_THREAD
+if 
+not $ZOMBIE_DEAD == 1
+jf @TNK_MSC_START
+
+gosub @2RANDOM_THEME
+
+Audiostream.PerformAction(21@, PLAY)
+Audiostream.Loop(21@, 1)
+0086: $MUSIC_VOLUME2 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME2 *= $TANK_VOLUME_MULTIPLIER // (float)
+Audiostream.Volume(21@) = $MUSIC_VOLUME2
+
+audiostream.Release(19@)
+19@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\tank_sounds\tank_walk.mp3")
+Audiostream.LinkToActor(19@, PLAYER_ACTOR)
+Audiostream.Loop(19@,1)
+Audiostream.Volume(19@) = $SOUNDS_VOLUME
+Audiostream.PerformAction(19@, PLAY)
+
+:TANK_MUSIC_START_CHECK
+wait 0
+
+if or
+$MUTE_MUSIC_FLAG == 0
+USER_TAPE_TURNED_ON_GLOBAL == 1
+then
+0086: $MUSIC_VOLUME2 = $MUSIC_VOLUME // (float)
+0069: $MUSIC_VOLUME2 *= $TANK_VOLUME_MULTIPLIER // (float)
+Audiostream.Volume(21@) = $MUSIC_VOLUME2
+else
+Audiostream.Volume(21@) = 0.0
+end
+
+if and
+$END_ROUND_INF == 0
+$ROUND_ENDED == 0
+$INF_SIDE == 1
+$TANK_MUSIC_MUTE == 0
+jf @2TANK_MP3_OFF
+if 
+not $ZOMBIE_DEAD == 1
+jf @2TANK_MP3_OFF2
+jump @2TANK_WALK_CHECK
+
+:2TANK_WALK_CHECK
+if and
+actor.Animation(PLAYER_ACTOR) == "tank_run"
+044B:   actor PLAYER_ACTOR on_foot
+82A0: not  actor PLAYER_ACTOR stopped
+8818: not actor PLAYER_ACTOR in_air
+jf @2TANK_WALK_CHECK2        
+audiostream.Volume(19@) = $SOUNDS_VOLUME
+jump @TANK_MUSIC_START_CHECK
+
+:2TANK_WALK_CHECK2
+audiostream.Volume(19@) = 0.0
+jump @TANK_MUSIC_START_CHECK
+
+:2TANK_MP3_OFF
+audiostream.Release(19@)  
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+008A: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = 21@ // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+$ZOMBIE_TANK_MUSIC_FLAG = 0
+
+//////////////////////////////////////////////////////////
+
+end_thread
+
+:2TANK_MP3_OFF2
+audiostream.Release(19@)
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+008A: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = 21@ // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+//////////////////////////////////////////////////////////
+ 
+$ZOMBIE_TANK_MUSIC_FLAG = 0  
+jump @TNK_MSC_START
+
+:TANK_MUSIC_END_THREAD
+end_thread
+
+:2RANDOM_THEME
+if
+not $GAMEMODE_INF == 1
+jf @2RANDOM_THEME2 
+random_int 0@ 1 4
+if and 
+not 0@ == 1
+not 0@ == 2
+jf @2THEME1
+if and 
+not 0@ == 3
+not 0@ == 4
+jf @2THEME2
+
+:2RANDOM_THEME2
+random_int 0@ 1 4
+if and 
+not 0@ == 1
+not 0@ == 2
+jf @2THEME3
+if and 
+not 0@ == 3
+not 0@ == 4
+jf @2THEME4
+
+:2THEME1
+21@ = Audiostream.Load("AUDIO\SOUNDS\infected_sounds\tank_sounds\tank_theme.WAV")
+return
+
+:2THEME2
+21@ = Audiostream.Load("AUDIO\SOUNDS\infected_sounds\tank_sounds\tank_theme2.WAV")
+return
+
+:2THEME3
+21@ = Audiostream.Load("AUDIO\SOUNDS\infected_sounds\tank_sounds\midnighttank.wav")
+return
+
+:2THEME4
+21@ = Audiostream.Load("AUDIO\SOUNDS\infected_sounds\tank_sounds\onebadtank.wav")
+return

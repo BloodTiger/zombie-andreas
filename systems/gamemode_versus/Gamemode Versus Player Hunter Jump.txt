@@ -1,0 +1,276 @@
+:HTR_JMP
+thread 'HTR_JMP'                
+
+:HUNTER_JUMP_CHECK
+wait 0   
+ 
+$SLOW_BAR += 1.9
+
+if
+001C: $SLOW_BAR > $SLOW_BAR_MAX // (int)   
+then
+0086: $SLOW_BAR = $SLOW_BAR_MAX // (float)
+end
+
+if or
+$END_ROUND_INF == 0
+$INF_SIDE == 0
+jf @HUNTER_JUMP_END_THREAD
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @HUNTER_JUMP_CHECK
+if and
+00E1: key_pressed 0 14
+$SLOW_BAR > 38.0  
+actor.Animation(PLAYER_ACTOR) == "hunter_walk"
+jf @HUNTER_JUMP_CHECK
+audiostream.Release(21@) 
+
+random_int 0@ 0 to 4
+
+if
+0@ == 0
+    then
+    21@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\hunter_sounds\hunter_alert1.wav")
+    end
+    
+if
+0@ == 1
+    then
+    21@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\hunter_sounds\hunter_alert2.wav")
+    end
+    
+if
+0@ == 2
+    then
+    21@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\hunter_sounds\hunter_alert3.wav")
+    end
+    
+if
+0@ == 3
+    then
+    21@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\hunter_sounds\hunter_alert4.wav")
+    end 
+    
+if
+0@ == 4
+    then
+    21@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\hunter_sounds\hunter_alert5.wav")
+    end                   
+    
+Audiostream.LinkToActor(21@, PLAYER_ACTOR)
+Audiostream.PerformAction(21@, PLAY)
+Audiostream.Volume(21@) = $SOUNDS_VOLUME
+wait 100
+
+if and                          
+00E1: key_pressed 0 14
+$SLOW_BAR > 38.0  
+jf @HUNTER_JUMP_CHECK
+if              
+0818:  actor PLAYER_ACTOR in_air
+jf @HNTR_4
+jump @HNTR_2
+
+:HNTR_4
+05BC: AS_actor PLAYER_ACTOR jump 1     
+jump @HNTR_2
+
+:HNTR_2
+9@ = 0.0
+10@ = 14.0
+:JUMP_PLUS
+wait 3
+if and
+00E1: key_pressed 0 14
+9@ <= 40.0
+jf @JUMP
+9@ += 3.5 
+10@ += 0.9
+jump @JUMP_PLUS
+:JUMP
+audiostream.Release(21@)
+
+if
+not COOP_ACTIVE_FLAG == 1
+then
+$SLOW_BAR -= 40.0
+else
+$SLOW_BAR -= 13.0
+end
+
+random_int 0@ 0 to 4
+
+if
+0@ == 0
+    then
+    21@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\hunter_sounds\hunter_attack1.wav")
+    end
+    
+if
+0@ == 1
+    then
+    21@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\hunter_sounds\hunter_attack2.wav")
+    end
+    
+if
+0@ == 2
+    then
+    21@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\hunter_sounds\hunter_attack3.wav")
+    end
+    
+if
+0@ == 3
+    then
+    21@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\hunter_sounds\hunter_attack4.wav")
+    end           
+    
+Audiostream.LinkToActor(21@, PLAYER_ACTOR)
+Audiostream.PerformAction(21@, PLAY)
+Audiostream.Volume(21@) = $SOUNDS_VOLUME
+actor.StorePos(PLAYER_ACTOR, 1@, 2@, 3@) 
+04C4: store_coords_to 4@ 5@ 6@ from_actor PLAYER_ACTOR with_offset 0.0 9@ 9.0 
+0063: 4@ -= 1@  // (float) 
+0063: 5@ -= 2@  // (float) 
+0063: 6@ -= 3@  // (float) 
+083C: set_actor PLAYER_ACTOR velocity_in_direction_XYZ 4@ 5@ 6@
+wait 100
+
+:HNTR_ATTACK
+wait 0
+0@ = actor.Health(PLAYER_ACTOR)
+if
+not 0@ == 0
+jf @HNTR_ATTACK_DEAD
+0812: AS_actor PLAYER_ACTOR perform_animation "FALL_skyDive" IFP "PED" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time -1  // versionB
+$HUNTER_IN_AIR = 1
+
+actor.StorePos(PLAYER_ACTOR,25@,26@,27@)
+
+if 
+0AE2: 1@ = random_vehicle_near_point 25@ 26@ 27@ in_radius 2.5 find_next 1 pass_wrecked 1
+then
+0792: disembark_instantly_actor PLAYER_ACTOR
+jump to @HNTR_ATTACK_CANCEL     
+end  
+            
+actor.StorePos(PLAYER_ACTOR,25@,26@,27@)
+if 
+0AE3: 0@ = random_object_near_point 25@ 26@ 27@ in_radius 2.5 find_next 1 //IF and SET          
+    then
+    if
+    03CA:   object 0@ exists
+        then
+        0984: 28@ = object 0@ model
+        gosub @GRENADE_MODEL_CHECK_VERSUS
+        if
+        not 29@ == 1
+            then
+            0792: disembark_instantly_actor PLAYER_ACTOR
+            jump to @HNTR_ATTACK_CANCEL
+            end
+        end                 
+    end
+    
+if
+84AD: not  actor PLAYER_ACTOR in_water      
+jf @HNTR_ATTACK_CANCEL
+
+0819: 25@ = actor PLAYER_ACTOR distance_from_ground
+if
+25@ > 1.5
+jf @HNTR_ATTACK_CANCEL
+jump @HNTR_ATTACK
+
+:HNTR_ATTACK_CANCEL
+Actor.SetWalkStyle(PLAYER_ACTOR,"HUNTER2")
+$HUNTER_IN_AIR = 0
+0792: disembark_instantly_actor PLAYER_ACTOR
+jump @HUNTER_JUMP_CHECK
+
+:HNTR_ATTACK_DEAD
+Actor.SetWalkStyle(PLAYER_ACTOR,"HUNTER2")
+$HUNTER_IN_AIR = 0
+05BE: AS_actor PLAYER_ACTOR die
+jump @HUNTER_JUMP_CHECK
+
+:HTR_JMP2
+wait 0
+if
+00E1:  player 0 pressed_key 4 
+jf @HTR_JMP2
+078F: AS_actor PLAYER_ACTOR climb 1 
+wait 300
+audiostream.Release(21@)
+
+random_int 0@ 0 to 4
+
+if
+0@ == 0
+    then
+    21@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\hunter_sounds\hunter_attack1.wav")
+    end
+    
+if
+0@ == 1
+    then
+    21@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\hunter_sounds\hunter_attack2.wav")
+    end
+    
+if
+0@ == 2
+    then
+    21@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\hunter_sounds\hunter_attack3.wav")
+    end
+    
+if
+0@ == 3
+    then
+    21@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\hunter_sounds\hunter_attack4.wav")
+    end
+
+Audiostream.LinkToActor(21@, PLAYER_ACTOR)
+Audiostream.PerformAction(21@, PLAY)
+Audiostream.Volume(21@) = $SOUNDS_VOLUME
+actor.StorePos(PLAYER_ACTOR, 1@, 2@, 3@) 
+04C4: store_coords_to 4@ 5@ 6@ from_actor PLAYER_ACTOR with_offset 0.0 40.0 170.0 
+0063: 4@ -= 1@  // (float) 
+0063: 5@ -= 2@  // (float) 
+0063: 6@ -= 3@  // (float) 
+083C: set_actor PLAYER_ACTOR velocity_in_direction_XYZ 4@ 5@ 6@
+wait 3000
+jump @HTR_JMP2
+
+:HUNTER_JUMP_END_THREAD
+end_thread
+
+:GRENADE_MODEL_CHECK_VERSUS
+
+29@ = 0
+
+if or
+28@ == 342  
+28@ == 343
+28@ == 344
+28@ == 12445
+28@ == 12448
+28@ == 12445
+28@ == 12462
+28@ == 12463
+    then
+    29@ = 1
+    end
+
+if or   
+28@ == 12464
+28@ == 12507
+28@ == 12508
+28@ == 12509
+28@ == 12537
+28@ == 12538
+28@ == 12539
+    then
+    29@ = 1
+    end
+
+return
