@@ -1,0 +1,4581 @@
+const
+DERBY_CAR = $PARK_CAR[DERBY_SURVIVOR_NUMBER]
+DERBY_CAR_ACTOR = $PARK_CAR_DAMAGED[DERBY_SURVIVOR_NUMBER]
+DERBY_CAR_DISTANCE_TO_CHECKPOINT = $PARK_CAR_CREATED[DERBY_SURVIVOR_NUMBER]
+DERBY_CAR_CREDITS = $PARK_CAR_ID[DERBY_SURVIVOR_NUMBER]
+DERBY_CAR_TIME_LEFT = $PARK_CAR_ENGINE[DERBY_SURVIVOR_NUMBER]
+DERBY_CAR_POSITION = $PARK_CAR_DOORS[DERBY_SURVIVOR_NUMBER]
+DERBY_SURVIVOR_NUMBER = 29@
+DERBY_CAR_TARGET_ACTOR = 21@
+DERBY_CAR_TARGET_FOUND = 22@
+DERBY_CAR_MARKER = 23@
+DERBY_CAR_CURRENT_CHECKPOINT = 17@
+DERBY_CAR_CURRENT_CHECKPOINT_GLOB = $PARK_CAR_H_MIN[DERBY_SURVIVOR_NUMBER]
+DERBY_CAR_CURRENT_LAP = $PARK_CAR_H_MAX[DERBY_SURVIVOR_NUMBER]
+DERBY_CAR_CURRENT_ACTION = 15@
+DERBY_CAR_CURRENT_ACTION_TIMER = 14@
+DERBY_CAR_CURRENT_ACTION_TIMER2 = 13@
+DERBY_CAR_IDLE_TIMER = 5@
+DERBY_CAR_DRIVE_TIMER = 12@
+DERBY_CAR_TARGET_CAR = 28@
+DERBY_CAR_CURRENT_TARGET_TIMER = 32@
+DERBY_CAR_REPEAT_CURRENT_ACTION_TIMER = 33@
+DERBY_CAR_TARGET_FIND_AREA = 500.0
+DERBY_CAR_TARGET_FIND_AREA_Z = 120.0
+DERBY_CAR_FROZEN_FLAG = 24@
+DERBY_CAR_STRAIGHT_DRIVE_TIME = 19@
+DERBY_CAR_STRAIGHT_DRIVE_TIME2 = 18@
+SPAWN_DISTANCE = 4.0
+DERBY_CAR_REPEAT_CURRENT_ACTION_TIMER2 = 2000
+DERBY_CAR_CURRENT_TARGET_TIMER2 = 30000
+DERBY_CAR_GIVE_NITRO_TIMER = 16@
+DERBY_CAR_SECOND_CARREC_FLAG = $PARK_CAR_C1[DERBY_SURVIVOR_NUMBER]
+DERBY_CAR_NITRO_PATH_BOOST_FLAG = $PARK_CAR_C2[DERBY_SURVIVOR_NUMBER]
+DERBY_CAR_DAMAGED_BY_PLAYER_TIMER = $WPN_AMM_FLAG[DERBY_SURVIVOR_NUMBER] 
+CARMA_GLOB_CP_RUSH_NO_NITRO_BCP = $RNDM_HOUSE_BANKA[103]
+CARMA_GLOB_1VS1_MODE = $RNDM_HOUSE_BANKA[104]
+end
+
+:DRB_CAR
+if
+DERBY_SURVIVOR_NUMBER == 0
+then
+thread 'DRB_CAR'
+else
+gosub @DRB_CAR_NUM_GET
+end
+
+//008B: DERBY_SURVIVOR_NUMBER = $PEOPLES_NUMBER // (int)
+
+repeat
+wait 0
+until 056E:   car DERBY_CAR defined
+
+if
+CLASSIC_CARMA_MAP_AC_MODE == 1
+then
+$SAME_PLAYER_CHEAT_SPAWN = 1
+end
+
+if and
+0AAB:   file_exists "debug\ctest.txt"
+$DEBUG_MENU_ON == 1
+then
+CARMA_TRACK_CHECKPOINT_TEST_MODE = 1
+else
+CARMA_TRACK_CHECKPOINT_TEST_MODE = 0
+end
+
+if
+ZOMBIEGEDDON_GAME_TYPE == 2
+then
+CARMA_TRACK_CHECKPOINT_TEST_MODE = 1
+end 
+
+DERBY_CAR_CURRENT_CHECKPOINT = 0
+008A: DERBY_CAR_CURRENT_CHECKPOINT_GLOB = DERBY_CAR_CURRENT_CHECKPOINT // (int)
+DERBY_CAR_CURRENT_ACTION = 0
+DERBY_CAR_FROZEN_FLAG = 0
+if
+8AAB: not  file_exists "debug\cwrite.txt"
+then
+car.LockInCurrentPosition(DERBY_CAR,true)
+099A: set_car DERBY_CAR collision_detection 1
+end
+DERBY_CAR_CURRENT_LAP = 1
+  
+if
+ZOMBIEGEDDON_GAME_TYPE == 3
+then
+099A: set_car DERBY_CAR collision_detection 0
+0338: set_car DERBY_CAR visibility 0
+
+while ZOMBIEGEDDON_GAME_TYPE == 3
+wait 0
+end
+
+end
+
+DERBY_CAR_CURRENT_ACTION_TIMER = 0
+random_int DERBY_CAR_CURRENT_ACTION_TIMER2 1000 1500
+gosub @DERBY_CAR_AI_DRIVE_TIME_MULT_CHECK
+
+DERBY_CAR_IDLE_TIMER = 0
+DERBY_CAR_STRAIGHT_DRIVE_TIME = -1
+
+0@ = actor.CurrentCar(PLAYER_ACTOR)
+3@ = 0.0
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+for 1@ = 0 to 109
+
+0085: 4@ = 1@ // (int)
+4@ /= 2
+4@ *= 2
+
+if and
+003B:   DERBY_SURVIVOR_NUMBER == 1@  // (int)
+003B:   4@ == 1@  // (int)
+then
+0407: store_coords_to 9@ 10@ 20@ from_car 0@ with_offset -5.0 3@ 0.0
+if
+CARMA_GLOB_DO_NOT_ALLIGN_Z_LEVEL == 1
+    then
+    0EB4: set_car_coordinates_simple DERBY_CAR position 9@ 10@ 20@
+    jump to @DRB_CAR_DO_NOT_ALLIGN_Z_LEVEL_JUMP
+    end
+02CE: 11@ = ground_z_at 9@ 10@ 20@
+car.PutAt(DERBY_CAR,9@,10@,11@)
+0840: link_car DERBY_CAR to_interior $ACTIVE_INTERIOR
+if and
+0E93: is_car_really_in_air DERBY_CAR
+$ACTIVE_INTERIOR == 0
+then
+
+0087: 20@ = 11@ // (float)
+while 0E93: is_car_really_in_air DERBY_CAR
+20@ += 0.1
+if
+$ACTIVE_INTERIOR == 0
+then
+02CE: 11@ = ground_z_at 9@ 10@ 20@
+car.PutAt(DERBY_CAR,9@,10@,11@)
+else
+0087: 11@ = 20@ // (float)
+0EB4: set_car_coordinates_simple DERBY_CAR position 9@ 10@ 11@
+end
+0840: link_car DERBY_CAR to_interior $ACTIVE_INTERIOR
+0087: 2@ = 11@ // (float)
+2@ -= 1.0
+if
+0D3A: get_collision_between_poitns 9@ 10@ 11@ and 9@ 10@ 2@ flags 1 0 0 0 0 0 0 0 ignore_entity 0 store_point_to 25@ 26@ 27@ entity_to 3@ colpoint_data_to 1 // IF and SET
+    then
+    break
+    end
+end
+
+//0087: 2@ = 9@ // (float)
+//0087: 3@ = 10@ // (float)
+//0087: 4@ = 11@ // (float)
+//4@ += 10.0
+//gosub @DRB_CAR_DO_Z_CALCULATE_AGAIN
+end
+
+break
+else
+
+if and
+003B:   DERBY_SURVIVOR_NUMBER == 1@  // (int)
+803B:   4@ == 1@  // (int)
+then
+3@ += SPAWN_DISTANCE
+0407: store_coords_to 9@ 10@ 20@ from_car 0@ with_offset 0.0 3@ 0.0
+if
+CARMA_GLOB_DO_NOT_ALLIGN_Z_LEVEL == 1
+    then
+    0EB4: set_car_coordinates_simple DERBY_CAR position 9@ 10@ 20@
+    jump to @DRB_CAR_DO_NOT_ALLIGN_Z_LEVEL_JUMP
+    end
+02CE: 11@ = ground_z_at 9@ 10@ 20@
+
+car.PutAt(DERBY_CAR,9@,10@,11@)
+0840: link_car DERBY_CAR to_interior $ACTIVE_INTERIOR
+if and
+0E93: is_car_really_in_air DERBY_CAR
+$ACTIVE_INTERIOR == 0
+then
+
+0087: 20@ = 11@ // (float)
+while 0E93: is_car_really_in_air DERBY_CAR
+20@ += 0.1
+if
+$ACTIVE_INTERIOR == 0
+then
+02CE: 11@ = ground_z_at 9@ 10@ 20@
+car.PutAt(DERBY_CAR,9@,10@,11@)
+else
+0087: 11@ = 20@ // (float)
+0EB4: set_car_coordinates_simple DERBY_CAR position 9@ 10@ 11@
+end
+0840: link_car DERBY_CAR to_interior $ACTIVE_INTERIOR
+0087: 2@ = 11@ // (float)
+2@ -= 1.0
+if
+0D3A: get_collision_between_poitns 9@ 10@ 11@ and 9@ 10@ 2@ flags 1 0 0 0 0 0 0 0 ignore_entity 0 store_point_to 25@ 26@ 27@ entity_to 3@ colpoint_data_to 1 // IF and SET
+    then
+    break
+    end
+end
+
+//0087: 2@ = 9@ // (float)
+//0087: 3@ = 10@ // (float)
+//0087: 4@ = 11@ // (float)
+//4@ += 10.0
+//gosub @DRB_CAR_DO_Z_CALCULATE_AGAIN
+end
+
+break
+else
+3@ += SPAWN_DISTANCE
+end
+
+end
+
+end
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+:DRB_CAR_DO_NOT_ALLIGN_Z_LEVEL_JUMP
+
+039C: set_car DERBY_CAR watertight 1 
+
+0@ = actor.Angle(PLAYER_ACTOR)
+car.Angle(DERBY_CAR) = 0@
+
+if and
+COOP_ACTIVE_FLAG == 1
+DERBY_SURVIVOR_NUMBER == 0
+    then
+    car.Health(DERBY_CAR) = 1000    
+    else
+    car.Health(DERBY_CAR) = 1500
+    ZOMBIEGEDDON_MAX_OPPONENT_HP = 1500
+    end
+ 
+car.DoorStatus(DERBY_CAR) = 2
+
+if and
+COOP_ACTIVE_FLAG == 1
+DERBY_SURVIVOR_NUMBER == 0
+then
+DERBY_CAR_MARKER = marker.CreateAboveCar(DERBY_CAR)
+07E0: set_marker DERBY_CAR_MARKER type_to 1
+0168: set_marker DERBY_CAR_MARKER size 2
+else
+DERBY_CAR_MARKER = marker.CreateAboveCar(DERBY_CAR)
+018B: set_marker DERBY_CAR_MARKER radar_mode 2
+07E0: set_marker DERBY_CAR_MARKER type_to 0
+0168: set_marker DERBY_CAR_MARKER size 2
+end
+
+if
+CARMA_REPLAY_FLAG == 0
+then
+gosub @DERBY_CAR_ACTOR_CHECKING_MODEL
+else
+
+if
+DERBY_SURVIVOR_NUMBER == 0
+    then
+    0AF0: 0@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\0.dat" section "INFO" key "ACTOR_MODEL"
+    end
+    
+if
+DERBY_SURVIVOR_NUMBER == 1
+    then
+    0AF0: 0@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\1.dat" section "INFO" key "ACTOR_MODEL"
+    end
+    
+if
+DERBY_SURVIVOR_NUMBER == 2
+    then
+    0AF0: 0@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\2.dat" section "INFO" key "ACTOR_MODEL"
+    end
+    
+if
+DERBY_SURVIVOR_NUMBER == 3
+    then
+    0AF0: 0@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\3.dat" section "INFO" key "ACTOR_MODEL"
+    end
+    
+if
+DERBY_SURVIVOR_NUMBER == 4
+    then
+    0AF0: 0@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\4.dat" section "INFO" key "ACTOR_MODEL"
+    end
+    
+if
+DERBY_SURVIVOR_NUMBER == 5
+    then
+    0AF0: 0@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\5.dat" section "INFO" key "ACTOR_MODEL"
+    end
+    
+if
+DERBY_SURVIVOR_NUMBER == 6
+    then
+    0AF0: 0@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\6.dat" section "INFO" key "ACTOR_MODEL"
+    end
+    
+if
+DERBY_SURVIVOR_NUMBER == 7
+    then
+    0AF0: 0@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\7.dat" section "INFO" key "ACTOR_MODEL"
+    end
+    
+if
+DERBY_SURVIVOR_NUMBER == 8
+    then
+    0AF0: 0@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\8.dat" section "INFO" key "ACTOR_MODEL"
+    end                                
+
+end
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+DERBY_CAR_ACTOR = actor.CreateAsDriver(26,0@,DERBY_CAR)
+
+if
+model.Available(0@)
+then
+//model.Destroy(0@)
+end
+
+08AF: set_actor DERBY_CAR_ACTOR max_health_to 1000
+Actor.Health(DERBY_CAR_ACTOR) = 10000
+Actor.SetWalkStyle(DERBY_CAR_ACTOR, "surv5")
+0446: set_actor DERBY_CAR_ACTOR dismemberment_possible 0
+060B: set_actor DERBY_CAR_ACTOR decision_maker_to $DEC_PEOPLE
+07DD: set_actor DERBY_CAR_ACTOR attack_rate 80 // previously known as temper_to 
+0946: set_actor DERBY_CAR_ACTOR actions_uninterupted_by_weapon_fire 1
+081A: set_actor DERBY_CAR_ACTOR weapon_skill_to 2
+04D8: set_actor DERBY_CAR_ACTOR drowns_in_water 0
+
+if and
+COOP_ACTIVE_FLAG == 1
+DERBY_SURVIVOR_NUMBER == 0
+    then
+    0EA0: set_actor_second_player DERBY_CAR_ACTOR enable_camera 1 separate_cars 1
+    0687: clear_actor DERBY_CAR_ACTOR task
+    0362: remove_actor DERBY_CAR_ACTOR from_car_and_place_at 0.0 0.0 0.0
+    06F1: set_2_player_distance_limit_to 300.0
+    0084: COOP_ACTOR = DERBY_CAR_ACTOR // (int)
+    036A: put_actor DERBY_CAR_ACTOR in_car DERBY_CAR
+    07CC: set_player 1 can_enter_exit_vehicles 0
+    end
+
+09F6: set_actor DERBY_CAR_ACTOR get_out_of_upside_down_car 0
+0982: set_actor DERBY_CAR_ACTOR stay_in_car_when_dead 1
+
+if
+CLASSIC_CARMA_MAP == 1
+then
+
+repeat
+wait 0
+until CLASSIC_CARMA_CHECKED_CARMA2_RSC == 1
+
+end
+
+if or
+car.Model(DERBY_CAR) == 19111
+car.Model(DERBY_CAR) == 15490
+car.Model(DERBY_CAR) == 19127
+car.Model(DERBY_CAR) == 18025
+car.Model(DERBY_CAR) == 18041
+then
+0397: enable_car DERBY_CAR siren 1
+end          
+
+gosub @DEBRY_CAR_SETTINGS
+
+DERBY_CAR_TARGET_FOUND = 0
+DERBY_CAR_CURRENT_TARGET_TIMER = 0
+DERBY_CAR_REPEAT_CURRENT_ACTION_TIMER = 0
+if
+CARMA_GLOB_TWO_CARRECS > 1
+then
+DERBY_CAR_SECOND_CARREC_FLAG = 0
+end
+
+if and
+not ZOMBIEGEDDON_GAME_TYPE == 2
+803A: not  DERBY_CAR_ACTOR == COOP_ACTOR // (int)
+then
+DERBY_CAR_TIME_LEFT = 60000
+else
+
+actor.StorePos(DERBY_CAR_ACTOR,0@,1@,2@)
+050A: 3@ = distance_between_XYZ 0@ 1@ 2@ and_XYZ $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+0092: 3@ = float 3@ to_integer
+3@ *= 40
+if
+CARMA_GLOB_TIME_MULT > 0
+then
+006E: 3@ *= CARMA_GLOB_TIME_MULT // (int)
+end
+005E: DERBY_CAR_TIME_LEFT += 3@  // (int)
+DERBY_CAR_TIME_LEFT += 5000
+
+end
+
+//if
+//DERBY_SURVIVOR_NUMBER > 4
+//then
+//end_thread
+//end
+
+/////////////////////////////////////////////////
+
+if
+CARMA_REPLAY_FLAG == 1
+then
+
+0085: 0@ = DERBY_SURVIVOR_NUMBER // (int)
+0@ += 74
+
+repeat
+wait 0
+07C0: load_path 0@
+until 07C1:   path 0@ available
+
+05EB: assign_car DERBY_CAR to_path 0@
+06FD: set_car DERBY_CAR speed_on_path_to 0.0
+099A: set_car DERBY_CAR collision_detection 0
+
+end
+
+///////////////////////////////////////////////// 
+
+if and
+$CHEATS_ON == 1
+ZOMBIEGEDDON_GAME_TYPE == 2
+then
+099A: set_car DERBY_CAR collision_detection 0
+
+while true
+wait 0
+DERBY_CAR_FROZEN_FLAG = 1
+end
+
+end
+
+if and
+not CARMA_REPLAY_FLAG == 1
+803A: not  DERBY_CAR_ACTOR == COOP_ACTOR // (int)
+803A: not  $SPEC_ACTOR == DERBY_CAR_ACTOR // (int)
+then
+Car.SetMaxSpeed(DERBY_CAR, 100.0)
+00A9: set_car DERBY_CAR to_normal_driver
+04E0: car DERBY_CAR abandon_path_radius 90000
+00AF: set_car DERBY_CAR driver_behaviour_to 14
+end
+
+31@ = 0
+
+repeat
+wait 0
+
+02E3: 0@ = car DERBY_CAR speed
+if or
+003A:  $SPEC_ACTOR == DERBY_CAR_ACTOR // (int)
+0@ > 0.0
+then
+car.SetDriverBehaviour(DERBY_CAR,0)
+car.SetSpeedInstantly(DERBY_CAR,0.0) 
+31@ = 1
+end
+
+until 016B:   fading 
+
+repeat
+wait 0
+
+02E3: 0@ = car DERBY_CAR speed
+if or
+003A:  $SPEC_ACTOR == DERBY_CAR_ACTOR // (int)
+0@ > 0.0
+then
+car.SetDriverBehaviour(DERBY_CAR,0)
+car.SetSpeedInstantly(DERBY_CAR,0.0)
+31@ = 1
+end
+
+if and
+not CARMA_REPLAY_FLAG == 1
+803A: not  DERBY_CAR_ACTOR == COOP_ACTOR // (int)
+803A: not  $SPEC_ACTOR == DERBY_CAR_ACTOR // (int) 
+not 31@ == 1
+then
+0407: store_coords_to 1@ 2@ 3@ from_car DERBY_CAR with_offset 0.0 10.0 0.0
+00A7: car DERBY_CAR drive_to 1@ 2@ 3@
+end
+                                     
+if
+003A:   $SPEC_ACTOR == DERBY_CAR_ACTOR // (int)
+then
+0084: LAP_NUMBER = DERBY_CAR_CURRENT_LAP // (int)
+008A: CARMA_GLOB_PLAYER_CHECKPOINT_NUMBER = DERBY_CAR_CURRENT_CHECKPOINT // (int)
+0084: CARMA_PLAYER_POSITION = DERBY_CAR_POSITION // (int)
+
+if
+SPEC_MOD_FREE_CAM == 1
+then
+018B: set_marker DERBY_CAR_MARKER radar_mode 3
+07E0: set_marker DERBY_CAR_MARKER type_to 1
+else
+
+if
+CARMA_GLOB_FREEROAM_DR == 0
+then
+018B: set_marker DERBY_CAR_MARKER radar_mode 2
+else
+018B: set_marker DERBY_CAR_MARKER radar_mode 0
+end
+
+07E0: set_marker DERBY_CAR_MARKER type_to 0
+end
+
+else
+018B: set_marker DERBY_CAR_MARKER radar_mode 2
+
+if
+003A:   DERBY_CAR_ACTOR == COOP_ACTOR // (int)
+then
+07E0: set_marker DERBY_CAR_MARKER type_to 1
+else
+07E0: set_marker DERBY_CAR_MARKER type_to 0
+end
+
+end        
+
+gosub @DISTANCE_CALCULATE
+until CARMA_GLOB_RACE_STARTED == 1
+
+31@ = 0
+
+if
+not CARMA_REPLAY_FLAG == 1
+then
+car.SetDriverBehaviour(DERBY_CAR,0)
+car.SetSpeedInstantly(DERBY_CAR,0.0)
+end
+
+//DERBY_CAR_CURRENT_CHECKPOINT = 4
+//car.PutAt(DERBY_CAR,$RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT])
+
+car.LockInCurrentPosition(DERBY_CAR,false)
+car.SetImmunities(DERBY_CAR,0,0,0,0,0)
+
+if
+003A:   DERBY_CAR_ACTOR == COOP_ACTOR // (int)
+then
+0085: 0@ = DERBY_CAR_CURRENT_CHECKPOINT // (int)
+0@ += 1
+018A: $MISSION_CHECKPOINT = create_checkpoint_at $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT] 
+06D5: $MISSION_MARKER = create_racing_checkpoint_at $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT] point_to $RNDM_HOUSE_ITEM_X[0@] $RNDM_HOUSE_ITEM_Y[0@] $RNDM_HOUSE_ITEM_Z[0@] type 0 radius 6.0
+end
+
+if
+803A: not  DERBY_CAR_ACTOR == COOP_ACTOR // (int)
+then
+
+if 
+ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+    then
+    if or
+    CARMA_GLOB_RACE_NUMBER == 31
+    CARMA_GLOB_RACE_NUMBER == 35
+    CARMA_GLOB_RACE_NUMBER == 38
+    CARMA_GLOB_RACE_NUMBER == 41
+        then
+        04E0: car DERBY_CAR abandon_path_radius 5
+        car.Health(DERBY_CAR) = 4500
+        ZOMBIEGEDDON_MAX_OPPONENT_HP = 4500
+        end
+    end
+    
+if 
+ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+    then
+    if or
+    CARMA_GLOB_RACE_NUMBER == 32
+    CARMA_GLOB_RACE_NUMBER == 36
+    CARMA_GLOB_RACE_NUMBER == 39
+    CARMA_GLOB_RACE_NUMBER == 42
+        then
+        car.Health(DERBY_CAR) = 3000
+        ZOMBIEGEDDON_MAX_OPPONENT_HP = 3000
+        end
+    end
+    
+if 
+ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+    then
+    if or
+    CARMA_GLOB_RACE_NUMBER == 74
+    CARMA_GLOB_RACE_NUMBER == 75
+    CARMA_GLOB_RACE_NUMBER == 76
+        then
+        car.Health(DERBY_CAR) = 3000
+        ZOMBIEGEDDON_MAX_OPPONENT_HP = 3000
+        end
+    end
+    
+if 
+ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+    then
+    if or
+    CARMA_GLOB_RACE_NUMBER == 47
+    CARMA_GLOB_RACE_NUMBER == 52
+    CARMA_GLOB_RACE_NUMBER == 56
+        then
+        car.Health(DERBY_CAR) = 3000
+        ZOMBIEGEDDON_MAX_OPPONENT_HP = 3000
+        end
+    end            
+    
+if and
+ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+not ZOMBIEGEDDON_GAME_TYPE == 2
+	then
+	if or
+	CARMA_GLOB_RACE_NUMBER == 31
+	CARMA_GLOB_RACE_NUMBER == 35
+	CARMA_GLOB_RACE_NUMBER == 38
+	CARMA_GLOB_RACE_NUMBER == 41
+		then
+		088B: set_car DERBY_CAR form_drag_multiplier_to 5.0
+		end
+	end
+	
+if and
+ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 0
+CARMA_GLOB_RACE_NUMBER == 18
+	then
+	car.Health(DERBY_CAR) = 5000
+	ZOMBIEGEDDON_MAX_OPPONENT_HP = 5000
+	end		
+    
+if and
+ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+CARMA_GLOB_RACE_NUMBER == 57
+	then
+	car.Health(DERBY_CAR) = 4500
+	ZOMBIEGEDDON_MAX_OPPONENT_HP = 4500
+	04E0: car DERBY_CAR abandon_path_radius 60
+	end
+	
+if
+ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+	then
+	if or
+	CARMA_GLOB_RACE_NUMBER == 51
+	CARMA_GLOB_RACE_NUMBER == 46
+    	then
+    	04E0: car DERBY_CAR abandon_path_radius 10
+    	end
+	end
+    
+if
+ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+	then
+	if or
+	CARMA_GLOB_RACE_NUMBER == 47
+	CARMA_GLOB_RACE_NUMBER == 52
+	CARMA_GLOB_RACE_NUMBER == 56
+    	then
+    	04E0: car DERBY_CAR abandon_path_radius 10
+    	end
+	end    	
+    
+if
+04C8:   actor DERBY_CAR_ACTOR driving_flying_vehicle
+    then
+    car.Health(DERBY_CAR) = 10000
+    ZOMBIEGEDDON_MAX_OPPONENT_HP = 10000
+    end
+    
+end            	
+    
+if
+$CAMP_SAW_SHIT == 1
+then
+
+if
+003A:   $SPEC_ACTOR == DERBY_CAR_ACTOR // (int)
+then
+else
+
+if
+not ZOMBIEGEDDON_GAME_TYPE == 2
+then
+wait 1500
+else
+wait 500
+end
+
+end
+
+end
+
+if and
+ZOMBIEGEDDON_GAME_TYPE == 2
+not CARMA_GLOB_NO_NITRO_FLAG == 1
+then
+008B: 1@ = CARMA_GLOB_RACE_LENGHT // (int)
+008B: 2@ = CARMA_GLOB_RACE_LENGHT // (int)
+1@ /= 3
+2@ /= 3
+
+1@ /= 2
+random_int DERBY_CAR_GIVE_NITRO_TIMER 1@ 2@
+
+end        
+
+if
+not ZOMBIEGEDDON_GAME_TYPE == 2
+then
+00A9: set_car DERBY_CAR to_normal_driver
+
+if
+CARMA_GLOB_FREEROAM_DR == 1
+then
+//car.SetDriverBehaviour(DERBY_CAR,1)
+
+if
+CARMA_GLOB_FREEROAM_ALT_FLAG == 1
+then
+00A9: set_car DERBY_CAR to_normal_driver
+04E0: car DERBY_CAR abandon_path_radius 90000
+0407: store_coords_to 1@ 2@ 3@ from_car DERBY_CAR with_offset 0.0 5.0 0.0
+02C1: store_to 1@ 2@ 3@ car_path_coords_closest_to 1@ 2@ 3@
+
+    if
+    04C8:   actor DERBY_CAR_ACTOR driving_flying_vehicle
+    then
+    
+    if
+    04A9:   actor DERBY_CAR_ACTOR driving_heli
+    then
+    04A2: set_heli DERBY_CAR fly_to 1@ 2@ 3@ altitude_between 0.0 and 3@
+    else
+    04D2: set_plane DERBY_CAR fly_autopilot_around_point 1@ 2@ 3@ altitude_between 0.0 and 3@
+    end
+    
+    else
+    00A7: car DERBY_CAR drive_to 1@ 2@ 3@
+    end
+
+00AF: set_car DERBY_CAR driver_behaviour_to 14
+else
+00A8: set_car DERBY_CAR to_psycho_driver
+end
+
+else
+
+///////////////////////////////////////////////////////////////
+
+if
+04C8:   actor DERBY_CAR_ACTOR driving_flying_vehicle
+then
+
+if
+04A9:   actor DERBY_CAR_ACTOR driving_heli
+then
+04A2: set_heli DERBY_CAR fly_to $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT] altitude_between 0.0 and $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+else
+04D2: set_plane DERBY_CAR fly_autopilot_around_point $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT] altitude_between 0.0 and $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+end
+
+else
+
+if and
+COOP_ACTIVE_FLAG == 1
+DERBY_SURVIVOR_NUMBER == 0
+then
+else
+0704: car DERBY_CAR drive_to $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+end
+
+end
+
+///////////////////////////////////////////////////////////////
+
+end
+
+else
+00A9: set_car DERBY_CAR to_normal_driver
+4@ = 1
+gosub @DERBY_CAR_CHECKPOINT_RUSH_PATH_CHECK
+end
+
+/////////////////////////////////////////////////
+
+if
+CARMA_REPLAY_FLAG == 1
+then
+06FD: set_car DERBY_CAR speed_on_path_to 1.0
+end
+
+/////////////////////////////////////////////////
+
+while true
+
+if
+CARMA_GLOB_FREEROAM_ALT_FLAG == 1
+    then
+    if and
+    CARMA_GLOB_FREEROAM_DR == 1
+    not ZOMBIEGEDDON_GAME_TYPE == 2
+    not DERBY_CAR_FROZEN_FLAG == 1
+    DERBY_CAR_CURRENT_ACTION == 0
+    then
+    gosub @DERBY_CAR_FREEROAM_ALT_DRIVE_SET2
+    end
+end
+
+if and
+$SPECTATING_FLAG == 1
+003A:   $SPEC_ACTOR == DERBY_CAR_ACTOR // (int)
+$CHEATS_ON == 1
+0E3D: is_key_just_pressed 46
+    then    
+    car.Health(DERBY_CAR) = 0
+    end
+
+if and
+CARMA_GLOB_FREEROAM_DR == 1
+not ZOMBIEGEDDON_GAME_TYPE == 2
+not DERBY_CAR_FROZEN_FLAG == 1
+then
+random_int 0@ 0 50
+if and
+0@ == 25
+0E45: frame_mod 30
+    then
+    if and
+    80F2: not  actor DERBY_CAR_ACTOR near_actor PLAYER_ACTOR radius 300.0 300.0 sphere 0
+    82CA: not  car DERBY_CAR bounding_sphere_visible
+        then                
+        
+        while true
+        wait 0
+        
+        04C4: store_coords_to 1@ 2@ 3@ from_actor PLAYER_ACTOR with_offset 0.0 -30.0 0.0
+        02C1: store_to 4@ 9@ 6@ car_path_coords_closest_to 1@ 2@ 3@
+        actor.StorePos(PLAYER_ACTOR,1@,2@,3@)
+        0509: 0@ = distance_between_XY 1@ 2@ and_XY 4@ 9@
+        
+        if and
+        0@ > 20.0
+        8AE2: not 10@ = random_vehicle_near_point 4@ 9@ 6@ in_radius 10.0 find_next 0 pass_wrecked 1
+            then
+            Car.PutAt(DERBY_CAR, 4@, 9@, 6@)
+//            0EB4: set_car_coordinates_simple DERBY_CAR position 4@ 9@ 6@
+            0840: link_car DERBY_CAR to_interior $ACTIVE_INTERIOR 
+            0E27: get_angle_from_two_coords 4@ 9@ and 1@ 2@ to 0@
+            car.Angle(DERBY_CAR) = 0@
+            car.SetSpeedInstantly(DERBY_CAR,30.0)
+            008B: DERBY_CAR_CURRENT_CHECKPOINT = CARMA_GLOB_PLAYER_CHECKPOINT_NUMBER // (int)
+            0084: DERBY_CAR_CURRENT_CHECKPOINT_GLOB = CARMA_GLOB_PLAYER_CHECKPOINT_NUMBER // (int)
+            break
+            end        
+        
+        end
+        
+        end
+    end
+end
+
+if and
+DERBY_CAR_GIVE_NITRO_TIMER > 1
+not CARMA_GLOB_NO_NITRO_FLAG == 1
+then
+DERBY_CAR_GIVE_NITRO_TIMER -= 1
+
+0A97: 1@ = car CARMA_GLOB_DERBY_PLAYER_CAR struct 
+0A8E: 2@ = 1@ + 0x8A4 // int
+0A8D: 1@ = read_memory 2@ size 4 virtual_protect 0
+//0AD1: show_formatted_text_highpriority "%f" time 2000 1@
+    
+if and
+$SPECTATING_FLAG == 1
+003A:   $SPEC_ACTOR == DERBY_CAR_ACTOR // (int)
+00E1:   player 0 pressed_key 6
+    then    
+    DERBY_CAR_GIVE_NITRO_TIMER = 1
+    end    
+
+if and
+1@ < 0.0
+1@ > -1.0
+002F:   DERBY_CAR_CURRENT_CHECKPOINT >= CARMA_GLOB_CP_RUSH_NO_NITRO_BCP // (int)
+    then
+    if or
+    CARMA_GLOB_PLAYER_CHECKPOINT_NUMBER == 0
+    0EE8: locate_car_distance_to_car CARMA_GLOB_DERBY_PLAYER_CAR car DERBY_CAR radius 200.0
+        then
+        DERBY_CAR_GIVE_NITRO_TIMER = 0
+        09E9: car DERBY_CAR add_single_nitro
+        DERBY_CAR_NITRO_PATH_BOOST_FLAG = 1.0                
+        end
+    end
+end
+
+if and
+DERBY_CAR_GIVE_NITRO_TIMER == 1
+not CARMA_GLOB_NO_NITRO_FLAG == 1
+002F:   DERBY_CAR_CURRENT_CHECKPOINT >= CARMA_GLOB_CP_RUSH_NO_NITRO_BCP // (int)
+then
+DERBY_CAR_GIVE_NITRO_TIMER = 0
+09E9: car DERBY_CAR add_single_nitro
+DERBY_CAR_NITRO_PATH_BOOST_FLAG = 1.0
+end
+
+if and
+DERBY_CAR_NITRO_PATH_BOOST_FLAG >= 1.0
+DERBY_CAR_NITRO_PATH_BOOST_FLAG < 2.0
+    then
+    0A97: 1@ = car DERBY_CAR struct 
+    0A8E: 2@ = 1@ + 0x8A4 // int
+    0A8D: 1@ = read_memory 2@ size 4 virtual_protect 0
+    if and
+    1@ < 0.0
+    1@ > -1.0
+        then
+        0089: 1@ = CARMA_GLOB_CARREC_PATH_SPEED // (float)
+        0089: 2@ = CARMA_GLOB_CARREC_PATH_SPEED // (float)
+        2@ *= 0.2
+        005B: 1@ += 2@  // (float)        
+        06FD: set_car DERBY_CAR speed_on_path_to 1@
+        DERBY_CAR_NITRO_PATH_BOOST_FLAG = 2.0
+//        0AD1: show_formatted_text_highpriority "Nitro carrec boost ON, Carrec Speed %f" time 2000 1@                       
+        end
+    end
+    
+if
+DERBY_CAR_NITRO_PATH_BOOST_FLAG >= 2.0
+    then
+    0A97: 1@ = car DERBY_CAR struct 
+    0A8E: 2@ = 1@ + 0x8A4 // int
+    0A8D: 1@ = read_memory 2@ size 4 virtual_protect 0
+    if and
+    1@ < 0.0
+    1@ > -1.0
+        then
+        else        
+        06FD: set_car DERBY_CAR speed_on_path_to CARMA_GLOB_CARREC_PATH_SPEED
+        DERBY_CAR_NITRO_PATH_BOOST_FLAG = 0.0
+//        0AD1: show_formatted_text_highpriority "Nitro carrec boost OFF, Carrec Speed %f" time 2000 CARMA_GLOB_CARREC_PATH_SPEED                       
+        end
+    end    
+
+gosub @DISTANCE_CALCULATE
+
+//0AD1: show_formatted_text_highpriority "CURRENT CHECKPOINT: %d" time 200 DERBY_CAR_CURRENT_CHECKPOINT
+//0407: store_coords_to 1@ 2@ 3@ from_car DERBY_CAR with_offset 0.0 -5.0 3.0
+//0407: store_coords_to 9@ 6@ 7@ from_car DERBY_CAR with_offset 0.0 5.0 0.0
+//camera.SetPosition(1@,2@,3@,0.0,0.0,0.0)
+//camera.PointAt(9@,6@,7@,2)
+//03A1: show_sphere_at $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT] radius 5.0
+
+////////////////////////////////////////////////////////////////////////////////////////
+
+if and
+not CARMA_BONUS_FROZEN_OPPONENTS_ACTIVE == 0
+DERBY_CAR_FROZEN_FLAG == 0
+803A: not  DERBY_CAR_ACTOR == COOP_ACTOR // (int)
+    then
+    DERBY_CAR_FROZEN_FLAG = 1
+    03CD: disable_car DERBY_CAR stuck_check
+    00A9: set_car DERBY_CAR to_normal_driver
+    02E3: 1@ = car DERBY_CAR speed    
+    if
+    1@ > 5.0
+        then
+        car.SetSpeedInstantly(DERBY_CAR,0.0)
+        end            
+    end
+    
+if and
+CARMA_BONUS_FROZEN_OPPONENTS_ACTIVE == 0
+DERBY_CAR_FROZEN_FLAG == 1
+803A: not  DERBY_CAR_ACTOR == COOP_ACTOR // (int)
+    then
+    DERBY_CAR_FROZEN_FLAG = 0
+    03CC: enable_car DERBY_CAR stuck_check_distance_to 0.0 time_to 5000
+    0574: set_car DERBY_CAR keep_position 0
+    0085: DERBY_CAR_CURRENT_ACTION_TIMER = DERBY_CAR_CURRENT_ACTION_TIMER2 // (int)            
+    end
+    
+////////////////////////////////////////////////////////////////////////////////////////
+
+if
+003A:   $SPEC_ACTOR == DERBY_CAR_ACTOR // (int)
+then
+0084: LAP_NUMBER = DERBY_CAR_CURRENT_LAP // (int)
+008A: CARMA_GLOB_PLAYER_CHECKPOINT_NUMBER = DERBY_CAR_CURRENT_CHECKPOINT // (int)
+0084: CARMA_PLAYER_POSITION = DERBY_CAR_POSITION // (int)
+
+if
+SPEC_MOD_FREE_CAM == 1
+then
+018B: set_marker DERBY_CAR_MARKER radar_mode 3
+07E0: set_marker DERBY_CAR_MARKER type_to 1
+else
+
+if
+CARMA_GLOB_FREEROAM_DR == 0
+then
+018B: set_marker DERBY_CAR_MARKER radar_mode 2
+else
+018B: set_marker DERBY_CAR_MARKER radar_mode 0
+end
+
+07E0: set_marker DERBY_CAR_MARKER type_to 0
+end
+
+else
+018B: set_marker DERBY_CAR_MARKER radar_mode 2
+07E0: set_marker DERBY_CAR_MARKER type_to 0
+end        
+
+06A2: get_car DERBY_CAR velocity_in_direction_XYZ 25@ 26@ 27@
+0097: make 25@ absolute_float
+0097: make 26@ absolute_float
+0097: make 27@ absolute_float
+005B: 25@ += 26@  // (float)
+005B: 25@ += 27@  // (float)
+if
+25@ == 0.0
+then
+DERBY_CAR_IDLE_TIMER += 5
+end
+
+if or
+CARMA_GLOB_FREEROAM_DR == 1
+ZOMBIEGEDDON_GAME_TYPE == 0
+then
+
+if and
+not ZOMBIEGEDDON_GAME_TYPE == 2
+803A: not  DERBY_CAR_ACTOR == COOP_ACTOR // (int)
+then
+DERBY_CAR_TIME_LEFT = 60000
+end
+
+end
+
+if and
+DERBY_CAR_IDLE_TIMER > 56
+not CARMA_TRACK_CHECKPOINT_TEST_MODE == 1
+not DERBY_CAR_STRAIGHT_DRIVE_TIME > 0
+DERBY_CAR_TIME_LEFT > 30000
+not CARMA_GLOB_1VS1_MODE == 1
+then
+0085: DERBY_CAR_CURRENT_ACTION_TIMER = DERBY_CAR_CURRENT_ACTION_TIMER2 // (int)
+DERBY_CAR_IDLE_TIMER = -150
+
+if
+8185: not  car DERBY_CAR health >= 400
+then
+DERBY_CAR_CURRENT_ACTION = 0
+else
+DERBY_CAR_CURRENT_ACTION = 1
+end
+
+DERBY_CAR_TARGET_ACTOR = -1
+end
+
+if and
+CARMA_GLOB_1VS1_MODE == 1
+0E45: frame_mod 30
+then
+DERBY_CAR_CURRENT_ACTION = 1
+DERBY_CAR_TARGET_FOUND = 1
+008B: DERBY_CAR_TARGET_ACTOR = PLAYER_ACTOR // (int)
+
+//////////////////////////////////////////////////
+                                
+if and
+0185:   car DERBY_CAR health > 250
+056D:   actor DERBY_CAR_TARGET_ACTOR defined
+DERBY_CAR_TARGET_FOUND == 1        
+    then            
+    if
+    actor.Driving(DERBY_CAR_TARGET_ACTOR)
+        then                
+        DERBY_CAR_TARGET_CAR = actor.CurrentCar(DERBY_CAR_TARGET_ACTOR)                
+        if and
+        056E:   car DERBY_CAR_TARGET_CAR defined
+        0185:   car DERBY_CAR health > 250
+            then                    
+            if
+            0185:   car DERBY_CAR_TARGET_CAR health >= 251
+                then
+                        
+                if
+                CARMA_GLOB_FREEROAM_DR == 1
+                then
+                car.SetDriverBehaviour(DERBY_CAR,0)
+                end
+                                                                                
+                00A9: set_car DERBY_CAR to_normal_driver                                                                                                                                
+                07F8: car DERBY_CAR follow_car DERBY_CAR_TARGET_CAR radius 0.01                        
+                gosub @DERBY_CAR_ABANDON_RADIUS_SETTINGS                                                                                                                                                                                                                                                                       
+                end                
+            end            
+        end
+    end                                
+            
+//////////////////////////////////////////////////
+
+end
+
+////////////////////////////////////////////////////////////////////////////////////////
+
+if and
+0AB0:   key_pressed 67
+0202:   actor PLAYER_ACTOR near_car DERBY_CAR radius 10.0 10.0 sphere 0
+$DEBUG_MENU_ON == 1
+then
+0AD1: show_formatted_text_highpriority "CURRENT_ACT: %d, CURR_ACT_TIMER: %d\%d, FROZ_FLAG: %d, CURR_TARG_TIMER: %d, CURR_ACT_TIMER: %d" time 2000 DERBY_CAR_CURRENT_ACTION DERBY_CAR_CURRENT_ACTION_TIMER DERBY_CAR_CURRENT_ACTION_TIMER2 DERBY_CAR_FROZEN_FLAG DERBY_CAR_CURRENT_TARGET_TIMER DERBY_CAR_REPEAT_CURRENT_ACTION_TIMER
+end
+
+////////////////////////////////////////////////////////////////////////////////////////
+
+if
+not actor.InCar(DERBY_CAR_ACTOR,DERBY_CAR)
+    then
+    05BE: AS_actor DERBY_CAR_ACTOR die
+    00A9: set_car DERBY_CAR to_normal_driver
+    070C: explode_car_without_radius_damage DERBY_CAR
+    end
+
+039E: set_actor DERBY_CAR_ACTOR locked 1 while_in_car
+    
+////////////////////////////////////////////    
+
+if and
+DERBY_CAR_FROZEN_FLAG == 0
+not ZOMBIEGEDDON_GAME_TYPE == 2
+not CARMA_TRACK_CHECKPOINT_TEST_MODE == 1
+not DERBY_CAR_STRAIGHT_DRIVE_TIME > 0
+then
+if or
+$GAME_SPEED == 1.0
+$GAME_SPEED == 0.2
+    then    
+    DERBY_CAR_CURRENT_ACTION_TIMER += 5    
+    if
+    DERBY_CAR_CURRENT_ACTION == 0
+        then
+        DERBY_CAR_DRIVE_TIMER += 5    
+        if
+        DERBY_CAR_DRIVE_TIMER > 10000
+            then
+            DERBY_CAR_DRIVE_TIMER = 0
+            end        
+        end    
+    end
+end
+
+////////////////////////////////////////////////////////////////////////////////////////
+
+if and
+002D:   DERBY_CAR_CURRENT_ACTION_TIMER >= DERBY_CAR_CURRENT_ACTION_TIMER2  // (int)
+0185:   car DERBY_CAR health > 250
+DERBY_CAR_FROZEN_FLAG == 0
+not CARMA_TRACK_CHECKPOINT_TEST_MODE == 1
+not DERBY_CAR_STRAIGHT_DRIVE_TIME > 0
+not CARMA_GLOB_1VS1_MODE == 1
+    then
+    
+    if
+    01F4:   car DERBY_CAR flipped    
+    then
+    0E65: get_car_collision_intensity DERBY_CAR store_to 0@
+    02E3: 1@ = car DERBY_CAR speed
+//    0AD1: show_formatted_text_highpriority "%f < 1.0 %f < 2.5" time 2000 0@ 1@
+    if and
+    0@ < 25.0
+    1@ < 2.5
+        then
+        if
+        82CB: not  actor DERBY_CAR_ACTOR bounding_sphere_visible
+            then
+            wait 0    
+            jump to @DERBY_CAR_RESTORE 
+            end
+        end
+    end
+    
+    DERBY_CAR_REPEAT_CURRENT_ACTION_TIMER = DERBY_CAR_REPEAT_CURRENT_ACTION_TIMER2    
+    random_int 0@ 0 to 4
+    if or
+    DERBY_CAR_TIME_LEFT < 30000
+    8185: not  car DERBY_CAR health >= 400
+    then
+    0@ = 2
+    end
+    
+    if and
+    0@ == 2
+    0185:   car DERBY_CAR health > 250    
+    then
+    DERBY_CAR_CURRENT_ACTION = 0
+    DERBY_CAR_TARGET_FOUND = 0
+    DERBY_CAR_TARGET_ACTOR = -1
+    00A9: set_car DERBY_CAR to_normal_driver
+    
+    if
+    CARMA_GLOB_FREEROAM_DR == 1
+    then
+//    car.SetDriverBehaviour(DERBY_CAR,1)
+
+    if
+    CARMA_GLOB_FREEROAM_ALT_FLAG == 1
+    then
+    gosub @DERBY_CAR_FREEROAM_ALT_DRIVE_SET
+    else
+    00A8: set_car DERBY_CAR to_psycho_driver
+    end
+    
+    else
+    
+    ///////////////////////////////////////////////////////////////
+
+    if
+    04C8:   actor DERBY_CAR_ACTOR driving_flying_vehicle
+    then
+    
+    if
+    04A9:   actor DERBY_CAR_ACTOR driving_heli
+    then
+    04A2: set_heli DERBY_CAR fly_to $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT] altitude_between 0.0 and $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+    else
+    04D2: set_plane DERBY_CAR fly_autopilot_around_point $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT] altitude_between 0.0 and $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+    end
+    
+    else
+    
+    if and
+    COOP_ACTIVE_FLAG == 1
+    DERBY_SURVIVOR_NUMBER == 0
+    then
+    else
+    0704: car DERBY_CAR drive_to $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+    end
+    
+    end
+    
+    ///////////////////////////////////////////////////////////////
+    
+    end
+    
+    else        
+    DERBY_CAR_CURRENT_ACTION = 1    
+    DERBY_CAR_TARGET_FOUND = 0
+    DERBY_CAR_TARGET_ACTOR = -1    
+    end
+            
+    DERBY_CAR_CURRENT_ACTION_TIMER = 0    
+    random_int DERBY_CAR_CURRENT_ACTION_TIMER2 1500 2000
+    gosub @DERBY_CAR_AI_DRIVE_TIME_MULT_CHECK            
+    
+    end
+    
+////////////////////////////////////////////////////////////////////////////////////////        
+
+if and
+DERBY_CAR_TARGET_FOUND == 0
+DERBY_CAR_CURRENT_ACTION == 1
+DERBY_CAR_FROZEN_FLAG == 0
+0185:   car DERBY_CAR health > 250
+not CARMA_GLOB_1VS1_MODE == 1
+    then    
+    gosub @SURVIVER_ARMAGEDDON_TARGET_FIND
+    if
+    056D:   actor DERBY_CAR_TARGET_ACTOR defined
+        then    
+        DERBY_CAR_TARGET_FOUND = 1
+        DERBY_CAR_CURRENT_ACTION_TIMER = 0    
+        random_int DERBY_CAR_CURRENT_ACTION_TIMER2 1500 2000
+        gosub @DERBY_CAR_AI_DRIVE_TIME_MULT_CHECK
+        DERBY_CAR_CURRENT_TARGET_TIMER = 0
+        DERBY_CAR_REPEAT_CURRENT_ACTION_TIMER = DERBY_CAR_REPEAT_CURRENT_ACTION_TIMER2                
+        end
+    end        
+    
+////////////////////////////////////////////////////////////////////////////////////////        
+
+if and
+DERBY_CAR_FROZEN_FLAG == 0
+not ZOMBIEGEDDON_GAME_TYPE == 2
+then
+gosub @DERBY_CAR_AI
+end
+
+////////////////////////////////////////////////////////////////////////////////////////
+
+if or
+82BF: not  car DERBY_CAR sunk
+ZOMBIEGEDDON_GAME_TYPE == 2
+    then
+    
+    if or
+    ZOMBIEGEDDON_GAME_TYPE == 1
+    ZOMBIEGEDDON_GAME_TYPE == 2
+    003A:   DERBY_CAR_ACTOR == COOP_ACTOR // (int)
+        then
+        if
+        DERBY_CAR_TIME_LEFT < 0
+            then
+            jump to @DERBY_CAR_DESTROY
+            end
+        end
+    
+    if or
+    car.Wrecked(DERBY_CAR)
+    8185:  car DERBY_CAR health < 251
+    actor.Dead(DERBY_CAR_ACTOR)    
+        then
+        :DERBY_CAR_DESTROY
+        
+        if
+        003A:   DERBY_CAR_ACTOR == COOP_ACTOR // (int)
+        then
+        0EA1: disable_second_player_restore_camera 1
+        end
+        
+        00A9: set_car DERBY_CAR to_normal_driver
+        
+        if
+        003A:   $SPEC_ACTOR == DERBY_CAR_ACTOR // (int)
+        then
+        04C4: store_coords_to 1@ 2@ 3@ from_actor PLAYER_ACTOR with_offset 0.0 0.0 50.0
+        0362: remove_actor PLAYER_ACTOR from_car_and_place_at 1@ 2@ 3@
+        end
+                
+        070C: explode_car_without_radius_damage DERBY_CAR
+        if
+        0EE8: locate_car_distance_to_car CARMA_GLOB_DERBY_PLAYER_CAR car DERBY_CAR radius 10.0
+        then
+        
+        if
+        $FP_ACTIVATED == 0
+        then
+        camera.Shake(255)
+        else
+        camera.Shake(192)
+        end
+        
+        end                
+        
+        if
+        not actor.Dead(DERBY_CAR_ACTOR)
+        then
+        05BE: AS_actor DERBY_CAR_ACTOR die
+        end
+        
+        CARMA_GLOB_OPPONENTS_WRECKED += 1
+        
+        if
+        DERBY_CAR_DAMAGED_BY_PLAYER_TIMER > 0
+        then
+        
+        0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ZOMBIGEDDON_OPPWRECKED"                
+                    
+        if
+        $CHEATED_FLAG == 0 
+        then   
+        0@ += 1
+        end
+        
+        CARMA_GLOB_OPPONENTS_WRECKED_BY_PLAYER += 1
+        CARMA_GLOB_DERBY_CREDITS += 8000
+        CARMA_GLOB_TIME_VAR += 60000        
+                 
+        0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "ZOMBIGEDDON_OPPWRECKED"
+        
+        0AF0: 2@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT134_GOT"
+        if and
+        2@ == 0
+        0@ >= 150
+        $CHEATED_FLAG == 0
+            then                            
+            v$ACHIEVEMNT = "ACH134"
+            $ACHIEVEMENT_GOT_FLAG = 1                                    
+            0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT134_GOT"
+            end
+        
+        end
+        
+        v$2NAME1 = "N_ME" // v$ // Sunday
+        0665: get_actor DERBY_CAR_ACTOR model_to 2@
+        if
+        2@ > 10000
+        then
+        05A9: v$2NAME1 = "N_" // v$ // Sunday
+        end
+        0AD3: v$2NAME2 = format "%d" 2@
+        098B: v$2NAME3 = v$2NAME1 + v$2NAME2 // all string variables
+        
+        if
+        003A:   DERBY_CAR_ACTOR == COOP_ACTOR // (int)
+        then
+        v$2NAME3 = "CRM66"
+        end
+        
+        if or
+        ZOMBIEGEDDON_GAME_TYPE == 1
+        ZOMBIEGEDDON_GAME_TYPE == 2
+        then
+        
+        0459: end_thread_named 'CRMTT21'
+        0459: end_thread_named 'CRMTXT2'
+        0459: end_thread_named 'CRM_TEXT'
+        
+        if
+        DERBY_CAR_TIME_LEFT < 0
+        then
+        create_thread @CRMTT21
+        else
+        create_thread @CRMTXT2
+        end
+        
+        else
+        create_thread @CRMTXT2
+        end                 
+        
+        if
+        075C:   marker DERBY_CAR_MARKER enabled
+        then
+        marker.Disable(DERBY_CAR_MARKER)
+        DERBY_CAR_MARKER = 0
+        end
+        
+        if
+        CARMA_REPLAY_FLAG == 1
+        then
+        0338: set_car DERBY_CAR visibility 0
+        end
+                
+        while true
+        wait 0
+        end                        
+        
+        end_thread
+        end
+    end
+    
+////////////////////////////////////////////////////////////////////////////////////////
+
+if
+056E:   car DERBY_CAR defined
+then
+0227: 1@ = car DERBY_CAR health
+0227: 25@ = car CARMA_GLOB_DERBY_PLAYER_CAR health
+else
+jump to @DERBY_CAR_SOMEHOW_MAGICALLY_DISSAPEARED
+end
+
+wait 5
+
+if
+056E:   car DERBY_CAR defined
+then
+0227: 2@ = car DERBY_CAR health
+0227: 26@ = car CARMA_GLOB_DERBY_PLAYER_CAR health
+else
+jump to @DERBY_CAR_SOMEHOW_MAGICALLY_DISSAPEARED
+end    
+    
+////////////////////////////////////////////////////////////////////////////////////////
+
+if
+DERBY_CAR_DAMAGED_BY_PLAYER_TIMER > 0
+then
+DERBY_CAR_DAMAGED_BY_PLAYER_TIMER -= 1
+end
+
+if
+0E45: frame_mod 5
+then
+if
+09CB:   vehicle DERBY_CAR colliding_with_vehicle CARMA_GLOB_DERBY_PLAYER_CAR
+    then
+    02E3: 0@ = car DERBY_CAR speed    
+    0092: 0@ = float 0@ to_integer
+    if
+    $FP_ACTIVATED == 0
+    then
+    0@ *= 2.0
+    else
+    0@ *= 1.0
+    end
+    
+    if
+    0@ > 255
+    then
+    0@ = 255
+    end
+    
+    camera.Shake(0@)
+    
+    end
+end
+
+if
+051D:   car DERBY_CAR damaged_by_car CARMA_GLOB_DERBY_PLAYER_CAR
+    then
+    054F: clear_car DERBY_CAR damage
+    DERBY_CAR_DAMAGED_BY_PLAYER_TIMER = 56        
+    random_int 0@ 33 to 40
+    Audiostream.Loop($AMM_WEAPON[0@], 0)
+    0089: 11@ = $SOUNDS_VOLUME // (float)
+    if
+    $FP_ACTIVATED == 0
+    then
+    11@ *= 1.5
+    end
+    Audiostream.Volume($AMM_WEAPON[0@]) = 11@
+    Audiostream.LinkToCar($AMM_WEAPON[0@],CARMA_GLOB_DERBY_PLAYER_CAR)
+    Audiostream.PerformAction($AMM_WEAPON[0@], PLAY)            
+    0062: 1@ -= 2@  // (int) //Opponent Car Total Damage
+    0062: 25@ -= 26@  // (int) //Player Car Total Damage
+    0085: 30@ = 25@ // (int) //Player Car Total Damage
+    0085: 31@ = 1@ // (int) //Opponent Car Total Damage       
+    008A: CARMA_GLOB_DERBY_PLAYER_CAR_DCOUNT = 25@ // (int)
+    CARMA_GLOB_DERBY_PLAYER_CAR_DCOUNT *= 2            
+    
+//    0AD1: show_formatted_text_highpriority "TO OPP CAR DAMAGE: %d, TO PLAYER CAR DAMAGE: %d" time 2000 1@ 25@            
+    
+    /////////Кто продамажил кого сильнее/////////
+    
+    06A2: get_car DERBY_CAR velocity_in_direction_XYZ 25@ 26@ 27@
+    06A2: get_car CARMA_GLOB_DERBY_PLAYER_CAR velocity_in_direction_XYZ 9@ 10@ 20@
+    0097: make 25@ absolute_float
+    0097: make 26@ absolute_float
+    0097: make 27@ absolute_float
+    0097: make 9@ absolute_float
+    0097: make 10@ absolute_float
+    0097: make 20@ absolute_float
+    
+    005B: 25@ += 26@  // (float)
+    005B: 25@ += 27@  // (float)
+    
+    005B: 9@ += 10@  // (float)
+    005B: 9@ += 20@  // (float)
+    
+//        0AD1: show_formatted_text_highpriority "PLAYER DAMAGE: %f, DAMAGE FROM OPPONENT: %f" time 2000 25@ 9@
+    
+    if
+    0025:   25@ > 9@  // (float)    
+        then                
+        CARMA_GLOB_DERBY_PLAYER_LAUGH_FLAG = 1
+        
+        /////////Player Credits Plus/////////                   
+    
+        if and
+        not car.Id(CARMA_GLOB_DERBY_PLAYER_CAR) == 15410
+        not car.Id(CARMA_GLOB_DERBY_PLAYER_CAR) == 15417
+        not car.Id(CARMA_GLOB_DERBY_PLAYER_CAR) == 15488
+        not car.Id(CARMA_GLOB_DERBY_PLAYER_CAR) == 15490
+        not car.Id(CARMA_GLOB_DERBY_PLAYER_CAR) == 15496
+        not car.Id(CARMA_GLOB_DERBY_PLAYER_CAR) == 15497
+        not car.Id(CARMA_GLOB_DERBY_PLAYER_CAR) == 19111
+        not car.Id(CARMA_GLOB_DERBY_PLAYER_CAR) == 19127
+        then
+        if and
+        not car.Id(CARMA_GLOB_DERBY_PLAYER_CAR) == 18025
+        not car.Id(CARMA_GLOB_DERBY_PLAYER_CAR) == 18041
+            then
+            1@ *= 30
+            else
+            1@ *= 8
+            end
+        else
+        if
+        not car.Id(CARMA_GLOB_DERBY_PLAYER_CAR) == 15417
+            then
+            1@ *= 16
+            else
+            1@ *= 32
+            end
+        end
+        
+        0085: 3@ = 2@ // (int)
+        3@ -= 250
+        0093: 3@ = integer 3@ to_float
+        3@ /= 12.5
+        0092: 3@ = float 3@ to_integer
+        
+        if
+        3@ < 0
+        then
+        3@ = 0
+        end
+        
+        if
+        3@ > 100
+        then
+        3@ = 100
+        end
+        
+        008A: CARMA_GLOB_OPPONENT_HP = 3@ // (int)
+        
+        if
+        ZOMBIEGEDDON_GAME_TYPE == 1
+        then
+        //ADJUST CREDITS BY PERCENT OF OPPONENTS
+        //20@ = actor.Health(0@)
+        20@ = CARMA_GLOB_OPPONENTS_COUNT3
+        0062: 20@ -= CARMA_GLOB_OPPONENTS_WRECKED  // (int)
+        0093: 20@ = integer 20@ to_float        
+        //0D39: 25@ = actor 0@ max_health
+        25@ = CARMA_GLOB_OPPONENTS_COUNT3
+        0093: 25@ = integer 25@ to_float                                        
+        25@ /= 100.0                     
+        0073: 20@ /= 25@ // (float)
+//        0AD1: show_formatted_text_highpriority "%f" time 2000 20@
+        20@ /= 100.0
+        0093: 1@ = integer 1@ to_float
+        006B: 1@ *= 20@  // (float)
+        0092: 1@ = float 1@ to_integer
+        end    
+        
+        if
+        1@ > 5000
+        then
+        1@ = 5000
+        end
+        
+        if
+        1@ < 1
+        then
+        1@ = 0
+        end
+        
+        if
+        not CARMA_GLOB_1VS1_MODE == 1
+        then
+        005E: CARMA_GLOB_DERBY_CREDITS += 1@  // (int)
+        1@ *= 10
+        005E: CARMA_GLOB_TIME_VAR += 1@  // (int)
+        end
+            
+        else
+        
+        if and
+        CARMA_GLOB_DERBY_CAR_DAMAGE_TIMER > 550
+        CARMA_GLOB_DERBY_PLAYER_CAR_HIT2_FLAG == 0
+        then
+        CARMA_GLOB_DERBY_PLAYER_CAR_HIT_FLAG = 1
+        CARMA_GLOB_DERBY_CAR_DAMAGE_TIMER = 0
+        end
+        
+        /////////Opponent Credits Plus/////////    
+        
+        if and
+        not car.Id(DERBY_CAR) == 15410
+        not car.Id(DERBY_CAR) == 15417
+        not car.Id(DERBY_CAR) == 15488
+        not car.Id(DERBY_CAR) == 15490
+        not car.Id(DERBY_CAR) == 15496
+        not car.Id(DERBY_CAR) == 15497
+        not car.Id(DERBY_CAR) == 19111
+        not car.Id(DERBY_CAR) == 19127
+        then
+        if and
+        not car.Id(DERBY_CAR) == 18025
+        not car.Id(DERBY_CAR) == 18041
+            then
+            30@ *= 15
+            else
+            30@ *= 4
+            end
+        else
+        if
+        not car.Id(DERBY_CAR) == 15417
+            then
+            30@ *= 4
+            else
+            30@ *= 8
+            end
+        end
+            
+        0085: 3@ = 31@ // (int)
+        3@ -= 250
+        0093: 3@ = integer 3@ to_float
+        3@ /= 12.5
+        0092: 3@ = float 3@ to_integer
+            
+        if
+        3@ < 0
+        then
+        3@ = 0
+        end
+            
+        if
+        3@ > 100
+        then
+        3@ = 100
+        end
+        
+        if
+        ZOMBIEGEDDON_GAME_TYPE == 1
+        then
+        //ADJUST CREDITS BY PERCENT OF OPPONENTS
+        //20@ = actor.Health(0@)
+        20@ = CARMA_GLOB_OPPONENTS_COUNT3
+        0062: 20@ -= CARMA_GLOB_OPPONENTS_WRECKED  // (int)
+        0093: 20@ = integer 20@ to_float        
+        //0D39: 25@ = actor 0@ max_health
+        25@ = CARMA_GLOB_OPPONENTS_COUNT3
+        0093: 25@ = integer 25@ to_float                                        
+        25@ /= 100.0                     
+        0073: 20@ /= 25@ // (float)
+//        0AD1: show_formatted_text_highpriority "%f" time 2000 20@
+        20@ /= 100.0
+        0093: 30@ = integer 30@ to_float
+        006B: 30@ *= 20@  // (float)
+        0092: 30@ = float 30@ to_integer
+        end
+                            
+        if
+        30@ > 5000
+        then
+        30@ = 5000
+        end
+            
+        if
+        30@ < 1
+        then
+        30@ = 0
+        end
+        
+        if
+        not CARMA_GLOB_1VS1_MODE == 1
+        then    
+        005E: DERBY_CAR_CREDITS += 30@  // (int)
+        0084: CARMA_GLOB_OPP_CREDITS = DERBY_CAR_CREDITS // (int)        
+                
+        30@ *= 10
+        005E: DERBY_CAR_TIME_LEFT += 30@  // (int)
+                                        
+        008B: 0@ = DERBY_CAR_TIME_LEFT // (int)
+        0@ /= 1000
+        008A: CARMA_GLOB_OPP_TIME = 0@ // (int)
+        end            
+        
+        end                                                                        
+    
+    end
+    
+//if and
+//ZOMBIEGEDDON_GAME_TYPE == 2
+//not CARMA_REPLAY_FLAG == 1
+//DERBY_CAR_CURRENT_CHECKPOINT > 1
+//    then
+//    0085: 0@ = DERBY_CAR_CURRENT_CHECKPOINT // (int)
+//    0@ += 1    
+//    
+//    if and
+//    00EC:   actor DERBY_CAR_ACTOR sphere 0 near_point $RNDM_HOUSE_ITEM_X[0@] $RNDM_HOUSE_ITEM_Y[0@] $RNDM_HOUSE_ITEM_Z[0@] radius 10.0 10.0
+//    80EC: not  actor DERBY_CAR_ACTOR sphere 0 near_point $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT] radius 10.0 10.0
+//    803B: not  DERBY_CAR_CURRENT_CHECKPOINT == 0@  // (int)        
+//        then
+//        0AD1: show_formatted_text_highpriority "BOT IS MISSED CHECKPOINT, FUCKING KILLED AT NEXT CHECKPOINT!" time 5000
+//        jump to @DERBY_CAR_DESTROY
+//        end        
+//        
+//    end    
+    
+if and
+ZOMBIEGEDDON_GAME_TYPE == 2
+not CARMA_REPLAY_FLAG == 1
+    then
+    
+    if and
+    CLASSIC_CARMA_MAP >= 1
+    CARMA_GLOB_RACE_NUMBER == 69    
+    then
+    if
+    0EEB: locate_car_distance_to_coordinates DERBY_CAR pos -1258.2216 1720.7716 58.0716 radius 10.0
+        then
+        car.SetSpeedInstantly(DERBY_CAR,100.0)
+        end
+    end
+    
+    if and
+    CLASSIC_CARMA_MAP >= 1
+    CARMA_GLOB_RACE_NUMBER == 67    
+    then
+    if
+    0EEB: locate_car_distance_to_coordinates DERBY_CAR pos 718.237 -2669.4011 78.5412 radius 10.0
+        then
+        car.SetSpeedInstantly(DERBY_CAR,65.0)
+        end
+    end
+    
+    if and
+    CLASSIC_CARMA_MAP >= 1
+    CARMA_GLOB_RACE_NUMBER == 47    
+    then
+    if
+    0EEB: locate_car_distance_to_coordinates DERBY_CAR pos 1294.9012 -1268.5195 1522.7073 radius 10.0
+        then
+        car.SetSpeedInstantly(DERBY_CAR,55.0)
+        end
+    end
+    
+    if and
+    CLASSIC_CARMA_MAP >= 1
+    CARMA_GLOB_RACE_NUMBER == 15    
+    then
+    if
+    0EEB: locate_car_distance_to_coordinates DERBY_CAR pos -1076.0538 -53.4613 30.5945 radius 10.0
+        then
+        car.SetSpeedInstantly(DERBY_CAR,115.0)
+        end
+    end
+    
+    if and
+    CLASSIC_CARMA_MAP >= 1
+    CARMA_GLOB_RACE_NUMBER == 52    
+    then
+    if
+    0EEB: locate_car_distance_to_coordinates DERBY_CAR pos 2056.4329 -1518.6525 1507.9221 radius 10.0
+        then
+        car.SetSpeedInstantly(DERBY_CAR,65.0)
+        end
+    end
+    
+    if
+    860E: not  car DERBY_CAR assigned_to_path
+        then
+        gosub @DERBY_CAR_CHECKPOINT_RUSH_PATH_CHECK
+        end
+    end    
+    
+////////////////////////////////////////////////Соперник едет на след. чекпоинт (AI на Carrec'е)////////////////////////////////////////////////
+
+if and
+DERBY_CAR_SECOND_CARREC_FLAG == 0
+CARMA_GLOB_TWO_CARRECS > 1
+ZOMBIEGEDDON_GAME_TYPE == 2
+not CARMA_REPLAY_FLAG == 1
+    then
+    if
+    00EC:   actor DERBY_CAR_ACTOR sphere 0 near_point CARMA_GLOB_CARREC_X CARMA_GLOB_CARREC_Y radius 7.5 7.5
+        then
+        
+        DERBY_CAR_SECOND_CARREC_FLAG = 1
+        
+        05EC: release_car DERBY_CAR from_path
+        4@ = 1        
+        gosub @DERBY_CAR_CHECKPOINT_RUSH_PATH_CHECK2 
+        
+        end
+    end    
+
+if and
+00EC:   actor DERBY_CAR_ACTOR sphere 0 near_point $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] radius 10.0 20.0
+0185:   car DERBY_CAR health > 250
+ZOMBIEGEDDON_GAME_TYPE == 2
+    then
+    
+    if and
+    DERBY_CAR_CURRENT_LAP > 1
+    DERBY_CAR_NITRO_PATH_BOOST_FLAG < 0.1
+    then        
+    06FD: set_car DERBY_CAR speed_on_path_to CARMA_GLOB_CARREC_PATH_SPEED
+//    0AD1: show_formatted_text_highpriority "Second lap starter boost OFF" time 2000
+    end
+    
+    DERBY_CAR_CURRENT_CHECKPOINT += 1
+    
+    actor.StorePos(DERBY_CAR_ACTOR,0@,1@,2@)
+    050A: 3@ = distance_between_XYZ 0@ 1@ 2@ and_XYZ $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+    0092: 3@ = float 3@ to_integer
+    3@ *= 40
+    if
+    CARMA_GLOB_TIME_MULT > 0
+    then
+    006E: 3@ *= CARMA_GLOB_TIME_MULT // (int)
+    end
+    005E: DERBY_CAR_TIME_LEFT += 3@  // (int)        
+    
+    if and
+    CARMA_GLOB_RACE_NUMBER == 20
+    DERBY_CAR_CURRENT_CHECKPOINT == 2    
+        then
+        DERBY_CAR_CURRENT_CHECKPOINT = 5
+        end        
+    
+    if
+    001F:   DERBY_CAR_CURRENT_CHECKPOINT > CARMA_GLOB_RACE_TOTAL_CHECKPOINTS // (int)
+        then
+        
+        DERBY_CAR_TIME_LEFT /= 4
+        actor.StorePos(DERBY_CAR_ACTOR,0@,1@,2@)
+        050A: 3@ = distance_between_XYZ 0@ 1@ 2@ and_XYZ $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+        0092: 3@ = float 3@ to_integer
+        3@ *= 40
+        if
+        CARMA_GLOB_TIME_MULT > 0
+        then
+        006E: 3@ *= CARMA_GLOB_TIME_MULT // (int)
+        end
+        005E: DERBY_CAR_TIME_LEFT += 3@  // (int)
+        DERBY_CAR_TIME_LEFT += 5000
+        
+        DERBY_CAR_CURRENT_LAP += 1
+        DERBY_CAR_CURRENT_CHECKPOINT = 0
+        
+        if
+        DERBY_CAR_SECOND_CARREC_FLAG == 1
+        then
+        DERBY_CAR_SECOND_CARREC_FLAG = 0
+        end
+        
+        008A: DERBY_CAR_CURRENT_CHECKPOINT_GLOB = DERBY_CAR_CURRENT_CHECKPOINT // (int)
+        DERBY_CAR_STRAIGHT_DRIVE_TIME = -1
+        4@ = 1
+        
+        if
+        not CARMA_REPLAY_FLAG == 1
+        then
+        05EC: release_car DERBY_CAR from_path        
+        gosub @DERBY_CAR_CHECKPOINT_RUSH_PATH_CHECK
+        end                
+        
+        else        
+        
+        if
+        $SPECTATING_FLAG == 1
+        then
+        0@ = 45
+        else
+        0@ = 25
+        end
+        
+        if
+        0E4D: random_percent 25
+        then
+        088B: set_car DERBY_CAR form_drag_multiplier_to 0.1
+        0A97: 1@ = car DERBY_CAR struct 
+        0A8E: 2@ = 1@ + CAR_ENGINE_POWER_PLUS_STRUCT // int
+        0A8C: write_memory 2@ size 4 value 0.15 virtual_protect 1
+        else
+        088B: set_car DERBY_CAR form_drag_multiplier_to 1.0
+        0A97: 1@ = car DERBY_CAR struct 
+        0A8E: 2@ = 1@ + CAR_ENGINE_POWER_PLUS_STRUCT // int
+        0A8C: write_memory 2@ size 4 value 0.0 virtual_protect 1
+        end
+                
+        end
+    
+    if and
+    001C:   DERBY_CAR_CURRENT_LAP > CARMA_GLOB_RACE_TOTAL_LAPS // (int)
+    ZOMBIEGEDDON_GAME_TYPE == 2 
+        then
+        
+        ZOMBIEGEDDON_SOME_BOT_FINISHED_FLAG = 1        
+        008A: ZOMBIEGEDDON_SOME_BOT_FINISHED_NUMBER = DERBY_SURVIVOR_NUMBER // (int)                
+        
+        end
+        
+    008A: DERBY_CAR_CURRENT_CHECKPOINT_GLOB = DERBY_CAR_CURRENT_CHECKPOINT // (int)                
+         
+    end                     
+    
+////////////////////////////////////////////////////////////////////////////////////////    
+    
+if and
+DERBY_CAR_TARGET_FOUND == 1
+DERBY_CAR_CURRENT_ACTION == 1
+DERBY_CAR_FROZEN_FLAG == 0
+not ZOMBIEGEDDON_GAME_TYPE == 2
+0185:   car DERBY_CAR health > 250
+    then
+    if
+    056D:   actor DERBY_CAR_TARGET_ACTOR defined
+        then
+        
+        02E3: 1@ = car DERBY_CAR speed
+        if and
+        00F2:   actor DERBY_CAR_ACTOR near_actor DERBY_CAR_TARGET_ACTOR radius 8.0 8.0 sphere 0
+        0364:   actor DERBY_CAR_ACTOR spotted_actor DERBY_CAR_TARGET_ACTOR
+        1@ < 20.0
+        then
+        DERBY_CAR_CURRENT_TARGET_TIMER += 250
+        end
+                                        
+        if or
+        actor.Dead(DERBY_CAR_TARGET_ACTOR)
+        8184:   actor DERBY_CAR_TARGET_ACTOR health < 1
+        80F2: not  actor DERBY_CAR_ACTOR near_actor DERBY_CAR_TARGET_ACTOR radius DERBY_CAR_TARGET_FIND_AREA DERBY_CAR_TARGET_FIND_AREA sphere 0
+        DERBY_CAR_CURRENT_TARGET_TIMER > DERBY_CAR_CURRENT_TARGET_TIMER2
+        DERBY_CAR_TIME_LEFT < 30000
+        8185: not  car DERBY_CAR health >= 400
+            then
+            DERBY_CAR_TARGET_FOUND = 0                        
+            DERBY_CAR_CURRENT_TARGET_TIMER = 0
+            DERBY_CAR_REPEAT_CURRENT_ACTION_TIMER = DERBY_CAR_REPEAT_CURRENT_ACTION_TIMER2
+            00A9: set_car DERBY_CAR to_normal_driver
+            
+            if
+            CARMA_GLOB_FREEROAM_DR == 1
+            then
+//            car.SetDriverBehaviour(DERBY_CAR,1)
+
+            if
+            CARMA_GLOB_FREEROAM_ALT_FLAG == 1
+            then
+            gosub @DERBY_CAR_FREEROAM_ALT_DRIVE_SET
+            else
+            00A8: set_car DERBY_CAR to_psycho_driver
+            end
+            
+            else
+            
+            ///////////////////////////////////////////////////////////////
+
+            if
+            04C8:   actor DERBY_CAR_ACTOR driving_flying_vehicle
+            then
+            
+            if
+            04A9:   actor DERBY_CAR_ACTOR driving_heli
+            then
+            04A2: set_heli DERBY_CAR fly_to $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT] altitude_between 0.0 and $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+            else
+            04D2: set_plane DERBY_CAR fly_autopilot_around_point $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT] altitude_between 0.0 and $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+            end
+            
+            else
+            
+            if and
+            COOP_ACTIVE_FLAG == 1
+            DERBY_SURVIVOR_NUMBER == 0
+            then
+            else
+            0704: car DERBY_CAR drive_to $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+            end
+            
+            end
+            
+            ///////////////////////////////////////////////////////////////
+            
+            end
+            
+            0085: DERBY_CAR_CURRENT_ACTION_TIMER = DERBY_CAR_CURRENT_ACTION_TIMER2 // (int)                        
+            end
+        else
+        DERBY_CAR_TARGET_FOUND = 0                
+        DERBY_CAR_CURRENT_TARGET_TIMER = 0
+        DERBY_CAR_REPEAT_CURRENT_ACTION_TIMER = DERBY_CAR_REPEAT_CURRENT_ACTION_TIMER2
+        00A9: set_car DERBY_CAR to_normal_driver
+        
+        if
+        CARMA_GLOB_FREEROAM_DR == 1
+        then
+//        car.SetDriverBehaviour(DERBY_CAR,1)
+
+        if
+        CARMA_GLOB_FREEROAM_ALT_FLAG == 1
+        then
+        gosub @DERBY_CAR_FREEROAM_ALT_DRIVE_SET
+        else
+        00A8: set_car DERBY_CAR to_psycho_driver
+        end
+        
+        else
+        
+        ///////////////////////////////////////////////////////////////
+
+        if
+        04C8:   actor DERBY_CAR_ACTOR driving_flying_vehicle
+        then
+        
+        if
+        04A9:   actor DERBY_CAR_ACTOR driving_heli
+        then
+        04A2: set_heli DERBY_CAR fly_to $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT] altitude_between 0.0 and $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+        else
+        04D2: set_plane DERBY_CAR fly_autopilot_around_point $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT] altitude_between 0.0 and $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+        end
+        
+        else
+        
+        if and
+        COOP_ACTIVE_FLAG == 1
+        DERBY_SURVIVOR_NUMBER == 0
+        then
+        else
+        0704: car DERBY_CAR drive_to $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+        end
+        
+        end
+        
+        ///////////////////////////////////////////////////////////////
+        
+        end
+        
+        0085: DERBY_CAR_CURRENT_ACTION_TIMER = DERBY_CAR_CURRENT_ACTION_TIMER2 // (int)                
+        end
+    end       
+    
+////////////////////////////////////////////////////////////////////////////////////////    
+
+if and
+CARMA_GLOB_RACE_STARTED2 == 1
+ZOMBIEGEDDON_GAME_TYPE == 2
+ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+CARMA_GLOB_RACE_NUMBER == 57
+    then
+    Car.StorePos(DERBY_CAR, 0@, 1@, 2@)
+    if 
+    2@ < 1306.0
+        then
+        jump to @DERBY_CAR_DESTROY 
+        end
+    end
+    
+if and
+CARMA_GLOB_RACE_STARTED2 == 1
+ZOMBIEGEDDON_GAME_TYPE == 2
+ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+CARMA_GLOB_RACE_NUMBER == 84
+    then
+    Car.StorePos(DERBY_CAR, 0@, 1@, 2@) 
+    if 
+    2@ < 59.7328
+        then
+        jump to @DERBY_CAR_DESTROY 
+        end
+    end    
+
+if and
+CARMA_GLOB_RACE_STARTED2 == 1
+DERBY_CAR_FROZEN_FLAG == 0
+not ZOMBIEGEDDON_GAME_TYPE == 2
+0185:   car DERBY_CAR health > 250
+    then
+    Car.StorePos(DERBY_CAR, 0@, 1@, 2@)
+    
+    if
+    CARMA_GLOB_RACE_NUMBER == 84    
+    then
+    if
+    2@ < 59.7328
+        then
+        jump to @DERBY_CAR_RESTORE
+        end
+    end
+    
+    if or
+    CARMA_GLOB_RACE_NUMBER == 47
+    CARMA_GLOB_RACE_NUMBER == 52
+    CARMA_GLOB_RACE_NUMBER == 56    
+    then
+    if
+    2@ < 1370.0
+        then
+        jump to @DERBY_CAR_RESTORE
+        end
+    end
+    
+    if and
+    not CARMA_GLOB_RACE_INTERIOR == 0
+    CARMA_GLOB_RACE_NUMBER == 71
+    2@ < 316.0
+    then
+    jump to @DERBY_CAR_RESTORE
+    end
+    
+    if and
+    not CARMA_GLOB_RACE_INTERIOR == 0
+    CARMA_GLOB_RACE_NUMBER == 70
+    2@ < 316.0
+    then
+    jump to @DERBY_CAR_RESTORE
+    end        
+    
+    if and
+    not CARMA_GLOB_RACE_INTERIOR == 0
+    CARMA_GLOB_RACE_NUMBER == 57
+    2@ < 1306.0
+    then
+    jump to @DERBY_CAR_RESTORE
+    end
+    
+    if and
+    not CARMA_GLOB_RACE_INTERIOR == 0
+    not CARMA_GLOB_RACE_NUMBER == 70
+    not CARMA_GLOB_RACE_NUMBER == 71
+    2@ < 950.0
+    then
+    jump to @DERBY_CAR_RESTORE
+    end    
+    
+    if and
+    CARMA_GLOB_RACE_NUMBER == 14
+    ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+    2@ < 225.0
+    then
+    jump to @DERBY_CAR_RESTORE
+    end   
+    
+    if
+    ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+    then
+    if or
+    CARMA_GLOB_RACE_NUMBER == 17
+    CARMA_GLOB_RACE_NUMBER == 14
+    CARMA_GLOB_RACE_NUMBER == 49
+        then
+        if    
+        2@ < 142.08
+            then
+            jump to @DERBY_CAR_RESTORE
+            end  
+        end
+    end   
+    
+    if and
+    CARMA_GLOB_RACE_NUMBER == 20
+    ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+    DERBY_CAR_CURRENT_ACTION == 0
+    then
+    
+    car.StorePos(DERBY_CAR,9@,6@,7@)
+    02CE: 8@ = ground_z_at 9@ 6@ 7@
+    050A: 0@ = distance_between_XYZ 9@ 6@ 7@ and_XYZ 9@ 6@ 8@
+    if
+    0@ > 60.0
+    then
+    jump to @DERBY_CAR_RESTORE
+    end    
+    
+    end
+    
+    if    
+    003A:   DERBY_CAR_ACTOR == COOP_ACTOR // (int)
+        then
+        if
+        0E3E: is_button_just_pressed 1 button 9
+            then
+            jump to @DERBY_CAR_RESTORE
+            else
+            jump to @DERBY_CAR_RESTORE_2P_SKIP_JUMP
+            end        
+        end
+        
+    if or
+    02BF:   car DERBY_CAR sunk
+    03CE:   car DERBY_CAR stuck
+        then
+        :DERBY_CAR_RESTORE
+        
+        1@ = 0        
+        
+        if and
+        ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+        803A: not  DERBY_CAR_ACTOR == COOP_ACTOR // (int)
+        then
+        1@ = 1
+        end
+            
+        if and
+        UNITED_MAP == 1
+        $UNITED_III_SPAWN == 1
+        then
+        1@ = 1
+        end     
+        
+        if
+        1@ == 0
+        then
+        Car.StorePos(DERBY_CAR, 0@, 1@, 2@)                        
+        02C1: store_to 0@ 1@ 2@ car_path_coords_closest_to 0@ 1@ 2@
+        else
+        
+        0085: 3@ = DERBY_CAR_CURRENT_CHECKPOINT // (int)                
+        
+        3@ -= 1
+        if
+        3@ < 0
+        then
+        008B: 3@ = CARMA_GLOB_RACE_TOTAL_CHECKPOINTS // (int)
+        end
+        
+        if and
+        CARMA_GLOB_RACE_NUMBER == 15
+        ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+        DERBY_CAR_CURRENT_CHECKPOINT == 14        
+        then
+        3@ = 15        
+        end 
+        
+        if and
+        CARMA_GLOB_RACE_NUMBER == 18
+        ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+        DERBY_CAR_CURRENT_CHECKPOINT >= 6
+        DERBY_CAR_CURRENT_CHECKPOINT < 9        
+        then
+        3@ = 9        
+        end
+        
+        if and
+        CARMA_GLOB_RACE_NUMBER == 20
+        ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+        DERBY_CAR_CURRENT_CHECKPOINT >= 0
+        DERBY_CAR_CURRENT_CHECKPOINT < 2        
+        then
+        3@ = 1        
+        end               
+        
+        0089: 0@ = $RNDM_HOUSE_ITEM_X[3@] // (float)
+        0089: 1@ = $RNDM_HOUSE_ITEM_Y[3@] // (float)
+        0089: 2@ = $RNDM_HOUSE_ITEM_Z[3@] // (float)
+        end
+        
+        if
+        8AE2: not 9@ = random_vehicle_near_point 0@ 1@ 2@ in_radius 5.0 find_next 0 pass_wrecked 0
+            then
+            2@ += 2.0  
+            Car.PutAt(DERBY_CAR, 0@, 1@, 2@)
+            0EB4: set_car_coordinates_simple DERBY_CAR position 0@ 1@ 2@
+            07C6: set_car DERBY_CAR axis_angle_relation_to 0.0 0.0 0.0 0.0
+            
+            0AD3: 0@v = format "CP%d_A" 3@            
+            if
+            0AF2: 9@ = get_float_from_ini_file CLASSIC_CARMAGEDDON_RACES_INI_PATH section v$RACE_FILE key 0@v
+            then                        
+            car.Angle(DERBY_CAR) = 9@
+            end
+            
+            wait 10
+            
+            if
+            8ABE: not  vehicle DERBY_CAR engine_on
+            then
+            0918: set_car DERBY_CAR engine_operation 1
+            end
+            
+            DERBY_CAR_STRAIGHT_DRIVE_TIME = -1
+            
+            if and 
+            ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+            CARMA_GLOB_RACE_NUMBER == 51
+            DERBY_CAR_CURRENT_CHECKPOINT == 1
+            then
+            DERBY_CAR_CURRENT_CHECKPOINT += 1
+            end
+            
+            if and 
+            ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+            CARMA_GLOB_RACE_NUMBER == 52
+            DERBY_CAR_CURRENT_CHECKPOINT == 0
+            then
+            DERBY_CAR_CURRENT_CHECKPOINT += 1
+            end
+            
+            end
+        end
+    end
+    
+:DERBY_CAR_RESTORE_2P_SKIP_JUMP    
+    
+////////////////////////////////////////////////////////////////////////////////////////            
+
+end
+
+end_thread
+
+:SURVIVER_ARMAGEDDON_TARGET_FIND
+
+if
+CARMA_GLOB_OPPONENTS_COUNT2 == 10
+then
+3@ = 50
+end
+
+if
+CARMA_GLOB_OPPONENTS_COUNT2 > 10
+then
+3@ = 45
+end
+
+if
+CARMA_GLOB_OPPONENTS_COUNT2 > 15
+then
+3@ = 40
+end
+
+if
+CARMA_GLOB_OPPONENTS_COUNT2 > 20
+then
+3@ = 35
+end
+
+if
+CARMA_GLOB_OPPONENTS_COUNT2 >= 25
+then
+3@ = 30
+end
+
+if and
+0E4D: random_percent 3@
+$SPECTATING_FLAG == 0
+not actor.Dead(PLAYER_ACTOR)
+then
+
+if and
+0E4D: random_percent 50
+COOP_ACTIVE_FLAG == 1
+then
+008B: DERBY_CAR_TARGET_ACTOR = COOP_ACTOR // (int)
+else
+008B: DERBY_CAR_TARGET_ACTOR = PLAYER_ACTOR // (int)
+end
+
+else
+random_int 1@ 0 to CARMA_GLOB_OPPONENTS_COUNT2
+008B: DERBY_CAR_TARGET_ACTOR = $PARK_CAR_DAMAGED[1@] // (int)
+end
+
+if and
+056D:   actor DERBY_CAR_TARGET_ACTOR defined
+87D6: not  DERBY_CAR_TARGET_ACTOR == DERBY_CAR_ACTOR // @ == $ (int)
+    then      
+    if and
+    00F2:   actor DERBY_CAR_ACTOR near_actor DERBY_CAR_TARGET_ACTOR radius DERBY_CAR_TARGET_FIND_AREA DERBY_CAR_TARGET_FIND_AREA sphere 0    
+    not actor.Dead(DERBY_CAR_TARGET_ACTOR)
+    actor.Driving(DERBY_CAR_TARGET_ACTOR)
+        then
+        return
+        else
+        DERBY_CAR_TARGET_ACTOR = -1
+        return                 
+        end
+    end
+
+return
+
+:SURVIVER_ARMAGEDDON_TARGET_FIND_Z
+wait 0
+
+random_int 1@ 1 to 21
+
+008B: DERBY_CAR_TARGET_ACTOR = $CREATURE[1@] // (int)
+
+if and
+056D:   actor DERBY_CAR_TARGET_ACTOR defined
+87D6: not  DERBY_CAR_TARGET_ACTOR == DERBY_CAR_ACTOR // @ == $ (int)
+    then      
+    if and
+    00F2:   actor DERBY_CAR_ACTOR near_actor DERBY_CAR_TARGET_ACTOR radius DERBY_CAR_TARGET_FIND_AREA_Z DERBY_CAR_TARGET_FIND_AREA_Z sphere 0    
+    not actor.Dead(DERBY_CAR_TARGET_ACTOR)    
+        then
+        if or
+        0364:   actor DERBY_CAR_ACTOR spotted_actor DERBY_CAR_TARGET_ACTOR
+        0364:   actor DERBY_CAR_TARGET_ACTOR spotted_actor DERBY_CAR_ACTOR
+            then
+            return
+            else
+            DERBY_CAR_TARGET_ACTOR = -1
+            return
+            end
+        else
+        DERBY_CAR_TARGET_ACTOR = -1
+        return                 
+        end
+    end
+
+return
+
+:DEBRY_CAR_SETTINGS
+
+1@ = 100.0
+
+if and
+CARMA_GLOB_RACE_NUMBER == 20
+ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+DERBY_CAR_CURRENT_CHECKPOINT == 2    
+    then
+    1@ = 35.0
+    end
+    
+if and
+CARMA_GLOB_RACE_NUMBER == 20
+ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+DERBY_CAR_CURRENT_CHECKPOINT == 3    
+    then
+    1@ = 45.0
+    end
+    
+if and
+CARMA_GLOB_RACE_NUMBER == 20
+ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+DERBY_CAR_CURRENT_CHECKPOINT == 4    
+    then
+    1@ = 65.0
+    end        
+
+car.SetMaxSpeed(DERBY_CAR,1@)  
+00AE: set_car DERBY_CAR traffic_behaviour_to 3  
+0423: set_car DERBY_CAR improved_handling_to 3.0 // (float)
+073B: unknown_car DERBY_CAR flag 1
+
+if
+0204:   actor PLAYER_ACTOR near_car DERBY_CAR radius 90.0 90.0 sphere 0 in_car
+then
+03AB: set_car DERBY_CAR strong 0
+else
+03AB: set_car DERBY_CAR strong 1
+end
+
+return
+
+:DERBY_CAR_FREEROAM_ALT_DRIVE_SET
+
+00A9: set_car DERBY_CAR to_normal_driver
+04E0: car DERBY_CAR abandon_path_radius 90000
+0407: store_coords_to 1@ 2@ 3@ from_car DERBY_CAR with_offset 0.0 30.0 0.0
+02C1: store_to 1@ 2@ 3@ car_path_coords_closest_to 1@ 2@ 3@
+
+if
+04C8:   actor DERBY_CAR_ACTOR driving_flying_vehicle
+then
+    
+if
+04A9:   actor DERBY_CAR_ACTOR driving_heli
+then
+04A2: set_heli DERBY_CAR fly_to 1@ 2@ 3@ altitude_between 0.0 and 3@
+else
+04D2: set_plane DERBY_CAR fly_autopilot_around_point 1@ 2@ 3@ altitude_between 0.0 and 3@
+end
+    
+else
+00A7: car DERBY_CAR drive_to 1@ 2@ 3@
+00AF: set_car DERBY_CAR driver_behaviour_to 14
+end
+
+return
+
+:DERBY_CAR_FREEROAM_ALT_DRIVE_SET2
+
+if
+0E45: frame_mod 5
+then
+04E0: car DERBY_CAR abandon_path_radius 90000
+0407: store_coords_to 1@ 2@ 3@ from_car DERBY_CAR with_offset 0.0 10.0 0.0
+02C1: store_to 1@ 2@ 3@ car_path_coords_closest_to 1@ 2@ 3@
+
+if
+04C8:   actor DERBY_CAR_ACTOR driving_flying_vehicle
+then
+    
+if
+04A9:   actor DERBY_CAR_ACTOR driving_heli
+then
+04A2: set_heli DERBY_CAR fly_to 1@ 2@ 3@ altitude_between 0.0 and 3@
+else
+04D2: set_plane DERBY_CAR fly_autopilot_around_point 1@ 2@ 3@ altitude_between 0.0 and 3@
+end
+    
+else
+00A7: car DERBY_CAR drive_to 1@ 2@ 3@
+00AF: set_car DERBY_CAR driver_behaviour_to 14
+end
+
+end
+
+return
+
+:DERBY_CAR_AI
+
+////////////////////////////////////////////////Соперник пытается чиниться////////////////////////////////////////////////
+
+if or
+003A:   DERBY_CAR_ACTOR == COOP_ACTOR // (int)
+ZOMBIEGEDDON_GAME_TYPE == 1
+ZOMBIEGEDDON_GAME_TYPE == 2
+    then
+    random_int 0@ 0 250
+    1@ = Car.Health(DERBY_CAR)
+    
+    if    
+    003A:   DERBY_CAR_ACTOR == COOP_ACTOR // (int)
+        then
+        1@ = 9999
+        0@ = 69
+        if
+        0E3E: is_button_just_pressed 1 button 8
+            then
+            jump to @DERBY_CAR_REPAIR_2P_JUMP
+            end        
+        end
+    
+    if or
+    0@ == 125
+    1@ < 500    
+        then
+        :DERBY_CAR_REPAIR_2P_JUMP
+        if and
+        DERBY_CAR_CREDITS >= 500
+        CARMA_GLOB_RACE_STARTED2 == 1 
+            then         
+            0@ = Car.Health(DERBY_CAR)
+            if or
+            0@ < 1000
+            0@ > 1000
+                then
+                DERBY_CAR_CREDITS -= 500
+                
+                if
+                056D:   actor DERBY_CAR_ACTOR defined
+                then
+                Audiostream.LinkToActor(CARMA_OPP_REPAIR_SOUND,DERBY_CAR_ACTOR)        
+                Audiostream.Volume(CARMA_OPP_REPAIR_SOUND) = $SOUNDS_VOLUME        
+                Audiostream.Loop(CARMA_OPP_REPAIR_SOUND, 0)
+                Audiostream.PerformAction(CARMA_OPP_REPAIR_SOUND, PLAY)
+                end
+                    
+                0@ += 90
+                
+                if
+                0@ > 1000
+                then
+                0@ = 1000
+                end
+                  
+                Car.Health(DERBY_CAR) = 0@
+                
+                for 1@ = 0 to 10
+                
+                random_int 0@ 0 6
+                if
+                09BB:   car DERBY_CAR has_visible_damage_on_component 0@
+                then
+                068A: set_car DERBY_CAR repair_door 0@
+                end
+                
+                end
+                
+//                if
+//                0E4D: random_percent 25
+//                then
+//                random_int 0@ 0 4
+//                0699: set_car DERBY_CAR repair_tire 0@
+//                end
+                
+                end
+            end
+        end
+    end
+    
+////////////////////////////////////////////////Таймер прямой езды////////////////////////////////////////////////    
+
+if and
+DERBY_CAR_STRAIGHT_DRIVE_TIME > 0
+not CARMA_GLOB_1VS1_MODE == 1
+    then
+    DERBY_CAR_STRAIGHT_DRIVE_TIME += 1
+    02E3: 1@ = car DERBY_CAR speed
+    
+    if
+    CARMA_GLOB_RACE_NUMBER == 18
+    then
+    1@ = 28.0
+    end
+    
+    if or
+    001D:   DERBY_CAR_STRAIGHT_DRIVE_TIME > DERBY_CAR_STRAIGHT_DRIVE_TIME2  // (int)
+    1@ < 10.0
+        then
+        00A9: set_car DERBY_CAR to_normal_driver
+        
+        if
+        CARMA_GLOB_FREEROAM_DR == 1
+        then
+//        car.SetDriverBehaviour(DERBY_CAR,1)
+
+        if
+        CARMA_GLOB_FREEROAM_ALT_FLAG == 1
+        then
+        gosub @DERBY_CAR_FREEROAM_ALT_DRIVE_SET
+        else
+        00A8: set_car DERBY_CAR to_psycho_driver
+        end
+        
+        else
+        
+        ///////////////////////////////////////////////////////////////
+
+        if
+        04C8:   actor DERBY_CAR_ACTOR driving_flying_vehicle
+        then
+        
+        if
+        04A9:   actor DERBY_CAR_ACTOR driving_heli
+        then
+        04A2: set_heli DERBY_CAR fly_to $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT] altitude_between 0.0 and $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+        else
+        04D2: set_plane DERBY_CAR fly_autopilot_around_point $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT] altitude_between 0.0 and $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+        end
+        
+        else
+        
+        if and
+        COOP_ACTIVE_FLAG == 1
+        DERBY_SURVIVOR_NUMBER == 0
+        then
+        else
+        0704: car DERBY_CAR drive_to $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+        end
+        
+        end
+        
+        ///////////////////////////////////////////////////////////////
+        
+        end
+        
+        DERBY_CAR_STRAIGHT_DRIVE_TIME = -1
+        end
+    end
+    
+////////////////////////////////////////////////Соперник едет на след. чекпоинт////////////////////////////////////////////////    
+
+if and
+00EC:   actor DERBY_CAR_ACTOR sphere 0 near_point $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] radius 10.0 10.0
+0185:   car DERBY_CAR health > 250
+803A: not  DERBY_CAR_ACTOR == COOP_ACTOR // (int)
+not CARMA_GLOB_1VS1_MODE == 1
+    then
+    
+    DERBY_CAR_CURRENT_CHECKPOINT += 1    
+    
+    actor.StorePos(DERBY_CAR_ACTOR,0@,1@,2@)
+    050A: 3@ = distance_between_XYZ 0@ 1@ 2@ and_XYZ $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+    3@ /= 16.666
+    0092: 3@ = float 3@ to_integer
+    3@ *= 1000
+    005E: DERBY_CAR_TIME_LEFT += 3@  // (int)
+    
+    if and
+    CARMA_GLOB_RACE_NUMBER == 20
+    DERBY_CAR_CURRENT_CHECKPOINT == 2    
+        then
+        DERBY_CAR_CURRENT_CHECKPOINT = 5
+        end        
+    
+    if
+    001F:   DERBY_CAR_CURRENT_CHECKPOINT > CARMA_GLOB_RACE_TOTAL_CHECKPOINTS // (int)
+    then
+    DERBY_CAR_CURRENT_LAP += 1
+    DERBY_CAR_CURRENT_CHECKPOINT = 0
+    DERBY_CAR_STRAIGHT_DRIVE_TIME = -1
+    end
+    
+    008A: DERBY_CAR_CURRENT_CHECKPOINT_GLOB = DERBY_CAR_CURRENT_CHECKPOINT // (int)
+    
+    if and
+    001C:   DERBY_CAR_CURRENT_LAP > CARMA_GLOB_RACE_TOTAL_LAPS // (int)
+    ZOMBIEGEDDON_GAME_TYPE == 1 
+    then
+    ZOMBIEGEDDON_SOME_BOT_FINISHED_FLAG = 1
+    008A: ZOMBIEGEDDON_SOME_BOT_FINISHED_NUMBER = DERBY_SURVIVOR_NUMBER // (int)
+    
+    32@ = 0
+    
+    while 32@ < 6000
+    wait 0
+    end
+    
+    070C: explode_car_without_radius_damage DERBY_CAR
+    
+    end
+    
+    if and
+    DERBY_CAR_CURRENT_ACTION == 0
+    0185:   car DERBY_CAR health > 250
+    then
+    
+    00A9: set_car DERBY_CAR to_normal_driver    
+    1@ = 0
+    
+    if and
+    CARMA_GLOB_RACE_NUMBER == 14
+    ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+    DERBY_CAR_CURRENT_CHECKPOINT > 8
+    DERBY_CAR_CURRENT_CHECKPOINT < 11    
+    then
+    1@ = 2
+    DERBY_CAR_STRAIGHT_DRIVE_TIME2 = 10
+    end
+    
+    if and
+    CARMA_GLOB_RACE_NUMBER == 15
+    ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+    DERBY_CAR_CURRENT_CHECKPOINT == 14        
+    then
+    1@ = 2
+    DERBY_CAR_STRAIGHT_DRIVE_TIME2 = 28000
+    end
+    
+    if and
+    CARMA_GLOB_RACE_NUMBER == 18
+    ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+    DERBY_CAR_CURRENT_CHECKPOINT >= 6
+    DERBY_CAR_CURRENT_CHECKPOINT < 9        
+    then
+    1@ = 2
+    DERBY_CAR_STRAIGHT_DRIVE_TIME2 = 28000
+    end
+    
+    if and
+    CARMA_GLOB_RACE_NUMBER == 20
+    ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+    DERBY_CAR_CURRENT_CHECKPOINT >= 0
+    DERBY_CAR_CURRENT_CHECKPOINT < 2        
+    then
+    1@ = 2
+    DERBY_CAR_STRAIGHT_DRIVE_TIME2 = 28000
+    end
+    
+    if and
+    CARMA_GLOB_RACE_NUMBER == 26
+    ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+    DERBY_CAR_CURRENT_CHECKPOINT >= 10        
+    then
+    1@ = 2
+    DERBY_CAR_STRAIGHT_DRIVE_TIME2 = 28000
+    end
+    
+    if and
+    CARMA_GLOB_RACE_NUMBER == 27
+    ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+    DERBY_CAR_CURRENT_CHECKPOINT == 1        
+    then
+    1@ = 2
+    DERBY_CAR_STRAIGHT_DRIVE_TIME2 = 28000
+    end
+    
+    if and
+    CARMA_GLOB_RACE_NUMBER == 27
+    ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+    DERBY_CAR_CURRENT_CHECKPOINT == 2        
+    then
+    1@ = 2
+    DERBY_CAR_STRAIGHT_DRIVE_TIME2 = 28000
+    end
+    
+    if and
+    CARMA_GLOB_RACE_NUMBER == 29
+    ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+    DERBY_CAR_CURRENT_CHECKPOINT == 6        
+    then
+    1@ = 2
+    DERBY_CAR_STRAIGHT_DRIVE_TIME2 = 28000
+    end
+    
+    if and
+    CARMA_GLOB_RACE_NUMBER == 30
+    ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+    DERBY_CAR_CURRENT_CHECKPOINT == 5        
+    then
+    1@ = 2
+    DERBY_CAR_STRAIGHT_DRIVE_TIME2 = 28000
+    end
+    
+    if and
+    CARMA_GLOB_RACE_NUMBER == 18
+    ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 0
+    DERBY_CAR_CURRENT_CHECKPOINT == 1        
+    then
+    1@ = 2
+    DERBY_CAR_STRAIGHT_DRIVE_TIME2 = 28000
+    end        
+    
+    if
+    1@ == 2
+        then
+        
+        if and
+        CARMA_GLOB_RACE_NUMBER == 14
+        DERBY_CAR_STRAIGHT_DRIVE_TIME < 0
+        then
+        car.setanimation(DERBY_CAR,9,350)
+        end
+        
+        if and
+        CARMA_GLOB_RACE_NUMBER == 15
+        DERBY_CAR_STRAIGHT_DRIVE_TIME < 0
+        then        
+        05D6: clear_scmpath
+        05D7: add_point_to_scmpath -1163.6155 -152.5567 24.0647
+        06BB: set_actor DERBY_CAR_ACTOR drive_car DERBY_CAR speed 100.0 along_SCM_path
+        02E3: 1@ = car DERBY_CAR speed
+        1@ += 50.0
+        if
+        1@ > 100.0
+        then
+        1@ = 100.0
+        end
+        
+        car.Angle(DERBY_CAR) = 138.9858
+        car.SetSpeedInstantly(DERBY_CAR,1@)
+        
+        end
+        
+        if and
+        CARMA_GLOB_RACE_NUMBER == 18
+        DERBY_CAR_STRAIGHT_DRIVE_TIME < 0
+        ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+        then
+        05D6: clear_scmpath
+        05D7: add_point_to_scmpath -461.1296 400.1488 59.0372
+        05D7: add_point_to_scmpath -494.747 295.538 97.4396
+        05D7: add_point_to_scmpath -533.8149 173.9656 143.8894
+        05D7: add_point_to_scmpath -541.6224 160.7189 149.545
+        05D7: add_point_to_scmpath -552.445 163.713 149.366
+        06BB: set_actor DERBY_CAR_ACTOR drive_car DERBY_CAR speed 100.0 along_SCM_path
+        end
+        
+        if and
+        CARMA_GLOB_RACE_NUMBER == 20
+        DERBY_CAR_STRAIGHT_DRIVE_TIME < 0
+        ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+        then
+        05D6: clear_scmpath
+        05D7: add_point_to_scmpath -529.2872 -114.4862 27.751
+        05D7: add_point_to_scmpath -582.62 -187.493 27.1111
+        06BB: set_actor DERBY_CAR_ACTOR drive_car DERBY_CAR speed 100.0 along_SCM_path
+        end
+        
+        if and
+        CARMA_GLOB_RACE_NUMBER == 26
+        DERBY_CAR_STRAIGHT_DRIVE_TIME < 0
+        ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+        then
+        05D6: clear_scmpath
+        05D7: add_point_to_scmpath 499.6615 -3010.218 1.9062
+        05D7: add_point_to_scmpath 554.7613 -3003.8779 1.9062
+        05D7: add_point_to_scmpath 604.9861 -2913.3198 1.9062
+        05D7: add_point_to_scmpath 576.0172 -2858.8005 1.8125
+        05D7: add_point_to_scmpath 584.9783 -2854.3467 1.8125
+        06BB: set_actor DERBY_CAR_ACTOR drive_car DERBY_CAR speed 100.0 along_SCM_path
+        end
+        
+        if and
+        CARMA_GLOB_RACE_NUMBER == 27
+        DERBY_CAR_CURRENT_CHECKPOINT == 1
+        DERBY_CAR_STRAIGHT_DRIVE_TIME < 0
+        ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+        then
+        05D6: clear_scmpath
+        05D7: add_point_to_scmpath -2147.0837 858.64 4.9307
+        06BB: set_actor DERBY_CAR_ACTOR drive_car DERBY_CAR speed 100.0 along_SCM_path
+        end
+        
+        if and
+        CARMA_GLOB_RACE_NUMBER == 27
+        DERBY_CAR_CURRENT_CHECKPOINT == 2
+        ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+        then
+        05D6: clear_scmpath
+        05D7: add_point_to_scmpath -2099.8625 814.8875 6.529
+        05D7: add_point_to_scmpath -2074.5347 767.5755 10.881
+        05D7: add_point_to_scmpath -2030.9851 620.7859 17.0885
+        06BB: set_actor DERBY_CAR_ACTOR drive_car DERBY_CAR speed 100.0 along_SCM_path
+        end
+        
+        if and
+        CARMA_GLOB_RACE_NUMBER == 29
+        ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+        then
+        05D6: clear_scmpath
+        05D7: add_point_to_scmpath 422.6584 -944.3527 7.9346
+        05D7: add_point_to_scmpath 431.8856 -1172.9822 7.9279
+        05D7: add_point_to_scmpath 326.3026 -1778.1682 9.1496
+        06BB: set_actor DERBY_CAR_ACTOR drive_car DERBY_CAR speed 100.0 along_SCM_path
+        end
+        
+        if and
+        CARMA_GLOB_RACE_NUMBER == 30
+        ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+        then
+        05D6: clear_scmpath
+        05D7: add_point_to_scmpath -1908.5262 870.69 9.5484
+        05D7: add_point_to_scmpath -1901.7023 757.2783 10.685
+        06BB: set_actor DERBY_CAR_ACTOR drive_car DERBY_CAR speed 100.0 along_SCM_path
+        end
+        
+        if and
+        CARMA_GLOB_RACE_NUMBER == 18
+        ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 0
+        then
+        05D6: clear_scmpath
+        05D7: add_point_to_scmpath -2741.8103 -436.5627 6.7838
+        05D7: add_point_to_scmpath -2700.7437 -402.207 7.4223
+        05D7: add_point_to_scmpath -2660.9368 -375.9253 10.1493
+        05D7: add_point_to_scmpath -2593.3059 -351.0956 19.8287        
+        05D7: add_point_to_scmpath -2452.896 -339.3307 33.3228
+        05D7: add_point_to_scmpath -2296.0623 -346.4293 39.421
+        05D7: add_point_to_scmpath -2163.6699 -347.7101 34.8229
+        05D7: add_point_to_scmpath -2027.5647 -321.9769 34.8313
+        06BB: set_actor DERBY_CAR_ACTOR drive_car DERBY_CAR speed 100.0 along_SCM_path
+        end                
+            
+        DERBY_CAR_STRAIGHT_DRIVE_TIME = 1
+    
+        else
+        
+        if
+        CARMA_GLOB_FREEROAM_DR == 1
+        then
+//        car.SetDriverBehaviour(DERBY_CAR,1)
+
+        if
+        CARMA_GLOB_FREEROAM_ALT_FLAG == 1
+        then
+        gosub @DERBY_CAR_FREEROAM_ALT_DRIVE_SET
+        else
+        00A8: set_car DERBY_CAR to_psycho_driver
+        end
+        
+        else
+                                        
+        ///////////////////////////////////////////////////////////////
+
+        if
+        04C8:   actor DERBY_CAR_ACTOR driving_flying_vehicle
+        then
+        
+        if
+        04A9:   actor DERBY_CAR_ACTOR driving_heli
+        then
+        04A2: set_heli DERBY_CAR fly_to $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT] altitude_between 0.0 and $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+        else
+        04D2: set_plane DERBY_CAR fly_autopilot_around_point $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT] altitude_between 0.0 and $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+        end
+        
+        else
+        
+        if and
+        COOP_ACTIVE_FLAG == 1
+        DERBY_SURVIVOR_NUMBER == 0
+        then
+        else
+        0704: car DERBY_CAR drive_to $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+        end
+        
+        end
+        
+        ///////////////////////////////////////////////////////////////
+                
+        end
+        
+        DERBY_CAR_STRAIGHT_DRIVE_TIME = -1
+        end
+    
+    end
+         
+    end
+    
+////////////////////////////////////////////////Соперник едет на след. чекпоинт (2P)////////////////////////////////////////////////    
+
+if and
+00EC:   actor DERBY_CAR_ACTOR sphere 0 near_point $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] radius 10.0 10.0
+0185:   car DERBY_CAR health > 250
+003A:   DERBY_CAR_ACTOR == COOP_ACTOR // (int)
+not CARMA_GLOB_1VS1_MODE == 1
+    then
+    
+    if
+    003A:   DERBY_CAR_ACTOR == COOP_ACTOR // (int)
+    then
+    marker.Disable($MISSION_CHECKPOINT)
+    $MISSION_CHECKPOINT = 0
+    06D6: disable_racing_checkpoint $MISSION_MARKER
+    end
+    
+    DERBY_CAR_CURRENT_CHECKPOINT += 1    
+    
+    actor.StorePos(DERBY_CAR_ACTOR,0@,1@,2@)
+    050A: 3@ = distance_between_XYZ 0@ 1@ 2@ and_XYZ $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+    3@ /= 16.666
+    0092: 3@ = float 3@ to_integer
+    3@ *= 1000
+    005E: DERBY_CAR_TIME_LEFT += 3@  // (int)          
+    
+    if
+    001F:   DERBY_CAR_CURRENT_CHECKPOINT > CARMA_GLOB_RACE_TOTAL_CHECKPOINTS // (int)
+    then
+    DERBY_CAR_CURRENT_LAP += 1
+    DERBY_CAR_CURRENT_CHECKPOINT = 0
+    DERBY_CAR_STRAIGHT_DRIVE_TIME = -1
+    end
+    
+    if
+    003A:   DERBY_CAR_ACTOR == COOP_ACTOR // (int)
+    then
+    0085: 0@ = DERBY_CAR_CURRENT_CHECKPOINT // (int)
+    0@ += 1
+    018A: $MISSION_CHECKPOINT = create_checkpoint_at $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT] 
+    06D5: $MISSION_MARKER = create_racing_checkpoint_at $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT] point_to $RNDM_HOUSE_ITEM_X[0@] $RNDM_HOUSE_ITEM_Y[0@] $RNDM_HOUSE_ITEM_Z[0@] type 0 radius 6.0
+    end
+    
+    008A: DERBY_CAR_CURRENT_CHECKPOINT_GLOB = DERBY_CAR_CURRENT_CHECKPOINT // (int)
+    
+    if and
+    001C:   DERBY_CAR_CURRENT_LAP > CARMA_GLOB_RACE_TOTAL_LAPS // (int)
+    ZOMBIEGEDDON_GAME_TYPE == 1 
+    then
+    ZOMBIEGEDDON_SOME_BOT_FINISHED_FLAG = 1
+    008A: ZOMBIEGEDDON_SOME_BOT_FINISHED_NUMBER = DERBY_SURVIVOR_NUMBER // (int)
+    
+    32@ = 0
+    
+    while 32@ < 6000
+    wait 0
+    end
+    
+    070C: explode_car_without_radius_damage DERBY_CAR
+    
+    end
+    
+    if and
+    DERBY_CAR_CURRENT_ACTION == 0
+    0185:   car DERBY_CAR health > 250
+    then       
+    1@ = 0               
+    if
+    1@ == 2
+        then        
+        //ass    
+        else
+        
+        if
+        CARMA_GLOB_FREEROAM_DR == 1
+        then
+//        car.SetDriverBehaviour(DERBY_CAR,1)
+
+        if
+        CARMA_GLOB_FREEROAM_ALT_FLAG == 1
+        then
+        gosub @DERBY_CAR_FREEROAM_ALT_DRIVE_SET
+        else
+        00A8: set_car DERBY_CAR to_psycho_driver
+        end
+        
+        else
+                                        
+        ///////////////////////////////////////////////////////////////
+
+        if
+        04C8:   actor DERBY_CAR_ACTOR driving_flying_vehicle
+        then
+        
+        if
+        04A9:   actor DERBY_CAR_ACTOR driving_heli
+        then
+        04A2: set_heli DERBY_CAR fly_to $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT] altitude_between 0.0 and $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+        else
+        04D2: set_plane DERBY_CAR fly_autopilot_around_point $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT] altitude_between 0.0 and $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+        end
+        
+        else
+        
+        if and
+        COOP_ACTIVE_FLAG == 1
+        DERBY_SURVIVOR_NUMBER == 0
+        then
+        else
+        0704: car DERBY_CAR drive_to $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+        end
+        
+        end
+        
+        ///////////////////////////////////////////////////////////////
+                
+        end
+        
+        DERBY_CAR_STRAIGHT_DRIVE_TIME = -1
+        end
+    
+    end
+         
+    end                  
+    
+////////////////////////////////////////////////Соперник меняет свое действие////////////////////////////////////////////////    
+
+if and
+DERBY_CAR_REPEAT_CURRENT_ACTION_TIMER > DERBY_CAR_REPEAT_CURRENT_ACTION_TIMER2
+0185:   car DERBY_CAR health > 250
+84C8: not  actor DERBY_CAR_ACTOR driving_flying_vehicle
+    then
+    if    
+    DERBY_CAR_CURRENT_ACTION == 1        
+        then
+        DERBY_CAR_REPEAT_CURRENT_ACTION_TIMER = 0        
+            
+        //////////////////////////////////////////////////
+                                
+        if and
+        0185:   car DERBY_CAR health > 250
+        056D:   actor DERBY_CAR_TARGET_ACTOR defined
+        DERBY_CAR_TARGET_FOUND == 1        
+            then            
+            if
+            actor.Driving(DERBY_CAR_TARGET_ACTOR)
+                then                
+                DERBY_CAR_TARGET_CAR = actor.CurrentCar(DERBY_CAR_TARGET_ACTOR)                
+                if and
+                056E:   car DERBY_CAR_TARGET_CAR defined
+                0185:   car DERBY_CAR health > 250
+                    then                    
+                    if
+                    0185:   car DERBY_CAR_TARGET_CAR health >= 251
+                        then
+                        
+                        if
+                        CARMA_GLOB_FREEROAM_DR == 1
+                        then
+                        car.SetDriverBehaviour(DERBY_CAR,0)
+                        end
+                                                                                
+                        00A9: set_car DERBY_CAR to_normal_driver                                                                                                                                
+                        07F8: car DERBY_CAR follow_car DERBY_CAR_TARGET_CAR radius 0.01                        
+                        gosub @DERBY_CAR_ABANDON_RADIUS_SETTINGS                                                                                                                                                                                                                                                                       
+                        end                
+                    end            
+                end
+            end                                
+            
+        //////////////////////////////////////////////////                
+            
+        else                
+                
+        DERBY_CAR_REPEAT_CURRENT_ACTION_TIMER = 0
+        00A9: set_car DERBY_CAR to_normal_driver
+        
+        if
+        CARMA_GLOB_FREEROAM_DR == 1
+        then
+//        car.SetDriverBehaviour(DERBY_CAR,1)
+
+        if
+        CARMA_GLOB_FREEROAM_ALT_FLAG == 1
+        then
+        gosub @DERBY_CAR_FREEROAM_ALT_DRIVE_SET
+        else
+        00A8: set_car DERBY_CAR to_psycho_driver
+        end
+        
+        else
+        
+        ///////////////////////////////////////////////////////////////
+
+        if
+        04C8:   actor DERBY_CAR_ACTOR driving_flying_vehicle
+        then
+        
+        if
+        04A9:   actor DERBY_CAR_ACTOR driving_heli
+        then
+        04A2: set_heli DERBY_CAR fly_to $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT] altitude_between 0.0 and $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+        else
+        04D2: set_plane DERBY_CAR fly_autopilot_around_point $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT] altitude_between 0.0 and $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+        end
+        
+        else
+        
+        if and
+        COOP_ACTIVE_FLAG == 1
+        DERBY_SURVIVOR_NUMBER == 0
+        then
+        else
+        0704: car DERBY_CAR drive_to $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+        end
+        
+        end
+        
+        ///////////////////////////////////////////////////////////////
+        
+        end
+        
+        if and
+        CARMA_GLOB_RACE_NUMBER == 20
+        ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+        then
+        04E0: car DERBY_CAR abandon_path_radius 300
+        end        
+                
+        end
+    end        
+
+return
+
+:DISTANCE_CALCULATE
+
+008B: 3@ = CARMA_GLOB_OPPONENTS_COUNT2 // (int)
+0064: 3@ -= CARMA_GLOB_OPPONENTS_WRECKED  // (int)
+
+////////////////////////////////////////////////////////////////////////////
+
+for 2@ = 0 to CARMA_GLOB_OPPONENTS_COUNT
+
+if and
+056E:   car $PARK_CAR[2@] defined
+803B: not  2@ == DERBY_SURVIVOR_NUMBER  // (int)
+    then
+    
+    if
+    not car.Wrecked($PARK_CAR[2@])
+        then
+        
+        /////////////////////////////////////////////////////////////////////////////
+        
+        if
+        001C:   DERBY_CAR_CURRENT_LAP > $PARK_CAR_H_MAX[2@] // (int)
+            then
+            3@ -= 1
+            else
+                
+            /////////////////////
+                
+            if
+            003A:   DERBY_CAR_CURRENT_LAP == $PARK_CAR_H_MAX[2@] // (int)
+                then                    
+                if
+                001F:   DERBY_CAR_CURRENT_CHECKPOINT_GLOB > $PARK_CAR_H_MIN[2@] // (int)
+                    then
+                    3@ -= 1
+                    else
+                        
+                    if
+                    003A:   DERBY_CAR_CURRENT_CHECKPOINT_GLOB == $PARK_CAR_H_MIN[2@] // (int)
+                    then
+                    
+                    car.StorePos(DERBY_CAR,4@,9@,6@)
+                    050A: 7@ = distance_between_XYZ 4@ 9@ 6@ and_XYZ $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+                    car.StorePos($PARK_CAR[2@],4@,9@,6@)
+                    050A: 8@ = distance_between_XYZ 4@ 9@ 6@ and_XYZ $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Z[DERBY_CAR_CURRENT_CHECKPOINT]
+                        
+                    if
+                    0025:   8@ > 7@  // (float)
+                        then
+                        3@ -= 1
+                        end
+                        
+                    end
+                        
+                    end                                        
+                end
+                    
+            /////////////////////
+                
+            end
+            
+        /////////////////////////////////////////////////////////////////////////////    
+            
+        end
+    
+    end    
+
+end
+
+////////////////////////////////////////////////////////////////////////////
+
+if
+$SPECTATING_FLAG == 0
+    then
+
+        if
+        001C:  DERBY_CAR_CURRENT_LAP > LAP_NUMBER // (int)
+            then
+            3@ -= 1
+            else
+                
+            /////////////////////
+                
+            if
+            003A:   DERBY_CAR_CURRENT_LAP == LAP_NUMBER // (int)
+                then                    
+                if
+                001F:   DERBY_CAR_CURRENT_CHECKPOINT_GLOB > CARMA_GLOB_PLAYER_CHECKPOINT_NUMBER // (int)
+                    then
+                    3@ -= 1
+                    else
+                        
+                    if
+                    003A:   DERBY_CAR_CURRENT_CHECKPOINT_GLOB == CARMA_GLOB_PLAYER_CHECKPOINT_NUMBER // (int)
+                    then
+                    
+                    car.StorePos(DERBY_CAR,4@,9@,6@)
+                    050A: 7@ = distance_between_XYZ 4@ 9@ 6@ and_XYZ $RNDM_HOUSE_ITEM_X[CARMA_GLOB_PLAYER_CHECKPOINT_NUMBER] $RNDM_HOUSE_ITEM_Y[CARMA_GLOB_PLAYER_CHECKPOINT_NUMBER] $RNDM_HOUSE_ITEM_Z[CARMA_GLOB_PLAYER_CHECKPOINT_NUMBER]
+                    car.StorePos(CARMA_GLOB_DERBY_PLAYER_CAR,4@,9@,6@)
+                    050A: 8@ = distance_between_XYZ 4@ 9@ 6@ and_XYZ $RNDM_HOUSE_ITEM_X[CARMA_GLOB_PLAYER_CHECKPOINT_NUMBER] $RNDM_HOUSE_ITEM_Y[CARMA_GLOB_PLAYER_CHECKPOINT_NUMBER] $RNDM_HOUSE_ITEM_Z[CARMA_GLOB_PLAYER_CHECKPOINT_NUMBER]
+                        
+                    if
+                    0025:   8@ > 7@  // (float)
+                        then
+                        3@ -= 1
+                        end
+                        
+                    end
+                        
+                    end                                        
+                end
+                    
+//////////////////////////////////////////
+                
+            end
+            
+    end
+
+if
+$SPECTATING_FLAG == 1
+then
+3@ -= 1
+end
+
+0085: DERBY_CAR_POSITION = 3@ // (int)
+008B: 8@ = $PARK_CAR_DOORS[DERBY_SURVIVOR_NUMBER] // (int)
+0084: $VERSUS_PEOPLE[8@] = $PARK_CAR[DERBY_SURVIVOR_NUMBER] // (int)
+
+return
+
+:DERBY_CAR_ACTOR_CHECKING_MODEL
+wait 0   
+
+//////////////////////////////////////////////////
+    
+random_int 0@ = MIN_SKIN_GEN MAX_SKIN_GEN
+if and
+0@ == SKIN_GEN_SET
+UNITED_MAP == 0
+$GAMEMODE_WAR == 0
+$SAME_PLAYER_CHEAT_SPAWN == 0
+    then
+    
+    while true
+    wait 0
+    
+    if
+    0E4D: random_percent NEWSKINS2_GEN_PERCENT
+    then
+    random_int 0@ $MIN_SKIN2 $MAX_SKIN2
+    else
+    random_int 0@ $MIN_SKIN $MAX_SKIN
+    end
+    
+    if
+    not model.Available(0@)
+    then
+    model.Load(0@)
+    end
+    
+    if
+    003C:   $RANDOM_MODE_MODEL == 0@  // (int)
+        then
+        else   
+        break
+        end
+    
+    end
+    
+    return
+    end
+    
+//////////////////////////////////////////////////    
+
+if
+UNITED_MAP == 0
+then
+
+if
+$GAMEMODE_WAR == 0
+then
+0209: 0@ = random_int_in_ranges 7 285
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+
+//////////////////////////////////////////////
+
+if and
+8583: not  player PLAYER_CHAR in_zone 'VE'
+8583: not  player PLAYER_CHAR in_zone 'BONE'
+8583: not  player PLAYER_CHAR in_zone 'ROBAD'
+8583: not  player PLAYER_CHAR in_zone 'ROBAD1'
+then
+1@ = 0
+else
+1@ = 1
+end
+
+if
+1@ == 0
+then
+
+0842: 2@ = player PLAYER_CHAR town_number
+
+if
+not 2@ == 0
+then
+0209: 0@ = random_int_in_ranges 14976 14980
+else
+0209: 0@ = random_int_in_ranges 14980 14984
+end
+
+else
+0209: 0@ = random_int_in_ranges 15000 15004
+end
+
+/////////////////////////////////////////////
+
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+0209: 0@ = random_int_in_ranges 14990 14998
+end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+then
+0209: 0@ = random_int_in_ranges 14985 14989
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+0209: 0@ = random_int_in_ranges #SWAT #SWAT
+end
+
+end
+
+else
+
+if
+$UNITED_VC_FLAG == 1
+then
+
+if
+$GAMEMODE_WAR == 0
+then
+
+if
+STORIES_MAP == 0
+then
+0209: 0@ = random_int_in_ranges MINID_VC_SKIN MAXID_VC_SKIN
+else
+0209: 0@ = random_int_in_ranges MINID_VCS_SKIN MAXID_VCS_SKIN
+end
+
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+0084: $VC_ARMY_SKIN22 = $VC_ARMY_SKIN2 // (int)
+$VC_ARMY_SKIN22 += 1
+0209: 0@ = random_int_in_ranges $VC_ARMY_SKIN $VC_ARMY_SKIN22
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+0084: $VC_BANDITS_SKIN22 = $VC_BANDITS_SKIN2 // (int)
+$VC_BANDITS_SKIN22 += 1
+0209: 0@ = random_int_in_ranges $VC_BANDITS_SKIN1 $VC_BANDITS_SKIN22
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+0209: 0@ = random_int_in_ranges $VC_SWAT_SKIN $VC_SWAT_SKIN
+end
+
+end
+
+else
+
+if
+$GAMEMODE_WAR == 0
+then
+
+if
+STORIES_MAP == 0
+then
+0209: 0@ = random_int_in_ranges MINID_III_SKIN MAXID_III_SKIN
+else
+0209: 0@ = random_int_in_ranges MINID_LCS_SKIN MAXID_LCS_SKIN
+end
+
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+0209: 0@ = random_int_in_ranges $III_ARMY_SKIN $III_ARMY_SKIN
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+0084: $III_BANDITS_SKIN22 = $III_BANDITS_SKIN2 // (int)
+$III_BANDITS_SKIN22 += 1
+0209: 0@ = random_int_in_ranges $III_BANDITS_SKIN1 $III_BANDITS_SKIN22
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+0209: 0@ = random_int_in_ranges $III_SWAT_SKIN $III_SWAT_SKIN
+end
+
+end
+
+end
+
+end
+
+if
+$GAMEMODE_WAR == 1
+then
+jump to @DERBY_CAR_ACTOR_CHECKING_MODEL2 
+end
+
+if
+003C:   $RANDOM_MODE_MODEL == 0@  // (int)
+jf @DERBY_CAR_ACTOR_CHECKING_MODEL2
+jump @DERBY_CAR_ACTOR_CHECKING_MODEL
+
+:DERBY_CAR_ACTOR_CHECKING_MODEL2
+ 
+if
+07DE:   model 0@ exists  // versionB
+jf @DERBY_CAR_ACTOR_CHECKING_MODEL
+
+if
+$GAMEMODE_WAR == 0
+then
+0AD3: 2@v = format "%d" 0@
+0AF0: 1@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key 2@v
+if
+not 1@ == 1
+jf @DERBY_CAR_ACTOR_CHECKING_MODEL
+end  
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+  
+return
+
+:DERBY_CAR_COORD_SET
+wait 0 
+0208: 9@ = random_float_in_ranges 160.0 -120.0 
+0208: 10@ = random_float_in_ranges -120.0 160.0
+04C4: store_coords_to 6@ 7@ 8@ from_actor PLAYER_ACTOR with_offset 9@ 10@ 0.0 
+02C1: store_to 9@ 10@ 11@ car_path_coords_closest_to 6@ 7@ 8@ 
+Actor.StorePos(PLAYER_ACTOR, 6@, 7@, 8@)
+050A: 0@ = distance_between_XYZ 6@ 7@ 8@ and_XYZ 9@ 10@ 11@ 
+0092: 0@ = float 0@ to_integer  
+if and
+0@ >= 120 
+not 0@ >= 200 
+jf @DERBY_CAR_COORD_SET 
+if and
+8AE2: not 0@ = random_vehicle_near_point 9@ 10@ 11@ in_radius 5.0 find_next 1 pass_wrecked 0 //IF and SET
+8AE1: not 0@ = random_actor_near_point 9@ 10@ 11@ in_radius 5.0 find_next 1 pass_deads 0
+jf @DERBY_CAR_COORD_SET
+return
+
+:DRB_CAR_ANY_ZOMBIE_NEAR_CHECK
+
+0@ = -1
+
+for 1@ = 0 to 19
+
+if
+056D:   actor $ZOMBIE[1@] defined
+    then
+    if and
+    00F2:   actor DERBY_CAR_ACTOR near_actor $ZOMBIE[1@] radius DERBY_CAR_TARGET_FIND_AREA_Z DERBY_CAR_TARGET_FIND_AREA_Z sphere 0    
+    not actor.Dead($ZOMBIE[1@])    
+        then
+        if or
+        0364:   actor DERBY_CAR_ACTOR spotted_actor $ZOMBIE[1@]
+        0364:   actor $ZOMBIE[1@] spotted_actor DERBY_CAR_ACTOR
+            then            
+            0@ = 2            
+            end
+        end
+    end
+
+end
+
+return
+
+:DERBY_CAR_CHECKPOINT_RUSH_PATH_CHECK
+
+if
+CARMA_REPLAY_FLAG == 1
+then
+return
+end
+
+car.StorePos(ZOMBIEGEDDON_PATH_CAR,1@,2@,3@)
+
+if or
+0E45: frame_mod 30
+4@ == 1
+then
+
+if
+not CARMA_GLOB_RACE_STRGHT == 1
+then
+00A9: set_car DERBY_CAR to_normal_driver
+0704: car DERBY_CAR drive_to 1@ 2@ 3@
+04E0: car DERBY_CAR abandon_path_radius 100
+else
+00A9: set_car DERBY_CAR to_normal_driver
+04E0: car DERBY_CAR abandon_path_radius 90000
+00A7: car DERBY_CAR drive_to 1@ 2@ 3@
+00AF: set_car DERBY_CAR driver_behaviour_to 14
+end
+
+end
+
+if and
+860E: not  car DERBY_CAR assigned_to_path
+01AD:   car DERBY_CAR sphere 0 near_point 1@ 2@ radius 5.0 5.0
+then
+
+008B: 0@ = CARMA_GLOB_RACE_NUMBER // (int)
+0@ += 16
+if
+0@ > 73
+then
+0@ += 100
+end
+
+repeat
+wait 0
+07C0: load_path 0@
+until 07C1:   path 0@ available
+
+05EC: release_car DERBY_CAR from_path
+0705: car DERBY_CAR assign_to_path 0@ and_drive_normal
+
+if
+DERBY_CAR_CURRENT_LAP < 2
+then
+if
+DERBY_CAR_NITRO_PATH_BOOST_FLAG < 1.0
+    then        
+    06FD: set_car DERBY_CAR speed_on_path_to CARMA_GLOB_CARREC_PATH_SPEED
+//    0AD1: show_formatted_text_highpriority "Usual path speed set" time 2000
+    else
+    0089: 1@ = CARMA_GLOB_CARREC_PATH_SPEED // (float)
+    0089: 2@ = CARMA_GLOB_CARREC_PATH_SPEED // (float)
+    
+    if
+    CARMA_GLOB_NO_NITRO_FLAG == 1
+    then
+    2@ *= 0.1
+    else
+    2@ *= 0.2
+    end
+    
+    005B: 1@ += 2@  // (float)        
+    06FD: set_car DERBY_CAR speed_on_path_to 1@
+//    0AD1: show_formatted_text_highpriority "Second lap starter boost ON" time 2000
+    end
+end
+
+if or
+DERBY_CAR_CURRENT_LAP > 1
+DERBY_CAR_NITRO_PATH_BOOST_FLAG > 1.0
+then
+0089: 1@ = CARMA_GLOB_CARREC_PATH_SPEED // (float)
+0089: 2@ = CARMA_GLOB_CARREC_PATH_SPEED // (float)
+2@ *= 0.2
+005B: 1@ += 2@  // (float)        
+06FD: set_car DERBY_CAR speed_on_path_to 1@
+//0AD1: show_formatted_text_highpriority "Second lap starter boost ON" time 2000
+end
+
+if
+DERBY_CAR_CURRENT_LAP > 1
+then
+008B: 1@ = CARMA_GLOB_RACE_LENGHT // (int)
+008B: 2@ = CARMA_GLOB_RACE_LENGHT // (int)
+1@ /= 3
+2@ /= 3
+
+1@ /= 2
+random_int DERBY_CAR_GIVE_NITRO_TIMER 1@ 2@
+end
+
+if
+0E4D: random_percent 25
+then
+088B: set_car DERBY_CAR form_drag_multiplier_to 0.1
+0A97: 1@ = car DERBY_CAR struct 
+0A8E: 2@ = 1@ + CAR_ENGINE_POWER_PLUS_STRUCT // int
+0A8C: write_memory 2@ size 4 value 0.15 virtual_protect 1
+else
+088B: set_car DERBY_CAR form_drag_multiplier_to 1.0
+0A97: 1@ = car DERBY_CAR struct 
+0A8E: 2@ = 1@ + CAR_ENGINE_POWER_PLUS_STRUCT // int
+0A8C: write_memory 2@ size 4 value 0.0 virtual_protect 1
+end
+
+end
+
+return
+
+:DERBY_CAR_CHECKPOINT_RUSH_PATH_CHECK2
+
+car.StorePos(ZOMBIEGEDDON_PATH_CAR2,1@,2@,3@)
+
+if or
+0E45: frame_mod 30
+4@ == 1
+then
+
+if
+not CARMA_GLOB_RACE_STRGHT == 1
+then
+00A9: set_car DERBY_CAR to_normal_driver
+0704: car DERBY_CAR drive_to 1@ 2@ 3@
+04E0: car DERBY_CAR abandon_path_radius 100
+else
+00A9: set_car DERBY_CAR to_normal_driver
+04E0: car DERBY_CAR abandon_path_radius 90000
+00A7: car DERBY_CAR drive_to 1@ 2@ 3@
+00AF: set_car DERBY_CAR driver_behaviour_to 14
+end
+
+end
+
+repeat
+wait 0
+until 01AD:   car DERBY_CAR sphere 0 near_point 1@ 2@ radius 5.0 5.0
+
+if and
+860E: not  car DERBY_CAR assigned_to_path
+01AD:   car DERBY_CAR sphere 0 near_point 1@ 2@ radius 5.0 5.0
+then
+
+repeat
+wait 0
+07C0: load_path CARMA_GLOB_TWO_CARRECS
+until 07C1:   path CARMA_GLOB_TWO_CARRECS available
+
+05EC: release_car DERBY_CAR from_path
+0705: car DERBY_CAR assign_to_path CARMA_GLOB_TWO_CARRECS and_drive_normal
+06FD: set_car DERBY_CAR speed_on_path_to CARMA_GLOB_CARREC_PATH_SPEED
+
+if
+0E4D: random_percent 25
+then
+088B: set_car DERBY_CAR form_drag_multiplier_to 0.1
+0A97: 1@ = car DERBY_CAR struct 
+0A8E: 2@ = 1@ + CAR_ENGINE_POWER_PLUS_STRUCT // int
+0A8C: write_memory 2@ size 4 value 0.15 virtual_protect 1
+else
+088B: set_car DERBY_CAR form_drag_multiplier_to 1.0
+0A97: 1@ = car DERBY_CAR struct 
+0A8E: 2@ = 1@ + CAR_ENGINE_POWER_PLUS_STRUCT // int
+0A8C: write_memory 2@ size 4 value 0.0 virtual_protect 1
+end
+
+end
+
+return
+
+:DERBY_CAR_ABANDON_RADIUS_SETTINGS
+
+if 
+ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+    then
+    if or
+    CARMA_GLOB_RACE_NUMBER == 31
+    CARMA_GLOB_RACE_NUMBER == 35
+    CARMA_GLOB_RACE_NUMBER == 38
+    CARMA_GLOB_RACE_NUMBER == 41
+        then
+        04E0: car DERBY_CAR abandon_path_radius 8
+        return
+        end
+    end
+
+if
+$ACTIVE_INTERIOR == 0
+then
+
+1@ = 0
+
+if and
+CARMA_GLOB_RACE_NUMBER == 16
+DERBY_CAR_CURRENT_CHECKPOINT == 2
+ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+then
+1@ = 1
+end
+
+if and
+CARMA_GLOB_RACE_NUMBER == 14
+DERBY_CAR_CURRENT_CHECKPOINT >= 4
+DERBY_CAR_CURRENT_CHECKPOINT < 10
+ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+then
+1@ = 2
+end
+
+if and
+CARMA_GLOB_RACE_NUMBER == 15
+DERBY_CAR_CURRENT_CHECKPOINT >= 2
+DERBY_CAR_CURRENT_CHECKPOINT < 3
+ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+then
+1@ = 2
+end
+
+if and
+CARMA_GLOB_RACE_NUMBER == 18
+DERBY_CAR_CURRENT_CHECKPOINT >= 6
+DERBY_CAR_CURRENT_CHECKPOINT < 9
+ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+then
+1@ = 2
+end
+
+if and
+CARMA_GLOB_RACE_NUMBER == 19
+DERBY_CAR_CURRENT_CHECKPOINT >= 10
+DERBY_CAR_CURRENT_CHECKPOINT < 12
+ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+then
+1@ = 2
+end
+
+if and
+CARMA_GLOB_RACE_NUMBER == 20
+DERBY_CAR_CURRENT_CHECKPOINT >= 2
+DERBY_CAR_CURRENT_CHECKPOINT < 23
+ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+then
+1@ = 3
+end
+
+if
+1@ == 1
+then
+04E0: car DERBY_CAR abandon_path_radius 300
+else
+
+if
+1@ == 2
+then
+04E0: car DERBY_CAR abandon_path_radius 600
+else
+
+if
+1@ == 3
+then
+04E0: car DERBY_CAR abandon_path_radius 30
+else
+04E0: car DERBY_CAR abandon_path_radius 150
+end
+
+end
+
+end
+
+else
+04E0: car DERBY_CAR abandon_path_radius 30
+end
+
+return
+
+:DERBY_CAR_AI_DRIVE_TIME_MULT_CHECK
+
+if
+not DERBY_CAR_CURRENT_ACTION == 0
+then
+return
+end
+
+if
+ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+    then    
+    if
+    0AF0: 0@ = get_int_from_ini_file CLASSIC_CARMAGEDDON_RACES_INI_PATH section v$RACE_FILE key "AI_DRIVE_TIME_MULT"
+        then
+        0AF0: 0@ = get_int_from_ini_file CLASSIC_CARMAGEDDON_RACES_INI_PATH section v$RACE_FILE key "AI_DRIVE_TIME_MULT"
+        006A: DERBY_CAR_CURRENT_ACTION_TIMER2 *= 0@  // (int)
+        end    
+    else    
+    if
+    0AF0: 0@ = get_int_from_ini_file "data\derby.ini" section v$RACE_FILE key "AI_DRIVE_TIME_MULT"
+        then
+        0AF0: 0@ = get_int_from_ini_file "data\derby.ini" section v$RACE_FILE key "AI_DRIVE_TIME_MULT"
+        006A: DERBY_CAR_CURRENT_ACTION_TIMER2 *= 0@  // (int)
+        end    
+    end
+    
+return
+
+:DRB_CAR_DO_Z_CALCULATE_AGAIN
+wait 0
+0D3A: get_collision_between_poitns 2@ 3@ 4@ and 9@ 10@ 11@ flags 1 0 0 0 0 0 0 0 ignore_entity 0 store_point_to 25@ 26@ 27@ entity_to 3@ colpoint_data_to 1 // IF and SET
+if
+86BD: not  no_obstacles_between 2@ 3@ 4@ and 9@ 10@ 11@ solid 1 car 0 actor 0 object 0 particle 0
+then
+car.PutAt(DERBY_CAR,25@,26@,27@)
+0840: link_car DERBY_CAR to_interior $ACTIVE_INTERIOR
+return
+else
+11@ += 1.0
+jump to @DRB_CAR_DO_Z_CALCULATE_AGAIN
+end
+
+:DERBY_CAR_SOMEHOW_MAGICALLY_DISSAPEARED
+
+if
+003A:   DERBY_CAR_ACTOR == COOP_ACTOR // (int)
+then
+0EA1: disable_second_player_restore_camera 1
+end
+
+if
+003A:   $SPEC_ACTOR == DERBY_CAR_ACTOR // (int)
+then
+04C4: store_coords_to 1@ 2@ 3@ from_actor PLAYER_ACTOR with_offset 0.0 0.0 50.0
+0362: remove_actor PLAYER_ACTOR from_car_and_place_at 1@ 2@ 3@
+end
+
+CARMA_GLOB_OPPONENTS_WRECKED += 1
+
+if
+DERBY_CAR_DAMAGED_BY_PLAYER_TIMER > 0
+then
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ZOMBIGEDDON_OPPWRECKED"
+    
+if
+$CHEATED_FLAG == 0 
+then   
+0@ += 1
+end
+
+CARMA_GLOB_OPPONENTS_WRECKED_BY_PLAYER += 1
+CARMA_GLOB_DERBY_CREDITS += 8000
+CARMA_GLOB_TIME_VAR += 60000
+ 
+0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "ZOMBIGEDDON_OPPWRECKED"
+
+0AF0: 2@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT134_GOT"
+if and
+2@ == 0
+0@ >= 500
+$CHEATED_FLAG == 0
+    then    
+    v$ACHIEVEMNT = "ACH134"
+    $ACHIEVEMENT_GOT_FLAG = 1    
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT134_GOT"
+    end
+
+end
+
+v$2NAME3 = "CRM68"
+
+if or
+ZOMBIEGEDDON_GAME_TYPE == 1
+ZOMBIEGEDDON_GAME_TYPE == 2
+then
+
+if
+DERBY_CAR_TIME_LEFT < 0
+then
+create_thread @CRMTT21
+else
+create_thread @CRMTXT2
+end
+
+else
+create_thread @CRMTXT2
+end 
+
+if
+075C:   marker DERBY_CAR_MARKER enabled
+then
+marker.Disable(DERBY_CAR_MARKER)
+DERBY_CAR_MARKER = 0
+end
+
+while true
+wait 0
+end
+
+end_thread     
+
+:DRB_CAR_NUM_GET
+
+if
+DERBY_SURVIVOR_NUMBER == 1
+then
+thread 'DR_CAR1'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 2
+then
+thread 'DR_CAR2'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 3
+then
+thread 'DR_CAR3'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 4
+then
+thread 'DR_CAR4'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 5
+then
+thread 'DR_CAR5'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 6
+then
+thread 'DR_CAR6'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 7
+then
+thread 'DR_CAR7'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 8
+then
+thread 'DR_CAR8'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 9
+then
+thread 'DR_CAR9'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 10
+then
+thread 'DR_CA10'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 11
+then
+thread 'DR_CA11'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 12
+then
+thread 'DR_CA12'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 13
+then
+thread 'DR_CA13'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 14
+then
+thread 'DR_CA14'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 15
+then
+thread 'DR_CA15'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 16
+then
+thread 'DR_CA16'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 17
+then
+thread 'DR_CA17'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 18
+then
+thread 'DR_CA18'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 19
+then
+thread 'DR_CA19'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 20
+then
+thread 'DR_CA20'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 21
+then
+thread 'DR_CA21'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 22
+then
+thread 'DR_CA22'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 23
+then
+thread 'DR_CA23'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 24
+then
+thread 'DR_CA24'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 25
+then
+thread 'DR_CA25'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 26
+then
+thread 'DR_CA26'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 27
+then
+thread 'DR_CA27'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 28
+then
+thread 'DR_CA28'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 29
+then
+thread 'DR_CA29'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 30
+then
+thread 'DR_CA30'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 31
+then
+thread 'DR_CA31'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 32
+then
+thread 'DR_CA32'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 33
+then
+thread 'DR_CA33'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 34
+then
+thread 'DR_CA34'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 35
+then
+thread 'DR_CA35'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 36
+then
+thread 'DR_CA36'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 37
+then
+thread 'DR_CA37'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 38
+then
+thread 'DR_CA38'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 39
+then
+thread 'DR_CA39'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 40
+then
+thread 'DR_CA40'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 41
+then
+thread 'DR_CA41'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 42
+then
+thread 'DR_CA42'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 43
+then
+thread 'DR_CA43'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 44
+then
+thread 'DR_CA44'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 45
+then
+thread 'DR_CA45'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 46
+then
+thread 'DR_CA46'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 47
+then
+thread 'DR_CA47'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 48
+then
+thread 'DR_CA48'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 49
+then
+thread 'DR_CA49'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 50
+then
+thread 'DR_CA50'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 51
+then
+thread 'DR_CA51'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 52
+then
+thread 'DR_CA52'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 53
+then
+thread 'DR_CA53'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 54
+then
+thread 'DR_CA54'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 55
+then
+thread 'DR_CA55'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 56
+then
+thread 'DR_CA56'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 57
+then
+thread 'DR_CA57'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 58
+then
+thread 'DR_CA58'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 59
+then
+thread 'DR_CA59'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 60
+then
+thread 'DR_CA60'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 61
+then
+thread 'DR_CA61'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 62
+then
+thread 'DR_CA62'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 63
+then
+thread 'DR_CA63'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 64
+then
+thread 'DR_CA64'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 65
+then
+thread 'DR_CA65'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 66
+then
+thread 'DR_CA66'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 67
+then
+thread 'DR_CA67'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 68
+then
+thread 'DR_CA68'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 69
+then
+thread 'DR_CA69'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 70
+then
+thread 'DR_CA70'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 71
+then
+thread 'DR_CA71'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 72
+then
+thread 'DR_CA72'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 73
+then
+thread 'DR_CA73'
+end
+
+if
+DERBY_SURVIVOR_NUMBER == 74
+then
+thread 'DR_CA74'
+end
+
+return

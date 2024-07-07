@@ -1,0 +1,346 @@
+const
+CARREC_REC_INTERVAL_MS = 225
+CARREC_RECORD_STATE = 0@
+CARREC_RECORD_INTERVAL = 32@
+CARREC_KEY_RELEASE_TIMER = 33@
+CARREC_IS_FILE_OPEN = 1@
+CARREC_hFILE = 2@
+CARREC_TIMING = 4@
+CARREC_TOTAL_TIME = 5@
+CARREC_TARGET_VEHICLE = 6@
+CARREC_REC_FLAG = 7@
+CARREC_TARGET_ACTOR = 8@
+CARREC_REC_NUM = 9@     
+end
+
+const
+DERBY_REPLAY_NUM = 14@
+DERBY_REPLAY_ACTOR_MODEL = 15@
+DERBY_REPLAY_CAR_MODEL = 16@
+DERBY_REPLAY_COLOR1_NUM = 17@
+DERBY_REPLAY_COLOR2_NUM = 18@
+end
+
+:DRB_REC
+thread 'DRB_REC'
+
+if or
+CARMA_REPLAY_FLAG == 1
+not ZOMBIEGEDDON_GAME_TYPE == 2
+then
+end_thread
+end
+
+CARREC_RECORD_STATE = FALSE
+CARREC_KEY_RELEASE_TIMER = 500
+CARREC_IS_FILE_OPEN = FALSE 
+CARREC_REC_FLAG = 1
+
+0AF0: DERBY_REPLAY_NUM = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "DRA"
+if or
+DERBY_REPLAY_NUM > 7
+DERBY_REPLAY_NUM < 0
+then
+DERBY_REPLAY_NUM = 0
+0AF1: write_int DERBY_REPLAY_NUM to_ini_file "saves\ZACM.set" section "SCR" key "DRA"
+end
+
+repeat
+wait 0
+
+///////////////////////////////////////////////
+
+if
+CARREC_REC_NUM == 9
+then
+008B: CARREC_TARGET_ACTOR = PLAYER_ACTOR // (int)
+else
+008B: CARREC_TARGET_ACTOR = $PARK_CAR_DAMAGED[CARREC_REC_NUM] // (int)
+end
+
+///////////////////////////////////////////////
+
+if and
+CARMA_GLOB_RACE_STARTED == 1
+056D:   actor CARREC_TARGET_ACTOR defined
+    then
+    break
+    end
+
+until false
+
+if and
+not CARREC_REC_NUM == 9
+DERBY_FALSESTART_FLAG == 1
+then
+wait 500
+end
+
+0AD3: 10@v = format "za\DB\%d\%d.rrr" DERBY_REPLAY_NUM CARREC_REC_NUM
+
+///////////////////////////////////////////////
+            
+while true
+    wait 0
+    
+    ////////////////////////////////
+    
+    if or
+    CLASSIC_MUSIC == 2
+    actor.Dead(CARREC_TARGET_ACTOR)
+        then
+        CARREC_REC_FLAG = 1        
+        end
+    
+    ////////////////////////////////
+    
+    gosub @ToggleRecordState 
+    if
+        CARREC_RECORD_STATE == True
+    then
+        if
+            CARREC_IS_FILE_OPEN == FALSE
+        then
+           gosub @OpenR3File
+           CARREC_RECORD_INTERVAL = 0
+           CARREC_TOTAL_TIME = 0
+           CARREC_TIMING = 0          
+        end
+        gosub @processRecord 
+    else
+        if
+            CARREC_IS_FILE_OPEN == TRUE
+        then
+           gosub @CloseR3File           
+        end           
+    end    
+end
+
+:ToggleRecordState
+if
+    056D:   actor CARREC_TARGET_ACTOR defined
+then
+    if
+        00DF:   actor CARREC_TARGET_ACTOR driving
+    then
+        if
+        CARREC_REC_FLAG == 1                
+        then
+        CARREC_REC_FLAG = 0
+            if
+                CARREC_RECORD_STATE == TRUE
+            then
+                CARREC_RECORD_STATE = FALSE
+                CARREC_IS_FILE_OPEN = TRUE // close file
+//                03E5: show_text_box 'CARREC2' // Car record OFF
+                gosub @WriteDDD
+                end_thread               
+            else
+                CARREC_RECORD_STATE = TRUE
+                CARREC_IS_FILE_OPEN = FALSE // open file                
+//                03E5: show_text_box 'CARREC1' // Car record ON                                                      
+            end
+            CARREC_KEY_RELEASE_TIMER = 0                  
+        end
+        return        
+    end            
+end
+if
+    CARREC_RECORD_STATE == TRUE
+then
+    CARREC_RECORD_STATE = FALSE
+    CARREC_IS_FILE_OPEN = TRUE // close file   
+//    03E5: show_text_box 'CARREC2' // Car record OFF
+    gosub @WriteDDD
+    end_thread     
+end
+return
+
+:OpenR3File
+if
+    0A9A: CARREC_hFILE = openfile 10@v mode 0x6277  // "wb"
+then
+    CARREC_IS_FILE_OPEN = TRUE
+else
+    CARREC_RECORD_STATE = FALSE            
+end    
+return
+
+:CloseR3File
+0A9B: closefile CARREC_hFILE
+CARREC_IS_FILE_OPEN = FALSE
+return
+
+
+:processRecord
+if
+    CARREC_RECORD_STATE == TRUE
+then    
+    if
+        002D:  CARREC_RECORD_INTERVAL >= CARREC_TIMING
+    then
+        CARREC_RECORD_INTERVAL = 0
+        005A: CARREC_TOTAL_TIME += CARREC_TIMING
+        gosub @WriteRRR        
+        // NEXT INFO STORING TIME
+//        0209: CARREC_TIMING = random_int_in_ranges 0 50
+        CARREC_TIMING = 1
+        CARREC_TIMING += CARREC_REC_INTERVAL_MS                       
+    end        
+end    
+return
+
+
+:WriteRRR
+0A9E: writefile CARREC_hFILE size 4 from CARREC_TOTAL_TIME
+
+03C0: CARREC_TARGET_VEHICLE = actor CARREC_TARGET_ACTOR car
+
+0665: get_actor CARREC_TARGET_ACTOR model_to DERBY_REPLAY_ACTOR_MODEL
+0441: DERBY_REPLAY_CAR_MODEL = car CARREC_TARGET_VEHICLE model
+03F3: get_car CARREC_TARGET_VEHICLE primary_color_to DERBY_REPLAY_COLOR1_NUM secondary_color_to DERBY_REPLAY_COLOR2_NUM
+
+0A97: CARREC_TARGET_VEHICLE = car CARREC_TARGET_VEHICLE struct
+
+0A8E: 23@ = CARREC_TARGET_VEHICLE + 0x44 // velocity.x
+0A8D: 23@ = read_memory 23@ size 4 virtual_protect 0
+23@ *= 16383.5
+008E: 23@ = float 23@ to_integer
+0A9E: writefile CARREC_hFILE size 2 from 23@
+0A8E: 23@ = CARREC_TARGET_VEHICLE + 0x48 // velocity.y
+0A8D: 23@ = read_memory 23@ size 4 virtual_protect 0
+23@ *= 16383.5
+008E: 23@ = float 23@ to_integer
+0A9E: writefile CARREC_hFILE size 2 from 23@
+0A8E: 23@ = CARREC_TARGET_VEHICLE + 0x4C // velocity.z
+0A8D: 23@ = read_memory 23@ size 4 virtual_protect 0
+23@ *= 16383.5
+008E: 23@ = float 23@ to_integer
+0A9E: writefile CARREC_hFILE size 2 from 23@
+
+0A8E: 23@ = CARREC_TARGET_VEHICLE + 0x14 // pXYZ
+0A8D: 23@ = read_memory 23@ size 4 virtual_protect 0  // xyz.right
+gosub @WriteXYZ
+
+23@ += 0x10   // xyz.top
+gosub @WriteXYZ
+
+0A8E: 23@ = CARREC_TARGET_VEHICLE + 0x494 // SteerAngle
+0A8D: 23@ = read_memory 23@ size 4 virtual_protect 0
+23@ *= 20.0
+008E: 23@ = float 23@ to_integer
+0A9E: writefile CARREC_hFILE size 1 from 23@
+
+0A8E: 23@ = CARREC_TARGET_VEHICLE + 0x49C // GasPedal
+0A8D: 23@ = read_memory 23@ size 4 virtual_protect 0
+23@ *= 100.0
+008E: 23@ = float 23@ to_integer
+0A9E: writefile CARREC_hFILE size 1 from 23@
+
+0A8E: 23@ = CARREC_TARGET_VEHICLE + 0x4A0 // BrakePedal
+0A8D: 23@ = read_memory 23@ size 4 virtual_protect 0
+23@ *= 100.0
+008E: 23@ = float 23@ to_integer
+0A9E: writefile CARREC_hFILE size 1 from 23@
+
+0A8E: 23@ = CARREC_TARGET_VEHICLE + 0x428 // Handbrake
+0A8D: 23@ = read_memory 23@ size 1 virtual_protect 0
+if
+    08B7:   test 23@ bit 5 
+then
+    23@ = 1
+else
+    23@ = 0
+end        
+0A9E: writefile CARREC_hFILE size 1 from 23@
+
+03C0: CARREC_TARGET_VEHICLE = actor CARREC_TARGET_ACTOR car 
+00AA: store_car CARREC_TARGET_VEHICLE position_to 20@ 21@ 22@ 
+0A9E: writefile CARREC_hFILE size 12 from 20@
+
+return
+
+:WriteXYZ
+0A8E: 24@ = 23@ + 0x0 // x
+0A8D: 24@ = read_memory 24@ size 4 virtual_protect 0
+24@ *= 127.0
+008E: 24@ = float 24@ to_integer 
+0A9E: writefile CARREC_hFILE size 1 from 24@
+
+0A8E: 24@ = 23@ + 0x4 // y
+0A8D: 24@ = read_memory 24@ size 4 virtual_protect 0
+24@ *= 127.0
+008E: 24@ = float 24@ to_integer
+0A9E: writefile CARREC_hFILE size 1 from 24@
+
+0A8E: 24@ = 23@ + 0x8 // z
+0A8D: 24@ = read_memory 24@ size 4 virtual_protect 0
+24@ *= 127.0
+008E: 24@ = float 24@ to_integer
+0A9E: writefile CARREC_hFILE size 1 from 24@
+return
+
+:WriteDDD
+
+repeat
+wait 0
+0AD3: 10@v = format "za\DB\%d\%d.dat" DERBY_REPLAY_NUM CARREC_REC_NUM
+until 0A9A: CARREC_hFILE = openfile 10@v mode 0x6277  // "wb"
+
+0AF1: write_int DERBY_REPLAY_ACTOR_MODEL to_ini_file 10@v section "INFO" key "ACTOR_MODEL"
+0AF1: write_int DERBY_REPLAY_CAR_MODEL to_ini_file 10@v section "INFO" key "CAR_MODEL"
+0AF1: write_int DERBY_REPLAY_COLOR1_NUM to_ini_file 10@v section "INFO" key "CAR_COLOR1"
+0AF1: write_int DERBY_REPLAY_COLOR2_NUM to_ini_file 10@v section "INFO" key "CAR_COLOR2"
+    
+if
+CARREC_REC_NUM == 9
+    then
+    0AF1: write_int ZOMBIEGEDDON_GAME_TYPE to_ini_file 10@v section "GAMEINFO" key "GAME_TYPE"
+    0AF1: write_int CARMA_GLOB_RACE_NUMBER to_ini_file 10@v section "GAMEINFO" key "RACE_NUM"
+    00BF: 15@ = current_time_hours, 16@ = current_time_minutes
+    0AF1: write_int 15@ to_ini_file 10@v section "GAMEINFO" key "CURRENT_HOUR"
+    0AF1: write_int 16@ to_ini_file 10@v section "GAMEINFO" key "CURRENT_MINUTE"            
+    0D2D: get_local_time_year_to 19@ month_to 15@ day_of_week_to 19@ day_to 16@ hour_to 17@ minute_to 18@ second_to 19@ milliseconds_to 19@
+    0AF1: write_int 15@ to_ini_file 10@v section "GAMEINFO" key "DATE_MONTH"
+    0AF1: write_int 16@ to_ini_file 10@v section "GAMEINFO" key "DATE_DAY"
+    0AF1: write_int 17@ to_ini_file 10@v section "GAMEINFO" key "DATE_HOUR"
+    0AF1: write_int 18@ to_ini_file 10@v section "GAMEINFO" key "DATE_MINUTE"
+    
+    if
+    UNITED_MAP == 0
+    then
+    
+    if
+    CLASSIC_CARMA_MAP < 1
+    then
+    0AF1: write_int 28 to_ini_file 10@v section "GAMEINFO" key "MAP_NUM"
+    else
+    
+    if
+    CLASSIC_CARMA_MAP_AC_MODE == 0
+    then
+    0AF1: write_int 69 to_ini_file 10@v section "GAMEINFO" key "MAP_NUM"
+    else
+    0AF1: write_int 699 to_ini_file 10@v section "GAMEINFO" key "MAP_NUM"
+    end
+    
+    end
+    
+    else
+    0AF1: write_int LCVC_MAP_NUM to_ini_file 10@v section "GAMEINFO" key "MAP_NUM"
+    end
+    
+    DERBY_REPLAY_NUM += 1
+    if
+    DERBY_REPLAY_NUM > 7
+    then
+    DERBY_REPLAY_NUM = 0
+    end
+    
+    0AF1: write_int DERBY_REPLAY_NUM to_ini_file "saves\ZACM.set" section "SCR" key "DRA"
+                
+    end
+    
+0A9B: closefile CARREC_hFILE    
+            
+return                

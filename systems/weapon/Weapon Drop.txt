@@ -1,0 +1,306 @@
+:WEP_DRO
+thread 'WEP_DRO'
+create_thread @WEP_DR2        
+        
+:WEAPON_DROP_CHECK
+wait 0
+
+if and
+$INFECTED_SCORE > 0
+$FREEMODE == 1
+$ONMISSION == 1
+    then
+    jump to @WEAPON_DROP_CHECK
+    end
+
+if
+0A4B:   controls_set_to_joystick
+then
+
+0@ = 0
+
+while true
+wait 0
+
+if and
+00E1:   player 0 pressed_key 16
+02A0:   actor PLAYER_ACTOR stopped
+player.Controllable(PLAYER_CHAR)
+$HUD_REMOVE == 0
+$PANEL_OPEN == 0
+$CHEAT_TYPE_FLAG == 0
+    then
+    0@ += 1
+    else
+    break
+    end
+
+if
+0@ > 30
+    then
+    jump to @WEAPON_DROP_JOY_PRESSED    
+    end
+ 
+end
+
+0@ = 0
+
+jump to @WEAPON_DROP_CHECK
+
+else
+if and
+0AB0:   key_pressed $KEY_DROP 
+$HUD_REMOVE == 0
+$PANEL_OPEN == 0
+$CHEAT_TYPE_FLAG == 0
+jf @WEAPON_DROP_CHECK
+end
+
+:WEAPON_DROP_JOY_PRESSED
+
+if
+player.Controllable(PLAYER_CHAR)
+jf @WEAPON_DROP_CHECK
+wait 0
+if and
+not Actor.Dead(PLAYER_ACTOR)
+not Actor.Driving(PLAYER_ACTOR) 
+044B:   actor PLAYER_ACTOR on_foot 
+09E7:   player PLAYER_CHAR not_frozen
+jf @WEAPON_DROP_CHECK
+gosub @WEAPON_DROP_MELEE_CHECK
+0470: 1@ = actor PLAYER_ACTOR current_weapon
+if and
+82D8: not actor PLAYER_ACTOR current_weapon == 0
+82D8: not actor PLAYER_ACTOR current_weapon == 9
+82D8: not actor PLAYER_ACTOR current_weapon == 46
+82D8: not actor PLAYER_ACTOR current_weapon == 110     
+82D8: not actor PLAYER_ACTOR current_weapon == 151
+1@ > 15
+2@ == 0
+jf @WEAPON_DROP_CHECK
+04C4: store_coords_to 0@ 1@ 2@ from_actor PLAYER_ACTOR with_offset 0.0 2.0 0.0
+0470: 3@ = actor PLAYER_ACTOR current_weapon
+041A: 4@ = actor PLAYER_ACTOR weapon 3@ ammo
+0781: get_weapon_with_ID 3@ model_to 5@
+
+if or
+3@ == 44
+3@ == 45
+then
+08B1: enable_night_vision 0
+08B2: enable_thermal_vision 0
+end
+
+$WEAPON2 += 1
+ 
+if
+$WEAPON2 == 20
+    then
+    $WEAPON2 = 0
+    end
+
+if
+09D1:   pickup $DROP_PICKUP[$WEAPON2] created
+    then
+    
+    065B: store_pickup $DROP_PICKUP[$WEAPON2] position_to 7@ 8@ 9@
+    if
+    048C:   pickup_at 7@ 8@ 9@ available_to_be_picked_up
+    then
+    
+    03DC: 6@ = create_marker_above_pickup $DROP_PICKUP[$WEAPON2]
+    
+    if
+    80E1: not  player 0 pressed_key 4    
+    then
+    10@ = 0
+    else
+    10@ = 1
+    end
+    
+    $NOT_ALLOW_COMMANDS = 1
+    $PANEL_OPEN = 1
+    
+    while true
+    wait 0
+    text.ShowH('GME1155',100,1)
+            
+    if
+    0E3E: is_button_just_pressed 0 button 11 //YES
+        then
+        marker.Disable(6@)
+        text.ClearAll()
+        04C4: store_coords_to 0@ 1@ 2@ from_actor PLAYER_ACTOR with_offset 0.0 2.0 0.0
+        break
+        end
+            
+    if
+    0E3E: is_button_just_pressed 0 button 10 //NO
+        then
+        marker.Disable(6@)
+        text.ClearAll()
+        
+        if
+        $WEAPON2 == 20
+            then
+            $WEAPON2 = 0
+            else
+            $WEAPON2 -= 1
+            end
+        
+        wait 0
+        $NOT_ALLOW_COMMANDS = 0
+        $PANEL_OPEN = 0
+        jump to @WEAPON_DROP_CHECK
+        end
+            
+    end
+    
+    wait 0
+    $NOT_ALLOW_COMMANDS = 0
+    $PANEL_OPEN = 0
+    
+    end                
+    
+    pickup.Destroy($DROP_PICKUP[$WEAPON2])
+    end
+
+if
+0A4B:   controls_set_to_joystick
+then
+
+if and
+80E1: not  player 0 pressed_key 4
+not 10@ == 1   
+then
+0555: remove_weapon 3@ from_actor PLAYER_ACTOR
+032B: $DROP_PICKUP[$WEAPON2] = create_weapon_pickup 5@ group 3 ammo 4@ at 0@ 1@ 2@
+else
+
+if
+4@ < 10
+then
+0555: remove_weapon 3@ from_actor PLAYER_ACTOR
+032B: $DROP_PICKUP[$WEAPON2] = create_weapon_pickup 5@ group 3 ammo 4@ at 0@ 1@ 2@
+else
+4@ /= 2
+0555: remove_weapon 3@ from_actor PLAYER_ACTOR
+032B: $DROP_PICKUP[$WEAPON2] = create_weapon_pickup 5@ group 3 ammo 4@ at 0@ 1@ 2@
+
+0781: get_weapon_with_ID 3@ model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+actor.GiveWeaponAndAmmo(PLAYER_ACTOR,3@,4@)
+end
+
+end
+
+else
+    
+if
+80E1: not  player 0 pressed_key 4  
+then
+0555: remove_weapon 3@ from_actor PLAYER_ACTOR
+032B: $DROP_PICKUP[$WEAPON2] = create_weapon_pickup 5@ group 3 ammo 4@ at 0@ 1@ 2@
+else
+
+if
+4@ < 10
+then
+0555: remove_weapon 3@ from_actor PLAYER_ACTOR
+032B: $DROP_PICKUP[$WEAPON2] = create_weapon_pickup 5@ group 3 ammo 4@ at 0@ 1@ 2@
+else
+4@ /= 2
+0555: remove_weapon 3@ from_actor PLAYER_ACTOR
+032B: $DROP_PICKUP[$WEAPON2] = create_weapon_pickup 5@ group 3 ammo 4@ at 0@ 1@ 2@
+
+0781: get_weapon_with_ID 3@ model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+actor.GiveWeaponAndAmmo(PLAYER_ACTOR,3@,4@)
+end
+
+end
+
+end
+
+Audiostream.Volume($DROP_ITEM_SOUND) = $SOUNDS_VOLUME 
+Audiostream.Loop($DROP_ITEM_SOUND, 0)
+Audiostream.PerformAction($DROP_ITEM_SOUND, PLAY)
+
+wait 1000 
+
+jump to @WEAPON_DROP_CHECK
+
+:WEAPON_DROP_MELEE_CHECK
+
+2@ = 0
+
+if and
+PLAYER_USING_MELEE_FLAG == 1
+UNITED_MAP == 0
+82D8: not  actor PLAYER_ACTOR current_weapon == 16
+82D8: not  actor PLAYER_ACTOR current_weapon == 17
+82D8: not  actor PLAYER_ACTOR current_weapon == 18
+82D8: not  actor PLAYER_ACTOR current_weapon == 44
+82D8: not  actor PLAYER_ACTOR current_weapon == 45
+then
+2@ = 1
+end
+
+if
+UNITED_MAP == 0
+then
+return
+end
+
+/////////////////////////////////////////////////
+
+for 0@ = 121 to 131
+
+if
+02D8:   actor PLAYER_ACTOR current_weapon == 0@
+then
+2@ = 1
+end
+
+end
+
+/////////////////////////////////////////////////
+
+for 0@ = 154 to 164
+
+if
+02D8:   actor PLAYER_ACTOR current_weapon == 0@
+then
+2@ = 1
+end
+
+end
+
+/////////////////////////////////////////////////
+
+for 0@ = 184 to 194
+
+if
+02D8:   actor PLAYER_ACTOR current_weapon == 0@
+then
+2@ = 1
+end
+
+end
+
+///////////////////////////////////////////////// 
+
+return    

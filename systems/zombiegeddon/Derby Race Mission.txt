@@ -1,0 +1,706 @@
+:DERBY_R
+thread 'DERBY_R'
+gosub @ASSKOD_MISSII2 
+if 
+wasted_or_busted 
+jf @ASSPROPUSK_KODA2 
+gosub @ASSKOD_PROVALA2 
+
+:ASSPROPUSK_KODA2        
+gosub @ASSUDALENIE_KODA2
+end_thread
+
+:ASSKOD_MISSII2
+increment_mission_attempts
+$ONMISSION = 1
+0629: change_integer_stat 258 to 21
+0629: change_integer_stat 258 to 21
+
+if
+CARMA_REPLAY_FLAG == 0
+then
+
+if
+UNITED_MAP == 0
+then
+0AF0: 0@ = get_int_from_ini_file "data\derby.ini" section "GENERAL" key "MODEL_1ID"
+//0AF0: 1@ = get_int_from_ini_file "data\derby.ini" section "GENERAL" key "MODEL_2ID"
+1@ = 15594
+else
+
+if
+$UNITED_III_SPAWN == 1
+then
+0AF0: 0@ = get_int_from_ini_file "data\derby.ini" section "GENERAL" key "LCMODEL_1ID"
+0AF0: 1@ = get_int_from_ini_file "data\derby.ini" section "GENERAL" key "LCMODEL_2ID"
+else
+0AF0: 0@ = get_int_from_ini_file "data\derby.ini" section "GENERAL" key "VCMODEL_1ID"
+0AF0: 1@ = get_int_from_ini_file "data\derby.ini" section "GENERAL" key "VCMODEL_2ID"
+end
+
+end
+
+if
+UNITED_MAP == 0
+then
+161@ = 34
+else
+161@ = 9
+end
+
+gosub @DERBY_RANDOM_CAR_MODEL
+0AF0: 0@ = get_int_from_ini_file "data\derby.ini" section "GENERAL" key "TEST_MODEL_FOR_PLAYER"
+if
+0@ > -1
+then
+0AF0: CARMA_GLOB_PLAYER_MODEL = get_int_from_ini_file "data\derby.ini" section "GENERAL" key "TEST_MODEL_FOR_PLAYER"
+else
+008A: CARMA_GLOB_PLAYER_MODEL = 28@ // (int)
+end
+
+else
+0AF0: CARMA_GLOB_PLAYER_MODEL = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\9.dat" section "INFO" key "CAR_MODEL"
+end
+
+if
+CARMA_REPLAY_FLAG == 1
+then
+gosub @DERBY_CREATE_CARS_REPLAY
+else
+gosub @DERBY_CREATE_CARS_UPTO100
+end
+
+repeat
+wait 0
+until CARMA_GLOB_RACE_SELECTED == 1
+
+if
+ZOMBIEGEDDON_GAME_TYPE == 2
+then
+
+008B: 0@ = CARMA_GLOB_RACE_NUMBER // (int)
+0@ += 16
+if
+0@ > 73
+then
+0@ += 100
+end
+
+repeat
+wait 0
+07C0: load_path 0@
+until 07C1:   path 0@ available
+
+while not model.Available(#RCCAM)
+wait 0
+model.Load(#RCCAM)
+mload
+end
+
+ZOMBIEGEDDON_PATH_CAR = car.Create(#RCCAM,0.0,0.0,0.0)
+0338: set_car ZOMBIEGEDDON_PATH_CAR visibility 0
+099A: set_car ZOMBIEGEDDON_PATH_CAR collision_detection 0
+05EB: assign_car ZOMBIEGEDDON_PATH_CAR to_path 0@
+06FD: set_car ZOMBIEGEDDON_PATH_CAR speed_on_path_to 0.0
+car.SetImmunities(ZOMBIEGEDDON_PATH_CAR,1,1,1,1,1)
+0840: link_car ZOMBIEGEDDON_PATH_CAR to_interior CARMA_GLOB_RACE_INTERIOR 
+
+wait 2000
+
+if
+not CARMA_GLOB_TWO_CARRECS == 0
+    then
+    
+    repeat
+    wait 0
+    07C0: load_path CARMA_GLOB_TWO_CARRECS
+    until 07C1:   path CARMA_GLOB_TWO_CARRECS available
+    
+    while not model.Available(#RCCAM)
+    wait 0
+    model.Load(#RCCAM)
+    mload
+    end
+    
+    ZOMBIEGEDDON_PATH_CAR2 = car.Create(#RCCAM,0.0,0.0,0.0)
+    0338: set_car ZOMBIEGEDDON_PATH_CAR2 visibility 0
+    099A: set_car ZOMBIEGEDDON_PATH_CAR2 collision_detection 0
+    05EB: assign_car ZOMBIEGEDDON_PATH_CAR2 to_path CARMA_GLOB_TWO_CARRECS
+    06FD: set_car ZOMBIEGEDDON_PATH_CAR2 speed_on_path_to 0.0
+    car.SetImmunities(ZOMBIEGEDDON_PATH_CAR2,1,1,1,1,1)
+    0840: link_car ZOMBIEGEDDON_PATH_CAR2 to_interior CARMA_GLOB_RACE_INTERIOR
+    
+    end
+
+end
+
+while true
+wait 0
+
+if
+8A4B: not  controls_set_to_joystick
+    then
+    if
+    0AB0:   key_pressed 16
+        then
+        0A8C: write_memory 0x6B2A15 size 1 value 235 virtual_protect 0
+        else
+        0A8C: write_memory 0x6B2A15 size 1 value 117 virtual_protect 0
+        end
+    end
+
+//0x0081214A test, do invert
+if
+8A4B: not  controls_set_to_joystick
+then
+if
+0E3D: is_key_just_pressed 8
+    then
+    
+    014F: stop_timer CARMA_GLOB_TIME_VAR
+    0151: remove_status_text CARMA_GLOB_DERBY_CREDITS
+    0151: remove_status_text CARMA_DERBY_LOSS
+    
+    $HUD_REMOVE = 1           
+    
+    fade 0 500
+    wait 500    
+    
+    if
+    SELECT_RANDOM_MAP_AFTER_SELECT_GAMEMODE == 1
+    then
+    $HUD_REMOVE = 1
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "GAMEMODE_AUTOSELECT_CRASH"
+    0AF1: write_int 8 to_ini_file "saves/ZACM.set" section "SCR" key "GAMEMODE_AUTOSELECT_NUMBER"
+    0AF1: write_int ZOMBIEGEDDON_GAME_TYPE to_ini_file "saves/ZACM.set" section "SCR" key "GAMEMODE_AUTOSELECT_PARAM"
+    0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
+    else
+    $HUD_REMOVE = 1
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_START"
+    0AF1: write_int ZOMBIEGEDDON_GAME_TYPE to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_MODE"
+    0AF1: write_int $SPECTATING_FLAG to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_SPECTATE"
+    0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "NO_INIT_TEXT_FLAG"
+    end
+    
+    //0x0081214A test
+//    0AF0: 0@ = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "ZOMBIEGEDDON_LAST_MAP_SELECTED"
+//    0@ += 1
+//    if
+//    0@ < 18
+//    then
+//    0AF1: write_int 0@ to_ini_file "saves\ZACM.set" section "SCR" key "ZOMBIEGEDDON_LAST_MAP_SELECTED"
+//    else
+//    0AF1: write_int 0 to_ini_file "saves\ZACM.set" section "SCR" key "ZOMBIEGEDDON_LAST_MAP_SELECTED"
+//    end
+        
+    0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
+    
+    end
+else
+if and
+0E3E: is_button_just_pressed 0 button 4
+0E3E: is_button_just_pressed 0 button 11
+    then
+    
+    014F: stop_timer CARMA_GLOB_TIME_VAR
+    0151: remove_status_text CARMA_GLOB_DERBY_CREDITS
+    0151: remove_status_text CARMA_DERBY_LOSS
+    
+    $HUD_REMOVE = 1           
+    
+    fade 0 500
+    wait 500    
+    
+    $HUD_REMOVE = 1
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_START"
+    0AF1: write_int ZOMBIEGEDDON_GAME_TYPE to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_MODE"
+    0AF1: write_int $SPECTATING_FLAG to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_SPECTATE"
+    0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "NO_INIT_TEXT_FLAG"
+    
+    //0x0081214A test
+//    0AF0: 0@ = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "ZOMBIEGEDDON_LAST_MAP_SELECTED"
+//    0@ += 1
+//    if
+//    0@ < 18
+//    then
+//    0AF1: write_int 0@ to_ini_file "saves\ZACM.set" section "SCR" key "ZOMBIEGEDDON_LAST_MAP_SELECTED"
+//    else
+//    0AF1: write_int 0 to_ini_file "saves\ZACM.set" section "SCR" key "ZOMBIEGEDDON_LAST_MAP_SELECTED"
+//    end
+        
+    0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
+    
+    end
+end
+
+end
+
+jump to @ASSUDALENIE_KODA2
+
+:DERBY_RANDOM_CAR_MODEL
+
+if and
+0AF0: 28@ = get_int_from_ini_file "data\derby.ini" section "GENERAL" key "TEST_MODEL_FOR_PLAYER"
+COOP_ACTIVE_FLAG == 1
+50@ == 0
+then
+return
+end
+
+if
+0AF0: 28@ = get_int_from_ini_file "data\derby.ini" section "GENERAL" key "TEST_MODEL"
+then
+return
+end
+
+if
+UNITED_MAP == 0
+then
+0AF0: 0@ = get_int_from_ini_file "data\derby.ini" section "GENERAL" key "MODEL_1ID"
+0AF0: 1@ = get_int_from_ini_file "data\derby.ini" section "GENERAL" key "MODEL_2ID"
+else
+
+if
+$UNITED_III_SPAWN == 1
+then
+0AF0: 0@ = get_int_from_ini_file "data\derby.ini" section "GENERAL" key "LCMODEL_1ID"
+0AF0: 1@ = get_int_from_ini_file "data\derby.ini" section "GENERAL" key "LCMODEL_2ID"
+else
+0AF0: 0@ = get_int_from_ini_file "data\derby.ini" section "GENERAL" key "VCMODEL_1ID"
+0AF0: 1@ = get_int_from_ini_file "data\derby.ini" section "GENERAL" key "VCMODEL_2ID"
+end
+
+end
+
+1@ += 1
+random_int 28@ 0@ 1@
+
+if and
+ZOMBIEGEDDON_GAME_TYPE == 2
+UNITED_MAP == 1
+then
+jump to @DERBY_RANDOM_CAR_UNITED_CP_RUSH_SKIP
+end
+
+if
+ZOMBIEGEDDON_GAME_TYPE == 2
+then
+if and
+not 28@ == 15410
+not 28@ == 15417
+not 28@ == 15488
+not 28@ == 19111
+not 28@ == 19127
+not 28@ == 18025
+not 28@ == 18041
+not 28@ == 15490 
+jf @DERBY_RANDOM_CAR_MODEL
+if and
+not 28@ == 15496
+not 28@ == 15497
+not 28@ == 15593
+not 28@ == 15594
+jf @DERBY_RANDOM_CAR_MODEL
+end
+
+:DERBY_RANDOM_CAR_UNITED_CP_RUSH_SKIP
+
+if and
+not 28@ == 15420
+not 28@ == 15421
+not 28@ == 15422
+not 28@ == 15423
+not 28@ == 15424
+not 28@ == 15425
+not 28@ == 15426 
+jf @DERBY_RANDOM_CAR_MODEL
+if and
+not 28@ == 15434
+not 28@ == 15435
+not 28@ == 15436
+not 28@ == 15468
+not 28@ == 15469
+not 28@ == 15470
+not 28@ == 15471 
+jf @DERBY_RANDOM_CAR_MODEL
+if and
+not 28@ == 15472
+not 28@ == 15473
+not 28@ == 15474
+not 28@ == 15475
+not 28@ == 15476
+not 28@ == 15477
+not 28@ == 15478 
+jf @DERBY_RANDOM_CAR_MODEL
+if and
+not 28@ == 15479
+not 28@ == 15480
+not 28@ == 15481
+not 28@ == 15482
+not 28@ == 15483
+not 28@ == 15486
+not 28@ == 15487
+not 28@ == 15489 
+jf @DERBY_RANDOM_CAR_MODEL
+if and
+not 28@ == 15491
+not 28@ == 15492
+not 28@ == 15493
+not 28@ == 15494
+not 28@ == 15501 
+not 28@ == 15502
+not 28@ == 15590
+not 28@ == 15591
+jf @DERBY_RANDOM_CAR_MODEL
+if
+not 28@ == 15593
+jf @DERBY_RANDOM_CAR_MODEL
+
+2@ = 0
+
+for 0@ = 0 to 109
+
+if
+056E:   car $PARK_CAR[0@] defined
+then
+0441: 1@ = car $PARK_CAR[0@] model
+if and
+003B:   28@ == 1@  // (int)
+801D:   162@ < 161@  // (int)
+    then
+    2@ = 1
+    break
+    end
+end
+
+end
+
+if
+2@ == 0
+jf @DERBY_RANDOM_CAR_MODEL
+
+if
+801D:   162@ < 161@  // (int)
+then
+if
+87D6: not  28@ == CARMA_GLOB_PLAYER_MODEL // @ == $ (int)
+jf @DERBY_RANDOM_CAR_MODEL
+end
+
+if or
+28@ == 15496
+28@ == 15497
+then
+162@ += 1
+return
+end
+
+if
+28@ == 15594
+then
+162@ += 1
+return 
+end
+
+if and
+07DE:   model 28@ exists  // versionB
+0A01:   model 28@ car
+jf @DERBY_RANDOM_CAR_MODEL
+162@ += 1
+return  
+
+:ASSKOD_PROVALA2
+mission_cleanup     
+return 
+
+:ASSUDALENIE_KODA2     
+mission_cleanup    
+return
+
+:DERBY_CREATE_CARS_UPTO100
+
+51@ = 5.0
+
+for 50@ = 0 to CARMA_GLOB_OPPONENTS_COUNT3
+
+gosub @DERBY_RANDOM_CAR_MODEL
+
+while not model.Available(28@)
+wait 0
+model.Load(28@)
+mload
+end
+
+car.Create($PARK_CAR[50@],28@,0.0,0.0,51@)
+
+06EC: get_car $PARK_CAR[50@] number_of_possible_paintjobs_to 0@
+if
+0@ > 0
+    then
+    if
+    0E4D: random_percent 50
+        then
+        random_int 1@ 0 0@
+        06ED: set_car $PARK_CAR[50@] paintjob 1@
+        end 
+    end
+    
+if
+model.Available(28@)
+then
+//model.Destroy(28@)
+end    
+
+51@ += 15.0
+car.LockInCurrentPosition($PARK_CAR[50@],true)
+099A: set_car $PARK_CAR[50@] collision_detection 0
+car.SetImmunities($PARK_CAR[50@],1,1,1,1,1)
+
+end
+
+return
+
+:DERBY_CREATE_CARS_REPLAY
+
+if
+CARMA_REPLAY_FLAG == 0
+then
+gosub @DERBY_RANDOM_CAR_MODEL
+else
+0AF0: 28@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\0.dat" section "INFO" key "CAR_MODEL"
+end
+
+while not model.Available(28@)
+wait 0
+model.Load(28@)
+mload
+end
+
+car.Create(300@,28@,0.0,5.0,0.0)
+008A: $PARK_CAR[0] = 300@ // (int)
+//0085: CAR1_MODEL = 28@
+
+if
+CARMA_REPLAY_FLAG == 1
+then
+0AF0: 0@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\0.dat" section "INFO" key "CAR_COLOR1"
+0AF0: 1@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\0.dat" section "INFO" key "CAR_COLOR2"
+0229: set_car 300@ primary_color_to 0@ secondary_color_to 1@
+end
+
+if
+CARMA_REPLAY_FLAG == 0
+then
+gosub @DERBY_RANDOM_CAR_MODEL
+else
+0AF0: 28@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\1.dat" section "INFO" key "CAR_MODEL"
+end
+
+while not model.Available(28@)
+wait 0
+model.Load(28@)
+mload
+end
+
+car.Create(301@,28@,0.0,10.0,5.0)
+008A: $PARK_CAR[1] = 301@ // (int)
+//0085: CAR2_MODEL = 28@
+
+if
+CARMA_REPLAY_FLAG == 1
+then
+0AF0: 0@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\1.dat" section "INFO" key "CAR_COLOR1"
+0AF0: 1@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\1.dat" section "INFO" key "CAR_COLOR2"
+0229: set_car 300@ primary_color_to 0@ secondary_color_to 1@
+end
+
+if
+CARMA_REPLAY_FLAG == 0
+then
+gosub @DERBY_RANDOM_CAR_MODEL
+else
+0AF0: 28@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\2.dat" section "INFO" key "CAR_MODEL"
+end
+
+while not model.Available(28@)
+wait 0
+model.Load(28@)
+mload
+end
+
+car.Create(302@,28@,0.0,15.0,10.0)
+008A: $PARK_CAR[2] = 302@ // (int)
+//0085: CAR3_MODEL = 28@
+
+if
+CARMA_REPLAY_FLAG == 1
+then
+0AF0: 0@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\2.dat" section "INFO" key "CAR_COLOR1"
+0AF0: 1@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\2.dat" section "INFO" key "CAR_COLOR2"
+0229: set_car 300@ primary_color_to 0@ secondary_color_to 1@
+end
+                                                            
+if
+CARMA_REPLAY_FLAG == 0
+then
+gosub @DERBY_RANDOM_CAR_MODEL
+else
+0AF0: 28@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\3.dat" section "INFO" key "CAR_MODEL"
+end
+
+while not model.Available(28@)
+wait 0
+model.Load(28@)
+mload
+end
+
+car.Create(303@,28@,0.0,20.0,15.0)
+008A: $PARK_CAR[3] = 303@ // (int)
+//0085: CAR4_MODEL = 28@
+
+if
+CARMA_REPLAY_FLAG == 1
+then
+0AF0: 0@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\3.dat" section "INFO" key "CAR_COLOR1"
+0AF0: 1@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\3.dat" section "INFO" key "CAR_COLOR2"
+0229: set_car 300@ primary_color_to 0@ secondary_color_to 1@
+end
+
+if
+CARMA_REPLAY_FLAG == 0
+then
+gosub @DERBY_RANDOM_CAR_MODEL
+else
+0AF0: 28@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\4.dat" section "INFO" key "CAR_MODEL"
+end
+
+while not model.Available(28@)
+wait 0
+model.Load(28@)
+mload
+end
+
+car.Create(304@,28@,0.0,25.0,20.0)
+008A: $PARK_CAR[4] = 304@ // (int)
+//0085: CAR5_MODEL = 28@
+
+if
+CARMA_REPLAY_FLAG == 1
+then
+0AF0: 0@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\4.dat" section "INFO" key "CAR_COLOR1"
+0AF0: 1@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\4.dat" section "INFO" key "CAR_COLOR2"
+0229: set_car 300@ primary_color_to 0@ secondary_color_to 1@
+end
+
+if
+CARMA_REPLAY_FLAG == 0
+then
+gosub @DERBY_RANDOM_CAR_MODEL
+else
+0AF0: 28@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\5.dat" section "INFO" key "CAR_MODEL"
+end
+
+while not model.Available(28@)
+wait 0
+model.Load(28@)
+mload
+end
+
+car.Create(305@,28@,0.0,30.0,25.0)
+008A: $PARK_CAR[5] = 305@ // (int)
+//0085: CAR6_MODEL = 28@
+
+if
+CARMA_REPLAY_FLAG == 1
+then
+0AF0: 0@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\5.dat" section "INFO" key "CAR_COLOR1"
+0AF0: 1@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\5.dat" section "INFO" key "CAR_COLOR2"
+0229: set_car 300@ primary_color_to 0@ secondary_color_to 1@
+end
+
+if
+CARMA_REPLAY_FLAG == 0
+then
+gosub @DERBY_RANDOM_CAR_MODEL
+else
+0AF0: 28@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\6.dat" section "INFO" key "CAR_MODEL"
+end
+
+while not model.Available(28@)
+wait 0
+model.Load(28@)
+mload
+end
+
+car.Create(306@,28@,0.0,35.0,30.0)
+008A: $PARK_CAR[6] = 306@ // (int)
+//0085: CAR7_MODEL = 28@
+
+if
+CARMA_REPLAY_FLAG == 1
+then
+0AF0: 0@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\6.dat" section "INFO" key "CAR_COLOR1"
+0AF0: 1@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\6.dat" section "INFO" key "CAR_COLOR2"
+0229: set_car 300@ primary_color_to 0@ secondary_color_to 1@
+end 
+
+if
+CARMA_REPLAY_FLAG == 0
+then
+gosub @DERBY_RANDOM_CAR_MODEL
+else
+0AF0: 28@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\7.dat" section "INFO" key "CAR_MODEL"
+end
+
+while not model.Available(28@)
+wait 0
+model.Load(28@)
+mload
+end
+
+car.Create(307@,28@,0.0,40.0,35.0)
+008A: $PARK_CAR[7] = 307@ // (int)
+//0085: CAR8_MODEL = 28@
+
+if
+CARMA_REPLAY_FLAG == 1
+then
+0AF0: 0@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\7.dat" section "INFO" key "CAR_COLOR1"
+0AF0: 1@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\7.dat" section "INFO" key "CAR_COLOR2"
+0229: set_car 300@ primary_color_to 0@ secondary_color_to 1@
+end
+
+if
+CARMA_REPLAY_FLAG == 0
+then
+gosub @DERBY_RANDOM_CAR_MODEL
+else
+0AF0: 28@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\8.dat" section "INFO" key "CAR_MODEL"
+end
+
+while not model.Available(28@)
+wait 0
+model.Load(28@)
+mload
+end
+
+car.Create(308@,28@,0.0,45.0,40.0)
+008A: $PARK_CAR[8] = 308@ // (int)
+//0085: CAR9_MODEL = 28@
+
+if
+CARMA_REPLAY_FLAG == 1
+then
+0AF0: 0@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\8.dat" section "INFO" key "CAR_COLOR1"
+0AF0: 1@ = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\8.dat" section "INFO" key "CAR_COLOR2"
+0229: set_car 300@ primary_color_to 0@ secondary_color_to 1@
+end
+
+for 0@ = 0 to 8
+car.LockInCurrentPosition($PARK_CAR[0@],true)
+099A: set_car $PARK_CAR[0@] collision_detection 0
+car.SetImmunities($PARK_CAR[0@],1,1,1,1,1)
+car.Health($PARK_CAR[0@]) = 999999
+end
+
+return

@@ -1,0 +1,348 @@
+:WEP_PICK
+thread 'WEP_PICK'
+
+const
+PICKUP_MODEL = 25@
+PICKUP_AMMO = 26@
+PICKUP_TYPE = 27@
+PICKUP_X = 10@
+PICKUP_Y = 11@
+PICKUP_Z = 12@
+PICKUP_HINT_FLAG = 9@
+PICKUP_ARRAY_PREV_NUMBER = 8@
+PICKUP_ARRAY_CURR_NUMBER = 7@
+end
+
+32@ = 0
+
+repeat
+wait 250
+until $GAMEMODE_SELECTED == 1
+
+if or
+$ZOMBIE_DERBY_FLAG == 1
+$GAMEMODE_WAR == 1
+$DEFENSE_CHALLENGE_FLAG == 1
+$GAMEMODE_EDITOR == 1
+then
+end_thread
+end
+
+while true
+0A8D: PICKUP_ARRAY_PREV_NUMBER = read_memory 0x978624 size 4 virtual_protect 0
+wait 10
+0A8D: PICKUP_ARRAY_CURR_NUMBER = read_memory 0x978624 size 4 virtual_protect 0
+
+while $SAVESTATUS_TRUE == 1
+wait 0
+end
+
+if
+803B: not  PICKUP_ARRAY_PREV_NUMBER == PICKUP_ARRAY_CURR_NUMBER  // (int)
+then
+
+{$I newopcodes/forallpickups}     
+
+if
+09D1:   pickup pick created
+then
+0E34: get_pickup_model pick PICKUP_MODEL 
+else
+PICKUP_MODEL = 0
+end
+
+////////////////////////////////// 
+
+0@ = 0
+
+if and
+PICKUP_MODEL >= 333
+PICKUP_MODEL <= 372
+    then
+    0@ = 1
+    end
+    
+if and
+PICKUP_MODEL >= 12400
+PICKUP_MODEL <= 12482
+    then
+    0@ = 1
+    end
+    
+if and
+PICKUP_MODEL >= 12403
+PICKUP_MODEL <= 12544
+    then
+    0@ = 1
+    end
+    
+if and
+PICKUP_MODEL >= 12552
+PICKUP_MODEL <= 12607
+    then
+    0@ = 1
+    end          
+    
+if or
+PICKUP_MODEL == 371
+PICKUP_MODEL == 342
+PICKUP_MODEL == 343
+PICKUP_MODEL == 344
+PICKUP_MODEL == 370
+    then
+    0@ = 0
+    end   
+    
+if or
+PICKUP_MODEL == 12445
+PICKUP_MODEL == 12448
+PICKUP_MODEL == 12462
+PICKUP_MODEL == 12463
+PICKUP_MODEL == 12464
+    then
+    0@ = 0
+    end
+    
+if or
+PICKUP_MODEL == 12507
+PICKUP_MODEL == 12508
+PICKUP_MODEL == 12509
+PICKUP_MODEL == 12537
+PICKUP_MODEL == 12538
+PICKUP_MODEL == 12539
+    then
+    0@ = 0
+    end         
+    
+if or
+04AD:   actor PLAYER_ACTOR in_water
+$GAMEMODE_WAR == 1
+$GAMEMODE_HOLD == 1
+$GAMEMODE_VERSUS == 1
+actor.Driving(PLAYER_ACTOR)
+    then
+    0@ = 0
+    end                   
+    
+if 
+0@ == 0
+then     
+jump to @FUCK12345
+end     
+
+if or
+PICKUP_MODEL == 2663
+PICKUP_MODEL == 1275
+PICKUP_MODEL == 2709
+PICKUP_MODEL == 1650
+PICKUP_MODEL == 330
+PICKUP_MODEL == 1580
+PICKUP_MODEL == 2040
+then
+jump to @FUCK12345
+end     
+
+///////////////////////////////////////////
+
+if
+09D1:   pickup pick created     
+    then                    
+    if
+    pickup.Picked_up(pick)  
+        then                                                                    
+        if    
+        0@ == 1
+            then
+            
+            if
+            8800: not  in_two_players_mode
+            then                                                   
+            pickup.Destroy(pick)                                   
+            gosub @PICKUP_ANIMATION2
+            else
+            065B: store_pickup pick position_to 1@ 2@ 3@
+            pickup.Destroy(pick)                                                                           
+            actor.StorePos(PLAYER_ACTOR,4@,5@,6@)
+            actor.StorePos(COOP_ACTOR,7@,8@,9@)
+            050A: 10@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 4@ 5@ 6@
+            050A: 11@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 7@ 8@ 9@
+            if
+            0025:   11@ > 10@  // (float)
+                then
+                gosub @PICKUP_ANIMATION2
+                else
+                $SURVIVOR_REPAIR_COUNT[0] += 0
+                gosub @PICKUP_ANIMATION_COOP2
+                end
+            
+            end
+                                                
+            end
+        end
+    end        
+    
+:FUCK12345    
+
+{$I newopcodes/for_end}
+
+end
+       
+end
+
+end_thread 
+
+:PICKUP_ANIMATION2
+
+if
+0A32:  actor PLAYER_ACTOR on_turret_of_car
+    then
+    return
+    end
+
+07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 0
+
+while not animation.Available("BOMBER")
+wait 0
+04ED: load_animation "BOMBER"
+end 
+
+while 0818:  actor PLAYER_ACTOR in_air
+wait 10
+end
+      
+0792: disembark_instantly_actor PLAYER_ACTOR     
+  
+0605: actor PLAYER_ACTOR perform_animation "BOM_Plant_In" IFP "BOMBER" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1    
+wait 10         
+
+$FATIGUE_LEVEL += 0.5
+
+if or
+PICKUP_MODEL == 341
+PICKUP_MODEL == 12459
+PICKUP_MODEL == 12494
+PICKUP_MODEL == 12524
+then
+if or
+0491:   actor PLAYER_ACTOR has_weapon 9
+0491:   actor PLAYER_ACTOR has_weapon 131
+0491:   actor PLAYER_ACTOR has_weapon 164
+0491:   actor PLAYER_ACTOR has_weapon 194 
+    then
+    random_int 0@ 350 1001
+    005E: $CHAINSAW_GASOLINE += 0@  // (int)
+    
+    if
+    $CHAINSAW_GASOLINE > 1000
+    then
+    $CHAINSAW_GASOLINE = 1000
+    end
+    
+    0084: $CHAINSAW_GASOLINE2 = $CHAINSAW_GASOLINE
+    $CHAINSAW_GASOLINE2 /= 10
+    0084: $CHAINSAW_GASOLINE3 = $CHAINSAW_GASOLINE2
+    
+    end
+end
+
+while actor.Animation(PLAYER_ACTOR) == "BOM_Plant_In"
+wait 0
+end
+
+07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 1
+
+animation.Release("BOMBER")
+
+05B9: AS_actor PLAYER_ACTOR stay_idle 150 ms  
+
+return
+
+:PICKUP_ANIMATION_COOP2
+
+if
+0A32:  actor COOP_ACTOR on_turret_of_car
+    then
+    return
+    end
+
+07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 0
+
+while not animation.Available("BOMBER")
+wait 0
+04ED: load_animation "BOMBER"
+end
+
+if
+856D: not  actor COOP_ACTOR defined
+then
+jump to @PICKUP_ANIMATION_COOP2_RETURN_NOT_EXISTS
+end 
+
+while 0818:  actor COOP_ACTOR in_air
+wait 10
+end
+
+if
+856D: not  actor COOP_ACTOR defined
+then
+jump to @PICKUP_ANIMATION_COOP2_RETURN_NOT_EXISTS
+end
+      
+0792: disembark_instantly_actor COOP_ACTOR     
+  
+0605: actor COOP_ACTOR perform_animation "BOM_Plant_In" IFP "BOMBER" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1    
+wait 10
+
+if
+856D: not  actor COOP_ACTOR defined
+then
+jump to @PICKUP_ANIMATION_COOP2_RETURN_NOT_EXISTS
+end
+
+if or
+PICKUP_MODEL == 341
+PICKUP_MODEL == 12459
+PICKUP_MODEL == 12494
+PICKUP_MODEL == 12524
+then
+if or
+0491:   actor COOP_ACTOR has_weapon 9
+0491:   actor COOP_ACTOR has_weapon 131
+0491:   actor COOP_ACTOR has_weapon 164
+0491:   actor COOP_ACTOR has_weapon 194 
+    then
+    random_int 0@ 350 1001
+    005E: $CHAINSAW_GASOLINE += 0@  // (int)
+    
+    if
+    $CHAINSAW_GASOLINE > 1000
+    then
+    $CHAINSAW_GASOLINE = 1000
+    end
+    
+    0084: $CHAINSAW_GASOLINE2 = $CHAINSAW_GASOLINE
+    $CHAINSAW_GASOLINE2 /= 10
+    0084: $CHAINSAW_GASOLINE3 = $CHAINSAW_GASOLINE2
+    
+    end
+end
+
+while actor.Animation(COOP_ACTOR) == "BOM_Plant_In"
+wait 0
+if
+SAVE_PRE_TP_TEAMMATES_FLAG == 1
+    then    
+    jump to @PICKUP_ANIMATION_COOP2_RETURN_NOT_EXISTS
+    end
+end
+
+07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 1
+
+animation.Release("BOMBER")
+
+05B9: AS_actor COOP_ACTOR stay_idle 150 ms  
+
+return
+
+:PICKUP_ANIMATION_COOP2_RETURN_NOT_EXISTS
+return

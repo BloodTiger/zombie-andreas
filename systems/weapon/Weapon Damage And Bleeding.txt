@@ -1,0 +1,232 @@
+:WEP_DAM
+thread 'WEP_DAM'
+end_thread
+    
+:BLEEDIN
+thread 'BLEEDIN'  
+
+if or
+$DIE_HEADSHOOTED == 1
+$PLAYER_DYING == 1
+$PLAYER_BLEEDING == 1
+$GODMODE_FLAG == 1
+FIGHT_CLUB_FLAG == 1
+    then
+    end_thread 
+    end
+    
+if
+PERK_TITAN == 1
+then
+if
+0E4D: random_percent 80
+    then
+    end_thread
+    end
+end    
+    
+/////////////////////////////// 
+            
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_BLEEDINGS_GOT"        
+        
+$STATS_BLEEDINGS_GOT += 1        
+                
+if
+$CHEATED_FLAG == 0 
+then   
+0@ += 1
+end            
+             
+0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_BLEEDINGS_GOT"    
+0AF0: 3@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT57_GOT"
+            
+if and
+3@ == 0
+0@ >= 300
+$CHEATED_FLAG == 0
+    then
+    v$ACHIEVEMNT = "ACH57"
+    $ACHIEVEMENT_GOT_FLAG = 1                            
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT57_GOT"
+    end   
+            
+///////////////////////////////     
+              
+camera.Shake(70)
+0@ = actor.Health(PLAYER_ACTOR)
+0332: set_actor PLAYER_ACTOR bleeding 1
+06AF: set_player PLAYER_CHAR sprint_mode 1
+0A8C: write_memory 0xA49EFC size 1 value 7 virtual_protect 0
+0084: $HEAL_USE2 = $HEAL_USE // (int)
+0084: $BINT_USE2 = $BINT_USE // (int)
+015B: shake_player_controller 0 time 500 intensity 100
+
+if
+$HUNTER_ON_PLAYER == 0
+jf @BLDNG_TEXT_SKIP
+if
+$HUD_REMOVE == 0
+then
+text.ShowTextBox('INV148')
+end
+:BLDNG_TEXT_SKIP
+$PLAYER_BLEEDING = 1  
+gosub @BLEEDING_EFFECT_ON
+if                   
+not $EXTREME_MODE == 1
+jf @BLEEDING_CHECK
+32@ = 0
+33@ = 0
+:BLEEDING_CHECK
+wait 1
+gosub @BLEEDING_HUD_OFF_CHECK
+0332: set_actor PLAYER_ACTOR bleeding 1 
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @BLEEDING_CHECK_END
+if
+$HUD_REMOVE == 0
+jf @BLEEDING_CHECK2
+03F0: enable_text_draw 1
+$DYING_MODE_PIZDA_COLOR_A = 25
+038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA $DYING_MODE_COLOR_R $DYING_MODE_COLOR_G $DYING_MODE_COLOR_B $DYING_MODE_PIZDA_COLOR_A
+:BLEEDING_CHECK2
+if
+33@ > 1999
+jf @BLEEDING_CHECK
+33@ = 0
+0851: set_actor PLAYER_ACTOR decrease_health_by 2 affect_armour 0
+015B: shake_player_controller 0 time 250 intensity 50
+
+if
+PERK_GOODBLOOD == 0
+then
+28@ = 30000
+else
+28@ = 20000
+end
+
+if
+056D:   actor $VOICE_ACTOR defined
+then
+
+if
+not $RANDOM_MODE_MODEL == 0
+then
+05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 345
+else
+05C1: AS_actor PLAYER_ACTOR speak_from_audio_table 345
+end
+
+end
+
+///////////////////////////////////////////////////////////
+
+gosub @BLEEDING_HUD_OFF_CHECK
+
+/////////////////////////////////////////////////////////// 
+
+1@ = actor.Health(PLAYER_ACTOR)
+if or
+002D:   32@ >= 28@  // (int)
+actor.Dead(PLAYER_ACTOR)
+001C:   $HEAL_USE > $HEAL_USE2 // (int)
+001C:   $BINT_USE > $BINT_USE2 // (int)
+001D:   1@ > 0@  // (int)
+LAST_CHANCE_FLAG == 1
+$ALLOW_BLEEDING == 0
+jf @BLEEDING_CHECK
+
+if or
+001C:   $HEAL_USE > $HEAL_USE2 // (int)
+001C:   $BINT_USE > $BINT_USE2 // (int)
+    then         
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT12_GOT"        
+    if and
+    0@ == 0    
+    $CHEATED_FLAG == 0
+        then
+        v$ACHIEVEMNT = "ACH12"
+        $ACHIEVEMENT_GOT_FLAG = 1        
+        0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT12_GOT"        
+        end  
+    end
+  
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @BLEEDING_CHECK_END
+gosub @BLEEDING_EFFECT_OFF
+$PLAYER_BLEEDING = 0
+wait 0
+0332: set_actor PLAYER_ACTOR bleeding 0
+06AF: set_player PLAYER_CHAR sprint_mode 0
+0A8C: write_memory 0xA49EFC size 1 value 0 virtual_protect 0
+end_thread
+
+:BLEEDING_CHECK_END
+wait 0    
+$PLAYER_BLEEDING = 0
+0332: set_actor PLAYER_ACTOR bleeding 0
+06AF: set_player PLAYER_CHAR sprint_mode 0
+0A8C: write_memory 0xA49EFC size 1 value 0 virtual_protect 0
+end_thread
+
+:BLEEDING_EFFECT_ON  
+$DYING_MODE_BLYAD_COLOR_A = 0
+:BLEEDING_EFFECT_ON_IDLE
+wait 1
+$DYING_MODE_BLYAD_COLOR_A += 5  
+03F0: enable_text_draw 1
+038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA $DYING_MODE_COLOR_R $DYING_MODE_COLOR_G $DYING_MODE_COLOR_B $DYING_MODE_BLYAD_COLOR_A 
+if
+002C:   $DYING_MODE_BLYAD_COLOR_A >= $DYING_MODE_PIZDA_COLOR_A  // (int)
+jf @BLEEDING_EFFECT_ON_IDLE
+return
+
+:BLEEDING_EFFECT_OFF
+0084: $DYING_MODE_BLYAD_COLOR_A = $DYING_MODE_PIZDA_COLOR_A // (int)
+:BLEEDING_EFFECT_OFF_IDLE
+wait 1
+$DYING_MODE_BLYAD_COLOR_A -= 5
+03F0: enable_text_draw 1
+038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA $DYING_MODE_COLOR_R $DYING_MODE_COLOR_G $DYING_MODE_COLOR_B $DYING_MODE_BLYAD_COLOR_A
+if                        
+$DYING_MODE_BLYAD_COLOR_A == 0
+jf @BLEEDING_EFFECT_OFF_IDLE
+return
+
+:BLEEDING_HUD_OFF_CHECK
+
+if
+$HUD_REMOVE == 1
+then
+
+0332: set_actor PLAYER_ACTOR bleeding 0
+
+0085: 29@ = 32@ // (int)
+gosub @BLEEDING_EFFECT_OFF
+
+repeat
+wait 0  
+until $HUD_REMOVE == 0
+
+0085: 32@ = 29@ // (int)
+
+if or
+002D:   32@ >= 28@  // (int)
+actor.Dead(PLAYER_ACTOR)
+001C:   $HEAL_USE > $HEAL_USE2 // (int)
+001C:   $BINT_USE > $BINT_USE2 // (int)
+001D:   1@ > 0@  // (int)
+LAST_CHANCE_FLAG == 1
+$ALLOW_BLEEDING == 0
+then
+//skip bleed back effect
+else           
+gosub @BLEEDING_EFFECT_ON 
+0332: set_actor PLAYER_ACTOR bleeding 1
+end
+
+end 
+
+return

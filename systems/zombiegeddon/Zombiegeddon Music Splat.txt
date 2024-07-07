@@ -1,0 +1,217 @@
+const
+MUSIC1_PLAYED = 10@
+MUSIC2_PLAYED = 11@
+MUSIC3_PLAYED = 12@
+end
+
+:DRB_MU2
+thread 'DRB_MU2'
+
+:ZOMBIEGEDDON_MUSIC_SPLAT_START
+
+CARMA_CURR_MUSIC_SET = 2
+
+gosub @RANDOM_DERBY_MUSIC_SPLAT
+
+Audiostream.Volume($SELECT_MUSIC) = 0.0
+Audiostream.Loop($SELECT_MUSIC, 0)
+Audiostream.PerformAction($SELECT_MUSIC, PLAY) 
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $SELECT_MUSIC // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 2000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+//////////////////////////////////////////////////////////
+
+:ZOMBIEGEDDON_MUSIC_SPLAT_IDLE
+wait 0
+
+if and
+CARMA_GLOB_RACE_NUMBER == 57
+ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+then
+0A8C: write_memory 0xC402BA size 1 value 1 virtual_protect 0
+00C0: set_current_time 0 0
+else
+0A8C: write_memory 0xC402BA size 1 value 0 virtual_protect 0
+end
+
+if
+ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+then
+
+if or
+CARMA_GLOB_RACE_NUMBER == 47
+CARMA_GLOB_RACE_NUMBER == 52
+CARMA_GLOB_RACE_NUMBER == 56
+    then
+    068D: get_camera_position_to 0@ 1@ 2@
+    actor.StorePos(PLAYER_ACTOR,0@,1@,4@)
+    if or
+    2@ <= 1488.89999991
+    4@ <= 1488.89999991
+        then
+        3@ = 1
+        else
+        3@ = 0
+        end
+    end    
+
+if
+3@ == 1
+    then
+    0A8C: write_memory 0xC402D3 size 1 value 1 virtual_protect 0
+    03F0: enable_text_draw 1
+    038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA 50 200 50 50  
+    //////////////////////////////////////////////////////////////////////
+    0A8C: write_memory 0xC402D3 size 1 value 0 virtual_protect 0
+    0A8C: write_memory 0x55F6E9 size 1 value 0 virtual_protect 0 //R
+    0A8C: write_memory 0x55F6FC size 1 value 255 virtual_protect 0 //G
+    0A8C: write_memory 0x55F70F size 1 value 0 virtual_protect 0 //B
+    0A8C: write_memory 0x55F725 size 1 value 255 virtual_protect 0 //A
+    //////////////////////////////////////////////////////////////////////            
+    0A8C: write_memory 0x55F73B size 1 value 0 virtual_protect 0 //R
+    0A8C: write_memory 0x55F751 size 1 value 255 virtual_protect 0 //G
+    0A8C: write_memory 0x55F767 size 1 value 0 virtual_protect 0 //B
+    0A8C: write_memory 0x55F77D size 1 value 255 virtual_protect 0 //A    
+    else
+    0A8C: write_memory 0xC402D3 size 1 value 0 virtual_protect 0
+    //////////////////////////////////////////////////////////////////////    
+    0A8C: write_memory 0x55F6E9 size 1 value 56 virtual_protect 0 //R
+    0A8C: write_memory 0x55F6FC size 1 value 16 virtual_protect 0 //G
+    0A8C: write_memory 0x55F70F size 1 value 232 virtual_protect 0 //B
+    0A8C: write_memory 0x55F725 size 1 value 192 virtual_protect 0 //A
+    //////////////////////////////////////////////////////////////////////            
+    0A8C: write_memory 0x55F73B size 1 value 152 virtual_protect 0 //R
+    0A8C: write_memory 0x55F751 size 1 value 112 virtual_protect 0 //G
+    0A8C: write_memory 0x55F767 size 1 value 72 virtual_protect 0 //B
+    0A8C: write_memory 0x55F77D size 1 value 32 virtual_protect 0 //A
+    end       
+       
+end         
+
+if
+$DELETE_SOUND == 1
+then    
+end_thread
+else
+end
+
+if
+$MUTE_MUSIC_FLAG == 0
+then
+Audiostream.Volume($SELECT_MUSIC) = $MUSIC_VOLUME
+else
+Audiostream.Volume($SELECT_MUSIC) = 0.0
+end   
+
+0AB9: get_mp3 $SELECT_MUSIC state_to 11@
+if or
+11@ == -1
+CARMA_END_MUS_FLAG == 1 
+    then
+    audiostream.PerformAction($SELECT_MUSIC,STOP)          
+    audiostream.Release($SELECT_MUSIC)
+    
+    if
+    not CARMA_END_MUS_FLAG == 1
+    then
+    jump to @ZOMBIEGEDDON_MUSIC_SPLAT_START
+    else
+    CARMA_END_MUS_FLAG = 0
+    end_thread
+    end
+    
+    end
+
+jump to @ZOMBIEGEDDON_MUSIC_SPLAT_IDLE
+
+:RANDOM_DERBY_MUSIC_SPLAT
+random_int 1@ 0 3
+
+0AF0: 2@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ZOMBIGEDDON_SPLAT_MUSIC1_PLAYED"
+if
+1@ == 0
+then
+
+    if
+    not 2@ == 1
+    then        
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ZOMBIGEDDON_SPLAT_MUSIC1_PLAYED"    
+    $SELECT_MUSIC = Audiostream.Load("audio\sounds\other\zombiegeddon\ZOMBIEGEDDON_MUSIC_SPLAT\ZOMBIEGEDDON_MUSIC_SPLAT1.wav") 
+    else 
+    jump to @RANDOM_DERBY_MUSIC_SPLAT
+    end   
+
+end   
+
+0AF0: 2@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ZOMBIGEDDON_SPLAT_MUSIC2_PLAYED"
+if
+1@ == 1
+then
+
+    if
+    not 2@ == 1
+    then        
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ZOMBIGEDDON_SPLAT_MUSIC2_PLAYED"    
+    $SELECT_MUSIC = Audiostream.Load("audio\sounds\other\zombiegeddon\ZOMBIEGEDDON_MUSIC_SPLAT\ZOMBIEGEDDON_MUSIC_SPLAT2.wav")  
+    else
+    jump to @RANDOM_DERBY_MUSIC_SPLAT
+    end   
+
+end   
+
+0AF0: 2@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ZOMBIGEDDON_SPLAT_MUSIC3_PLAYED"
+if
+1@ == 2
+then
+
+    if
+    not 2@ == 1
+    then        
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ZOMBIGEDDON_SPLAT_MUSIC3_PLAYED"    
+    $SELECT_MUSIC = Audiostream.Load("audio\sounds\other\zombiegeddon\ZOMBIEGEDDON_MUSIC_SPLAT\ZOMBIEGEDDON_MUSIC_SPLAT3.wav")  
+    else
+    
+    gosub @MUSIC_PLAYED_GET_SPLAT
+    if and
+    MUSIC1_PLAYED == 1
+    MUSIC2_PLAYED == 1
+    MUSIC3_PLAYED == 1
+    then
+    0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "ZOMBIGEDDON_SPLAT_MUSIC1_PLAYED"
+    0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "ZOMBIGEDDON_SPLAT_MUSIC2_PLAYED"
+    0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "ZOMBIGEDDON_SPLAT_MUSIC3_PLAYED"
+    MUSIC1_PLAYED = 0
+    MUSIC2_PLAYED = 0
+    MUSIC3_PLAYED = 0
+    end
+    
+    jump to @RANDOM_DERBY_MUSIC_SPLAT
+    
+    end   
+
+end       
+
+return
+
+:MUSIC_PLAYED_GET_SPLAT
+0AF0: MUSIC1_PLAYED = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ZOMBIGEDDON_SPLAT_MUSIC1_PLAYED"
+0AF0: MUSIC2_PLAYED = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ZOMBIGEDDON_SPLAT_MUSIC2_PLAYED"
+0AF0: MUSIC3_PLAYED = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ZOMBIGEDDON_SPLAT_MUSIC3_PLAYED"
+return
