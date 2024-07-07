@@ -1,0 +1,135 @@
+//-------------Mission 3---------------
+// Название: Нападение на дом
+
+:RISS3
+thread 'RISS3'
+gosub @RKOD_MISSII3 
+if 
+wasted_or_busted 
+jf @RPROPUSK_KODA3 
+gosub @RKOD_PROVALA3 
+
+:RPROPUSK_KODA3
+gosub @RUDALENIE_KODA3
+end_thread
+
+:RKOD_MISSII3
+increment_mission_attempts
+
+cinema.Widescreen(1)
+0A48: enable_menu_access_in_widescreen_mode 0
+0629: change_integer_stat 258 to 3
+
+$DONT_CHANGE_MONTH_FLAG = 1
+wait 100
+0A8C: write_memory 0x00B70154 size 1 value 26 virtual_protect 0 //Day
+0A8C: write_memory 0x00B70155 size 1 value 9 virtual_protect 0 //Month
+wait 100
+$DONT_CHANGE_MONTH_FLAG = 0
+
+00C0: set_current_time 20 0      
+
+$SOUND_OFF_1 = 1
+
+$SAVESTATUS_TRUE = 1
+
+$ONMISSION = 1
+fade 0 0
+
+32@ = 0
+
+repeat
+wait 0
+fade 0 0
+03F0: enable_text_draw 1
+038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA 0 0 0 255
+until 32@ > 500
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+//////////////////////////////////////////////////////////
+
+$MISSION_START_NUMBER = 10 
+$SAVE_MISSION_START_FLAG = 1 
+create_thread @MS_STAR  
+
+jump @RUDACHNO3 
+
+:RUDACHNO3  
+0318: set_latest_mission_passed 'STR267'     
+gosub @RPROPUSK_KODA3 
+return 
+
+:RKOD_PROVALA3
+GAME_OVER_FLAG = 1
+create_thread @GMV_OVR  
+marker.Disable(MISSION_CHECKPOINT)
+marker.Disable(MISSION_MARKER)
+03BD: destroy_sphere MISSION_SPHERE
+$ONMISSION = 0 
+mission_cleanup 
+06D0: enable_emergency_traffic 0 
+06D7: enable_train_traffic 0 
+096A: enable_flying_helis 0 
+099E: enable_police_patrols 0  
+0923: enable_air_traffic 0 
+08E7: disable_entrance_markers 0    
+return 
+
+:RUDALENIE_KODA3
+$ONMISSION = 0 
+$Z_DONT_CLIMB_FLAG = 0
+
+if and
+GAME_OVER_FLAG == 0
+$ACTOR_DEAD == 0
+then
+fade 0 0
+end
+
+mission_cleanup
+
+if and
+GAME_OVER_FLAG == 0
+$ACTOR_DEAD == 0
+then
+fade 0 0
+end
+
+marker.Disable(MISSION_CHECKPOINT)
+marker.Disable(MISSION_MARKER)
+
+03BD: destroy_sphere MISSION_SPHERE
+
+06D0: enable_emergency_traffic 0 
+06D7: enable_train_traffic 0 
+096A: enable_flying_helis 0 
+099E: enable_police_patrols 0  
+0923: enable_air_traffic 0 
+08E7: disable_entrance_markers 0
+
+0A8C: write_memory 0xBA676C size 1 value 0 virtual_protect 1
+0A8C: write_memory 0xC402B4 size 1 value 0 virtual_protect 0     
+
+return

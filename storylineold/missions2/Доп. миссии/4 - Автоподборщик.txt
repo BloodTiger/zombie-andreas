@@ -1,0 +1,408 @@
+//-------------Additioanl Mission 4---------------
+// Название: Автоподборщик
+
+:DL_ADM4
+thread 'DL_ADM4'
+gosub @ADD_MSN_KOD_MISSI4 
+if 
+wasted_or_busted
+Jf @ADD_MSN_PROPUSK_KOD4 
+gosub @ADD_MSN_KOD_PROVAL4 
+
+:ADD_MSN_PROPUSK_KOD4 
+gosub @ADD_MSN_UDALENIE_KOD4
+$QUEST_TYPE = -1 
+end_thread
+
+:ADD_MSN_KOD_MISSI4 
+increment_mission_attempts
+0629: change_integer_stat 258 to 68
+
+$ONMISSION = 1
+$NOTSPAWN_ETC = 1
+$SAVESTATUS = 1
+cinema.Widescreen(1)
+BLACK_POLOSKI_ON = 1
+v$OBJECTIVE = "DUMMY"
+$QUEST_TYPE = 2048
+
+while not model.Available(169)
+wait 0
+model.Load(169)
+mload
+end
+
+$SURVIVER[0] = actor.Create(26,169,890.7756, -1473.1223, 12.5428)
+actor.Angle($SURVIVER[0]) = 179.8564
+actor.Health($SURVIVER[0]) = $FRIEND_HEALTH
+actor.SetWalkStyle($SURVIVER[0],"MAN")
+0446: set_actor $SURVIVER[0] dismemberment_possible 0
+077A: set_actor $SURVIVER[0] acquaintance 0 to_actors_pedtype 0 // see ped.dat
+060B: set_actor $SURVIVER[0] decision_maker_to $DEC_PEOPLE
+0350: set_actor $SURVIVER[0] maintain_position_when_attacked 1
+actor.Health($SURVIVER[0]) = $FRIEND_HEALTH
+actor.WeaponAccuracy($SURVIVER[0]) = 100
+
+camera.SetPosition(890.7756, -1473.1223, 12.5428,0.0,0.0,0.0)
+03CB: set_rendering_origin_at 890.7756 -1473.1223 12.5428
+
+actor.PutAtNoOffset(PLAYER_ACTOR,890.6332, -1480.2921, 13.5602)
+actor.Angle(PLAYER_ACTOR) = 359.9793
+              
+0639: AS_actor $SURVIVER[0] rotate_to_actor PLAYER_ACTOR
+0639: AS_actor PLAYER_ACTOR rotate_to_actor $SURVIVER[0]
+
+camera.SetPosition(888.723816, -1485.966675, 14.223122,0.0,0.0,0.0)
+camera.OnPed($SURVIVER[0],15,2)
+
+gosub @WEAPON_SELECT
+
+05BF: AS_actor PLAYER_ACTOR look_at_actor $SURVIVER[0] 999999 ms
+0635: AS_actor PLAYER_ACTOR aim_at_actor $SURVIVER[0] -1 ms
+05C4: AS_actor $SURVIVER[0] hands_up -1 ms
+
+wait 1000
+fade 1 1000
+wait 1000
+
+v$ST_DIALOG[0] = "DLC83"
+v$ST_DIALOG[1] = "DLC84"
+v$ST_DIALOG[2] = "DLC85"
+$DIALOG_COUNT = 2                
+create_thread @DG_SYS2
+
+repeat
+wait 0
+until $DIALOG_END == 1
+
+0687: clear_actor PLAYER_ACTOR task
+wait 1000
+0687: clear_actor $SURVIVER[0] task
+
+0084: $DIALOG_ACTOR[0] = $SURVIVER[0] // (int)
+0084: $DIALOG_ACTOR[1] = $SURVIVER[0] // (int)
+0084: $DIALOG_ACTOR[2] = $SURVIVER[0] // (int)
+0084: $DIALOG_ACTOR[3] = $SURVIVER[0] // (int)
+0084: $DIALOG_ACTOR[4] = $SURVIVER[0] // (int)
+
+v$ST_DIALOG[0] = "DLC86"
+v$ST_DIALOG[1] = "DLC86B"
+v$ST_DIALOG[2] = "DLC86C"
+v$ST_DIALOG[3] = "DLC86D"
+v$ST_DIALOG[4] = "DLC86E"
+$DIALOG_COUNT = 4                
+create_thread @DG_SYS
+
+repeat
+wait 0
+until $DIALOG_END == 1
+
+0084: $DIALOG_ACTOR[0] = PLAYER_ACTOR // (int)
+0084: $DIALOG_ACTOR[1] = $SURVIVER[0] // (int)
+v$ST_DIALOG[0] = "DLC89"
+v$ST_DIALOG[1] = "DLC90"
+$DIALOG_COUNT = 1               
+create_thread @DG_SYS
+
+repeat
+wait 0
+until $DIALOG_END == 1
+
+fade 0 1000
+wait 1000
+05BF: AS_actor $SURVIVER[0] look_at_actor PLAYER_ACTOR 1 ms
+05BF: AS_actor PLAYER_ACTOR look_at_actor $SURVIVER[0] 1 ms
+06AB: set_actor $SURVIVER[0] all_weapons_hidden 0
+actor.DestroyInstantly($SURVIVER[0])
+cinema.Widescreen(0)
+BLACK_POLOSKI_ON = 0
+$SAVESTATUS = 0
+wait 1000
+
+player.CanMove(PLAYER_CHAR) = true
+actor.PutAtNoOffset(PLAYER_ACTOR,896.4478, -1484.245, 13.5625)
+actor.Angle(PLAYER_ACTOR) = 270.214
+camera.Restore_WithJumpCut()
+
+fade 1 1000
+$HUD_REMOVE = 0
+wait 1000
+
+v$OBJECTIVE = "DLC90B"
+
+////////////////////////////////////////////////////
+
+03BC: MISSION_SPHERE = create_sphere_at 891.0007 -1483.9941 13.5592 radius 2.0
+018A: MISSION_CHECKPOINT = create_checkpoint_at 891.0007 -1483.9941 13.5592
+
+repeat
+wait 0
+
+if
+00EF:   actor PLAYER_ACTOR sphere 0 near_point 891.0007 -1483.9941 radius 2.0 2.0 stopped
+    then
+    if
+    actor.Driving(PLAYER_ACTOR)
+        then
+        2@ = actor.CurrentCar(PLAYER_ACTOR)
+        0441: 3@ = car 2@ model
+        0A97: 21@ = car 2@ struct 
+        21@ += 17 
+        0A8D: 24@ = read_memory 21@ size 1 virtual_protect 0           
+        if and
+        881E: not model 3@ boat
+        881F: not model 3@ plane
+        8820: not  model 3@ heli
+        88B4: not  test 24@ bit 4
+            then
+            if and
+            87D6: not  2@ == $USED_CAR[0] // @ == $ (int)
+            87D6: not  2@ == $USED_CAR[1] // @ == $ (int)
+            87D6: not  2@ == $USED_CAR[2] // @ == $ (int)
+            87D6: not  2@ == $USED_CAR[3] // @ == $ (int)
+            87D6: not  2@ == $USED_CAR[4] // @ == $ (int)
+                then                    
+                if
+                $KANISTRA_FUEL >= 24.9
+                    then
+                    if
+                    $BANKA >= 3
+                        then
+                        $BANKA -= 3
+                        $KANISTRA_FUEL = 0.0
+                        break
+                        else
+                        text.ClearAll()
+                        text.ShowH('DLC90F',2000,1)
+                        wait 2000
+                        end
+                    else
+                    text.ClearAll()
+                    text.ShowH('DLC90E',2000,1)
+                    wait 2000
+                    end
+                else
+                text.ClearAll()
+                text.ShowH('DLC90G',2000,1)
+                wait 2000
+                end
+            else
+            text.ClearAll()
+            text.ShowH('DLC90D',2000,1)
+            wait 2000
+            end
+        else
+        text.ClearAll()
+        text.ShowH('DLC90C',2000,1)
+        wait 2000
+        end
+    end
+
+until false
+
+////////////////////////////////////////////////////
+
+03BD: destroy_sphere MISSION_SPHERE
+marker.Disable(MISSION_CHECKPOINT)
+
+v$OBJECTIVE = "DUMMY"
+player.CanMove(PLAYER_CHAR,false)
+fade 0 1000
+$HUD_REMOVE = 1
+wait 1000
+
+cinema.Widescreen(1)
+BLACK_POLOSKI_ON = 1
+$SAVESTATUS = 1
+
+car.Angle(2@) = 270.0236
+0362: remove_actor PLAYER_ACTOR from_car_and_place_at 890.5544 -1479.4928 13.4489
+actor.Angle(PLAYER_ACTOR) = 0.0441
+
+while not model.Available(169)
+wait 0
+model.Load(169)
+mload
+end
+
+$SURVIVER[0] = actor.Create(26,169,890.7756, -1473.1223, 12.5428)
+create_thread @PED_BKP $SURVIVER[0] 371
+actor.Angle($SURVIVER[0]) = 179.8564
+actor.Health($SURVIVER[0]) = $FRIEND_HEALTH
+actor.SetWalkStyle($SURVIVER[0],"MAN")
+0446: set_actor $SURVIVER[0] dismemberment_possible 0
+077A: set_actor $SURVIVER[0] acquaintance 0 to_actors_pedtype 0 // see ped.dat
+060B: set_actor $SURVIVER[0] decision_maker_to $DEC_PEOPLE
+0350: set_actor $SURVIVER[0] maintain_position_when_attacked 1
+actor.Health($SURVIVER[0]) = $FRIEND_HEALTH
+actor.WeaponAccuracy($SURVIVER[0]) = 100
+
+05BF: AS_actor $SURVIVER[0] look_at_actor PLAYER_ACTOR 999999 ms
+05BF: AS_actor PLAYER_ACTOR look_at_actor $SURVIVER[0] 999999 ms
+
+camera.SetPosition(888.723816, -1485.966675, 14.223122,0.0,0.0,0.0)
+camera.OnPed($SURVIVER[0],15,2)
+
+wait 1000
+fade 1 1000
+wait 1000
+
+0084: $DIALOG_ACTOR[0] = PLAYER_ACTOR // (int)
+0084: $DIALOG_ACTOR[1] = $SURVIVER[0] // (int)
+v$ST_DIALOG[0] = "DLC92B"
+v$ST_DIALOG[1] = "DLC92C"
+$DIALOG_COUNT = 1                
+create_thread @DG_SYS
+
+repeat
+wait 0
+until $DIALOG_END == 1
+
+fade 0 1000
+wait 1000
+
+car.Destroy(2@)
+actor.DestroyInstantly($SURVIVER[0])
+0109: player PLAYER_CHAR money += 2000
+
+wait 1000
+
+cinema.Widescreen(0)
+BLACK_POLOSKI_ON = 0
+$SAVESTATUS = 0
+
+player.CanMove(PLAYER_CHAR,true)
+actor.PutAtNoOffset(PLAYER_ACTOR,890.5098, -1478.9733, 13.3765)
+actor.Angle(PLAYER_ACTOR) = 182.0203
+camera.Restore_WithJumpCut()
+
+fade 1 1000
+$HUD_REMOVE = 0
+wait 1000
+
+////////////////////////////////////////////////////
+
+$TEMP_XP = 1500
+008D: $TEMP_XP = integer $TEMP_XP to_float
+0069: $TEMP_XP *= $XP_COEFF // (float)
+if
+PERK_CHARISMA == 2
+then
+$TEMP_XP *= CHARISMA_LEVEL2_XP_COEFF
+end
+008C: $TEMP_XP = float $TEMP_XP to_integer
+0058: $PLAYER_XP += $TEMP_XP // (int)
+
+0629: change_integer_stat 258 to 0
+
+jump to @ADD_MSN_UDACHN4
+
+:WEAPON_SELECT
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 5 weapon 0@ ammo 1@ model 2@
+if
+not 0@ < 1
+jf @WEAPON_SELECT2
+model.Load(2@)
+mload
+actor.GiveWeaponAndAmmo(PLAYER_ACTOR,0@,1,2@)
+//model.Destroy(2@)
+return
+
+:WEAPON_SELECT2
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 3 weapon 0@ ammo 1@ model 2@
+if
+not 0@ < 1
+jf @WEAPON_SELECT3
+model.Load(2@)
+mload
+actor.GiveWeaponAndAmmo(PLAYER_ACTOR,0@,1,2@)
+//model.Destroy(2@)
+return
+
+:WEAPON_SELECT3
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 4 weapon 0@ ammo 1@ model 2@
+if
+not 0@ < 1
+jf @WEAPON_SELECT4
+model.Load(2@)
+mload
+actor.GiveWeaponAndAmmo(PLAYER_ACTOR,0@,1,2@)
+//model.Destroy(2@)
+return
+
+:WEAPON_SELECT4
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 6 weapon 0@ ammo 1@ model 2@
+if
+not 0@ < 1
+jf @WEAPON_SELECT5
+model.Load(2@)
+mload
+actor.GiveWeaponAndAmmo(PLAYER_ACTOR,0@,1,2@)
+//model.Destroy(2@)
+return
+
+:WEAPON_SELECT5
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 6 weapon 0@ ammo 1@ model 2@
+if
+not 0@ < 1
+jf @WEAPON_SELECT_RETURN
+model.Load(2@)
+mload
+actor.GiveWeaponAndAmmo(PLAYER_ACTOR,0@,1,2@)
+//model.Destroy(2@)
+return
+
+:WEAPON_SELECT_RETURN
+return
+
+:ADD_MSN_UDACHN4 
+$ONMISSION = 0   
+03DE: set_pedestrians_density_multiplier_to 0.0 
+01EB: set_traffic_density_multiplier_to 0.0
+if
+MCS_FLAG == 0
+then      
+0318: set_latest_mission_passed 'DLC82B'
+else
+0318: set_latest_mission_passed 'DLC82C'
+end 
+$ADDITIONAL_MISSIONS_PASSED += 1
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT104_GOT"                            
+if and
+0@ == 0
+$ADDITIONAL_MISSIONS_PASSED >= 20
+$CHEATED_FLAG == 0
+$CARL_STORY == 1
+    then
+    v$ACHIEVEMNT = "ACH104"
+    $ACHIEVEMENT_GOT_FLAG = 1                                    
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT104_GOT"
+    end
+gosub @ADD_MSN_PROPUSK_KOD4
+return
+
+:ADD_MSN_KOD_PROVAL4    
+$ONMISSION = 0  
+mission_cleanup
+06D0: enable_emergency_traffic 0 
+06D7: enable_train_traffic 0 
+096A: enable_flying_helis 0 
+099E: enable_police_patrols 0 
+06C8: enable_riot 0 
+0923: enable_air_traffic 0 
+03DE: set_pedestrians_density_multiplier_to 0.0 
+01EB: set_traffic_density_multiplier_to 0.0   
+return
+
+:ADD_MSN_UDALENIE_KOD4 
+$ONMISSION = 0
+mission_cleanup
+06D0: enable_emergency_traffic 0 
+06D7: enable_train_traffic 0 
+096A: enable_flying_helis 0 
+099E: enable_police_patrols 0 
+06C8: enable_riot 0 
+0923: enable_air_traffic 0 
+03DE: set_pedestrians_density_multiplier_to 0.0 
+01EB: set_traffic_density_multiplier_to 0.0
+return

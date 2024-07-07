@@ -1,0 +1,1355 @@
+//-------------Mission 2---------------
+// Название: Заварушка в магазине
+
+:MISS2
+thread 'MISS2'
+
+if
+MIKE_SHIZA_FLAG == 0
+then
+gosub @KOD_MISSII2
+else
+gosub @KOD_MISSII2_SHIZA
+end
+ 
+if 
+wasted_or_busted 
+jf @PROPUSK_KODA2 
+gosub @KOD_PROVALA2 
+
+:PROPUSK_KODA2
+gosub @UDALENIE_KODA2
+
+HARDCORE_DANGER_FLAG_SCRIPTED = 0
+if
+GAME_OVER_FLAG == 1
+then
+HARDCORE_DANGER_ANTIFLAG_SCRIPTED = 1
+end
+
+if
+GAME_OVER_FLAG == 1
+then
+repeat
+wait 0
+until BLACK_POLOSKI_ON == 1
+end
+
+{$INCLUDE checkpoints_write.txt}
+  
+end_thread                        
+
+:KOD_MISSII2
+increment_mission_attempts  
+
+cinema.Widescreen(1)
+text.RemoveTextBox()
+BLACK_POLOSKI_ON = 1
+0A48: enable_menu_access_in_widescreen_mode 0
+0629: change_integer_stat 258 to 2
+0B04: copy_file "modloader\MODLOADER GLOBAL FILES\ZA Some Files\ZA Skins\STORY\labig1int2b.txd" to "modloader\ZA COMPLETE USER MODS FOLDER\labig1int2.txd" //IF and SET 
+
+MAIN_QUEST_MUSIC_FLAG = 1
+
+create_thread @MCS_ASS_CREATE 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+
+32@ = 0
+repeat
+wait 0
+fade 0 0
+$SAVESTATUS = 1
+03F0: enable_text_draw 1
+038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA 0 0 0 255
+until 32@ > 3100
+
+while true
+wait 0
+$END_FADING_MUSIC_FAST = 1
+
+if and
+$MUSIC_FADE_ENDED[0] == 1
+$MUSIC_FADE_ENDED[1] == 1
+$MUSIC_FADE_ENDED[2] == 1
+$MUSIC_FADE_ENDED[3] == 1
+$MUSIC_FADE_ENDED[4] == 1
+then
+$END_FADING_MUSIC_FAST = 0
+break
+end
+
+end
+
+$SAVESTATUS = 1 
+$SOUND_OFF_1 = 1  
+$ONMISSION = 1                                                                                   
+$INT_ZMB_NOT = 1
+ENEX_OFF = 1
+$NOTSPAWN_ETC = 1
+$NOTSPAWN_CARS = 0
+$BANKA = 0
+
+$SATIETY_LEVEL = 500.0  
+
+$SPECIAL_INFECTED_NOT_SPAWN_FLAG = 1
+
+PLAYER_DONT_HAVE_BACKPACK = 1
+
+$DONT_CHANGE_MONTH_FLAG = 1
+wait 100
+0A8C: write_memory 0x00B70154 size 1 value 25 virtual_protect 0 //Day
+0A8C: write_memory 0x00B70155 size 1 value 9 virtual_protect 0 //Month
+wait 100
+$DONT_CHANGE_MONTH_FLAG = 0
+
+PLAYER_DONT_HAVE_BACKPACK = 0
+PLAYER_NO_ITEMS_FLAG = 1 
+
+fade 0 0
+wait 1
+
+wait 500
+
+00C0: set_current_time 23 0
+$WEATHER_SYNC_FLAG = 1
+
+$MUSIC_MISSION = Audiostream.Load(CLASSIC_MUSIC_2A)
+Audiostream.PerformAction($MUSIC_MISSION, PLAY)
+Audiostream.Loop($MUSIC_MISSION, 1)
+Audiostream.Volume($MUSIC_MISSION) = 0.0
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1  
+
+//////////////////////////////////////////////////////////
+
+wait 500
+
+0A8C: write_memory 0xB7014E size 1 value 5 virtual_protect 1
+
+01B9: set_actor PLAYER_ACTOR armed_weapon_to 0 
+
+cinema.Widescreen(1)
+BLACK_POLOSKI_ON = 1
+
+$HUD_REMOVE = 1 
+
+while not animation.Available("INT_HOUSE")
+wait 0
+animation.Load("INT_HOUSE")
+end
+
+renderer 247.4238 1108.529               
+03CB: set_rendering_origin_at 247.4238 1108.529 1079.8
+
+Actor.PutAt(PLAYER_ACTOR, 247.4238, 1109.0, 1079.8)
+Actor.Angle(PLAYER_ACTOR) = 94.4616
+
+DONT_DO_BURGLARY = 1
+select_interior 5 
+0860: link_actor PLAYER_ACTOR to_interior 5
+04F9: set_sky_color 1 fade 0  
+0619: enable_actor PLAYER_ACTOR collision_detection 0 
+
+0936: set_camera 245.447 1106.426 1080.992 position_to 245.6839 1109.961 1080.992 time 30000 smooth_transition 1 
+0920: point_camera 246.7375 1108.043 1080.992 transverse_to 246.6778 1110.644 1080.992 time 30000 smooth_transition 1
+
+Player.CanMove(PLAYER_CHAR) = False    
+
+wait 500
+0605: actor PLAYER_ACTOR perform_animation "BED_LOOP_L" IFP "INT_HOUSE" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time 20000
+wait 500 
+
+0707: start_scene_skip_to @MISSION2_SKIP
+
+00C0: set_current_time 23 0
+$WEATHER_SYNC_FLAG = 1
+
+0A48: enable_menu_access_in_widescreen_mode 1  
+$SOUND_OFF_1 = 0
+wait 0
+cinema.Widescreen(1)
+BLACK_POLOSKI_ON = 1
+
+create_thread @REFR_3D
+0A0B: set_rendering_origin_at_3D_coord 1438.1986 -927.13 39.6477 angle 105.447
+
+fade 1 2000
+wait 2000
+00BA: show_text_styled GXT "MSN2" time 5000 style 6
+wait 5000
+00BA: show_text_styled GXT "MSN36" time 5000 style 2
+wait 5000
+fade 0 1000 
+wait 1000
+
+015D: set_gamespeed 1.0
+
+041D: set_camera_near_clip 0.2
+
+0792: disembark_instantly_actor PLAYER_ACTOR
+
+0936: set_camera 245.447 1106.426 1080.992 position_to 245.6839 1109.961 1080.992 time 1 smooth_transition 1 
+0920: point_camera 246.7375 1108.043 1080.992 transverse_to 246.6778 1110.644 1080.992 time 1 smooth_transition 1
+
+wait 100
+
+0936: set_camera 243.83 1112.45 1080.3 position_to 244.251 1117.04 1080.3 time 9000 smooth_transition 1
+0920: point_camera 244.216 1113.05 1079.6 transverse_to 244.694 1117.93 1080.31 time 9000 smooth_transition 1
+ 
+04EF: release_animation "INT_HOUSE" 
+
+0619: enable_actor PLAYER_ACTOR collision_detection 1 
+
+Actor.PutAtNoOffset(PLAYER_ACTOR, 244.9568, 1113.4399, 1080.9922)
+Actor.Angle(PLAYER_ACTOR) = 358.7116
+
+wait 500 
+fade 1 10000 
+wait 3000
+
+0615: define_AS_pack_begin 9@ 
+05D3: AS_actor -1 goto_point 245.0954 1118.342 1080.992 mode 4 time 90000 ms // versionA 
+05D3: AS_actor -1 goto_point 249.8964 1118.844 1082.992 mode 4 time 90000 ms // versionA 
+05D3: AS_actor -1 goto_point 249.763 1113.128 1084.992 mode 4 time 90000 ms // versionA 
+05D3: AS_actor -1 goto_point 249.309 1111.828 1084.992 mode 4 time 90000 ms // versionA  
+0616: define_AS_pack_end 9@ 
+0618: assign_actor PLAYER_ACTOR to_AS_pack 9@ 
+061B: remove_references_to_AS_pack 9@
+
+wait 4000
+
+0936: set_camera 250.44 1120.31 1083.54 position_to 249.761 1116.55 1084.23 time 9000 smooth_transition 1
+0920: point_camera 249.979 1119.42 1083.54 transverse_to 249.669 1115.58 1084.47 time 9000 smooth_transition 1
+
+wait 3000
+
+repeat
+wait 0 
+until 00EC:   actor PLAYER_ACTOR sphere 0 near_point 249.309 1111.828 radius 2.0 2.0  
+
+fade 0 100
+wait 100
+
+0936: set_camera 244.8964 1119.1583 1080.9922 position_to 249.8554 1119.6409 1082.9922 time 0 smooth_transition 0
+0920: point_camera 245.0943 1118.6899 1080.9922 transverse_to 249.7921 1114.2651 1084.9922 time 0 smooth_transition 0 
+
+Actor.StorePos(PLAYER_ACTOR, 6@, 7@, 8@)
+Camera.SetPosition(6@, 7@, 8@, 0.0, 0.0, 0.0)
+Camera.PointAt(249.3826, 1111.362, 1085.992, 2)
+
+0337: set_actor PLAYER_ACTOR visibility 0 
+
+$STORYLINE_FOV = 1
+wait 50
+
+0922: set_camera_zoom_from 70.0 to 40.0 timelimit 55000 smooth_transition 1
+
+wait 500
+
+fade 1 1000 
+
+v$ST_DIALOG[0] = "MSN13"
+v$ST_DIALOG[1] = "MSN14"
+v$ST_DIALOG[2] = "MSN15"
+v$ST_DIALOG[3] = "MSN16"
+v$ST_DIALOG[4] = "MSN3"
+$DIALOG_COUNT = 4
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+repeat
+wait 0
+until $DIALOG_END == 1
+
+:MISSION2_SKIP 
+0701: end_scene_skip
+$END_DIALOG_INST = 1
+03D6: remove_styled_text "MSN36"  // Boxville
+
+$STORYLINE_FOV = 0
+
+fade 0 1000
+wait 1000 
+
+041D: set_camera_near_clip 0.1
+
+0936: set_camera 245.447 1106.426 1080.9922 position_to 245.6839 1109.9606 1080.9922 time 1 smooth_transition 1
+0920: point_camera 246.7375 1108.0431 1080.9922 transverse_to 246.6778 1110.6444 1080.9922 time 1 smooth_transition 1
+
+0922: set_camera_zoom_from 70.0 to 40.0 timelimit 1 smooth_transition 1
+
+00BE: text_clear_all
+0337: set_actor PLAYER_ACTOR visibility 1 
+
+0619: enable_actor PLAYER_ACTOR collision_detection 1 
+
+cinema.Widescreen(0)
+BLACK_POLOSKI_ON = 0 
+
+$SATIETY_LEVEL = 100.0
+
+wait 1000
+
+0972: put_actor PLAYER_ACTOR at 249.6407 1112.758 1084.992 no_offset 
+Actor.Angle(PLAYER_ACTOR) = 359.6252
+Camera.Restore_WithJumpCut
+
+Player.CanMove(PLAYER_CHAR) = True
+0619: enable_actor PLAYER_ACTOR collision_detection 1 
+09A6: enable_interior_radar_blips 1 
+28@ = Pickup.Create(6549, 3, 239.7427, 1116.892, 1084.9922)
+
+fade 1 1000
+$HUD_REMOVE = 0 
+wait 1000
+
+v$OBJECTIVE = "STR53"  
+03DC: MISSION_MARKER = create_marker_above_pickup 28@
+
+repeat
+wait 0
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @KOD_PROVALA2  
+until Pickup.Picked_up(28@)
+
+Marker.Disable(MISSION_MARKER)
+$PREPARING_TEXT_OFF = 0
+PLAYER_NO_ITEMS_FLAG = 0
+create_thread @PED_BKP PLAYER_ACTOR 371
+$HEAL += 1
+$BINT += 2
+
+//////////////////////////////////////////////
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 2 weapon 1@ ammo 2@ model 3@
+if
+2@ < 1
+then
+
+0781: get_weapon_with_ID 3 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+ 
+Actor.GiveWeaponAndAmmo(PLAYER_ACTOR, 3, 1)
+else
+//ass
+end
+
+//////////////////////////////////////////////
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 3 weapon 1@ ammo 2@ model 3@
+if
+2@ < 1
+then
+
+0781: get_weapon_with_ID 22 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+ 
+Actor.GiveWeaponAndAmmo(PLAYER_ACTOR, 22, 34)
+else
+2@ += 34
+017B: set_actor PLAYER_ACTOR weapon 1@ ammo_to 2@
+01B9: set_actor PLAYER_ACTOR armed_weapon_to 1@
+end
+
+//////////////////////////////////////////////
+
+v$OBJECTIVE = "STR22"
+018A: MISSION_CHECKPOINT = create_checkpoint_at 226.8415 1114.2958 1080.9957
+03BC: MISSION_SPHERE = create_sphere_at 226.8415 1114.2958 1080.9957 radius 1.0
+
+repeat
+wait 0
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @KOD_PROVALA2
+until 00FE:   actor PLAYER_ACTOR sphere 1 in_sphere 226.8415 1114.2958 1080.9957 radius 1.5 1.5 1.5
+
+marker.Disable(MISSION_CHECKPOINT)
+03BD: destroy_sphere MISSION_SPHERE
+player.CanMove(PLAYER_CHAR) = false
+v$OBJECTIVE = "DUMMY"
+
+fade 0 1000
+$HUD_REMOVE = 1
+wait 1000
+
+$SAVESTATUS = 0
+select_interior 0
+0860: link_actor PLAYER_ACTOR to_interior 0
+04FA: reset_sky_colors_with_fade 0
+actor.PutAtNoOffset(PLAYER_ACTOR,1439.125, -926.1063, 39.6477)
+actor.Angle(PLAYER_ACTOR) = 172.2693
+player.CanMove(PLAYER_CHAR) = true
+camera.Restore_WithJumpCut()
+create_thread @REFR_3D
+$X7_11B_ON_TIMER += 9999999999999
+wait 1000
+
+fade 1 1000
+$HUD_REMOVE = 0
+wait 1000
+
+v$OBJECTIVE = "STR90"
+018A: MISSION_CHECKPOINT = create_checkpoint_at 1315.4797 -898.3452 39.5781
+
+repeat
+wait 0
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @KOD_PROVALA2
+until 00FE:   actor PLAYER_ACTOR sphere 1 in_sphere 1315.4797 -898.3452 39.5781 radius 1.5 1.5 1.5
+
+v$OBJECTIVE = "DUMMY"
+marker.Disable(MISSION_CHECKPOINT)
+
+INT_ZOMBIE_OFF_FADING_AND_SHIT_FLAG = 1
+$INT_ZMB_NOT = 0
+fade 0 500
+$HUD_REMOVE = 1 
+wait 500  
+select_interior 18 
+0860: link_actor PLAYER_ACTOR to_interior 18  
+Actor.PutAtNoOffset(PLAYER_ACTOR, -30.8233, -90.0613, 1003.547)
+Actor.Angle(PLAYER_ACTOR) = 0.3366
+camera.Restore_WithJumpCut()
+
+0089: 500@ = $ZOMBIE_RUN_SPEED // (float)
+$ZOMBIE_RUN_SPEED = 0.1
+$ZOMBIES_HORDE = 1
+
+32@ = 0
+
+repeat
+wait 0
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @KOD_PROVALA2
+fade 0 0
+player.CanMove(PLAYER_CHAR,true)
+03F0: enable_text_draw 1
+038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA 0 0 0 255
+
+for 0@ = 0 to 19
+if
+056D:   actor $ZOMBIE[0@] defined
+    then
+    if
+    00A4:   actor $ZOMBIE[0@] sphere 0 in_cube_cornerA -38.8371 -92.4991 1007.8 cornerB -13.2181 -72.9769 1009.9487
+        then
+        actor.PutAtNoOffset($ZOMBIE[0@],3000.0,0.0,0.0)
+        end
+    end
+end
+
+until 32@ > 1000
+
+create_thread @REFR_3D
+fade 1 1000
+$HUD_REMOVE = 0
+0088: $ZOMBIE_RUN_SPEED = 500@ // (float)
+
+32@ = 0
+ 
+repeat
+wait 0
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @KOD_PROVALA2
+
+for 0@ = 0 to 19
+if
+056D:   actor $ZOMBIE[0@] defined
+    then
+    if
+    00A4:   actor $ZOMBIE[0@] sphere 0 in_cube_cornerA -38.8371 -92.4991 1007.8 cornerB -13.2181 -72.9769 1009.9487
+        then
+        actor.PutAtNoOffset($ZOMBIE[0@],3000.0,0.0,0.0)
+        end
+    end
+end
+
+until 32@ > 500
+
+text.ClearAll()
+$END_DIALOG_INST = 1
+
+v$OBJECTIVE = "STR54"
+
+008B: 0@ = $BANKA_FIND // (int)
+0@ += 6
+
+repeat
+wait 0
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @KOD_PROVALA2
+
+for 1@ = 0 to 19
+if
+056D:   actor $ZOMBIE[1@] defined
+    then
+    if
+    00A4:   actor $ZOMBIE[1@] sphere 0 in_cube_cornerA -38.8371 -92.4991 1007.8 cornerB -13.2181 -72.9769 1009.9487
+        then
+        actor.PutAtNoOffset($ZOMBIE[1@],3000.0,0.0,0.0)
+        end
+    end
+end
+ 
+until 002E:   $BANKA_FIND >= 0@  // (int)
+
+v$ST_DIALOG[0] = "STR51"
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+v$OBJECTIVE = "STR20"
+018A: MISSION_CHECKPOINT = create_checkpoint_at -31.0 -92.0 1003.5
+
+repeat
+wait 0
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @KOD_PROVALA2
+until 00FE:   actor PLAYER_ACTOR sphere 1 in_sphere -31.0 -92.0 1003.5 radius 1.5 1.5 1.5
+
+v$OBJECTIVE = "DUMMY"
+marker.Disable(MISSION_CHECKPOINT)
+
+0E68: set_player_control_pad 0 1 
+0E69: set_player_control_pad_movement 0 0
+fade 0 500
+$HUD_REMOVE = 1 
+wait 500  
+select_interior 0 
+0860: link_actor PLAYER_ACTOR to_interior 0  
+Actor.PutAt(PLAYER_ACTOR, 1315.495, -900.843, 39.5781)
+Actor.Angle(PLAYER_ACTOR) = 180.0
+Camera.Restore_WithJumpCut
+
+$SPECIAL_INFECTED_NOT_SPAWN_FLAG = 0
+WITCH_SPAWN_ON_ROAD = 1
+SPEC_INF_ONLY_ONE_INSTANSE_SPAWN_FLAG = 1
+$WITCH_X = 1316.14 
+$WITCH_Y = -913.2864 
+$WITCH_Z = 36.9634 
+$SPAWN_WITCH_ON_COORD = 1 
+$SPAWN_WITCH_FLAG = 1
+
+wait 500
+0E68: set_player_control_pad 0 1 
+0E69: set_player_control_pad_movement 0 1
+
+create_thread @REFR_3D
+0A0B: set_rendering_origin_at_3D_coord 1315.6965 -901.0519 39.5781 angle 105.447
+
+fade 1 500
+$HUD_REMOVE = 0 
+wait 500
+
+v$OBJECTIVE = "STR99"
+018A: MISSION_CHECKPOINT = create_checkpoint_at 1439.4099 -925.9525 39.6477
+03BC: MISSION_SPHERE = create_sphere_at 1439.4099 -925.9525 39.6477 radius 1.0
+0@ = 0
+
+32@ = 0
+
+repeat
+wait 0
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @KOD_PROVALA2
+
+if and
+32@ > 10000
+0@ == 0
+    then
+    0@ = 1
+    $ZOMBIES_HORDE = 1
+    $SPAWN_HUNTER_FLAG = 1
+    end
+
+until 00EC:   actor PLAYER_ACTOR sphere 0 near_point 1439.4099 -925.9525 radius 5.0 5.0
+
+marker.Disable(MISSION_CHECKPOINT)
+03BD: destroy_sphere MISSION_SPHERE
+v$OBJECTIVE = "DUMMY"
+
+fade 0 1000
+$HUD_REMOVE = 1
+wait 1000 
+
+/////////////////////////////////////////////////////////////////////////
+
+$NOTSPAWN_ETC = 0
+$SPAWN_WITCH_ON_COORD = 0
+SPEC_INF_ONLY_ONE_INSTANSE_SPAWN_FLAG = 0
+
+audiostream.Release(10@)
+
+actor.DestroyInstantly($MISSION_CHAR)
+
+gosub @MUSIC_MISSION2_OFF
+
+jump @UDACHNO2
+
+:UDACHNO2
+$ONMISSION = 0
+player.CanMove(PLAYER_CHAR) = false 
+0318: set_latest_mission_passed 'MSN36B'  
+$MISSION_START_NUMBER = 2  
+$SAVE_MISSION_START_FLAG = 1 
+$SAVE_MISSION_NOT_SAVE_FLAG = 0
+create_thread @MS_STAR
+$ZOMBIES_HORDE = 0
+
+$TEMP_XP = 500
+008D: $TEMP_XP = integer $TEMP_XP to_float
+0069: $TEMP_XP *= $XP_COEFF // (float)
+if
+PERK_CHARISMA == 2
+then
+$TEMP_XP *= CHARISMA_LEVEL2_XP_COEFF
+end
+008C: $TEMP_XP = float $TEMP_XP to_integer
+0058: $PLAYER_XP += $TEMP_XP // (int)
+
+gosub @PROPUSK_KODA2   
+return 
+
+:KOD_PROVALA2
+GAME_OVER_FLAG = 1
+create_thread @GMV_OVR  
+$ONMISSION = 0 
+marker.Disable(MISSION_MARKER)
+marker.Disable(MISSION_CHECKPOINT)
+mission_cleanup 
+06D0: enable_emergency_traffic 0 
+06D7: enable_train_traffic 0 
+096A: enable_flying_helis 0 
+099E: enable_police_patrols 0  
+0923: enable_air_traffic 0    
+return 
+
+:UDALENIE_KODA2
+$ONMISSION = 0 
+
+marker.Disable(MISSION_MARKER)
+marker.Disable(MISSION_CHECKPOINT)
+
+if and
+GAME_OVER_FLAG == 0
+$ACTOR_DEAD == 0
+then
+fade 0 0
+end
+
+mission_cleanup 
+
+if and
+GAME_OVER_FLAG == 0
+$ACTOR_DEAD == 0
+then
+fade 0 0
+end
+
+06D0: enable_emergency_traffic 0 
+06D7: enable_train_traffic 0 
+096A: enable_flying_helis 0 
+099E: enable_police_patrols 0  
+0923: enable_air_traffic 0   
+return 
+
+:MUSIC_MISSION2_OFF
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 700
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+//////////////////////////////////////////////////////////
+
+return
+
+//-------------Mission 2---------------
+// Название: Аманда
+
+:KOD_MISSII2_SHIZA
+increment_mission_attempts  
+
+cinema.Widescreen(1)
+BLACK_POLOSKI_ON = 1
+0A48: enable_menu_access_in_widescreen_mode 0
+0629: change_integer_stat 258 to 2  
+$SOUND_OFF_1 = 1
+  
+$ONMISSION = 1    
+fade 0 0 
+
+32@ = 0
+
+repeat
+wait 0
+fade 0 0
+03F0: enable_text_draw 1
+038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA 0 0 0 255
+until 32@ > 500
+                                                                                   
+$INT_ZMB_NOT = 1
+$NOTSPAWN_ETC = 1  
+
+$SPECIAL_INFECTED_NOT_SPAWN_FLAG = 1 
+
+$ZOMBIE_DONT_ATTACK_PLAYER = 1
+
+$HEAL += 2
+
+0555: remove_weapon 46 from_actor PLAYER_ACTOR
+
+$WEATHER_LOCK_NUMBER = 8
+create_thread @WTH_LCK   
+
+32@ = 0
+
+:3DRAW_LOGO_IDLE2222_1
+wait 0
+$SAVESTATUS = 1
+03F0: enable_text_draw 1
+038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA 0 0 0 255
+if
+32@ > 100
+jf @3DRAW_LOGO_IDLE2222_1
+fade 0 0
+wait 1
+
+32@ = 0 
+
+ repeat
+wait 0
+$SAVESTATUS = 1
+03F0: enable_text_draw 1
+038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA 0 0 0 255
+ until 32@ > 2900
+
+fade 0 0
+wait 1
+
+wait 500
+
+///////////////////////////////////////////////          
+
+if
+MIKE_CLASSIC_STORY_VOICES_ON == 1
+then
+
+{$INCLUDE noise2_on.txt}
+
+VOICE_SKIP_LONG_SET = 0
+
+for $ACHIV_NUMBER = 176 to 182
+
+create_thread @VOI_SHO
+          
+repeat
+wait 0
+
+if
+VOICE_SKIP_LONG_SET > VOICE_SKIP_LONG_SKIP_SET
+    then
+    break
+    end
+
+until $ACHIV_SHOW_ENDED == 1
+
+end
+
+{$INCLUDE noise2_off.txt}
+
+end 
+
+///////////////////////////////////////////////
+
+if
+CLASSIC_MUSIC == 0
+then
+$MUSIC_MISSION = Audiostream.Load(MUSIC_2A)
+else
+$MUSIC_MISSION = Audiostream.Load(CLASSIC_MUSIC_2A)
+end
+
+Audiostream.PerformAction($MUSIC_MISSION, PLAY)
+Audiostream.Loop($MUSIC_MISSION, 1)
+Audiostream.Volume($MUSIC_MISSION) = 0.0
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1  
+
+//////////////////////////////////////////////////////////
+
+0A0E: disable_text_with_style 1
+
+0391: release_textures
+0390: load_txd_dictionary 'miss1' 
+wait 1
+038F: load_texture "mission2" as 1 // Load dictionary with 0390 first 
+wait 1
+
+1@ = 0
+
+ repeat 
+wait 0
+1@ += 5
+03F0: enable_text_draw 1
+038D: draw_texture 1 position 320.0 220.0 size 600.0 400.0 RGBA 255 255 255 1@
+03E3: set_texture_to_be_drawn_antialiased 1 
+ until 1@ == 255
+
+32@ = 0
+$SPEED_08_FLAG = 1 
+
+ repeat 
+wait 0
+03F0: enable_text_draw 1
+038D: draw_texture 1 position 320.0 220.0 size 600.0 400.0 RGBA 255 255 255 1@
+03E3: set_texture_to_be_drawn_antialiased 1 
+ until 00E1: key_pressed 0 17
+ 
+$SPEED_08_FLAG = 0
+015D: set_gamespeed 1.0 
+
+ repeat
+wait 0
+1@ -= 5
+03F0: enable_text_draw 1
+038D: draw_texture 1 position 320.0 220.0 size 600.0 400.0 RGBA 255 255 255 1@
+03E3: set_texture_to_be_drawn_antialiased 1 
+ until 1@ == 0  
+
+wait 1
+03F0: enable_text_draw 0
+wait 1
+0391: release_textures 
+
+0A0E: disable_text_with_style 0
+
+wait 500
+
+0A8C: write_memory 0xB7014E size 1 value 5 virtual_protect 1
+
+08E7: disable_entrance_markers 1
+
+01B9: set_actor PLAYER_ACTOR armed_weapon_to 0 
+
+cinema.Widescreen(1)
+BLACK_POLOSKI_ON = 1
+
+$HUD_REMOVE = 1
+
+08E7: disable_entrance_markers 0 
+
+while not animation.Available("INT_HOUSE")
+wait 0
+animation.Load("INT_HOUSE")
+end
+
+renderer 247.4238 1108.529               
+03CB: set_rendering_origin_at 247.4238 1108.529 1079.8
+
+Actor.PutAt(PLAYER_ACTOR, 247.4238, 1109.0, 1079.8)
+Actor.Angle(PLAYER_ACTOR) = 94.4616
+
+select_interior 5 
+0860: link_actor PLAYER_ACTOR to_interior 5 
+
+0619: enable_actor PLAYER_ACTOR collision_detection 0 
+
+0936: set_camera 244.934 1106.61 1081.14 position_to 245.704 1107.12 1080.94 time 20000 smooth_transition 1
+0920: point_camera 245.656 1107.28 1080.99 transverse_to 246.474 1107.72 1080.72 time 20000 smooth_transition 1
+
+Player.CanMove(PLAYER_CHAR) = False    
+
+wait 500
+0605: actor PLAYER_ACTOR perform_animation "BED_LOOP_L" IFP "INT_HOUSE" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time 20000
+wait 500 
+
+0707: start_scene_skip_to @MISSION2_SKIP_SHIZA
+
+00C0: set_current_time 23 0
+$WEATHER_SYNC_FLAG = 1
+
+0A48: enable_menu_access_in_widescreen_mode 1  
+$SOUND_OFF_1 = 0
+wait 0
+cinema.Widescreen(1)
+BLACK_POLOSKI_ON = 1
+
+fade 1 20000
+015D: set_gamespeed 0.5
+wait 5000
+
+fade 0 100 
+wait 100
+
+015D: set_gamespeed 1.0
+
+041D: set_camera_near_clip 0.2
+
+0792: disembark_instantly_actor PLAYER_ACTOR
+
+0936: set_camera 245.447 1106.426 1080.9922 position_to 245.6839 1109.9606 1080.9922 time 1 smooth_transition 1
+0920: point_camera 246.7375 1108.0431 1080.9922 transverse_to 246.6778 1110.6444 1080.9922 time 1 smooth_transition 1
+
+wait 100
+
+0936: set_camera 243.83 1112.45 1080.3 position_to 244.251 1117.04 1080.3 time 9000 smooth_transition 1
+0920: point_camera 244.216 1113.05 1079.6 transverse_to 244.694 1117.93 1080.31 time 9000 smooth_transition 1
+ 
+04EF: release_animation "INT_HOUSE" 
+
+0619: enable_actor PLAYER_ACTOR collision_detection 1 
+
+Actor.PutAtNoOffset(PLAYER_ACTOR, 244.9568, 1113.4399, 1080.9922)
+Actor.Angle(PLAYER_ACTOR) = 358.7116
+
+wait 500 
+fade 1 15000 
+wait 3000
+
+0615: define_AS_pack_begin 9@ 
+05D3: AS_actor -1 goto_point 245.0954 1118.342 1080.992 mode 4 time 90000 ms // versionA 
+05D3: AS_actor -1 goto_point 249.8964 1118.844 1082.992 mode 4 time 90000 ms // versionA 
+05D3: AS_actor -1 goto_point 249.763 1113.128 1084.992 mode 4 time 90000 ms // versionA 
+05D3: AS_actor -1 goto_point 249.309 1111.828 1084.992 mode 4 time 90000 ms // versionA  
+0616: define_AS_pack_end 9@ 
+0618: assign_actor PLAYER_ACTOR to_AS_pack 9@ 
+061B: remove_references_to_AS_pack 9@
+
+wait 4000
+
+0936: set_camera 250.44 1120.31 1083.54 position_to 249.761 1116.55 1084.23 time 9000 smooth_transition 1
+0920: point_camera 249.979 1119.42 1083.54 transverse_to 249.669 1115.58 1084.47 time 9000 smooth_transition 1
+
+wait 3000
+
+repeat
+wait 0
+$ONMISSION = 1 
+until 00EC:   actor PLAYER_ACTOR sphere 0 near_point 249.309 1111.828 radius 2.0 2.0  
+
+fade 0 100
+wait 100
+
+0936: set_camera 244.8964 1119.1583 1080.9922 position_to 249.8554 1119.6409 1082.9922 time 0 smooth_transition 0
+0920: point_camera 245.0943 1118.6899 1080.9922 transverse_to 249.7921 1114.2651 1084.9922 time 0 smooth_transition 0 
+
+Actor.StorePos(PLAYER_ACTOR, 6@, 7@, 8@)
+Camera.SetPosition(6@, 7@, 8@, 0.0, 0.0, 0.0)
+Camera.PointAt(249.3826, 1111.362, 1085.992, 2)
+
+0337: set_actor PLAYER_ACTOR visibility 0 
+
+$STORYLINE_FOV = 1
+wait 50
+
+0922: set_camera_zoom_from 70.0 to 40.0 timelimit 22000 smooth_transition 1
+
+wait 500
+
+fade 1 20000 
+
+wait 15000
+
+:MISSION2_SKIP_SHIZA 
+0701: end_scene_skip
+03D6: remove_styled_text 'MSN23'  // Boxville
+015D: set_gamespeed 1.0
+
+$STORYLINE_FOV = 0
+
+fade 0 100
+wait 100 
+
+041D: set_camera_near_clip 0.1
+
+0936: set_camera 245.447 1106.426 1080.9922 position_to 245.6839 1109.9606 1080.9922 time 1 smooth_transition 1
+0920: point_camera 246.7375 1108.0431 1080.9922 transverse_to 246.6778 1110.6444 1080.9922 time 1 smooth_transition 1
+
+0922: set_camera_zoom_from 70.0 to 40.0 timelimit 1 smooth_transition 1
+
+00BE: text_clear_all
+0337: set_actor PLAYER_ACTOR visibility 1 
+
+0619: enable_actor PLAYER_ACTOR collision_detection 1 
+
+cinema.Widescreen(0)
+BLACK_POLOSKI_ON = 0 
+
+wait 1000
+
+select_interior 0 
+0860: link_actor PLAYER_ACTOR to_interior 0 
+
+Actor.PutAt(PLAYER_ACTOR, 1455.1, -950.2939, 35.6775)
+Actor.Angle(PLAYER_ACTOR) = 80.4522
+
+04E4: unknown_refresh_game_renderer_at 1455.1 -950.2939
+03CB: set_rendering_origin_at 1455.1 -950.2939 35.6775
+
+:CAR_CREATE_MISSION2_SHIZA
+if
+model.Available(#FORTUNE)
+then
+
+MIKE_CAR = car.Create(#FORTUNE,1453.0219, -923.5266, 37.1551)
+
+if
+model.Available(#FORTUNE)
+then
+model.Destroy(#FORTUNE)
+end
+
+else
+model.Load(#FORTUNE)
+mload
+wait 0
+jump to @CAR_CREATE_MISSION2_SHIZA
+end
+
+car.Angle(MIKE_CAR) = 171.3565
+car.Health(MIKE_CAR) = CAR_HEALTH_MAX
+0A97: 11@ = car MIKE_CAR struct 
+0229: set_car MIKE_CAR primary_color_to 17 secondary_color_to 17
+11@ += 9
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+08BD: set 12@ bit 2
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+/////////////////////
+0A97: 11@ = car MIKE_CAR struct 
+11@ += 4 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+08BD: set 12@ bit 1 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+random_float $BENZIN 30.0 50.0
+0A97: 22@ = car MIKE_CAR struct 
+0A8E: 23@ = 22@ + 5 // int 
+0A8C: write_memory 23@ size 4 value $BENZIN virtual_protect 0 
+08C3: clear 12@ bit 1
+08C3: clear 12@ bit 2 
+0A97: 11@ = car MIKE_CAR struct 
+11@ += 18
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+08BD: set 12@ bit 2
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 2
+
+036A: put_actor PLAYER_ACTOR in_car MIKE_CAR
+car.SetSpeedInstantly(MIKE_CAR,10.0)
+
+create_thread @REFR_3D
+                                                 
+camera.Restore_WithJumpCut()  
+
+Player.CanMove(PLAYER_CHAR) = true
+
+$SAVESTATUS = 0    
+    
+fade 1 5000
+057E: set_radar_grey 0 
+$HUD_REMOVE = 0
+018A: MISSION_CHECKPOINT = create_checkpoint_at 369.9632 -2006.5951 7.1896
+
+v$OBJECTIVE = "MSN27" 
+
+wait 2000
+
+repeat
+wait 0  
+
+if or
+car.Wrecked(MIKE_CAR)
+02BF:   car MIKE_CAR sunk
+    then
+    jump to @MISSION2_FAIL_CAR_SHIZA
+    end
+
+if
+actor.Dead(PLAYER_ACTOR)
+    then
+    jump to @KOD_PROVALA2_SHIZA
+    end       
+
+if
+not actor.InCar(PLAYER_ACTOR,MIKE_CAR)    
+    then 
+       
+    marker.Disable(MISSION_CHECKPOINT)
+    
+    MISSION_MARKER = marker.CreateAboveCar(MIKE_CAR)
+    07E0: set_marker MISSION_MARKER type_to 1
+    
+    v$OBJECTIVE = "MSN49"
+    
+    while not actor.InCar(PLAYER_ACTOR,MIKE_CAR)   
+    wait 0
+    
+    if or
+    car.Wrecked(MIKE_CAR)
+    02BF:   car MIKE_CAR sunk
+        then
+        jump to @MISSION2_FAIL_CAR_SHIZA
+        end
+        
+    if
+    actor.Dead(PLAYER_ACTOR)
+        then
+        jump to @KOD_PROVALA2_SHIZA
+        end    
+        
+    end
+    
+    marker.Disable(MISSION_MARKER)
+    
+    018A: MISSION_CHECKPOINT = create_checkpoint_at 369.9632 -2006.5951 7.1896
+    v$OBJECTIVE = "MSN27" 
+       
+    end 
+       
+until 00EC:   actor PLAYER_ACTOR sphere 0 near_point 373.8303 -2041.2294 radius 200.0 200.0
+
+marker.Disable(MISSION_CHECKPOINT)
+
+v$OBJECTIVE = "DUMMY"
+
+fade 0 200
+$HUD_REMOVE = 1
+$HUD_OFF_INST = 1
+wait 200
+
+player.CanMove(PLAYER_CHAR) = false
+$END_DIALOG_INST = 1
+
+$SAVESTATUS = 1
+$ZOMBIE_DONT_ATTACK_PLAYER = 0 
+cinema.Widescreen(1)
+BLACK_POLOSKI_ON = 1 
+
+0362: remove_actor PLAYER_ACTOR from_car_and_place_at 386.373 -2081.4414 7.8359
+
+Actor.PutAtNoOffset(PLAYER_ACTOR, 376.3467, -2013.7202, 7.8301)
+Actor.Angle(PLAYER_ACTOR) = 180.084
+
+0615: define_AS_pack_begin 9@ 
+05D3: AS_actor -1 goto_point 376.4947 -2039.1138 7.8301 mode 4 time 90000 ms // versionA 
+0616: define_AS_pack_end 9@ 
+0618: assign_actor PLAYER_ACTOR to_AS_pack 9@ 
+061B: remove_references_to_AS_pack 9@
+
+0936: set_camera 377.194 -2012.95 7.31657 position_to 377.319 -2038.16 7.14121 time 20000 smooth_transition 1
+0920: point_camera 376.914 -2013.91 7.25455 transverse_to 376.021 -2038.63 7.4341 time 20000 smooth_transition 1 
+
+wait 500
+
+015D: set_gamespeed 0.5
+
+fade 1 30000
+
+0707: start_scene_skip_to @MISSION2_SKIP1_SHIZA 
+
+wait 4000
+
+:MISSION2_SKIP1_SHIZA
+0701: end_scene_skip 
+
+fade 0 100
+wait 100
+
+0936: set_camera 377.6149 -2013.2729 7.8301 position_to 378.0105 -2044.5076 7.8301 time 1 smooth_transition 1
+0920: point_camera 376.5754 -2045.1771 7.8301 transverse_to 375.9918 -2046.9794 7.8301 time 1 smooth_transition 1 
+
+actor.PutAtNoOffset(PLAYER_ACTOR,386.373, -2081.4414, 7.8359)
+actor.Angle(PLAYER_ACTOR) = 180.3525
+
+0936: set_camera 387.712 -2080.55 8.83587 position_to 387.518 -2080.93 8.74559 time 92000 smooth_transition 1
+0920: point_camera 387.378 -2081.45 8.5732 transverse_to 387.133 -2081.84 8.56963 time 92000 smooth_transition 1
+
+while not model.Available(#BFYRI)
+wait 0
+model.Load(#BFYRI)
+mload
+end
+ 
+$MISSION_CHAR = Actor.Create(5, #BFYRI, 385.5094, -2088.2502, 7.8359)
+Actor.Angle($MISSION_CHAR) = 180.0
+
+0D10: set_actor $MISSION_CHAR alpha 150 // IF and SET 
+
+wait 1 
+
+while not animation.Available("GRAVEYARD")
+wait 0
+animation.Load("GRAVEYARD")
+end
+
+0605: actor $MISSION_CHAR perform_animation "mrnF_loop" IFP "GRAVEYARD" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time 90000
+
+10@ = Audiostream.Load3D("AUDIO\SOUNDS\AmandaCry.mp3")
+Audiostream.LinkToActor(10@, $MISSION_CHAR)
+Audiostream.PerformAction(10@, PLAY)
+Audiostream.Volume(10@) = $SOUNDS_VOLUME   
+Audiostream.Loop(10@,1)   
+
+01B9: set_actor PLAYER_ACTOR armed_weapon_to 0
+
+wait 1
+
+0605: actor PLAYER_ACTOR perform_animation "mrnM_loop" IFP "GRAVEYARD" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time 90000
+
+fade 1 67000
+0707: start_scene_skip_to @MISSION2_SKIP2_SHIZA 
+wait 1
+
+wait 10000
+
+:MISSION2_SKIP2_SHIZA
+$END_DIALOG_INST = 1
+0701: end_scene_skip 
+
+015D: set_gamespeed 1.0
+fade 0 100
+wait 100    
+
+$WEATHER_LOCK_OFF_FLAG = 1
+
+$NOTSPAWN_ETC = 0
+
+audiostream.Release(10@)
+
+actor.DestroyInstantly($MISSION_CHAR)
+
+gosub @MUSIC_MISSION2_OFF
+
+jump @UDACHNO2_SHIZA
+
+:MISSION2_FAIL_CAR_SHIZA
+text.ClearAll()
+v$FAILED_TEXT = "MS_FL21"
+jump @KOD_PROVALA2_SHIZA
+
+:UDACHNO2_SHIZA
+$ONMISSION = 0
+player.CanMove(PLAYER_CHAR) = false
+08E7: disable_entrance_markers 0
+0318: set_latest_mission_passed 'GME1196'
+0AF1: write_int 0 to_ini_file "saves\ZACM.set" section "SCR" key "VOICE_SHOWED"  
+$MISSION_START_NUMBER = 4  
+$SAVE_MISSION_START_FLAG = 1 
+$SAVE_MISSION_NOT_SAVE_FLAG = 1
+create_thread @MS_STAR
+gosub @PROPUSK_KODA2   
+return 
+
+:KOD_PROVALA2_SHIZA
+GAME_OVER_FLAG = 1
+create_thread @GMV_OVR  
+$ONMISSION = 0 
+marker.Disable(MISSION_MARKER)
+marker.Disable(MISSION_CHECKPOINT)
+mission_cleanup 
+06D0: enable_emergency_traffic 0 
+06D7: enable_train_traffic 0 
+096A: enable_flying_helis 0 
+099E: enable_police_patrols 0  
+0923: enable_air_traffic 0 
+08E7: disable_entrance_markers 0    
+return 
+
+:UDALENIE_KODA2_SHIZA
+$ONMISSION = 0 
+
+marker.Disable(MISSION_MARKER)
+marker.Disable(MISSION_CHECKPOINT)
+
+if and
+GAME_OVER_FLAG == 0
+$ACTOR_DEAD == 0
+then
+fade 0 0
+end
+
+mission_cleanup 
+
+if and
+GAME_OVER_FLAG == 0
+$ACTOR_DEAD == 0
+then
+fade 0 0
+end
+
+06D0: enable_emergency_traffic 0 
+06D7: enable_train_traffic 0 
+096A: enable_flying_helis 0 
+099E: enable_police_patrols 0  
+0923: enable_air_traffic 0 
+08E7: disable_entrance_markers 0    
+return 

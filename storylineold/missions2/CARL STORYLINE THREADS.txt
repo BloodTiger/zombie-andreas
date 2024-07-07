@@ -1,0 +1,3471 @@
+:MSN_STR
+thread 'MSN_STR'
+ 
+1@ = Marker.CreateIconAndSphere($MISSION_ICON, $X_START, $Y_START, $Z_START)
+
+repeat
+wait 0
+
+if
+875C: not  marker 1@ enabled
+then
+1@ = Marker.CreateIconAndSphere($MISSION_ICON, $X_START, $Y_START, $Z_START)
+end
+ 
+if and
+$ONMISSION == 0 
+0101:   actor PLAYER_ACTOR in_sphere $X_START $Y_START $Z_START radius 1.0 1.0 2.0 sphere 0 stopped 
+not Actor.Driving(PLAYER_ACTOR)
+not Actor.Dead(PLAYER_ACTOR)
+    then
+    break
+    end
+    
+until false
+
+if or
+$MISSION_START == 43
+$MISSION_START == 56
+then
+Marker.Disable(1@)
+MAIN_QUEST_MUSIC_FLAG = 1
+fade 0 1000
+$HUD_REMOVE = 1 
+wait 1000
+0629: change_integer_stat 258 to $MISSION_START
+gosub @MSN_STR_SAVE
+
+repeat
+wait 0
+until $SAVING_DELAY == 0
+
+fade 0 0
+$HUD_REMOVE = 1
+$HUD_OFF_INST = 1 
+wait 1000
+ 
+Text.ShowStyled(v$MISSION_NAME, 3000, 2)
+Player.CanMove(PLAYER_CHAR) = False
+start_mission $MISSION_START
+end_thread
+end
+
+MAIN_QUEST_MUSIC_FLAG = 1 
+Text.ShowStyled(v$MISSION_NAME, 3000, 2)
+Marker.Disable(1@)
+Player.CanMove(PLAYER_CHAR) = False
+fade 0 1000
+$HUD_REMOVE = 1 
+wait 1000  
+start_mission $MISSION_START 
+end_thread
+
+:MSN_STR_SAVE
+
+SAVE_PRE_TP_TEAMMATES_FLAG = 1
+
+repeat
+wait 0
+until SAVE_PRE_TP_TEAMMATES_FLAG == 0
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+$SAVESTATUS = 1
+$SAVESTATUS_TRUE = 1
+create_thread @PTL_TXT
+  
+wait $GAME_SAVE_WAIT_TIME
+
+while true
+wait 0
+$END_FADING_MUSIC_FAST = 1
+
+if and
+$MUSIC_FADE_ENDED[0] == 1
+$MUSIC_FADE_ENDED[1] == 1
+$MUSIC_FADE_ENDED[2] == 1
+$MUSIC_FADE_ENDED[3] == 1
+$MUSIC_FADE_ENDED[4] == 1
+then
+$END_FADING_MUSIC_FAST = 0
+break
+end
+
+end
+
+$PREPARING_TEXT_OFF = 1
+wait 10
+$PLAYER_HEALTH = actor.Health(PLAYER_ACTOR) 
+
+wait 1
+
+0A8D: 25@ = read_memory 0x61907A size 4 virtual_protect 1 
+0A8D: 26@ = read_memory 0x61907E size 1 virtual_protect 1
+0A8C: write_memory 0x61907A size 4 value -1869574000 virtual_protect 1 
+0A8C: write_memory 0x61907E size 1 value 144 virtual_protect 1
+ 
+SKIP_6HOURS_AFTER_SAVE2 = 1
+
+065C: release_decision_maker $DEC_PEOPLE 
+wait 10
+if
+UNITED_MAP == 1
+then
+03F0: enable_text_draw 0
+end
+03D8: show_save_screen   
+  
+repeat
+wait 0
+fade 0 0 
+$SAVESTATUS = 1
+$SAVESTATUS_TRUE = 1
+until 03D9:   save_done
+
+fade 0 0
+
+0A8C: write_memory 0x61907A size 4 value 25@ virtual_protect 1 
+0A8C: write_memory 0x61907E size 1 value 26@ virtual_protect 1
+
+camera.Restore_WithJumpCut()
+
+repeat
+wait 0
+until $SAVESTATUS_TRUE == 0
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+return
+
+:MSN_ST2
+thread 'MSN_ST2'
+ 
+JS_DLC_MISSION_TIMER = 0
+1@ = Marker.CreateIconWithoutSphere(43, $X_START, $Y_START, $Z_START)
+2@ = 0
+
+repeat
+wait 0
+
+if
+875C: not  marker 1@ enabled
+then
+
+if
+2@ == 0
+    then
+    1@ = Marker.CreateIconAndSphere(43, $X_START, $Y_START, $Z_START)
+    else
+    1@ = Marker.CreateIconAndSphere($MISSION_ICON, $X_START, $Y_START, $Z_START)
+    end
+
+end
+
+if or
+$GAME_SPEED == 1.0
+$GAME_SPEED == 0.2
+then
+JS_DLC_MISSION_TIMER += 1
+end
+
+////////////////////////////////////
+
+if
+$CHEAT_TYPE_FLAG == 1
+    then
+    if
+    0ADC:   test_cheat "DLCSKIP"
+        then
+        $CHEAT_CODE_ACTIVATED = 1
+        JS_DLC_MISSION_TIMER += 99999
+        end
+    end
+
+if and
+$SAVING_DELAY == 1
+AFTERSAVE_TIME_COUNT > PLAYER_UPTIME_BEFORE_WANNASLEEP
+then
+
+while $SAVING_DELAY == 1
+wait 0
+end
+
+JS_DLC_MISSION_TIMER += 13440
+
+end
+
+////////////////////////////////////
+
+if and
+2@ == 0
+001C:   JS_DLC_MISSION_TIMER > JS_DLC_MISSION_TIMER2 // (int)
+    then
+    2@ = 1
+    marker.Disable(1@)
+    1@ = Marker.CreateIconAndSphere($MISSION_ICON, $X_START, $Y_START, $Z_START)
+    end
+ 
+if and
+$ONMISSION == 0 
+0101:   actor PLAYER_ACTOR in_sphere $X_START $Y_START $Z_START radius 1.0 1.0 2.0 sphere 0 stopped 
+not Actor.Driving(PLAYER_ACTOR)
+not Actor.Dead(PLAYER_ACTOR)
+    then
+    
+    if
+    001C:   JS_DLC_MISSION_TIMER > JS_DLC_MISSION_TIMER2 // (int)
+    then
+    break
+    else
+    
+    if
+    $MISSION_ICON == 42
+    then
+    text.ShowTextBox('DLC990')
+    end
+    
+    if
+    $MISSION_ICON == 13
+    then
+    text.ShowTextBox('DLC991')
+    end
+    
+    if and
+    $MISSION_ICON == 40
+    $MISSION_START == 59
+    then
+    text.ShowTextBox('DLC992')
+    end
+    
+    if and
+    $MISSION_ICON == 40
+    $MISSION_START == 60
+    then
+    text.ShowTextBox('DLC993')
+    end
+    
+    if
+    $MISSION_START == 37
+    then
+    text.ShowTextBox('DLC1001')
+    end
+    
+    while 00FE:   actor PLAYER_ACTOR sphere 0 in_sphere $X_START $Y_START $Z_START radius 1.0 1.0 2.0    
+    wait 0
+    end
+    
+    text.RemoveTextBox()
+    
+    end
+    
+    end
+    
+until false
+
+MAIN_QUEST_MUSIC_FLAG = 1 
+Text.ShowStyled(v$MISSION_NAME, 3000, 2)
+Marker.Disable(1@)
+Player.CanMove(PLAYER_CHAR) = False
+fade 0 1000
+$HUD_REMOVE = 1 
+wait 1000  
+start_mission $MISSION_START 
+end_thread
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:MISSION_START4
+thread 'MISSION_START4'
+ 
+1@ = Marker.CreateIconAndSphere($MISSION_ICON, $X_START, $Y_START, $Z_START)
+
+repeat
+wait 0
+ 
+if and
+$ONMISSION == 0 
+0101:   actor PLAYER_ACTOR in_sphere $X_START $Y_START $Z_START radius 1.0 1.0 2.0 sphere 0 stopped 
+not Actor.Dead(PLAYER_ACTOR)
+    then
+    if
+    Actor.Driving(PLAYER_ACTOR)
+        then
+        
+        2@ = actor.CurrentCar(PLAYER_ACTOR)
+        0441: 3@ = car 2@ model
+        if
+        0A01:   model 3@ car
+            then                
+            break
+            else
+            
+            repeat
+            wait 0
+            Text.ShowH('DLC142', 300, 1)
+            
+            if or
+            80EC:   not actor PLAYER_ACTOR sphere 0 near_point $X_START $Y_START radius 2.0 2.0 
+            Actor.Dead(PLAYER_ACTOR)
+                then
+                break
+                end
+            
+            until false
+            
+            end
+        else        
+        
+        repeat
+        wait 0
+        Text.ShowH('DLC142', 300, 1)
+        
+        if or
+        80EC:   not actor PLAYER_ACTOR sphere 0 near_point $X_START $Y_START radius 2.0 2.0 
+        Actor.Dead(PLAYER_ACTOR)
+            then
+            break
+            end
+        
+        until false
+        
+        end
+    end
+    
+until false
+
+MAIN_QUEST_MUSIC_FLAG = 1 
+Text.ShowStyled(v$MISSION_NAME, 3000, 2)
+Marker.Disable(1@) 
+Player.CanMove(PLAYER_CHAR) = False
+fade 0 1000
+$HUD_REMOVE = 1 
+wait 1000
+
+if and
+056D:   actor COOP_ACTOR defined
+not COOP_ACTOR == -69
+0800:  in_two_players_mode
+    then
+    if
+    844B: not  actor COOP_ACTOR on_foot
+        then        
+        04C4: store_coords_to 0@ 1@ 2@ from_actor COOP_ACTOR with_offset 0.0 10.0 1.0
+        0362: remove_actor COOP_ACTOR from_car_and_place_at 0@ 1@ 2@
+        end
+    end
+  
+start_mission $MISSION_START 
+end_thread 
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+
+:SRTR_SV
+thread 'SRTR_SV'
+
+0089: 1@ = CAMP_RAID_DEST_X // (float)
+0089: 2@ = CAMP_RAID_DEST_Y // (float)
+0089: 3@ = CAMP_RAID_DEST_Z // (float)
+0089: 4@ = MECHA_STAND_X // (float)
+0089: 5@ = MECHA_STAND_Y // (float)
+0089: 6@ = MECHA_STAND_Z // (float) 
+
+:SRTR_SV_START
+
+repeat
+wait 0
+ 
+if and
+$ONMISSION == 0
+80EC:   not actor PLAYER_ACTOR sphere 0 near_point $X_SAVE $Y_SAVE radius 2.0 2.0
+00EC:    actor PLAYER_ACTOR sphere 0 near_point $X_SAVE $Y_SAVE radius 180.0 180.0
+003A:   $ACTIVE_INTERIOR == $INT_SAVE // (int) 
+    then
+    
+    if and
+    $INT_SAVE == 7
+    DONT_DO_BURGLARY == 0
+    then
+    //ass
+    else
+    break
+    end    
+    
+    end
+    
+if
+875C: not  marker $STARTER_SAVE enabled
+    then
+    marker.Disable($STARTER_SAVE)
+    end_thread
+    end     
+
+until false
+  
+0@ = Pickup.Create(#PICKUPSAVE, 3, $X_SAVE, $Y_SAVE, $Z_SAVE)
+
+repeat
+wait 0
+
+gosub @SRTR_SV_CHECK_IN_ZONE
+ 
+if and
+$ONMISSION == 0 
+003A:   $ACTIVE_INTERIOR == $INT_SAVE // (int)
+00EC:    actor PLAYER_ACTOR sphere 0 near_point $X_SAVE $Y_SAVE radius 180.0 180.0 
+jf @SRTR_SV_DELETE
+  
+until Pickup.Picked_up(0@)
+ 
+Player.CanMove(PLAYER_CHAR) = False
+Pickup.Destroy(0@)
+fade 0 1000
+$HUD_REMOVE = 1 
+wait 1000
+
+SAVE_PRE_TP_TEAMMATES_FLAG = 1
+
+repeat
+wait 0
+until SAVE_PRE_TP_TEAMMATES_FLAG == 0
+
+$SAVESTATUS = 1
+$SAVESTATUS_TRUE = 1
+create_thread @PTL_TXT
+  
+wait $GAME_SAVE_WAIT_TIME
+
+while true
+wait 0
+$END_FADING_MUSIC_FAST = 1
+
+if and
+$MUSIC_FADE_ENDED[0] == 1
+$MUSIC_FADE_ENDED[1] == 1
+$MUSIC_FADE_ENDED[2] == 1
+$MUSIC_FADE_ENDED[3] == 1
+$MUSIC_FADE_ENDED[4] == 1
+then
+$END_FADING_MUSIC_FAST = 0
+break
+end
+
+end
+
+$PREPARING_TEXT_OFF = 1
+wait 10
+$PLAYER_HEALTH = actor.Health(PLAYER_ACTOR) 
+
+wait 1
+
+if
+AFTERSAVE_TIME_COUNT < PLAYER_UPTIME_BEFORE_WANNASLEEP
+then
+SKIP_6HOURS_AFTER_SAVE = 1
+SKIP_6HOURS_AFTER_SAVE2 = 1
+0A8D: 25@ = read_memory 0x61907A size 4 virtual_protect 1 
+0A8D: 26@ = read_memory 0x61907E size 1 virtual_protect 1
+0A8C: write_memory 0x61907A size 4 value -1869574000 virtual_protect 1 
+0A8C: write_memory 0x61907E size 1 value 144 virtual_protect 1
+end 
+
+065C: release_decision_maker $DEC_PEOPLE 
+wait 10
+if
+UNITED_MAP == 1
+then
+03F0: enable_text_draw 0
+end
+03D8: show_save_screen   
+  
+repeat
+wait 0
+fade 0 0 
+$SAVESTATUS = 1
+$SAVESTATUS_TRUE = 1
+until 03D9:   save_done
+
+if
+SKIP_6HOURS_AFTER_SAVE == 1
+then
+0A8C: write_memory 0x61907A size 4 value 25@ virtual_protect 1 
+0A8C: write_memory 0x61907E size 1 value 26@ virtual_protect 1
+end
+
+Actor.PutAtNoOffset(PLAYER_ACTOR, $X_SAVE_TP, $Y_SAVE_TP, $Z_SAVE_TP)
+Actor.Angle(PLAYER_ACTOR) = $SAVE_A
+camera.Restore_WithJumpCut()
+player.CanMove(PLAYER_CHAR,true)
+
+if
+SKIP_6HOURS_AFTER_SAVE == 0
+then
+
+//if
+//$FREEMODE == 0
+//then
+//$MINUTES_PLAYED += 6
+//end
+    
+else
+
+0A8C: write_memory 0x61907A size 4 value 25@ virtual_protect 1 
+0A8C: write_memory 0x61907E size 1 value 26@ virtual_protect 1
+
+SKIP_6HOURS_AFTER_SAVE = 0
+
+end
+ 
+jump @SRTR_SV_START 
+
+:SRTR_SV_DELETE
+Pickup.Destroy(0@)
+
+if
+$SAVEPLACE_ON == 1
+then
+$SAVEPLACE_ON = 0
+        
+if
+HORDE_PREV_STATUS == 1
+then
+HORDE_PREV_STATUS = 0
+end
+        
+end
+
+jump @SRTR_SV_START
+
+:SRTR_SV_CHECK_IN_ZONE
+
+if
+$MIKE_STORY == 1
+then
+
+if
+00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA 1@ 2@ 3@ cornerB 4@ 5@ 6@
+    then
+        
+    if
+    $SAVEPLACE_ON == 0
+    then
+    0084: HORDE_PREV_STATUS = $ZOMBIES_HORDE // (int)
+    end
+        
+    $SAVEPLACE_ON = 1        
+    else
+            
+    if
+    $SAVEPLACE_ON == 1
+    then
+    $SAVEPLACE_ON = 0
+        
+    if
+    HORDE_PREV_STATUS == 1
+    then
+    HORDE_PREV_STATUS = 0
+    end
+        
+    end
+            
+    end
+        
+end
+
+return
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+
+:SAVE_MISSION4
+thread 'SAVE_MISSION4'
+
+///////////////////////
+
+for 0@ = 0 to 4
+
+if
+$SAVE_CAR_CREATED[0@] == 1
+    then
+    actor.StorePos(PLAYER_ACTOR,$SAVE_CAR_X[0@], $SAVE_CAR_Y[0@], $SAVE_CAR_Z[0@])
+    end
+
+end
+
+///////////////////////
+
+0362: remove_actor PLAYER_ACTOR from_car_and_place_at -434.6644 -2703.9998 170.4433
+create_thread @PLA_LOT
+wait 200
+
+MAIN_QUEST_MUSIC_FLAG = 1 
+Player.CanMove(PLAYER_CHAR) = False 
+fade 0 0   
+$SAVESTATUS_TRUE = 1 
+$SAVESTATUS = 1 
+048F: actor PLAYER_ACTOR remove_weapons
+
+create_thread @PED_BKP PLAYER_ACTOR 371
+
+$FP_BACKPACK_HAD = 1 
+$BANKA = 0 
+$BINT = 0 
+$HEAL = 0 
+$RADIO = 0 
+$KANISTRA = 0 
+$KANISTRA_FUEL = 0 
+$JIMMY = 0
+$REPAIR_KIT = 0
+
+///////////////////////////////////////////
+
+010B: 0@ = player PLAYER_CHAR money
+0@ *= -2
+0@ /= 2
+0109: player PLAYER_CHAR money += 0@
+
+///////////////////////////////////////////
+
+for 0@ = 0 to 4
+
+if
+056E:   car $USED_CAR[0@] defined
+then
+car.Destroy($USED_CAR[0@])
+end
+
+end
+
+///////////////////////////////////////////
+
+for 0@ = 0 to 19
+
+if
+09D1:   pickup $DROP_PICKUP[0@] created
+    then   
+    pickup.Destroy($DROP_PICKUP[0@])
+    end
+    
+end
+
+///////////////////////////////////////////
+
+SAVE_PRE_TP_TEAMMATES_FLAG = 1
+
+repeat
+wait 0
+until SAVE_PRE_TP_TEAMMATES_FLAG == 0
+
+$SAVESTATUS = 1
+$SAVESTATUS_TRUE = 1
+create_thread @PTL_TXT
+  
+wait $GAME_SAVE_WAIT_TIME
+
+while true
+wait 0
+$END_FADING_MUSIC_FAST = 1
+
+if and
+$MUSIC_FADE_ENDED[0] == 1
+$MUSIC_FADE_ENDED[1] == 1
+$MUSIC_FADE_ENDED[2] == 1
+$MUSIC_FADE_ENDED[3] == 1
+$MUSIC_FADE_ENDED[4] == 1
+then
+$END_FADING_MUSIC_FAST = 0
+break
+end
+
+end
+
+$PREPARING_TEXT_OFF = 1
+wait 10
+$PLAYER_HEALTH = actor.Health(PLAYER_ACTOR) 
+
+wait 1
+
+if
+AFTERSAVE_TIME_COUNT < PLAYER_UPTIME_BEFORE_WANNASLEEP
+then
+SKIP_6HOURS_AFTER_SAVE = 1
+SKIP_6HOURS_AFTER_SAVE2 = 1
+0A8D: 25@ = read_memory 0x61907A size 4 virtual_protect 1 
+0A8D: 26@ = read_memory 0x61907E size 1 virtual_protect 1
+0A8C: write_memory 0x61907A size 4 value -1869574000 virtual_protect 1 
+0A8C: write_memory 0x61907E size 1 value 144 virtual_protect 1
+end 
+
+065C: release_decision_maker $DEC_PEOPLE 
+wait 10
+if
+UNITED_MAP == 1
+then
+03F0: enable_text_draw 0
+end
+03D8: show_save_screen   
+
+$SAVE_MISSION_START_FLAG = 1
+  
+repeat
+wait 0
+fade 0 0 
+$SAVESTATUS = 1
+$SAVESTATUS_TRUE = 1
+until 03D9:   save_done
+
+if
+SKIP_6HOURS_AFTER_SAVE == 0
+then
+
+//if
+//$FREEMODE == 0
+//then
+//$MINUTES_PLAYED += 6
+//end
+    
+else
+
+0A8C: write_memory 0x61907A size 4 value 25@ virtual_protect 1 
+0A8C: write_memory 0x61907E size 1 value 26@ virtual_protect 1
+
+SKIP_6HOURS_AFTER_SAVE = 0
+
+end
+
+repeat
+wait 0
+until $SAVING_DELAY == 0
+ 
+Actor.Angle(PLAYER_ACTOR) = 74.5972 
+Player.CanMove(PLAYER_CHAR) = True
+$SAVESTATUS_TRUE = 0  
+start_mission 48
+end_thread
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:SAVE_MISSION5
+thread 'SAVE_MISSION5'
+
+MAIN_QUEST_MUSIC_FLAG = 1 
+Player.CanMove(PLAYER_CHAR) = False 
+fade 0 0   
+$SAVESTATUS_TRUE = 1 
+$SAVESTATUS = 1 
+048F: actor PLAYER_ACTOR remove_weapons
+
+create_thread @PED_BKP PLAYER_ACTOR 371
+
+$FP_BACKPACK_HAD = 1 
+$BANKA = 0 
+$BINT = 0 
+$HEAL = 0 
+$RADIO = 0 
+$KANISTRA = 0 
+$KANISTRA_FUEL = 0 
+$JIMMY = 0
+$REPAIR_KIT = 0
+
+///////////////////////////////////////////
+
+010B: 0@ = player PLAYER_CHAR money
+0@ *= -2
+0@ /= 2
+0109: player PLAYER_CHAR money += 0@
+
+///////////////////////////////////////////
+
+for 0@ = 0 to 4
+
+$SAVE_CAR_CREATED[0@] = 0
+$SAVE_CAR_MODEL[0@] = 0
+if
+056E:   car $USED_CAR[0@] defined
+then
+car.Destroy($USED_CAR[0@])
+end
+
+end
+
+///////////////////////////////////////////
+
+for 0@ = 0 to 19
+
+if
+09D1:   pickup $DROP_PICKUP[0@] created
+    then   
+    pickup.Destroy($DROP_PICKUP[0@])
+    end
+    
+end
+
+///////////////////////////////////////////
+
+SAVE_PRE_TP_TEAMMATES_FLAG = 1
+
+repeat
+wait 0
+until SAVE_PRE_TP_TEAMMATES_FLAG == 0
+
+$SAVESTATUS = 1
+$SAVESTATUS_TRUE = 1
+create_thread @PTL_TXT
+  
+wait $GAME_SAVE_WAIT_TIME
+
+while true
+wait 0
+$END_FADING_MUSIC_FAST = 1
+
+if and
+$MUSIC_FADE_ENDED[0] == 1
+$MUSIC_FADE_ENDED[1] == 1
+$MUSIC_FADE_ENDED[2] == 1
+$MUSIC_FADE_ENDED[3] == 1
+$MUSIC_FADE_ENDED[4] == 1
+then
+$END_FADING_MUSIC_FAST = 0
+break
+end
+
+end
+
+$PREPARING_TEXT_OFF = 1
+wait 10
+$PLAYER_HEALTH = actor.Health(PLAYER_ACTOR) 
+
+wait 1
+
+if
+AFTERSAVE_TIME_COUNT < PLAYER_UPTIME_BEFORE_WANNASLEEP
+then
+SKIP_6HOURS_AFTER_SAVE = 1
+SKIP_6HOURS_AFTER_SAVE2 = 1
+0A8D: 25@ = read_memory 0x61907A size 4 virtual_protect 1 
+0A8D: 26@ = read_memory 0x61907E size 1 virtual_protect 1
+0A8C: write_memory 0x61907A size 4 value -1869574000 virtual_protect 1 
+0A8C: write_memory 0x61907E size 1 value 144 virtual_protect 1
+end 
+
+065C: release_decision_maker $DEC_PEOPLE 
+wait 10
+if
+UNITED_MAP == 1
+then
+03F0: enable_text_draw 0
+end
+03D8: show_save_screen
+
+$SAVE_MISSION_START_FLAG = 1   
+  
+repeat
+wait 0
+fade 0 0 
+$SAVESTATUS = 1
+$SAVESTATUS_TRUE = 1
+until 03D9:   save_done
+
+if
+SKIP_6HOURS_AFTER_SAVE == 0
+then
+
+//if
+//$FREEMODE == 0
+//then
+//$MINUTES_PLAYED += 6
+//end
+    
+else
+
+0A8C: write_memory 0x61907A size 4 value 25@ virtual_protect 1 
+0A8C: write_memory 0x61907E size 1 value 26@ virtual_protect 1
+
+SKIP_6HOURS_AFTER_SAVE = 0
+
+end
+
+repeat
+wait 0
+until $SAVING_DELAY == 0
+ 
+Actor.Angle(PLAYER_ACTOR) = 279.1691 
+Player.CanMove(PLAYER_CHAR) = True
+$SAVESTATUS_TRUE = 0  
+start_mission 48
+end_thread
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:SAVE_MISSION11
+thread 'SAVE_MISSION11'
+
+///////////////////////
+
+for 0@ = 0 to 4
+
+if
+$SAVE_CAR_CREATED[0@] == 1
+    then
+    actor.StorePos(PLAYER_ACTOR,$SAVE_CAR_X[0@], $SAVE_CAR_Y[0@], $SAVE_CAR_Z[0@])
+    end
+
+end
+
+///////////////////////
+
+fade 0 0 
+0362: remove_actor PLAYER_ACTOR from_car_and_place_at 2234.593 2397.36 10.8203
+
+create_thread @PLA_LO2
+
+32@ = 0
+
+repeat
+wait 0
+03F0: enable_text_draw 1
+038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA 0 0 0 255
+fade 0 0
+until 32@ > 200
+
+repeat
+wait 0
+03F0: enable_text_draw 1
+038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA 0 0 0 255
+until $ONMISSION == 0
+
+048F: actor PLAYER_ACTOR remove_weapons
+
+create_thread @PED_BKP PLAYER_ACTOR 371
+
+$FP_BACKPACK_HAD = 1 
+$BANKA = 0 
+$BINT = 0 
+$HEAL = 0 
+$RADIO = 0 
+$KANISTRA = 0 
+$KANISTRA_FUEL = 0 
+$JIMMY = 0
+$REPAIR_KIT = 0
+
+///////////////////////////////////////////
+
+010B: 0@ = player PLAYER_CHAR money
+0@ *= -2
+0@ /= 2
+0109: player PLAYER_CHAR money += 0@
+
+///////////////////////////////////////////
+
+//for 0@ = 0 to 4
+//
+//$SAVE_CAR_CREATED[0@] = 0
+//$SAVE_CAR_MODEL[0@] = 0
+//if
+//056E:   car $USED_CAR[0@] defined
+//then
+//car.Destroy($USED_CAR[0@])
+//end
+//
+//end
+
+///////////////////////////////////////////
+
+for 0@ = 0 to 19
+
+if
+09D1:   pickup $DROP_PICKUP[0@] created
+    then   
+    pickup.Destroy($DROP_PICKUP[0@])
+    end
+    
+end
+
+///////////////////////////////////////////
+ 
+$HEAL += 2 
+$BANKA += 1
+
+SAVE_PRE_TP_TEAMMATES_FLAG = 1
+
+repeat
+wait 0
+until SAVE_PRE_TP_TEAMMATES_FLAG == 0
+
+$SAVESTATUS = 1
+$SAVESTATUS_TRUE = 1
+create_thread @PTL_TXT
+  
+wait $GAME_SAVE_WAIT_TIME
+
+while true
+wait 0
+03F0: enable_text_draw 1
+038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA 0 0 0 255
+$END_FADING_MUSIC_FAST = 1
+
+if and
+$MUSIC_FADE_ENDED[0] == 1
+$MUSIC_FADE_ENDED[1] == 1
+$MUSIC_FADE_ENDED[2] == 1
+$MUSIC_FADE_ENDED[3] == 1
+$MUSIC_FADE_ENDED[4] == 1
+then
+$END_FADING_MUSIC_FAST = 0
+break
+end
+
+end
+
+$PREPARING_TEXT_OFF = 1
+wait 10
+$PLAYER_HEALTH = actor.Health(PLAYER_ACTOR) 
+
+wait 1
+
+if
+AFTERSAVE_TIME_COUNT < PLAYER_UPTIME_BEFORE_WANNASLEEP
+then
+SKIP_6HOURS_AFTER_SAVE = 1
+SKIP_6HOURS_AFTER_SAVE2 = 1
+0A8D: 25@ = read_memory 0x61907A size 4 virtual_protect 1 
+0A8D: 26@ = read_memory 0x61907E size 1 virtual_protect 1
+0A8C: write_memory 0x61907A size 4 value -1869574000 virtual_protect 1 
+0A8C: write_memory 0x61907E size 1 value 144 virtual_protect 1
+end 
+
+065C: release_decision_maker $DEC_PEOPLE 
+wait 10
+if
+UNITED_MAP == 1
+then
+03F0: enable_text_draw 0
+end
+03D8: show_save_screen
+
+$SAVE_MISSION_START_FLAG = 1   
+  
+repeat
+wait 0
+03F0: enable_text_draw 1
+038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA 0 0 0 255 
+$SAVESTATUS = 1
+$SAVESTATUS_TRUE = 1
+until 03D9:   save_done
+
+if
+SKIP_6HOURS_AFTER_SAVE == 0
+then
+
+//if
+//$FREEMODE == 0
+//then
+//$MINUTES_PLAYED += 6
+//end
+    
+else
+
+0A8C: write_memory 0x61907A size 4 value 25@ virtual_protect 1 
+0A8C: write_memory 0x61907E size 1 value 26@ virtual_protect 1
+
+SKIP_6HOURS_AFTER_SAVE = 0
+
+end
+
+repeat
+wait 0
+03F0: enable_text_draw 1
+038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA 0 0 0 255
+until $SAVING_DELAY == 0
+
+fade 0 0
+    
+start_mission 54
+end_thread
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:BOAT_SAVE
+thread 'BOAT_SAVE'
+
+fade 0 0
+
+SAVE_PRE_TP_TEAMMATES_FLAG = 1
+
+repeat
+wait 0
+until SAVE_PRE_TP_TEAMMATES_FLAG == 0
+
+$SAVESTATUS = 1
+$SAVESTATUS_TRUE = 1
+create_thread @PTL_TXT
+  
+wait $GAME_SAVE_WAIT_TIME
+
+while true
+wait 0
+fade 0 0
+$END_FADING_MUSIC_FAST = 1
+
+if and
+$MUSIC_FADE_ENDED[0] == 1
+$MUSIC_FADE_ENDED[1] == 1
+$MUSIC_FADE_ENDED[2] == 1
+$MUSIC_FADE_ENDED[3] == 1
+$MUSIC_FADE_ENDED[4] == 1
+then
+$END_FADING_MUSIC_FAST = 0
+break
+end
+
+end
+
+$PREPARING_TEXT_OFF = 1
+wait 10
+$PLAYER_HEALTH = actor.Health(PLAYER_ACTOR) 
+
+wait 1
+
+if
+AFTERSAVE_TIME_COUNT < PLAYER_UPTIME_BEFORE_WANNASLEEP
+then
+SKIP_6HOURS_AFTER_SAVE = 1
+SKIP_6HOURS_AFTER_SAVE2 = 1
+0A8D: 25@ = read_memory 0x61907A size 4 virtual_protect 1 
+0A8D: 26@ = read_memory 0x61907E size 1 virtual_protect 1
+0A8C: write_memory 0x61907A size 4 value -1869574000 virtual_protect 1 
+0A8C: write_memory 0x61907E size 1 value 144 virtual_protect 1
+end 
+
+065C: release_decision_maker $DEC_PEOPLE 
+wait 10
+if
+UNITED_MAP == 1
+then
+03F0: enable_text_draw 0
+end
+03D8: show_save_screen
+
+$SAVE_MISSION_START_FLAG = 1   
+  
+repeat
+wait 0
+fade 0 0 
+$SAVESTATUS = 1
+$SAVESTATUS_TRUE = 1
+until 03D9:   save_done
+
+if
+SKIP_6HOURS_AFTER_SAVE == 0
+then
+
+//if
+//$FREEMODE == 0
+//then
+//$MINUTES_PLAYED += 6
+//end
+    
+else
+
+0A8C: write_memory 0x61907A size 4 value 25@ virtual_protect 1 
+0A8C: write_memory 0x61907E size 1 value 26@ virtual_protect 1
+
+SKIP_6HOURS_AFTER_SAVE = 0
+
+end
+
+repeat
+wait 0
+until $SAVING_DELAY == 0
+
+player.CanMove(PLAYER_CHAR) = false
+actor.PutAtNooffset(PLAYER_ACTOR,-1455.8793, 1491.9393, 7.1092)
+actor.Angle(PLAYER_ACTOR) = 246.9429
+camera.Restore_WithJumpCut()
+  
+start_mission 63
+end_thread
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:MISSION_START2
+thread 'MISSION_START2'
+ 
+//1@ = Marker.CreateIconAndSphere($MISSION_ICON, $X_START, $Y_START, $Z_START)
+1@ = Marker.CreateIconAndSphere($MISSION_ICON, 206.4194, 1870.7102, 17.6406)
+
+:MISSION_START2_36
+wait 0
+
+if
+0E45: frame_mod 60
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "DLC2_M6_FAILED_ONCE"
+end
+
+if
+not 0@ == 1
+jf @MISSION_START2_CHECK2
+ 
+if and
+$ONMISSION == 0 
+//0101:   actor PLAYER_ACTOR in_sphere $X_START $Y_START $Z_START radius 1.0 1.0 2.0 sphere 0 stopped
+00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA 429.69 2156.25 -100.0 cornerB -85.94 1632.81 1000.0 
+jf @MISSION_START2_36 
+if 
+not Actor.Dead(PLAYER_ACTOR)
+jf @MISSION_START2_36 
+if 
+Actor.DrivingVehicleType(PLAYER_ACTOR, #PATRIOT)
+jf @MISSION_START2_176
+ 
+Text.ShowStyled(v$MISSION_NAME, 3000, 2)
+Marker.Disable(1@)
+09A6: enable_interior_radar_blips 0 
+Player.CanMove(PLAYER_CHAR) = False
+fade 0 1000
+$HUD_REMOVE = 1 
+wait 1000  
+start_mission $MISSION_START 
+end_thread 
+
+:MISSION_START2_176
+Text.ShowH('DLC912', 2000, 1)
+
+:MISSION_START2_192
+wait 0 
+Text.ShowH('DLC912', 300, 1)
+if or
+//80EC:   not actor PLAYER_ACTOR sphere 0 near_point $X_START $Y_START radius 2.0 2.0 
+80A4: not  actor PLAYER_ACTOR sphere 0 in_cube_cornerA 429.69 2156.25 -100.0 cornerB -85.94 1632.81 1000.0
+Actor.Dead(PLAYER_ACTOR)
+jf @MISSION_START2_192 
+Text.ClearAll
+jump @MISSION_START2_36
+
+:MISSION_START2_CHECK2
+text.RemoveTextBox()
+text.ShowTextBox('DLC981')
+
+:MISSION_START2_CHECK22
+wait 0
+if or
+0AB0:   key_pressed 50
+//00EC:   actor PLAYER_ACTOR sphere 0 near_point $X_START $Y_START radius 1.0 1.0 
+00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA 429.69 2156.25 -100.0 cornerB -85.94 1632.81 1000.0           
+jf @MISSION_START2_CHECK22
+
+Text.ShowStyled(v$MISSION_NAME, 3000, 2)
+Marker.Disable(1@)
+09A6: enable_interior_radar_blips 0 
+Player.CanMove(PLAYER_CHAR) = False
+fade 0 1000
+$HUD_REMOVE = 1 
+wait 1000  
+start_mission $MISSION_START 
+end_thread
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:MIS1_SAV
+thread 'MIS1_SAV'
+
+repeat
+wait 0
+until $ONMISSION == 0
+
+SAVE_PRE_TP_TEAMMATES_FLAG = 1
+
+repeat
+wait 0
+until SAVE_PRE_TP_TEAMMATES_FLAG == 0
+
+$SAVESTATUS = 1
+$SAVESTATUS_TRUE = 1
+create_thread @PTL_TXT
+  
+wait $GAME_SAVE_WAIT_TIME
+AFTERSAVE_TIME_COUNT = 0
+
+while true
+wait 0
+$END_FADING_MUSIC_FAST = 1
+
+if and
+$MUSIC_FADE_ENDED[0] == 1
+$MUSIC_FADE_ENDED[1] == 1
+$MUSIC_FADE_ENDED[2] == 1
+$MUSIC_FADE_ENDED[3] == 1
+$MUSIC_FADE_ENDED[4] == 1
+then
+$END_FADING_MUSIC_FAST = 0
+break
+end
+
+end
+
+$PREPARING_TEXT_OFF = 1
+wait 10
+$PLAYER_HEALTH = actor.Health(PLAYER_ACTOR) 
+
+wait 1
+
+0A8D: 25@ = read_memory 0x61907A size 4 virtual_protect 1 
+0A8D: 26@ = read_memory 0x61907E size 1 virtual_protect 1
+0A8C: write_memory 0x61907A size 4 value -1869574000 virtual_protect 1 
+0A8C: write_memory 0x61907E size 1 value 144 virtual_protect 1 
+
+SKIP_6HOURS_AFTER_SAVE2 = 1
+
+065C: release_decision_maker $DEC_PEOPLE 
+wait 10
+if
+UNITED_MAP == 1
+then
+03F0: enable_text_draw 0
+end
+03D8: show_save_screen   
+  
+repeat
+wait 0
+fade 0 0 
+$SAVESTATUS = 1
+$SAVESTATUS_TRUE = 1
+until 03D9:   save_done
+
+0A8C: write_memory 0x61907A size 4 value 25@ virtual_protect 1 
+0A8C: write_memory 0x61907E size 1 value 26@ virtual_protect 1
+
+camera.Restore_WithJumpCut()
+$NOTSAVE_MODE = 1
+
+repeat
+wait 0
+until $SAVESTATUS_TRUE == 0
+
+MAIN_QUEST_MUSIC_FLAG = 0
+
+$TIME = 300000
+03C3: set_timer_to $TIME type 1 GXT 'DLC983' // global_variable
+
+if
+8AE2: not 0@ = random_vehicle_near_point 2489.9883 -1648.8599 13.4447 in_radius 5.0 find_next 0 pass_wrecked 0
+    then
+    
+    :CAR4_CREATE_2MISSION1BBB
+    if
+    model.Available(#BMX)
+    then
+    
+    1@ = car.Create(#BMX,2489.9883, -1648.8599, 13.4447)
+    car.Angle(1@) = 100.0866
+    car.RemoveReferences(1@)
+    
+    if
+    model.Available(#BMX)
+    then
+    //model.Destroy(#BMX)
+    end
+    
+    else
+    model.Load(#BMX)
+    mload
+    wait 0
+    jump to @CAR4_CREATE_2MISSION1BBB
+    end
+    
+    end
+
+while $TIME > 0
+wait 0
+AFTERSAVE_TIME_COUNT = 0
+
+if and
+$SAVESTATUS_TRUE == 1
+$SAVING_DELAY == 1
+then
+
+//$TIME -= 480000
+
+repeat
+wait 0
+until $SAVING_DELAY == 0
+
+03C3: set_timer_to $TIME type 1 GXT 'DLC983' // global_variable
+
+end
+
+0652: 0@ = integer_stat 258
+if or
+0@ == 43
+0@ == 56
+then
+$NOTSAVE_MODE = 0
+014F: stop_timer $TIME
+$TIME = 0
+end_thread
+end
+
+end
+
+text.ClearAll()
+v$FAILED_TEXT = "DLC984"
+$DELETE_SOUND = 1
+GAME_OVER_FLAG = 1
+
+create_thread @GMV_OVR  
+end_thread
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:CESAR_D
+thread 'CESAR_D'
+
+repeat
+wait 0
+until $ONMISSION == 0
+
+$TIME = 1080000
+03C3: set_timer_to $TIME type 1 GXT 'DLC986' // global_variable
+
+while $TIME > 0
+wait 0
+AFTERSAVE_TIME_COUNT = 0
+
+if and
+$SAVESTATUS_TRUE == 1
+$SAVING_DELAY == 1
+then
+
+//$TIME -= 480000
+
+repeat
+wait 0
+until $SAVING_DELAY == 0
+
+03C3: set_timer_to $TIME type 1 GXT 'DLC986' // global_variable
+
+end
+
+0652: 0@ = integer_stat 258
+if
+0@ == 44
+then
+014F: stop_timer $TIME
+$TIME = 0
+end_thread
+end
+
+end
+
+text.ClearAll()
+v$FAILED_TEXT = "DLC987"
+$DELETE_SOUND = 1
+GAME_OVER_FLAG = 1
+
+create_thread @GMV_OVR  
+end_thread
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:KENDL_D
+thread 'KENDL_D'
+
+repeat
+wait 0
+until $ONMISSION == 0
+
+$TIME = 1440000
+03C3: set_timer_to $TIME type 1 GXT 'DLC989' // global_variable
+
+while $TIME > 0
+wait 0
+AFTERSAVE_TIME_COUNT = 0
+
+if and
+$SAVESTATUS_TRUE == 1
+$SAVING_DELAY == 1
+then
+
+//$TIME -= 480000
+
+repeat
+wait 0
+until $SAVING_DELAY == 0
+
+03C3: set_timer_to $TIME type 1 GXT 'DLC989' // global_variable
+
+end
+
+0652: 0@ = integer_stat 258
+if
+0@ == 45
+then
+014F: stop_timer $TIME
+$TIME = 0
+end_thread
+end
+
+end
+
+text.ClearAll()
+v$FAILED_TEXT = "DLC987"
+$DELETE_SOUND = 1
+GAME_OVER_FLAG = 1
+
+create_thread @GMV_OVR  
+end_thread
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:FNLMSN1START
+thread 'FNLMSN1START'
+
+wait 9000
+text.ClearAll()
+text.ShowTextBox('DLC729')
+
+:FNL_MSN1_START
+wait 0
+if
+$FINAL_MISSION1_START_FLAG == 1
+jf @FNL_MSN1_START
+1@ = Marker.CreateIconAndSphere(33, 1657.7173, 940.5959, 10.8203)
+ 
+:FNL_MSN1_40
+wait 0
+
+if
+0E45: frame_mod 60
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "DLC1_M13_FAILED_ONCE"
+end
+
+if
+not 0@ == 1
+jf @FNL_MSN1_START_CHECK2
+        
+if and
+$ONMISSION == 0
+0101:   actor PLAYER_ACTOR in_sphere 1657.7173 940.5959 10.8203 radius 1.7 1.7 2.0 sphere 0 stopped
+jf @FNL_MSN1_40 
+if and
+not Actor.Driving(PLAYER_ACTOR)
+not Actor.Dead(PLAYER_ACTOR)
+jf @FNL_MSN1_40
+    
+00BA: text_styled "DLC730" 3000 ms 2
+Marker.Disable(1@)   
+09A6: enable_interior_radar_blips 0
+player.CanMove(PLAYER_CHAR) = false  
+fade 0 1000
+$HUD_REMOVE = 1 
+wait 1000
+$DELETE_TEAMMATES = 1
+wait 500 
+start_mission 55 
+end_thread
+
+:FNL_MSN1_START_CHECK2
+text.RemoveTextBox()
+text.ShowTextBox('DLC981')
+
+:FNL_MSN12_CHECK2
+wait 0
+if or
+0AB0:   key_pressed 50
+0101:   actor PLAYER_ACTOR in_sphere 1657.7173 940.5959 10.8203 radius 1.7 1.7 2.0 sphere 0 stopped            
+jf @FNL_MSN12_CHECK2
+
+00BA: text_styled "DLC730" 3000 ms 2
+Marker.Disable(1@)   
+09A6: enable_interior_radar_blips 0
+player.CanMove(PLAYER_CHAR) = false  
+fade 0 1000
+$HUD_REMOVE = 1 
+wait 1000
+$DELETE_TEAMMATES = 1
+wait 500 
+start_mission 55 
+end_thread
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:FINAL_MISSION2
+thread 'FINAL_MISSION2'
+
+wait 2000
+text.ClearAll()
+text.ShowTextBox('DLC951')
+
+:FINAL_MISSION_CHECK
+wait 0
+if
+NESTS_CLEARED_TOTAL >= 13
+jf @FINAL_MISSION_CHECK
+wait 5000
+
+$RADIO_SOUND = Audiostream.Load("AUDIO\SOUNDS\Radio.mp3") 
+Audiostream.Loop($RADIO_SOUND, 1)  
+Audiostream.Volume($RADIO_SOUND) = 0.0
+Audiostream.PerformAction($RADIO_SOUND, PLAY)
+
+Audiostream.Loop($RADIO_ON_SOUND,0)
+Audiostream.PerformAction($RADIO_ON_SOUND, PLAY)
+Audiostream.Volume($RADIO_ON_SOUND) = $SOUNDS_VOLUME
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $SOUNDS_VOLUME // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1 
+
+////////////////////////////////////////////////////////
+
+1@ = 12
+gosub @TRADER_DEAD_TEST
+
+00BC: show_text_highpriority GXT 'DLC977' time 3000 flag 1  // ~s~Come back between 9:00 and 17:00.
+wait 3000
+00BC: show_text_highpriority GXT 'DLC978' time 2000 flag 1  // ~s~Come back between 9:00 and 17:00.
+wait 2000
+
+1@ = marker.CreateIconAndSphere(33,417.1938, 2521.9702, 16.4844)
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 150
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+/////////////////////////////////////////////////////////////////
+
+Audiostream.Loop($RADIO_OFF_SOUND,0)
+Audiostream.PerformAction($RADIO_OFF_SOUND, PLAY)
+Audiostream.Volume($RADIO_OFF_SOUND) = $SOUNDS_VOLUME
+
+jump to @FINAL_MISSION_START_CHECK
+
+:FINAL_MISSION_START_CHECK
+wait 0
+
+if
+0E45: frame_mod 60
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "DLC2_M9_FAILED_ONCE"
+end
+
+if
+not 0@ == 1
+jf @FINAL_MISSION_START_CHECK2
+if 
+00EC:   actor PLAYER_ACTOR sphere 0 near_point 417.1938 2521.9702 radius 1.0 1.0 
+jf @FINAL_MISSION_START_CHECK 
+if and
+not Actor.Driving(PLAYER_ACTOR)
+not Actor.Dead(PLAYER_ACTOR)
+jf @FINAL_MISSION_START_CHECK
+
+player.CanMove(PLAYER_CHAR) = false
+00BA: text_styled 'DLC980' 3000 ms 2
+Marker.Disable(1@)
+fade 0 1000
+$HUD_REMOVE = 1 
+wait 1000
+$DELETE_TEAMMATES = 1
+wait 500 
+start_mission 64 
+end_thread
+
+:FINAL_MISSION_START_CHECK2
+text.RemoveTextBox()
+text.ShowTextBox('DLC981')
+
+:FINAL_MISSION_START_CHECK3
+wait 0
+if or
+0AB0:   key_pressed 50
+00EC:   actor PLAYER_ACTOR sphere 0 near_point 417.1938 2521.9702 radius 1.0 1.0            
+jf @FINAL_MISSION_START_CHECK3
+
+player.CanMove(PLAYER_CHAR) = false
+fade 0 1000
+$HUD_REMOVE = 1
+wait 1000
+$DELETE_TEAMMATES = 1
+wait 500
+09BA: show_entered_zone_name 0
+renderer 417.1938 2521.9702
+03CB: set_rendering_origin_at 417.1938 2521.9702 16.4844
+actor.PutAtNoOffset(PLAYER_ACTOR,417.1938, 2521.9702, 16.4844)
+00BA: text_styled 'DLC980' 3000 ms 2
+Marker.Disable(1@) 
+wait 1000 
+start_mission 64 
+end_thread
+
+:FINAL_MISSION_START_CHECK4 
+wait 0
+if 
+00EC:   actor PLAYER_ACTOR sphere 0 near_point 417.1938 2521.9702 radius 1.0 1.0 
+jf @FINAL_MISSION_START_CHECK4 
+if and
+not Actor.Driving(PLAYER_ACTOR)
+not Actor.Dead(PLAYER_ACTOR)
+jf @FINAL_MISSION_START_CHECK4
+player.CanMove(PLAYER_CHAR) = false
+00BA: text_styled 'DLC980' 3000 ms 2
+Marker.Disable(1@)
+fade 0 1000
+$HUD_REMOVE = 1 
+wait 1000
+$DELETE_TEAMMATES = 1
+wait 500 
+start_mission 64 
+end_thread
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:ADD_MSN
+thread 'ADD_MSN' 
+
+:ADD_MSN_11
+wait 0 
+if and
+  $ADD_MIS1_FLAG == 0 
+  $ONMISSION == 0 
+jf @ADD_MSN_200 
+if 
+00EC:   actor PLAYER_ACTOR sphere 0 near_point 2252.768 -1649.163 radius 80.0 80.0 
+jf @ADD_MSN_200 
+if 
+00EF:   actor PLAYER_ACTOR sphere 0 near_point 2252.768 -1649.163 radius 2.0 2.0 stopped 
+jf @ADD_MSN_200 
+if and
+   not Actor.Driving(PLAYER_ACTOR)
+   not Actor.Dead(PLAYER_ACTOR)
+jf @ADD_MSN_200 
+Marker.Disable($ADDITIONAL_MISSION1)
+Text.ShowStyled("DLC24", 3000, 2)
+Player.CanMove(PLAYER_CHAR) = False
+$ADD_MIS1_FLAG = 1 
+$HUD_REMOVE = 1 
+fade 0 1000 
+wait 1000 
+start_mission 65
+jump @ADD_MSN_200 
+
+:ADD_MSN_200
+if and
+  $ADD_MIS2_FLAG == 0 
+  $ONMISSION == 0 
+jf @ADD_MSN_385 
+if 
+00EC:   actor PLAYER_ACTOR sphere 0 near_point 2846.995 -1273.96 radius 80.0 80.0 
+jf @ADD_MSN_385 
+if 
+00EF:   actor PLAYER_ACTOR sphere 0 near_point 2846.995 -1273.96 radius 2.0 2.0 stopped 
+jf @ADD_MSN_385 
+if and
+   not Actor.Driving(PLAYER_ACTOR)
+   not Actor.Dead(PLAYER_ACTOR)
+jf @ADD_MSN_385 
+Marker.Disable($ADDITIONAL_MISSION2)
+Text.ShowStyled("DLC42", 3000, 2)
+Player.CanMove(PLAYER_CHAR) = False
+$ADD_MIS2_FLAG = 1 
+$HUD_REMOVE = 1 
+fade 0 1000 
+wait 1000 
+start_mission 66
+jump @ADD_MSN_385 
+
+:ADD_MSN_385
+if and
+  $ADD_MIS3_FLAG == 0 
+  $ONMISSION == 0 
+jf @ADD_MSN_570 
+if 
+00EC:   actor PLAYER_ACTOR sphere 0 near_point 891.0417 -1484.2101 radius 80.0 80.0 
+jf @ADD_MSN_570 
+if 
+00EF:   actor PLAYER_ACTOR sphere 0 near_point 891.0417 -1484.2101 radius 2.0 2.0 stopped 
+jf @ADD_MSN_570 
+if and
+   not Actor.Driving(PLAYER_ACTOR)
+   not Actor.Dead(PLAYER_ACTOR)
+jf @ADD_MSN_570 
+Marker.Disable($ADDITIONAL_MISSION3)
+Text.ShowStyled("DLC82", 3000, 2)
+Player.CanMove(PLAYER_CHAR) = False
+$ADD_MIS3_FLAG = 1 
+$HUD_REMOVE = 1 
+fade 0 1000 
+wait 1000 
+start_mission 68
+jump @ADD_MSN_570 
+
+:ADD_MSN_570
+if and
+  $ADD_MIS4_FLAG == 0 
+  $ONMISSION == 0 
+jf @ADD_MSN_755 
+if 
+00EC:   actor PLAYER_ACTOR sphere 0 near_point 496.5593 -1082.131 radius 80.0 80.0 
+jf @ADD_MSN_755 
+if 
+00EF:   actor PLAYER_ACTOR sphere 0 near_point 496.5593 -1082.131 radius 2.0 2.0 stopped 
+jf @ADD_MSN_755 
+if and
+   not Actor.Driving(PLAYER_ACTOR)
+   not Actor.Dead(PLAYER_ACTOR)
+jf @ADD_MSN_755 
+Marker.Disable($ADDITIONAL_MISSION4)
+Text.ShowStyled("DLC93", 3000, 2)
+Player.CanMove(PLAYER_CHAR) = False
+$ADD_MIS4_FLAG = 1 
+$HUD_REMOVE = 1 
+fade 0 1000 
+wait 1000 
+start_mission 69
+jump @ADD_MSN_755 
+
+:ADD_MSN_755
+if and
+  $ADD_MIS5_FLAG == 0 
+  $ONMISSION == 0 
+jf @ADD_MSN_940 
+if 
+00EC:   actor PLAYER_ACTOR sphere 0 near_point 377.7248 -2032.89 radius 80.0 80.0 
+jf @ADD_MSN_940 
+if 
+00EF:   actor PLAYER_ACTOR sphere 0 near_point 377.7248 -2032.89 radius 2.0 2.0 stopped 
+jf @ADD_MSN_940 
+if and
+   not Actor.Driving(PLAYER_ACTOR)
+   not Actor.Dead(PLAYER_ACTOR)
+jf @ADD_MSN_940 
+Marker.Disable($ADDITIONAL_MISSION5)
+Text.ShowStyled("DLC54", 3000, 2)
+Player.CanMove(PLAYER_CHAR) = False
+$ADD_MIS5_FLAG = 1 
+$HUD_REMOVE = 1 
+fade 0 1000 
+wait 1000 
+start_mission 67
+jump @ADD_MSN_11 
+
+:ADD_MSN_940
+if and
+  $ADD_MIS6_FLAG == 0 
+  $ONMISSION == 0 
+jf @ADD_MSN_1126 
+if 
+00EC:   actor PLAYER_ACTOR sphere 0 near_point 1553.375 29.0312 radius 80.0 80.0 
+jf @ADD_MSN_1126 
+if 
+00EF:   actor PLAYER_ACTOR sphere 0 near_point 1553.375 29.0312 radius 2.0 2.0 stopped 
+jf @ADD_MSN_1126 
+if and
+   not Actor.Driving(PLAYER_ACTOR)
+   not Actor.Dead(PLAYER_ACTOR)
+jf @ADD_MSN_1126 
+Marker.Disable($ADDITIONAL_MISSION6)
+Text.ShowStyled("DLC480", 3000, 2)
+Player.CanMove(PLAYER_CHAR) = False
+$ADD_MIS6_FLAG = 1 
+$HUD_REMOVE = 1 
+fade 0 1000 
+wait 1000 
+start_mission 70
+jump @ADD_MSN_11 
+
+:ADD_MSN_1126
+if and
+  $ADD_MIS7_FLAG == 0 
+  $ONMISSION == 0 
+jf @ADD_MSN_1312 
+if 
+00EC:   actor PLAYER_ACTOR sphere 0 near_point -361.3282 -1049.089 radius 80.0 80.0 
+jf @ADD_MSN_1312 
+if 
+00EF:   actor PLAYER_ACTOR sphere 0 near_point -361.3282 -1049.089 radius 2.0 2.0 stopped 
+jf @ADD_MSN_1312 
+if and
+   not Actor.Driving(PLAYER_ACTOR)
+   not Actor.Dead(PLAYER_ACTOR)
+jf @ADD_MSN_1312 
+Marker.Disable($ADDITIONAL_MISSION7)
+Text.ShowStyled("DLC485", 3000, 2)
+Player.CanMove(PLAYER_CHAR) = False
+$ADD_MIS7_FLAG = 1 
+$HUD_REMOVE = 1 
+fade 0 1000 
+wait 1000 
+start_mission 71
+jump @ADD_MSN_11 
+
+:ADD_MSN_1312
+if and
+  $ADD_MIS8_FLAG == 0 
+  $ONMISSION == 0 
+jf @ADD_MSN_1498 
+if 
+00EC:   actor PLAYER_ACTOR sphere 0 near_point -933.42 -505.1839 radius 80.0 80.0 
+jf @ADD_MSN_1498 
+if 
+00EF:   actor PLAYER_ACTOR sphere 0 near_point -933.42 -505.1839 radius 2.0 2.0 stopped 
+jf @ADD_MSN_1498 
+if and
+   not Actor.Driving(PLAYER_ACTOR)
+   not Actor.Dead(PLAYER_ACTOR)
+jf @ADD_MSN_1498 
+Marker.Disable($ADDITIONAL_MISSION8)
+Text.ShowStyled("DLC513", 3000, 2)
+Player.CanMove(PLAYER_CHAR) = False
+$ADD_MIS8_FLAG = 1 
+$HUD_REMOVE = 1 
+fade 0 1000 
+wait 1000 
+start_mission 73
+jump @ADD_MSN_11 
+
+:ADD_MSN_1498
+if and
+  $ADD_MIS9_FLAG == 0 
+  $ONMISSION == 0 
+jf @ADD_MSN_1684 
+if 
+00EC:   actor PLAYER_ACTOR sphere 0 near_point -1090.441 -1644.917 radius 80.0 80.0 
+jf @ADD_MSN_1684 
+if 
+00EF:   actor PLAYER_ACTOR sphere 0 near_point -1090.441 -1644.917 radius 2.0 2.0 stopped 
+jf @ADD_MSN_1684 
+if and
+   not Actor.Driving(PLAYER_ACTOR)
+   not Actor.Dead(PLAYER_ACTOR)
+jf @ADD_MSN_1684 
+Marker.Disable($ADDITIONAL_MISSION9)
+Text.ShowStyled("DLC512", 3000, 2)
+Player.CanMove(PLAYER_CHAR) = False
+$ADD_MIS9_FLAG = 1 
+$HUD_REMOVE = 1 
+fade 0 1000 
+wait 1000 
+start_mission 72
+jump @ADD_MSN_11 
+
+:ADD_MSN_1684
+if and
+  $ADD_MIS10_FLAG == 0 
+  $ONMISSION == 0 
+jf @ADD_MSN_1870 
+if 
+00EC:   actor PLAYER_ACTOR sphere 0 near_point -2191.637 -2267.871 radius 80.0 80.0 
+jf @ADD_MSN_1870 
+if 
+00EF:   actor PLAYER_ACTOR sphere 0 near_point -2191.637 -2267.871 radius 2.0 2.0 stopped 
+jf @ADD_MSN_1870 
+if and
+   not Actor.Driving(PLAYER_ACTOR)
+   not Actor.Dead(PLAYER_ACTOR)
+jf @ADD_MSN_1870 
+Marker.Disable($ADDITIONAL_MISSION10)
+Text.ShowStyled("DLC531", 3000, 2)
+Player.CanMove(PLAYER_CHAR) = False
+$ADD_MIS10_FLAG = 1 
+$HUD_REMOVE = 1 
+fade 0 1000 
+wait 1000 
+start_mission 74
+jump @ADD_MSN_11 
+
+:ADD_MSN_1870
+if and
+  $ADD_MIS11_FLAG == 0 
+  $ONMISSION == 0 
+jf @ADD_MSN_2056 
+if 
+00EC:   actor PLAYER_ACTOR sphere 0 near_point -1641.808 560.7321 radius 80.0 80.0 
+jf @ADD_MSN_2056 
+if 
+00EF:   actor PLAYER_ACTOR sphere 0 near_point -1641.808 560.7321 radius 2.0 2.0 stopped 
+jf @ADD_MSN_2056 
+if and
+   not Actor.Driving(PLAYER_ACTOR)
+   not Actor.Dead(PLAYER_ACTOR)
+jf @ADD_MSN_2056 
+Marker.Disable($ADDITIONAL_MISSION11)
+Text.ShowStyled("DLC553", 3000, 2)
+Player.CanMove(PLAYER_CHAR) = False
+$ADD_MIS11_FLAG = 1 
+$HUD_REMOVE = 1 
+fade 0 1000 
+wait 1000 
+start_mission 75
+jump @ADD_MSN_2056 
+
+:ADD_MSN_2056
+if and
+  $ADD_MIS12_FLAG == 0 
+  $ONMISSION == 0 
+jf @ADD_MSN_2242 
+if 
+00EC:   actor PLAYER_ACTOR sphere 0 near_point -2671.607 1344.667 radius 80.0 80.0 
+jf @ADD_MSN_2242 
+if 
+00EF:   actor PLAYER_ACTOR sphere 0 near_point -2671.607 1344.667 radius 2.0 2.0 stopped 
+jf @ADD_MSN_2242 
+if and
+   not Actor.Driving(PLAYER_ACTOR)
+   not Actor.Dead(PLAYER_ACTOR)
+jf @ADD_MSN_2242 
+Marker.Disable($ADDITIONAL_MISSION12)
+Text.ShowStyled("DLC560", 3000, 2)
+Player.CanMove(PLAYER_CHAR) = False
+$ADD_MIS12_FLAG = 1 
+$HUD_REMOVE = 1 
+fade 0 1000 
+wait 1000 
+start_mission 76
+jump @ADD_MSN_2242 
+
+:ADD_MSN_2242
+if and
+  $ADD_MIS13_FLAG == 0 
+  $ONMISSION == 0 
+jf @ADD_MSN_2428 
+if 
+00EC:   actor PLAYER_ACTOR sphere 0 near_point -2653.268 -288.1735 radius 80.0 80.0 
+jf @ADD_MSN_2428 
+if 
+00EF:   actor PLAYER_ACTOR sphere 0 near_point -2653.268 -288.1735 radius 2.0 2.0 stopped 
+jf @ADD_MSN_2428 
+if and
+   not Actor.Driving(PLAYER_ACTOR)
+   not Actor.Dead(PLAYER_ACTOR)
+jf @ADD_MSN_11 
+Marker.Disable($ADDITIONAL_MISSION13)
+Text.ShowStyled("DLC573", 3000, 2)
+Player.CanMove(PLAYER_CHAR) = False
+$ADD_MIS13_FLAG = 1 
+$HUD_REMOVE = 1 
+fade 0 1000 
+wait 1000 
+start_mission 77
+jump @ADD_MSN_2428 
+
+:ADD_MSN_2428
+if and
+  $ADD_MIS14_FLAG == 0 
+  $ONMISSION == 0 
+jf @ADD_MSN_2614 
+if 
+00EC:   actor PLAYER_ACTOR sphere 0 near_point -701.8149 953.9492 radius 80.0 80.0 
+jf @ADD_MSN_2614 
+if 
+00EF:   actor PLAYER_ACTOR sphere 0 near_point -701.8149 953.9492 radius 2.0 2.0 stopped 
+jf @ADD_MSN_2614 
+if and
+   not Actor.Driving(PLAYER_ACTOR)
+   not Actor.Dead(PLAYER_ACTOR)
+jf @ADD_MSN_2614 
+Marker.Disable($ADDITIONAL_MISSION14)
+Text.ShowStyled("DLC602", 3000, 2)
+Player.CanMove(PLAYER_CHAR) = False
+$ADD_MIS14_FLAG = 1 
+$HUD_REMOVE = 1 
+fade 0 1000 
+wait 1000 
+start_mission 78
+jump @ADD_MSN_2614 
+
+:ADD_MSN_2614
+if and
+  $ADD_MIS15_FLAG == 0 
+  $ONMISSION == 0 
+jf @ADD_MSN_2800 
+if 
+00EC:   actor PLAYER_ACTOR sphere 0 near_point 260.9307 1381.481 radius 80.0 80.0 
+jf @ADD_MSN_2800 
+if 
+00EF:   actor PLAYER_ACTOR sphere 0 near_point 260.9307 1381.481 radius 2.0 2.0 stopped 
+jf @ADD_MSN_2800 
+if and
+   not Actor.Driving(PLAYER_ACTOR)
+   not Actor.Dead(PLAYER_ACTOR)
+jf @ADD_MSN_2800 
+Marker.Disable($ADDITIONAL_MISSION15)
+Text.ShowStyled("DLC610", 3000, 2)
+Player.CanMove(PLAYER_CHAR) = False
+$ADD_MIS15_FLAG = 1 
+$HUD_REMOVE = 1 
+fade 0 1000 
+wait 1000 
+start_mission 79
+jump @ADD_MSN_11 
+
+:ADD_MSN_2800
+if and
+  $ADD_MIS16_FLAG == 0 
+  $ONMISSION == 0 
+jf @ADD_MSN_2986
+
+if
+875C: not  marker $ADDITIONAL_MISSION16 enabled
+then
+0570: $ADDITIONAL_MISSION16 = create_asset_radar_marker_with_icon 33 at 2167.328 1678.067 10.8203
+end
+ 
+if 
+00EC:   actor PLAYER_ACTOR sphere 0 near_point 2167.328 1678.067 radius 80.0 80.0 
+jf @ADD_MSN_2986 
+if 
+00EF:   actor PLAYER_ACTOR sphere 0 near_point 2167.328 1678.067 radius 2.0 2.0 stopped 
+jf @ADD_MSN_2986 
+if and
+   not Actor.Driving(PLAYER_ACTOR)
+   not Actor.Dead(PLAYER_ACTOR)
+jf @ADD_MSN_2986 
+Marker.Disable($ADDITIONAL_MISSION16)
+Text.ShowStyled("DLC625", 3000, 2)
+Player.CanMove(PLAYER_CHAR) = False
+$ADD_MIS16_FLAG = 1 
+$HUD_REMOVE = 1 
+fade 0 1000 
+wait 1000 
+start_mission 80
+jump @ADD_MSN_11 
+
+:ADD_MSN_2986
+if and
+  $ADD_MIS17_FLAG == 0 
+  $ONMISSION == 0 
+jf @ADD_MSN_3172 
+if 
+00EC:   actor PLAYER_ACTOR sphere 0 near_point 2575.147 1079.839 radius 80.0 80.0 
+jf @ADD_MSN_3172 
+if 
+00EF:   actor PLAYER_ACTOR sphere 0 near_point 2575.147 1079.839 radius 2.0 2.0 stopped 
+jf @ADD_MSN_3172 
+if and
+   not Actor.Driving(PLAYER_ACTOR)
+   not Actor.Dead(PLAYER_ACTOR)
+jf @ADD_MSN_3172 
+Marker.Disable($ADDITIONAL_MISSION17)
+Text.ShowStyled("DLC648", 3000, 2)
+Player.CanMove(PLAYER_CHAR) = False
+$ADD_MIS17_FLAG = 1 
+$HUD_REMOVE = 1 
+fade 0 1000 
+wait 1000 
+start_mission 82
+jump @ADD_MSN_11 
+
+:ADD_MSN_3172
+if and
+  $ADD_MIS18_FLAG == 0 
+  $ONMISSION == 0 
+jf @ADD_MSN_3358 
+if 
+00EC:   actor PLAYER_ACTOR sphere 0 near_point 1368.563 2061.27 radius 80.0 80.0 
+jf @ADD_MSN_3358 
+if 
+00EF:   actor PLAYER_ACTOR sphere 0 near_point 1368.563 2061.27 radius 2.0 2.0 stopped 
+jf @ADD_MSN_3358 
+if and
+   not Actor.Driving(PLAYER_ACTOR)
+   not Actor.Dead(PLAYER_ACTOR)
+jf @ADD_MSN_3358 
+Marker.Disable($ADDITIONAL_MISSION18)
+Text.ShowStyled("DLC626", 3000, 2)
+Player.CanMove(PLAYER_CHAR) = False
+$ADD_MIS18_FLAG = 1 
+$HUD_REMOVE = 1 
+fade 0 1000 
+wait 1000 
+start_mission 81
+jump @ADD_MSN_11 
+
+:ADD_MSN_3358
+if and
+  $ADD_MIS19_FLAG == 0 
+  $ONMISSION == 0 
+jf @ADD_MSN_3544 
+if 
+00EC:   actor PLAYER_ACTOR sphere 0 near_point -2340.5298 -1634.7502 radius 80.0 80.0 
+jf @ADD_MSN_3544 
+if 
+00EF:   actor PLAYER_ACTOR sphere 0 near_point -2340.5298 -1634.7502 radius 2.0 2.0 stopped 
+jf @ADD_MSN_3544 
+if and
+   not Actor.Driving(PLAYER_ACTOR)
+   not Actor.Dead(PLAYER_ACTOR)
+jf @ADD_MSN_3544
+Player.CanMove(PLAYER_CHAR) = False 
+Marker.Disable($ADDITIONAL_MISSION19)
+MAIN_QUEST_MUSIC_FLAG = 1
+fade 0 1000
+$HUD_REMOVE = 1 
+wait 1000
+gosub @MSN_STR_SAVE
+
+repeat
+wait 0
+until $SAVING_DELAY == 0
+
+fade 0 0
+$HUD_REMOVE = 1
+$HUD_OFF_INST = 1 
+wait 1000
+
+Text.ShowStyled("DLC660", 3000, 2)
+Player.CanMove(PLAYER_CHAR) = False
+$ADD_MIS19_FLAG = 1 
+$HUD_REMOVE = 1 
+fade 0 1000 
+wait 1000 
+start_mission 84
+jump @ADD_MSN_11 
+
+:ADD_MSN_3544
+if and
+  $ADD_MIS20_FLAG == 0 
+  $ONMISSION == 0 
+jf @ADD_MSN_11 
+if 
+00EC:   actor PLAYER_ACTOR sphere 0 near_point 2806.478 1696.232 radius 80.0 80.0 
+jf @ADD_MSN_11 
+if 
+00EF:   actor PLAYER_ACTOR sphere 0 near_point 2806.478 1696.232 radius 2.0 2.0 stopped 
+jf @ADD_MSN_11 
+if and
+   not Actor.Driving(PLAYER_ACTOR)
+   not Actor.Dead(PLAYER_ACTOR)
+jf @ADD_MSN_11 
+Marker.Disable($ADDITIONAL_MISSION20)
+Text.ShowStyled("DLC649", 3000, 2)
+Player.CanMove(PLAYER_CHAR) = False
+$ADD_MIS20_FLAG = 1 
+$HUD_REMOVE = 1 
+fade 0 1000 
+wait 1000 
+start_mission 83
+jump @ADD_MSN_11
+
+:ZOMBIE_COORD
+thread 'ZOMBIE_COORD'
+32@ = 0
+
+:ZOMBIE_COORD_SET22
+wait 0
+04C4: store_coords_to 0@ 1@ 2@ from_actor PLAYER_ACTOR with_offset 0.0 100.0 0.0
+02C1: store_to 0@ 1@ 2@ car_path_coords_closest_to 0@ 1@ 2@
+0088: $ZOMBIE_X[0] = 0@ // (float)
+0088: $ZOMBIE_Y[0] = 1@ // (float)
+0088: $ZOMBIE_Z[0] = 2@ // (float)
+$ZOMBIE_SPAWN_ON_COORD = 1
+if
+$COORD_OFF == 0
+jf @ZOMBIE_COORD_SET_OFF
+if
+32@ > 120000
+jf @ZOMBIE_COORD_SET22
+32@ = 0
+$SPAWN_HUNTER_FLAG = 1
+jump to @ZOMBIE_COORD_SET22
+
+:ZOMBIE_COORD_SET_OFF
+$ZOMBIE_SPAWN_ON_COORD = 0
+end_thread
+
+:PLA_LOT
+thread 'PLA_LOT'
+
+008B: 4@ = $BANKA // (int)
+008B: 5@ = $BINT // (int)
+008B: 6@ = $HEAL // (int)
+008B: 7@ = $RADIO // (int)
+008B: 8@ = $KANISTRA // (int)
+0089: 9@ = $KANISTRA_FUEL // (float)
+008B: 10@ = $JIMMY // (int)
+008B: 11@ = $REPAIR_KIT // (int)
+010B: 14@ = player PLAYER_CHAR money
+14@ /= 2 
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 2 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 1285.6147 210.6357 19.75
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 3 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 1285.0919 209.3007 19.7943
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 4 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 1284.6007 208.0759 19.75
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 5 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 1283.8444 206.2183 19.6646
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 6 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 1282.9379 204.4374 19.6603
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 7 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 1282.3562 203.0631 19.6622
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 8 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 1287.4783 209.9463 19.7503
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 9 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 1286.8058 208.0176 19.7593
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 10 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 1307.2585 201.5468 20.4609
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 11 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 1308.3279 199.1078 20.4609
+end
+end
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 92
+    then
+    032B: 3@ = create_weapon_pickup #M79 group 15 ammo 1 at 1287.4154 209.6538 19.7628
+    end
+    
+if
+0491:   actor PLAYER_ACTOR has_weapon 107
+    then
+    032B: 3@ = create_weapon_pickup #MGL group 15 ammo 1 at 1287.4154 209.6538 19.7628
+    end
+
+///////////////////////
+
+if
+$SAVE_CAR_CREATED[0] == 1
+then
+$SAVE_CAR_X[0] = 1192.2126
+$SAVE_CAR_Y[0] = 150.9206
+$SAVE_CAR_Z[0] = 20.1724
+$SAVE_CAR_ANGLE[0] = 337.4432
+end
+
+if
+$SAVE_CAR_CREATED[1] == 1
+then
+$SAVE_CAR_X[1] = 1197.0359
+$SAVE_CAR_Y[1] = 162.465
+$SAVE_CAR_Z[1] = 20.173
+$SAVE_CAR_ANGLE[1] = 337.1535
+end
+
+if
+$SAVE_CAR_CREATED[2] == 1
+then
+$SAVE_CAR_X[2] = 1204.5068
+$SAVE_CAR_Y[2] = 178.3621
+$SAVE_CAR_Z[2] = 20.1645
+$SAVE_CAR_ANGLE[2] = 335.2594
+end
+
+if
+$SAVE_CAR_CREATED[3] == 1
+then
+$SAVE_CAR_X[3] = 1237.1659
+$SAVE_CAR_Y[3] = 212.7884
+$SAVE_CAR_Z[3] = 19.2176
+$SAVE_CAR_ANGLE[3] = 66.6615
+end
+
+if
+$SAVE_CAR_CREATED[4] == 1
+then
+$SAVE_CAR_X[4] = 1293.8296
+$SAVE_CAR_Y[4] = 218.0018
+$SAVE_CAR_Z[4] = 19.2177
+$SAVE_CAR_ANGLE[4] = 68.9319
+end
+
+if
+$SAVE_CAR_CREATED[LATEST_CAR_SLOT_USED] == 1
+then
+$SAVE_CAR_X[LATEST_CAR_SLOT_USED] = 1284.6566
+$SAVE_CAR_Y[LATEST_CAR_SLOT_USED] = 186.8019
+$SAVE_CAR_Z[LATEST_CAR_SLOT_USED] = 19.7656
+$SAVE_CAR_ANGLE[LATEST_CAR_SLOT_USED] = 146.3446
+end
+
+wait 50
+
+SAVED_CARS_MARK_REDO = 1
+
+///////////////////////              
+
+12@ = marker.CreateIconAndSphere2(25,1296.604, 190.4902, 20.4609)
+13@ = 0
+
+wait 200
+
+SAVED_CARS_MARK_REDO = 0  
+
+while true
+wait 0
+
+if
+13@ == 0
+then
+if and
+0101:   actor PLAYER_ACTOR in_sphere 1296.604 190.4902 20.4609 radius 2.0 2.0 2.0 sphere 1 stopped
+not actor.Driving(PLAYER_ACTOR)
+    then
+    
+    marker.Disable(12@)        
+    0E68: set_player_control_pad 0 1 
+    0E69: set_player_control_pad_movement 0 0
+    
+    fade 0 500
+    $HUD_REMOVE = 1
+    wait 500
+    
+    005E: $BANKA += 4@  // (int)
+    005E: $BINT += 5@  // (int)
+    005E: $HEAL += 6@  // (int)
+    005E: $RADIO += 7@  // (int)
+    005E: $KANISTRA += 8@  // (int)
+    if
+    $KANISTRA > 1
+    then
+    $KANISTRA = 1
+    end
+    005F: $KANISTRA_FUEL += 9@  // (float)
+    005E: $JIMMY += 10@  // (int)
+    005E: $REPAIR_KIT += 11@  // (int)
+    0109: player PLAYER_CHAR money += 14@
+    0470: 0@ = actor PLAYER_ACTOR current_weapon
+    
+    0781: get_weapon_with_ID 151 model_to 0@
+
+    while not model.Available(0@)
+    wait 0
+    model.Load(0@)
+    mload
+    end
+    
+    actor.GiveWeaponAndAmmo(PLAYER_ACTOR,151,1)
+    01B9: set_actor PLAYER_ACTOR armed_weapon_to 0@
+    13@ = 1
+    
+    wait 1000
+    
+    actor.PutAtNoOffset(PLAYER_ACTOR,1296.6569, 190.3208, 20.4609)
+    actor.Angle(PLAYER_ACTOR) = 206.9127
+    camera.Restore_WithJumpCut()
+    0E68: set_player_control_pad 1 1 
+    0E69: set_player_control_pad_movement 0 1
+    
+    fade 1 500
+    $HUD_REMOVE = 0
+    wait 500
+    
+    end_thread
+    
+    end
+end
+
+end
+
+end_thread
+
+:PLA_LO2
+thread 'PLA_LO2'
+
+008B: 4@ = $BANKA // (int)
+008B: 5@ = $BINT // (int)
+008B: 6@ = $HEAL // (int)
+008B: 7@ = $RADIO // (int)
+008B: 8@ = $KANISTRA // (int)
+0089: 9@ = $KANISTRA_FUEL // (float)
+008B: 10@ = $JIMMY // (int)
+008B: 11@ = $REPAIR_KIT // (int)
+010B: 14@ = player PLAYER_CHAR money
+14@ /= 2 
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 2 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 2266.9473 2459.5935 10.8203
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 3 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then 
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 2287.0044 2440.6406 10.8203
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 4 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 2264.989 2440.4954 10.8203
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 5 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 2247.5527 2440.502 10.8203
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 6 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 2247.4507 2479.1091 10.8203
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 7 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 2264.9094 2479.2163 10.8203
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 8 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 2286.7424 2479.0937 10.8203
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 9 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 2288.418 2459.5205 10.8203
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 10 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 2238.5464 2449.3889 11.0372
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 11 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 2244.4404 2431.6255 10.8203
+end
+end
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 92
+    then
+    032B: 3@ = create_weapon_pickup #M79 group 15 ammo 1 at 2284.4033 2459.6147 10.8203
+    end
+    
+if
+0491:   actor PLAYER_ACTOR has_weapon 107
+    then
+    032B: 3@ = create_weapon_pickup #MGL group 15 ammo 1 at 2284.4033 2459.6147 10.8203
+    end
+
+///////////////////////
+
+if
+$SAVE_CAR_CREATED[0] == 1
+then
+$SAVE_CAR_X[0] = 2241.813
+$SAVE_CAR_Y[0] = 2476.3223
+$SAVE_CAR_Z[0] = 2.9499
+$SAVE_CAR_ANGLE[0] = 270.1213
+end
+
+if
+$SAVE_CAR_CREATED[1] == 1
+then
+$SAVE_CAR_X[1] = 2241.5974
+$SAVE_CAR_Y[1] = 2471.542
+$SAVE_CAR_Z[1] = 2.9499
+$SAVE_CAR_ANGLE[1] = 271.1666
+end
+
+if
+$SAVE_CAR_CREATED[2] == 1
+then
+$SAVE_CAR_X[2] = 2241.499
+$SAVE_CAR_Y[2] = 2466.6914
+$SAVE_CAR_Z[2] = 2.9503
+$SAVE_CAR_ANGLE[2] = 270.8587
+end
+
+if
+$SAVE_CAR_CREATED[3] == 1
+then
+$SAVE_CAR_X[3] = 2241.6987
+$SAVE_CAR_Y[3] = 2461.887
+$SAVE_CAR_Z[3] = 2.9498
+$SAVE_CAR_ANGLE[3] = 270.5059
+end
+
+if
+$SAVE_CAR_CREATED[4] == 1
+then
+$SAVE_CAR_X[4] = 2241.7759
+$SAVE_CAR_Y[4] = 2457.1716
+$SAVE_CAR_Z[4] = 2.9499
+$SAVE_CAR_ANGLE[4] = 270.6016
+end
+
+if
+$SAVE_CAR_CREATED[LATEST_CAR_SLOT_USED] == 1
+then
+$SAVE_CAR_X[LATEST_CAR_SLOT_USED] = 2305.3049
+$SAVE_CAR_Y[LATEST_CAR_SLOT_USED] = 2455.3499
+$SAVE_CAR_Z[LATEST_CAR_SLOT_USED] = 10.4967
+$SAVE_CAR_ANGLE[LATEST_CAR_SLOT_USED] = 179.954
+end
+
+///////////////////////
+
+wait 50
+
+SAVED_CARS_MARK_REDO = 1              
+
+12@ = marker.CreateIconAndSphere2(25,2296.4055, 2451.5056, 10.8203)
+13@ = 0
+
+wait 200
+
+SAVED_CARS_MARK_REDO = 0  
+
+while true
+wait 0
+
+if
+13@ == 0
+then
+if and
+0101:   actor PLAYER_ACTOR in_sphere 2296.4055 2451.5056 10.8203 radius 2.0 2.0 2.0 sphere 1 stopped
+not actor.Driving(PLAYER_ACTOR)
+    then
+    
+    marker.Disable(12@)        
+    0E68: set_player_control_pad 0 1 
+    0E69: set_player_control_pad_movement 0 0
+    
+    fade 0 500
+    $HUD_REMOVE = 1
+    wait 500
+    
+    005E: $BANKA += 4@  // (int)
+    005E: $BINT += 5@  // (int)
+    005E: $HEAL += 6@  // (int)
+    005E: $RADIO += 7@  // (int)
+    005E: $KANISTRA += 8@  // (int)
+    if
+    $KANISTRA > 1
+    then
+    $KANISTRA = 1
+    end
+    005F: $KANISTRA_FUEL += 9@  // (float)
+    005E: $JIMMY += 10@  // (int)
+    005E: $REPAIR_KIT += 11@  // (int)
+    0109: player PLAYER_CHAR money += 14@
+    0470: 0@ = actor PLAYER_ACTOR current_weapon
+    
+    0781: get_weapon_with_ID 151 model_to 0@
+
+    while not model.Available(0@)
+    wait 0
+    model.Load(0@)
+    mload
+    end
+    
+    actor.GiveWeaponAndAmmo(PLAYER_ACTOR,151,1)
+    01B9: set_actor PLAYER_ACTOR armed_weapon_to 0@
+    13@ = 1
+    
+    wait 1000
+    
+    actor.PutAtNoOffset(PLAYER_ACTOR,2295.5261, 2451.5544, 10.8203)
+    actor.Angle(PLAYER_ACTOR) = 91.4586
+    camera.Restore_WithJumpCut()
+    0E68: set_player_control_pad 1 1 
+    0E69: set_player_control_pad_movement 0 1
+    
+    fade 1 500
+    $HUD_REMOVE = 0
+    wait 500
+    
+    end_thread
+    
+    end
+end
+
+end
+
+end_thread
+
+:PLA_LO3
+thread 'PLA_LO3' 
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 2 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 299.3316 1844.4069 7.7266
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 3 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then 
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 299.3163 1845.4608 7.7266
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 4 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 299.338 1846.6255 7.7266
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 5 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 299.2825 1847.6949 7.7341
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 6 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 299.3035 1849.0706 7.7341
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 7 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 299.3061 1850.4948 7.7341
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 8 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 299.2869 1851.9811 7.7341
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 9 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 296.3258 1844.4283 7.7341
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 10 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 297.798 1846.1873 7.7266
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 11 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 297.7899 1849.6162 7.7341
+end
+end
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 92
+    then
+    032B: 3@ = create_weapon_pickup #M79 group 15 ammo 1 at 296.1402 1846.0995 7.7266
+    end
+    
+if
+0491:   actor PLAYER_ACTOR has_weapon 107
+    then
+    032B: 3@ = create_weapon_pickup #MGL group 15 ammo 1 at 296.1402 1846.0995 7.7266
+    end
+
+///////////////////////
+
+if
+$SAVE_CAR_CREATED[0] == 1
+then
+$SAVE_CAR_X[0] = 194.1554
+$SAVE_CAR_Y[0] = 1917.5317
+$SAVE_CAR_Z[0] = 17.2691
+$SAVE_CAR_ANGLE[0] = 180.4908
+end
+
+if
+$SAVE_CAR_CREATED[1] == 1
+then
+$SAVE_CAR_X[1] = 202.8586
+$SAVE_CAR_Y[1] = 1917.3977
+$SAVE_CAR_Z[1] = 17.2688
+$SAVE_CAR_ANGLE[1] = 180.7897
+end
+
+if
+$SAVE_CAR_CREATED[2] == 1
+then
+$SAVE_CAR_X[2] = 211.8378
+$SAVE_CAR_Y[2] = 1917.3389
+$SAVE_CAR_Z[2] = 17.2691
+$SAVE_CAR_ANGLE[2] = 179.45
+end
+
+if
+$SAVE_CAR_CREATED[3] == 1
+then
+$SAVE_CAR_X[3] = 221.0582
+$SAVE_CAR_Y[3] = 1917.6228
+$SAVE_CAR_Z[3] = 17.2686
+$SAVE_CAR_ANGLE[3] = 178.7993
+end
+
+if
+$SAVE_CAR_CREATED[4] == 1
+then
+$SAVE_CAR_X[4] = 234.8186
+$SAVE_CAR_Y[4] = 1920.4352
+$SAVE_CAR_Z[4] = 17.2744
+$SAVE_CAR_ANGLE[4] = 130.4062
+end
+
+if
+$SAVE_CAR_CREATED[LATEST_CAR_SLOT_USED] == 1
+then
+$SAVE_CAR_X[LATEST_CAR_SLOT_USED] = 189.563
+$SAVE_CAR_Y[LATEST_CAR_SLOT_USED] = 1904.8944
+$SAVE_CAR_Z[LATEST_CAR_SLOT_USED] = 17.2689
+$SAVE_CAR_ANGLE[LATEST_CAR_SLOT_USED] = 305.7562
+end
+
+wait 50
+
+SAVED_CARS_MARK_REDO = 1
+
+wait 200
+
+SAVED_CARS_MARK_REDO = 0
+
+///////////////////////              
+
+end_thread
+
+:PLA_LO4
+thread 'PLA_LO4'
+
+008B: 4@ = $BANKA // (int)
+008B: 5@ = $BINT // (int)
+008B: 6@ = $HEAL // (int)
+008B: 7@ = $RADIO // (int)
+008B: 8@ = $KANISTRA // (int)
+0089: 9@ = $KANISTRA_FUEL // (float)
+008B: 10@ = $JIMMY // (int)
+008B: 11@ = $REPAIR_KIT // (int)
+010B: 31@ = player PLAYER_CHAR money
+31@ /= 2 
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 2 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 27.0092 1344.668 1084.3812
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 3 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 34.6985 1351.8221 1084.375
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 4 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 19.8164 1347.8759 1084.375
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 5 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 35.2969 1343.1067 1084.375
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 6 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 27.3342 1340.6069 1088.875
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 7 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 35.6421 1345.1195 1088.875
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 8 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 24.2513 1348.2672 1088.875
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 9 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 31.4835 1341.7069 1088.875
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 10 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 29.8141 1352.2939 1084.375
+end
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 11 weapon 0@ ammo 1@ model 2@
+if
+not 2@ == -1
+then
+0E7F: get_model_type 2@ store_to 3@
+if
+3@ == 4
+then
+032B: 3@ = create_weapon_pickup 2@ group 15 ammo 1@ at 24.8155 1347.0861 1084.3812
+end
+end
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 92
+    then
+    032B: 3@ = create_weapon_pickup #M79 group 15 ammo 1 at 29.533 1340.9469 1088.875
+    end
+    
+if
+0491:   actor PLAYER_ACTOR has_weapon 107
+    then
+    032B: 3@ = create_weapon_pickup #MGL group 15 ammo 1 at 29.533 1340.9469 1088.875
+    end
+
+///////////////////////              
+
+13@ = 0
+14@ = 0
+15@ = 0 
+
+wait 200  
+
+while true
+wait 0
+
+if and
+0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos -2790.4543 -82.5946 7.1953 radius 25.0
+$SAVESTATUS == 0
+then
+if
+14@ == 0
+    then
+    if
+    ENEX_OFF == 0
+        then
+        0A40: 16@ = create_entrance_marker_at -2790.4543 -82.5946 7.6953 color 14
+        14@ = 1
+        end
+    else
+    if
+    14@ == 1
+        then
+        if and   
+        0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos -2790.4543 -82.5946 7.1953 radius 1.0
+        not actor.Driving(PLAYER_ACTOR)
+            then
+            player.CanMove(PLAYER_CHAR,false)
+            0A41: destroy_entrance_marker 16@
+            14@ = 0
+            DONT_DO_BURGLARY = 1
+            fade 0 500
+            $HUD_REMOVE = 1
+            wait 500
+            select_interior 10
+            0860: link_actor PLAYER_ACTOR to_interior 10
+            04F9: set_sky_color 1 fade 0
+            actor.PutAtNoOffset(PLAYER_ACTOR,24.0419, 1341.4799, 1084.375)
+            actor.Angle(PLAYER_ACTOR) = 360.0
+            camera.Restore_WithJumpCut()
+            create_thread @3D_REFR     
+            end
+        end
+    end
+else
+if
+14@ == 1
+    then
+    0A41: destroy_entrance_marker 16@
+    14@ = 0
+    end
+end
+
+if and
+0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos 23.9436 1340.3196 1084.375 radius 25.0
+$SAVESTATUS == 0
+$ONMISSION == 0
+then
+if
+15@ == 0
+    then
+    if
+    ENEX_OFF == 0
+        then
+        0A40: 17@ = create_entrance_marker_at 23.9436 1340.3196 1084.875 color 14
+        15@ = 1
+        end
+    else
+    if
+    15@ == 1
+        then
+        if and   
+        0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos 23.9436 1340.3196 1084.375 radius 1.0
+        not actor.Driving(PLAYER_ACTOR)
+            then
+            15@ = 0
+            0A41: destroy_entrance_marker 17@
+            player.CanMove(PLAYER_CHAR,false)
+            fade 0 500
+            $HUD_REMOVE = 1
+            wait 500
+            select_interior 0
+            0860: link_actor PLAYER_ACTOR to_interior 0
+            04FA: reset_sky_colors_with_fade 0
+            actor.PutAtNoOffset(PLAYER_ACTOR,-2794.3403, -82.6035, 7.1875)
+            actor.Angle(PLAYER_ACTOR) = 90.0
+            camera.Restore_WithJumpCut()
+            create_thread @3D_REFR
+            DONT_DO_BURGLARY = 0     
+            end
+        end
+    end
+else
+if
+15@ == 1
+    then
+    0A41: destroy_entrance_marker 17@
+    15@ = 0
+    end
+end
+
+if
+13@ == 0
+then
+if and
+0101:   actor PLAYER_ACTOR in_sphere 31.3493 1345.0328 1088.875 radius 2.0 2.0 2.0 sphere 1 stopped
+not actor.Driving(PLAYER_ACTOR)
+    then
+    
+    if
+    075C:   marker BLOOD_HOUSE_MARK enabled
+    then
+    marker.Disable(BLOOD_HOUSE_MARK)    
+    end
+    
+    BLOOD_HOUSE_MARK = 2869
+            
+    0E68: set_player_control_pad 0 1 
+    0E69: set_player_control_pad_movement 0 0
+    
+    fade 0 500
+    $HUD_REMOVE = 1
+    wait 500
+    
+    005E: $BANKA += 4@  // (int)
+    005E: $BINT += 5@  // (int)
+    005E: $HEAL += 6@  // (int)
+    005E: $RADIO += 7@  // (int)
+    005E: $KANISTRA += 8@  // (int)
+    if
+    $KANISTRA > 1
+    then
+    $KANISTRA = 1
+    end
+    005F: $KANISTRA_FUEL += 9@  // (float)
+    005E: $JIMMY += 10@  // (int)
+    005E: $REPAIR_KIT += 11@  // (int)
+    0109: player PLAYER_CHAR money += 31@
+    0470: 0@ = actor PLAYER_ACTOR current_weapon
+    
+    0781: get_weapon_with_ID 151 model_to 0@
+
+    while not model.Available(0@)
+    wait 0
+    model.Load(0@)
+    mload
+    end
+    
+    actor.GiveWeaponAndAmmo(PLAYER_ACTOR,151,1)
+    01B9: set_actor PLAYER_ACTOR armed_weapon_to 0@
+    13@ = 1
+    
+    wait 1000
+    
+    actor.PutAtNoOffset(PLAYER_ACTOR,31.3493, 1345.0328, 1088.875)
+    actor.Angle(PLAYER_ACTOR) = 179.3376
+    camera.Restore_WithJumpCut()
+    0E68: set_player_control_pad 1 1 
+    0E69: set_player_control_pad_movement 0 1
+    
+    fade 1 500
+    $HUD_REMOVE = 0
+    wait 500        
+    
+    end
+end
+
+end
+
+end_thread
+
+:DLC_TXT
+thread 'DLC_TXT'
+
+1@ = 0
+2@ = 0
+32@ = 0
+
+ repeat 
+wait 0
+1@ += 5
+gosub @DLC_TEXT_DRAW 
+ until 1@ == 255 
+
+ repeat 
+wait 0
+
+if
+32@ > 5000
+    then    
+    if
+    not 2@ == 255
+        then
+        2@ += 17
+        end
+    end
+
+if
+2@ > 0
+    then
+    
+    03F0: enable_text_draw 1
+    0349: set_text_draw_font 2
+    0340: set_text_draw_RGBA 180 180 180 2@
+    if
+    DIRECTFONT_INSTALLED == 1
+    then    
+    0340: set_text_draw_RGBA DIRECTFONT_FONT2_R DIRECTFONT_FONT2_G DIRECTFONT_FONT2_B 2@
+    end
+     
+    033F: set_text_draw_letter_size $SAVING_TEXT_SIZE_X $SAVING_TEXT_SIZE_Y
+    0343: set_text_draw_linewidth 640.0
+    0342: set_text_draw_centered 1    
+    033E: set_draw_text_position 320.0 410.0 GXT 'GME1489'  // Push
+    
+    end
+
+gosub @DLC_TEXT_DRAW 
+ until 00E1: key_pressed 0 17 
+
+ repeat
+wait 0
+1@ -= 5
+gosub @DLC_TEXT_DRAW 
+ until 1@ == 0
+ 
+$PORTRAIT_RELOAD_FLAG = 1 
+ 
+end_thread
+
+:DLC_TEXT_DRAW
+03F0: enable_text_draw 1
+0349: set_text_draw_font 2
+0340: set_text_draw_RGBA 180 180 180 1@
+if
+DIRECTFONT_INSTALLED == 1
+then    
+0340: set_text_draw_RGBA DIRECTFONT_FONT2_R DIRECTFONT_FONT2_G DIRECTFONT_FONT2_B 1@
+end
+ 
+033F: set_text_draw_letter_size $SAVING_TEXT_SIZE_X $SAVING_TEXT_SIZE_Y
+0343: set_text_draw_linewidth 640.0
+0342: set_text_draw_centered 1    
+033E: set_draw_text_position 320.0 180.0 GXT v$BNS_TXT  // Push
+
+return          

@@ -1,0 +1,1021 @@
+//-------------Mission 1---------------
+// Название: Неизвестный тип
+
+:DLC2_M1
+thread 'DLC2_M1' 
+gosub @DLC2_M1_KOD_MISSII 
+if 
+wasted_or_busted 
+jf @DLC2_M1_PROPUSK_KODA 
+gosub @DLC2_M1_KOD_PROVALA 
+
+:DLC2_M1_PROPUSK_KODA
+gosub @DLC2_M1_UDALENIE_KODA
+
+HARDCORE_DANGER_FLAG_SCRIPTED = 0
+if
+GAME_OVER_FLAG == 1
+then
+HARDCORE_DANGER_ANTIFLAG_SCRIPTED = 1
+end
+
+if
+GAME_OVER_FLAG == 1
+then
+repeat
+wait 0
+until BLACK_POLOSKI_ON == 1
+end
+
+{$INCLUDE checkpoints_write.txt}
+ 
+end_thread 
+
+:DLC2_M1_KOD_MISSII 
+increment_mission_attempts
+0629: change_integer_stat 258 to 56
+
+MAIN_QUEST_MUSIC_FLAG = 1
+$BANDITS_DONT_ATTACK_PLAYER_FLAG = 1
+$NOTSPAWN_ETC = 1
+
+wait 1000
+
+while true
+wait 0
+$END_FADING_MUSIC_FAST = 1
+
+if and
+$MUSIC_FADE_ENDED[0] == 1
+$MUSIC_FADE_ENDED[1] == 1
+$MUSIC_FADE_ENDED[2] == 1
+$MUSIC_FADE_ENDED[3] == 1
+$MUSIC_FADE_ENDED[4] == 1
+then
+$END_FADING_MUSIC_FAST = 0
+break
+end
+
+end
+ 
+$ONMISSION = 1 
+$SAVESTATUS = 1 
+$HUD_REMOVE = 1  
+v$OBJECTIVE = "DUMMY"
+ 
+Actor.PutAtNoOffset(PLAYER_ACTOR, 1598.2269, -1637.1608, 13.7187)
+Actor.Angle(PLAYER_ACTOR) = 358.0749
+
+Camera.SetAtPos(1598.2269, -1637.1608, 13.7187)
+
+Cinema.Widescreen(1)
+BLACK_POLOSKI_ON = 1
+
+0936: set_camera 1596.534546 -1635.153687 13.435653 position_to 1597.009888 -1635.481079 13.487761 time 30000 smooth_transition 1
+0920: point_camera 1597.278809 -1635.815430 13.526153 transverse_to 1597.754150 -1636.142822 13.578261 time 30000 smooth_transition 1
+
+Model.Load(#CELLPHONE)
+mload
+ 
+$MUSIC_MISSION = Audiostream.Load("modloader\ZAOLDSTORYFILES\m2\35.wav")
+Audiostream.PerformAction($MUSIC_MISSION, PLAY)
+Audiostream.Loop($MUSIC_MISSION, 1)
+Audiostream.Volume($MUSIC_MISSION) = $MUSIC_VOLUME
+
+wait 1000 
+fade 1 1000  
+0615: define_AS_pack_begin 0@ 
+0729: AS_actor -1 hold_cellphone 1 
+0616: define_AS_pack_end 0@ 
+0618: assign_actor PLAYER_ACTOR to_AS_pack 0@ 
+061B: remove_references_to_AS_pack 0@
+
+wait 3000
+
+$RADIO_SOUND = Audiostream.Load3d("AUDIO\SOUNDS\Radio.mp3")
+Audiostream.LinkToActor($RADIO_SOUND,PLAYER_ACTOR)
+Audiostream.Loop($RADIO_SOUND, 1)  
+Audiostream.Volume($RADIO_SOUND) = 0.0
+Audiostream.PerformAction($RADIO_SOUND, PLAY)
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $SOUNDS_VOLUME // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1 
+
+////////////////////////////////////////////////////////
+ 
+wait 2000 
+
+v$ST_DIALOG[0] = "DLC780"
+v$ST_DIALOG[1] = "DLC781"
+v$ST_DIALOG[2] = "DLC782"
+$DIALOG_COUNT = 2                 
+create_thread @DG_SYS2
+
+repeat
+wait 0
+until $DIALOG_END == 1
+ 
+0729: AS_actor PLAYER_ACTOR hold_cellphone 0
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 150
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+//////////////////////////////////////////////////////////
+ 
+wait 2000 
+fade 0 1000 
+wait 1000
+
+0936: set_camera 1596.534546 -1635.153687 13.435653 position_to 1597.009888 -1635.481079 13.487761 time 1 smooth_transition 1
+0920: point_camera 1597.278809 -1635.815430 13.526153 transverse_to 1597.754150 -1636.142822 13.578261 time 1 smooth_transition 1
+ 
+Cinema.Widescreen(0)
+BLACK_POLOSKI_ON = 0
+Camera.Restore_WithJumpCut
+Player.CanMove(PLAYER_CHAR) = True
+$SAVESTATUS = 0
+ 
+wait 1000 
+fade 1 1000
+$HUD_REMOVE = 0 
+wait 1000  
+018A: MISSION_CHECKPOINT = create_checkpoint_at 2079.7529 -1194.6232 23.8644 
+v$OBJECTIVE = "DLC783"
+
+$TIME = 120000
+03C3: set_timer_to $TIME type 1 GXT 'DLC983' // global_variable
+
+repeat
+wait 0
+ 
+if and
+00EC:   actor PLAYER_ACTOR sphere 1 near_point 2079.7529 -1194.6232 radius 2.0 2.0 
+Actor.Stopped(PLAYER_ACTOR)
+not Actor.Driving(PLAYER_ACTOR)
+    then
+    break
+    end
+    
+if
+$TIME < 1
+    then
+    jump to @DLC2_M1_TIMER_OUT
+    end    
+    
+until false
+
+014F: stop_timer $TIME
+$TIME = 0
+v$OBJECTIVE = "DUMMY" 
+Marker.Disable(MISSION_CHECKPOINT)
+Player.CanMove(PLAYER_CHAR) = False
+
+fade 0 1000
+$HUD_REMOVE = 1 
+wait 1000 
+$SAVESTATUS = 1   
+Cinema.Widescreen(1)
+BLACK_POLOSKI_ON = 1
+
+gosub @DLC2_M1_BANDITS_CREATE_CUTSCENE
+
+06AB: set_actor PLAYER_ACTOR all_weapons_hidden 1 
+0639: AS_actor $SURVIVER[0] rotate_to_actor PLAYER_ACTOR 
+0639: AS_actor $SURVIVER[1] rotate_to_actor PLAYER_ACTOR 
+0639: AS_actor $SURVIVER[2] rotate_to_actor PLAYER_ACTOR 
+0639: AS_actor PLAYER_ACTOR rotate_to_actor $SURVIVER[0]
+ 
+wait 1000 
+fade 1 1000 
+wait 1000
+ 
+05BF: AS_actor $SURVIVER[0] look_at_actor PLAYER_ACTOR 999999 ms 
+05BF: AS_actor $SURVIVER[1] look_at_actor PLAYER_ACTOR 999999 ms 
+05BF: AS_actor $SURVIVER[2] look_at_actor PLAYER_ACTOR 999999 ms 
+05BF: AS_actor PLAYER_ACTOR look_at_actor $SURVIVER[0] 999999 ms
+ 
+0084: $DIALOG_ACTOR[0] = $SURVIVER[0] // (int) 
+0084: $DIALOG_ACTOR[1] = PLAYER_ACTOR // (int) 
+0084: $DIALOG_ACTOR[2] = $SURVIVER[0] // (int) 
+0084: $DIALOG_ACTOR[3] = PLAYER_ACTOR // (int) 
+0084: $DIALOG_ACTOR[4] = $SURVIVER[0] // (int) 
+0084: $DIALOG_ACTOR[5] = PLAYER_ACTOR // (int) 
+0084: $DIALOG_ACTOR[6] = $SURVIVER[0] // (int) 
+0084: $DIALOG_ACTOR[7] = $SURVIVER[0] // (int)
+0084: $DIALOG_ACTOR[8] = PLAYER_ACTOR // (int) 
+0084: $DIALOG_ACTOR[9] = $SURVIVER[0] // (int) 
+0084: $DIALOG_ACTOR[10] = PLAYER_ACTOR // (int) 
+0084: $DIALOG_ACTOR[11] = $SURVIVER[0] // (int) 
+0084: $DIALOG_ACTOR[12] = $SURVIVER[0] // (int) 
+0084: $DIALOG_ACTOR[13] = PLAYER_ACTOR // (int) 
+0084: $DIALOG_ACTOR[14] = $SURVIVER[0] // (int)
+ 
+06D1: v$ST_DIALOG[0] = "DLC784" // v$ = string 
+06D1: v$ST_DIALOG[1] = "DLC785" // v$ = string 
+06D1: v$ST_DIALOG[2] = "DLC786" // v$ = string 
+06D1: v$ST_DIALOG[3] = "DLC787" // v$ = string 
+06D1: v$ST_DIALOG[4] = "DLC788" // v$ = string 
+06D1: v$ST_DIALOG[5] = "DLC789" // v$ = string 
+06D1: v$ST_DIALOG[6] = "DLC790" // v$ = string 
+06D1: v$ST_DIALOG[7] = "DLC791" // v$ = string
+06D1: v$ST_DIALOG[8] = "DLC791A" // v$ = string
+06D1: v$ST_DIALOG[9] = "DLC791B" // v$ = string 
+06D1: v$ST_DIALOG[10] = "DLC792" // v$ = string 
+06D1: v$ST_DIALOG[11] = "DLC793" // v$ = string 
+06D1: v$ST_DIALOG[12] = "DLC795" // v$ = string 
+06D1: v$ST_DIALOG[13] = "DLC796" // v$ = string 
+06D1: v$ST_DIALOG[14] = "DLC797" // v$ = string 
+$DIALOG_COUNT = 14  
+create_thread @DG_SYS 
+
+repeat
+wait 0  
+until $DIALOG_END == 1 
+ 
+$DIALOG_END = 0 
+fade 0 1000 
+wait 1000
+
+0936: set_camera 2119.709717 -1173.525757 23.695356 position_to 2120.521484 -1174.478516 23.722660 time 1 smooth_transition 1
+0920: point_camera 2120.358398 -1174.286621 23.717117 transverse_to 2121.170166 -1175.239380 23.744421 time 1 smooth_transition 1
+ 
+06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0 
+05BF: AS_actor $SURVIVER[0] look_at_actor PLAYER_ACTOR 1 ms 
+05BF: AS_actor $SURVIVER[1] look_at_actor PLAYER_ACTOR 1 ms 
+05BF: AS_actor $SURVIVER[2] look_at_actor PLAYER_ACTOR 1 ms 
+05BF: AS_actor PLAYER_ACTOR look_at_actor $SURVIVER[0] 1 ms
+ 
+Actor.DestroyInstantly($SURVIVER[0])
+Actor.DestroyInstantly($SURVIVER[1])
+Actor.DestroyInstantly($SURVIVER[2])
+
+Actor.PutAtNoOffset(PLAYER_ACTOR, 2079.4084, -1194.0133, 23.8603)
+Actor.Angle(PLAYER_ACTOR) = 90.3195
+
+Camera.Restore_WithJumpCut
+Player.CanMove(PLAYER_CHAR) = True
+Cinema.Widescreen(0)
+BLACK_POLOSKI_ON = 0
+
+:CAR_CREATE_DLC2_M1_1
+if
+model.Available(#PATRIOT)
+then
+ 
+220@ = Car.Create(#PATRIOT, 1831.965, -1403.974, 13.5107)
+Car.Angle(220@) = 269.8747
+
+if
+model.Available(#PATRIOT)
+then
+//model.Destroy(#PATRIOT)
+end
+
+else
+model.Load(#PATRIOT)
+mload
+wait 0
+jump to @CAR_CREATE_DLC2_M1_1
+end
+
+:CAR_CREATE_DLC2_M1_2
+if
+model.Available(#PATRIOT)
+then
+
+221@ = Car.Create(#PATRIOT, 1810.916, -1432.943, 13.511)
+Car.Angle(221@) = 358.3016
+
+if
+model.Available(#PATRIOT)
+then
+//model.Destroy(#PATRIOT)
+end
+
+else
+model.Load(#PATRIOT)
+mload
+wait 0
+jump to @CAR_CREATE_DLC2_M1_2
+end
+
+Car.DoorStatus(220@) = 4
+Car.DoorStatus(221@) = 4
+
+while not model.Available(#ARMY1)
+wait 0
+model.Load(#ARMY1)
+mload
+end
+
+$ARMY69_2[0] = Actor.Create(27, #ARMY1, 1835.532, -1405.685, 13.4297)
+Actor.Angle($ARMY69_2[0]) = 359.3604
+
+while not model.Available(#ARMY2)
+wait 0
+model.Load(#ARMY2)
+mload
+end
+
+$ARMY69_2[1] = Actor.Create(27, #ARMY2, 1833.545, -1388.052, 13.5831)
+Actor.Angle($ARMY69_2[1]) = 270.9996
+
+while not model.Available(#ARMY3)
+wait 0
+model.Load(#ARMY3)
+mload
+end
+
+$ARMY69_2[2] = Actor.Create(27, #ARMY3, 1828.267, -1405.167, 13.4297)
+Actor.Angle($ARMY69_2[2]) = 1.4493
+
+while not model.Available(#ARMY4)
+wait 0
+model.Load(#ARMY4)
+mload
+end
+
+$ARMY69_2[3] = Actor.Create(27, #ARMY4, 1808.716, -1397.866, 13.4196)
+Actor.Angle($ARMY69_2[3]) = 271.2085
+
+while not model.Available(#ARMY1)
+wait 0
+model.Load(#ARMY1)
+mload
+end
+
+$ARMY69_2[4] = Actor.Create(27, #ARMY1, 1813.079, -1429.612, 13.4297)
+Actor.Angle($ARMY69_2[4]) = 89.6011
+
+while not model.Available(#ARMY2)
+wait 0
+model.Load(#ARMY2)
+mload
+end
+
+$ARMY69_2[5] = Actor.Create(27, #ARMY2, 1803.123, -1435.665, 13.4297)
+Actor.Angle($ARMY69_2[5]) = 356.668
+
+while not model.Available(#ARMY3)
+wait 0
+model.Load(#ARMY3)
+mload
+end
+
+$ARMY69_2[6] = Actor.Create(27, #ARMY3, 1806.259, -1419.622, 13.5783)
+Actor.Angle($ARMY69_2[6]) = 181.6176
+
+while not model.Available(#ARMY4)
+wait 0
+model.Load(#ARMY4)
+mload
+end
+
+$ARMY69_2[7] = Actor.Create(27, #ARMY4, 1786.912, -1428.623, 13.5859)
+Actor.Angle($ARMY69_2[7]) = 212.6379
+
+for 0@ = 0 to 7 
+Actor.SetWalkStyle($ARMY69_2[0@], "GANG2") 
+Actor.Health($ARMY69_2[0@]) = $DLC2_M1_ARMY_HEALTH 
+Actor.WeaponAccuracy($ARMY69_2[0@]) = $DLC2_M1_ARMY_ACCURACY 
+060B: set_actor $ARMY69_2[0@] decision_maker_to $DEC_PEOPLE  
+0446: set_actor $ARMY69_2[0@] dismemberment_possible 0
+random_int 1@ 30 55
+03FE: set_actor $ARMY69_2[0@] money 1@
+0350: set_actor $ARMY69_2[0@] maintain_position_when_attacked 1 
+0816: set_actor $ARMY69_2[0@] dont_chase_victim 1 
+07DD: set_actor $ARMY69_2[0@] attack_rate -1 // previously known as temper_to
+
+create_thread @PED_BKP $ARMY69_2[0@] 371
+create_thread @ANT_PRE $ARMY69_2[0@]
+
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 6 weapon 1@ ammo 2@ model 3@
+if
+2@ < 1
+then
+
+0781: get_weapon_with_ID 30 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+ 
+Actor.GiveWeaponAndAmmo(PLAYER_ACTOR, 30, 410)
+else
+2@ += 210
+017B: set_actor PLAYER_ACTOR weapon 1@ ammo_to 2@
+end
+
+0781: get_weapon_with_ID 77 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+
+Actor.GiveWeaponAndAmmo($ARMY69_2[0], 77, 99999)
+
+0781: get_weapon_with_ID 77 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+
+Actor.GiveWeaponAndAmmo($ARMY69_2[1], 77, 99999)
+
+0781: get_weapon_with_ID 77 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+
+Actor.GiveWeaponAndAmmo($ARMY69_2[2], 77, 99999)
+
+0781: get_weapon_with_ID 75 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+
+Actor.GiveWeaponAndAmmo($ARMY69_2[3], 75, 99999)
+
+0781: get_weapon_with_ID 75 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+
+Actor.GiveWeaponAndAmmo($ARMY69_2[4], 75, 99999)
+
+0781: get_weapon_with_ID 77 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+
+Actor.GiveWeaponAndAmmo($ARMY69_2[5], 77, 99999)
+
+0781: get_weapon_with_ID 75 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+
+Actor.GiveWeaponAndAmmo($ARMY69_2[6], 75, 99999)
+
+0781: get_weapon_with_ID 77 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+
+Actor.GiveWeaponAndAmmo($ARMY69_2[7], 77, 99999)
+  
+200@ = Marker.CreateAboveActor($ARMY69_2[0])
+201@ = Marker.CreateAboveActor($ARMY69_2[1])
+202@ = Marker.CreateAboveActor($ARMY69_2[2])
+203@ = Marker.CreateAboveActor($ARMY69_2[3])
+204@ = Marker.CreateAboveActor($ARMY69_2[4])
+205@ = Marker.CreateAboveActor($ARMY69_2[5])
+206@ = Marker.CreateAboveActor($ARMY69_2[6])
+207@ = Marker.CreateAboveActor($ARMY69_2[7])
+
+marker.SetIconSize(200@,2)
+marker.SetIconSize(201@,2)
+marker.SetIconSize(202@,2)
+marker.SetIconSize(203@,2)
+marker.SetIconSize(204@,2)
+marker.SetIconSize(205@,2)
+marker.SetIconSize(206@,2)
+marker.SetIconSize(207@,2)
+
+wait 1000  
+$SAVESTATUS = 0 
+fade 1 1000
+$HUD_REMOVE = 0 
+wait 1000  
+v$OBJECTIVE = "DLC798"
+
+210@ = 0 
+211@ = 0 
+212@ = 0 
+213@ = 0 
+214@ = 0 
+215@ = 0 
+216@ = 0 
+217@ = 0 
+218@ = 0   
+
+:DLC2_M1_2628
+wait 0
+
+if
+32@ > 500
+then
+32@ = 0
+random_int 0@ 0 8
+if
+not actor.Dead($ARMY69_2[0@])
+    then
+    if or
+    051A:   actor $ARMY69_2[0@] damaged_by_actor PLAYER_ACTOR
+    0364:   actor $ARMY69_2[0@] spotted_actor PLAYER_ACTOR
+        then
+        if
+        82E0: not  actor $ARMY69_2[0@] firing_weapon
+            then            
+            
+            if and
+            0E4D: random_percent 50
+            0800:   in_two_players_mode
+            then
+            05E2: AS_actor $ARMY69_2[0@] kill_actor COOP_ACTOR
+            else
+            05E2: AS_actor $ARMY69_2[0@] kill_actor PLAYER_ACTOR
+            end
+            
+            HARDCORE_DANGER_FLAG_SCRIPTED = 1
+            end
+        end
+    end
+end
+ 
+if 
+  210@ == 0 
+jf @DLC2_M1_2666 
+if 
+   not Actor.Dead($ARMY69_2[0])
+jf @DLC2_M1_4199 
+
+:DLC2_M1_2666
+if 
+  211@ == 0 
+jf @DLC2_M1_2700 
+if 
+   not Actor.Dead($ARMY69_2[1])
+jf @DLC2_M1_4218 
+
+:DLC2_M1_2700
+if 
+  212@ == 0 
+jf @DLC2_M1_2734 
+if 
+   not Actor.Dead($ARMY69_2[2])
+jf @DLC2_M1_4237 
+
+:DLC2_M1_2734
+if 
+  213@ == 0 
+jf @DLC2_M1_2768 
+if 
+   not Actor.Dead($ARMY69_2[3])
+jf @DLC2_M1_4256 
+
+:DLC2_M1_2768
+if 
+  214@ == 0 
+jf @DLC2_M1_2802 
+if 
+   not Actor.Dead($ARMY69_2[4])
+jf @DLC2_M1_4275 
+
+:DLC2_M1_2802
+if 
+  215@ == 0 
+jf @DLC2_M1_2836 
+if 
+   not Actor.Dead($ARMY69_2[5])
+jf @DLC2_M1_4294 
+
+:DLC2_M1_2836
+if 
+  216@ == 0 
+jf @DLC2_M1_2870 
+if 
+   not Actor.Dead($ARMY69_2[6])
+jf @DLC2_M1_4313 
+
+:DLC2_M1_2870
+if 
+  217@ == 0 
+jf @DLC2_M1_2904 
+if 
+   not Actor.Dead($ARMY69_2[7])
+jf @DLC2_M1_4332 
+
+:DLC2_M1_2904
+if and
+   Actor.Dead($ARMY69_2[0])
+   Actor.Dead($ARMY69_2[1])
+   Actor.Dead($ARMY69_2[2])
+   Actor.Dead($ARMY69_2[3])
+   Actor.Dead($ARMY69_2[4])
+   Actor.Dead($ARMY69_2[5])
+   Actor.Dead($ARMY69_2[6])
+   Actor.Dead($ARMY69_2[7])
+jf @DLC2_M1_2628
+
+HARDCORE_DANGER_FLAG_SCRIPTED = 0  
+v$OBJECTIVE = "DLC799"
+018A: MISSION_CHECKPOINT = create_checkpoint_at 2079.7529 -1194.6232 23.8644 
+
+repeat
+wait 0
+ 
+if and
+00EC:   actor PLAYER_ACTOR sphere 1 near_point 2079.7529 -1194.6232 radius 2.0 2.0 
+Actor.Stopped(PLAYER_ACTOR)
+not Actor.Driving(PLAYER_ACTOR)
+    then
+    break
+    end
+
+until false
+
+v$OBJECTIVE = "DUMMY"
+ 
+Marker.Disable(MISSION_CHECKPOINT)
+Player.CanMove(PLAYER_CHAR) = False
+
+fade 0 1000
+$HUD_REMOVE = 1 
+wait 1000 
+$SAVESTATUS = 1   
+Cinema.Widescreen(1)
+BLACK_POLOSKI_ON = 1
+
+gosub @DLC2_M1_BANDITS_CREATE_CUTSCENE
+
+06AB: set_actor PLAYER_ACTOR all_weapons_hidden 1 
+0639: AS_actor $SURVIVER[0] rotate_to_actor PLAYER_ACTOR 
+0639: AS_actor $SURVIVER[1] rotate_to_actor PLAYER_ACTOR 
+0639: AS_actor $SURVIVER[2] rotate_to_actor PLAYER_ACTOR 
+0639: AS_actor PLAYER_ACTOR rotate_to_actor $SURVIVER[0]
+ 
+wait 1000 
+fade 1 1000 
+wait 1000
+ 
+05BF: AS_actor $SURVIVER[0] look_at_actor PLAYER_ACTOR 999999 ms 
+05BF: AS_actor $SURVIVER[1] look_at_actor PLAYER_ACTOR 999999 ms 
+05BF: AS_actor $SURVIVER[2] look_at_actor PLAYER_ACTOR 999999 ms 
+05BF: AS_actor PLAYER_ACTOR look_at_actor $SURVIVER[0] 999999 ms
+ 
+0084: $DIALOG_ACTOR[0] = $SURVIVER[0] // (int) 
+0084: $DIALOG_ACTOR[1] = PLAYER_ACTOR // (int) 
+0084: $DIALOG_ACTOR[2] = $SURVIVER[0] // (int) 
+0084: $DIALOG_ACTOR[3] = $SURVIVER[0] // (int) 
+0084: $DIALOG_ACTOR[4] = PLAYER_ACTOR // (int) 
+06D1: v$ST_DIALOG[0] = "DLC800" // v$ = string 
+06D1: v$ST_DIALOG[1] = "DLC801" // v$ = string 
+06D1: v$ST_DIALOG[2] = "DLC802" // v$ = string 
+06D1: v$ST_DIALOG[3] = "DLC803" // v$ = string 
+06D1: v$ST_DIALOG[4] = "DLC804" // v$ = string 
+$DIALOG_COUNT = 4  
+create_thread @DG_SYS 
+
+repeat
+wait 0  
+until $DIALOG_END == 1
+  
+$DIALOG_END = 0 
+fade 0 1000 
+wait 1000
+
+0936: set_camera 2119.709717 -1173.525757 23.695356 position_to 2120.521484 -1174.478516 23.722660 time 1 smooth_transition 1
+0920: point_camera 2120.358398 -1174.286621 23.717117 transverse_to 2121.170166 -1175.239380 23.744421 time 1 smooth_transition 1
+ 
+06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0 
+05BF: AS_actor $SURVIVER[0] look_at_actor PLAYER_ACTOR 1 ms 
+05BF: AS_actor $SURVIVER[1] look_at_actor PLAYER_ACTOR 1 ms 
+05BF: AS_actor $SURVIVER[2] look_at_actor PLAYER_ACTOR 1 ms 
+05BF: AS_actor PLAYER_ACTOR look_at_actor $SURVIVER[0] 1 ms 
+Actor.DestroyInstantly($SURVIVER[0])
+Actor.DestroyInstantly($SURVIVER[1])
+Actor.DestroyInstantly($SURVIVER[2])
+Actor.PutAtNoOffset(PLAYER_ACTOR, 2079.4084, -1194.0133, 23.8603)
+Actor.Angle(PLAYER_ACTOR) = 90.3195
+gosub @DLC2_M1_MUSIC_FADE_OUT 
+Camera.Restore_WithJumpCut
+Player.CanMove(PLAYER_CHAR) = True
+Cinema.Widescreen(0)
+BLACK_POLOSKI_ON = 0
+$SAVESTATUS = 0 
+wait 1000 
+fade 1 1000
+$HUD_REMOVE = 0 
+wait 1000
+
+v$OBJECTIVE = "DLC1106"
+
+$TEMP_XP = 1500
+008D: $TEMP_XP = integer $TEMP_XP to_float
+0069: $TEMP_XP *= $XP_COEFF // (float)
+if
+PERK_CHARISMA == 2
+then
+$TEMP_XP *= CHARISMA_LEVEL2_XP_COEFF
+end
+008C: $TEMP_XP = float $TEMP_XP to_integer
+0058: $PLAYER_XP += $TEMP_XP // (int)
+
+0629: change_integer_stat 258 to 0
+  
+jump @DLC2_M1_UDACHNO 
+
+:DLC2_M1_UDACHNO
+$ONMISSION = 0  
+03DE: set_pedestrians_density_multiplier_to 0.0 
+01EB: set_traffic_density_multiplier_to 0.0 
+0318: set_latest_mission_passed 'DLC759B' 
+08E7: disable_entrance_markers 0
+$X_START = 1092.198 
+$Y_START = -732.2471 
+$Z_START = 102.3154 
+$MISSION_ICON = 33 
+06D1: v$MISSION_NAME = "DLC805" // v$ = string 
+$MISSION_START = 57
+//JS_DLC_MISSION_TIMER2 = 20160 
+//create_thread @MSN_ST2
+create_thread @MSN_STR 
+MAIN_QUEST_MUSIC_FLAG = 0
+$NOTSPAWN_ETC = 0
+0570: $ADDITIONAL_MISSION1 = create_asset_radar_marker_with_icon 33 at 2252.768 -1649.163 15.4768  
+0570: $ADDITIONAL_MISSION5 = create_asset_radar_marker_with_icon 33 at 377.7248 -2032.89 7.8301 
+$ADD_MIS2_FLAG = 1
+$ADD_MIS3_FLAG = 1
+$ADD_MIS4_FLAG = 1
+$ADD_MIS6_FLAG = 1 
+$ADD_MIS7_FLAG = 1 
+$ADD_MIS8_FLAG = 1 
+$ADD_MIS9_FLAG = 1 
+$ADD_MIS10_FLAG = 1 
+$ADD_MIS11_FLAG = 1 
+$ADD_MIS12_FLAG = 1 
+$ADD_MIS13_FLAG = 1 
+$ADD_MIS14_FLAG = 1 
+$ADD_MIS15_FLAG = 1 
+$ADD_MIS16_FLAG = 1 
+$ADD_MIS17_FLAG = 1 
+$ADD_MIS18_FLAG = 1 
+$ADD_MIS19_FLAG = 1 
+$ADD_MIS20_FLAG = 1
+create_thread @ADD_MSN  
+gosub @DLC2_M1_PROPUSK_KODA 
+return 
+
+:DLC2_M1_KOD_PROVALA
+$GAME_OVER = 1 
+create_thread @GMV_OVR 
+$ONMISSION = 0
+014F: stop_timer $TIME 
+mission_cleanup 
+Marker.Disable(MISSION_CHECKPOINT)
+Marker.Disable(200@)
+Marker.Disable(201@)
+Marker.Disable(202@)
+Marker.Disable(203@)
+Marker.Disable(204@)
+Marker.Disable(205@)
+Marker.Disable(206@)
+Marker.Disable(207@)
+Marker.Disable(208@)
+06D0: enable_emergency_traffic 0 
+06D7: enable_train_traffic 0 
+096A: enable_flying_helis 0 
+099E: enable_police_patrols 0 
+0923: enable_air_traffic 0 
+08E7: disable_entrance_markers 0 
+03DE: set_pedestrians_density_multiplier_to 0.0 
+01EB: set_traffic_density_multiplier_to 0.0 
+gosub @DLC2_M1_MUSIC_FADE_OUT 
+return 
+
+:DLC2_M1_MUSIC_FADE_OUT
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+//////////////////////////////////////////////////////////
+
+return 
+
+:DLC2_M1_UDALENIE_KODA
+$ONMISSION = 0 
+mission_cleanup 
+06D0: enable_emergency_traffic 0 
+06D7: enable_train_traffic 0 
+096A: enable_flying_helis 0 
+099E: enable_police_patrols 0 
+0923: enable_air_traffic 0 
+08E7: disable_entrance_markers 0 
+03DE: set_pedestrians_density_multiplier_to 0.0 
+01EB: set_traffic_density_multiplier_to 0.0 
+return
+
+:DLC2_M1_TIMER_OUT
+Text.ClearAll
+v$FAILED_TEXT = "DLC984"
+jump @DLC2_M1_KOD_PROVALA 
+
+:DLC2_M1_4199
+Marker.Disable(200@)
+210@ = 1 
+jump @DLC2_M1_2628 
+
+:DLC2_M1_4218
+Marker.Disable(201@)
+211@ = 1 
+jump @DLC2_M1_2628 
+
+:DLC2_M1_4237
+Marker.Disable(202@)
+212@ = 1 
+jump @DLC2_M1_2628 
+
+:DLC2_M1_4256
+Marker.Disable(203@)
+213@ = 1 
+jump @DLC2_M1_2628 
+
+:DLC2_M1_4275
+Marker.Disable(204@)
+214@ = 1 
+jump @DLC2_M1_2628 
+
+:DLC2_M1_4294
+Marker.Disable(205@)
+215@ = 1 
+jump @DLC2_M1_2628 
+
+:DLC2_M1_4313
+Marker.Disable(206@)
+216@ = 1 
+jump @DLC2_M1_2628 
+
+:DLC2_M1_4332
+Marker.Disable(207@)
+217@ = 1 
+jump @DLC2_M1_2628
+ 
+Marker.Disable(208@)
+218@ = 1 
+jump @DLC2_M1_2628
+
+:DLC2_M1_BANDITS_CREATE_CUTSCENE
+
+while not model.Available(#HMYRI)
+wait 0
+model.Load(#HMYRI)
+mload
+end
+
+$SURVIVER[0] = Actor.Create(25, #HMYRI, 2123.7407, -1177.6487, 24.0354)
+Actor.Angle($SURVIVER[0]) = 90.0
+
+04C4: store_coords_to 1@ 2@ 3@ from_actor $SURVIVER[0] with_offset 1.5 0.0 0.0
+
+while not model.Available(#BANDIT1)
+wait 0
+model.Load(#BANDIT1)
+mload
+end
+
+$SURVIVER[1] = Actor.Create(25, #BANDIT1, 1@, 2@, 3@)
+Actor.Angle($SURVIVER[1]) = 90.0
+
+while not model.Available(#BANDIT2)
+wait 0
+model.Load(#BANDIT2)
+mload
+end
+
+04C4: store_coords_to 1@ 2@ 3@ from_actor $SURVIVER[0] with_offset -1.5 0.0 0.0
+
+$SURVIVER[2] = Actor.Create(25, #BANDIT2, 1@, 2@, 3@)
+Actor.Angle($SURVIVER[2]) = 90.0
+
+create_thread @PED_BKP $SURVIVER[0] 371
+create_thread @PED_BKP $SURVIVER[1] 371
+create_thread @PED_BKP $SURVIVER[2] 371
+
+0781: get_weapon_with_ID 36 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+
+Actor.GiveWeaponAndAmmo($SURVIVER[1], 36, 99999)
+
+0781: get_weapon_with_ID 36 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+
+Actor.GiveWeaponAndAmmo($SURVIVER[2], 36, 99999)
+
+0781: get_weapon_with_ID 30 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+
+Actor.GiveWeaponAndAmmo($SURVIVER[1], 30, 99999)
+
+0781: get_weapon_with_ID 30 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+
+Actor.GiveWeaponAndAmmo($SURVIVER[2], 30, 99999)
+
+04C4: store_coords_to 1@ 2@ 3@ from_actor $SURVIVER[0] with_offset 0.0 2.0 0.0
+
+Actor.PutAtNoOffset(PLAYER_ACTOR, 1@, 2@, 3@)
+Actor.Angle(PLAYER_ACTOR) = 280.0
+
+0936: set_camera 2119.709717 -1173.525757 23.695356 position_to 2120.521484 -1174.478516 23.722660 time 60000 smooth_transition 1
+0920: point_camera 2120.358398 -1174.286621 23.717117 transverse_to 2121.170166 -1175.239380 23.744421 time 60000 smooth_transition 1
+
+return 

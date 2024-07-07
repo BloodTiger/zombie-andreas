@@ -1,0 +1,671 @@
+//-------------Mission 1---------------
+// Название: Начало ужаса
+                          
+:RISS1
+thread 'RISS1'
+gosub @RKOD_MISSII1 
+if 
+wasted_or_busted 
+jf @RPROPUSK_KODA1 
+gosub @RKOD_PROVALA1 
+
+:RPROPUSK_KODA1        
+gosub @RUDALENIE_KODA1
+end_thread
+
+:RKOD_MISSII1
+increment_mission_attempts 
+
+cinema.Widescreen(1)
+0A48: enable_menu_access_in_widescreen_mode 0
+0629: change_integer_stat 258 to 1
+0777: delete_objects_in_object_group "mike"
+  
+$SOUND_OFF_1 = 1
+$ONMISSION = 1 
+$HUD_REMOVE = 1
+$SAVESTATUS = 1   
+$INT_ZMB_NOT = 1
+$NOTSPAWN_CARS = 1
+
+$SPECIAL_INFECTED_NOT_SPAWN_FLAG = 1
+
+$SATIETY_LEVEL = 200.0
+
+$DONT_CHANGE_MONTH_FLAG = 1
+wait 100
+0A8C: write_memory 0x00B70154 size 1 value 18 virtual_protect 0 //Day
+0A8C: write_memory 0x00B70155 size 1 value 9 virtual_protect 0 //Month
+wait 100
+$DONT_CHANGE_MONTH_FLAG = 0 
+
+0555: remove_weapon 46 from_actor PLAYER_ACTOR
+
+while not animation.Available("INT_HOUSE")
+wait 0
+animation.Load("INT_HOUSE")
+end
+
+player.CanMove(PLAYER_CHAR) = false
+
+$WEATHER_LOCK_NUMBER = 0 
+0792: disembark_instantly_actor PLAYER_ACTOR
+player.CanMove(PLAYER_CHAR) = false
+set_weather 0
+select_interior 5 
+0860: link_actor PLAYER_ACTOR to_interior 5 
+0619: enable_actor PLAYER_ACTOR collision_detection 0
+
+0362: remove_actor PLAYER_ACTOR from_car_and_place_at 240.5 1108.2 1084.05
+Actor.PutAt(PLAYER_ACTOR, 240.5 1108.2, 1084.05)
+actor.Angle(PLAYER_ACTOR) = 180.0 
+04E4: unknown_refresh_game_renderer_at 242.0 1106.4
+03CB: set_rendering_origin_at 242.0 1106.4 1085.0
+0A0B: set_rendering_origin_at_3D_coord 242.0 1106.4 1085.0 angle 51.6275
+   
+00C0: set_current_time 19 0
+$WEATHER_SYNC_FLAG = 1
+0A8C: write_memory 0xB7014E size 1 value 4 virtual_protect 1 
+
+01B9: set_actor PLAYER_ACTOR armed_weapon_to 0
+
+$SAVESTATUS_TRUE = 0
+SURVIVAL_STARTED_FULLY_FLAG = 1 
+   
+0605: actor PLAYER_ACTOR perform_animation "BED_Out_L" IFP "INT_HOUSE" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1
+0612: set_actor PLAYER_ACTOR animation "BED_Out_L" paused 0
+wait 0
+0612: set_actor PLAYER_ACTOR animation "BED_Out_L" paused 0 
+
+$MUSIC_MISSION = Audiostream.Load(CLASSIC_MUSIC_1A)
+Audiostream.PerformAction($MUSIC_MISSION, PLAY)
+Audiostream.Loop($MUSIC_MISSION, 1)
+Audiostream.Volume($MUSIC_MISSION) = 0.0
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1 
+
+////////////////////////////////////////////////////////    
+
+0936: set_camera 242.441 1106.06 1085.15 position_to 242.076 1106.5 1085.11 time 20000 smooth_transition 1
+0920: point_camera 241.749 1106.78 1085.08 transverse_to 241.427 1107.26 1085.05 time 20000 smooth_transition 1
+
+0A48: enable_menu_access_in_widescreen_mode 1  
+$SOUND_OFF_1 = 0
+
+00BA: show_text_styled GXT "STR2" time 5000 style 6
+
+fade 1 3000
+0A0B: set_rendering_origin_at_3D_coord 241.3094 1107.7769 1085.0391 angle 36.1252
+0707: start_scene_skip_to @RMISSION1_SKIP
+wait 2000   
+
+0612: set_actor PLAYER_ACTOR animation "BED_Out_L" paused 1 
+0619: enable_actor PLAYER_ACTOR collision_detection 1 
+
+09FD: get_gxt_string "STR0" width_to 3@  // ~k~~PED_SPRINT~ Select
+0093: 3@ = integer 3@ to_float
+3@ *= 8.0
+0092: 3@ = float 3@ to_integer
+
+00BC: show_text_highpriority GXT 'STR0' time 3@ flag 1 
+wait 3@
+
+00BA: show_text_styled GXT "STR3" time 5000 style 2
+
+09FD: get_gxt_string "STR1" width_to 3@  // ~k~~PED_SPRINT~ Select
+0093: 3@ = integer 3@ to_float
+3@ *= 8.0
+0092: 3@ = float 3@ to_integer
+ 
+00BC: show_text_highpriority GXT 'STR1' time 3@ flag 1 
+wait 3@
+
+:RMISSION1_SKIP
+0701: end_scene_skip
+03D6: remove_styled_text 'STR2'
+03D6: remove_styled_text 'STR10' 
+
+fade 0 2000
+wait 2000
+
+0612: set_actor PLAYER_ACTOR animation "BED_Out_L" paused 1
+0619: enable_actor PLAYER_ACTOR collision_detection 1
+
+0792: disembark_instantly_actor PLAYER_ACTOR
+04EF: release_animation "INT_HOUSE"   
+
+0936: set_camera 241.2005 1106.3474 1085.0391 position_to 243.0623 1108.8495 1085.0391 time 1 smooth_transition 1
+0920: point_camera 239.9773 1108.5262 1084.0391 transverse_to 240.9327 1108.5332 1086.0391 time 1 smooth_transition 1 
+
+camera.Restore_WithJumpCut()
+
+01B9: set_actor PLAYER_ACTOR armed_weapon_to 0   
+
+cinema.Widescreen(0)
+BLACK_POLOSKI_ON = 0
+
+fade 1 1000
+$HUD_REMOVE = 0
+wait 1000
+
+text.ShowTextBox('HINT0')
+
+player.CanMove(PLAYER_CHAR) = true
+
+v$OBJECTIVE = "STR5"
+018A: MISSION_CHECKPOINT = create_checkpoint_at 234.4265 1116.8142 1080.9922
+03BC: MISSION_SPHERE = create_sphere_at 234.4265 1116.8142 1080.9922 radius 1.0
+
+0@ = 0
+
+repeat
+wait 0
+
+if and
+0@ == 0
+8A2A:   text_box 'HINT0' displayed
+    then
+    0@ = 1
+    text.ShowTextBox('HINT0B')
+    end
+
+until 00EF:   actor PLAYER_ACTOR sphere 0 near_point 234.4265 1116.8142 radius 1.0 1.0 stopped
+
+marker.Disable(MISSION_CHECKPOINT)
+03BD: destroy_sphere MISSION_SPHERE
+player.CanMove(PLAYER_CHAR) = false
+v$OBJECTIVE = "DUMMY"
+
+fade 0 1000
+$HUD_REMOVE = 1
+wait 1000
+
+28@ = Audiostream.Load("AUDIO\SOUNDS\fridgeopen.mp3")
+Audiostream.PerformAction(28@, PLAY)
+Audiostream.Loop(28@, 0)
+Audiostream.Volume(28@) = $SOUNDS_VOLUME
+
+cinema.Widescreen(1)
+BLACK_POLOSKI_ON = 1
+
+while not animation.Available("int_shop")
+wait 0
+animation.Load("int_shop")
+end
+
+wait 500
+
+0615: define_AS_pack_begin 9@
+05D4: AS_actor -1 rotate_angle 90.0  
+0605: actor -1 perform_animation "shop_in" IFP "int_shop" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1 
+0605: actor -1 perform_animation "shop_looka" IFP "int_shop" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1 
+0605: actor -1 perform_animation "shop_lookb" IFP "int_shop" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1 
+0605: actor -1 perform_animation "shop_out" IFP "int_shop" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1
+05D4: AS_actor -1 rotate_angle 260.0 
+0616: define_AS_pack_end 9@ 
+0618: assign_actor PLAYER_ACTOR to_AS_pack 9@ 
+061B: remove_references_to_AS_pack 9@ 
+
+0936: set_camera 233.957397 1116.202515 1081.703613 position_to 237.278885 1116.828003 1081.578125 time 20500 smooth_transition 1
+0920: point_camera 234.917603 1116.475952 1081.646851 transverse_to 236.284943 1116.814697 1081.468994 time 20500 smooth_transition 1
+
+fade 1 1000
+0707: start_scene_skip_to @RMISSION1_SKIP2
+wait 1000
+
+v$ST_DIALOG[0] = "STR10"
+v$ST_DIALOG[1] = "DUMMY"
+v$ST_DIALOG[2] = "STR11"
+v$ST_DIALOG[3] = "STR12"
+$DIALOG_COUNT = 3
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2 
+
+wait 7500
+
+audiostream.Release(28@)
+28@ = Audiostream.Load("AUDIO\SOUNDS\fridgeclose.mp3")
+Audiostream.PerformAction(28@, PLAY)
+Audiostream.Loop(28@, 0)
+Audiostream.Volume(28@) = $SOUNDS_VOLUME
+
+wait 5000
+
+:RMISSION1_SKIP2
+fade 0 1000
+0701: end_scene_skip
+wait 1000
+
+text.ClearAll()
+$END_DIALOG_INST = 1
+0792: disembark_instantly_actor PLAYER_ACTOR
+
+0936: set_camera 233.957397 1116.202515 1081.703613 position_to 237.278885 1116.828003 1081.578125 time 1 smooth_transition 1
+0920: point_camera 234.917603 1116.475952 1081.646851 transverse_to 236.284943 1116.814697 1081.468994 time 1 smooth_transition 1
+actor.Angle(PLAYER_ACTOR) = 260.0
+
+cinema.Widescreen(0)
+BLACK_POLOSKI_ON = 0
+wait 1000
+audiostream.Release(28@)
+
+camera.Restore_WithJumpCut()
+player.CanMove(PLAYER_CHAR) = true
+
+fade 1 1000
+$HUD_REMOVE = 0
+wait 1000
+
+v$ST_DIALOG[0] = "STR13"
+v$ST_DIALOG[1] = "STR14"
+v$ST_DIALOG[2] = "STR15"
+v$ST_DIALOG[3] = "DUMMY"
+v$ST_DIALOG[4] = "STR16"
+v$ST_DIALOG[5] = "STR17"
+$DIALOG_COUNT = 5
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+repeat
+wait 0
+until $DIALOG_END == 1
+
+v$OBJECTIVE = "STR22"
+018A: MISSION_CHECKPOINT = create_checkpoint_at 226.8415 1114.2958 1080.9957
+03BC: MISSION_SPHERE = create_sphere_at 226.8415 1114.2958 1080.9957 radius 1.0
+
+repeat
+wait 0
+until 00EF:   actor PLAYER_ACTOR sphere 0 near_point 226.8415 1114.2958 radius 1.0 1.0 stopped
+
+marker.Disable(MISSION_CHECKPOINT)
+03BD: destroy_sphere MISSION_SPHERE
+player.CanMove(PLAYER_CHAR) = false
+v$OBJECTIVE = "DUMMY"
+
+fade 0 1000
+$HUD_REMOVE = 1
+wait 1000
+
+28@ = Audiostream.Load("AUDIO\SOUNDS\dooropcl.mp3")
+Audiostream.PerformAction(28@, PLAY)
+Audiostream.Loop(28@, 0)
+Audiostream.Volume(28@) = $SOUNDS_VOLUME
+
+wait 3000
+
+select_interior 0
+0860: link_actor PLAYER_ACTOR to_interior 0
+actor.PutAtNoOffset(PLAYER_ACTOR,1439.125, -926.1063, 39.6477)
+actor.Angle(PLAYER_ACTOR) = 172.2693
+player.CanMove(PLAYER_CHAR) = true
+camera.Restore_WithJumpCut()
+create_thread @REFR_3D
+wait 1000
+
+057E: set_radar_grey 0
+
+fade 1 1000
+$HUD_REMOVE = 0
+wait 1000
+
+v$OBJECTIVE = "STR6"
+018A: MISSION_CHECKPOINT = create_checkpoint_at 1315.4469 -898.5663 39.5781
+03BC: MISSION_SPHERE = create_sphere_at 1315.4469 -898.5663 39.5781 radius 1.0
+
+v$ST_DIALOG[0] = "STR23"
+v$ST_DIALOG[1] = "STR24"
+v$ST_DIALOG[2] = "DUMMY"
+$DIALOG_COUNT = 2
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+repeat
+wait 0
+until 00EF:   actor PLAYER_ACTOR sphere 0 near_point 1315.4469 -898.5663 radius 1.0 1.0 stopped
+
+text.ClearAll()
+$END_DIALOG_INST = 1
+
+marker.Disable(MISSION_CHECKPOINT)
+03BD: destroy_sphere MISSION_SPHERE
+player.CanMove(PLAYER_CHAR) = false
+v$OBJECTIVE = "DUMMY"
+
+fade 0 1000
+$HUD_REMOVE = 1
+wait 1000
+
+select_interior 18
+0860: link_actor PLAYER_ACTOR to_interior 18
+actor.PutAtNoOffset(PLAYER_ACTOR,-30.9081, -90.5744, 1003.5469)
+actor.Angle(PLAYER_ACTOR) = 0.0
+camera.Restore_WithJumpCut()
+create_thread @REFR_3D
+wait 1000
+cinema.Widescreen(1)
+BLACK_POLOSKI_ON = 1
+
+05D4: AS_actor PLAYER_ACTOR rotate_angle 358.9028
+
+////////////////////////////////////////////////////////////////////////////////
+
+0936: set_camera -31.507654 -91.087624 1004.386719 position_to -32.557159 -89.181931 1004.306885 time 6500 smooth_transition 1
+0920: point_camera -31.199657 -90.143028 1004.273254 transverse_to -31.924450 -88.416176 1004.191589 time 6500 smooth_transition 1
+
+fade 1 1000
+0707: start_scene_skip_to @RMISSION1_SKIP3
+wait 1000
+
+v$ST_DIALOG[0] = "STR7"
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+wait 4000
+
+:RMISSION1_SKIP3
+fade 0 1000
+0701: end_scene_skip
+wait 1000
+
+text.ClearAll()
+$END_DIALOG_INST = 1
+0936: set_camera -31.672617 -91.011528 1004.436462 position_to -29.543787 -87.274345 1004.033630 time 1 smooth_transition 1
+0920: point_camera -31.180218 -90.146072 1004.344116 transverse_to -29.051388 -86.408890 1003.941284 time 1 smooth_transition 1
+cinema.Widescreen(0)
+BLACK_POLOSKI_ON = 0
+player.CanMove(PLAYER_CHAR) = true
+camera.Restore_WithJumpCut()
+wait 1000
+
+fade 1 1000
+$HUD_REMOVE = 0
+wait 1000
+
+v$OBJECTIVE = "STR8"
+018A: MISSION_CHECKPOINT = create_checkpoint_at -32.1173 -87.1962 1003.5469
+03BC: MISSION_SPHERE = create_sphere_at -32.1173 -87.1962 1003.5469 radius 1.0
+
+repeat
+wait 0
+until 00EF:   actor PLAYER_ACTOR sphere 0 near_point -32.1173 -87.1962 radius 1.0 1.0 stopped
+
+marker.Disable(MISSION_CHECKPOINT)
+03BD: destroy_sphere MISSION_SPHERE
+v$OBJECTIVE = "DUMMY"
+
+v$ST_DIALOG[0] = "STR9"
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+0615: define_AS_pack_begin 9@
+05D4: AS_actor -1 rotate_angle 270.0  
+0605: actor -1 perform_animation "shop_in" IFP "int_shop" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1 
+0605: actor -1 perform_animation "shop_looka" IFP "int_shop" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1 
+0605: actor -1 perform_animation "shop_lookb" IFP "int_shop" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1 
+0605: actor -1 perform_animation "shop_out" IFP "int_shop" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1 
+0616: define_AS_pack_end 9@ 
+0618: assign_actor PLAYER_ACTOR to_AS_pack 9@ 
+061B: remove_references_to_AS_pack 9@ 
+
+wait 7500
+
+v$ST_DIALOG[0] = "STR18"
+v$ST_DIALOG[1] = "STR19"
+$DIALOG_COUNT = 1
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+repeat
+wait 0
+until $DIALOG_END == 1
+
+v$OBJECTIVE = "STR20"
+018A: MISSION_CHECKPOINT = create_checkpoint_at -30.9302 -91.2854 1003.5469
+03BC: MISSION_SPHERE = create_sphere_at -30.9302 -91.2854 1003.5469 radius 1.0
+
+repeat
+wait 0
+until 00EF:   actor PLAYER_ACTOR sphere 0 near_point -30.9302 -91.2854 radius 1.0 1.0 stopped
+
+marker.Disable(MISSION_CHECKPOINT)
+03BD: destroy_sphere MISSION_SPHERE
+player.CanMove(PLAYER_CHAR) = false
+v$OBJECTIVE = "DUMMY"
+
+fade 0 1000
+$HUD_REMOVE = 1
+wait 1000
+
+select_interior 0
+0860: link_actor PLAYER_ACTOR to_interior 0
+actor.PutAtNoOffset(PLAYER_ACTOR,1315.49, -900.843, 39.5781)
+actor.Angle(PLAYER_ACTOR) = 180.0 
+camera.Restore_WithJumpCut()
+create_thread @REFR_3D
+cinema.Widescreen(1)
+BLACK_POLOSKI_ON = 1
+wait 500
+
+while not model.Available(#ZMB1)
+model.Load(#ZMB1)
+mload
+wait 0
+end
+
+300@ = Actor.Create(Criminal, #ZMB1, 1315.8221, -913.9586, 36.9974)
+actor.Angle(300@) = 1.136
+Actor.SetWalkStyle(300@, "zombie1")
+
+0A09: set_actor 300@ muted 1 // versionB
+0967: actor 300@ move_mouth 99999999 ms
+
+//Установление ХП    
+
+0209: 0@ = random_int_in_ranges $ZOMBIE_HP_MIN $ZOMBIE_HP_MAX 
+Actor.Health(300@) = 1 
+
+0446: set_actor 300@ dismemberment_possible $ZOMBIE_HEADSHOT 
+060F: set_actor 300@ melee_accuracy_to 150.0 
+060B: set_actor 300@ decision_maker_to $DEC_ZOMBIE  
+07DD: set_actor 300@ attack_rate $ZOMBIE_ATTACK_RATE // previously known as temper_to
+0856: set_actor 300@ enable_crouch 0
+07FE: set_actor 300@ fighting_style_to 5 moves 6
+09B5: set_actor 300@ signal_after_kill 0
+09F4: set_actor 300@ ignore_height_difference_following_nodes $Z_IGNORE_HEIGHT
+
+wait 500
+
+0936: set_camera 1318.252197 -896.573486 40.114002 position_to 1317.662842 -898.939209 39.908298 time 15000 smooth_transition 1
+0920: point_camera 1318.012207 -897.540588 40.029926 transverse_to 1317.422852 -899.906311 39.824223 time 15000 smooth_transition 1
+
+fade 1 1000
+wait 1000
+
+v$ST_DIALOG[0] = "STR21"
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+repeat
+wait 0
+until $DIALOG_END == 1
+
+05D9: AS_actor 300@ run_to_actor PLAYER_ACTOR timelimit 5000 stop_within_radius 3.0
+
+v$ST_DIALOG[0] = "STR36"
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+actor.GiveWeaponAndAmmo(PLAYER_ACTOR,22,34)
+wait 2000
+07A5: AS_actor PLAYER_ACTOR attack_actor 300@ time 1500
+wait 1500
+
+v$ST_DIALOG[0] = "STR37"
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+repeat
+wait 0
+until $DIALOG_END == 1
+
+fade 0 1000
+wait 1000
+
+$SAVESTATUS = 0
+$ZOMBIES_HORDE = 1
+
+0936: set_camera 1318.252197 -896.573486 40.114002 position_to 1317.662842 -898.939209 39.908298 time 1 smooth_transition 1
+0920: point_camera 1318.012207 -897.540588 40.029926 transverse_to 1317.422852 -899.906311 39.824223 time 1 smooth_transition 1
+camera.Restore_WithJumpCut()
+cinema.Widescreen(0)
+BLACK_POLOSKI_ON = 0
+player.CanMove(PLAYER_CHAR) = true
+wait 500
+
+fade 1 1000
+$HUD_REMOVE = 0
+wait 1000
+
+v$ST_DIALOG[0] = "STR38"
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+repeat
+wait 0
+until $DIALOG_END == 1
+
+v$OBJECTIVE = "STR39"
+018A: MISSION_CHECKPOINT = create_checkpoint_at 1439.4099 -925.9525 39.6477
+03BC: MISSION_SPHERE = create_sphere_at 1439.4099 -925.9525 39.6477 radius 1.0
+
+repeat
+wait 0
+until 00EC:   actor PLAYER_ACTOR sphere 0 near_point 1439.4099 -925.9525 radius 5.0 5.0
+
+marker.Disable(MISSION_CHECKPOINT)
+03BD: destroy_sphere MISSION_SPHERE
+v$OBJECTIVE = "DUMMY"
+
+fade 0 1000
+$HUD_REMOVE = 1
+wait 1000 
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+$ZOMBIE_SPAWN_INT = 0 
+$SAVESTATUS = 1
+$ZOMBIES_HORDE = 0
+$SAVESTATUS_TRUE = 1   
+$MIKE_MUTED = 0
+
+gosub @RMUSIC_MISSION1_OFF
+
+Actor.PutAt(PLAYER_ACTOR, 247.4238, 1109.0, 1079.8)
+Actor.Angle(PLAYER_ACTOR) = 94.4616
+0318: set_latest_mission_passed 'STR10'  
+
+$MISSION_START_NUMBER = 1 
+$SAVE_MISSION_START_FLAG = 1
+$SAVE_MISSION_NOT_SAVE_FLAG = 0
+create_thread @MS_STAR
+
+jump @RUDACHNO1 
+
+:RUDACHNO1        
+gosub @RPROPUSK_KODA1 
+return 
+
+:RKOD_PROVALA1
+GAME_OVER_FLAG = 1 
+create_thread @GMV_OVR
+$ONMISSION = 0 
+mission_cleanup 
+06D0: enable_emergency_traffic 0 
+06D7: enable_train_traffic 0 
+096A: enable_flying_helis 0 
+099E: enable_police_patrols 0  
+0923: enable_air_traffic 0 
+08E7: disable_entrance_markers 0    
+return 
+
+:RUDALENIE_KODA1    
+$ONMISSION = 0 
+marker.Disable(MISSION_CHECKPOINT)
+marker.Disable(MISSION_MARKER) 
+
+if and
+GAME_OVER_FLAG == 0
+$ACTOR_DEAD == 0
+then
+fade 0 0
+end
+
+mission_cleanup
+
+if and
+GAME_OVER_FLAG == 0
+$ACTOR_DEAD == 0
+then
+fade 0 0
+end
+
+06D0: enable_emergency_traffic 0 
+06D7: enable_train_traffic 0 
+096A: enable_flying_helis 0 
+099E: enable_police_patrols 0  
+0923: enable_air_traffic 0 
+08E7: disable_entrance_markers 0    
+return
+
+:RMUSIC_MISSION1_OFF
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 700
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+//////////////////////////////////////////////////////////
+
+return

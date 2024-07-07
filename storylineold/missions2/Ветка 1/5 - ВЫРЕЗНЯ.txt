@@ -1,0 +1,504 @@
+//-------------Mission 5---------------
+// Название: Чудом выживший
+
+:DLC_M5
+thread 'DLC_M5' 
+gosub @DLC_M5_KOD_MISSII 
+if 
+wasted_or_busted 
+jf @DLC_M5_PROPUSK_KODA 
+gosub @DLC_M5_KOD_PROVALA 
+
+:DLC_M5_PROPUSK_KODA
+gosub @DLC_M5_UDALENIE_KODA
+$SPEED_09_FLAG = 0
+015D: set_gamespeed 1.0 
+end_thread 
+
+:DLC_M5_KOD_MISSII 
+increment_mission_attempts
+0629: change_integer_stat 258 to 47
+
+cinema.Widescreen(1)
+0A48: enable_menu_access_in_widescreen_mode 0      
+$SOUND_OFF_1 = 0
+
+fade 0 0 
+$ONMISSION = 1
+ 
+$HUD_REMOVE = 1 
+$SAVESTATUS = 1
+$SAVESTATUS_TRUE = 1     
+$NOTSPAWN_CARS = 1
+$FATIGUE_OFF_FLAG = 1
+$HUNGER_OVER_FLAG = 1
+
+$NIGHTMARE_FLAG = 1
+0A48: enable_menu_access_in_widescreen_mode 0
+
+32@ = 0
+repeat
+wait 0
+fade 0 0
+$SAVESTATUS = 1
+03F0: enable_text_draw 1
+038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA 0 0 0 255
+until 32@ > 3000
+    
+$MUSIC_MISSION = Audiostream.Load(CLASSIC_MUSIC_6A)
+Audiostream.PerformAction($MUSIC_MISSION, PLAY)
+Audiostream.Loop($MUSIC_MISSION, 1)
+Audiostream.Volume($MUSIC_MISSION) = $MUSIC_VOLUME
+
+set_weather 210 
+00C0: set_current_time_hours_to 0 minutes_to 0 
+create_thread @TIME_00
+
+$SPEED_09_FLAG = 1
+015D: set_gamespeed 0.9
+ 
+$MUSIC_SOUND = Audiostream.Load("AUDIO\SOUNDS\heartbeatloop.wav")
+Audiostream.PerformAction($MUSIC_SOUND, PLAY)
+Audiostream.Loop($MUSIC_SOUND, 1)
+Audiostream.Volume($MUSIC_SOUND) = $MUSIC_VOLUME
+
+0A0E: disable_text_with_style 1 
+0A8C: write_memory 0xBA676C size 1 value 2 virtual_protect 1
+0A8C: write_memory 0xC402B4 size 1 value 1 virtual_protect 0
+
+0362: remove_actor PLAYER_ACTOR from_car_and_place_at 2494.86 -1685.547 13.5121 
+Actor.PutAtNoOffset(PLAYER_ACTOR, 2494.86, -1685.547, 13.5121)
+
+Actor.Angle(PLAYER_ACTOR) = 0.546 
+Player.CanMove(PLAYER_CHAR) = True
+Camera.Restore_WithJumpCut
+
+wait 3000
+
+0777: delete_objects_in_object_group "carl"
+
+repeat
+wait 0
+023C: load_special_actor 'SWEET' as 3 // models 290-299
+until 023D:   special_actor 3 loaded
+ 
+$MISSION_CHAR = Actor.Create(26, #SPECIAL03, 2492.221, -1659.952, 12.3359)
+0296: unload_special_actor 3
+Actor.Angle($MISSION_CHAR) = 90.7867
+
+Actor.SetWalkStyle($MISSION_CHAR, "GANG1")
+0446: set_actor $MISSION_CHAR dismemberment_possible 0 
+060B: set_actor $MISSION_CHAR decision_maker_to $DEC_PEOPLE 
+Actor.Health($MISSION_CHAR) = 3000
+Actor.WeaponAccuracy($MISSION_CHAR) = 100
+07DD: set_actor $MISSION_CHAR attack_rate -1 // previously known as temper_to 
+077A: set_actor $MISSION_CHAR acquaintance 0 to_actors_pedtype 0 // see ped.dat 
+Actor.SetImmunities($MISSION_CHAR, 1, 1, 1, 1, 1)
+0D10: set_actor $MISSION_CHAR alpha 150 // IF and SET
+
+500@ = 0
+501@ = 1     
+
+$DRAW_RED = 1
+
+fade 1 10000
+ 
+0615: define_AS_pack_begin 51@ 
+05D3: AS_actor -1 goto_point 2425.847 -1660.405 13.3828 mode 6 time 99999 ms // versionA 
+05D3: AS_actor -1 goto_point 2417.444 -1696.342 13.8054 mode 6 time 99999 ms // versionA 
+05D3: AS_actor -1 goto_point 2403.316 -1738.557 13.5469 mode 6 time 99999 ms // versionA 
+05D3: AS_actor -1 goto_point 2198.754 -1738.749 13.3611 mode 6 time 99999 ms // versionA 
+05D3: AS_actor -1 goto_point 2173.345 -1727.317 13.5401 mode 6 time 99999 ms // versionA 
+05D3: AS_actor -1 goto_point 2100.268 -1724.927 13.3913 mode 6 time 99999 ms // versionA 
+0616: define_AS_pack_end 51@ 
+0618: assign_actor $MISSION_CHAR to_AS_pack 51@ 
+061B: remove_references_to_AS_pack 51@
+
+create_thread @FU_MIKE
+
+repeat
+wait 0
+
+if and
+32@ > 5000
+500@ == 0
+501@ == 1 
+then
+33@ = 0
+500@ = 1
+501@ = 0
+fade 1 10000
+end
+
+if and
+33@ > 5000
+500@ == 1
+501@ == 0 
+then
+32@ = 0
+500@ = 0
+501@ = 1
+fade 0 10000
+end
+
+if and
+0AB0:   key_pressed 112
+$CHEATS_ON == 1
+    then
+    jump to @DLC_M5_NIGHTMARE_SKIP
+    end
+ 
+if or
+00F2:   actor $MISSION_CHAR near_actor PLAYER_ACTOR radius 200.0 200.0 0
+0364:   actor PLAYER_ACTOR spotted_actor $MISSION_CHAR 
+jf @DLC_M5_FAILED_LOST_SWEET
+ 
+if and
+00EC:   actor $MISSION_CHAR sphere 0 near_point 2100.268 -1724.927 radius 5.0 5.0 
+Actor.Stopped($MISSION_CHAR)
+00F2:   actor PLAYER_ACTOR near_actor $MISSION_CHAR radius 10.0 10.0 0 
+    then
+    break
+    end
+
+until false
+
+Actor.PutAtNoOffset($MISSION_CHAR, 2112.109, -1606.059, 24.4973)
+Actor.Angle($MISSION_CHAR) = 359.9206
+ 
+0615: define_AS_pack_begin 51@ 
+05D3: AS_actor -1 goto_point 2112.863 -1462.572 23.8336 mode 6 time 9999999 ms // versionA 
+05D3: AS_actor -1 goto_point 1848.454 -1463.104 13.3984 mode 6 time 9999999 ms // versionA 
+05D3: AS_actor -1 goto_point 1849.665 -1181.258 23.6477 mode 6 time 9999999 ms // versionA 
+05D3: AS_actor -1 goto_point 1715.392 -1160.978 23.653 mode 6 time 9999999 ms // versionA 
+05D3: AS_actor -1 goto_point 1213.046 -1145.505 23.5002 mode 6 time 9999999 ms // versionA 
+05D3: AS_actor -1 goto_point 1203.541 -1039.631 31.7318 mode 6 time 9999999 ms // versionA 
+0616: define_AS_pack_end 51@ 
+0618: assign_actor $MISSION_CHAR to_AS_pack 51@ 
+061B: remove_references_to_AS_pack 51@ 
+
+repeat
+wait 0
+
+if and
+32@ > 5000
+500@ == 0
+501@ == 1 
+then
+33@ = 0
+500@ = 1
+501@ = 0
+fade 1 10000
+end
+
+if and
+33@ > 5000
+500@ == 1
+501@ == 0 
+then
+32@ = 0
+500@ = 0
+501@ = 1
+fade 0 10000
+end
+ 
+if or
+00F2:   actor $MISSION_CHAR near_actor PLAYER_ACTOR radius 200.0 200.0 0
+0364:   actor PLAYER_ACTOR spotted_actor $MISSION_CHAR 
+jf @DLC_M5_FAILED_LOST_SWEET
+ 
+if and
+00EC:   actor $MISSION_CHAR sphere 0 near_point 1203.541 -1039.631 radius 5.0 5.0 
+Actor.Stopped($MISSION_CHAR)
+00F2:   actor PLAYER_ACTOR near_actor $MISSION_CHAR radius 10.0 10.0 0 
+    then
+    break
+    end
+
+until false
+
+Actor.PutAtNoOffset($MISSION_CHAR, 1263.918, -1038.747, 31.7112)
+Actor.Angle($MISSION_CHAR) = 5.8726
+ 
+0615: define_AS_pack_begin 51@ 
+05D3: AS_actor -1 goto_point 1260.913 -930.5611 42.5344 mode 6 time 9999999 ms // versionA 
+05D3: AS_actor -1 goto_point 1436.472 -949.4294 36.1349 mode 6 time 9999999 ms // versionA 
+05D3: AS_actor -1 goto_point 1437.686 -935.6348 36.2601 mode 6 time 9999999 ms // versionA 
+0616: define_AS_pack_end 51@ 
+0618: assign_actor $MISSION_CHAR to_AS_pack 51@ 
+061B: remove_references_to_AS_pack 51@ 
+
+repeat
+wait 0
+
+if and
+32@ > 5000
+500@ == 0
+501@ == 1 
+then
+33@ = 0
+500@ = 1
+501@ = 0
+fade 1 10000
+end
+
+if and
+33@ > 5000
+500@ == 1
+501@ == 0 
+then
+32@ = 0
+500@ = 0
+501@ = 1
+fade 0 10000
+end
+ 
+if or
+00F2:   actor $MISSION_CHAR near_actor PLAYER_ACTOR radius 200.0 200.0 0
+0364:   actor PLAYER_ACTOR spotted_actor $MISSION_CHAR 
+jf @DLC_M5_FAILED_LOST_SWEET
+ 
+if and
+00EC:   actor $MISSION_CHAR sphere 0 near_point 1437.686 -935.6348 radius 5.0 5.0 
+Actor.Stopped($MISSION_CHAR)
+00F2:   actor PLAYER_ACTOR near_actor $MISSION_CHAR radius 5.0 5.0 0 
+    then
+    break
+    end
+
+until false
+
+:DLC_M5_NIGHTMARE_SKIP
+$FUCK_MIKE_OFF = 1
+ 
+Player.CanMove(PLAYER_CHAR) = False
+ 
+Actor.StorePos($MISSION_CHAR, 0@, 1@, 2@)
+Actor.DestroyInstantly($MISSION_CHAR)
+
+while not model.Available(#OMYST)
+wait 0
+model.Load(#OMYST)
+mload
+end
+ 
+$SURVIVER[1] = Actor.Create(26, #OMYST, 0@, 1@, 2@)
+Actor.PutAtNoOffset($SURVIVER[1], 0@, 1@, 2@)
+Actor.Angle($SURVIVER[1]) = 173.4436
+42@ = Audiostream.Load("AUDIO\SOUNDS\horror_scream1.wav")
+Audiostream.PerformAction(42@, PLAY)
+Audiostream.Loop(42@, 0)
+Audiostream.Volume(42@) = $SOUNDS_VOLUME
+wait 1000 
+$HUD_REMOVE = 1 
+fade 0 200 
+wait 200 
+wait 3000 
+Audiostream.Release(42@)
+gosub @DLC_M5_MUSIC_FADE_OUT 
+gosub @DLC_M5_SOUND_FADE_OUT 
+fade 0 0
+ 
+wait 500
+$DRAW_RED = 0 
+
+fade 0 0
+$NIGHTMARE_FLAG = 0
+0A48: enable_menu_access_in_widescreen_mode 1     
+$TIME_00_OFF = 1
+01B7: release_weather
+set_weather 0
+
+$TEMP_XP = 3500
+008D: $TEMP_XP = integer $TEMP_XP to_float
+0069: $TEMP_XP *= $XP_COEFF // (float)
+if
+PERK_CHARISMA == 2
+then
+$TEMP_XP *= CHARISMA_LEVEL2_XP_COEFF
+end
+008C: $TEMP_XP = float $TEMP_XP to_integer
+0058: $PLAYER_XP += $TEMP_XP // (int)
+
+$INF_MODE_COLOR_A = 20
+ 
+Actor.PutAtNoOffset(PLAYER_ACTOR, -459.6962, -2719.839, 159.6132)
+Actor.Angle(PLAYER_ACTOR) = 156.3324
+Camera.SetAtPos(-459.6962, -2719.839, 159.6132)
+$NOTSPAWN_CARS = 0
+$FATIGUE_OFF_FLAG = 0
+$HUNGER_OVER_FLAG = 0
+0629: change_integer_stat 258 to 0  
+jump @DLC_M5_UDACHNO 
+
+:DLC_M5_FAILED_LOST_SWEET
+v$FAILED_TEXT = "DLC339"
+jump @DLC_M5_KOD_PROVALA 
+
+:DLC_M5_UDACHNO
+$ONMISSION = 0 
+03DE: set_pedestrians_density_multiplier_to 0.0 
+01EB: set_traffic_density_multiplier_to 0.0 
+0318: set_latest_mission_passed 'DLC306B' 
+08E7: disable_entrance_markers 0
+0776: create_objects_in_object_group "carl"
+create_thread @SAVE_MISSION5 
+gosub @DLC_M5_PROPUSK_KODA 
+return 
+
+:DLC_M5_KOD_PROVALA
+$GAME_OVER = 1 
+create_thread @GMV_OVR 
+$ONMISSION = 0
+
+if and
+$GAME_OVER == 0
+$ACTOR_DEAD == 0
+then
+fade 0 0
+end
+ 
+mission_cleanup
+
+if and
+$GAME_OVER == 0
+$ACTOR_DEAD == 0
+then
+fade 0 0
+end
+ 
+Marker.Disable(MISSION_CHECKPOINT)
+06D0: enable_emergency_traffic 0 
+06D7: enable_train_traffic 0 
+096A: enable_flying_helis 0 
+099E: enable_police_patrols 0 
+0923: enable_air_traffic 0 
+08E7: disable_entrance_markers 0 
+03DE: set_pedestrians_density_multiplier_to 0.0 
+01EB: set_traffic_density_multiplier_to 0.0 
+gosub @DLC_M5_MUSIC_FADE_OUT 
+return 
+
+:DLC_M5_MUSIC_FADE_OUT
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+//////////////////////////////////////////////////////////
+
+return 
+
+:DLC_M5_SOUND_FADE_OUT
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_SOUND // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+//////////////////////////////////////////////////////////
+
+return 
+
+:DLC_M5_UDALENIE_KODA
+if 
+$GAME_OVER == 0 
+jf @DLC_M5_3579 
+$ONMISSION = 0
+
+if and
+$GAME_OVER == 0
+$ACTOR_DEAD == 0
+then
+fade 0 0
+end
+ 
+mission_cleanup
+
+if and
+$GAME_OVER == 0
+$ACTOR_DEAD == 0
+then
+fade 0 0
+end
+ 
+fade 0 0 
+06D0: enable_emergency_traffic 0 
+06D7: enable_train_traffic 0 
+096A: enable_flying_helis 0 
+099E: enable_police_patrols 0 
+0923: enable_air_traffic 0 
+08E7: disable_entrance_markers 0 
+03DE: set_pedestrians_density_multiplier_to 0.0 
+01EB: set_traffic_density_multiplier_to 0.0
+0A8C: write_memory 0xBA676C size 1 value 0 virtual_protect 1
+0A8C: write_memory 0xC402B4 size 1 value 0 virtual_protect 0  
+$TIME_00_OFF = 1
+$FUCK_MIKE_OFF = 1 
+return 
+
+:DLC_M5_3579
+$ONMISSION = 0
+
+if and
+$GAME_OVER == 0
+$ACTOR_DEAD == 0
+then
+fade 0 0
+end
+ 
+mission_cleanup
+
+if and
+$GAME_OVER == 0
+$ACTOR_DEAD == 0
+then
+fade 0 0
+end
+ 
+06D0: enable_emergency_traffic 0 
+06D7: enable_train_traffic 0 
+096A: enable_flying_helis 0 
+099E: enable_police_patrols 0 
+0923: enable_air_traffic 0 
+08E7: disable_entrance_markers 0 
+03DE: set_pedestrians_density_multiplier_to 0.0 
+01EB: set_traffic_density_multiplier_to 0.0 
+return 

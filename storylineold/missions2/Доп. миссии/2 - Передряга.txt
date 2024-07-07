@@ -1,0 +1,323 @@
+//-------------Additioanl Mission 2---------------
+// Название: Большая проблема
+
+:DL_ADM2
+thread 'DL_ADM2'
+gosub @ADD_MSN_KOD_MISSI2 
+if 
+wasted_or_busted
+Jf @ADD_MSN_PROPUSK_KOD2 
+gosub @ADD_MSN_KOD_PROVAL2 
+
+:ADD_MSN_PROPUSK_KOD2 
+gosub @ADD_MSN_UDALENIE_KOD2
+$QUEST_TYPE = -1
+end_thread
+
+:ADD_MSN_KOD_MISSI2 
+increment_mission_attempts
+0629: change_integer_stat 258 to 66
+
+$ONMISSION = 1
+$NOTSPAWN_ETC = 1
+$SAVESTATUS = 1
+$NOTSPAWN = 0
+cinema.Widescreen(1)
+BLACK_POLOSKI_ON = 1
+v$OBJECTIVE = "DUMMY"
+$QUEST_TYPE = 2048
+
+while not model.Available(#BMYCG)
+wait 0
+model.Load(#BMYCG)
+mload
+end
+
+$SURVIVER[0] = actor.Create(26,#BMYCG,2836.3291, -1277.5203, 21.0411)
+$SURVIVOR_MELEE_ID[0] = -1
+create_thread @PED_BKP $SURVIVER[0] 371
+actor.Angle($SURVIVER[0]) = 285.9897
+actor.Health($SURVIVER[0]) = $FRIEND_HEALTH
+actor.SetWalkStyle($SURVIVER[0],"MAN")
+0446: set_actor $SURVIVER[0] dismemberment_possible 0
+077A: set_actor $SURVIVER[0] acquaintance 0 to_actors_pedtype 0 // see ped.dat
+060B: set_actor $SURVIVER[0] decision_maker_to $DEC_PEOPLE
+0350: set_actor $SURVIVER[0] maintain_position_when_attacked 1
+actor.Health($SURVIVER[0]) = $FRIEND_HEALTH
+actor.WeaponAccuracy($SURVIVER[0]) = 100
+04EB: AS_actor $SURVIVER[0] crouch 1
+0568: set_actor $SURVIVER[0] untargetable 1
+
+0781: get_weapon_with_ID 26 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+    
+actor.GiveWeaponAndAmmo($SURVIVER[0],26,9999)
+07DD: set_actor $SURVIVER[0] attack_rate 999 // previously known as temper_to
+
+camera.SetPosition(2847.6089, -1274.6642, 20.3906,0.0,0.0,0.0)
+03CB: set_rendering_origin_at 2847.6089 -1274.6642 20.3906
+
+actor.PutAtNoOffset(PLAYER_ACTOR,2845.1946, -1274.1825, 20.5254)
+actor.Angle(PLAYER_ACTOR) = 99.6182
+                 
+0639: AS_actor $SURVIVER[0] rotate_to_actor PLAYER_ACTOR
+0639: AS_actor PLAYER_ACTOR rotate_to_actor $SURVIVER[0]
+
+camera.SetPosition(2853.6206, -1270.7893, 20.5422,0.0,0.0,0.0)
+camera.OnPed($SURVIVER[0],15,2)
+
+wait 1000
+fade 1 1000
+wait 1000
+ 
+05BF: AS_actor $SURVIVER[0] look_at_actor PLAYER_ACTOR 4500 ms
+05BF: AS_actor PLAYER_ACTOR look_at_actor $SURVIVER[0] 4500 ms
+
+0615: define_AS_pack_begin 0@
+06E3: AS_actor -1 roll_sideways 0
+0635: AS_actor -1 aim_at_actor PLAYER_ACTOR 5000 ms
+0616: define_AS_pack_end 0@
+0643: set_AS_pack 0@ loop 0
+0618: assign_actor $SURVIVER[0] to_AS_pack 0@
+061B: remove_references_to_AS_pack 0@
+
+wait 2000
+0635: AS_actor PLAYER_ACTOR aim_at_actor $SURVIVER[0] 5000 ms
+
+v$ST_DIALOG[0] = "DLC43"
+$DIALOG_COUNT = 0                 
+create_thread @DG_SYS2
+
+repeat
+wait 0
+until $DIALOG_END == 1
+
+$SAVESTATUS = 0
+$NOTSPAWN = 0
+$SPAWN_TANK_FLAG = 1
+$SPAWN_TANK_ON_COORD = 1
+$TANK_X[0] = 2829.272
+$TANK_Y[0] = -1254.6149
+$TANK_Z[0] = 22.9855
+ 
+repeat
+wait 0
+until 0AE1: 70@ = random_actor_near_point 2829.272 -1254.6149 22.9855 in_radius 10.0 find_next 0 pass_deads 1
+
+$SPAWN_TANK_ON_COORD = 0
+
+v$ST_DIALOG[0] = "DLC44"
+v$ST_DIALOG[1] = "DLC45"
+$DIALOG_COUNT = 1                 
+create_thread @DG_SYS2
+
+0687: clear_actor PLAYER_ACTOR task
+0687: clear_actor $SURVIVER[0] task
+
+05E2: AS_actor 70@ kill_actor PLAYER_ACTOR
+
+0615: define_AS_pack_begin 51@
+05D3: AS_actor -1 goto_point 2848.2161 -1281.6646 19.8513 mode 6 time 99999 ms // versionA
+05D4: AS_actor -1 rotate_angle 8.3406
+0616: define_AS_pack_end 51@
+0618: assign_actor PLAYER_ACTOR to_AS_pack 51@
+061B: remove_references_to_AS_pack 51@
+
+marker.CreateAboveActor(MISSION_MARKER,70@)
+camera.OnPed(70@,15,1)
+
+wait 2500
+$HUD_REMOVE = 1                                     
+fade 0 500
+wait 500
+
+cinema.Widescreen(0)
+BLACK_POLOSKI_ON = 0
+
+player.CanMove(PLAYER_CHAR) = true
+
+wait 500
+camera.Restore_WithJumpCut()
+05E2: AS_actor $SURVIVER[0] kill_actor 70@
+fade 1 500
+$HUD_REMOVE = 0
+wait 500
+v$OBJECTIVE = "DLC46"
+
+repeat
+wait 0
+  
+if
+not actor.Dead($SURVIVER[0])
+jf @UNKOWN_DEAD
+
+if
+056D:   actor 70@ defined
+    then
+    if
+    actor.Dead(70@)
+        then
+        marker.Disable(MISSION_MARKER)
+        break
+        end
+    else
+    break
+    end
+
+until false
+
+player.CanMove(PLAYER_CHAR) = false
+v$ST_DIALOG[0] = "DLC47"
+$DIALOG_COUNT = 0                 
+create_thread @DG_SYS2
+
+v$OBJECTIVE = "DUMMY"
+wait 1000
+
+fade 0 1000
+$HUD_REMOVE = 1 
+wait 1000
+$SAVESTATUS = 1
+wait 2000
+
+actor.PutAtNoOffset(PLAYER_ACTOR,2845.9795, -1268.7002, 20.8551)
+actor.Angle(PLAYER_ACTOR) = 188.8973
+
+actor.PutAtNoOffset($SURVIVER[0],2846.9666, -1272.9159, 20.535)
+actor.Angle($SURVIVER[0]) = 10.9862
+
+camera.SetPosition(2852.144, -1266.1919, 20.8902,0.0,0.0,0.0)
+camera.PointAt(2845.7612, -1272.0026, 20.6454,2)
+cinema.Widescreen(1)
+BLACK_POLOSKI_ON = 1
+
+0639: AS_actor PLAYER_ACTOR rotate_to_actor $SURVIVER[0]
+0639: AS_actor $SURVIVER[0] rotate_to_actor PLAYER_ACTOR
+
+wait 500
+06AB: set_actor $SURVIVER[0] all_weapons_hidden 1
+06AB: set_actor PLAYER_ACTOR all_weapons_hidden 1
+
+fade 1 1000
+wait 1000
+
+05BF: AS_actor $SURVIVER[0] look_at_actor PLAYER_ACTOR 999999 ms
+05BF: AS_actor PLAYER_ACTOR look_at_actor $SURVIVER[0] 999999 ms
+0084: $DIALOG_ACTOR[0] = $SURVIVER[0] // (int)
+v$ST_DIALOG[0] = "DLC49"
+$DIALOG_COUNT = 0                 
+0109: player PLAYER_CHAR money += 500
+create_thread @DG_SYS
+
+repeat
+wait 0
+until $DIALOG_END == 1
+
+actor.SetWalkStyle($SURVIVER[0],"GANG1")
+05D3: AS_actor $SURVIVER[0] goto_point 2854.6013 -1316.1532 12.7639 mode 6 time 999999 ms // versionA
+
+wait 500
+
+v$ST_DIALOG[0] = "DLC53"
+$DIALOG_COUNT = 0                 
+create_thread @DG_SYS2
+
+repeat
+wait 0
+until $DIALOG_END == 1
+
+fade 0 1000
+wait 1000
+06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0
+camera.Restore_WithJumpCut()
+cinema.Widescreen(0)
+BLACK_POLOSKI_ON = 0
+player.CanMove(PLAYER_CHAR) = true  
+actor.DestroyInstantly($SURVIVER[0])
+$SAVESTATUS = 0
+MAIN_QUEST_MUSIC_FLAG = 0
+wait 1000
+fade 1 1000
+$HUD_REMOVE = 0
+wait 1000
+
+$TEMP_XP = 1500
+008D: $TEMP_XP = integer $TEMP_XP to_float
+0069: $TEMP_XP *= $XP_COEFF // (float)
+if
+PERK_CHARISMA == 2
+then
+$TEMP_XP *= CHARISMA_LEVEL2_XP_COEFF
+end
+008C: $TEMP_XP = float $TEMP_XP to_integer
+0058: $PLAYER_XP += $TEMP_XP // (int)
+
+0629: change_integer_stat 258 to 0
+
+jump to @ADD_MSN_UDACHN2
+
+:ADD_MSN_UDACHN2 
+$ONMISSION = 0   
+03DE: set_pedestrians_density_multiplier_to 0.0 
+01EB: set_traffic_density_multiplier_to 0.0
+if
+MCS_FLAG == 0
+then      
+0318: set_latest_mission_passed 'DLC42B'
+else
+0318: set_latest_mission_passed 'DLC42C'
+end 
+$ADDITIONAL_MISSIONS_PASSED += 1
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT104_GOT"                            
+if and
+0@ == 0
+$ADDITIONAL_MISSIONS_PASSED >= 20
+$CHEATED_FLAG == 0
+$CARL_STORY == 1
+    then
+    v$ACHIEVEMNT = "ACH104"
+    $ACHIEVEMENT_GOT_FLAG = 1                                    
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT104_GOT"
+    end
+gosub @ADD_MSN_PROPUSK_KOD2
+return
+
+:ADD_MSN_KOD_PROVAL2    
+$ONMISSION = 0  
+mission_cleanup
+marker.Disable(MISSION_MARKER)
+06D0: enable_emergency_traffic 0 
+06D7: enable_train_traffic 0 
+096A: enable_flying_helis 0 
+099E: enable_police_patrols 0 
+06C8: enable_riot 0 
+0923: enable_air_traffic 0 
+03DE: set_pedestrians_density_multiplier_to 0.0 
+01EB: set_traffic_density_multiplier_to 0.0   
+MAIN_QUEST_MUSIC_FLAG = 0
+return
+
+:ADD_MSN_UDALENIE_KOD2 
+$ONMISSION = 0
+mission_cleanup
+marker.Disable(MISSION_MARKER)
+06D0: enable_emergency_traffic 0 
+06D7: enable_train_traffic 0 
+096A: enable_flying_helis 0 
+099E: enable_police_patrols 0 
+06C8: enable_riot 0 
+0923: enable_air_traffic 0 
+03DE: set_pedestrians_density_multiplier_to 0.0 
+01EB: set_traffic_density_multiplier_to 0.0
+return
+
+:UNKOWN_DEAD
+text.ClearAll()
+v$FAILED_TEXT = "DLC48"
+create_thread @GM_2OVR
+jump to @ADD_MSN_KOD_PROVAL2

@@ -1,0 +1,1199 @@
+//-------------Mission 7---------------
+// Название: Джеймс
+
+:MISS7
+thread 'MISS7'
+gosub @MISSION7_1942 
+if 
+wasted_or_busted 
+jf @MISSION7_1933 
+gosub @MISSION7_4175 
+
+:MISSION7_1933
+gosub @MISSION7_4219
+
+HARDCORE_DANGER_FLAG_SCRIPTED = 0
+if
+GAME_OVER_FLAG == 1
+then
+HARDCORE_DANGER_ANTIFLAG_SCRIPTED = 1
+end
+
+if
+GAME_OVER_FLAG == 1
+then
+repeat
+wait 0
+until BLACK_POLOSKI_ON == 1
+end
+
+{$INCLUDE checkpoints_write.txt}
+ 
+end_thread 
+
+:MISSION7_1942
+increment_mission_attempts
+
+Player.CanMove(PLAYER_CHAR) = False 
+
+cinema.Widescreen(1)
+BLACK_POLOSKI_ON = 1
+0A48: enable_menu_access_in_widescreen_mode 0  
+$SOUND_OFF_1 = 1
+0629: change_integer_stat 258 to 7
+
+MAIN_QUEST_MUSIC_FLAG = 1
+MAIN_QUEST_TEAMMATES_REMOVE_FLAG = 1
+
+wait 1000
+
+while true
+wait 0
+$END_FADING_MUSIC_FAST = 1
+
+if and
+$MUSIC_FADE_ENDED[0] == 1
+$MUSIC_FADE_ENDED[1] == 1
+$MUSIC_FADE_ENDED[2] == 1
+$MUSIC_FADE_ENDED[3] == 1
+$MUSIC_FADE_ENDED[4] == 1
+then
+$END_FADING_MUSIC_FAST = 0
+break
+end
+
+end
+
+$ONMISSION = 1  
+fade 0 0
+
+01B9: set_actor PLAYER_ACTOR armed_weapon_to 0 
+
+$SAVESTATUS = 1
+$NOTSPAWN_CARS = 0
+$NOTSPAWN_ETC = 1
+$WITCH_NOTSPAWN_FLAG = 1
+$TANK_NOTSPAWN_FLAG = 1
+
+ENEX_OFF = 1
+
+renderer 1002.4943 -650.2887 
+03CB: set_rendering_origin_at 1002.4943 -650.2887 121.1732
+
+select_interior 0
+0860: link_actor PLAYER_ACTOR to_interior 0
+
+actor.PutAtNooffset(PLAYER_ACTOR,1002.4943, -650.2887, 121.1732)
+actor.Angle(PLAYER_ACTOR) = 151.6953
+
+$WEATHER_LOCK_NUMBER = 8
+create_thread @WTH_LCK
+
+if
+CLASSIC_MUSIC == 0
+then
+$MUSIC_MISSION = Audiostream.Load(MUSIC_8A)
+else
+$MUSIC_MISSION = Audiostream.Load(CLASSIC_MUSIC_8A)
+end
+
+Audiostream.PerformAction($MUSIC_MISSION, PLAY)
+Audiostream.Loop($MUSIC_MISSION, 1)
+Audiostream.Volume($MUSIC_MISSION) = 0.0 
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+//////////////////////////////////////////////////////////
+
+if
+MIKE_SHIZA_FLAG == 1
+then
+
+//////////////////////////////////////////////////////////  
+
+0A0E: disable_text_with_style 1
+
+0391: release_textures
+0390: load_txd_dictionary 'miss2' 
+wait 1
+038F: load_texture "mission7" as 1 // Load dictionary with 0390 first 
+wait 1
+
+1@ = 0
+
+ repeat 
+wait 0
+1@ += 5
+03F0: enable_text_draw 1
+038D: draw_texture 1 position 320.0 220.0 size 600.0 400.0 RGBA 255 255 255 1@
+03E3: set_texture_to_be_drawn_antialiased 1 
+ until 1@ == 255
+
+32@ = 0
+$SPEED_08_FLAG = 1 
+
+ repeat 
+wait 0
+03F0: enable_text_draw 1
+038D: draw_texture 1 position 320.0 220.0 size 600.0 400.0 RGBA 255 255 255 1@
+03E3: set_texture_to_be_drawn_antialiased 1 
+ until 00E1: key_pressed 0 17
+ 
+$SPEED_08_FLAG = 0
+015D: set_gamespeed 1.0 
+
+ repeat
+wait 0
+1@ -= 5
+03F0: enable_text_draw 1
+038D: draw_texture 1 position 320.0 220.0 size 600.0 400.0 RGBA 255 255 255 1@
+03E3: set_texture_to_be_drawn_antialiased 1 
+ until 1@ == 0  
+  
+wait 1
+03F0: enable_text_draw 0
+wait 1
+0391: release_textures 
+
+0A0E: disable_text_with_style 0
+
+end  
+
+while not model.Available(#WMYST)
+wait 0
+model.Load(#WMYST)
+mload
+end
+ 
+$SURVIVER[0] = Actor.Create(26, #WMYST, 990.2005, -672.9497, 125.5218)
+$SURVIVOR_MELEE_ID[0] = -1
+
+actor.PutAtNooffset($SURVIVER[0],990.2005, -672.9497, 125.5218)
+Actor.Angle($SURVIVER[0]) = 330.0
+
+actor.Health($SURVIVER[0]) = $FRIEND_HEALTH
+
+create_thread @PED_BKP $SURVIVER[0] 371
+
+0781: get_weapon_with_ID 30 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+Actor.GiveWeaponAndAmmo($SURVIVER[0], 30, 99999)
+07DD: set_actor $SURVIVER[0] attack_rate 60 // previously known as temper_to
+081A: set_actor $SURVIVER[0] weapon_skill_to 2
+060B: set_actor $SURVIVER[0] decision_maker_to $DEC_PEOPLE
+0446: set_actor $SURVIVER[0] dismemberment_possible 0 
+
+$HUD_REMOVE = 1
+$SAVESTATUS = 1 
+
+0936: set_camera 1003.141907 -647.104919 121.126892 position_to 1002.532959 -648.261841 121.383430 time 70000 smooth_transition 1
+0920: point_camera 1002.798462 -648.043030 121.171738 transverse_to 1002.223633 -649.210327 121.452156 time 70000 smooth_transition 1 
+
+0A1D: AS_actor $SURVIVER[0] rotate_to_and_look_at_actor PLAYER_ACTOR 
+0A1D: AS_actor PLAYER_ACTOR rotate_to_and_look_at_actor $SURVIVER[0]
+
+0A48: enable_menu_access_in_widescreen_mode 1  
+$SOUND_OFF_1 = 0
+wait 0
+cinema.Widescreen(1)
+BLACK_POLOSKI_ON = 1
+
+$SAVE_PREPARE_OFF = 0
+PLAYER_DONT_HAVE_BACKPACK = 0
+create_thread @PED_BKP PLAYER_ACTOR 371
+
+$FP_BACKPACK_HAD = 1
+
+wait 1000
+ 
+fade 1 2000     
+
+05BF: AS_actor $SURVIVER[0] look_at_actor PLAYER_ACTOR -1 ms
+05BF: AS_actor PLAYER_ACTOR look_at_actor $SURVIVER[0] -1 ms
+05C4: AS_actor PLAYER_ACTOR hands_up 12000 ms
+0635: AS_actor $SURVIVER[0] aim_at_actor PLAYER_ACTOR 12000 ms 
+0084: $DIALOG_ACTOR[0] = $SURVIVER[0] // (int)
+0084: $DIALOG_ACTOR[1] = PLAYER_ACTOR // (int)
+0084: $DIALOG_ACTOR[2] = $SURVIVER[0] // (int)
+
+v$ST_DIALOG[0] = "MSN105"
+v$ST_DIALOG[1] = "MSN106"
+v$ST_DIALOG[2] = "MSN107"                
+$DIALOG_COUNT = 2 
+create_thread @DG_SYS2
+
+repeat
+wait 0
+until $DIALOG_END == 1
+
+$DIALOG_END = 0
+
+05C4: AS_actor PLAYER_ACTOR hands_up 100 ms
+0635: AS_actor $SURVIVER[0] aim_at_actor PLAYER_ACTOR 100 ms
+wait 100
+01B9: set_actor $SURVIVER[0] armed_weapon_to 0
+
+if
+MIKE_SHIZA_FLAG == 1
+then
+0084: $DIALOG_ACTOR[0] = PLAYER_ACTOR // (int)
+0084: $DIALOG_ACTOR[1] = $SURVIVER[0] // (int)
+0084: $DIALOG_ACTOR[2] = PLAYER_ACTOR // (int)
+0084: $DIALOG_ACTOR[3] = $SURVIVER[0] // (int)
+0084: $DIALOG_ACTOR[4] = PLAYER_ACTOR // (int)
+0084: $DIALOG_ACTOR[5] = $SURVIVER[0] // (int)
+0084: $DIALOG_ACTOR[6] = PLAYER_ACTOR // (int)
+0084: $DIALOG_ACTOR[7] = $SURVIVER[0] // (int)
+0084: $DIALOG_ACTOR[8] = $SURVIVER[0] // (int)
+0084: $DIALOG_ACTOR[9] = $SURVIVER[0] // (int)
+0084: $DIALOG_ACTOR[10] = $SURVIVER[0] // (int)
+0084: $DIALOG_ACTOR[11] = $SURVIVER[0] // (int)
+0084: $DIALOG_ACTOR[12] = PLAYER_ACTOR // (int)
+0084: $DIALOG_ACTOR[13] = $SURVIVER[0] // (int)
+v$ST_DIALOG[0] = "MSN108"
+v$ST_DIALOG[1] = "MSN109"
+v$ST_DIALOG[2] = "MSN110"
+v$ST_DIALOG[3] = "MSN111"
+v$ST_DIALOG[4] = "MSN112"
+v$ST_DIALOG[5] = "MSN113"
+v$ST_DIALOG[6] = "MSN114"
+v$ST_DIALOG[7] = "MSN115"
+v$ST_DIALOG[8] = "MSN116"
+v$ST_DIALOG[9] = "MSN117"
+v$ST_DIALOG[10] = "MSN118"
+v$ST_DIALOG[11] = "MSN119"
+v$ST_DIALOG[12] = "MSN120"
+v$ST_DIALOG[13] = "MSN121"
+$DIALOG_COUNT = 13 
+create_thread @DG_SYS
+else
+0084: $DIALOG_ACTOR[0] = PLAYER_ACTOR // (int)
+0084: $DIALOG_ACTOR[1] = $SURVIVER[0] // (int)
+0084: $DIALOG_ACTOR[2] = PLAYER_ACTOR // (int)
+0084: $DIALOG_ACTOR[3] = $SURVIVER[0] // (int)
+0084: $DIALOG_ACTOR[4] = $SURVIVER[0] // (int)
+0084: $DIALOG_ACTOR[5] = $SURVIVER[0] // (int)
+0084: $DIALOG_ACTOR[6] = PLAYER_ACTOR // (int)
+0084: $DIALOG_ACTOR[7] = $SURVIVER[0] // (int)
+0084: $DIALOG_ACTOR[8] = $SURVIVER[0] // (int)
+0084: $DIALOG_ACTOR[9] = $SURVIVER[0] // (int)
+0084: $DIALOG_ACTOR[10] = $SURVIVER[0] // (int)
+0084: $DIALOG_ACTOR[11] = $SURVIVER[0] // (int)
+0084: $DIALOG_ACTOR[12] = PLAYER_ACTOR // (int)
+$DIALOG_ACTOR[13] = -69
+v$ST_DIALOG[0] = "MSN108"
+v$ST_DIALOG[1] = "MSN109"
+v$ST_DIALOG[2] = "MSN110"
+v$ST_DIALOG[3] = "MSN111"
+v$ST_DIALOG[4] = "MSN112"
+v$ST_DIALOG[5] = "MSN113"
+v$ST_DIALOG[6] = "MSN114"
+v$ST_DIALOG[7] = "MSN115"
+v$ST_DIALOG[8] = "MSN116"
+v$ST_DIALOG[9] = "MSN117"
+v$ST_DIALOG[10] = "MSN118"
+v$ST_DIALOG[11] = "MSN119"
+v$ST_DIALOG[12] = "MSN120"
+v$ST_DIALOG[13] = "MSN121"
+$DIALOG_COUNT = 13 
+create_thread @DG_SYS
+end
+
+repeat
+wait 0
+until $DIALOG_END == 1
+
+$DIALOG_END = 0
+ 
+:JAMES_SKIP
+fade 0 1000 
+wait 1000 
+
+0792: disembark_instantly_actor PLAYER_ACTOR
+
+05C4: AS_actor PLAYER_ACTOR hands_up 1 ms
+
+0635: AS_actor $SURVIVER[0] aim_at_actor PLAYER_ACTOR 1 ms 
+
+05BF: AS_actor $SURVIVER[0] look_at_actor PLAYER_ACTOR 100 ms
+05BF: AS_actor PLAYER_ACTOR look_at_actor $SURVIVER[0] 100 ms
+
+0936: set_camera 1003.141907 -647.104919 121.126892 position_to 1002.532959 -648.261841 121.383430 time 1 smooth_transition 1
+0920: point_camera 1002.798462 -648.043030 121.171738 transverse_to 1002.223633 -649.210327 121.452156 time 1 smooth_transition 1 
+
+00BE: text_clear_all
+camera.Restore_WithJumpCut()
+
+cinema.Widescreen(0)
+BLACK_POLOSKI_ON = 0
+
+Player.CanMove(PLAYER_CHAR) = True
+
+0631: put_actor $SURVIVER[0] in_group PLAYER_GROUP
+
+if
+COOP_ACTIVE_FLAG == 1
+then
+0EA0: set_actor_second_player $SURVIVER[0] enable_camera 1 separate_cars 0
+0084: COOP_ACTOR = $SURVIVER[0] // (int)
+
+0781: get_weapon_with_ID 5 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+ 
+Actor.GiveWeaponAndAmmo($SURVIVER[0], 5, 1)
+else
+
+0781: get_weapon_with_ID 5 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+ 
+Actor.GiveWeaponAndAmmo($SURVIVER[0], 5, 1)
+
+$SURVIVOR_MELEE_ID[0] = 5
+$SURVIVOR_WEP_ID[0] = 30
+create_thread @MEL_SRV $SURVIVER[0] 0
+end 
+
+Actor.WeaponAccuracy($SURVIVER[0]) = 100
+01B9: set_actor $SURVIVER[0] armed_weapon_to 30
+
+if
+MIKE_SHIZA_FLAG == 1
+then
+048F: actor PLAYER_ACTOR remove_weapons
+end 
+
+//////////////////////////////////////////////
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 2 weapon 1@ ammo 2@ model 3@
+if
+2@ < 1
+then
+
+0781: get_weapon_with_ID 5 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+ 
+Actor.GiveWeaponAndAmmo(PLAYER_ACTOR, 5, 1)
+else
+//ass
+end
+
+//////////////////////////////////////////////
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 6 weapon 1@ ammo 2@ model 3@
+if
+2@ < 1
+then
+
+0781: get_weapon_with_ID 30 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+if
+MIKE_SHIZA_FLAG == 1
+then 
+Actor.GiveWeaponAndAmmo(PLAYER_ACTOR, 30, 240)
+else
+Actor.GiveWeaponAndAmmo(PLAYER_ACTOR, 30, 80)
+end
+
+else
+
+if
+MIKE_SHIZA_FLAG == 1
+then
+2@ += 240
+else
+2@ += 80
+end
+
+017B: set_actor PLAYER_ACTOR weapon 1@ ammo_to 2@
+01B9: set_actor PLAYER_ACTOR armed_weapon_to 1@
+end
+
+//////////////////////////////////////////////
+
+081A: set_actor $SURVIVER[0] weapon_skill_to 2
+06AB: set_actor $SURVIVER[0] all_weapons_hidden 0 
+
+Actor.SetWalkStyle($SURVIVER[0], "SURV1") 
+
+actor.PutAtNoOffset(PLAYER_ACTOR,1003.5856, -653.6949, 121.1484)
+actor.Angle(PLAYER_ACTOR) = 1.7057
+camera.Restore_WithJumpCut()
+create_thread @REFR_3D
+
+wait 2000
+07B3: set_group PLAYER_GROUP give_command 1 
+
+fade 1 2000 
+$HUD_REMOVE = 0  
+wait 2000
+
+v$OBJECTIVE = "MSN47"
+
+0208: 300@ = random_float_in_ranges 1006.5601 782.6543 
+0208: 301@ = random_float_in_ranges -442.3817 -359.3923
+
+:CAR_CREATE_MISSION7
+if
+model.Available(15402)
+then
+
+SUPPLY_QUEST_TRUCK = Car.Create(15402, 300@, 301@, -100.0)
+
+if
+model.Available(15402)
+then
+//model.Destroy(15402)
+end
+
+else
+model.Load(15402)
+mload
+wait 0
+jump to @CAR_CREATE_MISSION7
+end
+
+random_float 1@ 0.0 360.0
+Car.Angle(SUPPLY_QUEST_TRUCK) = 1@  
+random_int 1@ 550 950
+car.Health(SUPPLY_QUEST_TRUCK) = 1@
+0229: set_car SUPPLY_QUEST_TRUCK primary_color_to 0 secondary_color_to 0 
+0A97: 11@ = car SUPPLY_QUEST_TRUCK struct 
+11@ += 9
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+08BD: set 12@ bit 2
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+/////////////////////
+0A97: 11@ = car SUPPLY_QUEST_TRUCK struct 
+11@ += 4 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+08BD: set 12@ bit 1 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0
+random_float $BENZIN 30.0 50.0 
+0A97: 22@ = car SUPPLY_QUEST_TRUCK struct 
+0A8E: 23@ = 22@ + 5 // int 
+0A8C: write_memory 23@ size 4 value $BENZIN virtual_protect 0 
+08C3: clear 12@ bit 1                                                                            
+08C3: clear 12@ bit 2
+0A97: 11@ = car SUPPLY_QUEST_TRUCK struct 
+11@ += 18
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+08BD: set 12@ bit 2
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 2
+073C: car SUPPLY_QUEST_TRUCK damage_componentB 0
+073C: car SUPPLY_QUEST_TRUCK damage_componentB 1
+073C: car SUPPLY_QUEST_TRUCK damage_componentB 2
+073C: car SUPPLY_QUEST_TRUCK damage_componentB 3
+073C: car SUPPLY_QUEST_TRUCK damage_componentB 4
+073C: car SUPPLY_QUEST_TRUCK damage_componentB 5
+if
+0E4D: random_percent 50
+then
+04FE: deflate_tire 0 on_car SUPPLY_QUEST_TRUCK
+else
+04FE: deflate_tire 2 on_car SUPPLY_QUEST_TRUCK
+end
+
+0407: store_coords_to 1@ 2@ 3@ from_car SUPPLY_QUEST_TRUCK with_offset 0.0 0.0 5.0
+0EB4: set_car_coordinates_simple SUPPLY_QUEST_TRUCK position 1@ 2@ 3@
+
+$SAVESTATUS = 0
+
+$WITCH_X = 922.4378
+$WITCH_Y = -406.632
+$WITCH_Z = 54.1359
+$SPAWN_WITCH_ON_COORD = 1
+
+car.DoorStatus(SUPPLY_QUEST_TRUCK,4)
+
+018A: MISSION_CHECKPOINT = create_checkpoint_at 992.3 -446.1 54.5 
+
+Model.Load(15402)    
+mload 
+
+wait 4000
+v$ST_DIALOG[0] = "DUMMY"
+v$ST_DIALOG[1] = "DUMMY"
+v$ST_DIALOG[2] = "DUMMY"
+v$ST_DIALOG[3] = "NDG09"
+v$ST_DIALOG[4] = "NDG10"
+v$ST_DIALOG[5] = "NDG11"
+v$ST_DIALOG[6] = "NDG12"
+v$ST_DIALOG[7] = "NDG13"
+v$ST_DIALOG[8] = "NDG14"
+v$ST_DIALOG[9] = "NDG15"
+v$ST_DIALOG[10] = "NDG16"
+$DIALOG_COUNT = 10
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2 
+
+repeat
+wait 0 
+
+if
+actor.Dead(PLAYER_ACTOR)
+    then
+    jump to @MISSION7_4175
+    end  
+  
+if 
+   not Actor.Dead($SURVIVER[0])
+jf @MISSION7_4175_JAMES 
+
+if
+not car.Wrecked(SUPPLY_QUEST_TRUCK)
+jf @MISSION7_4175_JAMES_CAR 
+
+if
+80F2: not  actor $SURVIVER[0] near_actor PLAYER_ACTOR radius 60.0 60.0 0  
+    then 
+       
+    marker.Disable(MISSION_CHECKPOINT)
+    $DIALOG_PAUSE = 1
+    
+    MISSION_MARKER = marker.CreateAboveActor($SURVIVER[0])
+    07E0: set_marker MISSION_MARKER type_to 1
+    
+    v$OBJECTIVE = "MSN48"
+    
+    while 80F2: not  actor $SURVIVER[0] near_actor PLAYER_ACTOR radius 60.0 60.0 0  
+    wait 0    
+        
+    if 
+    not actor.Dead($SURVIVER[0]) 
+    jf @MISSION7_4175_JAMES  
+    
+    if
+    actor.Dead(PLAYER_ACTOR)
+        then
+        jump to @MISSION7_4175
+        end      
+        
+    end
+    
+    marker.Disable(MISSION_MARKER) 
+           
+    v$OBJECTIVE = "MSN47"  
+    $DIALOG_PAUSE = 0
+    
+    018A: MISSION_CHECKPOINT = create_checkpoint_at 992.3 -446.1 54.5 
+       
+    end 
+
+until 00EC:   actor PLAYER_ACTOR sphere 1 near_point 992.3 -446.1 radius 2.0 2.0 
+
+$END_DIALOG_INST = 1
+
+text.ClearAll()                                                                                 
+text.ShowH('MSN170',2000,1)
+
+$SPECIAL_INFECTED_NOT_SPAWN_FLAG = 0
+$WITCH_NOTSPAWN_FLAG = 0
+$SPAWN_WITCH_FLAG = 1
+$WITCH_INSTANT_AGR = 1
+
+Marker.Disable(MISSION_CHECKPOINT)
+car.DoorStatus(SUPPLY_QUEST_TRUCK,0)
+
+repeat
+wait 0
+until 056D:   actor $WITCH[0] defined
+
+$SPECIAL_INFECTED_NOT_SPAWN_FLAG = 1
+$WITCH_INSTANT_AGR = 0
+$SPAWN_WITCH_ON_COORD = 0
+
+v$OBJECTIVE = "MSN57"
+
+28@ = 0
+
+repeat
+wait 0
+
+if
+28@ == 0
+    then
+    if
+    056D:   actor $WITCH[0] defined
+        then
+        if
+        actor.Dead($WITCH[0])
+            then
+            28@ = 1
+            text.ClearAll()                                                                                 
+            text.ShowH('MSN171',2000,1)
+            end
+        end
+    end
+
+if
+actor.Dead(PLAYER_ACTOR)
+    then
+    jump to @MISSION7_4175
+    end  
+
+if 
+   not Actor.Dead($SURVIVER[0])
+jf @MISSION7_4175_JAMES 
+
+if
+not car.Wrecked(SUPPLY_QUEST_TRUCK)
+jf @MISSION7_4175_JAMES_CAR  
+
+if
+80F2: not  actor $SURVIVER[0] near_actor PLAYER_ACTOR radius 60.0 60.0 0  
+    then 
+       
+    marker.Disable(MISSION_CHECKPOINT)
+    $DIALOG_PAUSE = 1
+    
+    MISSION_MARKER = marker.CreateAboveActor($SURVIVER[0])
+    07E0: set_marker MISSION_MARKER type_to 1
+    
+    v$OBJECTIVE = "MSN48"
+    
+    while 80F2: not  actor $SURVIVER[0] near_actor PLAYER_ACTOR radius 60.0 60.0 0  
+    wait 0    
+    
+    if
+    actor.Dead(PLAYER_ACTOR)
+        then
+        jump to @MISSION7_4175
+        end  
+        
+    if 
+    not actor.Dead($SURVIVER[0]) 
+    jf @MISSION7_4175_JAMES      
+        
+    end
+    
+    marker.Disable(MISSION_MARKER) 
+           
+    v$OBJECTIVE = "MSN57" 
+    $DIALOG_PAUSE = 0     
+       
+    end 
+
+until 0202:   actor PLAYER_ACTOR near_car SUPPLY_QUEST_TRUCK radius 50.0 50.0 sphere 0  
+
+MISSION_MARKER = Marker.CreateAboveCar(SUPPLY_QUEST_TRUCK)
+07E0: set_marker MISSION_MARKER type_to 1 
+00BC: show_text_highpriority GXT 'MSN123' time 5000 flag 1
+
+v$OBJECTIVE = "MSN58"  
+
+$WITCH_INSTANT_AGR = 0
+
+repeat
+wait 0 
+
+if
+actor.Dead(PLAYER_ACTOR)
+    then
+    jump to @MISSION7_4175
+    end  
+
+if 
+   not Actor.Dead($SURVIVER[0])
+jf @MISSION7_4175_JAMES  
+
+if
+not car.Wrecked(SUPPLY_QUEST_TRUCK)
+jf @MISSION7_4175_JAMES_CAR 
+
+if
+80F2: not  actor $SURVIVER[0] near_actor PLAYER_ACTOR radius 60.0 60.0 0  
+    then 
+       
+    marker.Disable(MISSION_MARKER)
+    $DIALOG_PAUSE = 1
+    
+    MISSION_MARKER = marker.CreateAboveActor($SURVIVER[0])
+    07E0: set_marker MISSION_MARKER type_to 1
+    
+    v$OBJECTIVE = "MSN48"
+    
+    while 80F2: not  actor $SURVIVER[0] near_actor PLAYER_ACTOR radius 60.0 60.0 0  
+    wait 0    
+    
+    if
+    actor.Dead(PLAYER_ACTOR)
+        then
+        jump to @MISSION7_4175
+        end  
+        
+    if 
+    not actor.Dead($SURVIVER[0]) 
+    jf @MISSION7_4175_JAMES      
+        
+    end
+    
+    marker.Disable(MISSION_MARKER) 
+           
+    v$OBJECTIVE = "MSN58"  
+    $DIALOG_PAUSE = 0
+    
+    MISSION_MARKER = Marker.CreateAboveCar(SUPPLY_QUEST_TRUCK)
+    07E0: set_marker MISSION_MARKER type_to 1 
+       
+    end 
+
+until Actor.InCar(PLAYER_ACTOR, SUPPLY_QUEST_TRUCK)
+
+if
+8800: not  in_two_players_mode
+then
+06C9: remove_actor $SURVIVER[0] from_group
+end
+
+if
+8800: not  in_two_players_mode
+then
+0407: store_coords_to 60@ 61@ 62@ from_car SUPPLY_QUEST_TRUCK with_offset 3.0 0.0 0.0
+0615: define_AS_pack_begin 51@
+05D3: AS_actor -1 goto_point 60@ 61@ 62@ mode 7 time 99999 ms // versionA
+05CA: AS_actor -1 enter_car SUPPLY_QUEST_TRUCK passenger_seat 0 time 10000
+05D4: AS_actor -1 rotate_angle 0.0
+0616: define_AS_pack_end 51@
+0618: assign_actor $SURVIVER[0] to_AS_pack 51@
+061B: remove_references_to_AS_pack 51@
+end
+
+//////////////////////////////////////////
+0A97: 10@ = car SUPPLY_QUEST_TRUCK struct
+0A8E: 2@ = 10@ + 0x45C 
+0A8C: write_memory 2@ size 2 value 65000 virtual_protect 1
+//////////////////////////////////////////
+
+Marker.Disable(MISSION_MARKER)
+$ZOMBIES_HORDE = 1
+create_thread @HOR_SND
+
+32@ = 0
+
+repeat
+wait 0
+
+if and
+02A0:   actor $SURVIVER[0] stopped
+89DE: not  actor $SURVIVER[0] entering_car
+not actor.Driving($SURVIVER[0])
+32@ > 1000
+8800: not  in_two_players_mode
+    then
+    32@ = 0
+    0407: store_coords_to 60@ 61@ 62@ from_car SUPPLY_QUEST_TRUCK with_offset 3.0 0.0 0.0
+    0615: define_AS_pack_begin 51@
+    05D3: AS_actor -1 goto_point 60@ 61@ 62@ mode 7 time 99999 ms // versionA
+    05CA: AS_actor -1 enter_car SUPPLY_QUEST_TRUCK passenger_seat 0 time 10000
+    05D4: AS_actor -1 rotate_angle 0.0
+    0616: define_AS_pack_end 51@
+    0618: assign_actor $SURVIVER[0] to_AS_pack 51@
+    061B: remove_references_to_AS_pack 51@
+    end
+
+if
+actor.Dead(PLAYER_ACTOR)
+    then
+    jump to @MISSION7_4175
+    end  
+
+if 
+   not Actor.Dead($SURVIVER[0])
+jf @MISSION7_4175_JAMES 
+
+if
+not car.Wrecked(SUPPLY_QUEST_TRUCK)
+jf @MISSION7_4175_JAMES_CAR
+
+until Actor.InCar($SURVIVER[0], SUPPLY_QUEST_TRUCK)
+
+if
+8800: not  in_two_players_mode
+then
+0631: put_actor $SURVIVER[0] in_group PLAYER_GROUP
+end
+
+00BC: show_text_highpriority GXT 'MSN124' time 5000 flag 1 
+018A: MISSION_CHECKPOINT = create_checkpoint_at 1007.9 -664.2 121.1
+
+v$OBJECTIVE = "MSN50"
+  
+wait 3000
+v$ST_DIALOG[0] = "DUMMY"
+v$ST_DIALOG[1] = "DUMMY"
+v$ST_DIALOG[2] = "DUMMY"
+v$ST_DIALOG[3] = "NDG17"
+v$ST_DIALOG[4] = "NDG18"
+v$ST_DIALOG[5] = "NDG19"
+v$ST_DIALOG[6] = "NDG20"
+v$ST_DIALOG[7] = "NDG21"
+v$ST_DIALOG[8] = "NDG22"
+v$ST_DIALOG[9] = "NDG23"
+v$ST_DIALOG[10] = "NDG24"
+v$ST_DIALOG[11] = "NDG25"
+v$ST_DIALOG[12] = "NDG26"
+$DIALOG_COUNT = 12
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2 
+
+repeat
+wait 0
+
+if
+$ZOMBIES_HORDE == 1
+    then
+    0A97: 10@ = car SUPPLY_QUEST_TRUCK struct
+    0A8E: 2@ = 10@ + 0x45C 
+    0A8D: 0@ = read_memory 2@ size 2 virtual_protect 1
+    if
+    0@ <= 0
+        then
+        $ZOMBIES_HORDE = 0
+        end
+    end   
+
+if
+actor.Dead(PLAYER_ACTOR)
+    then
+    jump to @MISSION7_4175
+    end   
+
+if 
+   not Actor.Dead($SURVIVER[0])
+jf @MISSION7_4175_JAMES 
+
+if
+not car.Wrecked(SUPPLY_QUEST_TRUCK)
+jf @MISSION7_4175_JAMES_CAR
+
+if
+not actor.InCar(PLAYER_ACTOR,SUPPLY_QUEST_TRUCK)    
+    then 
+       
+    marker.Disable(MISSION_CHECKPOINT)
+    $DIALOG_PAUSE = 1
+    
+    MISSION_MARKER = marker.CreateAboveCar(SUPPLY_QUEST_TRUCK)
+    07E0: set_marker MISSION_MARKER type_to 1
+    
+    v$OBJECTIVE = "MSN49"
+    
+    while not actor.InCar(PLAYER_ACTOR,SUPPLY_QUEST_TRUCK) 
+    :SEAT_CHECK_MISSION7  
+    wait 0
+    
+    if
+    $ZOMBIES_HORDE == 1
+        then
+        0A97: 10@ = car SUPPLY_QUEST_TRUCK struct
+        0A8E: 2@ = 10@ + 0x45C 
+        0A8D: 0@ = read_memory 2@ size 2 virtual_protect 1
+        if
+        0@ <= 0
+            then
+            $ZOMBIES_HORDE = 0
+            end
+        end
+    
+    if
+    car.Wrecked(SUPPLY_QUEST_TRUCK)
+        then
+        jump to @MISSION7_4175_JAMES_CAR
+        end
+        
+    if
+    actor.Dead(PLAYER_ACTOR)
+        then
+        jump to @MISSION7_4175
+        end      
+        
+    if 
+    not actor.Dead($SURVIVER[0]) 
+    jf @MISSION7_4175_JAMES  
+    
+    if
+    not actor.InCar($SURVIVER[0],SUPPLY_QUEST_TRUCK)   
+        then
+        jump to @SEAT_CHECK_MISSION7
+        end     
+        
+    end
+    
+    marker.Disable(MISSION_MARKER)
+    
+    018A: MISSION_CHECKPOINT = create_checkpoint_at 1007.9 -664.2 121.1
+    
+    v$OBJECTIVE = "MSN50" 
+    $DIALOG_PAUSE = 0
+       
+    end 
+
+until 00F1:   actor PLAYER_ACTOR sphere 1 near_point 1007.9 -664.2 radius 2.0 2.0 stopped_in_car 
+
+$END_DIALOG_INST = 1
+Marker.Disable(MISSION_CHECKPOINT)
+Player.CanMove(PLAYER_CHAR) = False
+
+v$OBJECTIVE = "DUMMY"
+
+fade 0 1000
+$HUD_REMOVE = 1
+wait 1000
+
+cinema.Widescreen(1)
+BLACK_POLOSKI_ON = 1
+
+car.PutAt(SUPPLY_QUEST_TRUCK,1007.7373, -662.4417, 120.7849)
+car.Angle(SUPPLY_QUEST_TRUCK) = 208.6851
+
+if
+COOP_ACTIVE_FLAG == 1
+then
+06C9: remove_actor $SURVIVER[0] from_group
+0EA1: disable_second_player_restore_camera 1
+COOP_ACTOR = -69
+end
+
+$SAVESTATUS = 1 
+
+wait 200
+
+0605: actor $SURVIVER[0] perform_animation "CAR_sitpLO" IFP "ped" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time 1
+
+06AB: set_actor PLAYER_ACTOR all_weapons_hidden 1
+06AB: set_actor $SURVIVER[0] all_weapons_hidden 1
+
+05BF: AS_actor $SURVIVER[0] look_at_actor PLAYER_ACTOR -1 ms
+05BF: AS_actor PLAYER_ACTOR look_at_actor $SURVIVER[0] -1 ms
+
+0936: set_camera 1007.789978 -666.735291 121.603584 position_to 1007.768738 -666.485352 121.546661 time 70000 smooth_transition 1
+0920: point_camera 1007.715820 -665.756348 121.413452 transverse_to 1007.702759 -665.545837 121.210609 time 70000 smooth_transition 1 
+
+wait 1000
+fade 1 1000
+wait 1000
+
+0084: $DIALOG_ACTOR[0] = $SURVIVER[0] // (int)
+0084: $DIALOG_ACTOR[1] = $SURVIVER[0] // (int)
+0084: $DIALOG_ACTOR[2] = PLAYER_ACTOR // (int)
+0084: $DIALOG_ACTOR[3] = $SURVIVER[0] // (int)
+v$ST_DIALOG[0] = "MSN125"
+v$ST_DIALOG[1] = "MSN127"
+v$ST_DIALOG[2] = "MSN129"
+v$ST_DIALOG[3] = "MSN130"
+$DIALOG_COUNT = 3   
+$DIALOG_NOT_ANIMS_FLAG = 1              
+create_thread @DG_SYS
+
+repeat
+wait 0
+until $DIALOG_END == 1
+
+$DIALOG_END = 0 
+
+:JAMES_SKIP_2
+fade 0 1000 
+wait 1000 
+
+gosub @MUSIC33_OFF 
+
+06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0
+06AB: set_actor $SURVIVER[0] all_weapons_hidden 0
+
+0936: set_camera 1007.789978 -666.735291 121.603584 position_to 1007.768738 -666.485352 121.546661 time 1 smooth_transition 1
+0920: point_camera 1007.715820 -665.756348 121.413452 transverse_to 1007.702759 -665.545837 121.210609 time 1 smooth_transition 1 
+
+0792: disembark_instantly_actor PLAYER_ACTOR
+
+05BF: AS_actor $SURVIVER[0] look_at_actor PLAYER_ACTOR 100 ms
+05BF: AS_actor PLAYER_ACTOR look_at_actor $SURVIVER[0] 100 ms
+
+$NOTSPAWN_CARS = 0
+$ZOMBIES_HORDE = 0
+$WEATHER_LOCK_OFF_FLAG = 1
+$TANK_NOTSPAWN_FLAG = 0
+$BANKA += 1
+
+cinema.Widescreen(0)
+BLACK_POLOSKI_ON = 0
+
+00BE: text_clear_all
+Actor.DestroyInstantly($SURVIVER[0])
+0362: remove_actor PLAYER_ACTOR from_car_and_place_at 1004.2 -662.6 121.1
+car.Destroy(SUPPLY_QUEST_TRUCK)
+wait 1000
+
+$SAVESTATUS = 0
+
+if
+MIKE_SHIZA_FLAG == 1
+then
+0318: set_latest_mission_passed 'GME1199'
+else
+0318: set_latest_mission_passed 'MSN131B'
+end   
+
+if
+not MIKE_SHIZA_FLAG == 1
+then
+$X_START = 1003.123 
+$Y_START = -646.1412 
+$Z_START = 121.3081 
+$MISSION_ICON = 61 
+06D1: v$MISSION_NAME = "MSN152" // v$ = string 
+$MISSION_START = 8
+JS_DLC_MISSION_TIMER2 = 20160 
+create_thread @MSN_ST2
+else
+$MISSION_START_NUMBER = 8 
+$SAVE_MISSION_START_FLAG = 1
+create_thread @MS_STAR
+gosub @MISSION7_1933 
+return 
+end
+
+Cinema.Widescreen(0)
+BLACK_POLOSKI_ON = 0
+Camera.Restore_WithJumpCut
+Player.CanMove(PLAYER_CHAR) = True
+wait 1000 
+$SAVESTATUS = 0 
+fade 1 1000
+$HUD_REMOVE = 0 
+wait 1000
+
+MAIN_QUEST_MUSIC_FLAG = 0
+
+$TEMP_XP = 1500
+008D: $TEMP_XP = integer $TEMP_XP to_float
+0069: $TEMP_XP *= $XP_COEFF // (float)
+if
+PERK_CHARISMA == 2
+then
+$TEMP_XP *= CHARISMA_LEVEL2_XP_COEFF
+end
+008C: $TEMP_XP = float $TEMP_XP to_integer
+0058: $PLAYER_XP += $TEMP_XP // (int)
+
+0629: change_integer_stat 258 to 0
+MAIN_QUEST_TEAMMATES_REMOVE_FLAG = 2
+COOP_TP_TEAMMATES_FLAG = 1
+
+gosub @MISSION7_1933 
+return 
+
+:MISSION7_4175_JAMES
+text.ClearAll()
+v$FAILED_TEXT = "MS_FL2"
+jump @MISSION7_4175
+
+:MISSION7_4175_JAMES_CAR
+text.ClearAll()
+v$FAILED_TEXT = "MS_FL6"
+jump @MISSION7_4175
+
+:MISSION7_4175
+GAME_OVER_FLAG = 1
+create_thread @GMV_OVR
+$ONMISSION = 0 
+$NOT_BROKE = 0 
+mission_cleanup
+Marker.Disable(MISSION_MARKER)
+Marker.Disable(MISSION_CHECKPOINT) 
+06D0: enable_emergency_traffic 0 
+06D7: enable_train_traffic 0 
+096A: enable_flying_helis 0 
+099E: enable_police_patrols 0  
+0923: enable_air_traffic 0 
+ENEX_OFF = 0    
+return 
+
+:MISSION7_4219
+$ONMISSION = 0 
+$NOT_BROKE = 0 
+$NOTSPAWN_CARS = 0
+$SPAWN_WITCH_ON_COORD = 0
+Marker.Disable(MISSION_MARKER)
+Marker.Disable(MISSION_CHECKPOINT)
+mission_cleanup 
+06D0: enable_emergency_traffic 0 
+06D7: enable_train_traffic 0 
+096A: enable_flying_helis 0 
+099E: enable_police_patrols 0  
+0923: enable_air_traffic 0 
+ENEX_OFF = 0    
+return
+
+:MUSIC33_OFF
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 700
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+//////////////////////////////////////////////////////////
+
+return 
