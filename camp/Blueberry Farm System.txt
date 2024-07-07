@@ -1,0 +1,877 @@
+const
+FARM_FOOD_BOY = $ARMY69_2[8]
+FARM_FOOD_TIMER_MAX = 28@
+FARM_FOOD_BOY_MARK = 27@
+FARM_FOOD_BOY_ON_TRACTOR1 = $ARMY69_2[9]
+FARM_FOOD_BOY_ON_TRACTOR2 = $ARMY69_2[10]
+FARM_FOOD_BOY_ON_TRACTOR3 = $ARMY69_2[11]
+FARM_FOOD_BOY_ON_TRACTOR4 = $ARMY69_2[12]
+FARM_FOOD_BOY_ON_COMBINE = $ARMY69_2[13]
+FARM_FOOD_TRACTOR1 = 20@
+FARM_FOOD_TRACTOR2 = 21@
+FARM_FOOD_TRACTOR3 = 22@
+FARM_FOOD_TRACTOR4 = 23@
+FARM_FOOD_COMBINE = 24@
+end
+
+:FARM_FD
+thread 'FARM_FD'
+
+random_int FARM_FOOD_TIMER_MAX 600000 900000
+008D: FARM_FOOD_TIMER_MAX = integer FARM_FOOD_TIMER_MAX to_float
+FARM_FOOD_TIMER_MAX *= 2.0
+008C: FARM_FOOD_TIMER_MAX = float FARM_FOOD_TIMER_MAX to_integer
+
+//////////////////////////////////////////////////////////
+
+:FARM_BOY_START
+
+while true
+wait 250
+
+if
+$CHEAT_TYPE_FLAG == 1
+    then
+    if and
+    0ADC:   test_cheat "FOODBOY"
+    $CHEATS_ON == 1
+        then
+        32@ += 1305000
+        $CHEAT_CODE_ACTIVATED = 1   
+        wait 1
+        end
+    end
+    
+if
+$CAMP_AGRED_FLAG[4] == 1
+    then
+    
+    if
+    075C:   marker FARM_FOOD_BOY_MARK enabled
+    then
+    marker.Disable(FARM_FOOD_BOY_MARK)
+    FARM_FOOD_BOY_MARK = 0
+    end
+    
+    else
+    
+    if and
+    001D:   32@ > FARM_FOOD_TIMER_MAX  // (int)
+    875C: not  marker FARM_FOOD_BOY_MARK enabled
+        then
+        FARM_FOOD_BOY_MARK = Marker.CreateIconAndSphere2(26, 49.7278, -75.367, -1.6094)
+        end
+    
+    end    
+
+if or
+$CAMP_DEAD_FLAG[4] == 1
+MAIN_QUEST5_COMPLETED_FLAG == -1
+    then
+    
+    if
+    075C:   marker FARM_FOOD_BOY_MARK enabled
+    then
+    marker.Disable(FARM_FOOD_BOY_MARK)
+    FARM_FOOD_BOY_MARK = 0
+    end
+    
+    end_thread
+    end
+
+if and
+00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA 175.6446 -204.5721 -100.0 cornerB -208.3141 251.2705 200.0
+$SAVESTATUS == 0
+    then
+    break
+    end
+
+end
+
+//////////////////////////////////////////////////////////
+
+while not model.Available(12777)
+wait 0
+model.Load(12777)
+mload
+end
+    
+FARM_FOOD_BOY = actor.Create(26,12777,49.7278, -75.367, -1.6094)
+actor.Angle(FARM_FOOD_BOY) = 340.8163 
+08C6: set_actor FARM_FOOD_BOY stay_on_bike 1    
+actor.SetWalkStyle(FARM_FOOD_BOY,"GANG2")
+0446: set_actor FARM_FOOD_BOY dismemberment_possible 0
+060B: set_actor FARM_FOOD_BOY decision_maker_to $DEC_PEOPLE
+actor.Health(FARM_FOOD_BOY) = 1000
+actor.WeaponAccuracy(FARM_FOOD_BOY) = 85
+
+create_thread @PED_BKP FARM_FOOD_BOY 371
+create_thread @ANT_PRE FARM_FOOD_BOY
+
+0781: get_weapon_with_ID 71 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+    
+Actor.GiveWeaponAndAmmo(FARM_FOOD_BOY, 71, 99999)
+
+//////////////////////////////////////////////////////////
+
+gosub @FARM_RANDOM_TRACTORS_CREATE
+
+if
+$CAMP_AGRED_FLAG[4] == 1
+    then
+    
+    for 0@ = 8 to 13
+        
+    0781: get_weapon_with_ID 30 model_to 1@
+
+    while not model.Available(1@)
+    wait 0
+    model.Load(1@)
+    mload
+    end
+        
+    actor.GiveWeaponAndAmmo($ARMY69_2[0@],30,99999)
+    0E96: clear_char_primary_tasks $ARMY69_2[0@]
+    05E2: AS_actor $ARMY69_2[0@] kill_actor PLAYER_ACTOR
+    077A: set_actor $ARMY69_2[0@] acquaintance 4 to_actors_pedtype 0 // see ped.dat
+    
+    end
+    
+    end
+
+while true
+wait 0
+
+if
+$CHEAT_TYPE_FLAG == 1
+    then
+    if and
+    0ADC:   test_cheat "FOODBOY"
+    $CHEATS_ON == 1
+        then
+        32@ += 900000
+        $CHEAT_CODE_ACTIVATED = 1   
+        wait 1
+        end
+    end
+
+if
+$CAMP_AGRED_FLAG[4] == 0
+    then
+    
+    for 2@ = 8 to 13
+    if
+    051A:   actor $ARMY69_2[2@] damaged_by_actor PLAYER_ACTOR
+        then
+        $CAMP_AGRED_FLAG[4] = 1
+        $CAMP_AGRED_FLAG2 = 1
+        
+        0879: enable_gang_wars 0
+        076C: set_zone "SVVZN1B" gang 5 density_to 0
+        076C: set_zone "SVVZN1B" gang 4 density_to 100
+        0879: enable_gang_wars 1
+        
+        for 0@ = 8 to 13
+        
+        0781: get_weapon_with_ID 30 model_to 1@
+
+        while not model.Available(1@)
+        wait 0
+        model.Load(1@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY69_2[0@],30,99999)
+        0E96: clear_char_primary_tasks $ARMY69_2[0@]
+        05E2: AS_actor $ARMY69_2[0@] kill_actor PLAYER_ACTOR
+        077A: set_actor $ARMY69_2[0@] acquaintance 4 to_actors_pedtype 0 // see ped.dat
+        
+        end
+        
+        end
+    end
+    
+    end
+
+//////////////////////////////////////////////////////        
+
+if
+056D:   actor FARM_FOOD_BOY defined
+    then    
+        
+    if and
+    $CAMP_AGRED_FLAG[4] == 0   
+    $PANEL_OPEN == 0
+    not actor.Driving(PLAYER_ACTOR)
+    not actor.Dead(FARM_FOOD_BOY)
+        then
+        
+        if and
+        0104:   actor PLAYER_ACTOR near_actor FARM_FOOD_BOY radius 3.0 3.0 1.0 sphere 0
+        0364:   actor FARM_FOOD_BOY spotted_actor PLAYER_ACTOR
+            then
+        
+            if
+            8A2A: not  text_box 'GAME769' displayed
+            then
+            0512: show_permanent_text_box 'GAME769' 
+            end
+            
+            else
+            
+            if
+            0A2A:   text_box 'GAME769' displayed
+            then
+            text.RemoveTextBox() 
+            end
+            
+            end
+        end        
+    end
+    
+//////////////////////////////////////////////////////    
+    
+if and
+056D:   actor FARM_FOOD_BOY defined
+RADIO_TEXTURE_RENDER_NUMBER == 0
+    then                
+    if and
+    $CAMP_AGRED_FLAG[4] == 0   
+    $PANEL_OPEN == 0
+    0AB0:   key_pressed 69
+    0104:   actor PLAYER_ACTOR near_actor FARM_FOOD_BOY radius 3.0 3.0 1.0 sphere 0
+    not actor.Dead(FARM_FOOD_BOY)
+    not actor.Driving(PLAYER_ACTOR)
+    0364:   actor FARM_FOOD_BOY spotted_actor PLAYER_ACTOR
+        then
+        if and
+        $KANISTRA_USING == 0
+        $JIMMY_USING == 0
+            then            
+            0084: PLAY_TALK_ACTOR = FARM_FOOD_BOY // (int)                                                            
+            player.CanMove(PLAYER_CHAR) = false            
+            text.RemoveTextBox()
+            $PHRASES_OFF_FLAG = 1    
+            fade 0 400
+            $HUD_REMOVE = 1
+            wait 400                        
+            text.ClearAll()    
+            0470: 22@ = actor PLAYER_ACTOR current_weapon
+            06AB: set_actor FARM_FOOD_BOY all_weapons_hidden 1
+            06AB: set_actor PLAYER_ACTOR all_weapons_hidden 1
+            01B9: set_actor PLAYER_ACTOR armed_weapon_to 0        
+            04C4: store_coords_to $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3 from_actor PLAYER_ACTOR with_offset 0.5 -1.3 1.0
+            015F: set_camera_position $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3 rotation 0.0 0.0 0.0
+            camera.OnPed(FARM_FOOD_BOY,15,2)
+            0581: enable_radar 0
+            $PANEL_OPEN = 1
+            $PHRASES_OFF_FLAG = 1
+            text.ClearAll()
+            0639: AS_actor PLAYER_ACTOR rotate_to_actor FARM_FOOD_BOY
+            0639: AS_actor FARM_FOOD_BOY rotate_to_actor PLAYER_ACTOR
+            05BF: AS_actor PLAYER_ACTOR look_at_actor FARM_FOOD_BOY 999999 ms
+            05BF: AS_actor FARM_FOOD_BOY look_at_actor PLAYER_ACTOR 999999 ms
+            wait 400
+            fade 1 400              
+            wait 400
+            $FIST_HUD_ALWAYS = 1    
+            gosub @FARM_BOY_START_MENU
+            :FARM_BOY_BYE                        
+            $FIST_HUD_ALWAYS = 0
+            fade 0 400
+            $HUD_REMOVE = 1
+            wait 400
+            text.ClearAll()
+            cinema.Widescreen(0) 
+            05BF: AS_actor PLAYER_ACTOR look_at_actor FARM_FOOD_BOY 1 ms
+            05BF: AS_actor FARM_FOOD_BOY look_at_actor PLAYER_ACTOR 1 ms
+            06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0
+            06AB: set_actor FARM_FOOD_BOY all_weapons_hidden 0
+            if
+            0491:   actor PLAYER_ACTOR has_weapon 22@
+            then
+            01B9: set_actor PLAYER_ACTOR armed_weapon_to 22@
+            end 
+            camera.SetBehindPlayer()
+            camera.Restore_WithJumpCut()            
+            fade 1 400
+            $HUD_REMOVE = 0  
+            wait 400            
+            cinema.Radar(1)
+            $PANEL_OPEN = 0
+            player.CanMove(PLAYER_CHAR) = true
+            05C1: AS_actor FARM_FOOD_BOY speak_from_audio_table 162    
+            gosub @RANDOM_DIALOG_FARMBOY_BYE
+                
+            v$2NAME3 = "GAME770"
+                            
+            09FD: get_gxt_string v$PHRASE3 width_to 29@
+            0093: 29@ = integer 29@ to_float
+            29@ *= 8.0
+            0092: 29@ = float 29@ to_integer              
+                
+            33@ = 0
+                    
+            repeat
+            wait 0  
+                                                                                
+            0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 99 1
+                                    
+            if or
+            $SAVESTATUS_TRUE == 1
+            $SAVESTATUS == 1
+            $PANEL_OPEN == 1
+            GAME_OVER_FLAG == 1
+            80FE: not  actor PLAYER_ACTOR sphere 0 in_sphere $CAMP_X[4] $CAMP_Y[4] $CAMP_Z[4] radius 140.0 140.0 140.0
+                then
+                break
+                end
+                                    
+            until 002D:   33@ >= 29@  // (int)
+                
+            $PHRASES_OFF_FLAG = 0
+                
+            PLAY_TALK_ACTOR = -1                
+                      
+            end
+        end
+    end    
+    
+//////////////////////////////////////////////////////    
+
+if or
+80A4: not  actor PLAYER_ACTOR sphere 0 in_cube_cornerA 175.6446 -204.5721 -100.0 cornerB -208.3141 251.2705 200.0
+$SAVESTATUS == 1
+    then
+    
+    actor.DestroyInstantly(FARM_FOOD_BOY)    
+    actor.DestroyInstantly(FARM_FOOD_BOY_ON_TRACTOR1)
+    actor.DestroyInstantly(FARM_FOOD_BOY_ON_TRACTOR2)
+    actor.DestroyInstantly(FARM_FOOD_BOY_ON_TRACTOR3)
+    actor.DestroyInstantly(FARM_FOOD_BOY_ON_TRACTOR4)
+    actor.DestroyInstantly(FARM_FOOD_BOY_ON_COMBINE)
+    
+    car.Destroy(FARM_FOOD_TRACTOR1)
+    car.Destroy(FARM_FOOD_TRACTOR2)
+    car.Destroy(FARM_FOOD_TRACTOR3)
+    car.Destroy(FARM_FOOD_TRACTOR4)
+    car.Destroy(FARM_FOOD_COMBINE)    
+    
+    jump to @FARM_BOY_START
+    
+    end
+    
+//////////////////////////////////////////////////////    
+
+end
+
+//////////////////////////////////////////////////////////
+
+end_thread
+
+:FARM_BOY_START_MENU
+
+text.ClearAll()
+
+$PANEL_OPEN = 1
+$PHRASES_OFF_FLAG = 1
+
+if
+001D:   32@ > FARM_FOOD_TIMER_MAX  // (int)
+then
+
+gosub @FARM_FOOD_TIMER_ZERO
+gosub @RANDOM_DIALOG_FARMBOY_FOOD_YES
+            
+0605: actor FARM_FOOD_BOY perform_animation "habargive" IFP "CAMERA" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1
+05BF: AS_actor FARM_FOOD_BOY look_at_actor PLAYER_ACTOR 1170 ms                        
+            
+v$2NAME3 = "GAME770"
+                        
+09FD: get_gxt_string v$PHRASE3 width_to 29@
+0093: 29@ = integer 29@ to_float
+29@ *= 8.0
+0092: 29@ = float 29@ to_integer                                      
+            
+random_int 0@ 0 to 2
+if
+0@ == 0
+then
+$BANKA += 3
+if
+PLAYER_FOOD_ZAPAS > 30
+    then
+    $BANKA -= 1
+    end
+else
+$BANKA += 5
+if
+PLAYER_FOOD_ZAPAS > 30
+    then
+    $BANKA -= 3
+    end
+end
+            
+046D: 0@ = actor PLAYER_ACTOR members_in_group
+            
+if and
+0@ >= 1
+0E4D: random_percent 45
+then
+$BANKA += 1
+end
+            
+if and
+0@ >= 2
+0E4D: random_percent 35
+then
+$BANKA += 1
+end
+            
+if and
+0@ >= 3
+0E4D: random_percent 25
+then
+$BANKA += 1
+end                        
+            
+Audiostream.Volume($PICKUP_ITEM_SOUND) = $SOUNDS_VOLUME 
+Audiostream.Loop($PICKUP_ITEM_SOUND, 0)
+Audiostream.PerformAction($PICKUP_ITEM_SOUND, PLAY)
+            
+33@ = 0
+            
+repeat
+wait 0
+            
+$PHRASES_OFF_FLAG = 1                              
+                            
+0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 99 1
+                            
+if or
+$SAVESTATUS_TRUE == 1
+$SAVESTATUS == 1
+GAME_OVER_FLAG == 1
+80A4: not  actor PLAYER_ACTOR sphere 0 in_cube_cornerA 175.6446 -204.5721 -100.0 cornerB -208.3141 251.2705 200.0
+00E1:   player 0 pressed_key 17
+    then
+    break
+    end
+                            
+until 002D:   33@ >= 29@  // (int)
+            
+text.ClearAll()        
+
+else
+
+gosub @RANDOM_DIALOG_FARMBOY_FOOD_NO
+            
+0605: actor FARM_FOOD_BOY perform_animation "endchat_02" IFP "PED" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1
+05BF: AS_actor FARM_FOOD_BOY look_at_actor 2000 1170 ms                        
+            
+v$2NAME3 = "GAME770"
+                        
+09FD: get_gxt_string v$PHRASE3 width_to 29@
+0093: 29@ = integer 29@ to_float
+29@ *= 8.0
+0092: 29@ = float 29@ to_integer                                      
+            
+33@ = 0
+            
+repeat
+wait 0
+            
+$PHRASES_OFF_FLAG = 1                              
+                            
+0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 99 1
+                            
+if or
+$SAVESTATUS_TRUE == 1
+$SAVESTATUS == 1
+GAME_OVER_FLAG == 1
+80A4: not  actor PLAYER_ACTOR sphere 0 in_cube_cornerA 175.6446 -204.5721 -100.0 cornerB -208.3141 251.2705 200.0
+00E1:   player 0 pressed_key 17
+    then
+    break
+    end
+                            
+until 002D:   33@ >= 29@  // (int)
+            
+text.ClearAll()
+
+end
+
+return
+
+:FARM_FOOD_TIMER_ZERO
+32@ = 0
+random_int FARM_FOOD_TIMER_MAX 600000 900000
+008D: FARM_FOOD_TIMER_MAX = integer FARM_FOOD_TIMER_MAX to_float
+FARM_FOOD_TIMER_MAX *= 1.45
+008C: FARM_FOOD_TIMER_MAX = float FARM_FOOD_TIMER_MAX to_integer
+
+if
+075C:   marker FARM_FOOD_BOY_MARK enabled
+then
+marker.Disable(FARM_FOOD_BOY_MARK)
+FARM_FOOD_BOY_MARK = 0
+end
+
+return
+
+:RANDOM_DIALOG_FARMBOY_FOOD_NO
+    
+for 1@ = 0 to 200
+
+
+v$PHRASE1 = "PH150_"
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 30@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH150_"
+0AD3: v$PHRASE2 = format "%d" 30@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return
+
+:RANDOM_DIALOG_FARMBOY_FOOD_YES
+    
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH149_"    
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 30@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH149_"
+0AD3: v$PHRASE2 = format "%d" 30@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return
+
+:RANDOM_DIALOG_FARMBOY_BYE
+    
+for 1@ = 0 to 200
+
+29@ = 4
+29@ += 156
+
+if
+not $RNDM_HOUSE_BANKA[29@] < 1
+then
+v$PHRASE1 = "PH111_"
+else
+v$PHRASE1 = "PH127_"
+end
+
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 30@ 0 1@
+    end
+
+end  
+
+if
+not $RNDM_HOUSE_BANKA[29@] < 1
+then
+v$PHRASE1 = "PH111_"
+else
+v$PHRASE1 = "PH127_"
+end
+
+0AD3: v$PHRASE2 = format "%d" 30@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return
+
+:FARM_RANDOM_TRACTORS_CREATE
+
+///////////////////////////////////////////////////////
+
+:CAR_CREATE_TRACTOR_FARM_1
+if
+model.Available(#TRACTOR)
+then
+
+gosub @GET_RANDOM_POINT_FOR_FARM_TRACTOR
+ 
+FARM_FOOD_TRACTOR1 = Car.Create(#TRACTOR, 6@, 7@, 8@)
+random_int 0@ 0 2
+06F8: get_nearest_route_for 6@ 7@ 8@ in_direction 0@ store_to 9@ 10@ 11@ Z_angle_to 12@   
+car.Angle(FARM_FOOD_TRACTOR1) = 12@
+
+if
+model.Available(#TRACTOR)
+then
+//model.Destroy(#TRACTOR)
+end
+
+else
+model.Load(#TRACTOR)
+mload
+wait 0
+jump to @CAR_CREATE_TRACTOR_FARM_1
+end
+
+while not model.Available(#FERMER1)
+wait 0
+model.Load(#FERMER1)
+mload
+end
+
+FARM_FOOD_BOY_ON_TRACTOR1 = actor.CreateAsDriver(26,#FERMER1,FARM_FOOD_TRACTOR1)     
+actor.SetWalkStyle(FARM_FOOD_BOY_ON_TRACTOR1,"GANG2")
+0446: set_actor FARM_FOOD_BOY_ON_TRACTOR1 dismemberment_possible 0
+060B: set_actor FARM_FOOD_BOY_ON_TRACTOR1 decision_maker_to $DEC_PEOPLE
+actor.Health(FARM_FOOD_BOY_ON_TRACTOR1) = 1000
+actor.WeaponAccuracy(FARM_FOOD_BOY_ON_TRACTOR1) = 85
+create_thread @ANT_PRE FARM_FOOD_BOY_ON_TRACTOR1
+
+//////////////////////////////////////////////////////////////////////////////
+
+:CAR_CREATE_TRACTOR_FARM_2
+if
+model.Available(#TRACTOR)
+then
+
+gosub @GET_RANDOM_POINT_FOR_FARM_TRACTOR
+ 
+FARM_FOOD_TRACTOR2 = Car.Create(#TRACTOR, 6@, 7@, 8@)
+random_int 0@ 0 2
+06F8: get_nearest_route_for 6@ 7@ 8@ in_direction 0@ store_to 9@ 10@ 11@ Z_angle_to 12@   
+car.Angle(FARM_FOOD_TRACTOR2) = 12@
+
+if
+model.Available(#TRACTOR)
+then
+//model.Destroy(#TRACTOR)
+end
+
+else
+model.Load(#TRACTOR)
+mload
+wait 0
+jump to @CAR_CREATE_TRACTOR_FARM_1
+end
+
+while not model.Available(#FERMER3)
+wait 0
+model.Load(#FERMER3)
+mload
+end
+
+FARM_FOOD_BOY_ON_TRACTOR2 = actor.CreateAsDriver(26,#FERMER3,FARM_FOOD_TRACTOR2)     
+actor.SetWalkStyle(FARM_FOOD_BOY_ON_TRACTOR2,"GANG2")
+0446: set_actor FARM_FOOD_BOY_ON_TRACTOR2 dismemberment_possible 0
+060B: set_actor FARM_FOOD_BOY_ON_TRACTOR2 decision_maker_to $DEC_PEOPLE
+actor.Health(FARM_FOOD_BOY_ON_TRACTOR2) = 1000
+actor.WeaponAccuracy(FARM_FOOD_BOY_ON_TRACTOR2) = 85
+create_thread @ANT_PRE FARM_FOOD_BOY_ON_TRACTOR2
+
+//////////////////////////////////////////////////////////////////////////////
+
+:CAR_CREATE_TRACTOR_FARM_3
+if
+model.Available(#TRACTOR)
+then
+
+gosub @GET_RANDOM_POINT_FOR_FARM_TRACTOR
+ 
+FARM_FOOD_TRACTOR3 = Car.Create(#TRACTOR, 6@, 7@, 8@)
+random_int 0@ 0 2
+06F8: get_nearest_route_for 6@ 7@ 8@ in_direction 0@ store_to 9@ 10@ 11@ Z_angle_to 12@   
+car.Angle(FARM_FOOD_TRACTOR3) = 12@
+
+if
+model.Available(#TRACTOR)
+then
+//model.Destroy(#TRACTOR)
+end
+
+else
+model.Load(#TRACTOR)
+mload
+wait 0
+jump to @CAR_CREATE_TRACTOR_FARM_3
+end
+
+while not model.Available(#FERMER4)
+wait 0
+model.Load(#FERMER4)
+mload
+end
+
+FARM_FOOD_BOY_ON_TRACTOR3 = actor.CreateAsDriver(26,#FERMER4,FARM_FOOD_TRACTOR3)     
+actor.SetWalkStyle(FARM_FOOD_BOY_ON_TRACTOR3,"GANG2")
+0446: set_actor FARM_FOOD_BOY_ON_TRACTOR3 dismemberment_possible 0
+060B: set_actor FARM_FOOD_BOY_ON_TRACTOR3 decision_maker_to $DEC_PEOPLE
+actor.Health(FARM_FOOD_BOY_ON_TRACTOR3) = 1000
+actor.WeaponAccuracy(FARM_FOOD_BOY_ON_TRACTOR3) = 85
+create_thread @ANT_PRE FARM_FOOD_BOY_ON_TRACTOR3
+
+//////////////////////////////////////////////////////////////////////////////
+
+:CAR_CREATE_TRACTOR_FARM_4
+if
+model.Available(#TRACTOR)
+then
+
+gosub @GET_RANDOM_POINT_FOR_FARM_TRACTOR
+ 
+FARM_FOOD_TRACTOR4 = Car.Create(#TRACTOR, 6@, 7@, 8@)
+random_int 0@ 0 2
+06F8: get_nearest_route_for 6@ 7@ 8@ in_direction 0@ store_to 9@ 10@ 11@ Z_angle_to 12@   
+car.Angle(FARM_FOOD_TRACTOR4) = 12@
+
+if
+model.Available(#TRACTOR)
+then
+//model.Destroy(#TRACTOR)
+end
+
+else
+model.Load(#TRACTOR)
+mload
+wait 0
+jump to @CAR_CREATE_TRACTOR_FARM_4
+end
+
+while not model.Available(#FERMER2)
+wait 0
+model.Load(#FERMER2)
+mload
+end
+
+FARM_FOOD_BOY_ON_TRACTOR4 = actor.CreateAsDriver(26,#FERMER2,FARM_FOOD_TRACTOR4)     
+actor.SetWalkStyle(FARM_FOOD_BOY_ON_TRACTOR4,"GANG2")
+0446: set_actor FARM_FOOD_BOY_ON_TRACTOR4 dismemberment_possible 0
+060B: set_actor FARM_FOOD_BOY_ON_TRACTOR4 decision_maker_to $DEC_PEOPLE
+actor.Health(FARM_FOOD_BOY_ON_TRACTOR4) = 1000
+actor.WeaponAccuracy(FARM_FOOD_BOY_ON_TRACTOR4) = 85
+create_thread @ANT_PRE FARM_FOOD_BOY_ON_TRACTOR4
+
+00AE: set_car FARM_FOOD_TRACTOR1 traffic_behaviour_to 2  
+03AB: set_car FARM_FOOD_TRACTOR1 strong 1 
+car.SetDriverBehaviour(FARM_FOOD_TRACTOR1,1)
+car.SetSpeedInstantly(FARM_FOOD_TRACTOR1,5.0)
+
+00AE: set_car FARM_FOOD_TRACTOR2 traffic_behaviour_to 2  
+03AB: set_car FARM_FOOD_TRACTOR2 strong 1 
+car.SetDriverBehaviour(FARM_FOOD_TRACTOR2,1)
+car.SetSpeedInstantly(FARM_FOOD_TRACTOR2,5.0)
+
+00AE: set_car FARM_FOOD_TRACTOR3 traffic_behaviour_to 2  
+03AB: set_car FARM_FOOD_TRACTOR3 strong 1 
+car.SetDriverBehaviour(FARM_FOOD_TRACTOR3,1)
+car.SetSpeedInstantly(FARM_FOOD_TRACTOR3,5.0)
+
+00AE: set_car FARM_FOOD_TRACTOR4 traffic_behaviour_to 2  
+03AB: set_car FARM_FOOD_TRACTOR4 strong 1 
+car.SetDriverBehaviour(FARM_FOOD_TRACTOR4,1)
+car.SetSpeedInstantly(FARM_FOOD_TRACTOR4,5.0)
+
+//////////////////////////////////////////////////////////////////////////////
+
+:CAR_CREATE_COMBINE_FARM
+if
+model.Available(#COMBINE)
+then
+
+gosub @GET_RANDOM_POINT_FOR_FARM_TRACTOR
+ 
+FARM_FOOD_COMBINE = Car.Create(#COMBINE, 6@, 7@, 8@)
+random_int 0@ 0 2
+06F8: get_nearest_route_for 6@ 7@ 8@ in_direction 0@ store_to 9@ 10@ 11@ Z_angle_to 12@   
+car.Angle(FARM_FOOD_COMBINE) = 12@
+car.DoorStatus(FARM_FOOD_COMBINE,2)
+
+if
+model.Available(#COMBINE)
+then
+//model.Destroy(#COMBINE)
+end
+
+else
+model.Load(#COMBINE)
+mload
+wait 0
+jump to @CAR_CREATE_COMBINE_FARM
+end
+
+while not model.Available(#FERMER1)
+wait 0
+model.Load(#FERMER1)
+mload
+end
+
+FARM_FOOD_BOY_ON_COMBINE = actor.CreateAsDriver(26,#FERMER1,FARM_FOOD_COMBINE)     
+actor.SetWalkStyle(FARM_FOOD_BOY_ON_COMBINE,"GANG2")
+0446: set_actor FARM_FOOD_BOY_ON_COMBINE dismemberment_possible 0
+060B: set_actor FARM_FOOD_BOY_ON_COMBINE decision_maker_to $DEC_PEOPLE
+actor.Health(FARM_FOOD_BOY_ON_COMBINE) = 1000
+actor.WeaponAccuracy(FARM_FOOD_BOY_ON_COMBINE) = 85
+
+00AE: set_car FARM_FOOD_COMBINE traffic_behaviour_to 2  
+03AB: set_car FARM_FOOD_COMBINE strong 1 
+car.SetDriverBehaviour(FARM_FOOD_COMBINE,1)
+car.SetSpeedInstantly(FARM_FOOD_COMBINE,5.0)    
+
+return
+
+:GET_RANDOM_POINT_FOR_FARM_TRACTOR
+wait 0
+
+if
+0E4D: random_percent 50
+then
+//-40.2749 -109.4156 3.1172
+//37.5237 -59.2123 1.6044
+0208: 6@ = random_float_in_ranges -40.2749 37.5237
+0208: 7@ = random_float_in_ranges -109.4156 -59.2123
+else
+0208: 6@ = random_float_in_ranges 70.7722 33.1095 
+0208: 7@ = random_float_in_ranges 54.4491 -48.0134
+end
+
+02C1: store_to 9@ 10@ 11@ car_path_coords_closest_to 6@ 7@ 8@
+
+if and
+8AE2: not 30@ = random_vehicle_near_point 9@ 10@ 11@ in_radius 10.0 find_next 0 pass_wrecked 1 //IF and SET
+8AE1: not 31@ = random_actor_near_point 9@ 10@ 11@ in_radius 5.0 find_next 0 pass_deads 0 //IF and SET
+jf @GET_RANDOM_POINT_FOR_FARM_TRACTOR
+
+return

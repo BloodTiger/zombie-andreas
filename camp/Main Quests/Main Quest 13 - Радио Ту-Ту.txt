@@ -1,0 +1,2095 @@
+//CAMP_NUMBER = 10
+
+const
+MQ13_HARZON = $RNDM_HOUSE_WEAPON[23]
+MQ13_HARZON_BMX = 299@
+MQ13_TRAIN_HANDLE = 200@
+MQ13_TRAIN_CARRIAGE1_HANDLE = 201@
+MQ13_TRAIN_CARRIAGE2_HANDLE = 202@
+MQ13_TRAIN_CARRIAGE3_HANDLE = 203@
+MQ13_TRAIN_CARRIAGE4_HANDLE = 204@
+MQ13_TRAIN_CARRIAGE5_HANDLE = 205@
+MQ13_TEMP_CAR_X = 402@
+MQ13_TEMP_CAR_Y = 403@
+MQ13_TEMP_CAR_Z = 404@
+MQ13_TEMP_CAR_ANGLE = 405@
+MQ13_TEMP_CAR_SAVE_FLAG = 406@
+end
+
+:MQ13
+thread 'MQ13'
+gosub @ASSKOD_MISSII2829_13 
+if 
+wasted_or_busted 
+jf @ASSPROPUSK_KODA2829_13 
+gosub @ASSKOD_PROVALA2829_13 
+
+:ASSPROPUSK_KODA2829_13        
+gosub @ASSUDALENIE_KODA2829_13
+
+HARDCORE_DANGER_FLAG_SCRIPTED = 0
+if
+GAME_OVER_FLAG == 1
+then
+HARDCORE_DANGER_ANTIFLAG_SCRIPTED = 1
+end
+
+create_thread @MQ_CHKP
+
+end_thread
+
+:ASSKOD_MISSII2829_13
+increment_mission_attempts
+0629: change_integer_stat 258 to 93
+
+if
+056E:   car $USED_CAR[LATEST_CAR_SLOT_USED] defined
+then
+Car.StorePos($USED_CAR[LATEST_CAR_SLOT_USED], MQ13_TEMP_CAR_X, MQ13_TEMP_CAR_Y, MQ13_TEMP_CAR_Z)
+MQ13_TEMP_CAR_ANGLE = car.Angle($USED_CAR[LATEST_CAR_SLOT_USED])
+MQ13_TEMP_CAR_SAVE_FLAG = 1
+else
+MQ13_TEMP_CAR_SAVE_FLAG = 0
+end
+
+$ALLOW_ZOMBIES = 0
+$ZOMBIE_REMOVE_FLAG = 1
+
+0776: create_objects_in_object_group "quest13"
+
+///////////////////////////////////////////////////////////
+
+MAIN_QUEST_MUSIC_FLAG = 1
+$MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\QUESTS\Q13\Q13A.wav")
+Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
+Audiostream.Loop($MUSIC_ASSHOLE, 1)
+Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+
+/////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1 
+
+/////////////////////////////////////////////////////////////////////
+
+actor.StorePos(PLAYER_ACTOR,100@,101@,102@)
+0084: $QUEST_CAMP_NUMBER = $ENTERED_CAMP_NUMBER // (int)
+
+marker.Disable($CAMP_MARKER[$QUEST_CAMP_NUMBER])
+$CAMP_MARKER[$QUEST_CAMP_NUMBER] = Marker.CreateIconWithoutSphere(31, $CAMP_X[$QUEST_CAMP_NUMBER], $CAMP_Y[$QUEST_CAMP_NUMBER], $CAMP_Z[$QUEST_CAMP_NUMBER])
+
+MAIN_QUEST_TEAMMATES_REMOVE_FLAG = 1 
+
+repeat
+wait 0
+until $PHRASES_OFF_FLAG == 0
+
+//MAIN_QUEST13_COMPLETED_FLAG = 1
+
+00BA: show_text_styled GXT "GAME931" time 5000 style 2
+
+$ONMISSION = 1
+$QUEST_TYPE = 23
+CAMP_DONT_SAY_HELLO_FLAG = 1
+PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 1
+$NOTSPAWN_ETC = 1
+$SPECIAL_INFECTED_NOT_SPAWN_FLAG = 1
+$SURVIVORS_DONT_SPAWN_FLAG = 1
+
+if and
+$CHEATS_ON == 1
+0AB0:   key_pressed 49
+then
+0AF1: write_int 1 to_ini_file "data\survival.set" section "SCR" key "MQ13_CHECKPOINT"
+end
+
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MQ13_CHECKPOINT"
+
+if
+MQ_CHECKPOINT_FUCKNO == 1
+then
+0@ = 0
+end
+
+if
+not 0@ == 1
+then
+018A: MISSION_CHECKPOINT = create_checkpoint_at 2838.1292 2605.3342 22.4417
+v$OBJECTIVE = "GAME932"
+if
+REALISM_MODE == 1
+then
+v$OBJECTIVE = "GRME932"
+end
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+else
+$HUD_REMOVE = 1
+fade 0 500
+wait 500
+actor.PutAtNoOffset(PLAYER_ACTOR,2797.6675, 2531.9807, 22.4417)
+actor.Angle(PLAYER_ACTOR) = 160.9094
+camera.Restore_WithJumpCut()
+create_thread @REFR_3D
+
+$ALLOW_ZOMBIES = 1
+$ZOMBIE_REMOVE_FLAG = 0
+
+marker.Disable(MISSION_CHECKPOINT)
+v$OBJECTIVE = "DUMMY"
+
+$ZOMBIE_SPAWN_ON_COORD = 1
+$SPECIAL_INFECTED_SPAWN_OZC_FLAG = 1  
+$ZOMBIE_COORD_MAX = 9  
+  
+$ZOMBIE_X[0] = 2823.8896
+$ZOMBIE_Y[0] = 2604.9053
+$ZOMBIE_Z[0] = 9.8203
+  
+$ZOMBIE_X[1] = 2791.3064
+$ZOMBIE_Y[1] = 2582.031
+$ZOMBIE_Z[1] = 9.8203
+  
+$ZOMBIE_X[2] = 2768.219
+$ZOMBIE_Y[2] = 2548.8215
+$ZOMBIE_Z[2] = 9.8203
+  
+$ZOMBIE_X[3] = 2778.084
+$ZOMBIE_Y[3] = 2525.7642
+$ZOMBIE_Z[3] = 9.8203
+  
+$ZOMBIE_X[4] = 2755.4368
+$ZOMBIE_Y[4] = 2501.7634
+$ZOMBIE_Z[4] = 9.8203
+  
+$ZOMBIE_X[5] = 2830.2192
+$ZOMBIE_Y[5] = 2630.5547
+$ZOMBIE_Z[5] = 9.8203
+  
+$ZOMBIE_X[6] = 2850.8706
+$ZOMBIE_Y[6] = 2601.4438
+$ZOMBIE_Z[6] = 9.8203
+  
+$ZOMBIE_X[7] = 2867.823
+$ZOMBIE_Y[7] = 2574.4639
+$ZOMBIE_Z[7] = 9.8203
+  
+$ZOMBIE_X[8] = 2778.6812
+$ZOMBIE_Y[8] = 2596.9211
+$ZOMBIE_Z[8] = 9.8203
+
+jump to @MQ13_CHECKPOINT_JUMP
+end
+
+repeat   
+wait 0
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST13_FAILED_PLAYER_DIED
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @MAIN_QUEST13_FAILED_AGRO
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @MAIN_QUEST13_FAILED_LDEAD
+
+//mqskip
+if and
+$CHEATS_ON == 1
+$DEBUG_MENU_ON == 1
+$CHEAT_TYPE_FLAG == 1
+    then
+    if
+    0ADC:   test_cheat "SKIP"
+        then
+        $TALK_SIMULATE = 1
+        $QUEST_READY_FLAG = 1
+        
+        /////////////////////Плавное затухание/////////////////////
+
+        $MUSIC_FADE_NUMBER += 1
+        if
+        $MUSIC_FADE_NUMBER > 4
+            then
+            $MUSIC_FADE_NUMBER = 0 
+            end    
+                
+        0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+        $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+                
+        $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 100
+        $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+        $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+        create_thread @MUS_FAD
+                
+        wait 1
+                
+        while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+        wait 0
+        end
+            
+        MAIN_QUEST_MUSIC_FLAG = 0
+        
+        jump to @MQ13_END_JUMP
+        end
+    end        
+
+until 00EC:   actor PLAYER_ACTOR sphere 0 near_point 2796.8755 2567.3811 radius 120.0 120.0
+
+$ALLOW_ZOMBIES = 1
+$ZOMBIE_REMOVE_FLAG = 0
+
+marker.Disable(MISSION_CHECKPOINT)
+v$OBJECTIVE = "DUMMY"
+
+$ZOMBIE_SPAWN_ON_COORD = 1
+$SPECIAL_INFECTED_SPAWN_OZC_FLAG = 1  
+$ZOMBIE_COORD_MAX = 9  
+  
+$ZOMBIE_X[0] = 2823.8896
+$ZOMBIE_Y[0] = 2604.9053
+$ZOMBIE_Z[0] = 9.8203
+  
+$ZOMBIE_X[1] = 2791.3064
+$ZOMBIE_Y[1] = 2582.031
+$ZOMBIE_Z[1] = 9.8203
+  
+$ZOMBIE_X[2] = 2768.219
+$ZOMBIE_Y[2] = 2548.8215
+$ZOMBIE_Z[2] = 9.8203
+  
+$ZOMBIE_X[3] = 2778.084
+$ZOMBIE_Y[3] = 2525.7642
+$ZOMBIE_Z[3] = 9.8203
+  
+$ZOMBIE_X[4] = 2755.4368
+$ZOMBIE_Y[4] = 2501.7634
+$ZOMBIE_Z[4] = 9.8203
+  
+$ZOMBIE_X[5] = 2830.2192
+$ZOMBIE_Y[5] = 2630.5547
+$ZOMBIE_Z[5] = 9.8203
+  
+$ZOMBIE_X[6] = 2850.8706
+$ZOMBIE_Y[6] = 2601.4438
+$ZOMBIE_Z[6] = 9.8203
+  
+$ZOMBIE_X[7] = 2867.823
+$ZOMBIE_Y[7] = 2574.4639
+$ZOMBIE_Z[7] = 9.8203
+  
+$ZOMBIE_X[8] = 2778.6812
+$ZOMBIE_Y[8] = 2596.9211
+$ZOMBIE_Z[8] = 9.8203
+
+v$ST_DIALOG[0] = "MQ_665"
+v$ST_DIALOG[1] = "MQ_666"
+$DIALOG_COUNT = 1
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+        
+repeat
+wait 0
+
+$ZOMBIES_COUNT = 20
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST13_FAILED_PLAYER_DIED
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @MAIN_QUEST13_FAILED_AGRO
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @MAIN_QUEST13_FAILED_LDEAD        
+ 
+until $DIALOG_END == 1
+
+v$OBJECTIVE = "GAME933"
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+
+repeat
+wait 0
+
+$ZOMBIES_COUNT = 20
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST13_FAILED_PLAYER_DIED
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @MAIN_QUEST13_FAILED_AGRO
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @MAIN_QUEST13_FAILED_LDEAD        
+
+if
+0E45: frame_mod 120
+    then
+        
+    gosub @RANDOM_DIALOG_MQ13       
+    
+    09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+    0093: 3@ = integer 3@ to_float
+    3@ *= 8.0
+    0092: 3@ = float 3@ to_integer
+    text.ClearAll()  
+            
+    00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+        
+    end 
+
+until 00FE:   actor PLAYER_ACTOR sphere 0 in_sphere 2821.1458 2565.6516 22.4417 radius 180.0 180.0 3.0
+
+:MQ13_CHECKPOINT_JUMP
+
+064B: 101@ = create_particle "teargas" at 2772.3979 2466.1443 17.6719 type 1
+064B: 102@ = create_particle "teargas" at 2773.3286 2465.7729 17.6719 type 1
+064B: 103@ = create_particle "teargas" at 2772.3447 2466.6855 17.6719 type 1
+064C: make_particle 101@ visible
+064C: make_particle 102@ visible
+064C: make_particle 103@ visible
+
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MQ13_CHECKPOINT"
+if
+MQ_CHECKPOINT_FUCKNO == 1
+then
+0@ = 0
+end
+
+if
+0@ == 1
+then
+camera.Restore_WithJumpCut()
+create_thread @REFR_3D
+fade 1 500
+$HUD_REMOVE = 0
+wait 500
+end
+
+0AF1: write_int 1 to_ini_file "data\survival.set" section "SCR" key "MQ13_CHECKPOINT"
+
+v$OBJECTIVE = "GAME934"
+if
+REALISM_MODE == 1
+then
+v$OBJECTIVE = "GRME934"
+end
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+
+$SIREN_X = 2772.5039
+$SIREN_Y = 2465.8008
+$SIREN_Z = 17.6719 
+$SIREN_VOLUME_MULTIPER = 60.0
+
+$SOUND_EFFECT1 = Audiostream.Load("AUDIO\SOUNDS\Radio.mp3")
+
+Audiostream.PerformAction($SOUND_EFFECT1, PLAY)
+Audiostream.Volume($SOUND_EFFECT1) = 0.0
+Audiostream.Loop($SOUND_EFFECT1, 1)
+
+//////////////////////////////////////////////////////////////////////////////
+
+while not model.Available(14729)
+wait 0
+model.Load(14729)
+mload
+end
+
+MQ13_HARZON = actor.Create(26,14729,2772.5039, 2465.8008, 17.6719)
+actor.Angle(MQ13_HARZON) = 139.2576
+
+actor.SetWalkStyle(MQ13_HARZON,"surv5")
+0446: set_actor MQ13_HARZON dismemberment_possible 0
+060B: set_actor MQ13_HARZON decision_maker_to $DEC_PEOPLE
+actor.Health(MQ13_HARZON) = 1000
+actor.WeaponAccuracy(MQ13_HARZON) = 100
+02A9: set_actor MQ13_HARZON immune_to_nonplayer 1
+08C6: set_actor MQ13_HARZON stay_on_bike 1
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+while not model.Available(#FREIGHT)
+wait 0
+model.Load(#FREIGHT)
+mload
+end
+
+while not model.Available(#FREIFLAT)
+wait 0
+model.Load(#FREIFLAT)
+mload
+end
+
+06D8: MQ13_TRAIN_HANDLE = create_train_at 2552.8926 2434.6904 11.23 type 13 direction 1 
+Car.DoorStatus(MQ13_TRAIN_HANDLE) = 3
+06DC: set_train MQ13_TRAIN_HANDLE acc 0.0 
+06DD: set_train MQ13_TRAIN_HANDLE speed 0.0 
+Car.LockInCurrentPosition(MQ13_TRAIN_HANDLE) = True
+Car.StorePos(MQ13_TRAIN_HANDLE, $TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+046C: 0@ = car MQ13_TRAIN_HANDLE driver
+actor.DestroyInstantly(0@)
+                          
+078A: MQ13_TRAIN_CARRIAGE1_HANDLE = get_train MQ13_TRAIN_HANDLE carriage 1 handle 
+78@ = Object.Init(#KMILITARY_CRATE, $TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+0681: attach_object 78@ to_car MQ13_TRAIN_CARRIAGE1_HANDLE with_offset -0.0485 5.578 -1.0661 rotation 0.0 0.0 90.1967 
+84@ = Object.Init(#KMILITARY_BASE, $TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+0681: attach_object 84@ to_car MQ13_TRAIN_CARRIAGE1_HANDLE with_offset -0.0485 5.578 -1.0661 rotation 0.0 0.0 90.1967 
+85@ = Object.Init(#BLOCKPALLET, $TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+0681: attach_object 85@ to_car MQ13_TRAIN_CARRIAGE1_HANDLE with_offset 0.2634 1.2508 -0.3321 rotation 0.0 0.0 90.1967 
+86@ = Object.Init(#TEMP_CRATE1, $TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+0681: attach_object 86@ to_car MQ13_TRAIN_CARRIAGE1_HANDLE with_offset 1.1025 -7.3122 -1.0766 rotation 0.0 0.0 90.1967 
+87@ = Object.Init(#TEMP_CRATE1, $TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+0681: attach_object 87@ to_car MQ13_TRAIN_CARRIAGE1_HANDLE with_offset 0.8835 -6.5365 -1.1047 rotation 0.0 0.0 183.7464 
+88@ = Object.Init(#TEMP_CRATE1, $TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+0681: attach_object 88@ to_car MQ13_TRAIN_CARRIAGE1_HANDLE with_offset 1.1395 -5.6969 -1.0827 rotation 0.0 0.0 273.6459 
+89@ = Object.Init(#K_SMASHBOXES, $TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+0681: attach_object 89@ to_car MQ13_TRAIN_CARRIAGE1_HANDLE with_offset 0.4817 -1.5356 -1.0651 rotation 0.0 0.0 93.1856 
+078A: MQ13_TRAIN_CARRIAGE2_HANDLE = get_train MQ13_TRAIN_HANDLE carriage 2 handle 
+078A: MQ13_TRAIN_CARRIAGE3_HANDLE = get_train MQ13_TRAIN_HANDLE carriage 3 handle 
+79@ = Object.Init(#KMILITARY_CRATE, $TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+0681: attach_object 79@ to_car MQ13_TRAIN_CARRIAGE3_HANDLE with_offset -0.0403 4.0293 -1.0661 rotation 0.0 0.0 90.1967 
+90@ = Object.Init(#KMILITARY_BASE, $TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+0681: attach_object 90@ to_car MQ13_TRAIN_CARRIAGE3_HANDLE with_offset -0.0403 4.0293 -1.0661 rotation 0.0 0.0 2.7605 
+//91@ = Object.Init(#K_CARGO1, $TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+//0681: attach_object 91@ to_car MQ13_TRAIN_CARRIAGE3_HANDLE with_offset -0.0177 0.6971 -1.0662 rotation 0.0 0.0 91.0 
+92@ = Object.Init(#K_SMASHBOXES, $TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+0681: attach_object 92@ to_car MQ13_TRAIN_CARRIAGE3_HANDLE with_offset -0.0228 -2.9213 -1.0651 rotation 0.0 0.0 87.9095 
+93@ = Object.Init(#K_SMASHBOXES, $TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+0681: attach_object 93@ to_car MQ13_TRAIN_CARRIAGE3_HANDLE with_offset 0.1054 6.4364 -1.0651 rotation 0.0 0.0 89.7187 
+96@ = Object.Init(#K_CARGO4, $TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+0681: attach_object 96@ to_car MQ13_TRAIN_CARRIAGE3_HANDLE with_offset 0.4192 -6.0624 -1.0628 rotation 0.0 0.0 2.7605 
+078A: MQ13_TRAIN_CARRIAGE4_HANDLE = get_train MQ13_TRAIN_HANDLE carriage 4 handle 
+078A: MQ13_TRAIN_CARRIAGE5_HANDLE = get_train MQ13_TRAIN_HANDLE carriage 5 handle 
+80@ = Object.Init(#KMILITARY_CRATE, $TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+0681: attach_object 80@ to_car MQ13_TRAIN_CARRIAGE5_HANDLE with_offset 0.0853 5.9501 -1.0583 rotation 0.0 0.0 90.1967 
+97@ = Object.Init(#KMILITARY_BASE, $TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+0681: attach_object 97@ to_car MQ13_TRAIN_CARRIAGE5_HANDLE with_offset 0.0853 5.9501 -1.0583 rotation 0.0 0.0 92.239 
+98@ = Object.Init(#K_CARGO4, $TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+0681: attach_object 98@ to_car MQ13_TRAIN_CARRIAGE5_HANDLE with_offset -0.8464 -6.5879 -1.0628 rotation 0.0 0.0 0.12 
+//100@ = Object.Init(#K_CARGO1, $TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+//0681: attach_object 100@ to_car MQ13_TRAIN_CARRIAGE5_HANDLE with_offset 0.8877 0.1707 -1.0564 rotation 0.0 0.0 177.5167 
+//101@ = Object.Init(#K_CARGO1, $TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+//0681: attach_object 101@ to_car MQ13_TRAIN_CARRIAGE5_HANDLE with_offset -0.6907 0.205 -1.0662 rotation 0.0 0.0 179.6863 
+//102@ = Object.Init(#K_CARGO1, $TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+//0681: attach_object 102@ to_car MQ13_TRAIN_CARRIAGE5_HANDLE with_offset 0.0036 2.2326 -1.0644 rotation 0.0 0.0 267.6086 
+
+repeat
+wait 0
+
+//if
+//0AB0:   key_pressed 53
+//then
+//car.StorePos(MQ13_TRAIN_CARRIAGE5_HANDLE,501@,502@,503@)
+//end
+//
+//if
+//0AB0:   key_pressed 52
+//then
+//car.StorePos(MQ13_TRAIN_CARRIAGE4_HANDLE,501@,502@,503@)
+//end
+//
+//if
+//0AB0:   key_pressed 51
+//then
+//car.StorePos(MQ13_TRAIN_CARRIAGE3_HANDLE,501@,502@,503@)
+//end
+//
+//if
+//0AB0:   key_pressed 50
+//then
+//car.StorePos(MQ13_TRAIN_CARRIAGE2_HANDLE,501@,502@,503@)
+//end
+//
+//if
+//0AB0:   key_pressed 49
+//then
+//car.StorePos(MQ13_TRAIN_CARRIAGE1_HANDLE,501@,502@,503@)
+//end
+// 
+//actor.StorePos(PLAYER_ACTOR,504@,505@,506@)
+//0063: 501@ -= 504@  // (float)
+//0063: 502@ -= 505@  // (float)
+//0063: 503@ -= 506@  // (float)
+//0AD1: show_formatted_text_highpriority "ACTOR OFFSET FROM TRAIN %f %f %f" time 2000 501@ 502@ 503@
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST13_FAILED_PLAYER_DIED
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @MAIN_QUEST13_FAILED_AGRO
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @MAIN_QUEST13_FAILED_LDEAD        
+if
+0184:   actor MQ13_HARZON health > 0
+jf @MAIN_QUEST13_FAILED_HARZON_DEAD
+
+gosub @SIREN_VOLUME_MQ13
+
+if
+0E45: frame_mod 120
+    then
+        
+    gosub @RANDOM_DIALOG_MQ13       
+    
+    09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+    0093: 3@ = integer 3@ to_float
+    3@ *= 8.0
+    0092: 3@ = float 3@ to_integer
+    text.ClearAll()  
+            
+    00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+        
+    end
+
+until 00FE:   actor PLAYER_ACTOR sphere 0 in_sphere 2772.5852 2465.7346 17.6719 radius 10.0 10.0 5.0
+
+v$OBJECTIVE = "DUMMY"
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+    
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+    
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 100
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+    
+wait 1
+    
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+    
+///////////////////////////////////////////////////////////
+    
+$MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\QUESTS\Q13\Q13B.wav")
+Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
+Audiostream.Loop($MUSIC_ASSHOLE, 1)
+Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+    
+/////////////////////Плавное нарастание/////////////////////
+    
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+    
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+    
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+    
+wait 1
+
+gosub @DISEMB_JETP_CHECK    
+0792: disembark_instantly_actor PLAYER_ACTOR
+0687: clear_actor PLAYER_ACTOR task
+    
+0639: AS_actor MQ13_HARZON rotate_to_actor PLAYER_ACTOR
+0639: AS_actor PLAYER_ACTOR rotate_to_actor MQ13_HARZON
+
+$END_DIALOG_INST = 1
+wait 0    
+0084: $DIALOG_ACTOR[0] = PLAYER_ACTOR // (int)
+$DIALOG_ACTOR[1] = -69
+v$ST_DIALOG[0] = "MQ_675"
+v$ST_DIALOG[1] = "MQ_676"
+$DIALOG_COUNT = 1
+create_thread @DG_SYS
+    
+0E68: set_player_control_pad 0 1 
+0E69: set_player_control_pad_movement 0 0
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+:MQ13_BMX_CREATE
+if
+model.Available(#MTBIKE)
+then
+
+MQ13_HARZON_BMX = car.Create(#MTBIKE,2763.0632, 2460.2568, 10.7773)
+car.Angle(MQ13_HARZON_BMX) = 197.9043
+
+if
+model.Available(#MTBIKE)
+then
+//model.Destroy(#MTBIKE)
+end
+
+else
+model.Load(#MTBIKE)
+mload
+wait 0
+jump to @MQ13_BMX_CREATE
+end
+
+088B: set_car MQ13_HARZON_BMX form_drag_multiplier_to -2.0 
+0423: set_car MQ13_HARZON_BMX improved_handling_to 2.0 // (float)
+020A: set_car MQ13_HARZON_BMX door_status_to 3
+
+:MQ13_BMX_CREATE2
+if
+model.Available(#BMX)
+then
+
+SUPPLY_QUEST_TRUCK = car.Create(#BMX,2774.6892, 2457.145, 10.9959)
+car.Angle(SUPPLY_QUEST_TRUCK) = 247.1933
+
+if
+model.Available(#BMX)
+then
+//model.Destroy(#BMX)
+end
+
+else
+model.Load(#BMX)
+mload
+wait 0
+jump to @MQ13_BMX_CREATE2
+end
+
+088B: set_car SUPPLY_QUEST_TRUCK form_drag_multiplier_to 10.0 
+
+//////////////////////////////////////////////////////////////////////////////                    
+    
+repeat
+wait 0
+
+07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 0
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST13_FAILED_PLAYER_DIED
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @MAIN_QUEST13_FAILED_AGRO
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @MAIN_QUEST13_FAILED_LDEAD        
+if
+0184:   actor MQ13_HARZON health > 0
+jf @MAIN_QUEST13_FAILED_HARZON_DEAD
+
+gosub @SIREN_VOLUME_MQ13
+
+if and
+50@ == 0
+$DIALOG_CURRENT_INT == 1
+    then
+    
+    50@ = 1
+    
+    0E68: set_player_control_pad 1 1 
+    0E69: set_player_control_pad_movement 0 1
+    
+    0615: define_AS_pack_begin 51@
+    05D3: AS_actor -1 goto_point 2767.4624 2467.6672 17.6719 mode 7 time 5000 ms // versionA
+    05D4: AS_actor -1 rotate_angle 135.4391
+    078F: AS_actor -1 climb 1
+    05D3: AS_actor -1 goto_point 2763.5955 2460.5576 10.8203 mode 7 time 5000 ms // versionA
+    05BD: AS_actor -1 tired 3500 ms
+    05CB: AS_actor -1 enter_car MQ13_HARZON_BMX as_driver 10000 ms
+    0616: define_AS_pack_end 51@
+    0618: assign_actor MQ13_HARZON to_AS_pack 51@
+    061B: remove_references_to_AS_pack 51@
+    
+    end
+
+until $DIALOG_END == 1
+
+v$ST_DIALOG[0] = "MQ_677"
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+50@ = 0
+51@ = 0
+52@ = 0
+53@ = 0
+54@ = 0
+55@ = 0
+
+018A: MISSION_CHECKPOINT = create_checkpoint_at 2772.5227 2466.052 17.6719
+03BC: MISSION_SPHERE = create_sphere_at 2772.5227 2466.052 17.6719 radius 2.0
+v$OBJECTIVE = "GAME935"
+if
+REALISM_MODE == 1
+then
+v$OBJECTIVE = "GRME935"
+end
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+
+repeat
+wait 0
+
+07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 0
+if
+53@ == 1
+then
+if and  
+0E3E: is_button_just_pressed 0 button 15
+not actor.Driving(PLAYER_ACTOR)
+not 57@ == 1
+056E:   car SUPPLY_QUEST_TRUCK defined
+    then
+    if
+    0EE5: locate_char_distance_to_car PLAYER_ACTOR car SUPPLY_QUEST_TRUCK radius 2.0
+        then
+        if
+        0E49: is_char_entering_any_car PLAYER_ACTOR
+            then
+            0687: clear_actor PLAYER_ACTOR task
+            else
+            05CB: AS_actor PLAYER_ACTOR enter_car SUPPLY_QUEST_TRUCK as_driver 90000 ms
+            end
+        end
+    end
+end
+
+0@ = 0
+if and
+53@ == 1
+8E48: not is_char_fallen_on_ground PLAYER_ACTOR
+0E45: frame_mod 15
+then
+
+if and
+0A29:   player PLAYER_CHAR climbing
+57@ == 1
+then
+0@ = 1
+end
+
+if
+actor.Animation(PLAYER_ACTOR) == "FALL_collapse"
+then
+0@ = 1
+end
+
+if or
+actor.Animation(PLAYER_ACTOR) == "JUMP_land"
+actor.Animation(PLAYER_ACTOR) == "FALL_land"
+0597:   actor PLAYER_ACTOR crouching
+0E47: is_char_fighting PLAYER_ACTOR
+0E46: is_char_using_gun PLAYER_ACTOR
+0@ == 1
+    then
+    if
+    0E4D: random_percent 50
+        then
+        0792: disembark_instantly_actor PLAYER_ACTOR
+        //Player.CanMove(PLAYER_CHAR) = False
+        0E68: set_player_control_pad 0 1 
+        0E69: set_player_control_pad_movement 0 0
+        05BB: AS_actor PLAYER_ACTOR fall_down 0 time_on_ground 5000 
+        wait 1 
+        //Player.CanMove(PLAYER_CHAR) = True
+        0E68: set_player_control_pad 1 1 
+        0E69: set_player_control_pad_movement 0 1
+        end
+    end
+    
+end
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST13_FAILED_PLAYER_DIED
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @MAIN_QUEST13_FAILED_AGRO
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @MAIN_QUEST13_FAILED_LDEAD        
+if
+0184:   actor MQ13_HARZON health > 0
+jf @MAIN_QUEST13_FAILED_HARZON_DEAD
+
+if and
+00F2:   actor PLAYER_ACTOR near_actor MQ13_HARZON radius 30.0 30.0 sphere 0
+55@ == 0
+53@ == 1
+    then
+    55@ = 1
+    v$ST_DIALOG[0] = "MQ_679"
+    v$ST_DIALOG[1] = "MQ_680"
+    $DIALOG_COUNT = 1
+    $DIALOG_NOT_SKIP = 1
+    create_thread @DG_SYS2
+    end
+    
+if and
+actor.InCar(PLAYER_ACTOR,SUPPLY_QUEST_TRUCK)
+075C:   marker MISSION_CHECKPOINT enabled
+54@ == 1
+    then
+    marker.Disable(MISSION_CHECKPOINT)
+//    06AF: set_player PLAYER_CHAR sprint_mode 1
+    end
+    
+if
+54@ == 0
+    then
+    gosub @SIREN_VOLUME_MQ13
+    end    
+
+if and
+54@ == 0
+53@ == 1
+80EC: not  actor PLAYER_ACTOR sphere 0 near_point 2772.5227 2466.052 radius 10.0 10.0
+    then
+    
+    marker.Disable(MISSION_CHECKPOINT)
+    03BD: destroy_sphere MISSION_SPHERE
+    
+    54@ = 1    
+    020C: create_explosion_with_radius 12 at 2772.5227 2466.052 17.6719            
+    
+    Audiostream.Volume($SOUND_EFFECT1) = 0.0
+    Audiostream.Release($SOUND_EFFECT1)
+    
+    v$ST_DIALOG[0] = "MQ_678"
+    $DIALOG_COUNT = 0
+    $DIALOG_NOT_SKIP = 1
+    create_thread @DG_SYS2
+    
+    MISSION_MARKER = marker.CreateAboveActor(MQ13_HARZON)
+    marker.SetIconSize(MISSION_MARKER,2)
+    07E0: set_marker MISSION_MARKER type_to 1
+    
+    MISSION_CHECKPOINT = marker.CreateAboveCar(SUPPLY_QUEST_TRUCK)
+    marker.SetIconSize(MISSION_CHECKPOINT,2)
+    07E0: set_marker MISSION_CHECKPOINT type_to 1
+    
+    v$OBJECTIVE = "GAME937"
+    0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+    $SOUNDS_VOLUME3 *= 0.5
+    Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+    Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+    Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+        
+    end        
+
+if and
+53@ == 0
+00EC:   actor PLAYER_ACTOR sphere 0 near_point 2772.5227 2466.052 radius 2.0 2.0
+    then
+    
+    v$OBJECTIVE = "DUMMY"
+    
+    marker.Disable(MISSION_CHECKPOINT)
+    03BD: destroy_sphere MISSION_SPHERE
+    
+    53@ = 1
+    
+    0470: 9@ = actor PLAYER_ACTOR current_weapon
+    06AB: set_actor PLAYER_ACTOR all_weapons_hidden 1
+    0992: set_player PLAYER_CHAR weapons_scrollable 0 
+    
+    while not animation.Available("BOMBER")
+    wait 0
+    animation.Load("BOMBER")
+    mload
+    end
+    
+    32@ = 0
+    
+    03CF: load_wav 20802 as 4 
+    
+    while 83D0: not  wav 4 loaded 
+    wait 0
+    03CF: load_wav 20802 as 4 
+    end
+     
+    0949: link_wav 4 to_actor PLAYER_ACTOR
+    03D1: play_wav 4
+    
+    0605: actor PLAYER_ACTOR perform_animation "BOM_PLANT" IFP "BOMBER" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1 
+    
+    32@ = 0
+    while 83D2:   wav 4 ended 
+    wait 0
+    if
+    32@ > 3500
+        then
+        break
+        end
+    end
+    
+    040D: unload_wav 4 
+    04EF: release_animation "BOMBER"
+    
+    0992: set_player PLAYER_CHAR weapons_scrollable 1
+    06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0
+    
+    01B9: set_actor PLAYER_ACTOR armed_weapon_to 9@
+    
+    v$OBJECTIVE = "GAME936"
+    0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+    $SOUNDS_VOLUME3 *= 0.5
+    Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+    Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+    Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+    
+    $DRUNK_MODE_FLAG = 1
+    PUKE_PROCESS_FLAG = 1
+    $ZOMBIE_REMOVE_FLAG = 1
+    ZOMBIES_NOTSPAWN = 1
+    0777: delete_objects_in_object_group "dns5"
+    
+    0459: end_thread_named 'SPRINTH'
+    wait 0
+    0@ = 0x609A4E 
+    0A8C: write_memory 0@ size 4 value -1869574000 virtual_protect 1 
+    0@ += 4 
+    0A8C: write_memory 0@ size 2 value 37008 virtual_protect 1
+    actor.SetWalkStyle(PLAYER_ACTOR,"drunk")    
+    
+    end
+    
+if and
+actor.InCar(PLAYER_ACTOR,SUPPLY_QUEST_TRUCK)
+00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA 2558.6472 2531.1677 0.9871 cornerB 2540.5474 2442.9404 29.2037
+    then
+    0622: AS_actor PLAYER_ACTOR bail_car SUPPLY_QUEST_TRUCK
+    end    
+
+if and
+50@ == 0 
+actor.InCar(MQ13_HARZON,MQ13_HARZON_BMX)
+00FF:   actor PLAYER_ACTOR sphere 0 in_sphere 2763.0632 2460.2568 10.7773 radius 10.0 10.0 7.5 on_foot
+    then
+    0E5F: car_horn MQ13_HARZON_BMX
+    
+    50@ = 1
+    
+    repeat
+    wait 0
+    07C0: load_path 58
+    until 07C1:   path 58 available
+        
+    0705: car MQ13_HARZON_BMX assign_to_path 58 and_drive_normal     
+    04E0: car MQ13_HARZON_BMX abandon_path_radius 5
+    car.SetSpeedInstantly(MQ13_HARZON_BMX,10.0)
+    $ZOMBIE_REMOVE_FLAG = 0
+    ZOMBIES_NOTSPAWN = 0
+    
+    end
+    
+if and
+860E: not  car MQ13_HARZON_BMX assigned_to_path
+50@ == 1
+51@ == 0
+    then
+    0705: car MQ13_HARZON_BMX assign_to_path 58 and_drive_normal
+    end    
+    
+if and
+51@ == 0
+0202:   actor MQ13_HARZON near_car MQ13_TRAIN_HANDLE radius 5.0 5.0 sphere 0
+    then
+    
+    51@ = 1
+    05EC: release_car MQ13_HARZON_BMX from_path
+    
+    0615: define_AS_pack_begin 51@
+    0622: AS_actor -1 bail_car MQ13_HARZON_BMX
+    05CB: AS_actor -1 enter_car MQ13_TRAIN_HANDLE as_driver 20000 ms
+    0616: define_AS_pack_end 51@
+    0618: assign_actor MQ13_HARZON to_AS_pack 51@
+    061B: remove_references_to_AS_pack 51@
+    
+    0395: clear_area 1 at 2787.4314 2307.6672 10.5783 radius 50.0
+    
+    end
+    
+if and
+56@ == 1
+57@ == 0
+    then
+    
+    repeat
+    wait 0
+    
+    if
+    not actor.Dead(PLAYER_ACTOR)
+    jf @MAIN_QUEST13_FAILED_PLAYER_DIED
+    if
+    $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+    jf @MAIN_QUEST13_FAILED_AGRO
+    if
+    803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+    jf @MAIN_QUEST13_FAILED_LDEAD        
+    if
+    0184:   actor MQ13_HARZON health > 0
+    jf @MAIN_QUEST13_FAILED_HARZON_DEAD
+    
+    if
+    00F2:   actor PLAYER_ACTOR near_actor MQ13_HARZON radius 180.0 180.0 sphere 0
+    jf @MAIN_QUEST13_FAILED_DISTANCE
+    
+    if and
+    actor.InCar(PLAYER_ACTOR,SUPPLY_QUEST_TRUCK)
+    00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA 2558.6472 2531.1677 0.9871 cornerB 2540.5474 2442.9404 29.2037
+        then
+        0622: AS_actor PLAYER_ACTOR bail_car SUPPLY_QUEST_TRUCK
+        end        
+    
+    until $DIALOG_CURRENT_INT == 1
+    
+    if
+    54@ == 1
+    jf @MAIN_QUEST13_FAILED_DONT_VZORVAL
+    
+    v$OBJECTIVE = "GAME938"
+    0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+    $SOUNDS_VOLUME3 *= 0.5
+    Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+    Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+    Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+    
+    300@ = marker.CreateAboveCar(MQ13_TRAIN_CARRIAGE1_HANDLE)
+    marker.SetIconSize(300@,2)
+    07E0: set_marker 300@ type_to 1
+    
+    301@ = marker.CreateAboveCar(MQ13_TRAIN_CARRIAGE2_HANDLE)
+    marker.SetIconSize(301@,2)
+    07E0: set_marker 301@ type_to 1
+    
+    302@ = marker.CreateAboveCar(MQ13_TRAIN_CARRIAGE3_HANDLE)
+    marker.SetIconSize(302@,2)
+    07E0: set_marker 302@ type_to 1
+    
+    303@ = marker.CreateAboveCar(MQ13_TRAIN_CARRIAGE4_HANDLE)
+    marker.SetIconSize(303@,2)
+    07E0: set_marker 303@ type_to 1
+    
+    304@ = marker.CreateAboveCar(MQ13_TRAIN_CARRIAGE5_HANDLE)
+    marker.SetIconSize(304@,2)
+    07E0: set_marker 304@ type_to 1
+         
+    06DD: set_train MQ13_TRAIN_HANDLE speed 100.0
+    
+    $TIME = 10000
+    
+    if
+    BOMBS_TIMER > 0
+        then
+        014F: stop_timer BOMBS_TIMER
+        create_thread @BMB_HLD
+        end
+    
+    03C3: set_timer_to $TIME type 1 GXT 'BB_19' // global_variable  // Time
+    
+    06DC: set_train MQ13_TRAIN_HANDLE acc 0.5
+    
+    repeat
+    wait 0
+    
+    if and
+    actor.InCar(PLAYER_ACTOR,SUPPLY_QUEST_TRUCK)
+    00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA 2558.6472 2531.1677 0.9871 cornerB 2540.5474 2442.9404 29.2037
+        then
+        0622: AS_actor PLAYER_ACTOR bail_car SUPPLY_QUEST_TRUCK
+        end
+    
+    if
+    not actor.Dead(PLAYER_ACTOR)
+    jf @MAIN_QUEST13_FAILED_PLAYER_DIED
+    if
+    $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+    jf @MAIN_QUEST13_FAILED_AGRO
+    if
+    803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+    jf @MAIN_QUEST13_FAILED_LDEAD        
+    if
+    0184:   actor MQ13_HARZON health > 0
+    jf @MAIN_QUEST13_FAILED_HARZON_DEAD
+    
+    if
+    $TIME > 1
+    jf @MAIN_QUEST13_FAILED_TIME
+    
+    if
+    00F2:   actor PLAYER_ACTOR near_actor MQ13_HARZON radius 180.0 180.0 sphere 0
+    jf @MAIN_QUEST13_FAILED_DISTANCE
+    
+    $ZOMBIE_SPAWN_ON_COORD = 0
+    $SPECIAL_INFECTED_SPAWN_OZC_FLAG = 0
+    
+    if and
+    157@ < 10.0
+    157@ > 0.0
+    207@ == 1
+        then
+        157@ += 0.1
+        06DC: set_train MQ13_TRAIN_HANDLE acc 157@
+        end
+        
+    if
+    0547:   actor PLAYER_ACTOR colliding_with_car MQ13_TRAIN_CARRIAGE5_HANDLE
+    then
+    fade 0 250
+    wait 250
+    0407: store_coords_to 0@ 1@ 2@ from_car MQ13_TRAIN_CARRIAGE5_HANDLE with_offset 0.0 -4.0 0.45
+    actor.PutAtNoOffset(PLAYER_ACTOR,0@,1@,2@)
+    wait 250
+    fade 1 250
+    jump to @ZALEZ_BLYAT_NA_POEZD
+    end
+    
+    if
+    0547:   actor PLAYER_ACTOR colliding_with_car MQ13_TRAIN_CARRIAGE4_HANDLE
+    then
+    fade 0 250
+    wait 250
+    0407: store_coords_to 0@ 1@ 2@ from_car MQ13_TRAIN_CARRIAGE4_HANDLE with_offset 0.0 -4.0 0.45
+    actor.PutAtNoOffset(PLAYER_ACTOR,0@,1@,2@)
+    wait 250
+    fade 1 250
+    jump to @ZALEZ_BLYAT_NA_POEZD
+    end    
+    
+    if or
+    0205:   actor PLAYER_ACTOR near_car MQ13_TRAIN_CARRIAGE1_HANDLE radius 10.0 10.0 0.5 flag 0
+    0205:   actor PLAYER_ACTOR near_car MQ13_TRAIN_CARRIAGE2_HANDLE radius 10.0 10.0 0.5 flag 0
+    0205:   actor PLAYER_ACTOR near_car MQ13_TRAIN_CARRIAGE3_HANDLE radius 10.0 10.0 0.5 flag 0
+    0205:   actor PLAYER_ACTOR near_car MQ13_TRAIN_CARRIAGE4_HANDLE radius 10.0 10.0 0.5 flag 0
+    0205:   actor PLAYER_ACTOR near_car MQ13_TRAIN_CARRIAGE5_HANDLE radius 10.0 10.0 0.5 flag 0
+        then                
+        
+        :ZALEZ_BLYAT_NA_POEZD
+        0A8C: write_memory 0x0B79100 size 1 value 1 virtual_protect 0
+        HARDCORE_DANGER_FLAG_SCRIPTED = 1 
+        v$ST_DIALOG[0] = "MQ_684"
+        $DIALOG_COUNT = 0
+        $DIALOG_NOT_SKIP = 1
+        create_thread @DG_SYS2
+        
+        v$OBJECTIVE = "GAME939"
+        if
+        REALISM_MODE == 1
+        then
+        v$OBJECTIVE = "GRME939"
+        end
+        0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+        $SOUNDS_VOLUME3 *= 0.5
+        Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+        Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+        Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+        
+        marker.Disable(300@)
+        marker.Disable(301@)
+        marker.Disable(302@)
+        marker.Disable(303@)
+        marker.Disable(304@)
+        014F: stop_timer $TIME
+        
+        /////////////////////Плавное затухание/////////////////////
+
+        $MUSIC_FADE_NUMBER += 1
+        if
+        $MUSIC_FADE_NUMBER > 4
+            then
+            $MUSIC_FADE_NUMBER = 0 
+            end    
+            
+        0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+        $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+            
+        $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 50
+        $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+        $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+        create_thread @MUS_FAD
+            
+        wait 1
+            
+        while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+        wait 0
+        end
+            
+        ///////////////////////////////////////////////////////////
+            
+        $MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\QUESTS\Q13\Q13C.wav")
+        Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
+        Audiostream.Loop($MUSIC_ASSHOLE, 1)
+        Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+            
+        /////////////////////Плавное нарастание/////////////////////
+            
+        $MUSIC_FADE_NUMBER += 1
+        if
+        $MUSIC_FADE_NUMBER > 4
+            then
+            $MUSIC_FADE_NUMBER = 0 
+            end    
+            
+        0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
+        0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+            
+        $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+        $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+        $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+        create_thread @MUS_FAD
+            
+        wait 1
+        
+        break
+        end
+    
+    until false
+    
+    57@ = 1
+    157@ = 0.5
+    207@ = 1    
+    
+    end
+    
+if and
+actor.InCar(MQ13_HARZON,MQ13_HARZON_BMX)
+00EC:   actor MQ13_HARZON sphere 0 near_point 2557.1047 2503.792 radius 5.0 5.0
+500@ == 0
+    then
+    02E3: 0@ = car MQ13_HARZON_BMX speed
+    if and
+    0@ < 10.0
+    8E93: not is_car_really_in_air MQ13_HARZON_BMX
+        then        
+        car.SetSpeedInstantly(MQ13_HARZON_BMX,30.0)
+        500@ = 1
+        end
+    end                
+    
+if and
+52@ == 0
+actor.InCar(MQ13_HARZON,MQ13_TRAIN_HANDLE)
+    then
+        
+    52@ = 1    
+    Car.DoorStatus(MQ13_TRAIN_HANDLE) = 2    
+    
+    if
+    00F2:   actor PLAYER_ACTOR near_actor MQ13_HARZON radius 180.0 180.0 sphere 0
+        then
+        v$ST_DIALOG[0] = "MQ_681"
+        v$ST_DIALOG[1] = "MQ_682"
+        v$ST_DIALOG[2] = "MQ_683"
+        $DIALOG_COUNT = 2
+        $DIALOG_NOT_SKIP = 1
+        create_thread @DG_SYS2
+        56@ = 1
+        else
+        06DC: set_train MQ13_TRAIN_HANDLE acc 5.0 
+        06DD: set_train MQ13_TRAIN_HANDLE speed 30.0
+        wait 3000
+        jump to @MAIN_QUEST13_FAILED_DISTANCE2
+        end
+        
+    end
+    
+if and
+157@ < 10.0
+157@ > 0.0
+207@ == 1
+    then
+    157@ += 0.1
+    06DC: set_train MQ13_TRAIN_HANDLE acc 157@
+    end
+    
+if
+207@ == 2
+    then
+    
+    v$OBJECTIVE = "DUMMY"
+    
+    0E68: set_player_control_pad 0 1 
+    0E69: set_player_control_pad_movement 0 0    
+    
+    fade 0 0
+    $HUD_REMOVE = 1
+    $HUD_OFF_INST = 1
+    wait 0
+    
+    0430: put_actor MQ13_HARZON into_car MQ13_TRAIN_HANDLE passenger_seat 0
+    036A: put_actor PLAYER_ACTOR in_car MQ13_TRAIN_HANDLE        
+    06DC: set_train MQ13_TRAIN_HANDLE acc 100.0
+    
+    wait 1000
+    
+    0@ = 0
+    1@ = 0
+    
+    repeat
+    wait 0
+    0@ += 1
+    
+    03F0: enable_text_draw 1
+    0349: set_text_draw_font 2
+    0342: set_text_draw_centered 0
+    0343: set_text_draw_linewidth 640.0
+    
+    if
+    DIRECTFONT_INSTALLED == 1
+    then    
+    0340: set_text_draw_RGBA DIRECTFONT_FONT2_R DIRECTFONT_FONT2_G DIRECTFONT_FONT2_B $SIM_ALPHA
+    else
+    0340: set_text_draw_RGBA 180 180 180 $SIM_ALPHA 
+    end
+    
+    033F: set_text_draw_letter_size $LOADING_TEXT_SIZE_X $LOADING_TEXT_SIZE_Y 
+    
+    if
+    0@ > 10
+    then
+    0@ = 0
+    1@ += 1
+    if
+    1@ > 2
+        then
+        1@ = 0
+        end
+    end
+    
+    if
+    1@ == 0
+    then
+    033E: set_draw_text_position 230.0 $LOADING_TEXT_Y GXT 'GME1496'  // Push
+    end
+    
+    if
+    1@ == 1
+    then
+    033E: set_draw_text_position 230.0 $LOADING_TEXT_Y GXT 'GME1497'  // Push
+    end
+    
+    if
+    1@ == 2
+    then
+    033E: set_draw_text_position 230.0 $LOADING_TEXT_Y GXT 'GME1498'  // Push
+    end
+    
+    if
+    not actor.Dead(PLAYER_ACTOR)
+    jf @MAIN_QUEST13_FAILED_PLAYER_DIED
+    if
+    $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+    jf @MAIN_QUEST13_FAILED_AGRO
+    if
+    803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+    jf @MAIN_QUEST13_FAILED_LDEAD        
+    if
+    0184:   actor MQ13_HARZON health > 0
+    jf @MAIN_QUEST13_FAILED_HARZON_DEAD
+    
+    until 0981:   train MQ13_TRAIN_HANDLE wrecked
+    
+    wait 3000
+    0430: put_actor PLAYER_ACTOR into_car MQ13_TRAIN_HANDLE passenger_seat 0
+    036A: put_actor MQ13_HARZON in_car MQ13_TRAIN_HANDLE     
+    
+    06DC: set_train MQ13_TRAIN_HANDLE acc 0.0
+    06DD: set_train MQ13_TRAIN_HANDLE speed 0.0
+        
+    0407: store_coords_to 1@ 2@ 3@ from_car MQ13_TRAIN_HANDLE with_offset -2.0 -10.0 1.0
+    4@ = car.Angle(MQ13_TRAIN_HANDLE)
+    0362: remove_actor PLAYER_ACTOR from_car_and_place_at 1@ 2@ 3@
+    actor.Angle(PLAYER_ACTOR) = 4@
+    0E32: set_char_coordinates_simple PLAYER_ACTOR coord 1@ 2@ 3@
+    camera.Restore_WithJumpCut()
+    
+    wait 1000
+    
+    0622: AS_actor MQ13_HARZON bail_car MQ13_TRAIN_HANDLE
+    
+    repeat
+    wait 0
+    
+    if
+    not actor.Dead(PLAYER_ACTOR)
+    jf @MAIN_QUEST13_FAILED_PLAYER_DIED
+    if
+    $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+    jf @MAIN_QUEST13_FAILED_AGRO
+    if
+    803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+    jf @MAIN_QUEST13_FAILED_LDEAD        
+    if
+    0184:   actor MQ13_HARZON health > 0
+    jf @MAIN_QUEST13_FAILED_HARZON_DEAD
+    
+    until not actor.InCar(MQ13_HARZON,MQ13_TRAIN_HANDLE)
+    
+    actor.Angle(MQ13_HARZON) = 2.5752
+    
+    while not animation.Available("CRACK")
+    wait 0
+    animation.Load("CRACK")
+    mload
+    end
+    
+    0605: actor MQ13_HARZON perform_animation "crckidle1" IFP "CRACK" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time 999999
+    
+    0E68: set_player_control_pad 1 1 
+    0E69: set_player_control_pad_movement 0 1
+    
+    fade 1 1000
+    create_thread @3D_REFR
+    $HUD_REMOVE = 0
+    wait 1000        
+    
+    v$ST_DIALOG[0] = "MQ_686"
+    v$ST_DIALOG[1] = "MQ_687"
+    $DIALOG_COUNT = 1
+    $DIALOG_NOT_SKIP = 1
+    create_thread @DG_SYS2
+            
+    repeat
+    wait 0
+    
+    if
+    not actor.Dead(PLAYER_ACTOR)
+    jf @MAIN_QUEST13_FAILED_PLAYER_DIED
+    if
+    $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+    jf @MAIN_QUEST13_FAILED_AGRO
+    if
+    803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+    jf @MAIN_QUEST13_FAILED_LDEAD        
+    if
+    0184:   actor MQ13_HARZON health > 0
+    jf @MAIN_QUEST13_FAILED_HARZON_DEAD
+     
+    until $DIALOG_END == 1
+            
+    v$OBJECTIVE = "GAME941"
+    0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+    $SOUNDS_VOLUME3 *= 0.5
+    Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+    Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+    Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+    
+    repeat
+    wait 0
+    
+    if
+    not actor.Dead(PLAYER_ACTOR)
+    jf @MAIN_QUEST13_FAILED_PLAYER_DIED
+    if
+    $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+    jf @MAIN_QUEST13_FAILED_AGRO
+    if
+    803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+    jf @MAIN_QUEST13_FAILED_LDEAD        
+    if
+    0184:   actor MQ13_HARZON health > 0
+    jf @MAIN_QUEST13_FAILED_HARZON_DEAD
+    
+    until 00F2:   actor PLAYER_ACTOR near_actor MQ13_HARZON radius 5.0 5.0 sphere 0
+    
+    marker.Disable(MISSION_MARKER)
+    
+    v$OBJECTIVE = "DUMMY"
+    05BF: AS_actor PLAYER_ACTOR look_at_actor MQ13_HARZON 10000 ms
+    05BF: AS_actor MQ13_HARZON look_at_actor PLAYER_ACTOR 10000 ms
+    
+    v$ST_DIALOG[0] = "MQ_688"
+    v$ST_DIALOG[1] = "MQ_689"
+    v$ST_DIALOG[2] = "MQ_690"
+    v$ST_DIALOG[3] = "MQ_691"
+    $DIALOG_COUNT = 3
+    create_thread @DG_SYS2
+            
+    repeat
+    wait 0 
+    until $DIALOG_END == 1
+    
+    0E68: set_player_control_pad 0 1 
+    0E69: set_player_control_pad_movement 0 0
+    
+    fade 0 1000
+    $HUD_REMOVE = 1
+    wait 1000
+    
+    0E68: set_player_control_pad 1 1 
+    0E69: set_player_control_pad_movement 0 1
+    
+    $SAVESTATUS = 0
+    0A8C: write_memory 0x0B79100 size 1 value 0 virtual_protect 0
+    0@ = 0x609A4E 
+    0A8C: write_memory 0@ size 4 value 0x4D48689 virtual_protect 1 
+    0@ += 4 
+    0A8C: write_memory 0@ size 2 value 0 virtual_protect 1
+    $DRUNK_MODE_FLAG = 0
+    0776: create_objects_in_object_group "dns5"
+    wait 0
+    0A92: create_custom_thread "script7.dat"
+    07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 1
+    
+    jump to @MQ13_END_JUMP        
+    
+    end        
+    
+if and
+57@ == 1
+58@ == 0
+    then
+    
+    0407: store_coords_to 1@ 2@ 3@ from_car MQ13_TRAIN_HANDLE with_offset 0.0 -8.0 1.0
+    marker.Disable(MISSION_CHECKPOINT)
+    018A: MISSION_CHECKPOINT = create_checkpoint_at 1@ 2@ 3@
+    
+    if and
+    00EC:   actor PLAYER_ACTOR sphere 1 near_point 1@ 2@ radius 3.0 3.0
+    8E48: not is_char_fallen_on_ground PLAYER_ACTOR
+    02A0:   actor PLAYER_ACTOR stopped
+        then
+                        
+        v$OBJECTIVE = "DUMMY"
+    
+        marker.Disable(MISSION_CHECKPOINT)
+        
+        58@ = 1
+        
+        0470: 9@ = actor PLAYER_ACTOR current_weapon
+        06AB: set_actor PLAYER_ACTOR all_weapons_hidden 1
+        0992: set_player PLAYER_CHAR weapons_scrollable 0 
+        
+        while not animation.Available("BOMBER")
+        wait 0
+        animation.Load("BOMBER")
+        mload
+        end
+        
+        32@ = 0
+        
+        03CF: load_wav 20802 as 4 
+        
+        while 83D0: not  wav 4 loaded 
+        wait 0
+        03CF: load_wav 20802 as 4 
+        end
+         
+        0949: link_wav 4 to_actor PLAYER_ACTOR
+        03D1: play_wav 4
+        
+        0605: actor PLAYER_ACTOR perform_animation "BOM_PLANT" IFP "BOMBER" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1 
+        
+        32@ = 0
+        while 83D2:   wav 4 ended 
+        wait 0
+        if
+        32@ > 3500
+            then
+            break
+            end
+        end
+        
+        040D: unload_wav 4 
+        04EF: release_animation "BOMBER"
+        
+        0992: set_player PLAYER_CHAR weapons_scrollable 1
+        06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0
+        
+        01B9: set_actor PLAYER_ACTOR armed_weapon_to 9@
+        
+        v$ST_DIALOG[0] = "MQ_685"
+        $DIALOG_COUNT = 0
+        $DIALOG_NOT_SKIP = 1
+        create_thread @DG_SYS2
+        
+        v$OBJECTIVE = "GAME940"
+        0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+        $SOUNDS_VOLUME3 *= 0.5
+        Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+        Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+        Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)               
+        
+        $TIME = 5000
+    
+        03C3: set_timer_to $TIME type 1 GXT 'BB_19' // global_variable  // Time
+        
+        repeat
+        wait 0
+        
+        if
+        not actor.Dead(PLAYER_ACTOR)
+        jf @MAIN_QUEST13_FAILED_PLAYER_DIED
+        if
+        $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+        jf @MAIN_QUEST13_FAILED_AGRO
+        if
+        803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+        jf @MAIN_QUEST13_FAILED_LDEAD        
+        if
+        0184:   actor MQ13_HARZON health > 0
+        jf @MAIN_QUEST13_FAILED_HARZON_DEAD
+        
+        if
+        $TIME > 1
+        jf @MAIN_QUEST13_FAILED_TIME
+        
+        if
+        00F2:   actor PLAYER_ACTOR near_actor MQ13_HARZON radius 180.0 180.0 sphere 0
+        jf @MAIN_QUEST13_FAILED_DISTANCE
+        
+        if and
+        8205: not  actor PLAYER_ACTOR near_car MQ13_TRAIN_CARRIAGE1_HANDLE radius 10.0 10.0 1.5 flag 0
+        8205: not  actor PLAYER_ACTOR near_car MQ13_TRAIN_CARRIAGE2_HANDLE radius 10.0 10.0 1.5 flag 0
+        8205: not  actor PLAYER_ACTOR near_car MQ13_TRAIN_CARRIAGE3_HANDLE radius 10.0 10.0 1.5 flag 0
+        8205: not  actor PLAYER_ACTOR near_car MQ13_TRAIN_CARRIAGE4_HANDLE radius 10.0 10.0 1.5 flag 0
+        8205: not  actor PLAYER_ACTOR near_car MQ13_TRAIN_CARRIAGE5_HANDLE radius 10.0 10.0 1.5 flag 0
+            then
+            
+            014F: stop_timer $TIME
+            
+            0407: store_coords_to 1@ 2@ 3@ from_car MQ13_TRAIN_HANDLE with_offset 0.0 -5.0 1.0
+            020C: create_explosion_with_radius 12 at 1@ 2@ 3@
+            HARDCORE_DANGER_FLAG_SCRIPTED = 0            
+            
+            207@ = 2
+            $SAVESTATUS = 1 
+                                    
+            break
+            end
+        
+        until false
+        
+        end
+    
+    end    
+
+if
+57@ == 1
+then    
+if
+00F2:   actor PLAYER_ACTOR near_actor MQ13_HARZON radius 180.0 180.0 sphere 0
+jf @MAIN_QUEST13_FAILED_DISTANCE 
+end        
+
+until false 
+
+:MQ13_END_JUMP
+
+$TALK_SIMULATE = 1
+$CAMP_SPOTTED_FLAG = 1
+$CAMP_SPOTTED_FLAG_SAVE = 1
+
+if
+MQ2_TEMP_CAR_SAVE_FLAG == 1
+then
+0088: $SAVE_CAR_X[LATEST_CAR_SLOT_USED] = MQ13_TEMP_CAR_X // (float)
+0088: $SAVE_CAR_Y[LATEST_CAR_SLOT_USED] = MQ13_TEMP_CAR_Y // (float)
+0088: $SAVE_CAR_Z[LATEST_CAR_SLOT_USED] = MQ13_TEMP_CAR_Z // (float)
+0088: $SAVE_CAR_ANGLE[LATEST_CAR_SLOT_USED] = MQ13_TEMP_CAR_ANGLE // (float)
+wait 0
+end
+
+actor.PutAtNoOffset(PLAYER_ACTOR,2359.8552, 2774.5723, 10.8203)
+actor.Angle(PLAYER_ACTOR) = 257.7289
+create_thread @REFR_3D                
+
+CAMP_DONT_SAY_HELLO_FLAG = 0
+PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 0
+$QUEST_READY_FLAG = 1
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 2000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+        
+wait 1
+        
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+    
+MAIN_QUEST_MUSIC_FLAG = 0
+
+$QUEST_READY_FLAG = 1
+create_thread @MNQ_RSP $QUEST_CAMP_NUMBER
+
+repeat
+wait 0
+until $QUEST_TYPE == -1
+
+marker.Disable(MISSION_CHECKPOINT)
+
+v$OBJECTIVE = "DUMMY"
+$ONMISSION = 0
+$NOTSPAWN_ETC = 0
+$SPECIAL_INFECTED_NOT_SPAWN_FLAG = 0
+$SURVIVORS_DONT_SPAWN_FLAG = 0
+MAIN_QUEST_TEAMMATES_REMOVE_FLAG = 2
+create_thread @MQTMBK
+0AF1: write_int 0 to_ini_file "data\survival.set" section "SCR" key "MQ13_CHECKPOINT"
+//06AF: set_player PLAYER_CHAR sprint_mode 0
+0777: delete_objects_in_object_group "quest13"
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+    
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+    
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+    
+wait 1
+    
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+MAIN_QUEST_MUSIC_FLAG = 0
+
+jump to @ASSUDALENIE_KODA2829_13
+
+:ASSKOD_PROVALA2829_13 
+mission_cleanup     
+return 
+
+:ASSUDALENIE_KODA2829_13    
+mission_cleanup    
+return
+
+:MAIN_QUEST13_FAILED_AGRO
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+///////////////////////////////////////////////////////////
+
+text.ClearAll()
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+v$FAILED_TEXT = "MS_FL5"
+create_thread @GMV_OVR
+mission_cleanup    
+return
+
+:MAIN_QUEST13_FAILED_LDEAD
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+///////////////////////////////////////////////////////////
+
+text.ClearAll()
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+v$FAILED_TEXT = "MS_FL43"
+create_thread @GMV_OVR
+mission_cleanup    
+return
+
+:MAIN_QUEST13_FAILED_DISTANCE
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+///////////////////////////////////////////////////////////
+
+text.ClearAll()
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+v$FAILED_TEXT = "MS_FL71"
+create_thread @GMV_OVR
+mission_cleanup    
+return
+
+:MAIN_QUEST13_FAILED_DISTANCE2
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+///////////////////////////////////////////////////////////
+
+text.ClearAll()
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+v$FAILED_TEXT = "MS_FL72"
+create_thread @GMV_OVR
+mission_cleanup    
+return
+
+:MAIN_QUEST13_FAILED_TIME
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+///////////////////////////////////////////////////////////
+
+text.ClearAll()
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+v$FAILED_TEXT = "MS_FL69"
+create_thread @GMV_OVR
+mission_cleanup    
+return
+
+:MAIN_QUEST13_FAILED_HARZON_DEAD
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+///////////////////////////////////////////////////////////
+
+text.ClearAll()
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+v$FAILED_TEXT = "MS_FL94"
+create_thread @GMV_OVR
+mission_cleanup    
+return
+
+:MAIN_QUEST13_FAILED_PLAYER_DIED
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+///////////////////////////////////////////////////////////
+
+text.ClearAll()
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+v$FAILED_TEXT = "MS_FL80"
+create_thread @GMV_OVR
+
+return
+
+:MAIN_QUEST13_FAILED_DONT_VZORVAL
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+///////////////////////////////////////////////////////////
+
+text.ClearAll()
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+v$FAILED_TEXT = "MSFL115"
+create_thread @GMV_OVR
+mission_cleanup    
+return
+
+:RANDOM_DIALOG_MQ13
+
+random_int 0@ 667 675
+v$PHRASE1 = "MQ_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+:SIREN_VOLUME_MQ13
+
+actor.StorePos(PLAYER_ACTOR,25@,26@,27@)
+050A: 100@ = distance_between_XYZ 25@ 26@ 27@ and_XYZ $SIREN_X $SIREN_Y $SIREN_Z
+
+0077: 100@ /= $SIREN_VOLUME_MULTIPER // (float)
+
+2@ = 1.0
+
+if
+100@ > 0.9
+    then
+    100@ = 0.9
+    end
+    
+0063: 2@ -= 100@  // (float)                   
+
+0086: $SOUNDS_VOLUME22 = $SOUNDS_VOLUME // (float)
+006D: $SOUNDS_VOLUME22 *= 2@ // (float)
+
+if
+$SIMULATING_FLAG == 1
+then
+$SOUNDS_VOLUME22 = 0.0
+end
+
+if
+54@ == 0
+then
+Audiostream.Volume($SOUND_EFFECT1) = $SOUNDS_VOLUME22
+else
+Audiostream.Volume($SOUND_EFFECT1) = 0.0
+end          
+                                                                 
+return

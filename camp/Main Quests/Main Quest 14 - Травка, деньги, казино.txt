@@ -1,0 +1,2172 @@
+//CAMP_NUMBER = 9
+
+const
+MAIN_QUEST14_ACTOR = $VERSUS_PEOPLE[1]
+end
+
+:MQ14
+thread 'MQ14'
+gosub @ASSKOD_MISSII2829_14 
+if 
+wasted_or_busted 
+jf @ASSPROPUSK_KODA2829_14 
+gosub @ASSKOD_PROVALA2829_14 
+
+:ASSPROPUSK_KODA2829_14        
+gosub @ASSUDALENIE_KODA2829_14
+
+HARDCORE_DANGER_FLAG_SCRIPTED = 0
+if
+GAME_OVER_FLAG == 1
+then
+HARDCORE_DANGER_ANTIFLAG_SCRIPTED = 1
+end
+
+create_thread @MQ_CHKP
+
+end_thread
+
+:ASSKOD_MISSII2829_14
+increment_mission_attempts
+0629: change_integer_stat 258 to 29
+
+///////////////////////////////////////////////////////////
+
+MAIN_QUEST_MUSIC_FLAG = 1
+$MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\QUESTS\Q14\Q14A.wav")
+Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
+Audiostream.Loop($MUSIC_ASSHOLE, 1)
+Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1 
+
+/////////////////////////////////////////////////////////////////////
+
+actor.StorePos(PLAYER_ACTOR,100@,101@,102@)
+0084: $QUEST_CAMP_NUMBER = $ENTERED_CAMP_NUMBER // (int)
+
+marker.Disable($CAMP_MARKER[$QUEST_CAMP_NUMBER])
+$CAMP_MARKER[$QUEST_CAMP_NUMBER] = Marker.CreateIconWithoutSphere(31, $CAMP_X[$QUEST_CAMP_NUMBER], $CAMP_Y[$QUEST_CAMP_NUMBER], $CAMP_Z[$QUEST_CAMP_NUMBER])
+
+MAIN_QUEST_TEAMMATES_REMOVE_FLAG = 1
+
+032B: 203@ = create_weapon_pickup #CHNSAW type 3 ammo 1 at 2216.1174 1579.6028 999.9783 
+
+repeat
+wait 0
+until $PHRASES_OFF_FLAG == 0
+
+//MAIN_QUEST14_COMPLETED_FLAG = 1
+
+wait 500
+
+$ONMISSION = 1
+$QUEST_TYPE = 12
+CAMP_DONT_SAY_HELLO_FLAG = 1
+$SAVESTATUS = 1
+
+repeat
+wait 0
+until 856D: not  actor $CAMP_ACTOR[3] defined
+
+$CAMP_ACTOR4_X[9] = 2410.1462
+$CAMP_ACTOR4_Y[9] = 1123.8119
+$CAMP_ACTOR4_Z[9] = 10.8253
+$CAMP_ACTOR4_A[9] = 44.5238
+
+gosub @MAIN_QUEST_14_ACTOR_CREATE
+
+wait 500
+
+$SAVESTATUS = 0
+
+:CAR_CREATE_MISSION141_1
+if
+model.Available(15421)
+then
+
+SUPPLY_QUEST_TRUCK = Car.Create(15421, 2466.1636, 1122.8607, 10.3803)
+Car.Angle(SUPPLY_QUEST_TRUCK) = 90.6091
+
+if
+model.Available(15421)
+then
+//model.Destroy(15421)
+end
+
+else
+model.Load(15421)
+mload
+wait 0
+jump to @CAR_CREATE_MISSION141_1
+end
+
+0229: set_car SUPPLY_QUEST_TRUCK primary_color_to 3 secondary_color_to 3
+0A97: 11@ = car SUPPLY_QUEST_TRUCK struct 
+11@ += 9 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+08BD: set 12@ bit 2 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+0A97: 11@ = car SUPPLY_QUEST_TRUCK struct 
+11@ += 4 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+08BD: set 12@ bit 1 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+24@ = 25.0 
+0A97: 22@ = car SUPPLY_QUEST_TRUCK struct 
+0A8E: 23@ = 22@ + 5 // int 
+0A8C: write_memory 23@ size 4 value 24@ virtual_protect 0 
+08C3: clear 12@ bit 1 
+08C3: clear 12@ bit 2 
+0A97: 11@ = car SUPPLY_QUEST_TRUCK struct 
+11@ += 18 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+08BD: set 12@ bit 2 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 2
+Car.RemoveReferences(SUPPLY_QUEST_TRUCK)
+036A: put_actor PLAYER_ACTOR in_car SUPPLY_QUEST_TRUCK
+0430: put_actor MAIN_QUEST14_ACTOR into_car SUPPLY_QUEST_TRUCK passenger_seat 0
+text.ClearAll()
+text.RemoveTextBox()
+camera.Restore_WithJumpCut()
+create_thread @REFR_3D
+
+wait 1000
+
+00BA: show_text_styled GXT "GAME609" time 5000 style 2
+
+if and
+$CHEATS_ON == 1
+0AB0:   key_pressed 49
+then
+0AF1: write_int 1 to_ini_file "data\survival.set" section "SCR" key "MQ14_CHECKPOINT"
+end
+
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MQ14_CHECKPOINT"
+
+if
+MQ_CHECKPOINT_FUCKNO == 1
+then
+0@ = 0
+end
+
+if
+0@ == 1
+then
+$HUD_REMOVE = 1
+fade 0 500
+wait 500
+car.PutAt(SUPPLY_QUEST_TRUCK,2192.6428 1751.8055 11.0469)
+car.Angle(SUPPLY_QUEST_TRUCK) = 90.0 
+else
+$HUD_REMOVE = 0
+fade 1 500
+wait 500
+end
+
+50@ = 0
+32@ = 0
+
+018A: MISSION_CHECKPOINT = create_checkpoint_at 2192.6428 1751.8055 11.0469
+03BC: MISSION_SPHERE = create_sphere_at 2192.6428 1751.8055 11.0469 radius 2.0
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MQ14_CHECKPOINT"
+if
+MQ_CHECKPOINT_FUCKNO == 1
+then
+0@ = 0
+end
+
+if
+not 0@ == 1
+then
+v$OBJECTIVE = "GAME587"
+if
+REALISM_MODE == 1
+then
+v$OBJECTIVE = "GRME587"
+end
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+repeat
+wait 0
+
+//mqskip
+if and
+$CHEATS_ON == 1
+$DEBUG_MENU_ON == 1
+$CHEAT_TYPE_FLAG == 1
+    then
+    if
+    0ADC:   test_cheat "SKIP"
+        then
+        $TALK_SIMULATE = 1
+        $QUEST_READY_FLAG = 1            
+        jump to @MQ14_END_JUMP
+        end
+    end
+
+$PHRASES_OFF_FLAG = 1
+
+if and
+32@ > 3000
+50@ == 0
+then
+
+50@ = 1
+text.ClearAll()
+
+v$ST_DIALOG[0] = "MQ_25"
+v$ST_DIALOG[1] = "MQ_26"
+v$ST_DIALOG[2] = "MQ_27"
+v$ST_DIALOG[3] = "MQ_28"
+v$ST_DIALOG[4] = "MQ_29"
+v$ST_DIALOG[5] = "MQ_30"
+v$ST_DIALOG[6] = "MQ_31"
+v$ST_DIALOG[7] = "MQ_32"
+v$ST_DIALOG[8] = "MQ_33"
+$DIALOG_COUNT = 8
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+end
+
+if
+056E:   car SUPPLY_QUEST_TRUCK defined
+then
+
+if
+not car.Wrecked(SUPPLY_QUEST_TRUCK)
+jf @MAIN_QUEST14_FAILED_DUKES
+
+if
+not actor.InCar(PLAYER_ACTOR,SUPPLY_QUEST_TRUCK)
+    then
+    $DIALOG_PAUSE = 1
+    marker.Disable(MISSION_CHECKPOINT)
+    v$OBJECTIVE = "GAME669"
+    0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+    $SOUNDS_VOLUME3 *= 0.5
+    Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+    Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+    Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+    
+    MISSION_CHECKPOINT = marker.CreateAboveCar(SUPPLY_QUEST_TRUCK)
+    07E0: set_marker MISSION_CHECKPOINT type_to 1
+    
+    ///////////////////////////////////////////////////////////////////
+    
+    while true
+    wait 0
+    
+    if
+    not actor.Dead(PLAYER_ACTOR)
+    jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+    if
+    $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+    jf @MAIN_QUEST14_FAILED_AGRO
+    
+    if
+    0184:   actor MAIN_QUEST14_ACTOR health > 0
+    jf @MAIN_QUEST14_FAILED_HDEAD
+    
+    if
+    056E:   car SUPPLY_QUEST_TRUCK defined
+        then
+        if
+        actor.InCar(PLAYER_ACTOR,SUPPLY_QUEST_TRUCK)   
+            then
+            $DIALOG_PAUSE = 0    
+            marker.Disable(MISSION_CHECKPOINT)
+            03BD: destroy_sphere MISSION_SPHERE    
+            018A: MISSION_CHECKPOINT = create_checkpoint_at 2192.6428 1751.8055 11.0469
+            03BC: MISSION_SPHERE = create_sphere_at 2192.6428 1751.8055 11.0469 radius 2.0
+            v$OBJECTIVE = "GAME587"
+            if
+            REALISM_MODE == 1
+            then
+            v$OBJECTIVE = "GRME587"
+            end
+            0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+            $SOUNDS_VOLUME3 *= 0.5
+            Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+            Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+            Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+            break
+            end
+        else
+        jump to @MAIN_QUEST14_FAILED_DUKES
+        end
+    
+    end
+    
+    ///////////////////////////////////////////////////////////////////
+    
+    end
+else
+jump to @MAIN_QUEST14_FAILED_DUKES
+end
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @MAIN_QUEST14_FAILED_AGRO
+
+if
+0184:   actor MAIN_QUEST14_ACTOR health > 0
+jf @MAIN_QUEST14_FAILED_HDEAD 
+
+if
+8104: not  actor PLAYER_ACTOR near_actor MAIN_QUEST14_ACTOR radius 100.0 100.0 50.0 sphere 0
+    then
+    $DIALOG_PAUSE = 1
+    v$OBJECTIVE = "GAME589"
+    0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+    $SOUNDS_VOLUME3 *= 0.5
+    Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+    Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+    Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+    marker.Disable(MISSION_CHECKPOINT)
+    03BD: destroy_sphere MISSION_SPHERE
+    MISSION_CHECKPOINT = marker.CreateAboveActor(MAIN_QUEST14_ACTOR)
+    07E0: set_marker MISSION_CHECKPOINT type_to 1
+    
+    while true
+    wait 0    
+    
+    if
+    not actor.Dead(PLAYER_ACTOR)
+    jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+    if
+    $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+    jf @MAIN_QUEST14_FAILED_AGRO
+    
+    if
+    0184:   actor MAIN_QUEST14_ACTOR health > 0
+    jf @MAIN_QUEST14_FAILED_HDEAD
+    
+    if or
+    8184:   actor MAIN_QUEST14_ACTOR health < 1
+    0104:   actor PLAYER_ACTOR near_actor MAIN_QUEST14_ACTOR radius 100.0 100.0 50.0 sphere 0
+        then
+        break
+        end
+    
+    end
+    
+    $DIALOG_PAUSE = 0    
+    marker.Disable(MISSION_CHECKPOINT)    
+    018A: MISSION_CHECKPOINT = create_checkpoint_at 2192.6428 1751.8055 11.0469
+    03BC: MISSION_SPHERE = create_sphere_at 2192.6428 1751.8055 11.0469 radius 2.0
+    v$OBJECTIVE = "GAME587"
+    if
+    REALISM_MODE == 1
+    then
+    v$OBJECTIVE = "GRME587"
+    end
+    0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+    $SOUNDS_VOLUME3 *= 0.5
+    Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+    Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+    Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)    
+        
+    end
+
+if
+875C: not  marker MISSION_CHECKPOINT enabled
+then
+018A: MISSION_CHECKPOINT = create_checkpoint_at 2192.6428 1751.8055 11.0469
+end
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @MAIN_QUEST14_FAILED_AGRO
+
+if
+0184:   actor MAIN_QUEST14_ACTOR health > 0
+jf @MAIN_QUEST14_FAILED_HDEAD
+
+if and
+00EC:   actor PLAYER_ACTOR sphere 0 near_point 2192.6428 1751.8055 radius 2.5 2.5
+00EC:   actor MAIN_QUEST14_ACTOR sphere 0 near_point 2192.6428 1751.8055 radius 5.0 5.0
+    then
+    break
+    end
+ 
+until false
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+$END_DIALOG_INST = 1
+
+0AF1: write_int 1 to_ini_file "data\survival.set" section "SCR" key "MQ14_CHECKPOINT"
+
+marker.Disable(MISSION_CHECKPOINT)
+03BD: destroy_sphere MISSION_SPHERE
+player.CanMove(PLAYER_CHAR,false)
+0221: set_player PLAYER_CHAR apply_brakes_to_car 1
+0E09: mark_car_as_needed SUPPLY_QUEST_TRUCK
+
+v$OBJECTIVE = "DUMMY"
+
+$HUD_REMOVE = 1
+fade 0 500
+wait 1500
+
+0221: set_player PLAYER_CHAR apply_brakes_to_car 0
+$SAVESTATUS = 1
+$INT_ZMB_NOT = 1
+0776: create_objects_in_object_group "quest14b"
+
+$SHIT_FUCK = Audiostream.Load("AUDIO\SOUNDS\knock.wav")
+
+Audiostream.PerformAction($SHIT_FUCK, PLAY)
+Audiostream.Loop($SHIT_FUCK, 0)
+Audiostream.Volume($SHIT_FUCK) = 0.0
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $SHIT_FUCK // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $SOUNDS_VOLUME // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 100
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+wait 3500
+
+audiostream.Release($SHIT_FUCK)
+
+wait 500
+
+ZOMBIES_NOTSPAWN = 1
+select_interior 1
+0860: link_actor PLAYER_ACTOR to_interior 1
+0860: link_actor MAIN_QUEST14_ACTOR to_interior 1
+04F9: set_sky_color 1 fade 0
+0776: create_objects_in_object_group "quest14"
+player.CanMove(PLAYER_CHAR,true)
+
+0362: remove_actor PLAYER_ACTOR from_car_and_place_at 2205.3787 1551.6704 1008.3551
+actor.PutAtNoOffset(PLAYER_ACTOR,2205.3787, 1551.6704, 1008.3551)
+actor.Angle(PLAYER_ACTOR) = 276.9463
+0362: remove_actor MAIN_QUEST14_ACTOR from_car_and_place_at 2207.9194 1551.8806 1007.4023
+camera.Restore_WithJumpCut()
+create_thread @REFR_3D
+
+wait 500
+
+$HUD_REMOVE = 0
+fade 1 500
+wait 500
+
+$SAVESTATUS = 0
+
+v$ST_DIALOG[0] = "MQ_34"
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+repeat
+wait 0
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+if
+0184:   actor MAIN_QUEST14_ACTOR health > 0
+jf @MAIN_QUEST14_FAILED_HDEAD
+
+until $DIALOG_END == 1
+
+018A: MISSION_CHECKPOINT = create_checkpoint_at 2150.1313 1602.8492 1001.9714
+03BC: MISSION_SPHERE = create_sphere_at 2150.1313 1602.8492 1001.9714 radius 2.0
+v$OBJECTIVE = "GAME590"
+if
+REALISM_MODE == 1
+then
+v$OBJECTIVE = "GRME590"
+end
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+repeat
+wait 0
+
+if
+0184:   actor MAIN_QUEST14_ACTOR health > 0
+jf @MAIN_QUEST14_FAILED_HDEAD
+
+if
+8104: not  actor PLAYER_ACTOR near_actor MAIN_QUEST14_ACTOR radius 35.0 35.0 10.0 sphere 0
+    then
+    $DIALOG_PAUSE = 1
+    v$OBJECTIVE = "GAME589"
+    0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+    $SOUNDS_VOLUME3 *= 0.5
+    Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+    Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+    Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+    marker.Disable(MISSION_CHECKPOINT)
+    03BD: destroy_sphere MISSION_SPHERE
+    MISSION_CHECKPOINT = marker.CreateAboveActor(MAIN_QUEST14_ACTOR)
+    07E0: set_marker MISSION_CHECKPOINT type_to 1
+    
+    while true
+    wait 0
+    
+    if
+    not actor.Dead(PLAYER_ACTOR)
+    jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+    if
+    $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+    jf @MAIN_QUEST14_FAILED_AGRO
+    
+    if
+    0184:   actor MAIN_QUEST14_ACTOR health > 0
+    jf @MAIN_QUEST14_FAILED_HDEAD
+    
+    if or
+    8184:   actor MAIN_QUEST14_ACTOR health < 1
+    0104:   actor PLAYER_ACTOR near_actor MAIN_QUEST14_ACTOR radius 35.0 35.0 10.0 sphere 0
+        then
+        break
+        end
+    
+    end
+    
+    $DIALOG_PAUSE = 0    
+    marker.Disable(MISSION_CHECKPOINT)    
+    018A: MISSION_CHECKPOINT = create_checkpoint_at 2150.1313 1602.8492 1001.9714
+    03BC: MISSION_SPHERE = create_sphere_at 2150.1313 1602.8492 1001.9714 radius 2.0
+    v$OBJECTIVE = "GAME590"
+    if
+    REALISM_MODE == 1
+    then
+    v$OBJECTIVE = "GRME590"
+    end
+    0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+    $SOUNDS_VOLUME3 *= 0.5
+    Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+    Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+    Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)    
+        
+    end
+
+if and
+00FE:   actor PLAYER_ACTOR sphere 0 in_sphere 2150.1313 1602.8492 1001.9714 radius 2.0 2.0 2.0
+00FE:   actor MAIN_QUEST14_ACTOR sphere 0 in_sphere 2150.1313 1602.8492 1001.9714 radius 2.0 2.0 2.0
+    then
+    break
+    end
+
+until false
+
+///////////////////////////////////
+
+while not model.Available(#MALE01)
+wait 0
+model.Load(#MALE01)
+mload
+end
+
+120@ = actor.Create(26,#MALE01,2144.1914, 1626.1636, 993.6882)
+0860: link_actor 120@ to_interior 1
+actor.LockInCurrentPosition(120@,true)
+actor.Health(120@) = 9999
+actor.SetImmunities(120@,1,1,1,1,1)
+0337: set_actor 120@ visibility 0
+0619: enable_actor 120@ collision_detection 0
+0489: set_actor 120@ muted 1
+
+///////////////////////////////////
+
+marker.Disable(MISSION_CHECKPOINT)
+03BD: destroy_sphere MISSION_SPHERE
+
+v$ST_DIALOG[0] = "MQ_35"
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+repeat
+wait 0
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+if
+0184:   actor MAIN_QUEST14_ACTOR health > 0
+jf @MAIN_QUEST14_FAILED_HDEAD
+
+until $DIALOG_END == 1
+
+018A: MISSION_CHECKPOINT = create_checkpoint_at 2144.1746 1625.5286 993.6882
+03BC: MISSION_SPHERE = create_sphere_at 2144.1746 1625.5286 993.6882 radius 2.0
+v$OBJECTIVE = "GAME591"
+if
+REALISM_MODE == 1
+then
+v$OBJECTIVE = "GRME591"
+end
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+repeat
+wait 0
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+if
+0184:   actor MAIN_QUEST14_ACTOR health > 0
+jf @MAIN_QUEST14_FAILED_HDEAD
+
+if
+8104: not  actor PLAYER_ACTOR near_actor MAIN_QUEST14_ACTOR radius 35.0 35.0 10.0 sphere 0
+    then
+    $DIALOG_PAUSE = 1
+    v$OBJECTIVE = "GAME589"
+    0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+    $SOUNDS_VOLUME3 *= 0.5
+    Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+    Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+    Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+    marker.Disable(MISSION_CHECKPOINT)
+    03BD: destroy_sphere MISSION_SPHERE
+    MISSION_CHECKPOINT = marker.CreateAboveActor(MAIN_QUEST14_ACTOR)
+    07E0: set_marker MISSION_CHECKPOINT type_to 1
+    
+    while true
+    wait 0
+    
+    if
+    not actor.Dead(PLAYER_ACTOR)
+    jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+    if
+    $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+    jf @MAIN_QUEST14_FAILED_AGRO
+    
+    if
+    0184:   actor MAIN_QUEST14_ACTOR health > 0
+    jf @MAIN_QUEST14_FAILED_HDEAD
+    
+    if or
+    8184:   actor MAIN_QUEST14_ACTOR health < 1
+    0104:   actor PLAYER_ACTOR near_actor MAIN_QUEST14_ACTOR radius 35.0 35.0 10.0 sphere 0
+        then
+        break
+        end
+    
+    end
+    
+    $DIALOG_PAUSE = 0    
+    marker.Disable(MISSION_CHECKPOINT)    
+    018A: MISSION_CHECKPOINT = create_checkpoint_at 2144.1746 1625.5286 993.6882
+    03BC: MISSION_SPHERE = create_sphere_at 2144.1746 1625.5286 993.6882 radius 2.0
+    v$OBJECTIVE = "GAME591"
+    if
+    REALISM_MODE == 1
+    then
+    v$OBJECTIVE = "GRME591"
+    end
+    0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+    $SOUNDS_VOLUME3 *= 0.5
+    Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+    Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+    Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)    
+        
+    end
+
+if and
+00FE:   actor PLAYER_ACTOR sphere 0 in_sphere 2144.1746 1625.5286 993.6882 radius 15.0 15.0 2.0
+00FE:   actor MAIN_QUEST14_ACTOR sphere 0 in_sphere 2144.1746 1625.5286 993.6882 radius 15.0 15.0 2.0
+    then
+    break
+    end
+
+until false
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+v$OBJECTIVE = "DUMMY"
+marker.Disable(MISSION_CHECKPOINT)
+03BD: destroy_sphere MISSION_SPHERE
+
+v$ST_DIALOG[0] = "MQ_36"
+v$ST_DIALOG[1] = "MQ_37"
+$DIALOG_COUNT = 1
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+repeat
+wait 0
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+if
+0184:   actor MAIN_QUEST14_ACTOR health > 0
+jf @MAIN_QUEST14_FAILED_HDEAD
+
+until $DIALOG_END == 1
+
+while not animation.Available("BOMBER")
+wait 0
+animation.Load("BOMBER")
+end
+
+06C9: remove_actor MAIN_QUEST14_ACTOR from_group
+
+while not animation.Available("BOMBER")
+wait 0
+animation.Load("BOMBER")
+end
+
+//0781: get_weapon_with_ID 39 model_to 1@
+//
+//while not model.Available(1@)
+//wait 0
+//model.Load(1@)
+//mload
+//end
+//
+//actor.GiveWeaponAndAmmo(MAIN_QUEST14_ACTOR,39,99999)
+
+06AB: set_actor MAIN_QUEST14_ACTOR all_weapons_hidden 1
+
+0615: define_AS_pack_begin 51@
+05D3: AS_actor -1 goto_point 2144.1304 1626.129 993.6882 mode 7 time 25000 ms // versionA
+//07A5: AS_actor -1 attack_actor 120@ time 9500
+0605: actor -1 perform_animation "BOM_PLANT" IFP "BOMBER" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1
+05D3: AS_actor -1 goto_point 2136.292 1610.0165 993.6882 mode 7 time 25000 ms // versionA
+05D4: AS_actor -1 rotate_angle 334.3027
+0616: define_AS_pack_end 51@
+0618: assign_actor MAIN_QUEST14_ACTOR to_AS_pack 51@
+061B: remove_references_to_AS_pack 51@
+
+v$ST_DIALOG[0] = "MQ_38"
+v$ST_DIALOG[1] = "MQ_39"
+v$ST_DIALOG[2] = "MQ_40"
+$DIALOG_COUNT = 2
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+300@ = 0
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+repeat
+wait 0
+
+if and
+actor.Animation(MAIN_QUEST14_ACTOR) == "BOM_PLANT"
+300@ == 0
+then
+300@ = 1
+end
+
+if and
+not actor.Animation(MAIN_QUEST14_ACTOR) == "BOM_PLANT"
+300@ == 1
+then
+300@ = 2
+0776: create_objects_in_object_group "luceblood"
+create_thread @3D_REFR
+06AB: set_actor MAIN_QUEST14_ACTOR all_weapons_hidden 0
+end
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+if
+0184:   actor MAIN_QUEST14_ACTOR health > 0
+jf @MAIN_QUEST14_FAILED_HDEAD
+
+until $DIALOG_END == 1
+
+v$ST_DIALOG[0] = "MQ_41"
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+repeat
+wait 0
+
+if and
+actor.Animation(MAIN_QUEST14_ACTOR) == "BOM_PLANT"
+300@ == 0
+then
+300@ = 1
+end
+
+if and
+not actor.Animation(MAIN_QUEST14_ACTOR) == "BOM_PLANT"
+300@ == 1
+then
+300@ = 2
+0776: create_objects_in_object_group "luceblood"
+create_thread @3D_REFR
+06AB: set_actor MAIN_QUEST14_ACTOR all_weapons_hidden 0
+end
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+if
+0184:   actor MAIN_QUEST14_ACTOR health > 0
+jf @MAIN_QUEST14_FAILED_HDEAD
+
+until $DIALOG_END == 1
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 13 weapon 400@ ammo 401@ model 402@
+
+0781: get_weapon_with_ID 40 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+
+actor.GiveWeaponAndAmmo(PLAYER_ACTOR,40,1)
+
+01B9: set_actor PLAYER_ACTOR armed_weapon_to 40
+
+v$OBJECTIVE = "GAME592"
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+repeat
+wait 0
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+if
+0184:   actor MAIN_QUEST14_ACTOR health > 0
+jf @MAIN_QUEST14_FAILED_HDEAD
+
+if and
+02D8:   actor PLAYER_ACTOR current_weapon == 40
+00E1:   player 0 pressed_key 17
+8EEA: not locate_char_distance_to_coordinates MAIN_QUEST14_ACTOR pos 2144.1914 1626.1636 993.6882 radius 10.0
+    then
+//    09D9: detonate_all_satchel_charges
+    020C: create_explosion_with_radius 0 at 2144.1914 1626.1636 993.6882
+    0777: delete_objects_in_object_group "luceblood"
+    break
+    end
+    
+if and
+02D8:   actor PLAYER_ACTOR current_weapon == 40
+00E1:   player 0 pressed_key 17
+0EEA:  locate_char_distance_to_coordinates MAIN_QUEST14_ACTOR pos 2144.1914 1626.1636 993.6882 radius 10.0
+    then
+//    09D9: detonate_all_satchel_charges
+    020C: create_explosion_with_radius 0 at 2144.1914 1626.1636 993.6882
+    05BE: AS_actor MAIN_QUEST14_ACTOR die
+    0777: delete_objects_in_object_group "luceblood"
+    jump to @MAIN_QUEST14_FAILED_HDEAD
+    end    
+
+until false
+
+0E7F: get_model_type 402@ store_to 0@
+if
+0@ == 4
+then
+model.Load(402@)
+mload
+actor.GiveWeaponAndAmmo(PLAYER_ACTOR,400@,401@)
+end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+v$OBJECTIVE = "DUMMY"
+
+0555: remove_weapon 39 from_actor MAIN_QUEST14_ACTOR
+01B9: set_actor MAIN_QUEST14_ACTOR armed_weapon_to 101
+
+064B: 101@ = create_particle "teargas" at 2142.3286 1639.917 993.5761 type 1
+064B: 102@ = create_particle "teargas" at 2146.1294 1638.244 993.5761 type 1
+064B: 103@ = create_particle "teargas" at 2144.1538 1634.8892 993.5761 type 1
+064B: 104@ = create_particle "teargas" at 2142.2527 1632.4197 993.5761 type 1
+064C: make_particle 101@ visible
+064C: make_particle 102@ visible
+064C: make_particle 103@ visible
+064C: make_particle 104@ visible
+
+wait 10
+0777: delete_objects_in_object_group "quest14"
+
+0615: define_AS_pack_begin 51@
+05D3: AS_actor -1 goto_point 2144.1863 1623.426 993.6882 mode 7 time 25000 ms // versionA
+05D3: AS_actor -1 goto_point 2144.1143 1635.1351 993.5761 mode 7 time 25000 ms // versionA
+05D3: AS_actor -1 goto_point 2143.4885 1639.171 993.5761 mode 7 time 25000 ms // versionA
+05D4: AS_actor -1 rotate_angle 27.3239
+0616: define_AS_pack_end 51@
+0618: assign_actor MAIN_QUEST14_ACTOR to_AS_pack 51@
+061B: remove_references_to_AS_pack 51@
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+repeat
+wait 0
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+if
+0184:   actor MAIN_QUEST14_ACTOR health > 0
+jf @MAIN_QUEST14_FAILED_HDEAD
+
+if and
+00EC:   actor PLAYER_ACTOR sphere 0 near_point 2143.4885 1639.171 radius 2.5 2.5
+00EC:   actor MAIN_QUEST14_ACTOR sphere 0 near_point 2143.4885 1639.171 radius 5.0 5.0
+02A0:   actor PLAYER_ACTOR stopped
+    then
+    break
+    end
+
+until false
+
+04EF: release_animation "BOMBER"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+0792: disembark_instantly_actor MAIN_QUEST14_ACTOR
+0631: put_actor MAIN_QUEST14_ACTOR in_group PLAYER_GROUP
+
+if
+COOP_ACTIVE_FLAG == 1
+then
+0EA0: set_actor_second_player MAIN_QUEST14_ACTOR enable_camera 1 separate_cars 0
+0084: COOP_ACTOR = MAIN_QUEST14_ACTOR // (int)
+end
+
+player.CanMove(PLAYER_CHAR,false)
+0639: AS_actor PLAYER_ACTOR rotate_to_actor MAIN_QUEST14_ACTOR
+
+$DRUNK_MODE_FLAG = 1
+
+v$ST_DIALOG[0] = "MQ_42"
+v$ST_DIALOG[1] = "MQ_43"
+v$ST_DIALOG[2] = "MQ_44"
+v$ST_DIALOG[3] = "MQ_45"
+v$ST_DIALOG[4] = "MQ_46"
+$DIALOG_COUNT = 4
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+repeat
+wait 0
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+if
+0184:   actor MAIN_QUEST14_ACTOR health > 0
+jf @MAIN_QUEST14_FAILED_HDEAD
+
+until $DIALOG_END == 1
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+fade 0 500
+$HUD_REMOVE = 1
+wait 500
+        
+cinema.Widescreen(1)
+0A48: enable_menu_access_in_widescreen_mode 0
+        
+////////////////////////////////////////////////////////
+        
+gosub @MAIN_QUEST14_NOTE_SOUND_PLAY        
+        
+////////////////////////////////////////////////////////
+    
+0A0E: disable_text_with_style 1
+        
+0391: release_textures
+0390: load_txd_dictionary 'quest14' 
+wait 1
+038F: load_texture "casino" as 1 // Load dictionary with 0390 first 
+wait 1    
+        
+32@ = 0
+$SPEED_08_FLAG = 1
+$READING_NOTE_FLAG = 1 
+        
+ repeat 
+wait 0
+03F0: enable_text_draw 1
+038D: draw_texture 1 position 320.0 224.5 size 640.0 449.0 RGBA 255 255 255 255
+03E3: set_texture_to_be_drawn_antialiased 1 
+ until 0E3E: is_button_just_pressed 0 17
+         
+$SPEED_08_FLAG = 0
+015D: set_gamespeed 1.0      
+         
+wait 1
+03F0: enable_text_draw 0
+wait 1
+0391: release_textures 
+        
+0A0E: disable_text_with_style 0
+        
+////////////////////////////////////////////////////////
+        
+audiostream.PerformAction(14@,STOP)
+audiostream.Release(14@)
+        
+$SPEED_08_FLAG = 0
+$READING_NOTE_FLAG = 0
+    
+cinema.Widescreen(0)
+0A48: enable_menu_access_in_widescreen_mode 1   
+        
+015D: set_gamespeed 1.0         
+
+player.CanMove(PLAYER_CHAR,true)        
+fade 1 500
+$HUD_REMOVE = 0
+wait 500
+
+/////////////////////////////////
+
+v$ST_DIALOG[0] = "MQ_47"
+v$ST_DIALOG[1] = "MQ_48"
+$DIALOG_COUNT = 1
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+////////////////////////////////////////////////////////
+
+repeat
+wait 0
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+if
+0184:   actor MAIN_QUEST14_ACTOR health > 0
+jf @MAIN_QUEST14_FAILED_HDEAD
+
+until $DIALOG_END == 1
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+    
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+    
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+    
+wait 1
+    
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+    
+///////////////////////////////////////////////////////////
+    
+$MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\QUESTS\Q14\Q14B.wav")
+Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
+Audiostream.Loop($MUSIC_ASSHOLE, 1)
+Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+    
+/////////////////////Плавное нарастание/////////////////////
+    
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+    
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+    
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+    
+wait 1
+
+////////////////////////////////////////////////////////
+
+v$ST_DIALOG[0] = "MQ_49"
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+//////////////////////////////////////////////////////////
+
+$SIREN_X = 2152.4465
+$SIREN_Y = 1599.5861
+$SIREN_Z = 1006.1736 
+$SIREN_VOLUME_MULTIPER = 200.0
+
+$SOUND_EFFECT1 = Audiostream.Load("AUDIO\SOUNDS\AlarmBanditBase.mp3")
+
+Audiostream.PerformAction($SOUND_EFFECT1, PLAY)
+Audiostream.Volume($SOUND_EFFECT1) = 0.0
+Audiostream.Loop($SOUND_EFFECT1, 1)
+
+//////////////////////////////////////////////////////////
+
+$ZOMBIE_X[0] = 2220.4153
+$ZOMBIE_Y[0] = 1584.5408
+$ZOMBIE_Z[0] = 998.9714
+
+ZOMBIES_NOTSPAWN = 0
+$ZOMBIES_ALWAYS_VISIBLE = 1
+ZOMBIE_INTERIOR_ALLOW_SPAWN = 1
+
+$ZOMBIE_SPAWN_ON_COORD = 1
+$ZOMBIE_COORD_MAX = 1
+$ZOMBIES_HORDE = 1
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+repeat
+wait 0
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+if
+0184:   actor MAIN_QUEST14_ACTOR health > 0
+jf @MAIN_QUEST14_FAILED_HDEAD
+
+until $DIALOG_END == 1
+
+////////////////////////////////////////////////////////
+
+repeat
+wait 0
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+if
+0184:   actor MAIN_QUEST14_ACTOR health > 0
+jf @MAIN_QUEST14_FAILED_HDEAD
+
+gosub @SIREN_VOLUME_MAIN_QUEST14
+until $DIALOG_END == 1
+
+v$ST_DIALOG[0] = "MQ_50"
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+repeat
+wait 0
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+if
+0184:   actor MAIN_QUEST14_ACTOR health > 0
+jf @MAIN_QUEST14_FAILED_HDEAD
+
+gosub @SIREN_VOLUME_MAIN_QUEST14
+until $DIALOG_END == 1
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+v$ST_DIALOG[0] = "DUMMY"
+v$ST_DIALOG[1] = "DUMMY"
+v$ST_DIALOG[2] = "DUMMY"
+v$ST_DIALOG[3] = "MQ_51"
+v$ST_DIALOG[4] = "DUMMY"
+v$ST_DIALOG[5] = "DUMMY"
+v$ST_DIALOG[6] = "MQ_52"
+v$ST_DIALOG[7] = "DUMMY"
+v$ST_DIALOG[8] = "DUMMY"
+v$ST_DIALOG[9] = "MQ_53"
+v$ST_DIALOG[10] = "DUMMY"
+v$ST_DIALOG[11] = "DUMMY"
+v$ST_DIALOG[12] = "MQ_54"
+v$ST_DIALOG[13] = "DUMMY"
+v$ST_DIALOG[14] = "DUMMY"
+v$ST_DIALOG[15] = "MQ_55"
+$DIALOG_COUNT = 15
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+018A: MISSION_CHECKPOINT = create_checkpoint_at 2205.377 1551.4846 1008.3557
+03BC: MISSION_SPHERE = create_sphere_at 2205.377 1551.4846 1008.3557 radius 2.0
+v$OBJECTIVE = "GAME593"
+if
+REALISM_MODE == 1
+then
+v$OBJECTIVE = "GRME593"
+end
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+repeat
+wait 0
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+if
+0184:   actor MAIN_QUEST14_ACTOR health > 0
+jf @MAIN_QUEST14_FAILED_HDEAD
+
+gosub @SIREN_VOLUME_MAIN_QUEST14
+
+if
+8104: not  actor PLAYER_ACTOR near_actor MAIN_QUEST14_ACTOR radius 35.0 35.0 10.0 sphere 0
+    then
+    $DIALOG_PAUSE = 1
+    v$OBJECTIVE = "GAME589"
+    0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+    $SOUNDS_VOLUME3 *= 0.5
+    Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+    Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+    Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+    marker.Disable(MISSION_CHECKPOINT)
+    03BD: destroy_sphere MISSION_SPHERE
+    MISSION_CHECKPOINT = marker.CreateAboveActor(MAIN_QUEST14_ACTOR)
+    07E0: set_marker MISSION_CHECKPOINT type_to 1
+    
+    while true
+    wait 0
+    
+    if
+    not actor.Dead(PLAYER_ACTOR)
+    jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+    if
+    $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+    jf @MAIN_QUEST14_FAILED_AGRO
+    
+    if
+    0184:   actor MAIN_QUEST14_ACTOR health > 0
+    jf @MAIN_QUEST14_FAILED_HDEAD
+    
+    if or
+    8184:   actor MAIN_QUEST14_ACTOR health < 1
+    0104:   actor PLAYER_ACTOR near_actor MAIN_QUEST14_ACTOR radius 35.0 35.0 10.0 sphere 0
+        then
+        break
+        end
+    
+    end
+    
+    $DIALOG_PAUSE = 0    
+    marker.Disable(MISSION_CHECKPOINT)    
+    018A: MISSION_CHECKPOINT = create_checkpoint_at 2205.377 1551.4846 1008.3557
+    03BC: MISSION_SPHERE = create_sphere_at 2205.377 1551.4846 1008.3557 radius 2.0
+    v$OBJECTIVE = "GAME593"
+    if
+    REALISM_MODE == 1
+    then
+    v$OBJECTIVE = "GRME593"
+    end
+    0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+    $SOUNDS_VOLUME3 *= 0.5
+    Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+    Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+    Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)    
+        
+    end
+
+if
+875C: not  marker MISSION_CHECKPOINT enabled
+then
+018A: MISSION_CHECKPOINT = create_checkpoint_at 2205.377 1551.4846 1008.3557
+end
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @MAIN_QUEST14_FAILED_AGRO
+
+if
+0184:   actor MAIN_QUEST14_ACTOR health > 0
+jf @MAIN_QUEST14_FAILED_HDEAD
+
+if and
+00EC:   actor PLAYER_ACTOR sphere 0 near_point 2205.377 1551.4846 radius 7.5 7.5
+00EC:   actor MAIN_QUEST14_ACTOR sphere 0 near_point 2205.377 1551.4846 radius 8.5 8.5
+    then
+    break
+    end
+ 
+until false
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+$END_DIALOG_INST = 1
+05BB: AS_actor MAIN_QUEST14_ACTOR fall_down 0 time_on_ground 15500
+
+v$ST_DIALOG[0] = "MQ_56"
+v$ST_DIALOG[1] = "DUMMY"
+v$ST_DIALOG[2] = "MQ_57"
+v$ST_DIALOG[3] = "MQ_58"
+v$ST_DIALOG[4] = "DUMMY"
+v$ST_DIALOG[5] = "MQ_59"
+v$ST_DIALOG[6] = "DUMMY"
+$DIALOG_COUNT = 6
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+repeat
+wait 0
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+if
+0184:   actor MAIN_QUEST14_ACTOR health > 0
+jf @MAIN_QUEST14_FAILED_HDEAD
+
+gosub @SIREN_VOLUME_MAIN_QUEST14
+until $DIALOG_END == 1
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+repeat
+wait 0
+
+if
+0184:   actor MAIN_QUEST14_ACTOR health > 0
+jf @MAIN_QUEST14_FAILED_HDEAD
+
+gosub @SIREN_VOLUME_MAIN_QUEST14
+
+if
+8104: not  actor PLAYER_ACTOR near_actor MAIN_QUEST14_ACTOR radius 35.0 35.0 10.0 sphere 0
+    then
+    $DIALOG_PAUSE = 1
+    v$OBJECTIVE = "GAME589"
+    0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+    $SOUNDS_VOLUME3 *= 0.5
+    Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+    Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+    Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+    marker.Disable(MISSION_CHECKPOINT)
+    03BD: destroy_sphere MISSION_SPHERE
+    MISSION_CHECKPOINT = marker.CreateAboveActor(MAIN_QUEST14_ACTOR)
+    07E0: set_marker MISSION_CHECKPOINT type_to 1
+    
+    while true
+    wait 0
+    
+    if
+    not actor.Dead(PLAYER_ACTOR)
+    jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+    if
+    $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+    jf @MAIN_QUEST14_FAILED_AGRO
+    
+    if
+    0184:   actor MAIN_QUEST14_ACTOR health > 0
+    jf @MAIN_QUEST14_FAILED_HDEAD
+    
+    if or
+    8184:   actor MAIN_QUEST14_ACTOR health < 1
+    0104:   actor PLAYER_ACTOR near_actor MAIN_QUEST14_ACTOR radius 35.0 35.0 10.0 sphere 0
+        then
+        break
+        end
+    
+    end
+    
+    $DIALOG_PAUSE = 0    
+    marker.Disable(MISSION_CHECKPOINT)    
+    018A: MISSION_CHECKPOINT = create_checkpoint_at 2205.377 1551.4846 1008.3557
+    03BC: MISSION_SPHERE = create_sphere_at 2205.377 1551.4846 1008.3557 radius 2.0
+    v$OBJECTIVE = "GAME593"
+    if
+    REALISM_MODE == 1
+    then
+    v$OBJECTIVE = "GRME593"
+    end
+    0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+    $SOUNDS_VOLUME3 *= 0.5
+    Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+    Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+    Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)    
+        
+    end
+
+if
+875C: not  marker MISSION_CHECKPOINT enabled
+then
+018A: MISSION_CHECKPOINT = create_checkpoint_at 2205.377 1551.4846 1008.3557
+end
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @MAIN_QUEST14_FAILED_AGRO
+
+if
+0184:   actor MAIN_QUEST14_ACTOR health > 0
+jf @MAIN_QUEST14_FAILED_HDEAD
+
+if and
+00EC:   actor PLAYER_ACTOR sphere 0 near_point 2205.377 1551.4846 radius 2.5 2.5
+00EC:   actor MAIN_QUEST14_ACTOR sphere 0 near_point 2205.377 1551.4846 radius 4.5 4.5
+    then
+    break
+    end
+ 
+until false
+
+marker.Disable(MISSION_CHECKPOINT)
+03BD: destroy_sphere MISSION_SPHERE
+player.CanMove(PLAYER_CHAR,false)
+
+v$OBJECTIVE = "DUMMY"
+
+$HUD_REMOVE = 1
+fade 0 500
+wait 1500
+
+$END_DIALOG_INST = 1
+
+Audiostream.PerformAction($SOUND_EFFECT1, STOP)
+Audiostream.Release($SOUND_EFFECT1)
+$SIREN_X = 0.0
+
+$DRUNK_MODE_FLAG = 0
+ZOMBIES_NOTSPAWN = 0
+$ZOMBIES_HORDE = 0
+$ZOMBIES_ALWAYS_VISIBLE = 0
+$INT_ZMB_NOT = 0
+
+select_interior 0
+0860: link_actor PLAYER_ACTOR to_interior 0
+0860: link_actor MAIN_QUEST14_ACTOR to_interior 0
+04FA: reset_sky_colors_with_fade 0
+player.CanMove(PLAYER_CHAR,true)
+
+actor.PutAtNoOffset(PLAYER_ACTOR,2191.3472, 1754.026, 10.8203)
+actor.Angle(PLAYER_ACTOR) = 358.1913
+actor.PutAtNoOffset(MAIN_QUEST14_ACTOR,2198.2756, 1760.608, 10.8203)
+actor.Angle(MAIN_QUEST14_ACTOR) = 259.444
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+    
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+    
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+    
+wait 1
+    
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+wait 100
+
+Car.RemoveReferences(SUPPLY_QUEST_TRUCK)
+036A: put_actor PLAYER_ACTOR in_car SUPPLY_QUEST_TRUCK
+0430: put_actor MAIN_QUEST14_ACTOR into_car SUPPLY_QUEST_TRUCK passenger_seat 0
+text.ClearAll()
+text.RemoveTextBox()
+camera.Restore_WithJumpCut()
+
+wait 100
+
+$HUD_REMOVE = 0
+fade 1 500
+create_thread @REFR_3D
+wait 500
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+018A: MISSION_CHECKPOINT = create_checkpoint_at 2511.0464 1122.7849 10.8203
+03BC: MISSION_SPHERE = create_sphere_at 2511.0464 1122.7849 10.8203 radius 2.0
+v$OBJECTIVE = "GAME594"
+if
+REALISM_MODE == 1
+then
+v$OBJECTIVE = "GRME594"
+end
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+
+v$ST_DIALOG[0] = "MQ_60"
+v$ST_DIALOG[1] = "MQ_61"
+$DIALOG_COUNT = 1
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+///////////////////////////////////////////////////////////
+    
+$MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\QUESTS\Q14\Q14C.wav")
+Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
+Audiostream.Loop($MUSIC_ASSHOLE, 1)
+Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+    
+/////////////////////Плавное нарастание/////////////////////
+    
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+    
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+    
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+    
+wait 1
+
+////////////////////////////////////////////////////////
+
+repeat
+wait 0
+
+if
+056E:   car SUPPLY_QUEST_TRUCK defined
+then
+
+if
+not car.Wrecked(SUPPLY_QUEST_TRUCK)
+jf @MAIN_QUEST14_FAILED_DUKES
+
+if
+not actor.InCar(PLAYER_ACTOR,SUPPLY_QUEST_TRUCK)
+    then
+    $DIALOG_PAUSE = 1
+    marker.Disable(MISSION_CHECKPOINT)
+    03BD: destroy_sphere MISSION_SPHERE
+    v$OBJECTIVE = "GAME669"
+    0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+    $SOUNDS_VOLUME3 *= 0.5
+    Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+    Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+    Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+    
+    MISSION_CHECKPOINT = marker.CreateAboveCar(SUPPLY_QUEST_TRUCK)
+    07E0: set_marker MISSION_CHECKPOINT type_to 1
+    
+    ///////////////////////////////////////////////////////////////////
+    
+    while true
+    wait 0
+    
+    if
+    not actor.Dead(PLAYER_ACTOR)
+    jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+    if
+    $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+    jf @MAIN_QUEST14_FAILED_AGRO
+    
+    if
+    0184:   actor MAIN_QUEST14_ACTOR health > 0
+    jf @MAIN_QUEST14_FAILED_HDEAD
+    
+    if
+    056E:   car SUPPLY_QUEST_TRUCK defined
+        then
+        if
+        actor.InCar(PLAYER_ACTOR,SUPPLY_QUEST_TRUCK)   
+            then
+            $DIALOG_PAUSE = 0    
+            marker.Disable(MISSION_CHECKPOINT)    
+            018A: MISSION_CHECKPOINT = create_checkpoint_at 2511.0464 1122.7849 10.8203
+            03BC: MISSION_SPHERE = create_sphere_at 2511.0464 1122.7849 10.8203 radius 2.0
+            v$OBJECTIVE = "GAME594"
+            if
+            REALISM_MODE == 1
+            then
+            v$OBJECTIVE = "GRME594"
+            end
+            0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+            $SOUNDS_VOLUME3 *= 0.5
+            Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+            Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+            Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+            break
+            end
+        else
+        jump to @MAIN_QUEST14_FAILED_DUKES
+        end
+    
+    end
+    
+    ///////////////////////////////////////////////////////////////////
+    
+    end
+else
+jump to @MAIN_QUEST14_FAILED_DUKES
+end
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+if
+0184:   actor MAIN_QUEST14_ACTOR health > 0
+jf @MAIN_QUEST14_FAILED_HDEAD
+
+if
+8104: not  actor PLAYER_ACTOR near_actor MAIN_QUEST14_ACTOR radius 100.0 100.0 50.0 sphere 0
+    then
+    $DIALOG_PAUSE = 1
+    v$OBJECTIVE = "GAME589"
+    0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+    $SOUNDS_VOLUME3 *= 0.5
+    Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+    Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+    Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+    marker.Disable(MISSION_CHECKPOINT)
+    03BD: destroy_sphere MISSION_SPHERE
+    MISSION_CHECKPOINT = marker.CreateAboveActor(MAIN_QUEST14_ACTOR)
+    07E0: set_marker MISSION_CHECKPOINT type_to 1
+    
+    while true
+    wait 0
+    
+    if
+    not actor.Dead(PLAYER_ACTOR)
+    jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+    if
+    $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+    jf @MAIN_QUEST14_FAILED_AGRO
+    
+    if
+    0184:   actor MAIN_QUEST14_ACTOR health > 0
+    jf @MAIN_QUEST14_FAILED_HDEAD
+    
+    if or
+    8184:   actor MAIN_QUEST14_ACTOR health < 1
+    0104:   actor PLAYER_ACTOR near_actor MAIN_QUEST14_ACTOR radius 100.0 100.0 50.0 sphere 0
+        then
+        break
+        end
+    
+    end
+    
+    $DIALOG_PAUSE = 0    
+    marker.Disable(MISSION_CHECKPOINT)    
+    018A: MISSION_CHECKPOINT = create_checkpoint_at 2511.0464 1122.7849 10.8203
+    03BC: MISSION_SPHERE = create_sphere_at 2511.0464 1122.7849 10.8203 radius 2.0
+    v$OBJECTIVE = "GAME594"
+    if
+    REALISM_MODE == 1
+    then
+    v$OBJECTIVE = "GRME594"
+    end
+    0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+    $SOUNDS_VOLUME3 *= 0.5
+    Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+    Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+    Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)    
+        
+    end
+
+if
+875C: not  marker MISSION_CHECKPOINT enabled
+then
+018A: MISSION_CHECKPOINT = create_checkpoint_at 2511.0464 1122.7849 10.8203
+end
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST14_FAILED_PLAYER_DIED
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @MAIN_QUEST14_FAILED_AGRO
+
+if
+0184:   actor MAIN_QUEST14_ACTOR health > 0
+jf @MAIN_QUEST14_FAILED_HDEAD
+
+if and
+00EC:   actor PLAYER_ACTOR sphere 0 near_point 2511.0464 1122.7849 radius 2.5 2.5
+00EC:   actor MAIN_QUEST14_ACTOR sphere 0 near_point 2511.0464 1122.7849 radius 4.5 4.5
+    then
+    break
+    end
+
+until false
+
+v$OBJECTIVE = "DUMMY"
+
+marker.Disable(MISSION_CHECKPOINT)
+03BD: destroy_sphere MISSION_SPHERE
+player.CanMove(PLAYER_CHAR,false)
+0221: set_player PLAYER_CHAR apply_brakes_to_car 1
+
+fade 0 500
+$HUD_REMOVE = 1
+wait 1500
+0221: set_player PLAYER_CHAR apply_brakes_to_car 0
+
+:MQ14_END_JUMP
+
+$SAVESTATUS = 1
+
+if
+COOP_ACTIVE_FLAG == 1
+then
+0EA1: disable_second_player_restore_camera 1
+COOP_ACTOR = -69
+end
+
+actor.DestroyInstantly(MAIN_QUEST14_ACTOR)
+
+$CAMP_ACTOR4_X[9] = 2488.1562
+$CAMP_ACTOR4_Y[9] = 1153.6544
+$CAMP_ACTOR4_Z[9] = 22.0078
+$CAMP_ACTOR4_A[9] = 180.7409
+
+repeat
+wait 0
+until 856D: not  actor $CAMP_ACTOR[3] defined
+
+$SAVESTATUS = 0
+$QUEST_READY_FLAG = 1
+
+repeat
+wait 0
+until 056D:   actor $CAMP_ACTOR[3] defined
+
+0362: remove_actor PLAYER_ACTOR from_car_and_place_at 2488.2297 1151.8297 22.0078
+actor.PutAtNoOffset(PLAYER_ACTOR,2488.2297, 1151.8297, 22.0078)
+actor.Angle(PLAYER_ACTOR) = 1.5893
+camera.Restore_WithJumpCut()
+create_thread @REFR_3D
+
+$TALK_SIMULATE = 1
+$CAMP_SPOTTED_FLAG = 1
+create_thread @MNQ_RSP $QUEST_CAMP_NUMBER
+
+repeat
+wait 0
+until $QUEST_TYPE == -1
+
+v$OBJECTIVE = "DUMMY"
+$ONMISSION = 0
+MAIN_QUEST_TEAMMATES_REMOVE_FLAG = 2
+CAMP_DONT_SAY_HELLO_FLAG = 0
+create_thread @MQTMBK
+0AF1: write_int 0 to_ini_file "data\survival.set" section "SCR" key "MQ14_CHECKPOINT" 
+SUPPLY_QUEST_TRUCK = -69
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+    
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+    
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+    
+wait 1
+    
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+MAIN_QUEST_MUSIC_FLAG = 0
+
+jump to @ASSUDALENIE_KODA2829_14
+
+//////////////////////////////////////////////////////////////////  
+
+:ASSKOD_PROVALA2829_14
+07FB: set_interior 'MAFCAS' access 1 
+mission_cleanup     
+return
+
+////////////////////////////////////////////////////////////////// 
+
+:ASSUDALENIE_KODA2829_14
+
+if
+$SIREN_X == -1566.4877
+then
+Audiostream.PerformAction($SOUND_EFFECT1, STOP)
+Audiostream.Release($SOUND_EFFECT1)
+$SIREN_X = 0.0
+end
+
+ZOMBIES_NOTSPAWN = 0
+$ZOMBIES_ALWAYS_VISIBLE = 0
+ZOMBIE_INTERIOR_ALLOW_SPAWN = 0
+$ZOMBIE_SPAWN_ON_COORD = 0
+$ZOMBIES_HORDE = 0
+    
+mission_cleanup    
+return
+
+//////////////////////////////////////////////////////////////////
+
+:MAIN_QUEST14_FAILED_AGRO
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+///////////////////////////////////////////////////////////
+
+07FB: set_interior 'MAFCAS' access 1
+text.ClearAll()
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+v$FAILED_TEXT = "MS_FL5"
+create_thread @GMV_OVR
+mission_cleanup    
+return
+
+//////////////////////////////////////////////////////////////////
+
+:MAIN_QUEST14_FAILED_HDEAD
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+///////////////////////////////////////////////////////////
+
+07FB: set_interior 'MAFCAS' access 1
+text.ClearAll()
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+v$FAILED_TEXT = "MS_FL38"
+create_thread @GMV_OVR
+mission_cleanup    
+return
+
+//////////////////////////////////////////////////////////////////
+
+:MAIN_QUEST14_FAILED_DUKES
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+///////////////////////////////////////////////////////////
+
+07FB: set_interior 'MAFCAS' access 1
+text.ClearAll()
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+v$FAILED_TEXT = "MS_FL51"
+create_thread @GMV_OVR
+mission_cleanup    
+return
+
+:MAIN_QUEST14_FAILED_PLAYER_DIED
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+///////////////////////////////////////////////////////////
+
+text.ClearAll()
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+v$FAILED_TEXT = "MS_FL80"
+create_thread @GMV_OVR
+
+return
+
+:MAIN_QUEST_14_ACTOR_CREATE
+
+while not model.Available(12798)
+wait 0
+model.Load(12798)
+mload
+end
+
+MAIN_QUEST14_ACTOR = actor.Create($TEAMMATES_PED_TYPE,12798,2507.4321, 1122.085, 10.8203)
+actor.Angle(MAIN_QUEST14_ACTOR) = 269.8032
+     
+0D10: set_actor MAIN_QUEST14_ACTOR alpha 255 // IF and SET
+
+create_thread @PED_BKP MAIN_QUEST14_ACTOR 371
+
+0781: get_weapon_with_ID 101 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+
+actor.GiveWeaponAndAmmo(MAIN_QUEST14_ACTOR,101,99999)
+
+actor.Health(MAIN_QUEST14_ACTOR) = 1000
+
+0D10: set_actor MAIN_QUEST14_ACTOR alpha 255 // IF and SET
+09F4: set_actor MAIN_QUEST14_ACTOR ignore_height_difference_following_nodes $Z_IGNORE_HEIGHT     
+Actor.SetWalkStyle(MAIN_QUEST14_ACTOR, "SURV1")
+0446: set_actor MAIN_QUEST14_ACTOR dismemberment_possible 0
+060B: set_actor MAIN_QUEST14_ACTOR decision_maker_to $DEC_PEOPLE
+07DD: set_actor MAIN_QUEST14_ACTOR attack_rate 50 // previously known as temper_to
+081A: set_actor MAIN_QUEST14_ACTOR weapon_skill_to 2  
+060F: set_actor MAIN_QUEST14_ACTOR melee_accuracy_to 999.0
+0946: set_actor MAIN_QUEST14_ACTOR actions_uninterupted_by_weapon_fire 1
+
+if
+UNITED_MAP == 0
+then
+04D8: set_actor MAIN_QUEST14_ACTOR drowns_in_water 0 
+end
+
+09B5: set_actor MAIN_QUEST14_ACTOR signal_after_kill 0  
+0A96: 0@ = actor MAIN_QUEST14_ACTOR struct
+0A8E: 0@ = 0@ + 1376
+0A8C: write_memory 0@ size 4 value $SURVIVORS_ROTATE_SPEED virtual_protect 1
+
+08AF: set_actor MAIN_QUEST14_ACTOR max_health_to $SURVIVER_MAX_HEALTH
+Actor.WeaponAccuracy(MAIN_QUEST14_ACTOR) = $SURV_ACCURACY
+
+0631: put_actor MAIN_QUEST14_ACTOR in_group PLAYER_GROUP
+
+return
+
+:SIREN_VOLUME_MAIN_QUEST14
+
+$ZOMBIES_HORDE = 1
+$ZOMBIES_COUNT = 20
+ZOMBIE_INTERIOR_ALLOW_SPAWN = 1
+
+if
+00FE:   actor PLAYER_ACTOR sphere 0 in_sphere 2220.4153 1584.5408 998.9714 radius 45.0 45.0 5.0
+then
+$ZOMBIE_X[0] = 2190.5112
+$ZOMBIE_Y[0] = 1618.5535
+$ZOMBIE_Z[0] = 998.9766
+end
+
+actor.StorePos(PLAYER_ACTOR,25@,26@,27@)
+050A: 100@ = distance_between_XYZ 25@ 26@ 27@ and_XYZ $SIREN_X $SIREN_Y $SIREN_Z
+
+0077: 100@ /= $SIREN_VOLUME_MULTIPER // (float)
+
+2@ = 1.0
+
+if
+100@ > 0.9
+    then
+    100@ = 0.9
+    end
+    
+0063: 2@ -= 100@  // (float)                   
+
+0086: $SOUNDS_VOLUME22 = $SOUNDS_VOLUME // (float)
+006D: $SOUNDS_VOLUME22 *= 2@ // (float)
+
+if or
+$SIMULATING_FLAG == 1
+not $GAME_SPEED >= 1.0
+then
+$SOUNDS_VOLUME22 = 0.0
+end
+
+Audiostream.Volume($SOUND_EFFECT1) = $SOUNDS_VOLUME22          
+                                                                 
+return
+
+:MAIN_QUEST14_NOTE_SOUND_PLAY
+
+random_int 16@ 0 to 5 
+
+if
+16@ == 0
+then
+14@ = Audiostream.Load("AUDIO\SOUNDS\PageScroll1.mp3") 
+end
+    
+if
+16@ == 1
+then
+14@ = Audiostream.Load("AUDIO\SOUNDS\PageScroll2.mp3") 
+end
+    
+if
+16@ == 2
+then
+14@ = Audiostream.Load("AUDIO\SOUNDS\PageScroll3.mp3") 
+end
+    
+if
+16@ == 3
+then
+14@ = Audiostream.Load("AUDIO\SOUNDS\PageScroll4.mp3") 
+end
+    
+if
+16@ == 4
+then
+14@ = Audiostream.Load("AUDIO\SOUNDS\PageScroll5.mp3") 
+end
+       
+Audiostream.PerformAction(14@, PLAY)
+Audiostream.Volume(14@) = $SOUNDS_VOLUME
+
+return

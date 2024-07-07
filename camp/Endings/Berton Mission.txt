@@ -1,0 +1,1532 @@
+:BERTON
+thread 'BERTON'
+gosub @ASSKOD_MISSII_BERTON 
+if 
+wasted_or_busted 
+jf @ASSPROPUSK_KODA_BERTON 
+gosub @ASSKOD_PROVALA_BERTON 
+
+:ASSPROPUSK_KODA_BERTON        
+gosub @ASSUDALENIE_KODA_BERTON
+end_thread
+
+:ASSKOD_MISSII_BERTON
+increment_mission_attempts
+0629: change_integer_stat 258 to 98
+
+$SAVESTATUS = 1
+$ONMISSION = 1
+$QUEST_TYPE = 666
+$NOTSPAWN_ETC = 1
+$SURVIVORS_DONT_SPAWN_FLAG = 1
+MAIN_QUEST_TEAMMATES_REMOVE_FLAG = 1
+HARDCORE_DANGER_FLAG_SCRIPTED = 1
+
+actor.PutAtNoOffset(PLAYER_ACTOR,213.717 1879.4949 13.1406)
+actor.Angle(PLAYER_ACTOR) = 180.0
+create_thread @REFR_3D
+
+///////////////////////////////////////////////////////////
+
+MAIN_QUEST_MUSIC_FLAG = 1
+$MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\QUESTS\BURTON\B1.wav")
+Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
+Audiostream.Loop($MUSIC_ASSHOLE, 1)
+Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1 
+
+/////////////////////////////////////////////////////////////////////
+
+0936: set_camera 215.825577 1884.371216 13.745288 position_to 215.455246 1882.654907 13.697717 time 180000 smooth_transition 1
+0920: point_camera 215.586502 1883.400635 13.718206 transverse_to 215.263474 1881.673828 13.670637 time 180000 smooth_transition 1
+
+cinema.Widescreen(1)
+BLACK_POLOSKI_ON = 1
+01B9: set_actor PLAYER_ACTOR armed_weapon_to 0
+
+01BC: put_object $OBJECT_M_A51_BLASTDOORR at 219.941 1874.571 13.903
+01BC: put_object $OBJECT_M_A51_BLASTDOORL at 207.941 1874.571 13.903
+
+while not model.Available(14731)
+wait 0
+model.Load(14731)
+mload
+end
+        
+BERTON_HANDLE = actor.Create(26,14731,213.8528, 1873.7977, 12.1406)
+actor.Angle(BERTON_HANDLE) = 0.0
+08C6: set_actor BERTON_HANDLE stay_on_bike 1    
+actor.SetWalkStyle(BERTON_HANDLE,"GANG2")
+0446: set_actor BERTON_HANDLE dismemberment_possible 0
+060B: set_actor BERTON_HANDLE decision_maker_to $DEC_PEOPLE
+actor.Health(BERTON_HANDLE) = 99999
+actor.WeaponAccuracy(BERTON_HANDLE) = 30
+create_thread @PED_BKP BERTON_HANDLE 371
+
+0350: set_actor BERTON_HANDLE maintain_position_when_attacked 1
+0816: set_actor BERTON_HANDLE dont_chase_victim 1
+0ED9: set_char_ignore_damage_anims BERTON_HANDLE 1
+07DD: set_actor BERTON_HANDLE attack_rate 20 // previously known as temper_to
+
+0A96: 0@ = actor BERTON_HANDLE struct
+0A8E: 0@ = 0@ + 1376
+0A8C: write_memory 0@ size 4 value 128.0 virtual_protect 1
+
+wait 1000
+
+fade 1 500
+wait 500
+
+0084: $DIALOG_ACTOR[0] = BERTON_HANDLE // (int)
+0084: $DIALOG_ACTOR[1] = BERTON_HANDLE // (int)
+if
+not OOS_CURRENT_PROGRESS == 9
+then
+v$ST_DIALOG[0] = "END28"
+v$ST_DIALOG[1] = "END29"
+else
+v$ST_DIALOG[0] = "END28"
+v$ST_DIALOG[1] = "EOD29"
+end 
+$DIALOG_COUNT = 1
+create_thread @DG_SYS
+    
+repeat
+wait 0
+until $DIALOG_END == 1
+
+fade 0 0
+
+$ACHIV_TOTAL_SHOW_OFF_FLAG = 0
+
+$ACHIV_NUMBER = 8000
+FREEMODE_VOICE_START = 8000
+FREEMODE_VOICE_END = 8010
+MIKE_VOICE_CANNOT_SKIP_FLAG = 1
+create_thread @VOI_SHO
+
+repeat
+wait 0
+until $ACHIV_SHOW_ENDED == 1
+
+wait 1000
+
+$DRUNK_MODE_FLAG = 1
+
+fade 1 100
+wait 100
+
+0084: $DIALOG_ACTOR[0] = PLAYER_ACTOR // (int)
+0084: $DIALOG_ACTOR[1] = BERTON_HANDLE // (int)
+0084: $DIALOG_ACTOR[2] = BERTON_HANDLE // (int)
+v$ST_DIALOG[0] = "END30"
+v$ST_DIALOG[1] = "END31"
+v$ST_DIALOG[2] = "END32" 
+$DIALOG_COUNT = 2
+create_thread @DG_SYS
+    
+repeat
+wait 0
+until $DIALOG_END == 1
+
+if
+OOS_FARMERS_WITH_PLAYER == 2
+then
+jump to @BERTON_KILL_VIBOR 
+end
+
+0512: show_permanent_text_box 'GME1406'
+$PANEL = 0 
+08D4: $PANEL = create_panel_with_title 'DLC12' position 71.0 170.0 width 200.0 columns 1 interactive 1 background 1 alignment 0 
+08DB: set_panel $PANEL column 0 header 'DUMMY' data 'GAME963' 'GAME964' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 
+
+:BERTON_CHOOSE
+wait 0 
+if 
+00E1:   player 0 pressed_key 16 
+jf @BERTON_CHOOSE 
+08D7: 0@ = panel $PANEL active_row 
+if 
+0@ == 1 
+jf @BERTON_KILL_VIBOR 
+Text.RemoveTextBox
+08DA: remove_panel $PANEL
+
+$DRUNK_MODE_FLAG = 0
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+            
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+            
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+            
+wait 1
+            
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+///////////////////////////////////////////////////////////
+
+$MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\QUESTS\BURTON\B3.wav")
+Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
+Audiostream.Loop($MUSIC_ASSHOLE, 1)
+Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1 
+
+/////////////////////////////////////////////////////////////////////
+
+0084: $DIALOG_ACTOR[0] = PLAYER_ACTOR // (int)
+v$ST_DIALOG[0] = "END46" 
+$DIALOG_COUNT = 0
+create_thread @DG_SYS
+    
+repeat
+wait 0
+until $DIALOG_END == 1
+
+fade 0 500
+wait 500
+
+actor.PutAtNoOffset(BERTON_HANDLE,272.4699, 1854.0076, 8.7649)
+actor.Angle(BERTON_HANDLE) = 178.9455
+
+while not animation.Available("CAR_CHECKS")
+wait 0 
+animation.Load("CAR_CHECKS")
+end
+
+0605: actor BERTON_HANDLE perform_animation "car_check" IFP "CAR_CHECKS" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time 99999999
+
+actor.PutAtNoOffset(PLAYER_ACTOR,274.9497, 1856.046, 8.7578)
+actor.Angle(PLAYER_ACTOR) = 142.9593
+
+0936: set_camera 278.656860 1858.241211 8.901360 position_to 276.705688 1856.553711 8.885704 time 10000 smooth_transition 1
+0920: point_camera 277.900543 1857.587036 8.895283 transverse_to 275.949371 1855.899536 8.879627 time 10000 smooth_transition 1
+
+wait 2000
+
+fade 1 2000
+
+v$ST_DIALOG[0] = "END47" 
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+    
+repeat
+wait 0
+until $DIALOG_END == 1
+
+0615: define_AS_pack_begin 51@
+07CD: AS_actor -1 walk_to 275.1737 1857.9731 8.7578 stop_with_angle 359.1486 within_radius 1.0
+05C8: AS_actor -1 look_around
+0616: define_AS_pack_end 51@
+0618: assign_actor PLAYER_ACTOR to_AS_pack 51@
+061B: remove_references_to_AS_pack 51@
+
+repeat
+wait 0
+until 02A0:   actor PLAYER_ACTOR stopped
+
+fade 0 100
+wait 100
+
+0936: set_camera 278.656860 1858.241211 8.901360 position_to 276.705688 1856.553711 8.885704 time 1 smooth_transition 1
+0920: point_camera 277.900543 1857.587036 8.895283 transverse_to 275.949371 1855.899536 8.879627 time 1 smooth_transition 1
+wait 10
+
+0936: set_camera 270.227661 1853.068237 9.184561 position_to 272.588867 1855.370483 9.028650 time 20000 smooth_transition 1
+0920: point_camera 270.942719 1853.765747 9.137325 transverse_to 273.303925 1856.067993 8.981415 time 20000 smooth_transition 1
+
+fade 1 100
+wait 100
+
+0792: disembark_instantly_actor BERTON_HANDLE
+
+0615: define_AS_pack_begin 51@
+05D9: AS_actor -1 run_to_actor PLAYER_ACTOR timelimit 5000 stop_within_radius 1.5
+0616: define_AS_pack_end 51@
+0618: assign_actor BERTON_HANDLE to_AS_pack 51@
+061B: remove_references_to_AS_pack 51@
+
+repeat
+wait 0
+
+if
+02A0:   actor BERTON_HANDLE stopped
+    then    
+    
+    wait 100
+        
+    0615: define_AS_pack_begin 51@
+    0812: AS_actor -1 perform_animation "KILL_Knife_Player" IFP "KNIFE" framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF 0 time -1  // versionB    
+    05BF: AS_actor -1 look_at_actor PLAYER_ACTOR 30000 ms
+    0616: define_AS_pack_end 51@
+    0618: assign_actor BERTON_HANDLE to_AS_pack 51@
+    061B: remove_references_to_AS_pack 51@
+    
+    0615: define_AS_pack_begin 51@    
+    0812: AS_actor -1 perform_animation "KILL_Knife_Ped_Damage" IFP "KNIFE" framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF 0 time -1  // versionB
+    05D4: AS_actor -1 rotate_angle 265.0
+    0812: AS_actor -1 perform_animation "KILL_Knife_Ped_Die" IFP "KNIFE" framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF 0 time -1  // versionB        
+    0616: define_AS_pack_end 51@
+    0618: assign_actor PLAYER_ACTOR to_AS_pack 51@
+    061B: remove_references_to_AS_pack 51@
+    
+    v$ST_DIALOG[0] = "END48" 
+    $DIALOG_COUNT = 0
+    $DIALOG_NOT_SKIP = 1
+    create_thread @DG_SYS2
+    
+    break    
+    end
+
+until false
+
+wait 500
+
+repeat
+wait 0
+until not actor.Animation(BERTON_HANDLE) == "KILL_Knife_Player"
+
+repeat
+wait 0
+0613: 0@ = actor PLAYER_ACTOR animation "KILL_Knife_Ped_Die" time
+until 0@ >= 0.98
+
+0393: actor PLAYER_ACTOR perform_animation "KILL_Knife_Ped_Die" at 0.0 times_normal_rate
+
+v$ST_DIALOG[0] = "END48"
+v$ST_DIALOG[1] = "END49" 
+$DIALOG_COUNT = 1
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+repeat
+wait 0
+until $DIALOG_END == 1
+
+0169: set_fade_color_RGB 200 0 0
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+            
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+            
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 3000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+            
+wait 1        
+
+///////////////////////////////////////////////////////////
+
+fade 0 3000
+wait 3000
+
+0936: set_camera 270.227661 1853.068237 9.184561 position_to 272.588867 1855.370483 9.028650 time 1 smooth_transition 1
+0920: point_camera 270.942719 1853.765747 9.137325 transverse_to 273.303925 1856.067993 8.981415 time 1 smooth_transition 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT113_GOT"                        
+if and
+0@ == 0
+$CHEATED_FLAG == 0
+then
+v$ACHIEVEMNT = "ACH113"
+$ACHIEVEMENT_GOT_FLAG = 1                                    
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT113_GOT"
+end
+
+while $ACHIEVEMENT_GOT_FLAG == 1
+wait 0
+end
+
+actor.DestroyInstantly(BERTON_HANDLE)
+gosub @DISEMB_JETP_CHECK
+0792: disembark_instantly_actor PLAYER_ACTOR
+
+actor.PutAtNoOffset(PLAYER_ACTOR,213.9133, 1877.5168, 13.1406)
+actor.Angle(PLAYER_ACTOR) = 0.8811
+create_thread @REFR_3D
+camera.Restore_WithJumpCut()
+
+///////////////////////////////////////////////////////////
+
+WEATHER_SYS_IDLE_FLAG = 1
+$WEATHER_CYCLE_OFF = 1
+$SOUND_OFF_1 = 1
+$SAVESTATUS_TRUE = 1
+$WEATHER_LOCK_OFF_FLAG = 1
+$NIGHTMARE_FLAG = 1
+$INF_MODE_COLOR_A = 50
+$SPEED_09_FLAG = 1
+PLAYER_NO_ITEMS_FLAG = 1
+015D: set_gamespeed 0.9
+set_weather 61
+0555: remove_weapon 46 from_actor PLAYER_ACTOR
+06AB: set_actor PLAYER_ACTOR all_weapons_hidden 1
+0992: set_player PLAYER_CHAR weapons_scrollable 0
+0901: enable_player PLAYER_CHAR jump_key 0
+create_thread @TIME_00
+select_interior 666
+
+{$I newopcodes/forallobjs}
+0750: set_object obj visibility 0 
+{$I newopcodes/for_end}
+
+01BC: put_object $OBJECT_M_A51_BLASTDOORR at 215.941 1874.571 13.903
+01BC: put_object $OBJECT_M_A51_BLASTDOORL at 211.842 1874.571 13.903
+
+$MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\QUESTS\BURTON\B4.wav")
+Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
+Audiostream.Loop($MUSIC_ASSHOLE, 1)
+Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 10000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+0A48: enable_menu_access_in_widescreen_mode 0 
+$TITLES_ENDED = 0
+
+create_thread @FIN_TIT
+
+player.CanMove(PLAYER_CHAR,true)
+0E68: set_player_control_pad 1 1 
+0E69: set_player_control_pad_movement 0 1
+fade 1 10000
+wait 5000
+
+repeat
+wait 0
+
+if
+0E3D: is_key_just_pressed 27 
+    then
+    break
+    end
+
+until false
+
+$TITLES_ENDED = 1
+fade 0 5000
+wait 5000
+
+jump to @BERTON_STATS_SHOW
+
+//endgay
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:BERTON_KILL_VIBOR
+
+Text.RemoveTextBox
+08DA: remove_panel $PANEL
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+            
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+            
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+            
+wait 1
+            
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+0084: $DIALOG_ACTOR[0] = PLAYER_ACTOR // (int)
+0084: $DIALOG_ACTOR[1] = PLAYER_ACTOR // (int)
+v$ST_DIALOG[0] = "END33"
+v$ST_DIALOG[1] = "END34" 
+$DIALOG_COUNT = 1
+create_thread @DG_SYS
+    
+repeat
+wait 0
+until $DIALOG_END == 1
+
+model.Load(#TEARGAS)
+mload
+actor.GiveWeaponAndAmmo(BERTON_HANDLE,Teargas,1)
+
+0668: AS_actor BERTON_HANDLE rotate_and_shoot_at 213.717 1879.4949 13.1406 1500 ms
+wait 1500
+05D3: AS_actor -1 goto_point 217.3874 1872.7928 13.1406 mode 7 time 99999 ms // versionA 
+
+Animation.PerfromB(PLAYER_ACTOR, "gas_cwr", "ped", 4.0, 1, 1, 1, 0, 10000)
+
+32@ = 0
+0@ = 0
+
+repeat
+wait 0
+
+if and
+32@ > 500
+0@ == 0
+    then
+    0@ = 1
+    05BB: AS_actor PLAYER_ACTOR fall_down 0 time_on_ground 50000
+    break
+    end
+
+until false
+
+fade 0 100 
+wait 100
+
+0395: clear_area 1 at 213.717 1879.4949 13.1406 radius 3.0  
+
+0936: set_camera 215.825577 1884.371216 13.745288 position_to 215.455246 1882.654907 13.697717 time 1 smooth_transition 1
+0920: point_camera 215.586502 1883.400635 13.718206 transverse_to 215.263474 1881.673828 13.670637 time 1 smooth_transition 1
+
+0781: get_weapon_with_ID 97 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+Actor.GiveWeaponAndAmmo(BERTON_HANDLE, 97, 99999)
+
+BLACK_POLOSKI_ON = 0
+player.CanMove(PLAYER_CHAR,true)
+camera.Restore_WithJumpCut()
+cinema.Widescreen(0)
+
+215@ = marker.CreateAboveActor(BERTON_HANDLE)  
+v$OBJECTIVE = "GAME966"
+actor.SetImmunities(BERTON_HANDLE,0,1,1,1,1)
+
+0615: define_AS_pack_begin 51@
+//05D3: AS_actor -1 goto_point 217.3874 1872.7928 13.1406 mode 7 time 99999 ms // versionA
+05D3: AS_actor -1 goto_point 227.1962 1872.4703 13.7268 mode 7 time 99999 ms // versionA
+05D3: AS_actor -1 goto_point 238.3367 1872.4222 11.4609 mode 7 time 99999 ms // versionA
+05D3: AS_actor -1 goto_point 239.4863 1873.3483 11.4609 mode 7 time 99999 ms // versionA
+05D4: AS_actor -1 rotate_angle 108.7464
+0616: define_AS_pack_end 51@
+0618: assign_actor BERTON_HANDLE to_AS_pack 51@
+061B: remove_references_to_AS_pack 51@
+
+wait 10
+
+fade 1 500
+$HUD_REMOVE = 0
+wait 500
+
+///////////////////////////////////////////////////////////
+
+$MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\QUESTS\BURTON\B2.wav")
+Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
+Audiostream.Loop($MUSIC_ASSHOLE, 1)
+Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1 
+
+/////////////////////////////////////////////////////////////////////
+
+//jump to @BERTON_DEATH_SKIP
+
+repeat
+wait 0
+
+if
+not actor.Dead(BERTON_HANDLE)
+jf @BERTON_DIED_EARLY
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @BERTON_FAILED_PLAYER_DIED
+
+until 00EC:   actor BERTON_HANDLE sphere 0 near_point 239.4863 1873.3483 radius 1.0 1.0
+
+04EB: AS_actor BERTON_HANDLE crouch 1
+05E2: AS_actor BERTON_HANDLE kill_actor PLAYER_ACTOR
+05C1: AS_actor BERTON_HANDLE speak_from_audio_table 89
+    
+v$ST_DIALOG[0] = "END35" 
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+    
+repeat
+wait 0
+
+if
+not actor.Dead(BERTON_HANDLE)
+jf @BERTON_DIED_EARLY
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @BERTON_FAILED_PLAYER_DIED
+
+until $DIALOG_END == 1
+
+077A: set_actor BERTON_HANDLE acquaintance 4 to_actors_pedtype 0 // see ped.dat
+wait 2000        
+054E: clear_actor BERTON_HANDLE damage
+
+repeat
+wait 0
+
+if
+not actor.Dead(BERTON_HANDLE)
+jf @BERTON_DIED_EARLY
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @BERTON_FAILED_PLAYER_DIED
+ 
+until 051A:   actor BERTON_HANDLE damaged_by_actor PLAYER_ACTOR
+
+054E: clear_actor BERTON_HANDLE damage
+wait 2000
+
+v$ST_DIALOG[0] = "END36" 
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+05C1: AS_actor BERTON_HANDLE speak_from_audio_table 89   
+077A: set_actor BERTON_HANDLE acquaintance 0 to_actors_pedtype 0 // see ped.dat
+
+0615: define_AS_pack_begin 51@
+0605: actor -1 perform_animation "Crouch_Roll_R" IFP "PED" framedelta 4.0 loop 0 lockX 1 lockY 1 lockF 0 time -1
+04EB: AS_actor -1 crouch 0      
+05D3: AS_actor -1 goto_point 243.2229 1879.6714 11.4609 mode 7 time 99999 ms // versionA
+05D3: AS_actor -1 goto_point 254.7533 1879.5652 11.4609 mode 7 time 99999 ms // versionA
+05D3: AS_actor -1 goto_point 254.8872 1873.5377 8.7578 mode 7 time 99999 ms // versionA
+05D4: AS_actor -1 rotate_angle 91.2775
+04EB: AS_actor -1 crouch 1
+05E2: AS_actor -1 kill_actor PLAYER_ACTOR       
+0616: define_AS_pack_end 51@
+0618: assign_actor BERTON_HANDLE to_AS_pack 51@
+061B: remove_references_to_AS_pack 51@
+054E: clear_actor BERTON_HANDLE damage
+
+repeat
+wait 0
+
+if
+not actor.Dead(BERTON_HANDLE)
+jf @BERTON_DIED_EARLY
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @BERTON_FAILED_PLAYER_DIED
+
+until 00EC:   actor BERTON_HANDLE sphere 0 near_point 254.8872 1873.5377 radius 1.0 1.0
+
+wait 2000
+054E: clear_actor BERTON_HANDLE damage
+  
+repeat
+wait 0
+
+if
+not actor.Dead(BERTON_HANDLE)
+jf @BERTON_DIED_EARLY
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @BERTON_FAILED_PLAYER_DIED
+
+until 051A:   actor BERTON_HANDLE damaged_by_actor PLAYER_ACTOR 
+
+v$ST_DIALOG[0] = "END37" 
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+05C1: AS_actor BERTON_HANDLE speak_from_audio_table 89   
+054E: clear_actor BERTON_HANDLE damage
+wait 1000      
+077A: set_actor BERTON_HANDLE acquaintance 0 to_actors_pedtype 0 // see ped.dat
+
+0615: define_AS_pack_begin 51@
+0605: actor -1 perform_animation "Crouch_Roll_L" IFP "PED" framedelta 4.0 loop 0 lockX 1 lockY 1 lockF 0 time -1
+04EB: AS_actor -1 crouch 0      
+05D3: AS_actor -1 goto_point 254.7175 1864.5951 8.765 mode 7 time 99999 ms // versionA
+05D3: AS_actor -1 goto_point 253.8679 1856.2183 8.7578 mode 7 time 99999 ms // versionA
+05D3: AS_actor -1 goto_point 249.4542 1840.9215 8.7578 mode 7 time 99999 ms // versionA
+05D4: AS_actor -1 rotate_angle 356.6814
+0616: define_AS_pack_end 51@
+0618: assign_actor BERTON_HANDLE to_AS_pack 51@
+061B: remove_references_to_AS_pack 51@
+
+repeat
+wait 0
+
+if
+not actor.Dead(BERTON_HANDLE)
+jf @BERTON_DIED_EARLY
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @BERTON_FAILED_PLAYER_DIED
+
+until 00EC:   actor BERTON_HANDLE sphere 0 near_point 249.4542 1840.9215 radius 1.0 1.0
+
+v$ST_DIALOG[0] = "END38" 
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+  
+05C1: AS_actor BERTON_HANDLE speak_from_audio_table 89    
+077A: set_actor BERTON_HANDLE acquaintance 4 to_actors_pedtype 0 // see ped.dat
+04EB: AS_actor BERTON_HANDLE crouch 1
+wait 500
+05E2: AS_actor BERTON_HANDLE kill_actor PLAYER_ACTOR  
+
+0350: set_actor BERTON_HANDLE maintain_position_when_attacked 0
+0816: set_actor BERTON_HANDLE dont_chase_victim 0
+
+077A: set_actor BERTON_HANDLE acquaintance 4 to_actors_pedtype 0 // see ped.dat
+wait 2000        
+054E: clear_actor BERTON_HANDLE damage
+
+repeat
+wait 0
+
+if
+not actor.Dead(BERTON_HANDLE)
+jf @BERTON_DIED_EARLY
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @BERTON_FAILED_PLAYER_DIED
+ 
+until 051A:   actor BERTON_HANDLE damaged_by_actor PLAYER_ACTOR
+
+054E: clear_actor BERTON_HANDLE damage
+wait 2000
+
+v$ST_DIALOG[0] = "END39" 
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+05C1: AS_actor BERTON_HANDLE speak_from_audio_table 89   
+077A: set_actor BERTON_HANDLE acquaintance 0 to_actors_pedtype 0 // see ped.dat
+
+0615: define_AS_pack_begin 51@
+0605: actor -1 perform_animation "Crouch_Roll_R" IFP "PED" framedelta 4.0 loop 0 lockX 1 lockY 1 lockF 0 time -1
+04EB: AS_actor -1 crouch 0      
+05D3: AS_actor -1 goto_point 248.9408 1826.2104 7.5547 mode 7 time 99999 ms // versionA
+05D3: AS_actor -1 goto_point 249.7268 1817.8451 7.5547 mode 7 time 99999 ms // versionA
+05D4: AS_actor -1 rotate_angle 270.8789
+05BC: AS_actor -1 jump 1
+05D3: AS_actor -1 goto_point 265.4135 1819.0085 4.7031 mode 7 time 99999 ms // versionA 
+0616: define_AS_pack_end 51@
+0618: assign_actor BERTON_HANDLE to_AS_pack 51@
+061B: remove_references_to_AS_pack 51@
+054E: clear_actor BERTON_HANDLE damage
+
+repeat
+wait 0
+
+if
+not actor.Dead(BERTON_HANDLE)
+jf @BERTON_DIED_EARLY
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @BERTON_FAILED_PLAYER_DIED
+
+until 00EC:   actor BERTON_HANDLE sphere 0 near_point 265.4135 1819.0085 radius 1.0 1.0 
+
+0615: define_AS_pack_begin 51@
+04EB: AS_actor -1 crouch 1
+05E2: AS_actor -1 kill_actor PLAYER_ACTOR      
+0616: define_AS_pack_end 51@
+0618: assign_actor BERTON_HANDLE to_AS_pack 51@
+061B: remove_references_to_AS_pack 51@
+054E: clear_actor BERTON_HANDLE damage
+
+v$ST_DIALOG[0] = "END40" 
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+  
+05C1: AS_actor BERTON_HANDLE speak_from_audio_table 89    
+077A: set_actor BERTON_HANDLE acquaintance 4 to_actors_pedtype 0 // see ped.dat
+04EB: AS_actor BERTON_HANDLE crouch 1
+wait 500
+05E2: AS_actor BERTON_HANDLE kill_actor PLAYER_ACTOR  
+
+0350: set_actor BERTON_HANDLE maintain_position_when_attacked 0
+0816: set_actor BERTON_HANDLE dont_chase_victim 0
+
+077A: set_actor BERTON_HANDLE acquaintance 4 to_actors_pedtype 0 // see ped.dat
+wait 2000        
+054E: clear_actor BERTON_HANDLE damage
+
+repeat
+wait 0
+
+if
+not actor.Dead(BERTON_HANDLE)
+jf @BERTON_DIED_EARLY
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @BERTON_FAILED_PLAYER_DIED
+ 
+until 051A:   actor BERTON_HANDLE damaged_by_actor PLAYER_ACTOR
+
+054E: clear_actor BERTON_HANDLE damage
+wait 2000
+
+repeat
+wait 0
+
+if
+not actor.Dead(BERTON_HANDLE)
+jf @BERTON_DIED_EARLY
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @BERTON_FAILED_PLAYER_DIED
+ 
+until 051A:   actor BERTON_HANDLE damaged_by_actor PLAYER_ACTOR
+
+054E: clear_actor BERTON_HANDLE damage
+wait 2000
+
+05C1: AS_actor BERTON_HANDLE speak_from_audio_table 89   
+077A: set_actor BERTON_HANDLE acquaintance 0 to_actors_pedtype 0 // see ped.dat
+
+0615: define_AS_pack_begin 51@
+04EB: AS_actor -1 crouch 0      
+05D3: AS_actor -1 goto_point 287.2077 1816.844 4.7266 mode 7 time 99999 ms // versionA
+05D3: AS_actor -1 goto_point 288.7594 1820.1177 4.7109 mode 7 time 99999 ms // versionA
+05D3: AS_actor -1 goto_point 295.7688 1820.1771 7.8205 mode 7 time 99999 ms // versionA
+05D3: AS_actor -1 goto_point 297.7375 1836.499 7.734 mode 7 time 99999 ms // versionA
+05D3: AS_actor -1 goto_point 300.4154 1839.6741 7.8099 mode 7 time 99999 ms // versionA
+0616: define_AS_pack_end 51@
+0618: assign_actor BERTON_HANDLE to_AS_pack 51@
+061B: remove_references_to_AS_pack 51@
+054E: clear_actor BERTON_HANDLE damage
+
+repeat
+wait 0
+
+if
+not actor.Dead(BERTON_HANDLE)
+jf @BERTON_DIED_EARLY
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @BERTON_FAILED_PLAYER_DIED
+
+until 00EC:   actor BERTON_HANDLE sphere 0 near_point 300.4154 1839.6741 radius 1.0 1.0
+
+v$ST_DIALOG[0] = "END41" 
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+  
+05C1: AS_actor BERTON_HANDLE speak_from_audio_table 89    
+077A: set_actor BERTON_HANDLE acquaintance 4 to_actors_pedtype 0 // see ped.dat
+04EB: AS_actor BERTON_HANDLE crouch 1
+wait 500
+05E2: AS_actor BERTON_HANDLE kill_actor PLAYER_ACTOR  
+
+0350: set_actor BERTON_HANDLE maintain_position_when_attacked 0
+0816: set_actor BERTON_HANDLE dont_chase_victim 0
+
+077A: set_actor BERTON_HANDLE acquaintance 4 to_actors_pedtype 0 // see ped.dat
+wait 2000        
+054E: clear_actor BERTON_HANDLE damage
+
+repeat
+wait 0
+
+if
+not actor.Dead(BERTON_HANDLE)
+jf @BERTON_DIED_EARLY
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @BERTON_FAILED_PLAYER_DIED
+ 
+until 051A:   actor BERTON_HANDLE damaged_by_actor PLAYER_ACTOR
+
+054E: clear_actor BERTON_HANDLE damage
+wait 2000
+
+05C1: AS_actor BERTON_HANDLE speak_from_audio_table 89   
+077A: set_actor BERTON_HANDLE acquaintance 0 to_actors_pedtype 0 // see ped.dat
+
+0615: define_AS_pack_begin 51@
+04EB: AS_actor -1 crouch 0      
+05D3: AS_actor -1 goto_point 313.4613 1839.7831 7.8281 mode 7 time 99999 ms // versionA
+05D3: AS_actor -1 goto_point 313.55 1853.1093 7.8281 mode 7 time 99999 ms // versionA
+05D3: AS_actor -1 goto_point 300.8716 1855.3682 7.7266 mode 7 time 99999 ms // versionA
+05D3: AS_actor -1 goto_point 297.6848 1866.728 8.7656 mode 7 time 99999 ms // versionA
+05D3: AS_actor -1 goto_point 283.3844 1869.3038 8.7578 mode 7 time 99999 ms // versionA
+05D3: AS_actor -1 goto_point 275.7533 1863.9293 8.7578 mode 7 time 99999 ms // versionA
+0616: define_AS_pack_end 51@
+0618: assign_actor BERTON_HANDLE to_AS_pack 51@
+061B: remove_references_to_AS_pack 51@
+054E: clear_actor BERTON_HANDLE damage
+
+repeat
+wait 0
+
+if
+not actor.Dead(BERTON_HANDLE)
+jf @BERTON_DIED_EARLY
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @BERTON_FAILED_PLAYER_DIED
+
+until 00EC:   actor BERTON_HANDLE sphere 0 near_point 275.7533 1863.9293 radius 1.0 1.0
+
+0615: define_AS_pack_begin 51@      
+05D3: AS_actor -1 goto_point 272.5485 1861.0105 8.7649 mode 7 time 99999 ms // versionA
+05D3: AS_actor -1 goto_point 268.63 1863.3141 8.7578 mode 7 time 99999 ms // versionA
+05D3: AS_actor -1 goto_point 268.6747 1876.8538 8.4375 mode 7 time 99999 ms // versionA
+0616: define_AS_pack_end 51@
+0618: assign_actor BERTON_HANDLE to_AS_pack 51@
+061B: remove_references_to_AS_pack 51@
+054E: clear_actor BERTON_HANDLE damage
+
+repeat
+wait 0
+
+if
+not actor.Dead(BERTON_HANDLE)
+jf @BERTON_DIED_EARLY
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @BERTON_FAILED_PLAYER_DIED
+
+until 00EC:   actor BERTON_HANDLE sphere 0 near_point 268.6747 1876.8538 radius 1.0 1.0
+
+1@ = 10000
+if
+AUTOLEVELING_ON_FLAG == 1
+then
+for 0@ = 1 to $PLAYER_LEVEL
+1@ += 350
+end
+end
+
+actor.Health(BERTON_HANDLE) = 1@
+08AF: set_actor BERTON_HANDLE max_health_to 1@
+
+if
+PLAYER_HOLDING_CHAINSAW_FLAG == 0
+then
+03C4: set_vagina_text $TIM_HEALTH type 1 GXT 'GME1045' // global_variable  // Score ~1~
+SUPPLY_TEXT_FLAG = 1
+else
+04F7: vagina_text $TIM_HEALTH type 1 line 2 GXT 'GME1045'
+end
+
+v$ST_DIALOG[0] = "END41" 
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+  
+05C1: AS_actor BERTON_HANDLE speak_from_audio_table 89    
+077A: set_actor BERTON_HANDLE acquaintance 4 to_actors_pedtype 0 // see ped.dat
+04EB: AS_actor BERTON_HANDLE crouch 1
+0ED9: set_char_ignore_damage_anims BERTON_HANDLE 1
+
+//wait 500
+32@ = 0
+while 32@ < 500
+wait 0
+gosub @BERTON_HP_CHECK
+end
+
+05E2: AS_actor BERTON_HANDLE kill_actor PLAYER_ACTOR  
+
+0350: set_actor BERTON_HANDLE maintain_position_when_attacked 1
+0816: set_actor BERTON_HANDLE dont_chase_victim 1
+
+077A: set_actor BERTON_HANDLE acquaintance 4 to_actors_pedtype 0 // see ped.dat
+//wait 2000
+32@ = 0
+while 32@ < 2000
+wait 0
+gosub @BERTON_HP_CHECK
+end        
+054E: clear_actor BERTON_HANDLE damage
+
+repeat
+wait 0
+
+gosub @BERTON_HP_CHECK
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @BERTON_FAILED_PLAYER_DIED
+ 
+until actor.Dead(BERTON_HANDLE)
+
+0151: remove_vagina_text $TIM_HEALTH
+0470: 28@ = actor PLAYER_ACTOR current_weapon
+
+:BERTON_DEATH_SKIP
+
+$DRUNK_MODE_FLAG = 0
+
+player.CanMove(PLAYER_CHAR,false)
+
+fade 0 500
+$HUD_REMOVE = 1
+wait 500
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+///////////////////////////////////////////////////////////
+
+BLACK_POLOSKI_ON = 1
+cinema.Widescreen(1)
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT139_GOT"                        
+if and
+0@ == 0
+$CHEATED_FLAG == 0
+then
+v$ACHIEVEMNT = "ACH139"
+$ACHIEVEMENT_GOT_FLAG = 1                                    
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT139_GOT"
+end
+
+while $ACHIEVEMENT_GOT_FLAG == 1
+wait 0
+end
+
+actor.DestroyInstantly(BERTON_HANDLE)
+
+while not model.Available(14731)
+wait 0
+model.Load(14731)
+mload
+end
+        
+BERTON_HANDLE = actor.Create(26,14731,268.1086, 1875.9486, 8.4375)
+actor.Angle(BERTON_HANDLE) = 180.0788
+actor.Health(BERTON_HANDLE) = 5000
+0ED9: set_char_ignore_damage_anims BERTON_HANDLE 1
+create_thread @PED_BKP BERTON_HANDLE 371
+
+while not animation.Available("RYDER")
+wait 0
+animation.Load("RYDER")
+end
+
+0812: AS_actor BERTON_HANDLE perform_animation "RYD_DIE_PT2" IFP "RYDER" framedelta 1000.0 loopA 0 lockX 0 lockY 0 lockF 1 time -1 // versionB
+
+0936: set_camera 267.528717 1867.657227 8.577798 position_to 267.683807 1868.829468 8.546421 time 30000 smooth_transition 1
+0920: point_camera 267.660461 1868.648193 8.552291 transverse_to 267.815552 1869.820435 8.520914 time 30000 smooth_transition 1
+
+actor.PutAtNoOffset(PLAYER_ACTOR,268.6623, 1870.6932, 8.6094)
+actor.Angle(PLAYER_ACTOR) = 0.4636
+create_thread @REFR_3D
+
+01B9: set_actor PLAYER_ACTOR armed_weapon_to 28@
+
+0635: AS_actor PLAYER_ACTOR aim_at_actor BERTON_HANDLE 10000 ms
+
+wait 1000
+
+fade 1 500
+wait 500
+
+repeat
+wait 0
+0613: 0@ = actor BERTON_HANDLE animation "RYD_DIE_PT2" time 
+until 0@ > 0.783
+
+0393: actor BERTON_HANDLE perform_animation "RYD_DIE_PT2" at 0.0 times_normal_rate
+
+wait 1000
+
+07A5: AS_actor PLAYER_ACTOR attack_actor BERTON_HANDLE time 1500
+
+0393: actor BERTON_HANDLE perform_animation "RYD_DIE_PT2" at 1.0 times_normal_rate
+
+32@ = 0
+
+repeat
+wait 0
+0613: 0@ = actor BERTON_HANDLE animation "RYD_DIE_PT2" time
+until 0@ >= 0.95
+
+wait 1000
+
+v$ST_DIALOG[0] = "END44"
+v$ST_DIALOG[1] = "END45" 
+$DIALOG_COUNT = 1
+create_thread @DG_SYS2
+    
+repeat
+wait 0
+until $DIALOG_END == 1
+
+fade 0 100
+wait 100
+
+0936: set_camera 267.528717 1867.657227 8.577798 position_to 267.683807 1868.829468 8.546421 time 1 smooth_transition 1
+0920: point_camera 267.660461 1868.648193 8.552291 transverse_to 267.815552 1869.820435 8.520914 time 1 smooth_transition 1
+wait 10
+
+actor.PutAtNoOffset(BERTON_HANDLE,268.6877, 1883.2352, -30.0938)
+actor.Angle(BERTON_HANDLE) = 180.0
+05BE: AS_actor BERTON_HANDLE die
+
+0936: set_camera 273.381744 1890.919800 -29.392973 position_to 273.381744 1890.919800 -29.392973 time 180000 smooth_transition 1
+0920: point_camera 272.898804 1890.045410 -29.440378 transverse_to 272.898804 1890.045410 -29.440378 time 180000 smooth_transition 1
+
+wait 2000
+
+fade 1 5000
+wait 7500
+
+fade 0 100
+wait 100
+
+wait 1000
+
+BLACK_POLOSKI_ON = 0
+player.CanMove(PLAYER_CHAR,true)
+camera.Restore_WithJumpCut()
+cinema.Widescreen(0)
+
+$SAVESTATUS = 0
+$HUD_REMOVE = 0
+fade 1 500
+wait 500
+
+v$OBJECTIVE = "DUMMY"
+$ONMISSION = 0
+$QUEST_TYPE = -1
+$NOTSPAWN_ETC = 0
+$SURVIVORS_DONT_SPAWN_FLAG = 0
+MAIN_QUEST_TEAMMATES_REMOVE_FLAG = 0
+MAIN_QUEST_MUSIC_FLAG = 0
+HARDCORE_DANGER_FLAG_SCRIPTED = 0
+BERTON_KILLED_FLAG = 1
+0629: change_integer_stat 258 to 0
+
+01BC: put_object $OBJECT_M_A51_BLASTDOORR at 215.941 1874.571 13.903
+01BC: put_object $OBJECT_M_A51_BLASTDOORL at 211.842 1874.571 13.903
+
+$TEMP_XP = 50000
+008D: $TEMP_XP = integer $TEMP_XP to_float
+0069: $TEMP_XP *= $XP_COEFF // (float)
+if
+PERK_CHARISMA == 2
+then
+$TEMP_XP *= CHARISMA_LEVEL2_XP_COEFF
+end
+008C: $TEMP_XP = float $TEMP_XP to_integer
+0058: $PLAYER_XP += $TEMP_XP // (int)
+
+v$ACHIEVEMNT = "OTQ8E"
+$GQUEST_GOT_FLAG = 1
+0AF1: write_int 3 to_ini_file "data\survival.set" section "SRV" key "OTQ8GT"
+$GQST_SLCTD_RGIN = 8
+$GQEST_SLCTD_QST = 8
+
+jump to @ASSUDALENIE_KODA_BERTON
+
+:BERTON_HP_CHECK
+
+/////////////////////////////////////
+    
+if
+056D:   actor BERTON_HANDLE defined
+then
+    
+5@ = 5000    
+if
+AUTOLEVELING_ON_FLAG == 1
+then
+for 1@ = 1 to $PLAYER_LEVEL
+5@ += 350
+end
+end
+    
+1@ = actor.Health(BERTON_HANDLE)
+                        
+0085: 2@ = 1@ // (int)
+0093: 2@ = integer 2@ to_float
+0085: 4@ = 5@ // (int)
+0093: 4@ = integer 4@ to_float                                                
+4@ /= 100.0                     
+0073: 2@ /= 4@ // (float)
+0092: 2@ = float 2@ to_integer
+            
+008A: $TIM_HEALTH = 2@ // (int)
+end
+            
+/////////////////////////////////////
+
+return
+
+:BERTON_DIED_EARLY
+
+$DRUNK_MODE_FLAG = 0
+
+v$OBJECTIVE = "DUMMY"
+marker.Disable(215@)
+
+player.CanMove(PLAYER_CHAR,false)
+
+fade 0 500
+$HUD_REMOVE = 1
+wait 500
+
+BLACK_POLOSKI_ON = 1
+cinema.Widescreen(1)
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT139_GOT"                        
+if and
+0@ == 0
+$CHEATED_FLAG == 0
+then
+v$ACHIEVEMNT = "ACH139"
+$ACHIEVEMENT_GOT_FLAG = 1                                    
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT139_GOT"
+end
+
+while $ACHIEVEMENT_GOT_FLAG == 1
+wait 0
+end
+
+0889: store_actor BERTON_HANDLE center_of_body_position_to $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3
+camera.SetPosition($TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3,0.0,0.0,0.0)
+camera.OnPed(PLAYER_ACTOR,15,2)
+05BF: AS_actor PLAYER_ACTOR look_at_actor BERTON_HANDLE 30000 ms
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+///////////////////////////////////////////////////////////
+
+$END_DIALOG_INST = 1
+wait 0
+
+v$ST_DIALOG[0] = "END44"
+v$ST_DIALOG[1] = "END45" 
+$DIALOG_COUNT = 1
+create_thread @DG_SYS2
+
+fade 1 5000
+
+repeat
+wait 0
+until $DIALOG_END == 1
+
+04C4: store_coords_to $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3 from_actor PLAYER_ACTOR with_offset 0.5 -1.3 0.5
+camera.SetPosition($TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3,0.0,0.0,0.0)
+camera.OnPed(BERTON_HANDLE,15,1)
+
+wait 5000
+
+fade 0 100
+wait 100
+
+0647: AS_actor PLAYER_ACTOR clear_look_task
+
+wait 1000
+
+$SAVESTATUS = 0
+$ONMISSION = 0
+$QUEST_TYPE = -1
+$NOTSPAWN_ETC = 0
+$SURVIVORS_DONT_SPAWN_FLAG = 0
+MAIN_QUEST_TEAMMATES_REMOVE_FLAG = 0
+MAIN_QUEST_MUSIC_FLAG = 0
+HARDCORE_DANGER_FLAG_SCRIPTED = 0
+BERTON_KILLED_FLAG = 1
+0629: change_integer_stat 258 to 0
+
+01BC: put_object $OBJECT_M_A51_BLASTDOORR at 215.941 1874.571 13.903
+01BC: put_object $OBJECT_M_A51_BLASTDOORL at 211.842 1874.571 13.903
+
+$TEMP_XP = 50000
+008D: $TEMP_XP = integer $TEMP_XP to_float
+0069: $TEMP_XP *= $XP_COEFF // (float)
+if
+PERK_CHARISMA == 2
+then
+$TEMP_XP *= CHARISMA_LEVEL2_XP_COEFF
+end
+008C: $TEMP_XP = float $TEMP_XP to_integer
+0058: $PLAYER_XP += $TEMP_XP // (int)
+
+v$ACHIEVEMNT = "OTQ8E"
+$GQUEST_GOT_FLAG = 1
+0AF1: write_int 3 to_ini_file "data\survival.set" section "SRV" key "OTQ8GT"
+$GQST_SLCTD_RGIN = 8
+$GQEST_SLCTD_QST = 8
+
+BLACK_POLOSKI_ON = 0
+player.CanMove(PLAYER_CHAR,true)
+camera.Restore_WithJumpCut()
+cinema.Widescreen(0)
+
+$SAVESTATUS = 0
+$HUD_REMOVE = 0
+fade 1 500
+wait 500
+
+jump to @ASSUDALENIE_KODA_BERTON
+
+:BERTON_STATS_SHOW
+$ALLOW_HUNGER = 0
+$DELETE_SOUND = 1
+$SAVER_COMING = 0 
+$FPS_COUNTER_ENABLED = 0 
+$FPS_COUNTER_ENABLED2 = 0    
+$SATIETY_LEVEL = 600.0
+$FATIGUE_LEVEL = 0.0
+
+$STATS_SHOW_FLAG = 0
+$STATS_SHOW_GAMEMODE = 1
+create_thread @STS_SHW
+
+$STATS_CAN_BE_SKIPPED = 0
+
+:CHECKING_STATS_BERTON_1
+wait 0
+if
+$STATS_CAN_BE_SKIPPED == 1
+then
+if or
+$STATS_SHOW_END == 1
+00E1:   player 0 pressed_key 17
+jf @CHECKING_STATS_BERTON_1
+else
+jump to @CHECKING_STATS_BERTON_1
+end
+
+$STATS_SHOW_END = 1
+$STATS_TOTAL_SHOW_OFF_FLAG = 1
+
+32@ = 0
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 10000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+fade 0 3000
+
+while 32@ < 3100
+wait 0
+$STATS_TOTAL_SHOW_OFF_FLAG = 1
+end
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end 
+
+/////////////////////////////////////////////////////////////////////
+
+0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
+end_thread
+
+:ASSKOD_PROVALA_BERTON 
+mission_cleanup     
+return 
+
+:ASSUDALENIE_KODA_BERTON    
+mission_cleanup    
+return
+
+:BERTON_FAILED_PLAYER_DIED
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+///////////////////////////////////////////////////////////
+
+text.ClearAll()
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+v$FAILED_TEXT = "MS_FL80"
+create_thread @GMV_OVR
+    
+return
