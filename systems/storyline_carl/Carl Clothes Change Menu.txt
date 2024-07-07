@@ -1,0 +1,3932 @@
+const
+CARL_CLOTHES_BINCO_SELECTED_ROW = 5@
+CARL_CLOTHES_PROLAPS_SELECTED_ROW = 6@
+CARL_CLOTHES_SUBURBAN_SELECTED_ROW = 7@
+CARL_CLOTHES_ZIP_SELECTED_ROW = 8@
+CARL_CLOTHES_VICTIM_SELECTED_ROW = 9@
+CARL_CLOTHES_DIDIERSACHS_SELECTED_ROW = 14@
+CARL_CLOTHES_SPECIALOUTFITS_SELECTED_ROW = 16@
+CARL_CLOTHES_REMOVECLOTHES_SELECTED_ROW = 17@
+CARL_CLOTHES_SELECTED_PANEL = 18@
+CARL_CLOTHES_SELECTED_HAIRCUT = 29@
+CARL_CLOTHES_SELECTED_BODYTYPE = 26@
+end
+
+:CJ_CLTS
+thread 'CJ_CLTS'
+
+////////////////////////////////////////////////////////////////////////////
+
+$INT_ZMB_NOT = 1
+actor.StorePos(PLAYER_ACTOR,10@,11@,12@)
+13@ = actor.Angle(PLAYER_ACTOR)
+cinema.Radar(0)        
+actor.PutAtNoOffset(PLAYER_ACTOR,257.6425, -42.1901, 1002.0234)
+actor.Angle(PLAYER_ACTOR) = 32.9773
+select_interior 14
+0860: link_actor PLAYER_ACTOR to_interior 14
+0792: disembark_instantly_actor PLAYER_ACTOR
+camera.Restore_WithJumpCut()
+33@ = 0
+                       
+create_thread @REFR_3D
+
+gosub @CJ_CLOTH_CAMERA_ALL
+
+wait 500
+fade 1 500
+
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\CS_ElevatorMusic.wav")
+Audiostream.Volume($MUSIC_MISSION) = 0.0
+Audiostream.Loop($MUSIC_MISSION, 1)
+Audiostream.PerformAction($MUSIC_MISSION, PLAY)
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 2000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+////////////////////////////////////////////////////////////////////////////
+
+0AF0: CARL_CLOTHES_SELECTED_HAIRCUT = get_int_from_ini_file "data\clothes.ini" section "CLOTHES" key "HEAD_NUMBER"
+if
+CARL_CLOTHES_SELECTED_HAIRCUT < -1
+then
+0AF1: write_int 0 to_ini_file "data\clothes.ini" section "CLOTHES" key "HEAD_NUMBER"
+CARL_CLOTHES_SELECTED_HAIRCUT = 0
+end
+
+0AF0: CARL_CLOTHES_SELECTED_BODYTYPE = get_int_from_ini_file "data\clothes.ini" section "CLOTHES" key "BODY_TYPE"
+if
+CARL_CLOTHES_SELECTED_BODYTYPE < -1
+then
+0AF1: write_int 1 to_ini_file "data\clothes.ini" section "CLOTHES" key "BODY_TYPE"
+CARL_CLOTHES_SELECTED_BODYTYPE = 0
+end
+
+if 0039:   CARL_CLOTHES_SELECTED_BODYTYPE == 0
+then
+  062A: change_float_stat 21 to 0.0
+  062A: change_float_stat 23 to 0.0
+  070D: rebuild_player PLAYER_CHAR  
+end
+
+if 0039:   CARL_CLOTHES_SELECTED_BODYTYPE == 1
+then
+  062A: change_float_stat 21 to 250.0    
+  062A: change_float_stat 23 to 501.0
+  070D: rebuild_player PLAYER_CHAR
+end
+
+if 0039:   CARL_CLOTHES_SELECTED_BODYTYPE == 2
+then
+  062A: change_float_stat 21 to 100.0
+  062A: change_float_stat 23 to 1000.0
+  070D: rebuild_player PLAYER_CHAR
+end
+
+if 0039:   CARL_CLOTHES_SELECTED_BODYTYPE == 3
+then
+  062A: change_float_stat 23 to 0.0
+  062A: change_float_stat 21 to 1000.0
+  070D: rebuild_player PLAYER_CHAR
+end
+
+if 0039:   CARL_CLOTHES_SELECTED_BODYTYPE == 4
+then
+  062A: change_float_stat 23 to 1000.0
+  062A: change_float_stat 21 to 1000.0
+  070D: rebuild_player PLAYER_CHAR
+end   
+               
+
+//wait 99999999
+
+//----------------
+//Shop menu: binco, didier sachs, etc
+//----------------
+
+:CARL_CLOTHES_SELECT_MAIN_MENU
+//wait 0
+//0AD1: show_formatted_text_highpriority "CARL_CLOTHES_SELECT_MAIN_MENU" time 2000
+gosub @CJ_CLOTH_CAMERA_ALL
+08D4: $PANEL = create_panel_with_title 'CL259' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+08DB:  set_panel $PANEL column 0 header 'DUMMY' data 'CL001' 'CL002' 'CL003' 'CL004' 'CL005'  'CL006'  'CL260' 'CL280' 'CL281' 'CL270' 'DUMMY' 'DUMMY'
+090E: set_panel $PANEL active_row 4@
+//wait 150
+gosub @CARL_CLOTHES_HANDLE_MENU_STORES
+
+if 0039:   31@ == 1
+then
+        
+text.RemoveTextBox() 
+
+///////////////////////////////////Потдверждение выбора одежды/////////////////////////////////// 
+
+Audiostream.Volume($MENU_ACCEPT_SOUND) = $SOUNDS_VOLUME 
+Audiostream.Loop($MENU_ACCEPT_SOUND, 0)
+Audiostream.PerformAction($MENU_ACCEPT_SOUND, PLAY)
+wait $MENU_BACK_WAIT
+
+if and
+0D49: 0@ = compare_strings v$HEAD_MODEL "head" // IF and SET 
+0D49: 0@ = compare_strings v$HEAD_TEXTURE "player_face" // IF and SET 
+0D49: 0@ = compare_strings v$TORSO_MODEL "vest" // IF and SET 
+0D49: 0@ = compare_strings v$TORSO_TEXTURE "vest" // IF and SET 
+0D49: 0@ = compare_strings v$LEGS_MODEL "jeans" // IF and SET 
+0D49: 0@ = compare_strings v$LEGS_TEXTURE "jeansdenim" // IF and SET 
+0D49: 0@ = compare_strings v$SHOES_MODEL "sneaker" // IF and SET 
+0D49: 0@ = compare_strings v$SHOES_TEXTURE "sneakerbincblk" // IF and SET 
+    then
+    if or
+    8846:   not string v$NECKLACE_MODEL empty // v$ 
+    8846:   not string v$WRISTWATCH_MODEL empty // v$ 
+    8846:   not string v$GLASSES_MODEL empty // v$ 
+    8846:   not string v$HATS_MODEL empty // v$ 
+    8846:   not string v$OUTFIT_MODEL empty // v$ 
+        then
+        //ass
+        else
+        09C1: add_next_text_to_brief_history 0 
+        Text.ShowH('GME1280', 5000, 1)
+        wait 5000
+        jump to @CARL_CLOTHES_SELECT_MAIN_MENU 
+        end
+    end 
+
+while true
+wait 0
+
+09C1: add_next_text_to_brief_history 0
+text.ShowH('GAME764',10,1)
+
+if 
+0E3E: is_button_just_pressed 0 button 10
+    then
+    Audiostream.Volume($MENU_BACK_SOUND) = $SOUNDS_VOLUME 
+    Audiostream.Loop($MENU_BACK_SOUND, 0)
+    Audiostream.PerformAction($MENU_BACK_SOUND, PLAY)            
+    jump to @CARL_CLOTHES_SELECT_MAIN_MENU
+    end
+    
+if 
+0E3E: is_button_just_pressed 0 button 11
+    then                  
+    Audiostream.Volume($MENU_HORROR01_SOUND) = $SOUNDS_VOLUME 
+    Audiostream.Loop($MENU_HORROR01_SOUND, 0)
+    Audiostream.PerformAction($MENU_HORROR01_SOUND, PLAY)     
+    break
+    end
+    
+end
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+//////////////////////////////////////////////////////////
+                
+fade 0 500
+wait 500        
+                
+wait 50              
+                
+select_interior 0
+0860: link_actor PLAYER_ACTOR to_interior 0                
+actor.PutAtNoOffset(PLAYER_ACTOR,10@,11@,12@)
+actor.Angle(PLAYER_ACTOR) = 13@
+camera.Restore_WithJumpCut()
+create_thread @REFR_3D
+    
+CARL_CLTHS_FLAG = 0
+                                                
+end_thread 
+end
+
+if 
+0039:   3@ == 0
+then
+CARL_CLOTHES_SELECTED_PANEL = 1 
+jump to @CARL_CLOTHES_BINCO_MENU
+end
+
+if 
+0039:   3@ == 1
+then
+CARL_CLOTHES_SELECTED_PANEL = 2 
+jump to @CARL_CLOTHES_PROLAPS_MENU
+end
+
+if 
+0039:   3@ == 2
+then
+CARL_CLOTHES_SELECTED_PANEL = 3 
+jump to @CARL_CLOTHES_SUBURBAN_MENU
+end
+
+if 
+0039:   3@ == 3
+then
+CARL_CLOTHES_SELECTED_PANEL = 4 
+jump to @CARL_CLOTHES_ZIP_MENU
+end
+
+if 
+0039:   3@ == 4
+then
+CARL_CLOTHES_SELECTED_PANEL = 5
+jump to @CARL_CLOTHES_VICTIM_MENU
+end
+
+if 
+0039:   3@ == 5
+then
+CARL_CLOTHES_SELECTED_PANEL = 6 
+jump to @CARL_CLOTHES_DIDIERSACHS_MENU
+end
+
+if 
+0039:   3@ == 6
+then
+CARL_CLOTHES_SELECTED_PANEL = 7
+jump to @CARL_CLOTHES_SPECIAL_MENU
+end
+
+if 
+0039:   3@ == 7
+then
+gosub @CJ_CLOTH_CAMERA_HAIR
+CARL_CLOTHES_SELECTED_PANEL = 8
+jump to @CARL_CLOTHES_HAIRCUT_MENU
+end
+
+if 
+0039:   3@ == 8
+then
+gosub @CJ_CLOTH_CAMERA_ALL
+CARL_CLOTHES_SELECTED_PANEL = 9
+jump to @CARL_CLOTHES_BODY_MENU
+end
+
+if 
+0039:   3@ == 9
+then
+CARL_CLOTHES_SELECTED_PANEL = 10
+jump to @CARL_CLOTHES_REMOVE_CLOTHES_MENU
+end
+
+///===========================
+//Part menu, Binco
+//===========================
+:CARL_CLOTHES_BINCO_MENU
+//0AD1: show_formatted_text_highpriority "CARL_CLOTHES_BINCO_MENU" time 2000
+//wait 0
+    gosub @CJ_CLOTH_CAMERA_ALL
+    08D4: 1@ = create_panel_with_title 'CL001' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+    08DB:  set_panel 1@ column 0 header 'DUMMY' data 'CL007' 'CL008' 'CL009' 'CL010' 'CL011'  'CL012'  'CL013' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+    090E: set_panel 1@ active_row CARL_CLOTHES_BINCO_SELECTED_ROW
+    //wait 100    
+    gosub @CARL_CLOTHES_HANDLE_MENU
+  
+    if 0039:   30@ == 1
+    then
+    3@ = -1
+    jump @CARL_CLOTHES_SELECT_MAIN_MENU 
+    end
+    
+    //----------------
+    //Torso Binco
+    //----------------
+    if 0039:   2@ == 0
+      then      
+      gosub @CJ_CLOTH_CAMERA_TORSO
+      08D4: $PANEL = create_panel_with_title 'CL001' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL007' data 'CL014' 'CL015' 'CL016' 'CL017' 'CL018'  'CL019'  'CL020' 'CL021' 'CL022' 'CL023' 'CL024' 'CL025'
+      :TORSO_BINCO
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_BINCO_MENU 
+      end
+      
+      if 0039:   2@ == 0
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "vest"
+        v$CLOTH_MODEL = "vest"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "vestblack"
+        v$CLOTH_MODEL = "vest"
+      end
+      
+      if 0039:   2@ == 2
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "hoodyAgreen"
+        v$CLOTH_MODEL = "hoodyA"
+      end
+      
+      if 0039:   2@ == 3
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "tshirtwhite"
+        v$CLOTH_MODEL = "tshirt"
+      end
+      
+      if 0039:   2@ == 4
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "tshirtilovels"
+        v$CLOTH_MODEL = "tshirt"
+      end
+      
+      if 0039:   2@ == 5
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "tshirtblunts"
+        v$CLOTH_MODEL = "tshirt"
+      end
+      
+      if 0039:   2@ == 6
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "shirtbgang"
+        v$CLOTH_MODEL = "shirtb"
+      end
+      
+      if 0039:   2@ == 7
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "shirtbcheck"
+        v$CLOTH_MODEL = "shirtb"
+      end
+      
+      if 0039:   2@ == 8
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "field"
+        v$CLOTH_MODEL = "field"
+      end
+      
+      if 0039:   2@ == 9
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "tshirterisyell"
+        v$CLOTH_MODEL = "tshirt"
+      end
+      
+      if 0039:   2@ == 10
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "tshirterisorn"
+        v$CLOTH_MODEL = "tshirt"
+      end
+      
+      if 0039:   2@ == 11
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "trackytop2eris"
+        v$CLOTH_MODEL = "trackytop1"
+      end
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @TORSO_BINCO
+    end 
+    
+    //----------------
+    //Legs Binco
+    //----------------
+    if 0039:   2@ == 1
+      then
+      gosub @CJ_CLOTH_CAMERA_LEGS
+      08D4: $PANEL = create_panel_with_title 'CL001' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL008' data 'CL026' 'CL027' 'CL028' 'CL029' 'CL030'  'CL031'  'CL032' 'CL033' 'CL034' 'CL035' 'CL036' 'CL037'
+      :LEGS_BINCO
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_BINCO_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "legsblack"
+        v$CLOTH_MODEL = "legs"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "legsheart"
+        v$CLOTH_MODEL = "legs"
+      end
+      
+      if 0039:   2@ == 2
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "worktrcamogrn"
+        v$CLOTH_MODEL = "worktr"
+      end
+      
+      if 0039:   2@ == 3
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "worktrcamogry"
+        v$CLOTH_MODEL = "worktr"
+      end
+      
+      if 0039:   2@ == 4
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "worktrgrey"
+        v$CLOTH_MODEL = "worktr"
+      end
+      
+      if 0039:   2@ == 5
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "worktrkhaki"
+        v$CLOTH_MODEL = "worktr"
+      end
+      
+      if 0039:   2@ == 6
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "tracktr"
+        v$CLOTH_MODEL = "tracktr"
+      end
+      
+      if 0039:   2@ == 7
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "jeansdenim"
+        v$CLOTH_MODEL = "jeans"
+      end
+      
+      if 0039:   2@ == 8
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "tracktreris"
+        v$CLOTH_MODEL = "tracktr"
+      end
+      
+      if 0039:   2@ == 9
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "biegetr"
+        v$CLOTH_MODEL = "chinosb"
+      end
+      
+      if 0039:   2@ == 10
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "denimsgang"
+        v$CLOTH_MODEL = "jeans"
+      end
+      
+      if 0039:   2@ == 11
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "tracktrgang"
+        v$CLOTH_MODEL = "tracktr"
+      end
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @LEGS_BINCO
+    end 
+    
+    //----------------
+    //Shoes Binco
+    //----------------
+    if 0039:   2@ == 2
+      then
+      gosub @CJ_CLOTH_CAMERA_LEGS
+      08D4: $PANEL = create_panel_with_title 'CL001' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL009' data 'CL038' 'CL039' 'CL040' 'CL041' 'CL042'  'CL043'  'CL044' 'CL045' 'CL046' 'DUMMY' 'DUMMY' 'DUMMY'
+      :SHOES_BINCO
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_BINCO_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "sandal"
+        v$CLOTH_MODEL = "flipflop"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "sandalsock"
+        v$CLOTH_MODEL = "flipflop"
+      end
+      
+      if 0039:   2@ == 2
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "flipflop"
+        v$CLOTH_MODEL = "flipflop"
+      end
+      
+      if 0039:   2@ == 3
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "cowboyboot2"
+        v$CLOTH_MODEL = "biker"
+      end
+      
+      if 0039:   2@ == 4
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "bask2semi"
+        v$CLOTH_MODEL = "bask1"
+      end
+      
+      if 0039:   2@ == 5
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "bask1eris"
+        v$CLOTH_MODEL = "bask1"
+      end
+      
+      if 0039:   2@ == 6
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "sneakerbincgang"
+        v$CLOTH_MODEL = "sneaker"
+      end
+      
+      if 0039:   2@ == 7
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "sneakerbincblu"
+        v$CLOTH_MODEL = "sneaker"
+      end
+      
+      if 0039:   2@ == 8
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "sneakerbincblk"
+        v$CLOTH_MODEL = "sneaker"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @SHOES_BINCO
+    end
+    
+    //----------------
+    //NECKLACES Binco
+    //----------------
+    if 0039:   2@ == 3
+      then
+      gosub @CJ_CLOTH_CAMERA_TORSO
+      08D4: $PANEL = create_panel_with_title 'CL001' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL010' data 'CL047' 'CL048' 'DUMMY' 'DUMMY' 'DUMMY'  'DUMMY'  'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :NECKLACES_BINCO
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_BINCO_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  13
+        v$CLOTH_TEXTURE = "dogtag"
+        v$CLOTH_MODEL = "neck"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  13
+        v$CLOTH_TEXTURE = "neckafrica"
+        v$CLOTH_MODEL = "neck"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @NECKLACES_BINCO
+    end
+    
+    //----------------
+    //WATCHES  Binco
+    //----------------
+    if 0039:   2@ == 4
+      then
+      gosub @CJ_CLOTH_CAMERA_WATCHES
+      08D4: $PANEL = create_panel_with_title 'CL001' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL011' data 'CL049' 'CL050' 'DUMMY' 'DUMMY' 'DUMMY'  'DUMMY'  'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :WATCHES_BINCO
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_BINCO_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  14
+        v$CLOTH_TEXTURE = "watchpink"
+        v$CLOTH_MODEL = "watch"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  14
+        v$CLOTH_TEXTURE = "watchyellow"
+        v$CLOTH_MODEL = "watch"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @WATCHES_BINCO
+    end
+    
+    //----------------
+    //GLASSES Binco
+    //----------------
+    if 0039:   2@ == 5
+      then
+      gosub @CJ_CLOTH_CAMERA_HAIR
+      08D4: $PANEL = create_panel_with_title 'CL001' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL012' data 'CL051' 'CL052' 'CL053' 'CL054'  'CL055' 'CL056' 'CL057' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :GLASSES_BINCO
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_BINCO_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  15
+        v$CLOTH_TEXTURE = "groucho"
+        v$CLOTH_MODEL = "grouchos"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  15
+        v$CLOTH_TEXTURE = "zorro"
+        v$CLOTH_MODEL = "zorromask"
+      end
+      
+      if 0039:   2@ == 2
+      then
+        19@ =  15
+        v$CLOTH_TEXTURE = "eyepatch"
+        v$CLOTH_MODEL = "eyepatch"
+      end
+      
+      if 0039:   2@ == 3
+      then
+        19@ =  15
+        v$CLOTH_TEXTURE = "bandred3"
+        v$CLOTH_MODEL = "bandmask"
+      end
+      
+      if 0039:   2@ == 4
+      then
+        19@ =  15
+        v$CLOTH_TEXTURE = "bandblue3"
+        v$CLOTH_MODEL = "bandmask"
+      end
+      
+      if 0039:   2@ == 5
+      then
+        19@ =  15
+        v$CLOTH_TEXTURE = "bandgang3"
+        v$CLOTH_MODEL = "bandmask"
+      end
+      
+      if 0039:   2@ == 6
+      then
+        19@ =  15
+        v$CLOTH_TEXTURE = "bandblack3"
+        v$CLOTH_MODEL = "bandmask"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @GLASSES_BINCO
+    end
+    
+    //----------------
+    //Hats Binco
+    //----------------
+    if 0039:   2@ == 6
+      then
+      gosub @CJ_CLOTH_CAMERA_HAIR
+      08D4: $PANEL = create_panel_with_title 'CL001' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL013' data 'CL058' 'CL059' 'CL060' 'CL061' 'CL062'  'CL063'  'CL064' 'CL065' 'CL066' 'CL067' 'CL068' 'CL069'
+      :HATS_BINCO
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_BINCO_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "bandred"
+        v$CLOTH_MODEL = "bandana"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "bandblue"
+        v$CLOTH_MODEL = "bandana"
+      end
+      
+      if 0039:   2@ == 2
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "bandgang"
+        v$CLOTH_MODEL = "bandana"
+      end
+      
+      if 0039:   2@ == 3
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "bandblack"
+        v$CLOTH_MODEL = "bandana"
+      end
+      
+      if 0039:   2@ == 4
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "bandred2"
+        v$CLOTH_MODEL = "bandknots"
+      end
+      
+      if 0039:   2@ == 5
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "bandblue2"
+        v$CLOTH_MODEL = "bandknots"
+      end
+      
+      if 0039:   2@ == 6
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "bandblack2"
+        v$CLOTH_MODEL = "bandknots"
+      end
+      
+      if 0039:   2@ == 7
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "bandgang2"
+        v$CLOTH_MODEL = "bandknots"
+      end
+      
+      if 0039:   2@ == 8
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "capknitgrn"
+        v$CLOTH_MODEL = "capknit"
+      end
+      
+      if 0039:   2@ == 9
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "captruck"
+        v$CLOTH_MODEL = "captruck"
+      end
+      
+      if 0039:   2@ == 10
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "cowboy"
+        v$CLOTH_MODEL = "cowboy"
+      end
+      
+      if 0039:   2@ == 11
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "hattiger"
+        v$CLOTH_MODEL = "cowboy"
+      end
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @HATS_BINCO
+    end 
+
+jump to @CARL_CLOTHES_BINCO_MENU
+
+//===========================
+//Part menu, Prolaps
+//===========================
+:CARL_CLOTHES_PROLAPS_MENU
+//0AD1: show_formatted_text_highpriority "CARL_CLOTHES_PROLAPS_MENU" time 2000
+//wait 0
+    gosub @CJ_CLOTH_CAMERA_ALL
+    08D4: 1@ = create_panel_with_title 'CL002' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+    08DB:  set_panel 1@ column 0 header 'DUMMY' data 'CL007' 'CL008' 'CL009' 'CL010' 'CL011'  'CL012'  'CL013' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+    090E: set_panel 1@ active_row CARL_CLOTHES_PROLAPS_SELECTED_ROW
+    //wait 100
+    gosub @CARL_CLOTHES_HANDLE_MENU
+  
+    if 0039:   30@ == 1
+    then
+    3@ = -1
+    jump @CARL_CLOTHES_SELECT_MAIN_MENU 
+    end
+    
+    //----------------
+    //Torso Prolaps
+    //----------------
+    if 0039:   2@ == 0
+      then
+      gosub @CJ_CLOTH_CAMERA_TORSO
+      08D4: $PANEL = create_panel_with_title 'CL002' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL007' data 'CL070' 'CL071' 'CL072' 'CL073' 'CL074' 'CL258' 'CL075' 'CL076' 'CL077' 'CL078' 'CL079' 'DUMMY'
+      :TORSO_PROLAPS
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_PROLAPS_MENU 
+      end
+      
+      if 0039:   2@ == 0
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "bbjackrim"
+        v$CLOTH_MODEL = "bbjack"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "bballjackrstar"
+        v$CLOTH_MODEL = "bbjack"
+      end
+      
+      if 0039:   2@ == 2
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "baskballdrib"
+        v$CLOTH_MODEL = "baskball"
+      end
+      
+      if 0039:   2@ == 3
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "baskballrim"
+        v$CLOTH_MODEL = "baskball"
+      end
+      
+      if 0039:   2@ == 4
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "sixtyniners"
+        v$CLOTH_MODEL = "tshirt"
+      end         
+      
+        
+      if 0039:   2@ == 5
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "bandits"
+        v$CLOTH_MODEL = "baseball"
+      end     
+             
+      if 0039:   2@ == 6
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "tshirtprored"
+        v$CLOTH_MODEL = "tshirt"
+      end
+      
+      if 0039:   2@ == 7
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "tshirtproblk"
+        v$CLOTH_MODEL = "tshirt"
+      end
+      
+      if 0039:   2@ == 8
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "trackytop1pro"
+        v$CLOTH_MODEL = "trackytop1"
+      end
+      
+      if 0039:   2@ == 9
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "hockeytop"
+        v$CLOTH_MODEL = "sweat"
+      end
+      
+      if 0039:   2@ == 10
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "bbjersey"
+        v$CLOTH_MODEL = "sleevt"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @TORSO_PROLAPS
+    end
+      
+               
+    //----------------
+    //Legs Prolaps
+    //----------------
+    if 0039:   2@ == 1
+      then
+      gosub @CJ_CLOTH_CAMERA_LEGS
+      08D4: $PANEL = create_panel_with_title 'CL002' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL008' data 'CL080' 'CL081' 'CL082' 'CL083' 'CL084'  'CL085'  'CL086' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :LEGS_PROLAPS
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_PROLAPS_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "tracktrpro"
+        v$CLOTH_MODEL = "tracktr"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "tracktrwhstr"
+        v$CLOTH_MODEL = "tracktr"
+      end
+      
+      if 0039:   2@ == 2
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "tracktrblue"
+        v$CLOTH_MODEL = "tracktr"
+      end
+      
+      if 0039:   2@ == 3
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "bbshortwht"
+        v$CLOTH_MODEL = "boxingshort"
+      end
+      
+      if 0039:   2@ == 4
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "boxshort"
+        v$CLOTH_MODEL = "boxingshort"
+      end
+      
+      if 0039:   2@ == 5
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "bbshortred"
+        v$CLOTH_MODEL = "boxingshort"
+      end
+      
+      if 0039:   2@ == 6
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "shellsuittr"
+        v$CLOTH_MODEL = "tracktr"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @LEGS_PROLAPS
+    end 
+    
+    //----------------
+    //Shoes Prolaps
+    //----------------
+    if 0039:   2@ == 2
+      then
+      gosub @CJ_CLOTH_CAMERA_LEGS
+      08D4: $PANEL = create_panel_with_title 'CL002' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL009' data 'CL087' 'CL088' 'CL089' 'CL090' 'CL091'  'CL092'  'CL093' 'CL094' 'CL095' 'CL096' 'DUMMY' 'DUMMY'
+      :SHOES_PROLAPS
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_PROLAPS_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "hitop"
+        v$CLOTH_MODEL = "bask1"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "convproblk"
+        v$CLOTH_MODEL = "conv"
+      end
+      
+      if 0039:   2@ == 2
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "convproblu"
+        v$CLOTH_MODEL = "conv"
+      end
+      
+      if 0039:   2@ == 3
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "convprogrn "
+        v$CLOTH_MODEL = "conv"
+      end
+      
+      if 0039:   2@ == 4
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "sneakerprored"
+        v$CLOTH_MODEL = "sneaker"
+      end
+      
+      if 0039:   2@ == 5
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "sneakerproblu"
+        v$CLOTH_MODEL = "sneaker"
+      end
+      
+      if 0039:   2@ == 6
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "sneakerprowht"
+        v$CLOTH_MODEL = "sneaker"
+      end
+      
+      if 0039:   2@ == 7
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "bask1prowht"
+        v$CLOTH_MODEL = "bask1"
+      end
+      
+      if 0039:   2@ == 8
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "bask1problk"
+        v$CLOTH_MODEL = "bask1"
+      end
+      
+      if 0039:   2@ == 9
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "boxingshoe"
+        v$CLOTH_MODEL = "biker"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @SHOES_PROLAPS
+    end
+    
+    //----------------
+    //NECKLACES Prolaps
+    //----------------
+    if 0039:   2@ == 3
+      then
+      gosub @CJ_CLOTH_CAMERA_TORSO
+      08D4: $PANEL = create_panel_with_title 'CL002' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL010' data 'CL097' 'CL098' 'DUMMY' 'DUMMY' 'DUMMY'  'DUMMY'  'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :NECKLACES_PROLAPS
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_PROLAPS_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  13
+        v$CLOTH_TEXTURE = "stopwatch"
+        v$CLOTH_MODEL = "neck"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  13
+        v$CLOTH_TEXTURE = "necksaints"
+        v$CLOTH_MODEL = "neck"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @NECKLACES_PROLAPS
+    end
+    
+    //----------------
+    //WATCHES Prolaps
+    //----------------
+    if 0039:   2@ == 4
+      then
+      gosub @CJ_CLOTH_CAMERA_WATCHES
+      08D4: $PANEL = create_panel_with_title 'CL002' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL011' data 'CL099' 'CL100' 'DUMMY' 'DUMMY' 'DUMMY'  'DUMMY'  'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :WATCHES_PROLAPS
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_PROLAPS_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  14
+        v$CLOTH_TEXTURE = "watchpro"
+        v$CLOTH_MODEL = "watch"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  14
+        v$CLOTH_TEXTURE = "watchpro2"
+        v$CLOTH_MODEL = "watch"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @WATCHES_PROLAPS
+    end
+    
+    //----------------
+    //GLASSES Prolaps
+    //----------------
+    if 0039:   2@ == 5
+      then
+      gosub @CJ_CLOTH_CAMERA_HAIR
+      08D4: $PANEL = create_panel_with_title 'CL002' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL012' data 'CL101' 'CL102' 'DUMMY' 'DUMMY'  'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :GLASSES_PROLAPS
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_PROLAPS_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  15
+        v$CLOTH_TEXTURE = "glasses01dark"
+        v$CLOTH_MODEL = "glasses01"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  15
+        v$CLOTH_TEXTURE = "glasses04dark"
+        v$CLOTH_MODEL = "glasses04"
+      end
+            
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @GLASSES_PROLAPS
+    end
+    
+    //----------------
+    //Hats Prolaps
+    //----------------
+    if 0039:   2@ == 6
+      then
+      gosub @CJ_CLOTH_CAMERA_HAIR
+      08D4: $PANEL = create_panel_with_title 'CL002' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL013' data 'CL103' 'CL104' 'CL105' 'CL106' 'CL107'  'CL108'  'CL109' 'CL110' 'CL111' 'CL112' 'DUMMY' 'DUMMY'
+      :HATS_PROLAPS
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_PROLAPS_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "capgang"
+        v$CLOTH_MODEL = "cap"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "capgangback"
+        v$CLOTH_MODEL = "capback"
+      end
+      
+      if 0039:   2@ == 2
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "capgangside"
+        v$CLOTH_MODEL = "capside"
+      end
+      
+      if 0039:   2@ == 3
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "capgangover"
+        v$CLOTH_MODEL = "capovereye"
+      end
+      
+      if 0039:   2@ == 4
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "capgangup"
+        v$CLOTH_MODEL = "caprimup"
+      end
+      
+      if 0039:   2@ == 5
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "boxingcap"
+        v$CLOTH_MODEL = "boxingcap"
+      end
+      
+      if 0039:   2@ == 6
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "hockey"
+        v$CLOTH_MODEL = "hockeymask"
+      end
+      
+      if 0039:   2@ == 7
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "helmet"
+        v$CLOTH_MODEL = "helmet"
+      end
+      
+      if 0039:   2@ == 8
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "moto"
+        v$CLOTH_MODEL = "moto"
+      end
+      
+      if 0039:   2@ == 9
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "bikerhelmet"
+        v$CLOTH_MODEL = "bikerhelmet"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @HATS_PROLAPS
+    end 
+
+jump to @CARL_CLOTHES_PROLAPS_MENU   
+
+//===========================
+//Part menu, Sub Urban
+//===========================
+:CARL_CLOTHES_SUBURBAN_MENU
+//0AD1: show_formatted_text_highpriority "CARL_CLOTHES_SUBURBAN_MENU" time 2000
+//wait 0
+    gosub @CJ_CLOTH_CAMERA_ALL
+    08D4: 1@ = create_panel_with_title 'CL003' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+    08DB:  set_panel 1@ column 0 header 'DUMMY' data 'CL007' 'CL008' 'CL009' 'CL010' 'CL011'  'CL012'  'CL013' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+    090E: set_panel 1@ active_row CARL_CLOTHES_SUBURBAN_SELECTED_ROW
+    //wait 100
+    gosub @CARL_CLOTHES_HANDLE_MENU
+  
+    if 0039:   30@ == 1
+    then
+    3@ = -1
+    jump @CARL_CLOTHES_SELECT_MAIN_MENU 
+    end
+    
+    //----------------
+    //Torso Sub Urban
+    //----------------
+    if 0039:   2@ == 0
+      then
+      gosub @CJ_CLOTH_CAMERA_TORSO
+      08D4: $PANEL = create_panel_with_title 'CL003' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL007' data 'CL113' 'CL114' 'CL115' 'CL116' 'CL117'  'CL118'  'CL119' 'CL120' 'CL121' 'CL122' 'CL123' 'CL124'
+      :TORSO_SUBURBAN
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_SUBURBAN_MENU 
+      end
+      
+      if 0039:   2@ == 0
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "tshirtheatwht"
+        v$CLOTH_MODEL = "tshirt"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "tshirtbobomonk"
+        v$CLOTH_MODEL = "tshirt"
+      end
+      
+      if 0039:   2@ == 2
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "tshirtbobored"
+        v$CLOTH_MODEL = "tshirt"
+      end
+      
+      if 0039:   2@ == 3
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "tshirtbase5"
+        v$CLOTH_MODEL = "tshirt"
+      end
+      
+      if 0039:   2@ == 4
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "tshirtsuburb"
+        v$CLOTH_MODEL = "tshirt"
+      end
+      
+      if 0039:   2@ == 5
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "hoodyamerc"
+        v$CLOTH_MODEL = "hoodya"
+      end
+      
+      if 0039:   2@ == 6
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "hoodyabase5"
+        v$CLOTH_MODEL = "hoodya"
+      end
+      
+      if 0039:   2@ == 7
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "hoodyarockstar"
+        v$CLOTH_MODEL = "hoodya"
+      end
+      
+      if 0039:   2@ == 8
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "wcoatblue"
+        v$CLOTH_MODEL = "wcoat"
+      end
+      
+      if 0039:   2@ == 9
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "coach"
+        v$CLOTH_MODEL = "coach"
+      end
+      
+      if 0039:   2@ == 10
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "coachsemi"
+        v$CLOTH_MODEL = "coach"
+      end
+      
+      if 0039:   2@ == 11
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "sweatrstar"
+        v$CLOTH_MODEL = "sweat"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @TORSO_SUBURBAN
+    end
+      
+               
+    //----------------
+    //Legs Sub Urban
+    //----------------
+    if 0039:   2@ == 1
+      then
+      gosub @CJ_CLOTH_CAMERA_LEGS
+      08D4: $PANEL = create_panel_with_title 'CL003' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL008' data 'CL125' 'CL126' 'CL127' 'CL128' 'CL129'  'CL130'  'CL131' 'CL132' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :LEGS_SUBURBAN
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_SUBURBAN_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "shortsgrey"
+        v$CLOTH_MODEL = "shorts"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "shortskhaki"
+        v$CLOTH_MODEL = "shorts"
+      end
+      
+      if 0039:   2@ == 2
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "chongergrey"
+        v$CLOTH_MODEL = "chonger"
+      end
+      
+      if 0039:   2@ == 3
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "chongergang"
+        v$CLOTH_MODEL = "chonger"
+      end
+      
+      if 0039:   2@ == 4
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "chongerred"
+        v$CLOTH_MODEL = "chonger"
+      end
+      
+      if 0039:   2@ == 5
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "chongerblue"
+        v$CLOTH_MODEL = "chonger"
+      end
+      
+      if 0039:   2@ == 6
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "shortsgang"
+        v$CLOTH_MODEL = "shorts"
+      end
+      
+      if 0039:   2@ == 7
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "denimsred"
+        v$CLOTH_MODEL = "jeans"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @LEGS_SUBURBAN
+    end 
+    
+    //----------------
+    //Shoes Sub Urban
+    //----------------
+    if 0039:   2@ == 2
+      then
+      gosub @CJ_CLOTH_CAMERA_LEGS
+      08D4: $PANEL = create_panel_with_title 'CL003' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL009' data 'CL133' 'CL134' 'CL135' 'CL136' 'CL137'  'CL138'  'CL139' 'CL140' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :SHOES_SUBURBAN
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_SUBURBAN_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "convheatblk"
+        v$CLOTH_MODEL = "conv"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "convheatred"
+        v$CLOTH_MODEL = "conv"
+      end
+      
+      if 0039:   2@ == 2
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "convheatorn"
+        v$CLOTH_MODEL = "conv"
+      end
+      
+      if 0039:   2@ == 3
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "sneakerheatwht"
+        v$CLOTH_MODEL = "sneaker"
+      end
+      
+      if 0039:   2@ == 4
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "sneakerheatgry"
+        v$CLOTH_MODEL = "sneaker"
+      end
+      
+      if 0039:   2@ == 5
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "sneakerheatblk"
+        v$CLOTH_MODEL = "sneaker"
+      end
+      
+      if 0039:   2@ == 6
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "bask2heatwht"
+        v$CLOTH_MODEL = "bask1"
+      end
+      
+      if 0039:   2@ == 7
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "bask2heatband"
+        v$CLOTH_MODEL = "bask1"
+      end
+            
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @SHOES_SUBURBAN
+    end
+    
+    //----------------
+    //NECKLACES Sub Urban
+    //----------------
+    if 0039:   2@ == 3
+      then
+      gosub @CJ_CLOTH_CAMERA_TORSO
+      08D4: $PANEL = create_panel_with_title 'CL003' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL010' data 'CL141' 'CL142' 'DUMMY' 'DUMMY' 'DUMMY'  'DUMMY'  'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :NECKLACES_SUBURBAN
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_SUBURBAN_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  13
+        v$CLOTH_TEXTURE = "necksilver"
+        v$CLOTH_MODEL = "neck2"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  13
+        v$CLOTH_TEXTURE = "neckls"
+        v$CLOTH_MODEL = "neck"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @NECKLACES_SUBURBAN
+    end
+    
+    //----------------
+    //WATCHES Sub Urban
+    //----------------
+    if 0039:   2@ == 4
+      then
+      gosub @CJ_CLOTH_CAMERA_WATCHES
+      08D4: $PANEL = create_panel_with_title 'CL003' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL011' data 'CL143' 'CL144' 'DUMMY' 'DUMMY' 'DUMMY'  'DUMMY'  'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :WATCHES_SUBURBAN
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_SUBURBAN_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  14
+        v$CLOTH_TEXTURE = "watchsub1"
+        v$CLOTH_MODEL = "watch"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  14
+        v$CLOTH_TEXTURE = "watchsub2"
+        v$CLOTH_MODEL = "watch"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @WATCHES_SUBURBAN
+    end
+    
+    //----------------
+    //GLASSES Sub Urban
+    //----------------
+    if 0039:   2@ == 5
+      then
+      gosub @CJ_CLOTH_CAMERA_HAIR
+      08D4: $PANEL = create_panel_with_title 'CL003' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL012' data 'CL145' 'CL146' 'DUMMY' 'DUMMY'  'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :GLASSES_SUBURBAN
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_SUBURBAN_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  15
+        v$CLOTH_TEXTURE = "glasses03red"
+        v$CLOTH_MODEL = "glasses03"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  15
+        v$CLOTH_TEXTURE = "glasses03blue"
+        v$CLOTH_MODEL = "glasses03"
+      end
+            
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @GLASSES_SUBURBAN
+    end
+    
+    //----------------
+    //Hats Sub Urban
+    //----------------
+    if 0039:   2@ == 6
+      then
+      gosub @CJ_CLOTH_CAMERA_HAIR
+      08D4: $PANEL = create_panel_with_title 'CL003' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL013' data 'CL147' 'CL148' 'CL149' 'CL150' 'CL151'  'CL152'  'CL153' 'CL154' 'CL155' 'CL156' 'CL157' 'CL158'
+      :HATS_SUBURBAN
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_SUBURBAN_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "capred"
+        v$CLOTH_MODEL = "cap"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "capredback "
+        v$CLOTH_MODEL = "capback"
+      end
+      
+      if 0039:   2@ == 2
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "capredside"
+        v$CLOTH_MODEL = "capside"
+      end
+      
+      if 0039:   2@ == 3
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "capredover"
+        v$CLOTH_MODEL = "capovereye"
+      end
+      
+      if 0039:   2@ == 4
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "capredup"
+        v$CLOTH_MODEL = "caprimup"
+      end
+      
+      if 0039:   2@ == 5
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "capblue"
+        v$CLOTH_MODEL = "cap"
+      end
+      
+      if 0039:   2@ == 6
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "capblueback"
+        v$CLOTH_MODEL = "capback"
+      end
+      
+      if 0039:   2@ == 7
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "capblueside"
+        v$CLOTH_MODEL = "capside"
+      end
+      
+      if 0039:   2@ == 8
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "capblueover"
+        v$CLOTH_MODEL = "capovereye"
+      end
+      
+      if 0039:   2@ == 9
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "capblueup"
+        v$CLOTH_MODEL = "caprimup"
+      end
+      
+      if 0039:   2@ == 10
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "skullyblk"
+        v$CLOTH_MODEL = "skullycap"
+      end
+      
+      if 0039:   2@ == 11
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "skullygrn"
+        v$CLOTH_MODEL = "skullycap"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @HATS_SUBURBAN
+    end 
+
+jump to @CARL_CLOTHES_SUBURBAN_MENU
+   
+//===========================
+//Part menu, ZIP
+//===========================
+:CARL_CLOTHES_ZIP_MENU
+//0AD1: show_formatted_text_highpriority "CARL_CLOTHES_ZIP_MENU" time 2000 
+//wait 0
+    gosub @CJ_CLOTH_CAMERA_ALL
+    08D4: 1@ = create_panel_with_title 'CL004' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+    08DB:  set_panel 1@ column 0 header 'DUMMY' data 'CL007' 'CL008' 'CL009' 'CL010' 'CL011'  'CL012'  'CL013' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+    090E: set_panel 1@ active_row CARL_CLOTHES_ZIP_SELECTED_ROW
+    //wait 100
+    gosub @CARL_CLOTHES_HANDLE_MENU
+  
+    if 0039:   30@ == 1
+    then
+    3@ = -1
+    jump @CARL_CLOTHES_SELECT_MAIN_MENU 
+    end
+    
+    //----------------
+    //Torso ZIP
+    //----------------
+    if 0039:   2@ == 0
+      then
+      gosub @CJ_CLOTH_CAMERA_TORSO
+      08D4: $PANEL = create_panel_with_title 'CL004' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL007' data 'CL159' 'CL160' 'CL161' 'CL162' 'CL163'  'CL165'  'CL164' 'CL166' 'CL167' 'CL168' 'CL169' 'CL170'
+      :TORSO_ZIP
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_ZIP_MENU 
+      end
+      
+      if 0039:   2@ == 0
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "hoodyAblue"
+        v$CLOTH_MODEL = "hoodyA"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "hoodyAblack"
+        v$CLOTH_MODEL = "hoodyA"
+      end
+      
+      if 0039:   2@ == 2
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "tshirt2horiz"
+        v$CLOTH_MODEL = "tshirt2"
+      end
+      
+      if 0039:   2@ == 3
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "shirtbplaid"
+        v$CLOTH_MODEL = "shirtb"
+      end
+      
+      if 0039:   2@ == 4
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "sleevtbrown"
+        v$CLOTH_MODEL = "sleevt"
+      end
+      
+      if 0039:   2@ == 5
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "shirtablue"
+        v$CLOTH_MODEL = "shirta"
+      end
+      
+      if 0039:   2@ == 6
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "shirtayellow"
+        v$CLOTH_MODEL = "shirta"
+      end
+      
+      if 0039:   2@ == 7
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "shirtagrey"
+        v$CLOTH_MODEL = "shirta"
+      end
+      
+      if 0039:   2@ == 8
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "tshirtzipcrm"
+        v$CLOTH_MODEL = "tshirt"
+      end
+      
+      if 0039:   2@ == 9
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "tshirtzipgry "
+        v$CLOTH_MODEL = "tshirt"
+      end
+      
+      if 0039:   2@ == 10
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "denimfade"
+        v$CLOTH_MODEL = "denim"
+      end
+      
+      if 0039:   2@ == 11
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "bowling"
+        v$CLOTH_MODEL = "hawaii"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @TORSO_ZIP
+    end
+      
+               
+    //----------------
+    //Legs ZIP
+    //----------------
+    if 0039:   2@ == 1
+      then
+      gosub @CJ_CLOTH_CAMERA_LEGS
+      08D4: $PANEL = create_panel_with_title 'CL004' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL008' data 'CL171' 'CL172' 'CL173' 'CL174' 'CL175'  'DUMMY'  'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :LEGS_ZIP
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_ZIP_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "chinosbiege"
+        v$CLOTH_MODEL = "chinosb"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "chinoskhaki"
+        v$CLOTH_MODEL = "chinosb"
+      end
+      
+      if 0039:   2@ == 2
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "chinosblack"
+        v$CLOTH_MODEL = "chinosb"
+      end
+      
+      if 0039:   2@ == 3
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "chinosblue"
+        v$CLOTH_MODEL = "chinosb"
+      end
+      
+      if 0039:   2@ == 4
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "cutoffchinos"
+        v$CLOTH_MODEL = "shorts"
+      end
+      
+      if 0039:   2@ == 5
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "cutoffchinosblue"
+        v$CLOTH_MODEL = "shorts"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @LEGS_ZIP 
+    end 
+    
+    //----------------
+    //Shoes ZIP
+    //----------------
+    if 0039:   2@ == 2
+      then
+      gosub @CJ_CLOTH_CAMERA_LEGS
+      08D4: $PANEL = create_panel_with_title 'CL004' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL009' data 'CL177' 'CL178' 'CL179' 'CL180' 'DUMMY'  'DUMMY'  'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :SHOES_ZIP
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_ZIP_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "timbergrey"
+        v$CLOTH_MODEL = "bask1"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "timberred"
+        v$CLOTH_MODEL = "bask1"
+      end
+      
+      if 0039:   2@ == 2
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "timberfawn"
+        v$CLOTH_MODEL = "bask1"
+      end
+      
+      if 0039:   2@ == 3
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "timberhike"
+        v$CLOTH_MODEL = "bask1"
+      end
+                 
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @SHOES_ZIP
+    end
+    
+    //----------------
+    //NECKLACES ZIP
+    //----------------
+    if 0039:   2@ == 3
+      then
+      gosub @CJ_CLOTH_CAMERA_TORSO
+      08D4: $PANEL = create_panel_with_title 'CL004' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL010' data 'CL181' 'CL182' 'DUMMY' 'DUMMY' 'DUMMY'  'DUMMY'  'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :NECKLACES_ZIP
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_ZIP_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  13
+        v$CLOTH_TEXTURE = "neckhash"
+        v$CLOTH_MODEL = "neck"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  13
+        v$CLOTH_TEXTURE = "neckgold"
+        v$CLOTH_MODEL = "neck2"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @NECKLACES_ZIP
+    end
+    
+    //----------------
+    //WATCHES ZIP
+    //----------------
+    if 0039:   2@ == 4
+      then
+      gosub @CJ_CLOTH_CAMERA_WATCHES
+      08D4: $PANEL = create_panel_with_title 'CL004' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL011' data 'CL183' 'CL184' 'DUMMY' 'DUMMY' 'DUMMY'  'DUMMY'  'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :WATCHES_ZIP
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_ZIP_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  14
+        v$CLOTH_TEXTURE = "watchzip1"
+        v$CLOTH_MODEL = "watch"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  14
+        v$CLOTH_TEXTURE = "watchzip2"
+        v$CLOTH_MODEL = "watch"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @WATCHES_ZIP
+    end
+    
+    //----------------
+    //GLASSES ZIP
+    //----------------
+    if 0039:   2@ == 5
+      then
+      gosub @CJ_CLOTH_CAMERA_HAIR
+      08D4: $PANEL = create_panel_with_title 'CL004' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL012' data 'CL185' 'CL186' 'DUMMY' 'DUMMY'  'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :GLASSES_ZIP
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_ZIP_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  15
+        v$CLOTH_TEXTURE = "glasses01"
+        v$CLOTH_MODEL = "glasses01"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  15
+        v$CLOTH_TEXTURE = "glasses04"
+        v$CLOTH_MODEL = "glasses04"
+      end
+            
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @GLASSES_ZIP
+    end
+    
+    //----------------
+    //Hats ZIP
+    //----------------
+    if 0039:   2@ == 6
+      then
+      gosub @CJ_CLOTH_CAMERA_HAIR
+      08D4: $PANEL = create_panel_with_title 'CL004' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL013' data 'CL187' 'CL188' 'CL189' 'CL190' 'CL191'  'CL192'  'CL193' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :HATS_ZIP
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_ZIP_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "hatmancblk"
+        v$CLOTH_MODEL = "hatmanc"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "hatmancplaid"
+        v$CLOTH_MODEL = "hatmanc"
+      end
+      
+      if 0039:   2@ == 2
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "capzip "
+        v$CLOTH_MODEL = "cap"
+      end
+      
+      if 0039:   2@ == 3
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "capzipback"
+        v$CLOTH_MODEL = "capback"
+      end
+      
+      if 0039:   2@ == 4
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "capzipside"
+        v$CLOTH_MODEL = "capside"
+      end
+      
+      if 0039:   2@ == 5
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "capzipover"
+        v$CLOTH_MODEL = "capovereye"
+      end
+      
+      if 0039:   2@ == 6
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "capzipup"
+        v$CLOTH_MODEL = "caprimup"
+      end
+            
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @HATS_ZIP
+    end    
+
+jump to @CARL_CLOTHES_ZIP_MENU
+
+//===========================
+//Part menu, Victim
+//===========================
+:CARL_CLOTHES_VICTIM_MENU
+//0AD1: show_formatted_text_highpriority "CARL_CLOTHES_VICTIM_MENU" time 2000
+//wait 0
+    gosub @CJ_CLOTH_CAMERA_ALL
+    08D4: 1@ = create_panel_with_title 'CL005' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+    08DB:  set_panel 1@ column 0 header 'DUMMY' data 'CL007' 'CL008' 'CL009' 'CL010' 'CL011'  'CL012'  'CL013' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+    090E: set_panel 1@ active_row CARL_CLOTHES_VICTIM_SELECTED_ROW
+    //wait 100
+    gosub @CARL_CLOTHES_HANDLE_MENU
+  
+    if 0039:   30@ == 1
+    then  
+    3@ = -1
+    jump @CARL_CLOTHES_SELECT_MAIN_MENU 
+    end
+    
+    //----------------
+    //Torso Victim
+    //----------------
+    if 0039:   2@ == 0
+      then
+      gosub @CJ_CLOTH_CAMERA_TORSO
+      08D4: $PANEL = create_panel_with_title 'CL005' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL007' data 'CL194' 'CL195' 'CL196' 'CL197' 'CL198'  'CL199'  'CL200' 'CL201' 'CL202' 'CL203' 'CL204' 'CL205'
+      :TORSO_VICTIM
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_VICTIM_MENU 
+      end
+      
+      if 0039:   2@ == 0
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "hoodjackbeige"
+        v$CLOTH_MODEL = "hoodjack"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "baskballloc"
+        v$CLOTH_MODEL = "baskball"
+      end
+      
+      if 0039:   2@ == 2
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "tshirtlocgrey"
+        v$CLOTH_MODEL = "tshirt"
+      end
+      
+      if 0039:   2@ == 3
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "tshirtmaddgrey"
+        v$CLOTH_MODEL = "tshirt"
+      end
+      
+      if 0039:   2@ == 4
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "tshirtmaddgrn"
+        v$CLOTH_MODEL = "tshirt"
+      end
+      
+      if 0039:   2@ == 5
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "suit1grey"
+        v$CLOTH_MODEL = "suit1"
+      end
+      
+      if 0039:   2@ == 6
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "suit1blk"
+        v$CLOTH_MODEL = "suit1"
+      end
+      
+      if 0039:   2@ == 7
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "leather"
+        v$CLOTH_MODEL = "leather"
+      end
+      
+      if 0039:   2@ == 8
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "painter"
+        v$CLOTH_MODEL = "painter"
+      end
+      
+      if 0039:   2@ == 9
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "hawaiiwht"
+        v$CLOTH_MODEL = "hawaii"
+      end
+      
+      if 0039:   2@ == 10
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "hawaiired"
+        v$CLOTH_MODEL = "hawaii"
+      end
+      
+      if 0039:   2@ == 11
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "sportjack"
+        v$CLOTH_MODEL = "trackytop1"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @TORSO_VICTIM
+    end
+      
+               
+    //----------------
+    //Legs Victim
+    //----------------
+    if 0039:   2@ == 1
+      then
+      gosub @CJ_CLOTH_CAMERA_LEGS
+      08D4: $PANEL = create_panel_with_title 'CL005' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL008' data 'CL206' 'CL207' 'CL208' 'CL209' 'CL210'  'DUMMY'  'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :LEGS_VICTIM
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_VICTIM_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "leathertr"
+        v$CLOTH_MODEL = "leathertr"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "leathertrchaps"
+        v$CLOTH_MODEL = "leathertr"
+      end
+      
+      if 0039:   2@ == 2
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "suit1trgrey"
+        v$CLOTH_MODEL = "suit1tr"
+      end
+      
+      if 0039:   2@ == 3
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "suit1trblk"
+        v$CLOTH_MODEL = "suit1tr"
+      end
+      
+      if 0039:   2@ == 4
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "cutoffdenims"
+        v$CLOTH_MODEL = "shorts"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @LEGS_VICTIM
+    end 
+    
+    //----------------
+    //Shoes Victim
+    //----------------
+    if 0039:   2@ == 2
+      then
+      gosub @CJ_CLOTH_CAMERA_LEGS
+      08D4: $PANEL = create_panel_with_title 'CL005' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL009' data 'CL211' 'CL212' 'CL213' 'DUMMY' 'DUMMY'  'DUMMY'  'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :SHOES_VICTIM
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_VICTIM_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "cowboyboot"
+        v$CLOTH_MODEL = "biker"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "biker"
+        v$CLOTH_MODEL = "biker"
+      end
+      
+      if 0039:   2@ == 2
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "snakeskin"
+        v$CLOTH_MODEL = "biker"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @SHOES_VICTIM
+    end
+    
+    //----------------
+    //NECKLACES Victim
+    //----------------
+    if 0039:   2@ == 3
+      then
+      gosub @CJ_CLOTH_CAMERA_TORSO
+      08D4: $PANEL = create_panel_with_title 'CL005' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL010' data 'CL214' 'CL215' 'DUMMY' 'DUMMY' 'DUMMY'  'DUMMY'  'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :NECKLACES_VICTIM
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_VICTIM_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  13
+        v$CLOTH_TEXTURE = "neckropes"
+        v$CLOTH_MODEL = "neck2"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  13
+        v$CLOTH_TEXTURE = "neckropeg"
+        v$CLOTH_MODEL = "neck2"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @NECKLACES_VICTIM
+    end
+    
+    //----------------
+    //WATCHES Victim
+    //----------------
+    if 0039:   2@ == 4
+      then
+      gosub @CJ_CLOTH_CAMERA_WATCHES
+      08D4: $PANEL = create_panel_with_title 'CL005' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL011' data 'CL216' 'CL217' 'DUMMY' 'DUMMY' 'DUMMY'  'DUMMY'  'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :WATCHES_VICTIM
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_VICTIM_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  14
+        v$CLOTH_TEXTURE = "watchgno"
+        v$CLOTH_MODEL = "watch"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  14
+        v$CLOTH_TEXTURE = "watchgno2"
+        v$CLOTH_MODEL = "watch"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @WATCHES_VICTIM
+    end
+    
+    //----------------
+    //GLASSES Victim
+    //----------------
+    if 0039:   2@ == 5
+      then
+      gosub @CJ_CLOTH_CAMERA_HAIR
+      08D4: $PANEL = create_panel_with_title 'CL005' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL012' data 'CL218' 'CL219' 'DUMMY' 'DUMMY'  'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :GLASSES_VICTIM
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_VICTIM_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  15
+        v$CLOTH_TEXTURE = "glasses03"
+        v$CLOTH_MODEL = "glasses03"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  15
+        v$CLOTH_TEXTURE = "glasses03dark"
+        v$CLOTH_MODEL = "glasses03"
+      end
+            
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @GLASSES_VICTIM
+    end
+    
+    //----------------
+    //Hats Victim
+    //----------------
+    if 0039:   2@ == 6
+      then
+      gosub @CJ_CLOTH_CAMERA_HAIR
+      08D4: $PANEL = create_panel_with_title 'CL005' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL013' data 'CL220' 'CL221' 'CL222' 'CL223' 'CL224'  'CL225'  'CL226' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :HATS_VICTIM
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_VICTIM_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "beretred"
+        v$CLOTH_MODEL = "beret"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "beretblk"
+        v$CLOTH_MODEL = "beret"
+      end
+      
+      if 0039:   2@ == 2
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "capblk"
+        v$CLOTH_MODEL = "cap"
+      end
+      
+      if 0039:   2@ == 3
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "capblkback"
+        v$CLOTH_MODEL = "capback"
+      end
+      
+      if 0039:   2@ == 4
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "capblkside"
+        v$CLOTH_MODEL = "capside"
+      end
+      
+      if 0039:   2@ == 5
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "capblkover"
+        v$CLOTH_MODEL = "capovereye"
+      end
+      
+      if 0039:   2@ == 6
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "capblkup"
+        v$CLOTH_MODEL = "caprimup"
+      end
+            
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @HATS_VICTIM
+    end    
+
+jump to @CARL_CLOTHES_VICTIM_MENU
+
+//===========================
+//Part menu, Didier Sachs
+//===========================
+:CARL_CLOTHES_DIDIERSACHS_MENU
+//0AD1: show_formatted_text_highpriority "CARL_CLOTHES_DIDIERSACHS_MENU" time 2000
+//wait 0
+    gosub @CJ_CLOTH_CAMERA_ALL
+    08D4: 1@ = create_panel_with_title 'CL006' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+    08DB:  set_panel 1@ column 0 header 'DUMMY' data 'CL007' 'CL008' 'CL009' 'CL010' 'CL011'  'CL012'  'CL013' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+    090E: set_panel 1@ active_row CARL_CLOTHES_DIDIERSACHS_SELECTED_ROW
+    //wait 100
+    gosub @CARL_CLOTHES_HANDLE_MENU
+  
+    if 0039:   30@ == 1
+    then  
+    3@ = -1
+    jump @CARL_CLOTHES_SELECT_MAIN_MENU 
+    end
+    
+    //----------------
+    //Torso Didier Sachs
+    //----------------
+    if 0039:   2@ == 0
+      then
+      gosub @CJ_CLOTH_CAMERA_TORSO
+      08D4: $PANEL = create_panel_with_title 'CL006' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL007' data 'CL227' 'CL228' 'CL229' 'CL230' 'CL231'  'CL232'  'CL233' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :TORSO_DIDIERSACHS
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_DIDIERSACHS_MENU 
+      end
+      
+      if 0039:   2@ == 0
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "suit2grn"
+        v$CLOTH_MODEL = "suit2"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "suit1red"
+        v$CLOTH_MODEL = "suit1"
+      end
+      
+      if 0039:   2@ == 2
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "suit1blue"
+        v$CLOTH_MODEL = "suit1"
+      end
+      
+      if 0039:   2@ == 3
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "suit1yellow"
+        v$CLOTH_MODEL = "suit1"
+      end
+      
+      if 0039:   2@ == 4
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "tuxedo"
+        v$CLOTH_MODEL = "suit2"
+      end
+      
+      if 0039:   2@ == 5
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "suit1gang"
+        v$CLOTH_MODEL = "suit1"
+      end
+      
+      if 0039:   2@ == 6
+      then
+        19@ =  0
+        v$CLOTH_TEXTURE = "letter"
+        v$CLOTH_MODEL = "sleevt"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @TORSO_DIDIERSACHS
+    end
+      
+               
+    //----------------
+    //Legs Didier Sachs
+    //----------------
+    if 0039:   2@ == 1
+      then
+      gosub @CJ_CLOTH_CAMERA_LEGS
+      08D4: $PANEL = create_panel_with_title 'CL006' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL008' data 'CL234' 'CL235' 'CL236' 'CL237' 'CL238'  'CL239'  'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :LEGS_DIDIERSACHS
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_DIDIERSACHS_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "suit1trred"
+        v$CLOTH_MODEL = "suit1tr"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "suit1trblue"
+        v$CLOTH_MODEL = "suit1tr"
+      end
+      
+      if 0039:   2@ == 2
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "suit1tryellow"
+        v$CLOTH_MODEL = "suit1tr"
+      end
+      
+      if 0039:   2@ == 3
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "suit1trgreen"
+        v$CLOTH_MODEL = "suit1tr"
+      end
+      
+      if 0039:   2@ == 4
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "suit1trblk2"
+        v$CLOTH_MODEL = "suit1tr"
+      end
+      
+      if 0039:   2@ == 5
+      then
+        19@ =  2
+        v$CLOTH_TEXTURE = "suit1trgang"
+        v$CLOTH_MODEL = "suit1tr"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @LEGS_DIDIERSACHS
+    end 
+    
+    //----------------
+    //Shoes Didier Sachs
+    //----------------
+    if 0039:   2@ == 2
+      then
+      gosub @CJ_CLOTH_CAMERA_LEGS
+      08D4: $PANEL = create_panel_with_title 'CL006' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL009' data 'CL240' 'CL241' 'CL242' 'DUMMY' 'DUMMY'  'DUMMY'  'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :SHOES_DIDIERSACHS
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_DIDIERSACHS_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "shoedressblk"
+        v$CLOTH_MODEL = "shoe"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "shoedressbrn"
+        v$CLOTH_MODEL = "shoe"
+      end
+      
+      if 0039:   2@ == 2
+      then
+        19@ =  3
+        v$CLOTH_TEXTURE = "shoespatz"
+        v$CLOTH_MODEL = "shoe"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @SHOES_DIDIERSACHS
+    end
+    
+    //----------------
+    //NECKLACES Didier Sachs
+    //----------------
+    if 0039:   2@ == 3
+      then
+      gosub @CJ_CLOTH_CAMERA_TORSO
+      08D4: $PANEL = create_panel_with_title 'CL006' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL010' data 'CL243' 'CL244' 'DUMMY' 'DUMMY' 'DUMMY'  'DUMMY'  'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :NECKLACES_DIDIERSACHS
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_DIDIERSACHS_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  13
+        v$CLOTH_TEXTURE = "neckdollar"
+        v$CLOTH_MODEL = "neck"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  13
+        v$CLOTH_TEXTURE = "neckcross"
+        v$CLOTH_MODEL = "neck"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @NECKLACES_DIDIERSACHS
+    end
+    
+    //----------------
+    //WATCHES Didier Sachs
+    //----------------
+    if 0039:   2@ == 4
+      then
+      gosub @CJ_CLOTH_CAMERA_WATCHES
+      08D4: $PANEL = create_panel_with_title 'CL006' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL011' data 'CL245' 'CL246' 'DUMMY' 'DUMMY' 'DUMMY'  'DUMMY'  'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :WATCHES_DIDIERSACHS
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_DIDIERSACHS_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  14
+        v$CLOTH_TEXTURE = "watchcro"
+        v$CLOTH_MODEL = "watch"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  14
+        v$CLOTH_TEXTURE = "watchcro2"
+        v$CLOTH_MODEL = "watch"
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @WATCHES_DIDIERSACHS
+    end
+    
+    //----------------
+    //GLASSES Didier Sachs
+    //----------------
+    if 0039:   2@ == 5
+      then
+      gosub @CJ_CLOTH_CAMERA_HAIR
+      08D4: $PANEL = create_panel_with_title 'CL006' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL012' data 'CL247' 'CL248' 'DUMMY' 'DUMMY'  'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+      :GLASSES_DIDIERSACHS
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_DIDIERSACHS_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  15
+        v$CLOTH_TEXTURE = "glasses05dark"
+        v$CLOTH_MODEL = "glasses03"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  15
+        v$CLOTH_TEXTURE = "glasses05"
+        v$CLOTH_MODEL = "glasses03"
+      end
+            
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @GLASSES_DIDIERSACHS
+    end
+    
+    //----------------
+    //Hats Didier Sachs
+    //----------------
+    if 0039:   2@ == 6
+      then
+      gosub @CJ_CLOTH_CAMERA_HAIR
+      08D4: $PANEL = create_panel_with_title 'CL006' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+      08DB:  set_panel $PANEL column 0 header 'CL013' data 'CL249' 'CL250' 'CL251' 'CL252' 'CL253'  'CL254'  'CL255' 'CL256' 'CL257' 'DUMMY' 'DUMMY' 'DUMMY'
+      :HATS_DIDIERSACHS
+      gosub @CARL_CLOTHES_HANDLE_MENU3
+    
+      if 0039:   30@ == 1
+      then
+      08DA: remove_panel $PANEL
+        jump @CARL_CLOTHES_DIDIERSACHS_MENU 
+      end
+           
+      if 0039:   2@ == 0
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "trilbydrk"
+        v$CLOTH_MODEL = "trilby"
+      end
+      
+      if 0039:   2@ == 1
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "trilbylght"
+        v$CLOTH_MODEL = "trilby"
+      end
+      
+      if 0039:   2@ == 2
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "bowler"
+        v$CLOTH_MODEL = "bowler"
+      end
+      
+      if 0039:   2@ == 3
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "bowlerred"
+        v$CLOTH_MODEL = "bowler"
+      end
+      
+      if 0039:   2@ == 4
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "bowlerblue"
+        v$CLOTH_MODEL = "bowler"
+      end
+      
+      if 0039:   2@ == 5
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "bowleryellow"
+        v$CLOTH_MODEL = "bowler"
+      end
+      
+      if 0039:   2@ == 6
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "boater"
+        v$CLOTH_MODEL = "boater"
+      end
+      
+      if 0039:   2@ == 7
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "bowlergang"
+        v$CLOTH_MODEL = "bowler"
+      end
+      
+      if 0039:   2@ == 8
+      then
+        19@ =  16
+        v$CLOTH_TEXTURE = "boaterblk"
+        v$CLOTH_MODEL = "boater"
+      end
+            
+    gosub @CARL_CLOTHES_UPDATE
+    jump to @HATS_DIDIERSACHS
+    end   
+   
+//===========================
+//SPECIAL CLOTHES
+//===========================
+:CARL_CLOTHES_SPECIAL_MENU
+//0AD1: show_formatted_text_highpriority "CARL_CLOTHES_SPECIAL_MENU" time 2000
+//wait 0
+    gosub @CJ_CLOTH_CAMERA_ALL
+    08D4: 1@ = create_panel_with_title 'CL260' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+    08DB:  set_panel 1@ column 0 header 'DUMMY' data 'CL261' 'CL262' 'CL263' 'CL264' 'CL265'  'CL266'  'CL267' 'CL268' 'CL269' 'CL279' 'DUMMY' 'DUMMY'
+    090E: set_panel 1@ active_row CARL_CLOTHES_SPECIALOUTFITS_SELECTED_ROW
+    //wait 100
+    gosub @CARL_CLOTHES_HANDLE_MENU
+  
+    if 0039:   30@ == 1
+    then
+    3@ = -1
+    jump @CARL_CLOTHES_SELECT_MAIN_MENU 
+    end
+
+      if 0039:   2@ == 0
+      then
+        19@ = 17
+        v$CLOTH_TEXTURE = "gimpleg"
+        v$CLOTH_MODEL = "gimpleg"
+      end
+      
+      if 0039:   2@ == 1
+      then                          
+        19@ = 17
+        v$CLOTH_TEXTURE = "valet"
+        v$CLOTH_MODEL = "valet"
+      end
+      
+      if 0039:   2@ == 2
+      then
+        19@ = 17
+        v$CLOTH_TEXTURE = "countrytr"
+        v$CLOTH_MODEL = "countrytr"
+      end
+      
+      if 0039:   2@ == 3
+      then
+        19@ = 17
+        v$CLOTH_TEXTURE = "croupier"
+        v$CLOTH_MODEL = "valet"
+      end
+      
+      if 0039:   2@ == 4
+      then
+        19@ = 17
+        v$CLOTH_TEXTURE = "policetr"
+        v$CLOTH_MODEL = "policetr"
+      end
+      
+      if 0039:   2@ == 5
+      then
+        19@ = 17
+        v$CLOTH_TEXTURE = "balaclava"
+        v$CLOTH_MODEL = "balaclava"
+      end
+      
+      if 0039:   2@ == 6
+      then
+        19@ = 17
+        v$CLOTH_TEXTURE = "pimptr"
+        v$CLOTH_MODEL = "pimptr"
+      end
+      
+      if 0039:   2@ == 7
+      then
+        19@ = 17
+        v$CLOTH_TEXTURE = "garageleg"
+        v$CLOTH_MODEL = "garagetr"
+      end
+      
+      if 0039:   2@ == 8
+      then
+        19@ = 17
+        v$CLOTH_TEXTURE = "medictr"
+        v$CLOTH_MODEL = "medictr"
+      end
+      
+      if 0039:   2@ == 9
+      then
+        19@ = 17
+        15@ = 1
+      end            
+      
+    gosub @CARL_CLOTHES_UPDATE
+    
+jump to @CARL_CLOTHES_SPECIAL_MENU 
+
+//===========================
+//BODY SELECT
+//===========================
+:CARL_CLOTHES_BODY_MENU
+//0AD1: show_formatted_text_highpriority "CARL_CLOTHES_BODY_MENU" time 2000
+//wait 0
+    gosub @CJ_CLOTH_CAMERA_ALL
+    08D4: 1@ = create_panel_with_title 'CL281' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+    08DB:  set_panel 1@ column 0 header 'DUMMY' data 'CL282' 'CL283' 'CL284' 'CL285' 'CL286'  'DUMMY'  'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+    090E: set_panel 1@ active_row CARL_CLOTHES_SELECTED_BODYTYPE
+    //wait 100
+    gosub @CARL_CLOTHES_HANDLE_MENU
+  
+    if 0039:   30@ == 1
+    then
+    3@ = -1
+    jump @CARL_CLOTHES_SELECT_MAIN_MENU 
+    end
+
+      if 0039:   2@ == 0
+      then
+        062A: change_float_stat 21 to 0.0
+        062A: change_float_stat 23 to 0.0
+        070D: rebuild_player PLAYER_CHAR
+        0AF1: write_int 0 to_ini_file "data\clothes.ini" section "CLOTHES" key "BODY_TYPE"
+        CARL_CLOTHES_SELECTED_BODYTYPE = 0  
+      end
+      
+      if 0039:   2@ == 1
+      then
+        062A: change_float_stat 21 to 250.0                                  
+        062A: change_float_stat 23 to 500.0
+        070D: rebuild_player PLAYER_CHAR
+        0AF1: write_int 1 to_ini_file "data\clothes.ini" section "CLOTHES" key "BODY_TYPE"
+        CARL_CLOTHES_SELECTED_BODYTYPE = 1
+      end
+      
+      if 0039:   2@ == 2
+      then
+        062A: change_float_stat 21 to 100.0
+        062A: change_float_stat 23 to 1000.0
+        070D: rebuild_player PLAYER_CHAR
+        0AF1: write_int 2 to_ini_file "data\clothes.ini" section "CLOTHES" key "BODY_TYPE"
+        CARL_CLOTHES_SELECTED_BODYTYPE = 2
+      end
+      
+      if 0039:   2@ == 3
+      then
+        062A: change_float_stat 23 to 0.0
+        062A: change_float_stat 21 to 1000.0
+        070D: rebuild_player PLAYER_CHAR
+        0AF1: write_int 3 to_ini_file "data\clothes.ini" section "CLOTHES" key "BODY_TYPE"
+        CARL_CLOTHES_SELECTED_BODYTYPE = 3
+      end
+      
+      if 0039:   2@ == 4
+      then
+        062A: change_float_stat 23 to 1000.0
+        062A: change_float_stat 21 to 1000.0
+        070D: rebuild_player PLAYER_CHAR
+        0AF1: write_int 4 to_ini_file "data\clothes.ini" section "CLOTHES" key "BODY_TYPE"
+        CARL_CLOTHES_SELECTED_BODYTYPE = 4
+      end                  
+    
+jump to @CARL_CLOTHES_BODY_MENU    
+    
+//===========================
+//REMOVE CLOTHES
+//===========================
+:CARL_CLOTHES_REMOVE_CLOTHES_MENU
+//0AD1: show_formatted_text_highpriority "CARL_CLOTHES_REMOVE_CLOTHES_MENU" time 2000 
+//wait 0
+    gosub @CJ_CLOTH_CAMERA_ALL
+    08D4: 1@ = create_panel_with_title 'CL270' position 71.0 145.0 width 220.0 columns 1 interactive 1 background 1 alignment 1
+    08DB:  set_panel 1@ column 0 header 'DUMMY' data 'CL272' 'CL273' 'CL274' 'CL275' 'CL276'  'CL277'  'CL278' 'CL279' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'
+    090E: set_panel 1@ active_row CARL_CLOTHES_REMOVECLOTHES_SELECTED_ROW
+    //wait 100 
+    gosub @CARL_CLOTHES_HANDLE_MENU
+  
+    if 0039:   30@ == 1
+    then
+    3@ = -1
+    jump @CARL_CLOTHES_SELECT_MAIN_MENU 
+    end
+
+      if 0039:   2@ == 0
+      then
+        19@ = 0
+        v$CLOTH_TEXTURE = "player_torso"
+        v$CLOTH_MODEL = "torso"
+     end
+      
+      if 0039:   2@ == 1
+      then                          
+        19@ = 2
+        v$CLOTH_TEXTURE = "player_legs"
+        v$CLOTH_MODEL = "legs"
+      end
+      
+      if 0039:   2@ == 2
+      then
+        19@ = 3
+        v$CLOTH_TEXTURE = "foot"
+        v$CLOTH_MODEL = "feet"
+      end
+      
+      if 0039:   2@ == 3
+      then
+        19@ = 13
+        15@ = 1
+      end
+      
+      if 0039:   2@ == 4
+      then
+        19@ =  14
+        15@ = 1
+      end
+      
+      if 0039:   2@ == 5
+      then
+        19@ =  15
+        15@ = 1
+      end
+      
+      if 0039:   2@ == 6
+      then
+        19@ = 16
+        15@ = 1
+      end
+      
+      if 0039:   2@ == 7
+      then
+        19@ = 17
+        15@ = 1
+      end
+      
+    gosub @CARL_CLOTHES_UPDATE
+    
+jump to @CARL_CLOTHES_REMOVE_CLOTHES_MENU
+
+//===========================
+//HAIRCUT
+//===========================
+:CARL_CLOTHES_HAIRCUT_MENU
+
+repeat
+wait 0
+
+if or
+0E3E:    player 0 pressed_key 15
+0E3E:    player 0 pressed_key 16
+then
+jump @CARL_CLOTHES_SELECT_MAIN_MENU
+end
+
+00E2: get_player 0 key 1 state_to 0@
+if and
+0@ == 128
+33@ > 100
+then
+33@ = 0
+CARL_CLOTHES_SELECTED_HAIRCUT -= 1
+Audiostream.PerformAction($MENU_FOCUS_SOUND, PLAY)
+Audiostream.Loop($MENU_FOCUS_SOUND, 0)
+Audiostream.Volume($MENU_FOCUS_SOUND) = $SOUNDS_VOLUME
+0AF1: write_int CARL_CLOTHES_SELECTED_HAIRCUT to_ini_file "data\clothes.ini" section "CLOTHES" key "HEAD_NUMBER"
+end
+
+if and
+0@ == -128
+33@ > 100
+then
+33@ = 0
+CARL_CLOTHES_SELECTED_HAIRCUT += 1
+Audiostream.PerformAction($MENU_FOCUS_SOUND, PLAY)
+Audiostream.Loop($MENU_FOCUS_SOUND, 0)
+Audiostream.Volume($MENU_FOCUS_SOUND) = $SOUNDS_VOLUME
+0AF1: write_int CARL_CLOTHES_SELECTED_HAIRCUT to_ini_file "data\clothes.ini" section "CLOTHES" key "HEAD_NUMBER"
+end
+
+if
+CARL_CLOTHES_SELECTED_HAIRCUT < 0
+then
+CARL_CLOTHES_SELECTED_HAIRCUT = 32
+end
+
+if
+CARL_CLOTHES_SELECTED_HAIRCUT > 32
+then
+CARL_CLOTHES_SELECTED_HAIRCUT = 0
+end
+
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 0
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "player_face"
+        v$CLOTH_MODEL = "head"
+     end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 1
+      then                          
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "hairblond"
+        v$CLOTH_MODEL = "head"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 2
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "hairred"
+        v$CLOTH_MODEL = "head"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 3
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "hairblue"
+        v$CLOTH_MODEL = "head"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 4
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "hairgreen"
+        v$CLOTH_MODEL = "head"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 5
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "hairpink"
+        v$CLOTH_MODEL = "head"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 6
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "bald"
+        v$CLOTH_MODEL = "head"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 7
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "baldbeard"
+        v$CLOTH_MODEL = "head"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 8
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "baldtash"
+        v$CLOTH_MODEL = "head"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 9
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "baldgoatee"
+        v$CLOTH_MODEL = "head"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 10
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "highfade"
+        v$CLOTH_MODEL = "head"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 11
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "highafro"
+        v$CLOTH_MODEL = "highafro"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 12
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "wedge"
+        v$CLOTH_MODEL = "wedge"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 13
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "slope"
+        v$CLOTH_MODEL = "slope"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 14
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "jhericurl"
+        v$CLOTH_MODEL = "jheri"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 15
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "cornrows"
+        v$CLOTH_MODEL = "cornrows"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 16
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "cornrowsb"
+        v$CLOTH_MODEL = "cornrows"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 17
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "tramline"
+        v$CLOTH_MODEL = "tramline"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 18
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "groovecut"
+        v$CLOTH_MODEL = "groovecut"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 19
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "mohawk"
+        v$CLOTH_MODEL = "mohawk"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 20
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "mohawkblond"
+        v$CLOTH_MODEL = "mohawk"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 21
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "mohawkpink"
+        v$CLOTH_MODEL = "mohawk"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 22
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "mohawkbeard"
+        v$CLOTH_MODEL = "mohawk"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 23
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "afro"
+        v$CLOTH_MODEL = "afro"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 24
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "afrotash"
+        v$CLOTH_MODEL = "afro"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 25
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "afrobeard"
+        v$CLOTH_MODEL = "afro"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 26
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "afroblond"
+        v$CLOTH_MODEL = "afro"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 27
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "flattop"
+        v$CLOTH_MODEL = "flattop"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 28
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "elvishair"
+        v$CLOTH_MODEL = "elvishair"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 29
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "beard"
+        v$CLOTH_MODEL = "head"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 30
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "tash"
+        v$CLOTH_MODEL = "head"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 31
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "goatee"
+        v$CLOTH_MODEL = "head"
+      end
+      
+      if 0039:   CARL_CLOTHES_SELECTED_HAIRCUT == 32
+      then
+        27@ = 1
+        19@ = 1
+        v$CLOTH_TEXTURE = "afrogoatee"
+        v$CLOTH_MODEL = "afro"
+      end      
+    
+    if
+    27@ == 1
+    then
+    27@ = 0  
+    gosub @CARL_CLOTHES_UPDATE
+    end
+    
+until false    
+    
+jump to @CARL_CLOTHES_HAIRCUT_MENU
+end_thread
+
+end_thread
+
+:CARL_CLOTHES_PANEL_CHECK
+
+if
+CARL_CLOTHES_SELECTED_PANEL == 1
+then
+08D7: CARL_CLOTHES_BINCO_SELECTED_ROW = panel 1@ active_row
+end
+
+if
+CARL_CLOTHES_SELECTED_PANEL == 2
+then
+08D7: CARL_CLOTHES_PROLAPS_SELECTED_ROW = panel 1@ active_row
+end
+
+if
+CARL_CLOTHES_SELECTED_PANEL == 3
+then
+08D7: CARL_CLOTHES_SUBURBAN_SELECTED_ROW = panel 1@ active_row
+end
+
+if
+CARL_CLOTHES_SELECTED_PANEL == 4
+then
+08D7: CARL_CLOTHES_ZIP_SELECTED_ROW = panel 1@ active_row
+end
+
+if
+CARL_CLOTHES_SELECTED_PANEL == 5
+then
+08D7: CARL_CLOTHES_VICTIM_SELECTED_ROW = panel 1@ active_row
+end
+
+if
+CARL_CLOTHES_SELECTED_PANEL == 6
+then
+08D7: CARL_CLOTHES_DIDIERSACHS_SELECTED_ROW = panel 1@ active_row
+end
+
+if
+CARL_CLOTHES_SELECTED_PANEL == 7
+then
+08D7: CARL_CLOTHES_SPECIALOUTFITS_SELECTED_ROW = panel 1@ active_row
+end
+
+if
+CARL_CLOTHES_SELECTED_PANEL == 8
+then
+08D7: CARL_CLOTHES_REMOVECLOTHES_SELECTED_ROW = panel 1@ active_row
+end
+
+if
+CARL_CLOTHES_SELECTED_PANEL == 9
+then
+08D7: CARL_CLOTHES_REMOVECLOTHES_SELECTED_ROW = panel 1@ active_row
+end
+
+if
+CARL_CLOTHES_SELECTED_PANEL == 10
+then
+08D7: CARL_CLOTHES_REMOVECLOTHES_SELECTED_ROW = panel 1@ active_row
+end
+
+return 
+
+:CARL_CLOTHES_HANDLE_MENU
+30@ = 0
+0512: show_permanent_text_box 'GAME765' 
+repeat
+wait  0 ms
+if 0E3E:   player 0 pressed_key 15
+then
+ 08DA: remove_panel 1@
+ repeat
+   wait 0
+ until 80E1:   not player 0 pressed_key 15
+ 30@ = 1
+ return
+end
+until 0E3E:   player 0 pressed_key 16
+
+08D7: 2@ = panel 1@ active_row
+gosub @CARL_CLOTHES_PANEL_CHECK
+08DA: remove_panel 1@
+
+repeat
+wait 0
+until 80E1:   not player 0 pressed_key 16
+
+return
+
+:CARL_CLOTHES_HANDLE_MENU3
+30@ = 0
+0512: show_permanent_text_box 'GAME765' 
+repeat
+wait  0 ms
+if 0E3E:   player 0 pressed_key 15
+then
+ repeat
+   wait 0
+ until 80E1:   not player 0 pressed_key 15
+ 30@ = 1
+ return
+end
+until 0E3E:   player 0 pressed_key 16
+
+08D7: 2@ = panel $PANEL active_row
+
+repeat
+wait 0
+until 80E1:   not player 0 pressed_key 16
+
+return
+
+:CARL_CLOTHES_HANDLE_MENU_STORES
+31@ = 0
+0512: show_permanent_text_box 'GAME766' 
+repeat
+wait  0 ms
+if 0E3E:   player 0 pressed_key 15
+then
+ 08DA: remove_panel $PANEL
+ repeat
+   wait 0
+ until 80E1:   not player 0 pressed_key 15
+ 31@ = 1
+ return
+end
+until 0E3E:   player 0 pressed_key 16
+
+08D7: 3@ = panel $PANEL active_row
+08D7: 4@ = panel $PANEL active_row
+08DA: remove_panel $PANEL
+
+repeat
+wait 0
+until 80E1:   not player 0 pressed_key 16
+
+return
+
+:CARL_CLOTHES_UPDATE
+
+2@ = -1
+
+if 8039:   not  15@ == 1
+then
+Player.SetClothes(PLAYER_CHAR, v$CLOTH_TEXTURE, v$CLOTH_MODEL, 19@)
+else
+0784: set_player PLAYER_CHAR textureCRC 0 modelCRC 0 bodypart 19@
+
+if
+19@ == 0
+then
+v$TORSO_MODEL = "torso"
+v$TORSO_TEXTURE = "player_torso"
+0AF5: write_string v$TORSO_MODEL to_ini_file "data\clothes.ini" section "CLOTHES" key "TORSO_MODEL"
+0AF5: write_string v$TORSO_TEXTURE to_ini_file "data\clothes.ini" section "CLOTHES" key "TORSO_TEXTURE"
+end
+
+if
+19@ == 2
+then
+v$LEGS_MODEL = "legs"
+v$LEGS_TEXTURE = "player_legs"
+0AF5: write_string v$LEGS_MODEL to_ini_file "data\clothes.ini" section "CLOTHES" key "LEGS_MODEL"
+0AF5: write_string v$LEGS_TEXTURE to_ini_file "data\clothes.ini" section "CLOTHES" key "LEGS_TEXTURE"
+end
+
+if
+19@ == 3
+then
+v$SHOES_MODEL = "feet"
+v$SHOES_TEXTURE = "foot"
+0AF5: write_string v$SHOES_MODEL to_ini_file "data\clothes.ini" section "CLOTHES" key "SHOES_MODEL"
+0AF5: write_string v$SHOES_TEXTURE to_ini_file "data\clothes.ini" section "CLOTHES" key "SHOES_TEXTURE"
+end
+
+if
+19@ == 13
+then
+v$NECKLACE_MODEL = ""
+v$NECKLACE_TEXTURE = ""
+0AF5: write_string v$NECKLACE_MODEL to_ini_file "data\clothes.ini" section "CLOTHES" key "NECKLACE_MODEL"
+0AF5: write_string v$NECKLACE_TEXTURE to_ini_file "data\clothes.ini" section "CLOTHES" key "NECKLACE_TEXTURE"
+end
+
+if
+19@ == 14
+then
+v$WRISTWATCH_MODEL = ""
+v$WRISTWATCH_TEXTURE = ""
+0AF5: write_string v$WRISTWATCH_MODEL to_ini_file "data\clothes.ini" section "CLOTHES" key "WRISTWATCH_MODEL"
+0AF5: write_string v$WRISTWATCH_TEXTURE to_ini_file "data\clothes.ini" section "CLOTHES" key "WRISTWATCH_TEXTURE"
+end
+
+if
+19@ == 15
+then
+v$GLASSES_MODEL = ""
+v$GLASSES_TEXTURE = ""
+0AF5: write_string v$GLASSES_MODEL to_ini_file "data\clothes.ini" section "CLOTHES" key "GLASSES_MODEL"
+0AF5: write_string v$GLASSES_TEXTURE to_ini_file "data\clothes.ini" section "CLOTHES" key "GLASSES_TEXTURE"
+end
+
+if
+19@ == 16
+then
+v$HATS_MODEL = ""
+v$HATS_TEXTURE = ""
+0AF5: write_string v$HATS_MODEL to_ini_file "data\clothes.ini" section "CLOTHES" key "HATS_MODEL"
+0AF5: write_string v$HATS_TEXTURE to_ini_file "data\clothes.ini" section "CLOTHES" key "HATS_TEXTURE"
+end
+
+if
+19@ == 17
+then
+v$OUTFIT_MODEL = ""
+v$OUTFIT_TEXTURE = ""
+0AF5: write_string v$OUTFIT_MODEL to_ini_file "data\clothes.ini" section "CLOTHES" key "OUTFIT_MODEL"
+0AF5: write_string v$OUTFIT_TEXTURE to_ini_file "data\clothes.ini" section "CLOTHES" key "OUTFIT_TEXTURE"
+end
+
+end
+
+if
+8039:   not  15@ == 1
+then
+
+if
+19@ == 0
+then
+0AD3: v$TORSO_MODEL = format "%s" v$CLOTH_MODEL
+0AD3: v$TORSO_TEXTURE = format "%s" v$CLOTH_TEXTURE
+0AF5: write_string v$TORSO_MODEL to_ini_file "data\clothes.ini" section "CLOTHES" key "TORSO_MODEL"
+0AF5: write_string v$TORSO_TEXTURE to_ini_file "data\clothes.ini" section "CLOTHES" key "TORSO_TEXTURE"
+end
+
+if
+19@ == 1
+then
+0AD3: v$HEAD_MODEL = format "%s" v$CLOTH_MODEL
+0AD3: v$HEAD_TEXTURE = format "%s" v$CLOTH_TEXTURE
+0AF5: write_string v$HEAD_MODEL to_ini_file "data\clothes.ini" section "CLOTHES" key "HEAD_MODEL"
+0AF5: write_string v$HEAD_TEXTURE to_ini_file "data\clothes.ini" section "CLOTHES" key "HEAD_TEXTURE"
+end
+
+if
+19@ == 2
+then
+0AD3: v$LEGS_MODEL = format "%s" v$CLOTH_MODEL
+0AD3: v$LEGS_TEXTURE = format "%s" v$CLOTH_TEXTURE
+0AF5: write_string v$LEGS_MODEL to_ini_file "data\clothes.ini" section "CLOTHES" key "LEGS_MODEL"
+0AF5: write_string v$LEGS_TEXTURE to_ini_file "data\clothes.ini" section "CLOTHES" key "LEGS_TEXTURE"
+end
+
+if
+19@ == 3
+then
+0AD3: v$SHOES_MODEL = format "%s" v$CLOTH_MODEL
+0AD3: v$SHOES_TEXTURE = format "%s" v$CLOTH_TEXTURE
+0AF5: write_string v$SHOES_MODEL to_ini_file "data\clothes.ini" section "CLOTHES" key "SHOES_MODEL"
+0AF5: write_string v$SHOES_TEXTURE to_ini_file "data\clothes.ini" section "CLOTHES" key "SHOES_TEXTURE"
+end
+
+if
+19@ == 13
+then
+0AD3: v$NECKLACE_MODEL = format "%s" v$CLOTH_MODEL
+0AD3: v$NECKLACE_TEXTURE = format "%s" v$CLOTH_TEXTURE
+0AF5: write_string v$NECKLACE_MODEL to_ini_file "data\clothes.ini" section "CLOTHES" key "NECKLACE_MODEL"
+0AF5: write_string v$NECKLACE_TEXTURE to_ini_file "data\clothes.ini" section "CLOTHES" key "NECKLACE_TEXTURE"
+end
+
+if
+19@ == 14
+then
+0AD3: v$WRISTWATCH_MODEL = format "%s" v$CLOTH_MODEL
+0AD3: v$WRISTWATCH_TEXTURE = format "%s" v$CLOTH_TEXTURE
+0AF5: write_string v$WRISTWATCH_MODEL to_ini_file "data\clothes.ini" section "CLOTHES" key "WRISTWATCH_MODEL"
+0AF5: write_string v$WRISTWATCH_TEXTURE to_ini_file "data\clothes.ini" section "CLOTHES" key "WRISTWATCH_TEXTURE"
+end
+
+if
+19@ == 15
+then
+0AD3: v$GLASSES_MODEL = format "%s" v$CLOTH_MODEL
+0AD3: v$GLASSES_TEXTURE = format "%s" v$CLOTH_TEXTURE
+0AF5: write_string v$GLASSES_MODEL to_ini_file "data\clothes.ini" section "CLOTHES" key "GLASSES_MODEL"
+0AF5: write_string v$GLASSES_TEXTURE to_ini_file "data\clothes.ini" section "CLOTHES" key "GLASSES_TEXTURE"
+end
+
+if
+19@ == 16
+then
+0AD3: v$HATS_MODEL = format "%s" v$CLOTH_MODEL
+0AD3: v$HATS_TEXTURE = format "%s" v$CLOTH_TEXTURE
+0AF5: write_string v$HATS_MODEL to_ini_file "data\clothes.ini" section "CLOTHES" key "HATS_MODEL"
+0AF5: write_string v$HATS_TEXTURE to_ini_file "data\clothes.ini" section "CLOTHES" key "HATS_TEXTURE"
+end
+
+if
+19@ == 17
+then
+0AD3: v$OUTFIT_MODEL = format "%s" v$CLOTH_MODEL
+0AD3: v$OUTFIT_TEXTURE = format "%s" v$CLOTH_TEXTURE
+0AF5: write_string v$OUTFIT_MODEL to_ini_file "data\clothes.ini" section "CLOTHES" key "OUTFIT_MODEL"
+0AF5: write_string v$OUTFIT_TEXTURE to_ini_file "data\clothes.ini" section "CLOTHES" key "OUTFIT_TEXTURE"
+end
+
+end 
+
+Player.Build(PLAYER_CHAR)
+
+15@ = 0
+
+return
+
+:CJ_CLOTH_CAMERA_ALL
+camera.SetPosition(256.105499, -40.201900, 1001.912659,0.0,0.0,0.0)
+camera.PointAt(256.733551, -40.978439, 1001.963074,2)
+return
+
+:CJ_CLOTH_CAMERA_HAIR
+camera.SetPosition(256.967072, -41.570210, 1002.728821,0.0,0.0,0.0)
+camera.PointAt(257.856964, -42.024769, 1002.690186,2)
+return
+
+:CJ_CLOTH_CAMERA_LEGS
+camera.SetPosition(256.239899, -41.337357, 1001.698914,0.0,0.0,0.0)
+camera.PointAt(257.169434, -41.699348, 1001.628906,2)
+return
+
+:CJ_CLOTH_CAMERA_TORSO
+camera.SetPosition(256.443481, -41.408642, 1002.326172,0.0,0.0,0.0)
+camera.PointAt(257.358063, -41.813023, 1002.329407,2)
+return
+
+:CJ_CLOTH_CAMERA_WATCHES
+camera.SetPosition(256.799530, -41.893036, 1001.985962,0.0,0.0,0.0)
+camera.PointAt(257.784790, -42.063980, 1001.980225,2)
+return
