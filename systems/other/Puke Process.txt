@@ -1,0 +1,155 @@
+:PUKE_SY
+thread 'PUKE_SY'
+
+while true
+wait 250
+
+if
+PUKE_PROCESS_FLAG == 1
+    then
+    PUKE_PROCESS_FLAG = 0
+    if
+    not actor.Driving(PLAYER_ACTOR)
+        then        
+        gosub @PUKE_ONFOOT
+        else
+        0221: set_player PLAYER_CHAR apply_brakes_to_car 1
+        gosub @PUKE_INCAR
+        0221: set_player PLAYER_CHAR apply_brakes_to_car 0
+        end
+    
+    end
+
+end
+
+end_thread
+
+:PUKE_ONFOOT
+ 
+0E69: set_player_control_pad_movement 0 0
+
+29@ = Audiostream.Load("AUDIO\SOUNDS\food_puke_sound.wav")
+
+while not animation.Available("FOOD")
+wait 0
+animation.Load("FOOD")
+end
+
+0687: clear_actor PLAYER_ACTOR task 
+Animation.PerfromA(PLAYER_ACTOR, "EAT_Vomit_P", "food", 4.0, 0, 0, 0, 0, -1)
+
+32@ = 0
+    
+repeat
+wait 0
+015B: shake_player_controller 0 time 50 intensity 35
+0613: 2@ = actor PLAYER_ACTOR animation "EAT_Vomit_P" time
+
+if
+not actor.Animation(PLAYER_ACTOR) == "EAT_Vomit_P"
+    then
+    break
+    end
+
+until 2@ >= 0.155
+
+if
+REALISM_MODE == 2
+then
+$SATIETY_LEVEL = 0.0
+else
+$SATIETY_LEVEL -= 200.0
+end
+    
+0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
+0D0A: store_coords_to 25@ 26@ 27@ from_matrix 0@ with_offsets 0.30 0.40 0.0
+064B: 28@ = create_particle "PUKE" at 25@ 26@ 27@ type 1
+064C: make_particle 28@ visible
+015B: shake_player_controller 0 time 1500 intensity 75
+
+Audiostream.Loop(29@,0)
+Audiostream.PerformAction(29@, PLAY)
+Audiostream.Volume(29@) = $SOUNDS_VOLUME
+                
+while actor.Animation(PLAYER_ACTOR) == "EAT_Vomit_P"
+wait 0                                                                                 
+end
+                
+064E: stop_particle 28@
+0650: destroy_particle 28@
+    
+04EF: release_animation "FOOD"
+
+audiostream.Release(29@)
+
+0E69: set_player_control_pad_movement 0 1
+
+return
+
+:PUKE_INCAR
+
+29@ = Audiostream.Load("AUDIO\SOUNDS\food_puke_sound.wav")
+
+0E68: set_player_control_pad 0 1 
+0E69: set_player_control_pad_movement 0 0
+
+while not animation.Available("FOOD")
+wait 0
+animation.Load("FOOD")
+end
+ 
+Animation.PerfromA(PLAYER_ACTOR, "EAT_Vomit_P_Car", "food", 4.0, 0, 0, 0, 0, -1)
+//0A1A: actor PLAYER_ACTOR perform_walk_animation "EAT_Vomit_P" IFP "food" framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF 0 1 ms // versionC
+    
+repeat
+wait 0
+0613: 2@ = actor PLAYER_ACTOR animation "EAT_Vomit_P_Car" time
+
+if
+not actor.Animation(PLAYER_ACTOR) == "EAT_Vomit_P_Car"
+    then
+    break
+    end
+
+until 2@ >= 0.25
+
+$SATIETY_LEVEL -= 200.0
+    
+//0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
+//0D0A: store_coords_to 25@ 26@ 27@ from_matrix 0@ with_offsets 0.40 0.25 0.0
+//0AF2: 1@ = get_float_from_ini_file "saves\ZACM.SET" section "SCR" key "CAR_PUKE_X"
+//0AF2: 2@ = get_float_from_ini_file "saves\ZACM.SET" section "SCR" key "CAR_PUKE_Y"
+//0AF2: 3@ = get_float_from_ini_file "saves\ZACM.SET" section "SCR" key "CAR_PUKE_Z"
+//0AF2: 4@ = get_float_from_ini_file "saves\ZACM.SET" section "SCR" key "CAR_PUKE_ANGLE_X"
+//0AF2: 5@ = get_float_from_ini_file "saves\ZACM.SET" section "SCR" key "CAR_PUKE_ANGLE_Y"
+//0AF2: 6@ = get_float_from_ini_file "saves\ZACM.SET" section "SCR" key "CAR_PUKE_ANGLE_Z"
+//0669: 28@ = attach_particle "PUKE" to_actor PLAYER_ACTOR with_offset 1@ 2@ 3@ type 1
+//066A: 28@ = attach_particle "PUKE" to_actor PLAYER_ACTOR with_offset 0.0 0.0 0.5 rotation 0.0 0.0 0.0 type 1
+//064C: make_particle 28@ visible
+
+0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
+0D0A: store_coords_to 25@ 26@ 27@ from_matrix 0@ with_offsets 0.20 0.20 0.0
+064B: 28@ = create_particle "PUKE" at 25@ 26@ 27@ type 1
+064C: make_particle 28@ visible
+
+Audiostream.Loop(29@,0)
+Audiostream.PerformAction(29@, PLAY)
+Audiostream.Volume(29@) = $SOUNDS_VOLUME
+
+wait 200
+
+064E: stop_particle 28@
+0650: destroy_particle 28@ 
+                
+while actor.Animation(PLAYER_ACTOR) == "EAT_Vomit_P_Car"
+wait 0                                                                                  
+end            
+    
+04EF: release_animation "FOOD"
+
+0E68: set_player_control_pad 1 1 
+0E69: set_player_control_pad_movement 0 1
+
+audiostream.Release(29@)
+
+return

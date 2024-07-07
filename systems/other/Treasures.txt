@@ -1,0 +1,970 @@
+const
+TREASURE_POS_X = 10@
+TREASURE_POS_Y = 11@
+TREASURE_POS_Z = 12@
+TREASURE_ROT_X = 13@
+TREASURE_ROT_Y = 14@
+TREASURE_ROT_Z = 15@
+TREASURES_TOTAL_COUNT = 16@
+TREASURE_OBJECT = 20@
+TREASURE_MODEL = 21@
+TREASURE_HACKED = 22@
+TREASURE_PREV_NUM = 23@
+TREASURE_TRAP_FLAG = 24@
+end
+
+:TREASUR
+thread 'TREASUR'
+
+TREASURE_PREV_NUM = -1
+
+0AF0: TREASURES_TOTAL_COUNT = get_int_from_ini_file "data/treasures.ini" section "TSINFO" key "TOTAL"
+
+create_thread @SUNDUKS
+
+if or
+TREASURES_TOTAL_COUNT == 0
+CLASSIC_CARMA_MAP >= 1
+$ALLOW_TREASURES == 0
+then
+end_thread
+end
+
+for 0@ = 0 to TREASURES_TOTAL_COUNT
+
+0AD3: v$TREA_FILE = format "ts%d" 0@
+if
+8AF0: not 1@ = get_int_from_ini_file "data/treasures.ini" section v$TREA_FILE key "CHANCE_PERCENTAGE"
+then
+
+if
+UNITED_MAP == 0
+then
+
+if
+not $EXPE_FLAG == 1
+then
+1@ = 60
+else
+1@ = 100
+end
+
+else
+
+if
+not $EXPE_FLAG == 1
+then
+1@ = 40
+else
+1@ = 100
+end
+
+end
+
+end
+
+if
+8AF0: not 2@ = get_int_from_ini_file "data/treasures.ini" section v$TREA_FILE key "INTERIOR"
+then
+2@ = 0
+end
+
+if
+8AF0: not 3@ = get_int_from_ini_file "data/treasures.ini" section v$TREA_FILE key "MODEL"
+then
+
+if
+UNITED_MAP == 0
+then
+
+if
+2@ > 0
+then
+3@ = 6553
+else
+3@ = 2969
+end
+
+else
+3@ = 1889
+end
+
+end
+
+if
+0E4D: random_percent 1@
+then    
+0AF2: TREASURE_POS_X = get_float_from_ini_file "data/treasures.ini" section v$TREA_FILE key "POS_X" 
+0AF2: TREASURE_POS_Y = get_float_from_ini_file "data/treasures.ini" section v$TREA_FILE key "POS_Y"  
+0AF2: TREASURE_POS_Z = get_float_from_ini_file "data/treasures.ini" section v$TREA_FILE key "POS_Z"
+TREASURE_POS_Z -= 0.11
+0AF2: TREASURE_ROT_X = get_float_from_ini_file "data/treasures.ini" section v$TREA_FILE key "ROT_X" 
+0AF2: TREASURE_ROT_Y = get_float_from_ini_file "data/treasures.ini" section v$TREA_FILE key "ROT_Y"  
+0AF2: TREASURE_ROT_Z = get_float_from_ini_file "data/treasures.ini" section v$TREA_FILE key "ROT_Z"
+
+if
+0@ < 150
+then
+$WPN_AMM_FLAG[0@] = object.Create(3@,TREASURE_POS_X,TREASURE_POS_Y,TREASURE_POS_Z)
+008B: TREASURE_OBJECT = $WPN_AMM_FLAG[0@] // (int)
+else
+0A8E: 1@ = 0@ + -150 // int
+$WEAPON[1@] = object.Create(3@,TREASURE_POS_X,TREASURE_POS_Y,TREASURE_POS_Z)
+008B: TREASURE_OBJECT = $WEAPON[1@] // (int)
+end
+
+0453: set_object TREASURE_OBJECT XY_rotation TREASURE_ROT_X TREASURE_ROT_Y angle TREASURE_ROT_Z
+object.KeepInMemory(TREASURE_OBJECT,true)
+0566: link_object TREASURE_OBJECT to_interior 2@
+
+if
+$EXPE_FLAG == 1
+then
+0188: 3@ = create_marker_above_object TREASURE_OBJECT
+end
+
+end
+ 
+end
+
+:TAINIK_LOOP_START
+
+while true
+wait 500
+
+for 0@ = 0 to TREASURES_TOTAL_COUNT
+
+if
+0@ < 150
+then
+008B: TREASURE_OBJECT = $WPN_AMM_FLAG[0@] // (int)
+else
+0A8E: 1@ = 0@ + -150 // int
+008B: TREASURE_OBJECT = $WEAPON[1@] // (int)
+end
+
+if
+TREASURE_OBJECT > 1
+    then
+    if
+    03CA:   object TREASURE_OBJECT exists
+        then
+        if
+//        0471:   actor PLAYER_ACTOR near_object_in_rectangle TREASURE_OBJECT radius 50.0 50.0 sphere 0
+        0EE6: locate_char_distance_to_object PLAYER_ACTOR object TREASURE_OBJECT radius 50.0
+            then
+            0984: TREASURE_MODEL = object TREASURE_OBJECT model
+            if or
+            TREASURE_MODEL == 6553
+            TREASURE_MODEL == 2969
+            TREASURE_MODEL == 1889
+            TREASURE_MODEL == 16812
+            TREASURE_MODEL == 18969
+                then
+                
+                if
+                803B: not  0@ == TREASURE_PREV_NUM  // (int)
+                then
+                TREASURE_HACKED = 0
+                TREASURE_TRAP_FLAG = 0
+                0085: TREASURE_PREV_NUM = 0@ // (int)
+                end
+                
+                while 0EE6: locate_char_distance_to_object PLAYER_ACTOR object TREASURE_OBJECT radius 50.0
+                wait 0
+                
+                if
+                83CA: not  object TREASURE_OBJECT exists
+                then              
+                jump to @TAINIK_LOOP_START
+                else
+                0984: TREASURE_MODEL = object TREASURE_OBJECT model
+                if or
+                TREASURE_MODEL == 6553
+                TREASURE_MODEL == 2969
+                TREASURE_MODEL == 1889
+                TREASURE_MODEL == 16812
+                TREASURE_MODEL == 18969
+                    then
+                    //ass
+                    else
+                    jump to @TAINIK_LOOP_START
+                    end
+                end
+                
+                01BB: store_object TREASURE_OBJECT position_to 1@ 2@ 3@
+                0D54: draw_corona_with_extra_params_texture 0 color 255 0 0 155 on_entity 0 at 1@ 2@ 3@ size 0.25 far_clip 5.0 near_clip 0.5 flare 0 enable_reflection 1 check_obstacles 0 flash_while_fading 0 fade_speed 15.0 only_from_below 0
+                
+                object.StorePos(TREASURE_OBJECT,1@,2@,3@) 
+                000F: 1@ -= 5.0
+                000F: 2@ -= 5.0
+                000F: 3@ -= 5.0
+                object.StorePos(TREASURE_OBJECT,4@,5@,6@) 
+                000F: 4@ -= -5.0
+                000F: 5@ -= -5.0
+                000F: 6@ -= -5.0
+                
+                if
+                0356:   explosion_type -1 in_cube_cornerA 1@ 2@ 3@ cornerB 4@ 5@ 6@
+                then
+                object.Destroy(TREASURE_OBJECT)
+                break
+                end
+                
+                071E: get_object TREASURE_OBJECT health_to 1@            
+                if
+                1@ == 69
+                then
+                object.Destroy(TREASURE_OBJECT)
+                break
+                end
+                                
+                if
+                TREASURE_DETECTOR == 1
+                    then
+                    8@ = 0.0
+                    01BB: store_object TREASURE_OBJECT position_to 1@ 2@ 3@
+                    actor.StorePos(PLAYER_ACTOR,4@,5@,6@)
+                    050A: 7@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 4@ 5@ 6@                    
+                    005B: 8@ += 7@  // (float) 
+                    0092: 8@ = float 8@ to_integer
+                    
+                    8@ *= 40
+                    
+                    if
+                    8@ < 150
+                    then
+                    8@ = 150
+                    end
+                    
+                    if
+                    002D:   32@ >= 8@  // (int)
+                        then
+                        32@ = 0
+                        Audiostream.Volume($TAINIK_DETECTOR_PISK) = $SOUNDS_VOLUME 
+                        Audiostream.Loop($TAINIK_DETECTOR_PISK, 0)
+                        Audiostream.PerformAction($TAINIK_DETECTOR_PISK, PLAY)
+                        end
+                    end
+                
+                if and
+                0471:   actor PLAYER_ACTOR near_object_in_rectangle TREASURE_OBJECT radius 1.0 1.0 sphere 0
+    //            0EE6: locate_char_distance_to_object PLAYER_ACTOR object TREASURE_OBJECT radius 1.0
+                02A0:   actor PLAYER_ACTOR stopped
+                044B:   actor PLAYER_ACTOR on_foot
+                    then
+                    
+                    LADDER_ON_MARKER_FLAG = 1
+                    
+                    :TREASURE_LOOT_AGAIN
+                    
+                    if and
+                    $KEY_USE == 69
+                    8A4B: not  controls_set_to_joystick
+                    then 
+                    0512: show_permanent_text_box 'INV319'
+                    else
+                    if
+                    8A4B: not  controls_set_to_joystick
+                        then
+                        0512: show_permanent_text_box 'INV319A'
+                        else
+                        0512: show_permanent_text_box 'INV319B'
+                        end
+                    end
+                    
+                    repeat
+                    wait 0
+                    
+                    if and
+                    $KEY_USE == 69
+                    8A4B: not  controls_set_to_joystick
+                    then
+                    if
+                    8A2A: not  text_box 'INV319' displayed
+                        then
+                        0512: show_permanent_text_box 'INV319'
+                        end    
+                    else
+                    
+                    if
+                    8A4B: not  controls_set_to_joystick
+                        then                    
+                        if
+                        8A2A: not  text_box 'INV319A' displayed
+                            then
+                            0512: show_permanent_text_box 'INV319A'
+                            end                            
+                        else
+                        if
+                        8A2A: not  text_box 'INV319B' displayed
+                            then
+                            0512: show_permanent_text_box 'INV319B'
+                            end
+                        end
+                        
+                    end
+                    
+                    if and
+                    0471:   actor PLAYER_ACTOR near_object_in_rectangle TREASURE_OBJECT radius 1.0 1.0 sphere 0
+                    02A0:   actor PLAYER_ACTOR stopped
+                    044B:   actor PLAYER_ACTOR on_foot
+                        then
+                        if
+                        0E3D:   key_pressed $KEY_USE
+                            then                            
+                                                        
+                            if and
+                            $KEY_USE == 69
+                            8A4B: not  controls_set_to_joystick
+                            then
+                            if
+                            0A2A:   text_box 'INV319' displayed
+                                then
+                                text.RemoveTextBox()
+                                end    
+                            else
+                            if
+                            8A4B: not  controls_set_to_joystick
+                                then
+                                if
+                                0A2A:   text_box 'INV319A' displayed
+                                    then
+                                    text.RemoveTextBox()
+                                    end
+                                else
+                                if
+                                0A2A:   text_box 'INV319B' displayed
+                                    then
+                                    text.RemoveTextBox()
+                                    end
+                                end                                
+                            end
+                            
+                            if
+                            not TREASURE_HACKED == 1
+                            then
+                            
+                            if
+                            $JIMMY > 0
+                            jf @TAINIK_OPEN_DONT_HAVE_JIMMY
+                            
+                            if
+                            PERK_HACKER == 0
+                            then    
+                            
+                            if
+                            0E4D: random_percent 35
+                            jf @TAINIK_OPEN_FAILED
+                            
+                            else
+                            
+                            if
+                            0E4D: random_percent 50
+                            jf @TAINIK_OPEN_FAILED
+                            
+                            end
+                                                                                  
+                            Audiostream.Volume($JIMMY_USE_SOUND2) = $SOUNDS_VOLUME 
+                            Audiostream.Loop($JIMMY_USE_SOUND2, 0)
+                            Audiostream.PerformAction($JIMMY_USE_SOUND2, PLAY)
+                            TREASURE_HACKED = 1 
+                            
+                            text.RemoveTextBox()
+                            if
+                            PERK_HACKER == 0
+                            then
+                            1@ = 40
+                            else
+                            1@ = 25
+                            end
+                            
+                            if
+                            0E4D: random_percent 1@
+                            then
+                            text.ShowTextBox('INV94B')
+                            Audiostream.Volume($JIMMY_BROKE_SOUND) = $SOUNDS_VOLUME 
+                            Audiostream.Loop($JIMMY_BROKE_SOUND, 0)
+                            Audiostream.PerformAction($JIMMY_BROKE_SOUND, PLAY)
+                            $JIMMY -= 1
+                            else
+                            text.ShowTextBox('INV94')  
+                            end
+                            wait 1000
+                            if and
+                            0471:   actor PLAYER_ACTOR near_object_in_rectangle TREASURE_OBJECT radius 1.25 1.25 sphere 0
+//                            0EE6: locate_char_distance_to_object PLAYER_ACTOR object TREASURE_OBJECT radius 1.0
+                            02A0:   actor PLAYER_ACTOR stopped
+                            044B:   actor PLAYER_ACTOR on_foot
+                                then
+                                //ass
+                                else
+                                jump to @TREASURE_LOOT_AGAIN
+                                end
+                            
+                            end
+                            
+                            while not animation.Available("BOMBER")
+                            wait 0
+                            animation.Load("BOMBER")
+                            end
+                            
+                            06AB: set_actor PLAYER_ACTOR all_weapons_hidden 1
+                            0992: set_player PLAYER_CHAR weapons_scrollable 0
+                            
+                            Audiostream.Volume($CAR_SEARCH_SOUND) = $SOUNDS_VOLUME 
+                            Audiostream.Loop($CAR_SEARCH_SOUND, 0)
+                            Audiostream.PerformAction($CAR_SEARCH_SOUND, PLAY)
+                             
+                            0605: actor PLAYER_ACTOR perform_animation "BOM_PLANT" IFP "BOMBER" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1
+                            
+                            gosub @RANDOM_DIALOG_TREASURE_LOOT
+                            
+                            if
+                            FREEMODE_CUSTOM_NAME == 1 
+                            then
+                            06D1: v$NAME3 = "F_NAME" // v$ = string
+                            end
+                            
+                            0384: show_text_1string GXT v$PHRASE3 string v$NAME3 time 2550 1
+                            
+                            32@ = 0
+                            
+                            repeat
+                            wait 0
+                            
+                            if
+                            0E3E: is_button_just_pressed 0 button 15
+                            then
+                            wait 0
+                            0687: clear_actor PLAYER_ACTOR task
+                            end
+                            
+                            if
+                            actor.Animation(PLAYER_ACTOR) == "BOM_PLANT"
+                                then
+                                else
+                                Audiostream.PerformAction($CAR_SEARCH_SOUND, STOP)                                       
+                                06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0
+                                0992: set_player PLAYER_CHAR weapons_scrollable 1
+                                04EF: release_animation "BOMBER"            
+                                jump to @TREASURE_LOOT_AGAIN
+                                end
+                            
+                            until 32@ > 2550
+                            
+                            Audiostream.PerformAction($CAR_SEARCH_SOUND, STOP)                
+                            
+                            06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0
+                            0992: set_player PLAYER_CHAR weapons_scrollable 1
+                            04EF: release_animation "BOMBER"
+                            
+                            gosub @TREASURE_RANDOM_LOOT_GIVE
+                            if
+                            31@ == -111222
+                            then
+                            jump to @TREASURE_LOOT_AGAIN
+                            end
+                            
+                            object.Destroy(TREASURE_OBJECT)
+                            TREASURE_OBJECT = 0
+                            jump to @TREASURE_LOOT_END                                                
+                            
+                            end
+                        else
+                        break
+                        end
+                    
+                    until false
+                    
+                    :TREASURE_LOOT_END
+                    
+                    LADDER_ON_MARKER_FLAG = 0
+                    
+                    text.RemoveTextBox()
+                    
+                    jump to @TAINIK_LOOP_START
+                    
+                    end
+                end
+                
+                end
+            end
+        end
+    end
+    
+end    
+
+end
+
+end_thread
+
+:TAINIK_OPEN_DONT_HAVE_JIMMY
+LADDER_ON_MARKER_FLAG = 0
+text.RemoveTextBox()
+text.ShowTextBox('INV355')
+wait 1000
+jump to @TAINIK_LOOP_START
+
+:TAINIK_OPEN_FAILED
+$JIMMY -= 1
+if
+not $JIMMY == 0
+jf @TAINIK_OUT2
+LADDER_ON_MARKER_FLAG = 0
+Audiostream.Volume($JIMMY_BROKE_SOUND) = $SOUNDS_VOLUME 
+Audiostream.Loop($JIMMY_BROKE_SOUND, 0)
+Audiostream.PerformAction($JIMMY_BROKE_SOUND, PLAY) 
+text.RemoveTextBox()
+text.ShowTextBox('INV93')
+wait 1000
+jump to @TAINIK_LOOP_START
+
+:TAINIK_OUT2
+LADDER_ON_MARKER_FLAG = 0  
+Audiostream.Volume($JIMMY_BROKE_SOUND) = $SOUNDS_VOLUME 
+Audiostream.Loop($JIMMY_BROKE_SOUND, 0)
+Audiostream.PerformAction($JIMMY_BROKE_SOUND, PLAY)  
+text.RemoveTextBox()
+text.ShowTextBox('INV104')
+wait 1000
+jump to @TAINIK_LOOP_START
+
+:TREASURE_RANDOM_LOOT_GIVE
+
+31@ = 0
+
+if
+TREASURE_MODEL == 18969
+then
+0ACF: show_formatted_styled_text "CONGRATULATIONS! YOU ARE A PONYEB!" time 5000 style 5
+
+while not model.Available(6554)
+wait 0
+model.Load(6554)
+end
+  
+0E2E: create_render_object_to_char_bone PLAYER_ACTOR model 6554 bone 0 offset -0.2 0.0 -0.1 rotation 90.0 -5.0 0.0 store_to 0@
+
+0@ = Audiostream.Load("audio\sounds\other\canals\ostprikol2.wav")
+Audiostream.Volume(0@) = $MUSIC_VOLUME 
+Audiostream.Loop(0@, 0)
+Audiostream.PerformAction(0@, PLAY)
+
+PONIEB_FLAG = 1
+
+for 0@ = 0 to 4
+
+if
+056D:   actor $SURVIVER[0@] defined
+    then
+    if or
+    0364:   actor $SURVIVER[0@] spotted_actor PLAYER_ACTOR
+    0364:   actor PLAYER_ACTOR spotted_actor $SURVIVER[0@]
+        then
+        if
+        not actor.Dead($SURVIVER[0@])
+            then
+            $SURVIVOR_SAW_SHIT[0@] = 1
+            end
+        end
+    
+    end
+    
+end
+
+CAMP_SAW_SHIT = 1
+
+return
+
+end
+
+if
+0E4D: random_percent 15
+then
+Audiostream.Volume($MENU_ENTER05_SOUND) = $SOUNDS_VOLUME 
+Audiostream.Loop($MENU_ENTER05_SOUND, 0)
+Audiostream.PerformAction($MENU_ENTER05_SOUND, PLAY)
+00BA: show_text_styled GXT "GME1377" time 5000 style 5
+return  
+end
+
+if or
+0E4D: random_percent 15
+TREASURE_TRAP_FLAG == 1
+then
+
+TREASURE_TRAP_FLAG = 1
+
+if
+SURVIVAL_CUSTOM_WEAPON_NABOR == 7
+then
+
+repeat
+wait 0
+015D: set_gamespeed 0.0
+text.Show1Number('GME1424',13@,250,1) 
+    
+if
+0E3E: is_button_just_pressed 0 button 10
+    then
+    text.ClearAll()
+    015D: set_gamespeed 1.0
+    31@ = -111222
+    return
+    end
+        
+if
+0E3E: is_button_just_pressed 0 button 11
+    then  
+    
+    text.ClearAll()
+    015D: set_gamespeed 1.0
+    0792: disembark_instantly_actor PLAYER_ACTOR
+    
+    31@ = Audiostream.Load("AUDIO\SOUNDS\OTHER\treasure_bomb_defuse.mp3")
+    Audiostream.Loop(31@, 0)  
+    Audiostream.PerformAction(31@, PLAY)
+    Audiostream.Volume(31@) = $SOUNDS_VOLUME
+    
+    while not animation.Available("BOMBER")
+    wait 0
+    animation.Load("BOMBER")
+    mload
+    end
+    
+    0992: set_player PLAYER_CHAR weapons_scrollable 0
+    
+    repeat
+    wait 0         
+    0605: actor PLAYER_ACTOR perform_animation "BOM_PLANT" IFP "BOMBER" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1 
+    until actor.Animation(PLAYER_ACTOR) == "BOM_PLANT"    
+    
+    32@ = 0
+    
+    repeat
+    wait 0
+        
+    if
+    actor.Animation(PLAYER_ACTOR) == "BOM_PLANT"    
+        then
+        else
+        Audiostream.PerformAction(31@, STOP)
+        0992: set_player PLAYER_CHAR weapons_scrollable 1
+        04EF: release_animation "BOMBER"
+        jump to @TREASURE_BOMB_NOT_DEFUSED_JUMP
+        end
+    
+    until 32@ > 2550
+    
+    Audiostream.PerformAction(31@, STOP)
+    
+    if
+    0E4D: random_percent 60
+    then
+    $TEMP_XP = DEFUSED_XP_PLUS
+    008D: $TEMP_XP = integer $TEMP_XP to_float
+    0069: $TEMP_XP *= $XP_COEFF // (float)
+    008C: $TEMP_XP = float $TEMP_XP to_integer
+    0058: $PLAYER_XP += $TEMP_XP // (int)
+    text.ShowTextBox('GME1425')
+    
+    actor.StorePos(PLAYER_ACTOR,$TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+    02CE: $TEMPVAR_FLOAT_3 = ground_z_at $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3
+    $TEMPVAR_FLOAT_3 += 0.5 
+    if
+    0E4D: random_percent 50
+    then
+    032B: 2@ = create_weapon_pickup #GRENADE group 3 ammo 1 at $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3
+    else
+    032B: 2@ = create_weapon_pickup #TEARGAS group 3 ammo 1 at $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3
+    end
+    
+    wait 1000
+    jump to @TREASURE_BOMB_DEFUSED_JUMP
+    else
+    break
+    end
+    
+    end    
+    
+until false
+          
+end
+
+:TREASURE_BOMB_NOT_DEFUSED_JUMP
+
+actor.StorePos(PLAYER_ACTOR,1@,2@,3@)
+064B: 4@ = create_particle "teargas" at 1@ 2@ 3@ type 1
+064C: make_particle 4@ visible
+
+audiostream.LinkToActor($GRND_LNCHR_SOUND_BOT,PLAYER_ACTOR)
+audiostream.Loop($GRND_LNCHR_SOUND_BOT,0)
+audiostream.Volume($GRND_LNCHR_SOUND_BOT) = $SOUNDS_VOLUME
+audiostream.PerformAction($GRND_LNCHR_SOUND_BOT,PLAY)
+
+wait 100
+player.CanMove(PLAYER_CHAR,false)
+wait 1
+05BB: AS_actor PLAYER_ACTOR fall_down 0 time_on_ground 999000
+0851: set_actor PLAYER_ACTOR decrease_health_by 10 affect_armour 1
+player.CanMove(PLAYER_CHAR,true)
+
+if
+UNITED_MAP == 0
+then
+
+random_int 0@ 0 2
+if
+0@ == 0
+    then
+    0@ = 17
+    else
+    0@ = 16
+    end
+
+else
+
+if
+$UNITED_III_SPAWN == 1
+then
+
+random_int 0@ 0 2
+if
+0@ == 0
+    then
+    0@ = 178
+    else
+    0@ = 177
+    end
+
+else
+
+random_int 0@ 0 2
+if
+0@ == 0
+    then
+    0@ = 208
+    else
+    0@ = 207
+    end
+
+end
+
+end
+
+0A96: 5@ = actor PLAYER_ACTOR struct
+0D60: create_projectile_type 0@ launched_from_entity 5@ origin 1@ 2@ 3@ target 1@ 2@ 3@ target_entity 0 force 0.0 // IF and SET
+
+wait 1000
+0650: destroy_particle 4@
+
+Audiostream.Volume($MENU_ENTER05_SOUND) = $SOUNDS_VOLUME 
+Audiostream.Loop($MENU_ENTER05_SOUND, 0)
+Audiostream.PerformAction($MENU_ENTER05_SOUND, PLAY)
+
+00BA: show_text_styled GXT "GAME974" time 5000 style 5
+
+return
+end
+
+:TREASURE_BOMB_DEFUSED_JUMP
+
+if and
+UNITED_MAP == 0
+$CARL_STORY == 0
+$MIKE_STORY == 0
+not $CANALS_CHALLENGE_FLAG == 1
+then
+0842: 0@ = player PLAYER_CHAR town_number
+if
+0@ == 2
+    then
+    if
+    0E4D: random_percent 30
+        then
+        if
+        CANALS_MAP_HAS_FLAG == 0
+            then
+            CANALS_MAP_HAS_FLAG = 1
+            create_thread @CNL_MAP
+            Audiostream.Volume($MENU_MISC42_SOUND) = $SOUNDS_VOLUME 
+            Audiostream.Loop($MENU_MISC42_SOUND, 0)
+            Audiostream.PerformAction($MENU_MISC42_SOUND, PLAY)
+            
+            if
+            8A4B: not  controls_set_to_joystick
+            then
+            00BA: show_text_styled GXT "GAME992" time 5000 style 5
+            else
+            00BA: show_text_styled GXT "AME992B" time 5000 style 5
+            end
+            
+            return
+            end
+        end
+    end
+end
+
+if and
+STATE_MAP_BOUGHT_FLAG == 0
+not $CANALS_CHALLENGE_FLAG == 1
+    then
+    if
+    0E4D: random_percent 5
+        then
+        STATE_MAP_BOUGHT_FLAG = 1
+        
+        for 1@ = 0xBA3714 to 0xBA376F    
+        0A8C: write_memory 1@ size 1 value 1 virtual_protect 0
+        end
+        
+        Audiostream.Volume($MENU_MISC42_SOUND) = $SOUNDS_VOLUME 
+        Audiostream.Loop($MENU_MISC42_SOUND, 0)
+        Audiostream.PerformAction($MENU_MISC42_SOUND, PLAY)
+        00BA: show_text_styled GXT "GAME995" time 5000 style 5
+        return
+        end
+    end
+
+0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_TREASURES_COLLECTED"    
+                
+if
+$CHEATED_FLAG == 0 
+then                  
+1@ += 1   
+end
+
+$TREASURES_COLLECTED += 1
+$TEMP_XP = TREASURE_XP_PLUS
+008D: $TEMP_XP = integer $TEMP_XP to_float
+0069: $TEMP_XP *= $XP_COEFF // (float)
+008C: $TEMP_XP = float $TEMP_XP to_integer
+0058: $PLAYER_XP += $TEMP_XP // (int)
+        
+0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_TREASURES_COLLECTED"
+
+0AF0: 2@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT105_GOT"
+if and
+1@ >= 100
+2@ == 0
+$CHEATED_FLAG == 0
+    then
+    v$ACHIEVEMNT = "ACH105"
+    $ACHIEVEMENT_GOT_FLAG = 1                                                               
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT105_GOT"
+    end
+
+random_int 9@ 1 4
+random_int 1@ 1 3
+random_int 2@ 1 4
+
+005E: $HEAL += 9@  // (int)
+005E: $BINT += 1@  // (int)
+if and
+PLAYER_FOOD_ZAPAS >= 50
+8E4D: not random_percent 25
+then
+//huy tebe (net ne hui 4to za pizdec)
+$BANKA += 1
+else
+005E: $BANKA += 2@  // (int)
+end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 3 weapon 9@ ammo 1@ model 2@
+if
+0488:   model 2@ exists  // versionA
+    then
+    random_int 1@ 40 80
+    gosub @TREASURE_AMMO_COUNTER        
+    0114: set_actor PLAYER_ACTOR weapon 9@ add_ammo 1@
+    end    
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 4 weapon 9@ ammo 1@ model 2@
+if
+0488:   model 2@ exists  // versionA
+    then
+    random_int 1@ 20 35
+    gosub @TREASURE_AMMO_COUNTER
+    0114: set_actor PLAYER_ACTOR weapon 9@ add_ammo 1@
+    end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 5 weapon 9@ ammo 1@ model 2@
+if
+0488:   model 2@ exists  // versionA
+    then
+    random_int 1@ 40 80
+    gosub @TREASURE_AMMO_COUNTER
+    0114: set_actor PLAYER_ACTOR weapon 9@ add_ammo 1@
+    end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 6 weapon 9@ ammo 1@ model 2@
+if
+0488:   model 2@ exists  // versionA
+    then
+    random_int 1@ 40 80
+    gosub @TREASURE_AMMO_COUNTER
+    0114: set_actor PLAYER_ACTOR weapon 9@ add_ammo 1@
+    end
+
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 7 weapon 9@ ammo 1@ model 2@
+if and
+0488:   model 2@ exists  // versionA
+not 9@ == 109
+not 9@ == 93
+not 9@ == 70
+    then
+    random_int 1@ 20 40
+    gosub @TREASURE_AMMO_COUNTER        
+    0114: set_actor PLAYER_ACTOR weapon 9@ add_ammo 1@
+    end        
+
+Audiostream.Volume($MENU_MISC42_SOUND) = $SOUNDS_VOLUME 
+Audiostream.Loop($MENU_MISC42_SOUND, 0)
+Audiostream.PerformAction($MENU_MISC42_SOUND, PLAY)
+
+00BA: show_text_styled GXT "GAME824" time 5000 style 5
+
+return
+
+:TREASURE_AMMO_COUNTER
+
+if and
+$CANALS_CHALLENGE_FLAG == 1
+COOP_ACTIVE_FLAG == 1
+then
+1@ *= 2
+end
+
+0093: 2@ = integer 1@ to_float
+2@ *= 0.6
+006F: 2@ *= AMMO_TREASURES_COEFF // (float)
+0092: 1@ = float 2@ to_integer
+
+return
+
+:RANDOM_DIALOG_TREASURE_LOOT
+    
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH186_"
+
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then   
+    1@ += 1 
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH186_"
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return

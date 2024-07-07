@@ -1,0 +1,654 @@
+const
+SHIT_TALK_TOTAL_PHRASES_COUNT = 21@
+SHIT_TALK_CURRENT_PHRASE_NUM = 22@
+end
+
+:SHT_TLK
+thread 'SHT_TLK'
+
+gosub @GENERATE_RANDOM_SHIT_TALK_QUEUE
+
+:SHT_TLK_START_JUMP
+
+repeat
+wait 1000
+
+if or
+$SURVIVOR_IN_PLAYER_TEAM[0] == 1
+$SURVIVOR_IN_PLAYER_TEAM[1] == 1
+$SURVIVOR_IN_PLAYER_TEAM[2] == 1
+$SURVIVOR_IN_PLAYER_TEAM[3] == 1 
+$SURVIVOR_IN_PLAYER_TEAM[4] == 1
+    then
+    break
+    end
+
+until false
+
+repeat
+wait 0
+until SURVIVAL_STARTED_FULLY_FLAG == 1
+
+if or
+$GAMEMODE_WAR == 1
+$GAMEMODE_HOLD == 1
+$CANALS_CHALLENGE_FLAG == 1
+$DEFENSE_CHALLENGE_FLAG == 1
+then
+end_thread
+end
+
+32@ = 0
+if
+$GAMEMODE_EDITOR == 0
+then
+random_int 31@ 120000 240000  
+else
+random_int 31@ 60000 120000  
+end 
+
+while true
+wait 250
+
+if and
+0AB0:   key_pressed 96
+$CHEATS_ON == 1
+    then
+    005A: 32@ += 31@  // (int)
+    0AD1: show_formatted_text_highpriority "SAY RANDOM SHIT %d\%d, INDEX %d" time 500 32@ 31@ SHIT_TALK_CURRENT_PHRASE_NUM
+    wait 500
+    end 
+
+if or
+$SURVIVOR_IN_PLAYER_TEAM[0] == 1
+$SURVIVOR_IN_PLAYER_TEAM[1] == 1
+$SURVIVOR_IN_PLAYER_TEAM[2] == 1
+$SURVIVOR_IN_PLAYER_TEAM[3] == 1 
+$SURVIVOR_IN_PLAYER_TEAM[4] == 1
+    then
+    //ass
+    else
+    jump to @SHT_TLK_START_JUMP
+    end
+    
+if and
+001D:   32@ > 31@  // (int)
+$PHRASES_OFF_FLAG == 0
+$SAVESTATUS_TRUE == 0
+$SAVESTATUS == 0
+$HUD_REMOVE == 0
+    then
+    random_int 20@ 0 4
+    if and
+    056D:   actor $SURVIVER[20@] defined
+    $SURVIVOR_IN_PLAYER_TEAM[20@] == 1
+    803A: not  $SURVIVER[20@] == COOP_ACTOR // (int)
+        then        
+        if and
+        0EE4: locate_char_distance_to_char $SURVIVER[20@] char PLAYER_ACTOR radius 20.0
+        82E0: not  actor $SURVIVER[20@] firing_weapon
+//        8E92: not is_char_really_in_air $SURVIVER[20@]
+        8818: not  actor $SURVIVER[20@] in_air
+            then
+            gosub @RANDOM_SHIT_TALK_DANGER_CHECK
+            if
+            0@ == 0
+                then
+                
+                0AD3: 14@s = format "%d" SHIT_TALK_CURRENT_PHRASE_NUM
+                0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SHIT_TALK" key 14@s                 
+                0AD3: 10@s = format "SHTK%d" 0@             
+                SHIT_TALK_CURRENT_PHRASE_NUM += 1                
+                
+                09FD: get_gxt_string 10@s width_to 9@
+                if
+                9@ == 0
+                then
+                gosub @GENERATE_RANDOM_SHIT_TALK_QUEUE
+                end
+                
+                0093: 9@ = integer 9@ to_float
+                9@ *= 8.0
+                0092: 9@ = float 9@ to_integer                                  
+                                
+                32@ = 0                    
+                
+                $PHRASES_OFF_FLAG = 1    
+                
+                repeat
+                wait 0  
+                
+                if
+                86EE: not  actor SURVIVER in_group PLAYER_GROUP
+                then
+                gosub @SURVIVER_ONFOOT_ATTACK_SYSTEM  
+                end
+                
+                if
+                056D:   actor $SURVIVER[20@] defined
+                then
+                gosub @RANDOM_TALK_NAME_CHECK
+                else
+                $PHRASES_OFF_FLAG = 0
+                break
+                end
+                
+                0384: show_text_1string GXT 10@s string 12@s time 9@ 1
+                
+                if
+                056D:   actor $SURVIVER[20@] defined
+                then
+                if or
+                actor.Dead($SURVIVER[20@])
+                $SURVIVOR_IN_PLAYER_TEAM[20@] == 0
+                $SURVIVOR_ATTACKED_BY_PLAYER_FLAG[20@] == 1
+                $SAVESTATUS_TRUE == 1
+                $SAVESTATUS == 1
+                    then
+                    $PHRASES_OFF_FLAG = 0
+                    break
+                    end
+                if and
+                051A:   actor $SURVIVER[20@] damaged_by_actor PLAYER_ACTOR
+                FRIENDLY_FIRE_ON == 1
+                    then
+                    $PHRASES_OFF_FLAG = 0
+                    break
+                    end    
+                else
+                $PHRASES_OFF_FLAG = 0
+                break
+                end
+                
+                until 002D:   32@ >= 9@  // (int)
+                
+                $PHRASES_OFF_FLAG = 0
+                32@ = 0
+                random_int 31@ 120000 240000    
+                
+                else
+                
+                if
+                $CHEATS_ON == 2
+                then
+                0AD1: show_formatted_text_highpriority "DANGER CHECK FAILED" time 500
+                wait 500    
+                end
+                            
+                end
+            else
+            
+            if
+            $CHEATS_ON == 2
+            then
+            
+            0@ = 0
+            if
+            8EE4: not locate_char_distance_to_char $SURVIVER[20@] char PLAYER_ACTOR radius 20.0
+            then
+            0@ = 1 
+            end
+            
+            1@ = 0
+            if
+            02E0:  actor $SURVIVER[20@] firing_weapon 
+            then
+            1@ = 1
+            end
+            
+            2@ = 0
+            if
+//            0E92: is_char_really_in_air $SURVIVER[20@]
+            0818:   actor $SURVIVER[20@] in_air
+            then
+            2@ = 1
+            end
+                                    
+            0AD1: show_formatted_text_highpriority "TEAMMATE GENERIC CHECKS FAILED, ~n~REASON NOT NEAR %d~n~FIRING WEP %d~n~REALLY IN AIR %d" time 500 0@ 1@ 2@
+            wait 500    
+            end
+                        
+            end        
+        end    
+    end    
+
+end
+
+end_thread
+
+:GENERATE_RANDOM_SHIT_TALK_QUEUE
+
+SHIT_TALK_CURRENT_PHRASE_NUM = 0
+
+0AC6: 24@ = label @SHITTALK_BUFFER offset
+//0AF1: write_int 24@ to_ini_file "debug\SHITTALK_BUFFER.ini" section "SectionName" key "intKey"
+
+/////////////////////////////////////////////////////////////////////
+
+for 5@ = 0 to 399
+0085: 31@ = 5@
+31@ *= 4 //size of xyz
+0EE3: write_struct_offset_multi 24@ offset 31@ count 1 size 4 -1    
+end
+
+/////////////////////////////////////////////////////////////////////
+
+for SHIT_TALK_TOTAL_PHRASES_COUNT = 0 to 200
+
+0AD3: 10@s = format "SHTK%d" SHIT_TALK_TOTAL_PHRASES_COUNT
+09FD: get_gxt_string 10@s width_to 31@
+if
+31@ == 0
+    then 
+    break    
+    end
+
+end
+ 
+0085: 26@ = SHIT_TALK_TOTAL_PHRASES_COUNT // (int)
+26@ -= 1
+
+/////////////////////////////////////////////////////////////////////
+
+2@ = 0
+//0AD1: show_formatted_text_highpriority "TALK_TOTAL_PHRASES_COUNT: %d" time 2000 SHIT_TALK_TOTAL_PHRASES_COUNT
+//wait 2000
+
+/////////////////////////////////////////////////////////////////////
+
+//wait 0
+//03F0: enable_text_draw 1
+//0349: set_text_draw_font 2
+//0340: set_text_draw_RGBA 180 180 180 255
+//if
+//DIRECTFONT_INSTALLED == 1
+//then    
+//0340: set_text_draw_RGBA DIRECTFONT_FONT2_R DIRECTFONT_FONT2_G DIRECTFONT_FONT2_B 255
+//end
+// 
+//033F: set_text_draw_letter_size 0.5 1.25      
+//0343: set_text_draw_linewidth 480.0
+//0342: set_text_draw_centered 1
+//0344: set_text_draw_linewidth 480.0 for_centered_text
+//033E: set_draw_text_position 320.0 200.0 GXT 'GME1476'  // Push
+//wait 0 
+
+repeat
+:RANDOM_DIALOG_SHIT_TALK
+//wait 0
+
+random_int 0@ 0 SHIT_TALK_TOTAL_PHRASES_COUNT
+//0AD3: 10@s = format "%d" 0@ 
+
+///////////////ѕровер€ем нет ли во всех сгенирированных номерах строк этого номера///////////////
+
+6@ = 1
+for 5@ = 0 to SHIT_TALK_TOTAL_PHRASES_COUNT
+
+//0AD3: 12@s = format "%d" 5@ 
+//0AF0: 25@ = get_int_from_ini_file "data\survival.set" section "SHIT_TALK" key 12@s
+
+0085: 31@ = 5@
+31@ *= 4 //size of xyz
+0EE2: read_struct_offset_multi 24@ offset 31@ count 1 size 4 25@
+if
+003B:   25@ == 0@  // (int)
+    then  
+//    wait 0
+//    0AD1: show_formatted_text_highpriority "NUMBER %d AT INDEX %d ALREADY EXISTS, GENERATED STRINGS %d\%d" time 2000 0@ 5@ 2@ SHIT_TALK_TOTAL_PHRASES_COUNT
+    6@ = 0
+    end
+    
+end
+
+//////////////» если его нет - вносим в список под текущим номером///////////////
+ 
+if
+6@ == 1
+    then
+    0AD3: 12@s = format "%d" 2@
+    0AF1: write_int 0@ to_ini_file "data\survival.set" section "SHIT_TALK" key 12@s
+    0085: 31@ = 2@
+    31@ *= 4 //size of xyz
+    0EE3: write_struct_offset_multi 24@ offset 31@ count 1 size 4 0@
+    2@ += 1
+    else
+    jump to @RANDOM_DIALOG_SHIT_TALK
+    end
+
+until 003B:   2@ == 26@  // (int)  
+
+/////////////////////////////////////////////////////////////////////
+
+return
+
+//////////////////////////////////////////////////////// 
+
+:RANDOM_SHIT_TALK_DANGER_CHECK
+      
+0@ = 0
+
+if and
+$ARMY1_SPOTTED_FLAG == 1
+not $ARMY_DONT_ATTACK_PLAYER_FLAG == 1
+    then
+    
+    ///////////////////////////////////////////////
+    
+    for 1@ = 1 to 4
+    
+    if
+    056D:   actor $ARMY[1@] defined
+    then
+    if or
+    0364:   actor $ARMY[1@] spotted_actor PLAYER_ACTOR
+    0EE4: locate_char_distance_to_char $ARMY[1@] char PLAYER_ACTOR radius 30.0
+        then
+        0@ = 1
+        end
+    end
+    
+    end
+    
+    ///////////////////////////////////////////////
+    
+    end
+    
+if and
+$BANDITS1_SPOTTED_FLAG == 1
+not $BANDITS_DONT_ATTACK_PLAYER_FLAG == 1
+    then
+    
+    ///////////////////////////////////////////////
+    
+    for 1@ = 1 to 4
+    
+    if
+    056D:   actor $BANDIT[1@] defined
+    then
+    if or
+    0364:   actor $BANDIT[1@] spotted_actor PLAYER_ACTOR
+    0EE4: locate_char_distance_to_char $BANDIT[1@] char PLAYER_ACTOR radius 30.0
+        then
+        0@ = 1
+        end
+    end
+    
+    end
+    
+    ///////////////////////////////////////////////
+    
+    end
+    
+if
+$FERMERS1_DAMAGE_FLAG == 1
+    then
+    
+    ///////////////////////////////////////////////
+    
+    for 1@ = 1 to 4
+    
+    if
+    056D:   actor $FERMER[1@] defined
+    then
+    if or
+    0364:   actor $FERMER[1@] spotted_actor PLAYER_ACTOR
+    0EE4: locate_char_distance_to_char $FERMER[1@] char PLAYER_ACTOR radius 30.0
+        then
+        0@ = 1
+        end
+    end
+    
+    end
+    
+    ///////////////////////////////////////////////
+    
+    end
+    
+if
+$SWATS1_DAMAGE_FLAG == 1
+    then
+    
+    ///////////////////////////////////////////////
+    
+    for 1@ = 1 to 4
+    
+    if
+    056D:   actor $SWAT[1@] defined
+    then
+    if or
+    0364:   actor $SWAT[1@] spotted_actor PLAYER_ACTOR
+    0EE4: locate_char_distance_to_char $SWAT[1@] char PLAYER_ACTOR radius 30.0
+        then
+        0@ = 1
+        end
+    end
+    
+    end
+    
+    ///////////////////////////////////////////////
+    
+    end
+    
+if
+$HUNTER_SPAWNED == 1
+    then
+    
+    for 1@ = 0 to 19
+    if
+    056D:   actor $HUNTER[1@] defined
+        then
+        if or
+        0364:   actor $HUNTER[1@] spotted_actor PLAYER_ACTOR
+        0EE4: locate_char_distance_to_char $HUNTER[1@] char PLAYER_ACTOR radius 120.0
+            then
+            0@ = 1
+            end
+        end
+    end
+    
+    end
+    
+if
+$TANK_SPAWNED == 1
+    then
+    
+    for 1@ = 0 to 19
+    if
+    056D:   actor $TANK[1@] defined
+        then
+        if or
+        0364:   actor $TANK[1@] spotted_actor PLAYER_ACTOR
+        0EE4: locate_char_distance_to_char $TANK[1@] char PLAYER_ACTOR radius 150.0
+            then
+            0@ = 1
+            end
+        end
+    end
+    
+    end
+    
+if
+$WITCH_SPAWNED == 1
+    then
+    
+    for 1@ = 0 to 19
+    if
+    056D:   actor $WITCH[1@] defined
+        then
+        
+        if
+        $WTH_AGRED_FLAG[1@] == 0
+        then
+        
+        if
+        $WITCH_NEAR == 1
+            then
+            0@ = 1
+            end
+            
+        else
+        
+        if or
+        0364:   actor $WITCH[1@] spotted_actor PLAYER_ACTOR
+        0EE4: locate_char_distance_to_char $WITCH[1@] char PLAYER_ACTOR radius 150.0
+            then
+            0@ = 1
+            end
+        
+        end    
+            
+        end
+    end
+    
+    end
+    
+if
+$CHARGER_SPAWNED == 1
+    then
+    
+    for 1@ = 0 to 19
+    if
+    056D:   actor $CHARGER[1@] defined
+        then
+        if or
+        0364:   actor $CHARGER[1@] spotted_actor PLAYER_ACTOR
+        0EE4: locate_char_distance_to_char $CHARGER[1@] char PLAYER_ACTOR radius 30.0
+            then
+            0@ = 1
+            end
+        end
+    end
+    
+    end
+    
+if
+$SURV_IN_CAR_FLAG1 == 1
+    then
+    if
+    056D:   actor $SURV_IN_CAR defined
+        then
+        if or
+        0364:   actor $SURV_IN_CAR spotted_actor PLAYER_ACTOR
+        0EE4: locate_char_distance_to_char $SURV_IN_CAR char PLAYER_ACTOR radius 60.0
+            then
+            0@ = 1
+            end
+        end
+    end                                
+
+if or
+$ZOMBIES_HORDE == 1
+PLAYER_IN_NEST_FLAG == 1
+$ENEMY_ZONE_IN == 1
+$CAMP_AGRED_FLAG2 == 1
+PLAYER_IN_CANALS_FLAG == 1
+BASE_TEAMMATE_AGRED == 1
+not BCAMP_AGRED_FLAG == 0
+CAMP_RAID_FLAG == 1
+    then
+    0@ = 1
+    end
+    
+if or
+PLAYER_LCVC_DROWNING_FLAG == 1
+HUNGER_DAMAGE_COUNTER > 3
+$FATIGUE_STATUS == 1
+PLAYER_FALLING_FLAG == 1
+$PLAYER_BLEEDING == 1
+$ACTOR_BURNING_FLAG == 1
+HARDCORE_DANGER_FLAG_SCRIPTED == 1
+    then
+    0@ = 1
+    end    
+    
+///////////////////////////////////////////    
+
+if
+$SAVEPLACE_ON == 0
+then
+    
+2@ = 0
+
+for 3@ = 0 to 19
+
+if and
+$ZOMBIE_NEAR[3@] == 1
+$ZMB_SPOTTED_FLAG[3@] == 1
+then
+2@ += 1
+end
+
+end
+
+if
+2@ > 0
+    then
+    0@ = 1
+    end
+    
+if
+$CLOWN_SPANWED == 1
+    then
+    0@ = 1
+    end    
+    
+end    
+    
+///////////////////////////////////////////        
+    
+if or
+ARMY_HELI_CHASE_FLAG == 1
+BANDIT_HELI_CHASE_FLAG == 1
+    then
+    0@ = 1
+    end
+    
+if or
+ARMY_RHINO_CHASE_FLAG == 1
+$PLAYER_DYING == 1
+    then
+    0@ = 1
+    end        
+
+return
+
+:RANDOM_TALK_NAME_CHECK
+
+if and
+20@ == 0
+TEAM1_SKIN > 0
+not $GAMEMODE_EDITOR == 1
+then
+12@s = 'F_NAME1'
+return
+end
+
+if and
+20@ == 1
+TEAM2_SKIN > 0
+not $GAMEMODE_EDITOR == 1
+then
+12@s = 'F_NAME2'
+return
+end
+
+if and
+20@ == 2
+TEAM3_SKIN > 0
+not $GAMEMODE_EDITOR == 1
+then
+12@s = 'F_NAME3'
+return
+end
+
+0665: get_actor $SURVIVER[20@] model_to 0@
+if
+0@ > 10000
+then
+0AD3: 12@s = format "N_%d" 0@
+else
+0AD3: 12@s = format "N_ME%d" 0@
+end
+
+return  

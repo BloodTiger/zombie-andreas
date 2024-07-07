@@ -1,0 +1,328 @@
+:DMG_PRC
+thread 'DMG_PRC'
+
+if
+5@ == 1
+then
+5@ = 0
+18@ = 1
+PLAYER_CRIT_DONE = 0
+else
+18@ = 0
+end
+
+24@ = 0
+                               
+28@ = 0
+
+29@ = 0
+30@ = 0
+
+31@ = 0
+
+5@ = -0.25
+
+10@ = 390.0
+11@ = 185.0
+
+:ANTIFIRESPAM_JUMP
+
+while 28@ < 14
+wait 0
+
+if and
+056D:   actor 0@ defined
+not 0@ == -69
+not $ALLOW_HEADSHOOT == -1
+87D6: not  0@ == PED_CANT_HEADSHOTED_HANDLE // @ == $ (int)
+then
+if
+31@ == 0
+    then
+    if
+    actor.Dead(0@)
+        then        
+        
+        if and
+        056D:   actor 0@ defined
+        not 0@ == -69
+        then
+        054A: set_actor 0@ can_be_shot_in_a_car 0
+        actor.StorePos(0@,25@,26@,27@) 
+        000F: 25@ -= 5.0
+        000F: 26@ -= 5.0
+        000F: 27@ -= 5.0
+        end
+        
+        if and
+        056D:   actor 0@ defined
+        not 0@ == -69
+        then
+        actor.StorePos(0@,12@,13@,14@) 
+        000F: 12@ -= -5.0
+        000F: 13@ -= -5.0
+        000F: 14@ -= -5.0
+        end
+        
+        if
+        $ALLOW_HEADSHOOT == -2
+        then
+        if
+        3@ == 9
+            then
+            jump to @GO_CHECK_HEADSHOT_BUT_NOT_EXP
+            else
+            jump to @KUZNECHIK_S_HUEM_PRIK_SKOK
+            end
+        end                    
+        
+        if or
+        3@ == 9
+        0356:   explosion_type -1 in_cube_cornerA 25@ 26@ 27@ cornerB 12@ 13@ 14@
+            then
+            :GO_CHECK_HEADSHOT_BUT_NOT_EXP            
+            if and
+            056D:   actor 0@ defined
+            not 0@ == -69
+                then
+                if or
+                044B:   actor 0@ on_foot
+                047A:   actor 0@ driving_bike
+                    then                                  
+                    
+                    0A96: 25@ = actor 0@ struct
+                    25@ += 0x754
+                    0A8D: 26@ = read_memory 25@ size 4 virtual_protect 0
+                    0EFF: get_char_simplest_active_task 0@ id_to 27@ pointer_to 25@
+                    
+                    if and
+                    8449: not  actor 0@ in_a_car
+                    not actor.Driving(0@)
+                    not 26@ == 0x02
+                    not 27@ == 834 //ИЛИ вываливается из авто
+                    then
+                    0A96: 25@ = actor 0@ struct
+                    25@ += 0x46D
+                    0A8D: 26@ = read_memory 25@ size 4 virtual_protect 0
+                    0A8C: write_memory 25@ size 4 value 0xA0 virtual_protect 0
+                    25@ -= 0x46D
+                    25@ += 0x754
+                    0A8D: 26@ = read_memory 25@ size 4 virtual_protect 0
+                    0A8C: write_memory 25@ size 4 value 0x02 virtual_protect 0
+                    0321: AS_actor 0@ die_headshotted                                                
+                    end
+                    
+                    if
+                    0D0B: get_actor 0@ bone 6 matrix_pointer_to 1@ // IF and SET
+                    then  
+                    0D0A: store_coords_to 25@ 26@ 27@ from_matrix 1@ with_offsets 0.0 0.0 0.0        
+                    09B8: create_blood_gush_at 25@ 26@ 27@ with_offset 0.0 0.0 0.0 density 400 on_actor 0@
+                    end
+                    
+                    0623: add 1 to_integer_stat 130
+                    
+                    $TEMP_XP = HEADSHOT_XP
+                    008D: $TEMP_XP = integer $TEMP_XP to_float
+                    0069: $TEMP_XP *= $XP_COEFF // (float)
+                    008C: $TEMP_XP = float $TEMP_XP to_integer
+                    0058: $PLAYER_XP += $TEMP_XP // (int)
+                    end                                                                    
+                end                         
+            end
+        31@ = 1    
+        end    
+    end
+else
+end_thread
+end
+
+:KUZNECHIK_S_HUEM_PRIK_SKOK
+
+28@ += 1
+
+if and
+056D:   actor 0@ defined
+not 0@ == -69
+then
+if
+0EA4: is_char_on_fire 0@
+    then
+    24@ = 1
+    if
+    0E4D: random_percent 70
+        then
+        jump to @ANTIFIRESPAM_JUMP
+        end
+    else
+    24@ = 0
+    end
+end
+
+if and
+056D:   actor 0@ defined
+not 0@ == -69
+then
+actor.StorePos(0@,25@,26@,27@)
+else
+end_thread
+end
+
+actor.StorePos(PLAYER_ACTOR,12@,13@,14@)
+050A: 15@ = distance_between_XYZ 12@ 13@ 14@ and_XYZ 25@ 26@ 27@
+if and
+15@ < 50.0
+15@ > 5.0
+not DAMAGE_PERCENTS_SHOW_STYLE == 1
+not REALISM_MODE == 1
+then
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+29@ == 0
+then
+5@ *= -2.0
+5@ *= 2.0
+29@ = 1
+end
+
+5@ += 0.2
+if and
+056D:   actor 0@ defined
+not 0@ == -69
+then
+04C4: store_coords_to 25@ 26@ 27@ from_actor 0@ with_offset 0.0 0.0 5@
+else
+end_thread
+end
+
+0E3F: convert_3d_to_screen_2d 25@ 26@ 27@ checkNearClip 5.0 checkFarClip 50.0 store_2d_to 6@ 7@ size_to 8@ 9@
+
+0087: 16@ = 15@ // (float)
+16@ /= 10.0
+if
+16@ < 1.0
+then
+16@ = 1.0
+end
+
+006B: 8@ *= 16@  // (float)
+16@ *= 1.5
+006B: 9@ *= 16@  // (float)
+
+if and
+not DAMAGE_PERCENTS_SHOW_STYLE == 0
+not REALISM_MODE == 1
+then
+03F0: enable_text_draw 1 
+03E0: draw_text_behind_textures 1
+03E3: set_texture_to_be_drawn_antialiased 1 
+0342: set_text_draw_centered 1
+
+if
+not 18@ == 1
+then
+
+if
+not 24@ == 1
+then
+0340: set_text_draw_RGBA 200 200 200 $HUD_ALPHA
+else
+0340: set_text_draw_RGBA 255 150 0 $HUD_ALPHA
+end
+
+else
+0340: set_text_draw_RGBA 200 10 10 $HUD_ALPHA
+end
+   
+081C: draw_text_outline 1 RGBA 0 0 0 $HUD_ALPHA     
+    
+if
+UNITED_MAP == 1
+then    
+0349: set_text_draw_font UNITED_HUD_FONT_NUMBER
+end
+
+if
+not 18@ == 1
+then    
+033F: set_text_draw_letter_size 8@ 9@
+else
+8@ *= 1.25
+9@ *= 1.25
+033F: set_text_draw_letter_size 8@ 9@
+end
+      
+045A: draw_text_1number 6@ 7@ GXT 'DISP30' number 4@
+end
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+else
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+not 17@ == 1
+then
+
+if
+29@ == 1
+then
+5@ *= 2.0
+5@ *= -2.0
+29@ = 0
+end
+
+5@ -= 0.2
+005B: 11@ += 5@  // (float)
+
+if and
+not DAMAGE_PERCENTS_SHOW_STYLE == 0
+not REALISM_MODE == 1
+then
+03F0: enable_text_draw 1 
+03E0: draw_text_behind_textures 1
+03E3: set_texture_to_be_drawn_antialiased 1 
+0342: set_text_draw_centered 1
+
+if
+not 18@ == 1
+then
+
+if
+not 24@ == 1
+then
+0340: set_text_draw_RGBA 200 200 200 $HUD_ALPHA
+else
+0340: set_text_draw_RGBA 255 150 0 $HUD_ALPHA
+end
+
+else
+0340: set_text_draw_RGBA 200 10 10 $HUD_ALPHA
+end
+   
+081C: draw_text_outline 1 RGBA 0 0 0 $HUD_ALPHA     
+    
+if
+UNITED_MAP == 1
+then    
+0349: set_text_draw_font UNITED_HUD_FONT_NUMBER
+end
+
+if
+not 18@ == 1
+then    
+033F: set_text_draw_letter_size $TEAM_TEXT_SIZE_X $TEAM_TEXT_SIZE_Y
+else
+033F: set_text_draw_letter_size 0.5 1.375
+end
+      
+045A: draw_text_1number 10@ 11@ GXT 'DISP30' number 4@
+end
+
+end
+
+end
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+end
+
+end_thread

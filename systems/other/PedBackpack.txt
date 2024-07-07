@@ -1,0 +1,871 @@
+const
+PED_BACKPACK_PARA_SWITCH_FLAG = 28@
+PED_BACKPACK_MELEE_FLAG = 3@
+PED_BACKPACK_MELEE_WEAPON = 4@
+PED_BACKPACK_CREATE_MARKER_FLAG = 5@
+PED_BACKPACK_CREATE_MARKER_FRIENDLY = 6@
+PED_BACKPACK_CREATE_MARKER_SIZE = 7@
+PED_BACKPACK_CREATE_MARKER_COLOR = 8@
+PED_BACKPACK_CREATE_MARKER_RADAR_TYPE = 9@
+PED_BACKPACK_CHECK_FOR_ANTIKILLING_FAIL = 10@
+PED_BACKPACK_HIDDEN = 11@
+PED_BACKPACK_MARKER = 12@
+end
+
+:PED_BKP
+thread 'PED_BKP'
+
+if and
+056D:   actor 0@ defined
+not 0@ == -69
+then
+
+if
+1@ == 371
+then
+
+if
+UNITED_MAP == 0
+then
+1@ = 6549
+else
+1@ = 18486
+end
+
+end
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+
+if and
+056D:   actor 0@ defined
+not 0@ == -69
+then
+0E2E: create_render_object_to_char_bone 0@ model 1@ bone 3 offset 0.1 -0.15 0.0 rotation 0.0 90.0 0.0 store_to 2@
+
+if
+PED_BACKPACK_HIDDEN == 1
+then
+0E31: set_render_object_visible 2@ 0
+end
+
+if
+PED_BACKPACK_CREATE_MARKER_FLAG == 1
+    then
+    PED_BACKPACK_MARKER = marker.CreateAboveActor(0@)
+    marker.SetIconSize(PED_BACKPACK_MARKER,PED_BACKPACK_CREATE_MARKER_SIZE)
+    018B: set_marker PED_BACKPACK_MARKER radar_mode PED_BACKPACK_CREATE_MARKER_RADAR_TYPE    
+    if
+    PED_BACKPACK_CREATE_MARKER_FRIENDLY == 1
+        then
+        07E0: set_marker PED_BACKPACK_MARKER type_to 1
+        0568: set_actor 0@ untargetable 1
+        
+        if
+        not PED_BACKPACK_CREATE_MARKER_COLOR == 2
+        then
+        marker.SetColor(PED_BACKPACK_MARKER,PED_BACKPACK_CREATE_MARKER_COLOR)
+        end
+        
+        else
+        marker.SetColor(PED_BACKPACK_MARKER,PED_BACKPACK_CREATE_MARKER_COLOR)
+        0568: set_actor 0@ untargetable 0
+        end        
+    end
+
+else
+end_thread
+end
+
+else
+end_thread
+end
+
+while true
+wait 0
+
+if
+07D6:   0@ == PLAYER_ACTOR // @ == $ (int)
+then
+
+if
+PED_BACKPACK_PARA_SWITCH_FLAG == 0
+then
+
+if or
+02D8:   actor PLAYER_ACTOR current_weapon == 46
+0A0C:   player PLAYER_CHAR on_jetpack
+$FP_ACTIVATED == 1
+$INF_SIDE == 1
+PLAYER_NO_ITEMS_FLAG == 1
+then
+0E31: set_render_object_visible 2@ 0
+PED_BACKPACK_PARA_SWITCH_FLAG = 1
+end
+
+else
+
+if and
+82D8: not  actor PLAYER_ACTOR current_weapon == 46
+8A0C: not  player PLAYER_CHAR on_jetpack
+$FP_ACTIVATED == 0
+$INF_SIDE == 0
+PLAYER_NO_ITEMS_FLAG == 0
+then
+0E31: set_render_object_visible 2@ 1
+PED_BACKPACK_PARA_SWITCH_FLAG = 0
+end
+
+end
+
+gosub @BACKPACK_CAR_START_CHECK_PRE 
+
+if or
+PLAYER_DONT_HAVE_BACKPACK == 1
+$PREPARING_TEXT_OFF == 1
+SAVE_PRE_TP_TEAMMATES_FLAG == 1
+    then
+    
+    if
+    PLAYER_DONT_HAVE_BACKPACK == 1
+    then
+    PLAYER_DONT_HAVE_BACKPACK = 0
+    end        
+    
+    0E2F: delete_render_object 2@
+    
+    end_thread
+    end
+
+else
+gosub @BCKPCK_TEAM_START_CHECK_PRE
+
+///////////////////////////////////////////////////////
+
+if
+07D6:   0@ == COOP_ACTOR // @ == $ (int)
+then
+if
+056D:   actor 0@ defined
+    then    
+    if
+    PED_BACKPACK_PARA_SWITCH_FLAG == 0
+        then        
+        if or
+        02D8:   actor COOP_ACTOR current_weapon == 46
+        $INF_SIDE == 1
+        PLAYER_NO_ITEMS_FLAG == 1
+            then
+            0E31: set_render_object_visible 2@ 0
+            PED_BACKPACK_PARA_SWITCH_FLAG = 1
+            end        
+        else        
+        if and
+        82D8: not  actor COOP_ACTOR current_weapon == 46
+        $INF_SIDE == 0
+        PLAYER_NO_ITEMS_FLAG == 0
+            then
+            0E31: set_render_object_visible 2@ 1
+            PED_BACKPACK_PARA_SWITCH_FLAG = 0
+            end        
+        end    
+    end
+end
+
+///////////////////////////////////////////////////////
+
+if
+CUSTOM_MODE_ONLY_MELEE == 1
+    then
+    if
+    056D:   actor 0@ defined
+        then
+        
+        if
+        PED_BACKPACK_MELEE_FLAG == 0
+        then
+        087E: set_actor 0@ weapon_droppable 0
+        048F: actor 0@ remove_weapons
+        gosub @MELEE_RULE_GIVE_RANDOM_WEP
+        PED_BACKPACK_MELEE_FLAG = 1        
+        else
+        if
+        82D8: not  actor 0@ current_weapon == PED_BACKPACK_MELEE_WEAPON
+            then
+            01B9: set_actor 0@ armed_weapon_to PED_BACKPACK_MELEE_WEAPON
+            end
+        end
+        
+        end
+    end
+    
+if
+PED_BACKPACK_CREATE_MARKER_FLAG == 1
+    then
+    if
+    075C:   marker PED_BACKPACK_MARKER enabled
+        then
+        :PED_BACKPACK_CHECK_FOR_ANITKILLING_JUMP
+        if and
+        056D:   actor 0@ defined
+        not 0@ == -69
+            then
+            
+//            if
+//            0E42: is_char_doing_task_id 0@ 901
+//                then
+//                0E44: get_char_kill_target_char 0@ store_to 1@
+//                if
+//                056D:   actor 1@ defined
+//                    then     
+//                    if
+//                    actor.Dead(1@)
+//                        then
+//                        05B9: AS_actor 0@ stay_idle 250 ms
+//                        0AD1: show_formatted_text_highpriority "STOP THIS PLEASE" time 500
+//                        end
+//                    end
+//                end
+                                      
+            if
+            8184:   actor 0@ health < 1
+                then
+                
+                if
+                PED_BACKPACK_CREATE_MARKER_FLAG == 1
+                then
+                marker.Disable(PED_BACKPACK_MARKER)
+                end
+                
+                :PED_BACKPACK_CHECK_FOR_ANITKILLING_JUMP2
+                if
+                PED_BACKPACK_CHECK_FOR_ANTIKILLING_FAIL == 1
+                    then
+                    0A96: 3@ = actor 0@ struct
+                    0A8E: 3@ = 3@ + 0x764
+                    0A8D: 1@ = read_memory 3@ size 2 virtual_protect 1
+                    0A8D: 2@ = read_memory 0xB6F5F0 size 2 virtual_protect 1
+                    
+                    if
+                    0800:   in_two_players_mode
+                    then
+                    0A8D: 3@ = read_memory 0xB7CF28 size 2 virtual_protect 1
+                    else
+                    3@ = -69
+                    end
+                    
+                    if or
+                    003B:   1@ == 2@  // (int)
+                    003B:   1@ == 3@  // (int)
+                        then
+                        $CAN_AIM_AT_SRVVRS = 2
+                        end
+                    end
+                else
+                04DD: 1@ = actor 0@ armour
+                if
+                1@ == 69
+                    then
+                    marker.Disable(PED_BACKPACK_MARKER)
+                    0A96: 3@ = actor 0@ struct
+                    0A8E: 3@ = 3@ + 0x548
+                    0A8C: write_memory 3@ size 4 value 0.0 virtual_protect 0
+                    end
+                end
+            end
+        end
+    else
+    if
+    PED_BACKPACK_CHECK_FOR_ANTIKILLING_FAIL == 1
+        then
+        jump to @PED_BACKPACK_CHECK_FOR_ANITKILLING_JUMP
+        end
+    end    
+
+if or
+856D: not  actor 0@ defined
+0@ == -69
+    then
+    break
+    else
+    if
+    8E0A: not is_char_script_controlled 0@
+        then
+        break
+        end
+    if
+    07D6:   0@ == CHAR_TO_DEL_BACKPACK // @ == $ (int)
+        then
+        0E31: set_render_object_visible 2@ 0
+        CHAR_TO_DEL_BACKPACK = 0
+        end    
+    end
+
+end
+
+end
+
+end_thread
+
+//////////////////////////////////////////////////////////////////////////////
+
+:BACKPACK_CAR_START_CHECK
+return
+
+:BACKPACK_CAR_START_CHECK_PRE
+$BACKPACK_HIDED = 0
+if and
+$END_SAVING == 0
+PED_BACKPACK_PARA_SWITCH_FLAG == 0  
+jf @BACKPACK_CAR_START_CHECK
+gosub @BACKPACK_CAR_IN_ANIM_CHECK
+if or
+0449:   actor PLAYER_ACTOR in_a_car
+$RANDOM_CAR_FLAG == 1
+31@ == 1
+jf @BACKPACK_CAR_START_CHECK
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,#BMX)
+actor.DrivingVehicleType(PLAYER_ACTOR,#MTBIKE)
+actor.DrivingVehicleType(PLAYER_ACTOR,#BIKE)
+actor.DrivingVehicleType(PLAYER_ACTOR,#PIZZABOY)
+actor.DrivingVehicleType(PLAYER_ACTOR,15322)
+actor.DrivingVehicleType(PLAYER_ACTOR,15526)
+actor.DrivingVehicleType(PLAYER_ACTOR,15430)
+actor.DrivingVehicleType(PLAYER_ACTOR,15457)
+then
+jump to @BACKPACK_CAR_START_CHECK
+end
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,#MOWER)
+actor.DrivingVehicleType(PLAYER_ACTOR,15489)
+then
+jump to @BACKPACK_CAR_START_CHECK
+end
+if and
+847A: not  actor PLAYER_ACTOR driving_bike
+not actor.DrivingVehicleType(PLAYER_ACTOR,#QUAD)
+not actor.DrivingVehicleType(PLAYER_ACTOR,15558)
+not actor.DrivingVehicleType(PLAYER_ACTOR,15426)
+jf @BACKPACK_CAR222
+
+0AB5: store_actor PLAYER_ACTOR closest_vehicle_to 31@ closest_ped_to 1@
+if
+056E:   car 31@ defined
+then
+
+if or
+car.Id(31@) == #MOWER
+car.Id(31@) == 15489
+then
+jump to @BACKPACK_CAR_START_CHECK
+end
+
+end
+
+wait 500
+0E31: set_render_object_visible 2@ 0
+PED_BACKPACK_PARA_SWITCH_FLAG = 1
+$BACKPACK_HIDED = 1
+wait 1500
+jump @BACKPACK_CAR1
+
+:BACKPACK_CAR222
+if
+actor.Driving(PLAYER_ACTOR)
+jf @BACKPACK_CAR_START_CHECK
+03C0: 30@ = actor PLAYER_ACTOR car
+if
+056E:   car 30@ defined
+jf @BACKPACK_CAR_START_CHECK
+if
+8431: not  car 30@ passenger_seat_free 0
+jf @BACKPACK_CAR_START_CHECK
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,#BMX)
+actor.DrivingVehicleType(PLAYER_ACTOR,#MTBIKE)
+actor.DrivingVehicleType(PLAYER_ACTOR,#BIKE)
+actor.DrivingVehicleType(PLAYER_ACTOR,#PIZZABOY)
+actor.DrivingVehicleType(PLAYER_ACTOR,15322)
+actor.DrivingVehicleType(PLAYER_ACTOR,15526)
+actor.DrivingVehicleType(PLAYER_ACTOR,15430)
+actor.DrivingVehicleType(PLAYER_ACTOR,15457) 
+then
+jump to @BACKPACK_CAR_START_CHECK
+end
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,#MOWER)
+actor.DrivingVehicleType(PLAYER_ACTOR,15489)
+then
+jump to @BACKPACK_CAR_START_CHECK
+end
+0E31: set_render_object_visible 2@ 0
+PED_BACKPACK_PARA_SWITCH_FLAG = 1
+$BACKPACK_HIDED = 1
+jump @BACKPACK_CAR1 
+
+:BACKPACK_CAR1
+wait 0
+gosub @BACKPACK_CAR_OUT_ANIM_CHECK
+if or
+31@ == 1
+8449: not  actor PLAYER_ACTOR in_a_car
+not actor.Driving(PLAYER_ACTOR)
+jf @BACKPACK_2CAR1
+
+if
+actor.Driving(PLAYER_ACTOR)
+then
+wait 500
+end
+
+$BACKPACK_HIDED = 0
+0E31: set_render_object_visible 2@ 1
+PED_BACKPACK_PARA_SWITCH_FLAG = 0
+jump @BACKPACK_CAR_START_CHECK
+
+:BACKPACK_2CAR1
+if or
+047A:   actor PLAYER_ACTOR driving_bike
+actor.DrivingVehicleType(PLAYER_ACTOR,#QUAD)
+actor.DrivingVehicleType(PLAYER_ACTOR,15558)
+actor.DrivingVehicleType(PLAYER_ACTOR,15426)
+jf @BACKPACK_CAR1
+03C0: 30@ = actor PLAYER_ACTOR car
+if
+056E:   car 30@ defined
+jf @BACKPACK_CAR1
+if
+0431:   car 30@ passenger_seat_free 0
+jf @BACKPACK_CAR1
+wait 200
+$BACKPACK_HIDED = 0
+0E31: set_render_object_visible 2@ 1
+PED_BACKPACK_PARA_SWITCH_FLAG = 0
+jump @BACKPACK_CAR_START_CHECK
+
+:BACKPACK_CAR_IN_ANIM_CHECK
+31@ = 0
+
+if or
+actor.Animation(PLAYER_ACTOR) == "CAR_getinL_LHS"
+actor.Animation(PLAYER_ACTOR) == "CAR_getinL_RHS"
+actor.Animation(PLAYER_ACTOR) == "CAR_getin_LHS"
+actor.Animation(PLAYER_ACTOR) == "CAR_getin_RHS"
+actor.Animation(PLAYER_ACTOR) == "CAR_jumpin_LHS"
+actor.Animation(PLAYER_ACTOR) == "Plane_getin"
+actor.Animation(PLAYER_ACTOR) == "TRUCK_getin_LHS"
+actor.Animation(PLAYER_ACTOR) == "TRUCK_getin_RHS"
+    then
+    31@ = 1
+    end
+    
+if or
+actor.Animation(PLAYER_ACTOR) == "VAN_getin_Back_LHS"
+actor.Animation(PLAYER_ACTOR) == "VAN_getin_Back_RHS"
+actor.Animation(PLAYER_ACTOR) == "CAR_getin_LHS"
+actor.Animation(PLAYER_ACTOR) == "CAR_getin_RHS"
+actor.Animation(PLAYER_ACTOR) == "CAR_jumpin_LHS"
+actor.Animation(PLAYER_ACTOR) == "Plane_getin"
+actor.Animation(PLAYER_ACTOR) == "TRUCK_getin_LHS"
+actor.Animation(PLAYER_ACTOR) == "TRUCK_getin_RHS"
+    then
+    31@ = 1
+    end
+    
+if or
+actor.Animation(PLAYER_ACTOR) == "BF_getin_LHS"
+actor.Animation(PLAYER_ACTOR) == "BF_getin_RHS"
+    then
+    31@ = 1
+    end        
+
+return
+
+:BACKPACK_CAR_OUT_ANIM_CHECK
+31@ = 0
+
+if or
+actor.Animation(PLAYER_ACTOR) == "CAR_getoutL_LHS"
+actor.Animation(PLAYER_ACTOR) == "CAR_getoutL_RHS"
+actor.Animation(PLAYER_ACTOR) == "CAR_getout_LHS"
+actor.Animation(PLAYER_ACTOR) == "CAR_getout_RHS"
+actor.Animation(PLAYER_ACTOR) == "Plane_getout"
+actor.Animation(PLAYER_ACTOR) == "COACH_outL"
+actor.Animation(PLAYER_ACTOR) == "COACH_outR"
+    then
+    31@ = 1
+    end
+
+if or
+actor.Animation(PLAYER_ACTOR) == "CAR_rollout_LHS"
+actor.Animation(PLAYER_ACTOR) == "CAR_rollout_RHS"
+actor.Animation(PLAYER_ACTOR) == "CAR_crawloutRHS"
+actor.Animation(PLAYER_ACTOR) == "CAR_jackedLHS"
+actor.Animation(PLAYER_ACTOR) == "CAR_jackedRHS"
+actor.Animation(PLAYER_ACTOR) == "CAR_LjackedLHS"
+actor.Animation(PLAYER_ACTOR) == "CAR_LjackedRHS"
+actor.Animation(PLAYER_ACTOR) == "CAR_Qjacked"
+    then
+    31@ = 1
+    end
+    
+if or
+actor.Animation(PLAYER_ACTOR) == "CAR_rollout_LHS"
+actor.Animation(PLAYER_ACTOR) == "CAR_rollout_RHS"
+actor.Animation(PLAYER_ACTOR) == "VAN_getout_back_LHS"
+actor.Animation(PLAYER_ACTOR) == "VAN_getout_back_RHS"
+actor.Animation(PLAYER_ACTOR) == "TRUCK_getout_LHS"
+actor.Animation(PLAYER_ACTOR) == "TRUCK_getout_RHS"
+actor.Animation(PLAYER_ACTOR) == "BF_getout_LHS"
+actor.Animation(PLAYER_ACTOR) == "BF_getout_RHS"
+    then
+    31@ = 1
+    end    
+
+return
+
+//////////////////////////////////////////////////////////////////////////////
+
+:BCKPCK_TEAM_START_CHECK
+return
+
+:BCKPCK_TEAM_START_CHECK_PRE
+if and
+056D:   actor 0@ defined
+not 0@ == -69
+jf @BCKPCK_TEAM_START_CHECK
+gosub @BCKPCK_TEAM_IN_ANIM_CHECK
+
+if and
+056D:   actor 0@ defined
+not 0@ == -69
+jf @BCKPCK_TEAM_START_CHECK
+if or
+0449:   actor 0@ in_a_car
+$RANDOM_CAR_FLAG == 1
+31@ == 1
+jf @BCKPCK_TEAM_START_CHECK
+if or
+actor.DrivingVehicleType(0@,#BMX)
+actor.DrivingVehicleType(0@,#MTBIKE)
+actor.DrivingVehicleType(0@,#BIKE)
+actor.DrivingVehicleType(0@,#PIZZABOY)
+actor.DrivingVehicleType(0@,15322)
+actor.DrivingVehicleType(0@,15526)
+actor.DrivingVehicleType(0@,15430)
+actor.DrivingVehicleType(0@,15457)
+then
+jump to @BCKPCK_TEAM_START_CHECK
+end
+if or
+actor.DrivingVehicleType(0@,#MOWER)
+actor.DrivingVehicleType(0@,15489)
+then
+jump to @BCKPCK_TEAM_START_CHECK
+end
+
+if
+0449:   actor 0@ in_a_car
+then
+03C0: 30@ = actor 0@ car
+0D5E: get_vehicle 30@ class_to 29@ subclass_to 27@
+if
+29@ == 9
+    then
+    jump to @BCKPCK_TEAM222
+    end
+end
+
+
+if and
+847A: not  actor 0@ driving_bike
+not actor.DrivingVehicleType(0@,#QUAD)
+not actor.DrivingVehicleType(0@,15558)
+not actor.DrivingVehicleType(0@,15426)
+jf @BCKPCK_TEAM222
+wait 500
+
+if and
+056D:   actor 0@ defined
+not 0@ == -69
+jf @BCKPCK_TEAM_START_CHECK
+0E31: set_render_object_visible 2@ 0
+wait 1500
+jump @BCKPCK_TEAM1
+
+//Проверка убирания рюкзака на кваде
+
+:BCKPCK_TEAM222
+if
+0449:   actor 0@ in_a_car
+jf @BCKPCK_TEAM_START_CHECK
+03C0: 30@ = actor 0@ car
+if
+056E:   car 30@ defined
+jf @BCKPCK_TEAM_START_CHECK
+if
+8431: not  car 30@ passenger_seat_free 0
+jf @BCKPCK_TEAM_START_CHECK
+if or
+actor.DrivingVehicleType(0@,#BMX)
+actor.DrivingVehicleType(0@,#MTBIKE)
+actor.DrivingVehicleType(0@,#BIKE)
+actor.DrivingVehicleType(0@,#PIZZABOY)
+actor.DrivingVehicleType(0@,15322)
+actor.DrivingVehicleType(0@,15526)
+actor.DrivingVehicleType(0@,15430)
+actor.DrivingVehicleType(0@,15457) 
+then
+jump to @BCKPCK_TEAM_START_CHECK
+end
+if or
+actor.DrivingVehicleType(0@,#MOWER)
+actor.DrivingVehicleType(0@,15489)
+then
+jump to @BCKPCK_TEAM_START_CHECK
+end
+
+if
+8431: not  car 30@ passenger_seat_free 0
+    then
+    046C: 27@ = car 30@ driver
+    if
+    803B: not  27@ == 0@  // (int)
+        then
+        jump to @BCKPCK_TEAM_START_CHECK
+        end
+    end
+
+0E31: set_render_object_visible 2@ 0
+jump @BCKPCK_TEAM1 
+
+//Рюкзак убрался, союзник зашел в машину
+
+:BCKPCK_TEAM1
+wait 0
+
+if and
+056D:   actor 0@ defined
+not 0@ == -69
+jf @BCKPCK_TEAM_START_CHECK_RETURN_BACKPACK_WAIT
+gosub @BCKPCK_TEAM_OUT_ANIM_CHECK
+if or
+31@ == 1
+044B:   actor 0@ on_foot
+jf @BACKPACK_TEAM_2CAR1
+
+if
+844B: not  actor 0@ on_foot
+then
+wait 500
+else
+
+////////////////////////////////////////////////////////////////////////
+
+repeat
+wait 0
+
+if
+856D: not  actor 0@ defined
+then
+break
+end
+
+until 044B:   actor 0@ on_foot
+
+////////////////////////////////////////////////////////////////////////
+
+end
+
+if and
+056D:   actor 0@ defined
+not 0@ == -69
+jf @BCKPCK_TEAM_START_CHECK_RETURN_BACKPACK_WAIT
+0E31: set_render_object_visible 2@ 1
+jump @BCKPCK_TEAM_START_CHECK
+
+//Проверка возвращения рюкзака на кваде
+
+:BACKPACK_TEAM_2CAR1
+
+if and
+056D:   actor 0@ defined
+not 0@ == -69
+jf @BCKPCK_TEAM_START_CHECK_RETURN_BACKPACK_WAIT
+if or
+047A:   actor 0@ driving_bike
+actor.DrivingVehicleType(0@,#QUAD)
+actor.DrivingVehicleType(0@,15558)
+actor.DrivingVehicleType(0@,15426)
+jf @BCKPCK_TEAM1
+03C0: 30@ = actor 0@ car
+if
+056E:   car 30@ defined
+jf @BCKPCK_TEAM1
+if
+0431:   car 30@ passenger_seat_free 0
+jf @BCKPCK_TEAM1
+wait 200
+
+if and
+056D:   actor 0@ defined
+not 0@ == -69
+jf @BCKPCK_TEAM_START_CHECK
+0E31: set_render_object_visible 2@ 1
+jump @BCKPCK_TEAM_START_CHECK
+
+:BCKPCK_TEAM_START_CHECK_RETURN_BACKPACK_WAIT
+return
+
+:BCKPCK_TEAM_IN_ANIM_CHECK
+31@ = 0
+
+if or
+actor.Animation(0@) == "CAR_getinL_LHS"
+actor.Animation(0@) == "CAR_getinL_RHS"
+actor.Animation(0@) == "CAR_getin_LHS"
+actor.Animation(0@) == "CAR_getin_RHS"
+actor.Animation(0@) == "CAR_jumpin_LHS"
+actor.Animation(0@) == "Plane_getin"
+actor.Animation(0@) == "TRUCK_getin_LHS"
+actor.Animation(0@) == "TRUCK_getin_RHS"
+    then
+    31@ = 1
+    end
+    
+if or
+actor.Animation(0@) == "VAN_getin_Back_LHS"
+actor.Animation(0@) == "VAN_getin_Back_RHS"
+actor.Animation(0@) == "CAR_getin_LHS"
+actor.Animation(0@) == "CAR_getin_RHS"
+actor.Animation(0@) == "CAR_jumpin_LHS"
+actor.Animation(0@) == "Plane_getin"
+actor.Animation(0@) == "TRUCK_getin_LHS"
+actor.Animation(0@) == "TRUCK_getin_RHS"
+    then
+    31@ = 1
+    end
+    
+if or
+actor.Animation(0@) == "BF_getin_LHS"
+actor.Animation(0@) == "BF_getin_RHS"
+    then
+    31@ = 1
+    end        
+
+return
+
+:BCKPCK_TEAM_OUT_ANIM_CHECK
+31@ = 0
+
+if or
+actor.Animation(0@) == "CAR_getoutL_LHS"
+actor.Animation(0@) == "CAR_getoutL_RHS"
+actor.Animation(0@) == "CAR_getout_LHS"
+actor.Animation(0@) == "CAR_getout_RHS"
+actor.Animation(0@) == "Plane_getout"
+actor.Animation(0@) == "COACH_outL"
+actor.Animation(0@) == "COACH_outR"
+    then
+    31@ = 1
+    end
+
+if or
+actor.Animation(0@) == "CAR_rollout_LHS"
+actor.Animation(0@) == "CAR_rollout_RHS"
+actor.Animation(0@) == "CAR_crawloutRHS"
+actor.Animation(0@) == "CAR_jackedLHS"
+actor.Animation(0@) == "CAR_jackedRHS"
+actor.Animation(0@) == "CAR_LjackedLHS"
+actor.Animation(0@) == "CAR_LjackedRHS"
+actor.Animation(0@) == "CAR_Qjacked"
+    then
+    31@ = 1
+    end
+    
+if or
+actor.Animation(0@) == "CAR_rollout_LHS"
+actor.Animation(0@) == "CAR_rollout_RHS"
+actor.Animation(0@) == "VAN_getout_back_LHS"
+actor.Animation(0@) == "VAN_getout_back_RHS"
+actor.Animation(0@) == "TRUCK_getout_LHS"
+actor.Animation(0@) == "TRUCK_getout_RHS"
+actor.Animation(0@) == "BF_getout_LHS"
+actor.Animation(0@) == "BF_getout_RHS"
+    then
+    31@ = 1
+    end    
+
+return
+
+:MELEE_RULE_GIVE_RANDOM_WEP
+wait 0 
+
+if
+UNITED_MAP == 0
+then
+random_int PED_BACKPACK_MELEE_WEAPON 2 to 16
+end
+
+if
+UNITED_MAP == 1
+then
+
+if 
+$UNITED_VC_FLAG == 1
+then
+
+if
+STORIES_MAP == 0
+then
+0209: PED_BACKPACK_MELEE_WEAPON = random_int_in_ranges 122 132
+else
+0209: PED_BACKPACK_MELEE_WEAPON = random_int_in_ranges 185 195
+end
+
+else
+
+if
+STORIES_MAP == 0
+then
+PED_BACKPACK_MELEE_WEAPON = 110
+else
+0209: PED_BACKPACK_MELEE_WEAPON = random_int_in_ranges 155 165
+end
+
+end
+
+end    
+
+////////////////////////////////////////////////////
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 108
+then
+PED_BACKPACK_MELEE_WEAPON = 108
+end    
+  
+0781: get_weapon_with_ID PED_BACKPACK_MELEE_WEAPON model_to 1@ 
+if and
+07DE:   model 1@ exists // versionB
+not PED_BACKPACK_MELEE_WEAPON == 14 
+jf @MELEE_RULE_GIVE_RANDOM_WEP
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+
+if
+856D: not  actor 0@ defined
+then
+return
+end
+
+Actor.GiveWeaponAndAmmo(0@, PED_BACKPACK_MELEE_WEAPON, 99999)
+return

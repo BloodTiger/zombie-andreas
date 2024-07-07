@@ -1,0 +1,207 @@
+const
+STRAFE_FLAG = 10@  
+CURRENT_CAM_ANGLE = 11@
+LATEST_CAM_ANGLE = 12@
+LOOKING_BACK_FLAG = 13@ 
+end
+
+:STRAFE
+thread 'STRAFE'
+
+while true
+wait 0
+
+if and
+$UNITED_III_SPAWN == 1
+STORIES_MAP == 0
+then
+
+if
+0E49: is_char_entering_any_car PLAYER_ACTOR
+then
+0AB5: store_actor PLAYER_ACTOR closest_vehicle_to 0@ closest_ped_to 1@
+if
+056E:   car 0@ defined
+    then
+    if or
+    car.Model(0@) == 15393
+    car.Model(0@) == 15394 
+        then
+        if
+        0EE5: locate_char_distance_to_car PLAYER_ACTOR car 0@ radius 3.0
+            then
+            072A: put_actor PLAYER_ACTOR into_car 0@ driverseat
+            end
+        end
+    end
+end
+
+if
+0E4A: is_char_exiting_any_car PLAYER_ACTOR
+then
+0AB5: store_actor PLAYER_ACTOR closest_vehicle_to 0@ closest_ped_to 1@
+if
+056E:   car 0@ defined
+    then
+    if or
+    car.Model(0@) == 15393
+    car.Model(0@) == 15394 
+        then
+        0407: store_coords_to 2@ 3@ 4@ from_car 0@ with_offset -2.0 1.5 -0.5
+        0362: remove_actor PLAYER_ACTOR from_car_and_place_at 2@ 3@ 4@       
+        end
+    end
+end
+
+end
+
+if and
+HYBRID_CONTORLS == 1
+8E92: not is_char_really_in_air PLAYER_ACTOR
+8A32: not actor PLAYER_ACTOR on_turret_of_car
+$20 == 0
+not actor.Animation(PLAYER_ACTOR) == "gas_cwr"
+not $INF_SIDE == 1
+then    
+
+0A96: 1@ = actor PLAYER_ACTOR struct
+0A8E: 1@ = 1@ + 0x534 //RUN STATE
+0A8D: 7@ = read_memory 1@ size 4 virtual_protect 1
+
+if
+0597:  actor PLAYER_ACTOR crouching
+then
+if or
+0AB0:   key_pressed 65 //LEFT
+0AB0:   key_pressed 83 //BACK
+0AB0:   key_pressed 68 //RIGHT
+0AB0:   key_pressed 83 //BACK
+    then
+    7@ = 7
+    end
+end
+
+//0AD1: show_formatted_text_highpriority "RUN STATE %d" time 2000 7@
+
+if or
+actor.Animation(PLAYER_ACTOR) == "car_check"
+actor.Animation(PLAYER_ACTOR) == "BOM_PLANT"
+actor.Animation(PLAYER_ACTOR) == "BOM_Plant_In"
+actor.Animation(PLAYER_ACTOR) == "IDLE_tired"
+0E48: is_char_fallen_on_ground PLAYER_ACTOR
+then
+7@ = 7
+end
+
+if and
+8A4B: not  controls_set_to_joystick
+8E46: not is_char_using_gun PLAYER_ACTOR
+80E1: not  player 0 pressed_key 17
+not actor.Driving(PLAYER_ACTOR)
+09E7:   player PLAYER_CHAR not_frozen
+$HUD_REMOVE == 0
+7@ < 6
+then         
+
+0A96: 1@ = actor PLAYER_ACTOR struct
+0A8E: 1@ = 1@ + 1376 //ROTATE SPEED
+0A8C: write_memory 1@ size 4 value 8.0 virtual_protect 1
+
+if and
+LOOKING_BACK_FLAG == 0
+00E1:  player 0 pressed_key 19
+then
+LOOKING_BACK_FLAG = 1
+else
+if and
+80E1: not  player 0 pressed_key 19
+LOOKING_BACK_FLAG == 1
+    then
+    LOOKING_BACK_FLAG = 2
+    32@ = 0
+    else
+    if and
+    LOOKING_BACK_FLAG == 2
+    32@ > 50
+        then
+        LOOKING_BACK_FLAG = 0
+        end
+    end
+end
+
+//Angle
+if and
+8E46: not is_char_using_gun PLAYER_ACTOR
+80E1: not  player 0 pressed_key 19
+not LOOKING_BACK_FLAG == 2
+then           
+0EB2: get_offset_from_camera_in_world_coords 0.0 -5.0 0.0 store_to 1@ 2@ 3@
+actor.StorePos(PLAYER_ACTOR,4@,5@,6@)
+0E27: get_angle_from_two_coords 1@ 2@ and 4@ 5@ to CURRENT_CAM_ANGLE
+actor.Angle(PLAYER_ACTOR) = CURRENT_CAM_ANGLE
+06A9: AS_actor PLAYER_ACTOR look_at_point 1@ 2@ 3@ 150 ms 
+end
+    
+:SKIP_ANGLE    
+
+if and
+8AB0: not  key_pressed 87 //FORWARD
+not $PLAYER_RELOADING == 1
+    then    
+    //Strafing
+    if and
+    0AB0:   key_pressed 65 //LEFT
+    8AB0: not  key_pressed 83 //BACK
+    8AB0: not  key_pressed 68 //RIGHT
+        then 
+        0605: actor PLAYER_ACTOR perform_animation "run_left" IFP "PED" framedelta 4.0 loop 0 lockX 1 lockY 1 lockF 0 time 1 
+        STRAFE_FLAG = 1    
+        end
+    
+    if and
+    0AB0:   key_pressed 68 //RIGHT
+    8AB0: not  key_pressed 65 //LEFT
+        then   
+        0605: actor PLAYER_ACTOR perform_animation "run_right" IFP "PED" framedelta 4.0 loop 0 lockX 1 lockY 1 lockF 0 time 1
+        STRAFE_FLAG = 1      
+        end
+    
+    if
+    0AB0:   key_pressed 83 //BACK
+        then   
+        0605: actor PLAYER_ACTOR perform_animation "run_back" IFP "PED" framedelta 4.0 loop 0 lockX 1 lockY 1 lockF 0 time 1
+        STRAFE_FLAG = 1  
+        if
+        0AB0:   key_pressed 65 //LEFT
+            then
+            0605: actor PLAYER_ACTOR perform_animation "run_back" IFP "PED" framedelta 4.0 loop 0 lockX 1 lockY 1 lockF 0 time 1
+            wait 0
+            0605: actor PLAYER_ACTOR perform_animation "run_left" IFP "PED" framedelta 4.0 loop 0 lockX 1 lockY 1 lockF 0 time 1
+            wait 0             
+            STRAFE_FLAG = 1
+            end
+        if
+        0AB0:   key_pressed 68 //RIGHT
+            then
+            0605: actor PLAYER_ACTOR perform_animation "run_back" IFP "PED" framedelta 4.0 loop 0 lockX 1 lockY 1 lockF 0 time 1
+            wait 0
+            0605: actor PLAYER_ACTOR perform_animation "run_right" IFP "PED" framedelta 4.0 loop 0 lockX 1 lockY 1 lockF 0 time 1
+            wait 0           
+            STRAFE_FLAG = 1
+            end        
+        end        
+    end  
+
+end 
+
+if
+0E45: frame_mod 2
+then
+0087: LATEST_CAM_ANGLE = CURRENT_CAM_ANGLE // (float)
+end
+
+end
+
+end
+
+end_thread      

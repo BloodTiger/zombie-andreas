@@ -1,0 +1,1463 @@
+const
+BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_NUMBER = 18@
+BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_HANDLE = 17@
+BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_HANDLE2 = 16@
+BOLIDE_CHALLENGE_PLAYER_LAP_NUMBER = 15@
+BOLIDE_CHALLENGE_PLAYER_POSITION = 13@
+BOLIDE_CHALLENGE_PLAYER_SKIN = 21@
+BOLIDE_CHALLENGE_MET_FLAG = 25@
+BOLIDE_CHALLENGE_FPS_LIMIT_FLAG = 26@
+BOLIDE_LAP_REC_BEST_MINUTES = $RNDM_HOUSE_WEAPON[23]
+BOLIDE_LAP_REC_BEST_SECONDS = $RNDM_HOUSE_WEAPON[24]
+BOLIDE_LAP_REC_CURR_MINUTES = $RNDM_HOUSE_WEAPON[25]
+BOLIDE_LAP_REC_CURR_SECONDS = $RNDM_HOUSE_WEAPON[26] 
+BOLIDE_HUNGER_FLAG = 20@
+BOLIDE_HUNGER_COUNT = 27@
+end
+
+:BOLID_M
+thread 'BOLID_M'
+
+create_thread @LESNIK
+
+//actor.PutAtNoOffset(PLAYER_ACTOR,1408.73, 2099.72, 11.0422)
+0776: create_objects_in_object_group "bolides"
+
+:BOLIDE_CHALLENGE_START
+
+while true
+wait 500
+
+//////////////////////////////////////////////////////////////
+
+if and
+$SAVESTATUS_TRUE == 1
+$SAVING_DELAY == 1
+then
+
+while $SAVESTATUS_TRUE == 1
+wait 0
+end
+
+while $SAVING_DELAY == 1
+wait 0
+end
+
+0776: create_objects_in_object_group "bolides"
+
+end
+
+//////////////////////////////////////////////////////////////
+
+if and
+0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos 1408.73 2099.72 11.0422 radius 50.0
+$SAVESTATUS == 0
+$ONMISSION == 0
+    then
+    break
+    end
+
+end
+
+14@ = actor.Create(26,#MALE01,1408.73, 2099.72, 11.0422)
+actor.SetImmunities(14@,1,1,1,1,1)
+actor.LockInCurrentPosition(14@,true)
+0619: enable_actor 14@ collision_detection 0
+0337: set_actor 14@ visibility 0
+0489: set_actor 14@ muted 1
+077A: set_actor 14@ acquaintance 0 to_actors_pedtype 0 // see ped.dat
+
+15@ = audiostream.Load3D("AUDIO\SOUNDS\OTHER\RACETRACK\menu_mod.ogg")
+Audiostream.Loop(15@,1)
+Audiostream.LinkToActor(15@,14@)
+Audiostream.PerformAction(15@, PLAY)
+Audiostream.Volume(15@) = $SOUNDS_VOLUME
+
+0AF0: BOLIDE_LAP_REC_BEST_MINUTES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "BOLIDE_REC_MINS"
+0AF0: BOLIDE_LAP_REC_BEST_SECONDS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "BOLIDE_REC_SECS"
+if
+BOLIDE_LAP_REC_BEST_MINUTES < -1
+then
+BOLIDE_LAP_REC_BEST_MINUTES = 0
+0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "BOLIDE_REC_MINS"
+end
+if
+BOLIDE_LAP_REC_BEST_SECONDS < -1
+then
+BOLIDE_LAP_REC_BEST_SECONDS = 0
+0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "BOLIDE_REC_SECS"
+end
+
+while true
+wait 0
+
+0D52: draw_light_type 0 position 1408.6886 2100.5398 12.0156 direction 1408.7206 2101.1313 12.0156 radius 5.0 RGBA 200 200 200 affect_entity 0
+
+if or
+8EEA: not locate_char_distance_to_coordinates PLAYER_ACTOR pos 1408.73 2099.72 11.0422 radius 50.0
+$SAVESTATUS == 1
+$ONMISSION == 1
+    then
+    audiostream.PerformAction(15@,STOP)
+    audiostream.Release(15@)
+    actor.DestroyInstantly(14@)
+    jump to @BOLIDE_CHALLENGE_START
+    end
+
+if and   
+$PANEL_OPEN == 0
+not actor.Driving(PLAYER_ACTOR)    
+    then
+        
+    if
+    0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos 1408.73 2099.72 11.0422 radius 2.0
+        then
+        
+        if
+        BOLIDE_CHALLENGE_MET_FLAG == 0
+        then
+        BOLIDE_CHALLENGE_MET_FLAG = 1
+        RANDOM_MEETINGS_COUNTER += 1
+        create_thread @MTG_ACH
+        end
+        
+        if
+        8A2A: not  text_box 'GAME859' displayed
+        then
+        0512: show_permanent_text_box 'GAME859' 
+        end
+        
+        03F0: enable_text_draw 1
+        0342: set_text_draw_centered 1
+        0344: set_text_draw_linewidth 500.0 for_centered_text
+        081C: draw_text_outline 1 RGBA 0 0 0 255
+        033F: set_text_draw_letter_size 0.5 1.25
+        03E0: draw_text_behind_textures 1
+        
+        if or
+        BOLIDE_LAP_REC_BEST_MINUTES > 0
+        BOLIDE_LAP_REC_BEST_SECONDS > 0
+        then
+         
+        if
+        BOLIDE_LAP_REC_BEST_SECONDS < 10
+        then
+        045B: draw_text_2numbers 320.0 400.0 GXT 'AME996B' numbers BOLIDE_LAP_REC_BEST_MINUTES BOLIDE_LAP_REC_BEST_SECONDS  // ~1~:~1~
+        else
+        045B: draw_text_2numbers 320.0 400.0 GXT 'GAME996' numbers BOLIDE_LAP_REC_BEST_MINUTES BOLIDE_LAP_REC_BEST_SECONDS  // ~1~:~1~
+        end
+        
+        else
+        033E: set_draw_text_position 320.0 400.0 GXT 'AME996C'  // Push
+        end
+        
+        if
+        0E3D: is_key_just_pressed 69
+            then
+            text.RemoveTextBox()
+//            jump to @BOLIDE_CHALLENGE_TRACK_CHALLENGE_BEGIN
+            010B: 0@ = player PLAYER_CHAR money
+            if
+            0@ >= 5
+                then
+                0E5E: change_player_money PLAYER_CHAR mode 2 value 5
+                jump to @BOLIDE_CHALLENGE_TRACK_CHALLENGE_BEGIN
+                else
+                text.RemoveTextBox()
+                text.ShowTextBox('INV330')
+//                wait 2000
+                32@ = 0
+                repeat
+                wait 0
+                0D52: draw_light_type 0 position 1408.6886 2100.5398 12.0156 direction 1408.7206 2101.1313 12.0156 radius 5.0 RGBA 200 200 200 affect_entity 0
+                until 32@ > 2000
+//                wait 2000
+                end
+            end
+            
+        else
+            
+        if
+        0A2A:   text_box 'GAME859' displayed
+        then
+        text.RemoveTextBox() 
+        end
+            
+        end
+    end
+    
+end     
+
+end_thread
+
+:BOLIDE_CHALLENGE_TRACK_CHALLENGE_BEGIN
+
+0776: create_objects_in_object_group "racetrack"
+
+MAIN_QUEST_TEAMMATES_REMOVE_FLAG = 1
+player.CanMove(PLAYER_CHAR,false)
+fade 0 500
+$HUD_REMOVE = 1
+wait 500
+
+0A8C: write_memory 0xC402C5 size 1 value 1 virtual_protect 0
+0A8C: write_memory 0x70305F size 1 value 45 virtual_protect 0
+0A8D: BOLIDE_CHALLENGE_FPS_LIMIT_FLAG = read_memory 0xBA6794 size 1 virtual_protect 0
+WEATHER_SYS_IDLE_FLAG = 1
+INT_ZOMBIE_OFF_FADING_AND_SHIT_FLAG = 1
+MAIN_QUEST_MUSIC_FLAG = 1
+$QUEST_TYPE = 200
+ZOMBIES_NOTSPAWN = 1
+008B: BOLIDE_HUNGER_FLAG = $ALLOW_HUNGER // (int)
+0089: BOLIDE_HUNGER_COUNT = $SATIETY_LEVEL // (float)  
+$ALLOW_HUNGER = 0
+PLAYER_NO_ITEMS_FLAG = 1
+$ONMISSION = 1
+008B: 19@ = $ALLOW_PLAYER_SLOWMOTION // (int)
+$ALLOW_PLAYER_SLOWMOTION = 0
+
+//Выключаем рендр меток радара внутри интерьеров
+0A8C: write_memory 0x05883D6 size 2 value 9333 virtual_protect 0
+0A8C: write_memory 0x0583B47 size 2 value 29557 virtual_protect 0
+0A8C: write_memory 0x0583B58 size 2 value 25205 virtual_protect 0
+
+audiostream.PerformAction(15@,STOP)
+audiostream.Release(15@)
+actor.DestroyInstantly(14@)
+
+0665: get_actor PLAYER_ACTOR model_to BOLIDE_CHALLENGE_PLAYER_SKIN
+
+:BOLIDE_RACE_RESTART
+
+select_interior 21
+0860: link_actor PLAYER_ACTOR to_interior 21
+0362: remove_actor PLAYER_ACTOR from_car_and_place_at 2530.1243 -894.6519 1023.4399
+
+//////////////////////////////////////////////////////////////////
+
+:BOLIDE_CHALLENGE_CAR_CREATE
+
+if
+model.Available(15405)
+then
+ 
+SUPPLY_QUEST_TRUCK = Car.Create(15405, 2530.502441, -894.414245, 1023.678771)
+0840: link_car SUPPLY_QUEST_TRUCK to_interior 21   
+car.Angle(SUPPLY_QUEST_TRUCK) = 122.1171
+car.SetImmunities(SUPPLY_QUEST_TRUCK,1,1,1,1,1)
+03ED: set_car SUPPLY_QUEST_TRUCK disable_flipped_explosion_when_empty 1
+
+if
+model.Available(15405)
+then
+//model.Destroy(15405)
+end
+
+else
+model.Load(15405)
+mload
+wait 0
+jump to @BOLIDE_CHALLENGE_CAR_CREATE
+end
+
+//////////////////////////////////////////////////////////////////
+
+car.Health(SUPPLY_QUEST_TRUCK) = CAR_HEALTH_MAX
+0A97: 11@ = car SUPPLY_QUEST_TRUCK struct 
+11@ += 9 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+08BD: set 12@ bit 2 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+0A97: 11@ = car SUPPLY_QUEST_TRUCK struct 
+11@ += 4 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+08BD: set 12@ bit 1 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+24@ = 100.0 
+0A97: 22@ = car SUPPLY_QUEST_TRUCK struct 
+0A8E: 23@ = 22@ + 5 // int 
+0A8C: write_memory 23@ size 4 value 24@ virtual_protect 0 
+08C3: clear 12@ bit 1 
+08C3: clear 12@ bit 2 
+0A97: 11@ = car SUPPLY_QUEST_TRUCK struct 
+11@ += 18 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+08BD: set 12@ bit 2 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 2
+
+///////////////////////////////////////////////////////////////////////////
+
+random_int 1@ 14658 14660
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+end
+
+09C7: change_player PLAYER_CHAR model_to 1@
+
+036A: put_actor PLAYER_ACTOR in_car SUPPLY_QUEST_TRUCK 
+07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 0
+camera.Restore_WithJumpCut()
+create_thread @REFR_3D
+
+BOLIDE_CHALLENGE_PLAYER_LAP_NUMBER = 1
+BOLIDE_RACE_STARTED = 0
+BOLIDE_SOME_BOT_FINISHED_FLAG = 0
+
+wait 500
+
+repeat
+wait 0
+07C0: load_path 50
+until 07C1:   path 50 available
+
+while not model.Available(#RCCAM)
+wait 0
+model.Load(#RCCAM)
+mload
+end
+
+ZOMBIEGEDDON_PATH_CAR = car.Create(#RCCAM,0.0,0.0,0.0)
+0338: set_car ZOMBIEGEDDON_PATH_CAR visibility 0
+099A: set_car ZOMBIEGEDDON_PATH_CAR collision_detection 0
+05EB: assign_car ZOMBIEGEDDON_PATH_CAR to_path 50
+06FD: set_car ZOMBIEGEDDON_PATH_CAR speed_on_path_to 0.0
+05ED: freeze_car ZOMBIEGEDDON_PATH_CAR while_on_path
+car.SetImmunities(ZOMBIEGEDDON_PATH_CAR,1,1,1,1,1)
+0840: link_car ZOMBIEGEDDON_PATH_CAR to_interior $ACTIVE_INTERIOR
+//1@ = marker.CreateAboveCar(ZOMBIEGEDDON_PATH_CAR)
+//07E0: set_marker 1@ type_to 1
+car.LockInCurrentPosition(ZOMBIEGEDDON_PATH_CAR,true)
+
+///////////////////////////////////////////////////////////////////////////
+
+for 0@ = 0 to 19
+
+:BOL_BOT_CREATE
+
+if
+model.Available(15405)
+then
+ 
+$BANDIT_MARKER[0@] = Car.Create(15405, 0.0,0.0,0.0)
+car.SetImmunities($BANDIT_MARKER[0@],1,1,1,1,1)
+03ED: set_car $BANDIT_MARKER[0@] disable_flipped_explosion_when_empty 1
+
+random_int 1@ 14658 14660
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+end
+
+if
+CARMA_VERY_BAD_FLAG == 0
+then
+$ARMY_MARKER[0@] = actor.CreateAsDriver(26,1@,$BANDIT_MARKER[0@])
+else
+$ARMY_MARKER[0@] = actor.CreateAsDriver(29,1@,$BANDIT_MARKER[0@])
+end
+
+0D10: set_actor $ARMY_MARKER[0@] alpha 255 // IF and SET
+0860: link_actor $ARMY_MARKER[0@] to_interior $ACTIVE_INTERIOR
+
+if
+model.Available(15434)
+then
+//model.Destroy(15434)
+end
+
+else
+model.Load(15434)
+mload
+wait 0
+jump to @BOL_BOT_CREATE
+end
+
+end
+
+///////////////////////////////////////////////////////////////////////////
+
+$BOLIDE_NUMBER = -1
+
+for 0@ = 0 to 19
+create_thread @BOL_BOT
+$BOLIDE_NUMBER += 1
+wait 10
+end
+
+//////////////////////////////////////////////////////////////////////////
+
+$SAVESTATUS = 1
+
+9@ = audiostream.Load("AUDIO\SOUNDS\OTHER\RACETRACK\go.wav")
+10@ = audiostream.Load("AUDIO\SOUNDS\OTHER\RACETRACK\1.wav")
+11@ = audiostream.Load("AUDIO\SOUNDS\OTHER\RACETRACK\2.wav")
+12@ = audiostream.Load("AUDIO\SOUNDS\OTHER\RACETRACK\3.wav")
+
+0459: end_thread_named 'HJ2'
+wait 0
+gosub @BOLIDE_CHALLENGE_CHECKPOINTS_ARRAY
+
+BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_NUMBER = 0
+
+018A: BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_HANDLE2 = create_checkpoint_at $TRADER_SPHERE_X[0] $TRADER_SPHERE_Y[0] $TRADER_SPHERE_Z[0]
+06D5: BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_HANDLE = create_racing_checkpoint_at $TRADER_SPHERE_X[0] $TRADER_SPHERE_Y[0] $TRADER_SPHERE_Z[0] point_to $TRADER_SPHERE_X[1] $TRADER_SPHERE_Y[1] $TRADER_SPHERE_Z[1] type 0 radius 6.0
+
+set_weather 0
+
+wait 10
+
+32@ = 0
+
+////////////////////////////////////////////////////////
+
+random_int 0@ 0 2
+if
+0@ == 0
+then
+$MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\OTHER\RACETRACK\song.wav")
+end
+
+if
+0@ == 1
+then
+$MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\OTHER\RACETRACK\song2.wav")
+end
+
+Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
+Audiostream.Loop($MUSIC_ASSHOLE, 1)
+Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1 
+
+////////////////////////////////////////////////////////
+
+fade 1 1000
+$HUD_REMOVE = 0
+
+repeat
+wait 0
+gosub @BOLIDE_CHALLENGE_DRAW_HUD
+until 32@ > 999
+
+///////////////////////////////////////////////
+
+Audiostream.Volume(12@) = $SOUNDS_VOLUME
+Audiostream.PerformAction(12@, PLAY)
+32@ = 0
+33@ = 0
+
+while 32@ < 1000
+wait 0
+
+gosub @BOLIDE_CHALLENGE_DRAW_HUD
+
+if
+33@ > 200
+then
+06FD: set_car TM_FLYING_FUCKER_HANDLE speed_on_path_to 0.99
+end
+
+03F0: enable_text_draw 1 
+033F: set_text_draw_letter_size 2.0 4.0
+0340: set_text_draw_RGBA 255 255 255 255
+if
+DIRECTFONT_INSTALLED == 1
+then    
+0340: set_text_draw_RGBA DIRECTFONT_FONT2_R DIRECTFONT_FONT2_G DIRECTFONT_FONT2_B 255
+end
+
+03E0: draw_text_behind_textures 1
+03E3: set_texture_to_be_drawn_antialiased 1
+0349: set_text_draw_font 2 
+045B: draw_text_2numbers 300.0 200.0 GXT 'CRM9' numbers 3 3
+end
+
+32@ = 0
+
+///////////////////////////////////////////////
+
+Audiostream.Volume(11@) = $SOUNDS_VOLUME
+Audiostream.PerformAction(11@, PLAY)
+32@ = 0
+
+while 32@ < 1000
+wait 0
+gosub @BOLIDE_CHALLENGE_DRAW_HUD
+03F0: enable_text_draw 1 
+033F: set_text_draw_letter_size 2.0 4.0
+0340: set_text_draw_RGBA 255 255 255 255
+if
+DIRECTFONT_INSTALLED == 1
+then    
+0340: set_text_draw_RGBA DIRECTFONT_FONT2_R DIRECTFONT_FONT2_G DIRECTFONT_FONT2_B 255
+end
+
+03E0: draw_text_behind_textures 1
+03E3: set_texture_to_be_drawn_antialiased 1
+0349: set_text_draw_font 2 
+045B: draw_text_2numbers 300.0 200.0 GXT 'CRM9' numbers 2 2
+end
+
+32@ = 0
+
+///////////////////////////////////////////////
+
+Audiostream.Volume(10@) = $SOUNDS_VOLUME
+Audiostream.PerformAction(10@, PLAY)
+32@ = 0
+
+while 32@ < 1000
+wait 0
+gosub @BOLIDE_CHALLENGE_DRAW_HUD
+03F0: enable_text_draw 1 
+033F: set_text_draw_letter_size 2.0 4.0
+0340: set_text_draw_RGBA 255 255 255 255
+if
+DIRECTFONT_INSTALLED == 1
+then    
+0340: set_text_draw_RGBA DIRECTFONT_FONT2_R DIRECTFONT_FONT2_G DIRECTFONT_FONT2_B 255
+end
+
+03E0: draw_text_behind_textures 1
+03E3: set_texture_to_be_drawn_antialiased 1
+0349: set_text_draw_font 2 
+045B: draw_text_2numbers 300.0 200.0 GXT 'CRM9' numbers 1 1
+end
+
+32@ = 0
+
+///////////////////////////////////////////////
+
+Audiostream.Volume(9@) = $SOUNDS_VOLUME
+Audiostream.PerformAction(9@, PLAY)
+
+32@ = 0
+33@ = 0
+29@ = 0
+
+player.CanMove(PLAYER_CHAR,true)
+
+create_thread @BOL_TMR
+BOLIDE_RACE_STARTED = 1
+
+while true
+wait 0
+
+gosub @BOLIDE_CHALLENGE_DRAW_HUD
+
+if
+29@ == 0
+    then
+    
+    if
+    33@ < 3000
+        then
+        
+        while 33@ < 3000
+        wait 0
+        
+        gosub @BOLIDE_CHALLENGE_DRAW_HUD
+                
+        03F0: enable_text_draw 1 
+        033F: set_text_draw_letter_size 1.0 2.0
+        0340: set_text_draw_RGBA 255 255 255 255
+        if
+        DIRECTFONT_INSTALLED == 1
+        then    
+        0340: set_text_draw_RGBA DIRECTFONT_FONT2_R DIRECTFONT_FONT2_G DIRECTFONT_FONT2_B 255
+        end
+        
+        03E0: draw_text_behind_textures 1
+        03E3: set_texture_to_be_drawn_antialiased 1
+        0349: set_text_draw_font 2
+        0342: set_text_draw_centered 1
+        0344: set_text_draw_linewidth 280.0 for_centered_text 
+        045B: draw_text_2numbers 320.0 200.0 GXT 'CRM10' numbers 1 5
+        end
+        
+        else
+        29@ = 1
+        audiostream.Release(9@)
+        audiostream.Release(10@)
+        audiostream.Release(11@)
+        audiostream.Release(12@)
+        9@ = audiostream.Load("AUDIO\SOUNDS\OTHER\RACETRACK\BolideCheckPoint.wav")
+        10@ = audiostream.Load("AUDIO\SOUNDS\OTHER\RACETRACK\BolideRaceDefeat.wav")
+        11@ = audiostream.Load("AUDIO\SOUNDS\OTHER\RACETRACK\BolideRaceWin.wav")
+        
+        if
+        $CHEATS_ON == 1
+        then    
+        05EB: assign_car SUPPLY_QUEST_TRUCK to_path 50    
+        06FD: set_car SUPPLY_QUEST_TRUCK speed_on_path_to 5.0        
+        end
+        
+        end
+    
+    end
+
+//jump to @BOLIDE_CHALLENGE_RACE_WON_CHECK
+
+if
+BOLIDE_SOME_BOT_FINISHED_FLAG == 1
+    then
+    jump to @BOLIDE_CHALLENGE_RACE_WON_CHECK
+    end
+
+if
+0E3E: is_button_just_pressed 0 button 15
+    then
+    :BOLIDE_CHALLENGE_RACE_EXIT    
+    fade 0 500
+    wait 500
+    player.CanMove(PLAYER_CHAR,false)
+    0A8C: write_memory 0xC402C5 size 1 value 0 virtual_protect 0
+    0A8C: write_memory 0xBA6794 size 1 value BOLIDE_CHALLENGE_FPS_LIMIT_FLAG virtual_protect 0
+    select_interior 0
+    0860: link_actor PLAYER_ACTOR to_interior 0
+    0362: remove_actor PLAYER_ACTOR from_car_and_place_at 1408.6677 2102.8186 12.0156
+    actor.Angle(PLAYER_ACTOR) = 0.5646
+    0D10: set_actor PLAYER_ACTOR alpha 255 // IF and SET
+    WEATHER_SYS_IDLE_FLAG = 0
+    MAIN_QUEST_TEAMMATES_REMOVE_FLAG = 2
+    0459: end_thread_named 'BOL_TMR'
+    
+    while not model.Available(BOLIDE_CHALLENGE_PLAYER_SKIN)
+    wait 0
+    model.Load(BOLIDE_CHALLENGE_PLAYER_SKIN)
+    mload
+    end
+    
+    09C7: change_player PLAYER_CHAR model_to BOLIDE_CHALLENGE_PLAYER_SKIN
+    0D10: set_actor PLAYER_ACTOR alpha 255 // IF and SET    
+    
+    MAIN_QUEST_MUSIC_FLAG = 0
+    $QUEST_TYPE = -1    
+
+    /////////////////Плавное затухание/////////////////////
+    
+    $MUSIC_FADE_NUMBER += 1
+    if
+    $MUSIC_FADE_NUMBER > 4
+        then
+        $MUSIC_FADE_NUMBER = 0 
+        end    
+    
+    0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+    $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+    
+    $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+    $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+    $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+    create_thread @MUS_FAD
+    
+    wait 1
+    
+    while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+    wait 0
+    end
+    
+    ///////////////////////////////////////////////////////    
+    
+    camera.Restore_WithJumpCut()
+    create_thread @REFR_3D
+    car.Destroy(SUPPLY_QUEST_TRUCK)
+    marker.Disable(BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_HANDLE2)
+    07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 1
+    06D6: disable_racing_checkpoint BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_HANDLE
+    0777: delete_objects_in_object_group "racetrack"
+    
+    //Включаем рендр меток радара внутри интерьеров
+    0E6A: make_nop 0x05883D6 size 2
+    0E6A: make_nop 0x0583B47 size 2
+    0E6A: make_nop 0x0583B58 size 2
+    
+    ZOMBIES_NOTSPAWN = 0
+//    $ALLOW_HUNGER = 1
+    008A: $ALLOW_HUNGER = BOLIDE_HUNGER_FLAG // (int)
+    wait 0
+    0088: $SATIETY_LEVEL = BOLIDE_HUNGER_COUNT // (float)
+    PLAYER_NO_ITEMS_FLAG = 0
+    $ONMISSION = 0
+    $SAVESTATUS = 0
+    player.CanMove(PLAYER_CHAR,true)
+    INT_ZOMBIE_OFF_FADING_AND_SHIT_FLAG = 0
+    008A: $ALLOW_PLAYER_SLOWMOTION = 19@ // (int)
+    fade 1 500
+    $HUD_REMOVE = 0
+    wait 500
+    
+    if
+    HJ2_CREATED == 1
+    then
+    create_thread @HJ2
+    end
+    
+    jump to @BOLIDE_CHALLENGE_START
+    end
+    
+if and
+0E3E: is_button_just_pressed 0 button 19
+33@ > 3000
+29@ == 1
+    then
+    010B: 0@ = player PLAYER_CHAR money
+    if
+    0@ >= 5
+        then
+        
+        /////////////////Плавное затухание/////////////////////
+    
+        $MUSIC_FADE_NUMBER += 1
+        if
+        $MUSIC_FADE_NUMBER > 4
+            then
+            $MUSIC_FADE_NUMBER = 0 
+            end    
+        
+        0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+        $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+        $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+        $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+        $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+        create_thread @MUS_FAD
+        
+        wait 1
+        
+        fade 0 500
+        $HUD_REMOVE = 0
+        wait 500                
+        
+        while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+        wait 0
+        end
+        
+        /////////////////////////////////////////////////////// 
+        
+        0E5E: change_player_money PLAYER_CHAR mode 2 value 5
+        marker.Disable(BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_HANDLE2)
+        06D6: disable_racing_checkpoint BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_HANDLE
+        
+        0873: release_path 50
+        WEATHER_SYS_IDLE_FLAG = 0
+        wait 500
+        WEATHER_SYS_IDLE_FLAG = 1
+        
+        audiostream.Release(9@)
+        audiostream.Release(10@)
+        audiostream.Release(11@)
+        0362: remove_actor PLAYER_ACTOR from_car_and_place_at 2530.1243 -894.6519 1023.4399 
+        car.Destroy(SUPPLY_QUEST_TRUCK)
+        camera.Restore_WithJumpCut()
+        create_thread @REFR_3D                
+        
+        player.CanMove(PLAYER_CHAR,false)
+        0459: end_thread_named 'BOL_TMR'
+                
+        jump to @BOLIDE_RACE_RESTART
+        else
+        text.ShowTextBox('INV331')
+        end
+    end    
+
+if and
+00FE:   actor PLAYER_ACTOR sphere 0 in_sphere $TRADER_SPHERE_X[BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_NUMBER] $TRADER_SPHERE_Y[BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_NUMBER] $TRADER_SPHERE_Z[BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_NUMBER] radius 10.0 20.0 5.0
+actor.Driving(PLAYER_ACTOR)
+    then
+    
+    Audiostream.Volume(9@) = $SOUNDS_VOLUME
+    Audiostream.PerformAction(9@, PLAY)        
+        
+    097A: play_audio_at 0.0 0.0 0.0 event 1058        
+    BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_NUMBER += 1
+    
+    if
+    BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_NUMBER > 8
+    then
+    BOLIDE_CHALLENGE_PLAYER_LAP_NUMBER += 1
+    BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_NUMBER = 0
+    
+    if
+    $CHEATS_ON == 1
+    then
+    05EC: release_car SUPPLY_QUEST_TRUCK from_path    
+    05EB: assign_car SUPPLY_QUEST_TRUCK to_path 50    
+    06FD: set_car SUPPLY_QUEST_TRUCK speed_on_path_to 5.0        
+    end
+    
+    if or
+    001C:   BOLIDE_LAP_REC_BEST_MINUTES > BOLIDE_LAP_REC_CURR_MINUTES // (int)
+    001C:   BOLIDE_LAP_REC_BEST_SECONDS > BOLIDE_LAP_REC_CURR_SECONDS // (int)    
+    then
+    gosub @BOLIDE_NEW_LAP_REC_WRITE
+    0084: BOLIDE_LAP_REC_BEST_MINUTES = BOLIDE_LAP_REC_CURR_MINUTES // (int)
+    0084: BOLIDE_LAP_REC_BEST_SECONDS = BOLIDE_LAP_REC_CURR_SECONDS // (int)
+    end
+    
+    if and
+    BOLIDE_LAP_REC_BEST_MINUTES == 0
+    BOLIDE_LAP_REC_BEST_SECONDS == 0
+    then
+    gosub @BOLIDE_NEW_LAP_REC_WRITE
+    0084: BOLIDE_LAP_REC_BEST_MINUTES = BOLIDE_LAP_REC_CURR_MINUTES // (int)
+    0084: BOLIDE_LAP_REC_BEST_SECONDS = BOLIDE_LAP_REC_CURR_SECONDS // (int)
+    end
+    
+    BOLIDE_LAP_REC_CURR_SECONDS = 0
+    BOLIDE_LAP_REC_CURR_MINUTES = 0    
+            
+    end
+    
+    if
+    BOLIDE_CHALLENGE_PLAYER_LAP_NUMBER == 6
+        then
+        BOLIDE_CHALLENGE_PLAYER_LAP_NUMBER = 5
+        marker.Disable(BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_HANDLE2)
+        06D6: disable_racing_checkpoint BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_HANDLE
+        jump to @BOLIDE_CHALLENGE_RACE_WON_CHECK
+        end
+    
+    gosub @BOLIDE_CHALLENGE_CHECKPOINTS_ARRAY
+    marker.Disable(BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_HANDLE2)
+    06D6: disable_racing_checkpoint BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_HANDLE
+    
+    0085: 0@ = BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_NUMBER // (int)
+    0@ += 1
+    
+    018A: BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_HANDLE2 = create_checkpoint_at $TRADER_SPHERE_X[BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_NUMBER] $TRADER_SPHERE_Y[BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_NUMBER] $TRADER_SPHERE_Z[BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_NUMBER]
+    
+    if
+    BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_NUMBER == 8    
+    then
+    
+    if
+    BOLIDE_CHALLENGE_PLAYER_LAP_NUMBER == 5
+    then
+    06D5: BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_HANDLE = create_racing_checkpoint_at $TRADER_SPHERE_X[TM_PLAYER_CHECKPOINT_NUMBER] $TRADER_SPHERE_Y[TM_PLAYER_CHECKPOINT_NUMBER] $TRADER_SPHERE_Z[TM_PLAYER_CHECKPOINT_NUMBER] point_to 0.0 0.0 0.0 type 1 radius 6.0
+    else
+    06D5: BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_HANDLE = create_racing_checkpoint_at $TRADER_SPHERE_X[BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_NUMBER] $TRADER_SPHERE_Y[BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_NUMBER] $TRADER_SPHERE_Z[BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_NUMBER] point_to $TRADER_SPHERE_X[0] $TRADER_SPHERE_Y[0] $TRADER_SPHERE_Z[0] type 0 radius 6.0
+    end
+    
+    else
+    06D5: BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_HANDLE = create_racing_checkpoint_at $TRADER_SPHERE_X[BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_NUMBER] $TRADER_SPHERE_Y[BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_NUMBER] $TRADER_SPHERE_Z[BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_NUMBER] point_to $TRADER_SPHERE_X[0@] $TRADER_SPHERE_Y[0@] $TRADER_SPHERE_Z[0@] type 0 radius 6.0
+    end
+    
+    end
+        
+end
+
+:BOLIDE_CHALLENGE_DRAW_HUD
+
+0A8C: write_memory 0xBA6794 size 1 value 0 virtual_protect 0
+
+///////////////////////
+
+if
+BOLIDE_RACE_STARTED == 1
+then
+
+03F0: enable_text_draw 1
+0342: set_text_draw_centered 1
+0344: set_text_draw_linewidth 500.0 for_centered_text
+081C: draw_text_outline 1 RGBA 0 0 0 255
+//0AF2: 3@ = get_float_from_ini_file "debug\timerass.ini" section "FUCK" key "X"
+//0AF2: 2@ = get_float_from_ini_file "debug\timerass.ini" section "FUCK" key "Y"
+033F: set_text_draw_letter_size 0.325 1.55
+03E0: draw_text_behind_textures 1
+
+if or
+BOLIDE_LAP_REC_BEST_MINUTES > 0
+BOLIDE_LAP_REC_BEST_SECONDS > 0
+then
+ 
+if
+BOLIDE_LAP_REC_BEST_SECONDS < 10
+then
+045B: draw_text_2numbers 570.0 152.5 GXT 'AME996B' numbers BOLIDE_LAP_REC_BEST_MINUTES BOLIDE_LAP_REC_BEST_SECONDS  // ~1~:~1~
+else
+045B: draw_text_2numbers 570.0 152.5 GXT 'GAME996' numbers BOLIDE_LAP_REC_BEST_MINUTES BOLIDE_LAP_REC_BEST_SECONDS  // ~1~:~1~
+end
+
+else
+033E: set_draw_text_position 570.0 152.5 GXT 'AME996C'  // Push
+end
+
+03F0: enable_text_draw 1
+0342: set_text_draw_centered 1
+0344: set_text_draw_linewidth 500.0 for_centered_text
+081C: draw_text_outline 1 RGBA 0 0 0 255
+033F: set_text_draw_letter_size 0.325 1.55
+03E0: draw_text_behind_textures 1
+
+if or
+BOLIDE_LAP_REC_CURR_MINUTES > 0
+BOLIDE_LAP_REC_CURR_SECONDS > 0
+then
+ 
+if
+BOLIDE_LAP_REC_CURR_SECONDS < 10
+then
+045B: draw_text_2numbers 570.0 169.5 GXT 'AME997B' numbers BOLIDE_LAP_REC_CURR_MINUTES BOLIDE_LAP_REC_CURR_SECONDS  // ~1~:~1~
+else
+045B: draw_text_2numbers 570.0 169.5 GXT 'GAME997' numbers BOLIDE_LAP_REC_CURR_MINUTES BOLIDE_LAP_REC_CURR_SECONDS  // ~1~:~1~
+end
+
+else
+033E: set_draw_text_position 570.0 169.5 GXT 'AME997C'  // Push
+end
+
+end
+
+///////////////////////
+
+03F0: enable_text_draw 1
+//0AF2: 0@ = get_float_from_ini_file "saves\ZACM.set" section "SCR" key "X_BOX"
+//0AF2: 1@ = get_float_from_ini_file "saves\ZACM.set" section "SCR" key "Y_BOX"
+//0AF2: 2@ = get_float_from_ini_file "saves\ZACM.set" section "SCR" key "X_BOX_SIZE"
+//0AF2: 3@ = get_float_from_ini_file "saves\ZACM.set" section "SCR" key "Y_BOX_SIZE"
+038E: draw_box_position 240.0 8.0 size 805.0 70.0 RGBA 0 0 0 55
+
+03F0: enable_text_draw 1
+1@ = 255
+0EC7: get_fade_alpha 2@
+0092: 2@ = float 2@ to_integer
+0062: 1@ -= 2@  // (int)
+
+2@ = 250.0
+
+//03E3: set_texture_to_be_drawn_antialiased 1
+//038D: draw_texture 1 position 320.0 224.5 size 640.0 449.0 RGBA 255 255 255 1@
+
+//02E3: 5@ = car SUPPLY_QUEST_TRUCK speed
+//5@ *= 3.9583 //ingame values to km/h (approximately)
+//0092: 5@ = float 5@ to_integer
+
+//03F0: enable_text_draw 1 
+//03E0: draw_text_behind_textures 1
+//03E3: set_texture_to_be_drawn_antialiased 1
+//0342: set_text_draw_centered 1 
+//0340: set_text_draw_RGBA 255 255 255 1@  
+//081C: draw_text_outline 1 RGBA 0 0 0 1@
+//033F: set_text_draw_letter_size 0.5915 1.7745
+//0343: set_text_draw_linewidth 640.0
+//045A: draw_text_1number 600.0 425.0 GXT 'DISP0' number 5@
+
+//////////////////////////////////////////////////////
+
+03F0: enable_text_draw 1
+0340: set_text_draw_RGBA 255 255 255 1@
+if
+DIRECTFONT_INSTALLED == 1
+then    
+0340: set_text_draw_RGBA DIRECTFONT_FONT2_R DIRECTFONT_FONT2_G DIRECTFONT_FONT2_B 1@
+end
+
+03E0: draw_text_behind_textures 1
+03E3: set_texture_to_be_drawn_antialiased 1
+0349: set_text_draw_font 2 
+033F: set_text_draw_letter_size 0.4 1.15 
+081C: draw_text_outline 1 RGBA 0 0 0 1@     
+045B: draw_text_2numbers 2@ 8.0 GXT 'CRM2' numbers BOLIDE_CHALLENGE_PLAYER_LAP_NUMBER 5
+
+2@ += 60.0
+
+//////////////////////////////////////////////////////
+
+03F0: enable_text_draw 1  
+0340: set_text_draw_RGBA 255 255 255 1@
+if
+DIRECTFONT_INSTALLED == 1
+then    
+0340: set_text_draw_RGBA DIRECTFONT_FONT2_R DIRECTFONT_FONT2_G DIRECTFONT_FONT2_B 1@
+end
+
+03E0: draw_text_behind_textures 1
+03E3: set_texture_to_be_drawn_antialiased 1
+0349: set_text_draw_font 2 
+033F: set_text_draw_letter_size 0.4 1.15 
+081C: draw_text_outline 1 RGBA 0 0 0 1@ 
+045B: draw_text_2numbers 2@ 8.0 GXT 'CRM14' numbers BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_NUMBER 8
+
+2@ += 100.0
+
+//////////////////////////////////////////////////////
+
+gosub @BOLIDE_CHALLENGE_PLAYER_POSITION_GET
+
+03F0: enable_text_draw 1
+0340: set_text_draw_RGBA 255 255 255 1@
+if
+DIRECTFONT_INSTALLED == 1
+then    
+0340: set_text_draw_RGBA DIRECTFONT_FONT2_R DIRECTFONT_FONT2_G DIRECTFONT_FONT2_B 1@
+end
+
+03E0: draw_text_behind_textures 1
+03E3: set_texture_to_be_drawn_antialiased 1
+0349: set_text_draw_font 2 
+033F: set_text_draw_letter_size 0.4 1.15 
+081C: draw_text_outline 1 RGBA 0 0 0 1@  
+045B: draw_text_2numbers 2@ 8.0 GXT 'CRM43' numbers BOLIDE_CHALLENGE_PLAYER_POSITION 21
+
+return
+
+:BOLIDE_CHALLENGE_RACE_WON_CHECK
+
+//0AD1: show_formatted_text_highpriority "Timer is %d" time 2000 $HORDE_TIMER
+//0AF1: write_int $HORDE_TIMER to_ini_file "debug\airtrack.ini" section "SectionName" key "intKey"
+player.CanMove(PLAYER_CHAR,false)
+0221: set_player PLAYER_CHAR apply_brakes_to_car 1
+
+if
+BOLIDE_SOME_BOT_FINISHED_FLAG == 1
+then
+
+MAIN_QUEST_MUSIC_FLAG = 0
+
+/////////////////////Плавное затухание/////////////////////
+    
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+    
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+    
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+    
+wait 1
+    
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+gosub @BOLIDE_CHALLENGE_DRAW_HUD
+end
+    
+///////////////////////////////////////////////////////////
+
+0AD1: show_formatted_text_highpriority "YOU LOSE! TRY BETTER AND DRIVE FASTER!" time 5000
+
+Audiostream.Volume(10@) = $SOUNDS_VOLUME
+Audiostream.PerformAction(10@, PLAY)
+
+32@ = 0
+while 32@ < 5000
+wait 0
+gosub @BOLIDE_CHALLENGE_DRAW_HUD
+end
+
+fade 0 500
+
+32@ = 0
+while 32@ < 500
+wait 0
+gosub @BOLIDE_CHALLENGE_DRAW_HUD
+end
+
+jump to @BOLIDE_CHALLENGE_RACE_EXIT
+ 
+else
+
+MAIN_QUEST_MUSIC_FLAG = 0
+
+/////////////////////Плавное затухание/////////////////////
+    
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+    
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+    
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+    
+wait 1
+    
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+gosub @BOLIDE_CHALLENGE_DRAW_HUD
+end
+    
+///////////////////////////////////////////////////////////
+
+Audiostream.Volume(11@) = $SOUNDS_VOLUME
+Audiostream.PerformAction(11@, PLAY)
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT121_GOT"
+if and
+0@ == 0
+$CHEATED_FLAG == 0
+    then                            
+    v$ACHIEVEMNT = "ACH121"
+    $ACHIEVEMENT_GOT_FLAG = 1                                    
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT121_GOT"
+    end
+
+$TEMP_XP = 20000
+008D: $TEMP_XP = integer $TEMP_XP to_float
+0069: $TEMP_XP *= $XP_COEFF // (float)
+if
+PERK_CHARISMA == 2
+then
+$TEMP_XP *= CHARISMA_LEVEL2_XP_COEFF
+end
+008C: $TEMP_XP = float $TEMP_XP to_integer
+0058: $PLAYER_XP += $TEMP_XP // (int)
+
+0AD1: show_formatted_text_highpriority "CONGRATULATIONS, YOU WON A REAL REPLICA OF THIS SUPER DUPER FAST CAR!" time 6500
+
+32@ = 0
+while 32@ < 6500
+wait 0
+gosub @BOLIDE_CHALLENGE_DRAW_HUD
+end
+
+0AD1: show_formatted_text_highpriority "YOU CAN GRAB IT FROM GARAGE AT THIS COORDINATES!" time 5000
+
+32@ = 0
+while 32@ < 5000
+wait 0
+gosub @BOLIDE_CHALLENGE_DRAW_HUD
+end
+
+fade 0 500
+
+32@ = 0
+while 32@ < 500
+wait 0
+gosub @BOLIDE_CHALLENGE_DRAW_HUD
+end
+
+player.CanMove(PLAYER_CHAR,false)
+0A8C: write_memory 0xC402C5 size 1 value 0 virtual_protect 0
+0A8C: write_memory 0xBA6794 size 1 value BOLIDE_CHALLENGE_FPS_LIMIT_FLAG virtual_protect 0
+select_interior 0
+0860: link_actor PLAYER_ACTOR to_interior 0
+0362: remove_actor PLAYER_ACTOR from_car_and_place_at 1408.6677 2102.8186 12.0156
+actor.Angle(PLAYER_ACTOR) = 0.5646
+0D10: set_actor PLAYER_ACTOR alpha 255 // IF and SET
+WEATHER_SYS_IDLE_FLAG = 0
+MAIN_QUEST_TEAMMATES_REMOVE_FLAG = 2
+create_thread @MQTMBK
+0459: end_thread_named 'BOL_TMR'
+
+while not model.Available(BOLIDE_CHALLENGE_PLAYER_SKIN)
+wait 0
+model.Load(BOLIDE_CHALLENGE_PLAYER_SKIN)
+mload
+end
+    
+09C7: change_player PLAYER_CHAR model_to BOLIDE_CHALLENGE_PLAYER_SKIN
+0D10: set_actor PLAYER_ACTOR alpha 255 // IF and SET
+
+$QUEST_TYPE = -1
+
+camera.Restore_WithJumpCut()
+create_thread @REFR_3D
+car.Destroy(SUPPLY_QUEST_TRUCK)
+marker.Disable(BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_HANDLE2)
+07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 1
+06D6: disable_racing_checkpoint BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_HANDLE
+0777: delete_objects_in_object_group "racetrack"
+
+//Включаем рендр меток радара внутри интерьеров
+0E6A: make_nop 0x05883D6 size 2
+0E6A: make_nop 0x0583B47 size 2
+0E6A: make_nop 0x0583B58 size 2
+
+ZOMBIES_NOTSPAWN = 0
+//$ALLOW_HUNGER = 1
+008A: $ALLOW_HUNGER = BOLIDE_HUNGER_FLAG // (int)
+wait 0
+0088: $SATIETY_LEVEL = BOLIDE_HUNGER_COUNT // (float)
+PLAYER_NO_ITEMS_FLAG = 0
+$ONMISSION = 0
+$SAVESTATUS = 0
+player.CanMove(PLAYER_CHAR,true)
+0221: set_player PLAYER_CHAR apply_brakes_to_car 0
+INT_ZOMBIE_OFF_FADING_AND_SHIT_FLAG = 0
+008A: $ALLOW_PLAYER_SLOWMOTION = 19@ // (int)
+fade 1 500
+$HUD_REMOVE = 0
+wait 500
+
+0@ = marker.CreateIconAndSphere(109,1467.0325, 2357.6877, 10.8203)
+
+repeat
+wait 0
+
+if
+00F0:   actor PLAYER_ACTOR 0 near_point 1467.0325 2357.6877 radius 3.0 3.0 stopped_on_foot
+    then
+    
+    marker.Disable(0@)
+    
+    player.CanMove(PLAYER_CHAR,false)
+    fade 0 500
+    $HUD_REMOVE = 1
+    wait 500
+    
+    :BOLIDE_CHALLENGE_CAR_CREATE_AS_PRIZE
+
+    if
+    model.Available(15405)
+    then
+     
+    28@ = Car.Create(15405, 1493.9377, 2366.5937, 10.2918)   
+    car.Angle(28@) = 1.0607
+    
+    if
+    model.Available(15405)
+    then
+    //model.Destroy(15405)
+    end
+    
+    else
+    model.Load(15405)
+    mload
+    wait 0
+    jump to @BOLIDE_CHALLENGE_CAR_CREATE_AS_PRIZE
+    end
+    
+    car.Health(28@) = CAR_HEALTH_MAX
+    0A97: 11@ = car 28@ struct 
+    11@ += 9 
+    0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+    08BD: set 12@ bit 2 
+    0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+    0A97: 11@ = car 28@ struct 
+    11@ += 4 
+    0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+    08BD: set 12@ bit 1 
+    0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+    24@ = 25.0 
+    0A97: 22@ = car 28@ struct 
+    0A8E: 23@ = 22@ + 5 // int 
+    0A8C: write_memory 23@ size 4 value 24@ virtual_protect 0 
+    08C3: clear 12@ bit 1 
+    08C3: clear 12@ bit 2 
+    0A97: 11@ = car 28@ struct 
+    11@ += 18 
+    0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+    08BD: set 12@ bit 2 
+    0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+    08C3: clear 12@ bit 2
+    
+    wait 1000
+    
+    036A: put_actor PLAYER_ACTOR in_car 28@
+    camera.Restore_WithJumpCut()
+    create_thread @REFR_3D
+    
+    player.CanMove(PLAYER_CHAR,true)
+    fade 1 500
+    $HUD_REMOVE = 0
+    wait 500
+    
+    end
+
+until false
+
+end
+
+end_thread
+
+:BOLIDE_CHALLENGE_CHECKPOINTS_ARRAY
+  
+$TRADER_SPHERE_X[0] = 2296.3289
+$TRADER_SPHERE_Y[0] = -1055.5244
+$TRADER_SPHERE_Z[0] = 1023.4376
+  
+$TRADER_SPHERE_X[1] = 2272.9954
+$TRADER_SPHERE_Y[1] = -1433.6804
+$TRADER_SPHERE_Z[1] = 1023.4424
+  
+$TRADER_SPHERE_X[2] = 2092.552
+$TRADER_SPHERE_Y[2] = -1730.936
+$TRADER_SPHERE_Z[2] = 1023.4407
+  
+$TRADER_SPHERE_X[3] = 2274.5886
+$TRADER_SPHERE_Y[3] = -1553.4886
+$TRADER_SPHERE_Z[3] = 1023.4397
+  
+$TRADER_SPHERE_X[4] = 2361.1008
+$TRADER_SPHERE_Y[4] = -1719.0873
+$TRADER_SPHERE_Z[4] = 1023.4402
+  
+$TRADER_SPHERE_X[5] = 2776.5566
+$TRADER_SPHERE_Y[5] = -1894.8971
+$TRADER_SPHERE_Z[5] = 1023.4402
+  
+$TRADER_SPHERE_X[6] = 2868.8821
+$TRADER_SPHERE_Y[6] = -1555.3987
+$TRADER_SPHERE_Z[6] = 1023.4399
+  
+$TRADER_SPHERE_X[7] = 2798.2542
+$TRADER_SPHERE_Y[7] = -968.1177
+$TRADER_SPHERE_Z[7] = 1023.4399
+  
+$TRADER_SPHERE_X[8] = 2539.0105
+$TRADER_SPHERE_Y[8] = -896.3536
+$TRADER_SPHERE_Z[8] = 1023.4399
+
+return
+
+:BOLIDE_CHALLENGE_PLAYER_POSITION_GET
+
+3@ = 21
+
+////////////////////////////////////////////////////////////////////////////
+
+for 0@ = 0 to 19
+
+if
+056E:   car $BANDIT_MARKER[0@] defined
+    then
+    
+    if
+    not car.Wrecked($BANDIT_MARKER[0@])
+        then
+        
+        /////////////////////////////////////////////////////////////////////////////
+        
+        if
+        001F:   BOLIDE_CHALLENGE_PLAYER_LAP_NUMBER > $ARMY_MARKER_FLAG[0@] // (int)
+            then
+            3@ -= 1
+            else
+                
+            /////////////////////
+                
+            if
+            07D6:   BOLIDE_CHALLENGE_PLAYER_LAP_NUMBER == $ARMY_MARKER_FLAG[0@] // (int)
+                then                    
+                if
+                001F:   BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_NUMBER > $BANDIT_MARKER_FLAG[0@] // (int)
+                    then
+                    3@ -= 1
+                    else
+                        
+                    if
+                    07D6:   BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_NUMBER == $BANDIT_MARKER_FLAG[0@] // (int)
+                    then
+                    
+                    car.StorePos(SUPPLY_QUEST_TRUCK,4@,5@,6@)
+                    050A: 7@ = distance_between_XYZ 4@ 5@ 6@ and_XYZ $TRADER_SPHERE_X[BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_NUMBER] $TRADER_SPHERE_Y[BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_NUMBER] $TRADER_SPHERE_Z[BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_NUMBER]
+                    car.StorePos($BANDIT_MARKER[0@],4@,5@,6@)
+                    050A: 8@ = distance_between_XYZ 4@ 5@ 6@ and_XYZ $TRADER_SPHERE_X[BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_NUMBER] $TRADER_SPHERE_Y[BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_NUMBER] $TRADER_SPHERE_Z[BOLIDE_CHALLENGE_PLAYER_CHECKPOINT_NUMBER]
+                        
+                    if
+                    0025:   8@ > 7@  // (float)
+                        then
+                        3@ -= 1
+                        end
+                        
+                    end
+                        
+                    end                                        
+                end
+                    
+            /////////////////////
+                
+            end
+            
+        /////////////////////////////////////////////////////////////////////////////    
+            
+        end
+    
+    end    
+
+end
+
+//////////////////////////////////////////////////////////////////////////// 
+
+0085: BOLIDE_CHALLENGE_PLAYER_POSITION = 3@ // (int)
+
+return
+
+:BOLIDE_NEW_LAP_REC_WRITE
+0AF1: write_int BOLIDE_LAP_REC_CURR_MINUTES to_ini_file "saves/ZACM.set" section "SCR" key "BOLIDE_REC_MINS"
+0AF1: write_int BOLIDE_LAP_REC_CURR_SECONDS to_ini_file "saves/ZACM.set" section "SCR" key "BOLIDE_REC_SECS"
+return
+
+:BOL_TMR
+thread 'BOL_TMR'
+
+0AF0: BOLIDE_LAP_REC_BEST_MINUTES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "BOLIDE_REC_MINS"
+0AF0: BOLIDE_LAP_REC_BEST_SECONDS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "BOLIDE_REC_SECS"
+if
+BOLIDE_LAP_REC_BEST_MINUTES < -1
+then
+BOLIDE_LAP_REC_BEST_MINUTES = 0
+0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "BOLIDE_REC_MINS"
+end
+if
+BOLIDE_LAP_REC_BEST_SECONDS < -1
+then
+BOLIDE_LAP_REC_BEST_SECONDS = 0
+0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "BOLIDE_REC_SECS"
+end
+
+repeat
+wait 0
+until BOLIDE_RACE_STARTED == 1
+
+BOLIDE_LAP_REC_CURR_MINUTES = 0
+BOLIDE_LAP_REC_CURR_SECONDS = 0
+
+:BOL_TIME_CHECK
+wait 0        
+if or
+$GAME_SPEED == 1.0
+$GAME_SPEED == 0.2
+jf @BOL_TIME_CHECK
+
+if
+32@ > 999
+jf @BOL_TIME_CHECK
+
+32@ = 0
+
+BOLIDE_LAP_REC_CURR_SECONDS += 1
+
+if
+BOLIDE_LAP_REC_CURR_SECONDS > 59
+then
+BOLIDE_LAP_REC_CURR_SECONDS = 0
+BOLIDE_LAP_REC_CURR_MINUTES += 1
+end
+
+jump to @BOL_TIME_CHECK  

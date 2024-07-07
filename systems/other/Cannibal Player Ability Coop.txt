@@ -1,0 +1,450 @@
+const
+PLAYER_CANNIBAL_EAT_CORPSE_FLAG = 28@
+PLAYER_CANNIBAL_DEGRADE_COUNTER = 29@
+PLAYER_CANNIBAL_EATED_MODEL = 30@
+end
+
+:CAN_PL2
+thread 'CAN_PL2'
+
+:CAN_PLA_START2
+
+while true
+wait 0
+
+while FIGHT_CLUB_FLAG == 1
+wait 0
+end
+
+repeat
+wait 0
+until 0800:   in_two_players_mode
+
+if and
+056D:   actor COOP_ACTOR defined
+not COOP_ACTOR == -69
+then
+
+if and
+00E1:   player 1 pressed_key 11
+80E1: not  player 1 pressed_key 4
+    then
+    
+    gosub @CANNIBAL_PLAYER_ABILITY_GET_CORPSE_PRE_COOP
+    if
+    13@ == 1
+    jf @CAN_PLA_START2
+    
+    0@ = 0
+    
+    repeat
+    wait 0
+    
+    gosub @CANNIBAL_PLAYER_ABILITY_GET_CORPSE_PRE_TEXT_COOP
+    
+    if and
+    00E1:   player 1 pressed_key 11
+    80E1: not  player 1 pressed_key 4
+    056D:   actor 3@ defined
+        then
+        0@ += 1
+        else
+        break
+        end
+        
+    until 0@ >= 56
+    
+    if
+    0@ >= 56
+        then
+        PLAYER_CANNIBAL_EAT_CORPSE_FLAG = 0
+        gosub @CANNIBAL_PLAYER_COOP_GET_FOOD_FROM_CORPSE
+        end
+    end
+
+if and
+00E1:   player 1 pressed_key 4
+00E1:   player 1 pressed_key 11
+not $SURVIVOR_SATIETY[COOP_ACTOR_SURV_NUM] > 599.0
+not PLAYER_NO_ITEMS_FLAG == 1
+    then
+    
+    gosub @CANNIBAL_PLAYER_ABILITY_GET_CORPSE_PRE_COOP
+    if
+    13@ == 1
+    jf @CAN_PLA_START2
+    
+    0@ = 0
+    
+    repeat
+    wait 0
+    
+    gosub @CANNIBAL_PLAYER_ABILITY_GET_CORPSE_PRE_TEXT2_COOP
+    
+    if and
+    00E1:   player 1 pressed_key 4
+    00E1:   player 1 pressed_key 11
+    056D:   actor 3@ defined
+        then
+        0@ += 1
+        else
+        break
+        end
+        
+    until 0@ >= 56
+    
+    if
+    0@ >= 56
+        then
+        PLAYER_CANNIBAL_EAT_CORPSE_FLAG = 1
+        gosub @CANNIBAL_PLAYER_COOP_GET_FOOD_FROM_CORPSE
+        end
+    end
+    
+end    
+
+end
+
+end_thread
+
+:CANNIBAL_PLAYER_COOP_GET_FOOD_FROM_CORPSE
+if
+player.Controllable(1)
+    then
+    if and
+    not Actor.Dead(COOP_ACTOR)
+    not Actor.Driving(COOP_ACTOR) 
+    044B:   actor COOP_ACTOR on_foot 
+    09E7:   player 1 not_frozen
+    02A0:   actor COOP_ACTOR stopped
+    8597:   actor COOP_ACTOR crouching
+    not CAMP_RAID_FLAG == 1
+        then    
+        actor.StorePos(COOP_ACTOR,0@,1@,2@)
+        if
+        0AE1: 3@ = random_actor_near_point 0@ 1@ 2@ in_radius 2.0 find_next 0 pass_deads 0
+            then
+            if
+            056D:   actor 3@ defined
+                then
+                089F: get_actor 3@ pedtype_to 0@
+                0665: get_actor 3@ model_to PLAYER_CANNIBAL_EATED_MODEL
+                if and
+                actor.Dead(3@)
+                not 0@ == 23
+                not PLAYER_CANNIBAL_EATED_MODEL == 14732
+                    then
+                    0A96: 11@ = actor 3@ struct 
+                    11@ += 9 
+                    0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0            
+                    if
+                    not 12@ == 69
+                        then
+                        
+                        0ECC: dont_delete_char_until_time 3@ 5000                    
+                        
+                        while not animation.Available("BOMBER")
+                        wait 0
+                        animation.Load("BOMBER")
+                        end
+                        
+                        06AB: set_actor COOP_ACTOR all_weapons_hidden 1
+                        0992: set_player 1 weapons_scrollable 0                    
+                        
+                        if
+                        PLAYER_CANNIBAL_EAT_CORPSE_FLAG == 0
+                        then
+                        4@ = Audiostream.Load3d("AUDIO\SOUNDS\CannibalMeatSlice.mp3") 
+                        0605: actor COOP_ACTOR perform_animation "BOM_PLANT" IFP "BOMBER" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1
+                        else
+                        4@ = Audiostream.Load3d("AUDIO\SOUNDS\CannibalEat.mp3")                    
+                        
+                        0615: define_AS_pack_begin 5@
+                        0605: actor -1 perform_animation "BOM_Plant_In" IFP "BOMBER" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1
+                        0605: actor -1 perform_animation "BOM_Plant_Loop" IFP "BOMBER" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time 4800
+                        0616: define_AS_pack_end 5@
+                        0618: assign_actor COOP_ACTOR to_AS_pack 5@
+                        061B: remove_references_to_AS_pack 5@
+                        
+                        end
+                                            
+                        Audiostream.LinkToActor(4@, COOP_ACTOR)
+                        Audiostream.Loop(4@, 0)
+                        Audiostream.PerformAction(4@, PLAY)
+                        Audiostream.Volume(4@) = $SOUNDS_VOLUME
+                        
+                        32@ = 0
+            
+                        repeat
+                        wait 0
+                        
+                        if
+                        PLAYER_CANNIBAL_EAT_CORPSE_FLAG == 0
+                        then
+                        
+                        if and
+                        056D:   actor 3@ defined
+                        0E45: frame_mod 30
+                        then
+                        actor.StorePos(3@,0@,1@,2@)
+                        09B8: create_blood_gush_at 0@ 1@ 2@ with_offset 0.0 1.0 -1.0 density 400 on_actor COOP_ACTOR
+                        end
+                         
+                        else
+                        
+                        if and
+                        056D:   actor 3@ defined
+                        0E45: frame_mod 15
+                        then
+                        actor.StorePos(3@,0@,1@,2@)
+                        09B8: create_blood_gush_at 0@ 1@ 2@ with_offset 0.0 1.0 -0.5 density 400 on_actor COOP_ACTOR
+                        end
+                        
+                        end
+                        
+                        if
+                        0E3E: is_button_just_pressed 1 button 15
+                        then
+                        wait 0
+                        0687: clear_actor COOP_ACTOR task
+                        jump to @CANNIBAL_PLAYER_ABILITY_CANCEL_COOP
+                        end                                          
+                        
+                        if or
+                        actor.Animation(COOP_ACTOR) == "BOM_PLANT"
+                        actor.Animation(COOP_ACTOR) == "BOM_Plant_In"
+                        actor.Animation(COOP_ACTOR) == "BOM_Plant_Loop"
+                            then
+                            else
+                            :CANNIBAL_PLAYER_ABILITY_CANCEL_COOP
+                            06AB: set_actor COOP_ACTOR all_weapons_hidden 0
+                            0992: set_player 1 weapons_scrollable 1
+                            04EF: release_animation "BOMBER"
+                            Audiostream.PerformAction(4@, STOP)
+                            Audiostream.Release(4@)            
+                            return
+                            end
+                            
+                        if and
+                        32@ > 2550
+                        PLAYER_CANNIBAL_EAT_CORPSE_FLAG == 0
+                            then
+                            break
+                            end
+                            
+                        if and
+                        32@ > 5100
+                        PLAYER_CANNIBAL_EAT_CORPSE_FLAG == 1
+                            then
+                            break
+                            end    
+                        
+                        until false                                    
+                        
+                        06AB: set_actor COOP_ACTOR all_weapons_hidden 0
+                        0992: set_player 1 weapons_scrollable 1
+                        04EF: release_animation "BOMBER"
+                        
+                        Audiostream.PerformAction(4@, STOP)
+                        Audiostream.Release(4@)
+                        
+                        if
+                        PLAYER_CANNIBAL_EAT_CORPSE_FLAG == 0
+                        then                    
+                        $SURVIVOR_BANKA_COUNT[COOP_ACTOR_SURV_NUM] += 1
+                        0A8C: write_memory 11@ size 1 value 69 virtual_protect 0
+                        text.ShowTextBox('INV339')                                                                    
+                        else
+                        $SURVIVOR_SATIETY[COOP_ACTOR_SURV_NUM] = 600.0                    
+                        0A8C: write_memory 11@ size 1 value 69 virtual_protect 0
+                        text.ShowTextBox('INV340')
+                        
+                        if
+                        056D:   actor 3@ defined
+                        then
+                        actor.PutAt(3@,0.0,0.0,0.0)
+                        end
+                                            
+                        end
+                        
+                        //////////////////
+                        
+                        PLAYER_CANNIBAL_DEGRADE_COUNTER += 1
+                        
+                        if and
+                        PLAYER_CANNIBAL_EATED_MODEL >= 19130
+                        PLAYER_CANNIBAL_EATED_MODEL < 19149
+                        then
+                        PLAYER_CANNIBAL_DEGRADE_COUNTER += 1
+                        end
+                        
+                        if
+                        PLAYER_CANNIBAL_DEGRADE_COUNTER >= 8
+                        then
+                        create_thread @CAN_PRK
+                        PLAYER_CANNIBAL_DEGRADE_COUNTER = 0
+                        end
+                        
+                        if and
+                        PLAYER_CANNIBAL_EATED_MODEL == 14555
+                        PLAYER_CANNIBAL_EAT_CORPSE_FLAG == 1 
+                        then
+                        create_thread @PUKECSY
+                        end
+                        
+                        if
+                        KARMA_SYS_ON_FLAG == 1
+                        then
+                        
+                        if
+                        CARMA_VERY_BAD_FLAG == 0
+                        then
+                        CARMA_BAD_POINTS += 2
+                        Audiostream.Loop($KARMA_BAD,0)
+                        Audiostream.PerformAction($KARMA_BAD, PLAY)
+                        Audiostream.Volume($KARMA_BAD) = $SOUNDS_VOLUME
+                        CARMA_GOOD_POINTS -= 1
+                        
+                        gosub @ANY_SURV_SAW_THAT_SHIT_CANNIBAL_COOP
+                        
+                        else
+                        CARMA_GOOD_POINTS += 2
+                        Audiostream.Loop($KARMA_BAD,0)
+                        Audiostream.PerformAction($KARMA_BAD, PLAY)
+                        Audiostream.Volume($KARMA_BAD) = $SOUNDS_VOLUME
+                        CARMA_BAD_POINTS -= 1
+                        end
+                        
+                        end
+                        
+                        //////////////////
+                        
+                        end            
+                    end
+                end
+            end
+        end
+    end
+
+return
+
+:CANNIBAL_PLAYER_ABILITY_GET_CORPSE_PRE_TEXT_COOP
+6@ = 100
+0085: 5@ = 0@ // (int)
+0093: 5@ = integer 5@ to_float
+5@ *= 1.78571428571
+0092: 5@ = float 5@ to_integer
+0062: 6@ -= 5@  // (int)
+text.Show1Number('GME1416',6@,10,1)
+0D54: draw_corona_with_extra_params_texture 0 color 255 0 0 155 on_entity 0 at 1@ 2@ 4@ size 0.5 far_clip 25.0 near_clip 0.01 flare 0 enable_reflection 1 check_obstacles 0 flash_while_fading 0 fade_speed 15.0 only_from_below 0
+return
+
+:CANNIBAL_PLAYER_ABILITY_GET_CORPSE_PRE_TEXT2_COOP
+6@ = 100
+0085: 5@ = 0@ // (int)
+0093: 5@ = integer 5@ to_float
+5@ *= 1.78571428571
+0092: 5@ = float 5@ to_integer
+0062: 6@ -= 5@  // (int)
+text.Show1Number('GME1417',6@,10,1)
+0D54: draw_corona_with_extra_params_texture 0 color 255 0 0 155 on_entity 0 at 1@ 2@ 4@ size 0.5 far_clip 25.0 near_clip 0.01 flare 0 enable_reflection 1 check_obstacles 0 flash_while_fading 0 fade_speed 15.0 only_from_below 0
+return                     
+
+:ANY_SURV_SAW_THAT_SHIT_CANNIBAL_COOP
+
+for 0@ = 0 to 4
+
+if and
+803B: not  0@ == 18@  // (int)
+056D:   actor $SURVIVER[0@] defined
+    then
+    
+    0665: get_actor $SURVIVER[0@] model_to 27@    
+    if and
+    27@ >= 19130
+    27@ < 19149
+    then    
+    else     
+    
+    if or
+    0364:   actor $SURVIVER[0@] spotted_actor COOP_ACTOR
+    0364:   actor COOP_ACTOR spotted_actor $SURVIVER[0@]
+        then
+//        0AD1: show_formatted_text_highpriority "SURV: %d is spotted dead SURV: %d" time 2000 0@ 18@
+        $SURVIVOR_SAW_SHIT[0@] = 1
+        end
+        
+    end
+    
+    end
+    
+end
+
+:ANY_SURV_SAW_THAT_SHIT_CANNIBAL_COOP2
+
+for 0@ = 0 to 9
+
+if
+056D:   actor $CAMP_ACTOR[0@] defined
+then
+if or
+0364:   actor $CAMP_ACTOR[0@] spotted_actor COOP_ACTOR
+0364:   actor COOP_ACTOR spotted_actor $CAMP_ACTOR[0@]
+    then
+//    0AD1: show_formatted_text_highpriority "CAMP_ACTOR: %d is spotted dead SURV: %d" time 2000 0@ 18@
+    CAMP_SAW_SHIT = 1
+    end
+    
+end
+
+end
+
+return
+
+:CANNIBAL_PLAYER_ABILITY_GET_CORPSE_PRE_COOP
+
+13@ = 0
+
+if
+player.Controllable(1)
+    then
+    if and
+    not Actor.Dead(COOP_ACTOR)
+    not Actor.Driving(COOP_ACTOR) 
+    044B:   actor COOP_ACTOR on_foot 
+    09E7:   player PLAYER_CHAR not_frozen
+    02A0:   actor COOP_ACTOR stopped
+    8597:   actor COOP_ACTOR crouching
+    not CAMP_RAID_FLAG == 1
+        then    
+        actor.StorePos(COOP_ACTOR,0@,1@,2@)
+        if
+        0AE1: 3@ = random_actor_near_point 0@ 1@ 2@ in_radius 2.0 find_next 0 pass_deads 0
+            then
+            if
+            056D:   actor 3@ defined
+                then
+                089F: get_actor 3@ pedtype_to 0@
+                0665: get_actor 3@ model_to PLAYER_CANNIBAL_EATED_MODEL
+                if and
+                actor.Dead(3@)
+                not 0@ == 23
+                not PLAYER_CANNIBAL_EATED_MODEL == 14732
+                    then
+                    0A96: 11@ = actor 3@ struct 
+                    11@ += 9 
+                    0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0            
+                    if
+                    not 12@ == 69
+                        then
+                        13@ = 1
+                        0ECC: dont_delete_char_until_time 3@ 5000 
+                        0889: store_actor 3@ center_of_body_position_to 1@ 2@ 4@                      
+                        end
+                    end
+                end
+            end
+        end
+    end
+                        
+return                      

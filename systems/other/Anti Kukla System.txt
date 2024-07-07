@@ -1,0 +1,695 @@
+const
+ANTIKUKLA_ACTOR = 0@
+ANTIKUKLA_DO_NOT_CAR_CHECKS_FLAG = 5@
+ANTIKUKLA_DO_POSHEL_NAHUI_FROM_CAR_MOMENT = 6@
+ANTIKUKLA_DO_POSHEL_NAHUI_FROM_CAR_SEAT_NUM = 7@
+ANTIKUKLA_WAIT_TIME1 = 10@
+ANTIKUKLA_WAIT_TIME2 = 11@
+ANTIKUKLA_DEBUG_ON = 8@
+ANTIKUKLA_DEBUG_PED_STATE = 9@
+ANTIKUKLA_STANDING_ON_CAR_FLAG = 12@
+end
+
+:ANTKUKL
+thread 'ANTKUKL'
+
+if
+UNITED_MAP == 0
+then
+ANTIKUKLA_WAIT_TIME1 = 1000
+ANTIKUKLA_WAIT_TIME2 = 2000
+else
+ANTIKUKLA_WAIT_TIME1 = 2000
+ANTIKUKLA_WAIT_TIME2 = 4000
+end
+
+//32@ = 0
+//        
+//while true
+//wait 0
+//        
+//if
+//056D:   actor ANTIKUKLA_ACTOR defined
+//then
+//0ECE: get_time_char_is_dead ANTIKUKLA_ACTOR store_to 1@
+//0EFF: get_char_simplest_active_task ANTIKUKLA_ACTOR id_to 2@ pointer_to 3@
+//0AD3: 10@v = format "time %d" 1@
+//0AF1: write_int 1@ to_ini_file "debug\task.ini" section "TIME_AFTER_CHAR_DEATH" key 10@v
+//0AD3: 20@v = format "task %d" 1@
+//0AF1: write_int 2@ to_ini_file "debug\task.ini" section "TASK_AFTER_CHAR_DEATH" key 20@v
+//else
+//end_thread
+//end        
+//        
+//if and
+//0AB0:   key_pressed 48
+//$CHEATS_ON == 1
+//then
+//0AD1: show_formatted_text_highpriority "time after death %d/1000, task id %d" time 250 1@ 2@
+//end
+//        
+//end
+
+//0AD1: show_formatted_text_highpriority "PED HANDLE %d, DO NOT USE CAR CHECKS %d" time 5000 ANTIKUKLA_ACTOR ANTIKUKLA_DO_NOT_CAR_CHECKS_FLAG
+
+if
+056D:   actor ANTIKUKLA_ACTOR defined
+    then    
+    0A96: 1@ = ped ANTIKUKLA_ACTOR struct
+    1@ += 0x568
+    0A8D: ANTIKUKLA_STANDING_ON_CAR_FLAG = read_memory 1@ size 1 virtual_protect 0
+    
+//    0470: 1@ = actor ANTIKUKLA_ACTOR current_weapon    
+//    if or
+//    1@ == 37
+//    1@ == 41
+//    1@ == 42
+//    1@ == 114
+//    1@ == 148
+//    1@ == 180
+//    1@ == 210
+//        then
+//        0555: remove_weapon 1@ from_actor ANTIKUKLA_ACTOR
+//        end
+        
+    if or
+    844B: not actor ANTIKUKLA_ACTOR on_foot
+    0449:  actor ANTIKUKLA_ACTOR in_a_car    
+        then             
+        if and
+        847A: not  actor ANTIKUKLA_ACTOR driving_bike
+        not ANTIKUKLA_DO_NOT_CAR_CHECKS_FLAG == 1
+            then        
+            054A: set_actor ANTIKUKLA_ACTOR can_be_shot_in_a_car 0        
+            if
+            ANTIKUKLA_DO_POSHEL_NAHUI_FROM_CAR_MOMENT == 1
+                then
+                1@ = actor.CurrentCar(ANTIKUKLA_ACTOR)
+                create_thread @ANTKUK3 ANTIKUKLA_ACTOR 1@ ANTIKUKLA_DO_POSHEL_NAHUI_FROM_CAR_SEAT_NUM
+                end        
+            end
+        end
+    end           
+
+wait 50
+
+//ƒобро пожаловать в самую совершенную систему убийства полуживых педокукл!
+
+:ANTKUKLA_FUCK_GO_BACK
+
+while 056D:   actor ANTIKUKLA_ACTOR defined
+wait 0
+
+if and
+ANTIKUKLA_DEBUG_ON == 0
+$CHEATS_ON == 1        
+    then
+    if
+    0AB0:   key_pressed 46 //позвол€ем при f4 на delete включить показ дебаг мода антикуклы       
+        then
+        if
+        056D:   actor ANTIKUKLA_ACTOR defined
+            then
+            if
+            00F2:   actor ANTIKUKLA_ACTOR near_actor PLAYER_ACTOR radius 5.0 5.0 sphere 0
+                then
+                ANTIKUKLA_DEBUG_ON = 1
+                end
+            end
+        end
+    end
+
+if
+056D:   actor ANTIKUKLA_ACTOR defined
+    then
+    0EFF: get_char_simplest_active_task ANTIKUKLA_ACTOR id_to 1@ pointer_to 2@
+    
+    if
+    ANTIKUKLA_DEBUG_ON == 1        
+        then
+        $PHRASES_OFF_FLAG = 1
+        0EAB: get_char_pedstate ANTIKUKLA_ACTOR store_to ANTIKUKLA_DEBUG_PED_STATE
+        if and
+        0AB0:   key_pressed 49
+        $CHEATS_ON == 1
+            then
+            0AD1: show_formatted_text_highpriority "task %d, state %d" time 2000 1@ ANTIKUKLA_DEBUG_PED_STATE
+            end
+        end            	
+    
+    if and
+    044B:  actor ANTIKUKLA_ACTOR on_foot //игнорируем все нахуй если пед в транспорте
+    8449: not  actor ANTIKUKLA_ACTOR in_a_car //игнорируем все нахуй если пед в транспорте
+    not actor.Driving(ANTIKUKLA_ACTOR) //игнорируем все нахуй если пед в транспорте (2)
+    895D: not  actor ANTIKUKLA_ACTOR stuck_under_car //игнорируем все нахуй если пед застр€л под машиной
+    84AD: not  actor ANTIKUKLA_ACTOR in_water //игнорируем все нахуй если пед находитс€ в воде
+    not ANTIKUKLA_STANDING_ON_CAR_FLAG == 1 //игнорируем все нахуй если пед стоит на транспорте
+    not 1@ == 241 //»Ћ» находитс€ в воздухе
+    not 1@ == 242 //»Ћ» приземл€етс€
+        then
+        
+        if
+        1@ == 834 //»Ћ» вываливаетс€ из авто
+        then
+        jump to @ANTKUKLA_FUCK_GO_BACK
+        end                                
+        
+        if
+        056D:   actor ANTIKUKLA_ACTOR defined
+        then
+        0ECE: get_time_char_is_dead ANTIKUKLA_ACTOR store_to 1@
+        else
+        end_thread
+        end
+        
+        if
+        ANTIKUKLA_DEBUG_ON == 1        
+            then
+            $PHRASES_OFF_FLAG = 1
+            0EAB: get_char_pedstate ANTIKUKLA_ACTOR store_to ANTIKUKLA_DEBUG_PED_STATE
+            if and
+            0AB0:   key_pressed 50
+            $CHEATS_ON == 1
+                then
+                0AD1: show_formatted_text_highpriority "time after dead %d, state %d" time 2000 1@ ANTIKUKLA_DEBUG_PED_STATE
+                end
+            end                
+        
+        //”биваем таском если пед не начал выполн€ть таск смерти сам
+        if and
+        1@ == -1 //пед не начал умирать ¬ќќЅў≈
+        not actor.Animation(ANTIKUKLA_ACTOR) == "FLOOR_hit"
+        not actor.Animation(ANTIKUKLA_ACTOR) == "FLOOR_hit_f"
+        not actor.Animation(ANTIKUKLA_ACTOR) == "KO_skid_back"
+        not actor.Animation(ANTIKUKLA_ACTOR) == "KO_skid_front"
+        not actor.Animation(ANTIKUKLA_ACTOR) == "KO_spin_L"
+        not actor.Animation(ANTIKUKLA_ACTOR) == "KO_spin_R"
+        not actor.Animation(ANTIKUKLA_ACTOR) == "KO_shot_face"
+        then
+        
+        if
+        actor.Animation(ANTIKUKLA_ACTOR) == "crckdeth1"
+        then
+        jump to @ANTKUKLA_FUCK_GO_BACK
+        end
+        
+        gosub @ANTIKUKLA_PLAY_RANDOM_DEATH_ANIM                
+        wait 250
+        
+        if and
+        ANTIKUKLA_DEBUG_ON == 1
+        056D:   actor ANTIKUKLA_ACTOR defined        
+            then
+            $PHRASES_OFF_FLAG = 1
+            0EAB: get_char_pedstate ANTIKUKLA_ACTOR store_to ANTIKUKLA_DEBUG_PED_STATE
+            if
+            $CHEATS_ON == 1
+                then
+                0AD1: show_formatted_text_highpriority "YЧЬҐaeѓ ¶ackoѓ ecЮЬ £eЪ Ѓe Ѓa§aЮ Ґ®£oЮЃђ¶© ¶ack cѓep¶Ь caѓ, time %d, state %d" time 2000 1@ ANTIKUKLA_DEBUG_PED_STATE
+                end
+            end
+                
+        if
+        056D:   actor ANTIKUKLA_ACTOR defined
+            then
+            0ECE: get_time_char_is_dead ANTIKUKLA_ACTOR store_to 1@
+            if
+            1@ == -1 //пед не начал умирать ¬ќќЅў≈, все еще
+                then
+                //—начала переводим педа в idle состо€ние чтобы он смог нормально умереть если первое не помогло
+                
+                if
+                ANTIKUKLA_DEBUG_ON == 1        
+                    then
+                    $PHRASES_OFF_FLAG = 1
+                    0EAB: get_char_pedstate ANTIKUKLA_ACTOR store_to ANTIKUKLA_DEBUG_PED_STATE
+                    if
+                    $CHEATS_ON == 1
+                        then
+                        0AD1: show_formatted_text_highpriority "£eЪ Ѓe Ѓa§aЮ yѓЬpa¶© ЛOOАКE, Ґce e°e ~n~CЃa§aЮa £epeҐoЪЬѓ £eЪa Ґ idle coc¶oђЃЬe §¶oЧ® oЃ cѓoЩ ЃopѓaЮ©Ѓo yѓepe¶© ecЮЬ £epҐoe Ѓe £oѓoЩЮo, time %d, state %d" time 2000 1@ ANTIKUKLA_DEBUG_PED_STATE
+                        end
+                    end
+                
+                0792: disembark_instantly_actor ANTIKUKLA_ACTOR
+                gosub @ANTIKUKLA_PLAY_RANDOM_DEATH_ANIM                                                                
+                wait 250
+                if
+                856D: not  actor ANTIKUKLA_ACTOR defined
+                    then
+                    end_thread
+                    end
+                end
+            else
+            end_thread
+            end        
+        end                                        
+               
+        if and 
+        001D: 1@ > ANTIKUKLA_WAIT_TIME1 
+        801D: 1@ < ANTIKUKLA_WAIT_TIME2                   
+            then
+            //прошла секунда, пед все еще не сдох, но сдыхает нормально
+            if
+            056D:   actor ANTIKUKLA_ACTOR defined
+                then
+                0EFF: get_char_simplest_active_task ANTIKUKLA_ACTOR id_to 1@ pointer_to 2@
+                
+                if
+                ANTIKUKLA_DEBUG_ON == 1        
+                    then
+                    $PHRASES_OFF_FLAG = 1
+                    0EAB: get_char_pedstate ANTIKUKLA_ACTOR store_to ANTIKUKLA_DEBUG_PED_STATE
+                    if
+                    $CHEATS_ON == 1
+                        then
+                        0AD1: show_formatted_text_highpriority "£po•Юa cekyЃЪa, £eЪ Ґce e°e Ѓe cЪox, Ѓo cЪ®xae¶ ЃopѓaЮ©Ѓo, task %d, state %d" time 2000 1@ ANTIKUKLA_DEBUG_PED_STATE
+                        end
+                    end
+                                                       
+                if and
+                not 1@ == 217
+                not 1@ == 218
+                not actor.Animation(ANTIKUKLA_ACTOR) == "FLOOR_hit"
+                not actor.Animation(ANTIKUKLA_ACTOR) == "FLOOR_hit_f"
+                not actor.Animation(ANTIKUKLA_ACTOR) == "KO_skid_back"
+                not actor.Animation(ANTIKUKLA_ACTOR) == "KO_skid_front"
+                not actor.Animation(ANTIKUKLA_ACTOR) == "KO_spin_L"
+                not actor.Animation(ANTIKUKLA_ACTOR) == "KO_spin_R"                                
+                    then
+                    if and
+                    not actor.Animation(ANTIKUKLA_ACTOR) == "KO_shot_face"
+                    not actor.Animation(ANTIKUKLA_ACTOR) == "Drown"
+                    not actor.Animation(ANTIKUKLA_ACTOR) == "crckdeth1" 
+                        then
+                        if
+                        056D:   actor ANTIKUKLA_ACTOR defined
+                            then
+                            //заставл€ем дохнуть его снова с переводом в idle состо€ние
+                            
+                            if
+                            ANTIKUKLA_DEBUG_ON == 1        
+                                then
+                                $PHRASES_OFF_FLAG = 1
+                                0EAB: get_char_pedstate ANTIKUKLA_ACTOR store_to ANTIKUKLA_DEBUG_PED_STATE
+                                if
+                                $CHEATS_ON == 1
+                                    then
+                                    0AD1: show_formatted_text_highpriority "Яac¶aҐЮђeѓ ЪoxЃy¶© eЩo cЃoҐa c £epeҐoЪoѓ Ґ idle coc¶oђЃЬe, task %d, state %d" time 2000 1@ ANTIKUKLA_DEBUG_PED_STATE
+                                    end
+                                end
+                            
+                            0792: disembark_instantly_actor ANTIKUKLA_ACTOR
+                            gosub @ANTIKUKLA_PLAY_RANDOM_DEATH_ANIM                                                
+                            wait 250                                                                                    
+                            end
+                        end
+                    else                                                            
+                    end_thread
+                    end
+                else
+                end_thread
+                end
+            else    
+            if and
+            001D: 1@ > ANTIKUKLA_WAIT_TIME2 //антикукла система пыталась убить его дольше 2 секунд
+            056D:   actor ANTIKUKLA_ACTOR defined           
+                then                                
+                if and
+                not actor.Animation(ANTIKUKLA_ACTOR) == "FLOOR_hit"
+                not actor.Animation(ANTIKUKLA_ACTOR) == "FLOOR_hit_f"
+                not actor.Animation(ANTIKUKLA_ACTOR) == "KO_skid_back"
+                not actor.Animation(ANTIKUKLA_ACTOR) == "KO_skid_front"
+                not actor.Animation(ANTIKUKLA_ACTOR) == "KO_spin_L"
+                not actor.Animation(ANTIKUKLA_ACTOR) == "KO_spin_R"
+                not actor.Animation(ANTIKUKLA_ACTOR) == "KO_shot_face"
+                not actor.Animation(ANTIKUKLA_ACTOR) == "Drown"                
+                    then
+                    
+                    if
+                    actor.Animation(ANTIKUKLA_ACTOR) == "crckdeth1"
+                    then
+                    jump to @ANTKUKLA_FUCK_GO_BACK
+                    end
+                    
+                    repeat
+                    wait 0
+                    
+                    if and
+                    ANTIKUKLA_DEBUG_ON == 0
+                    $CHEATS_ON == 1        
+                        then
+                        if
+                        0AB0:   key_pressed 46 //позвол€ем при f4 на delete включить показ дебаг мода антикуклы       
+                            then
+                            if
+                            056D:   actor ANTIKUKLA_ACTOR defined
+                                then
+                                if
+                                00F2:   actor ANTIKUKLA_ACTOR near_actor PLAYER_ACTOR radius 5.0 5.0 sphere 0
+                                    then
+                                    ANTIKUKLA_DEBUG_ON = 1
+                                    end
+                                end
+                            end
+                        end
+                    
+                    if
+                    32@ > 4000
+                        then
+                        if
+                        056D:   actor ANTIKUKLA_ACTOR defined
+                            then
+                            
+                            while true
+                            wait 0
+                            
+                            if
+                            056D:   actor ANTIKUKLA_ACTOR defined
+                                then
+                                if
+                                82CB: not  actor ANTIKUKLA_ACTOR bounding_sphere_visible
+                                    then                                                        
+                                    0337: set_actor ANTIKUKLA_ACTOR visibility 0
+                                    0619: enable_actor ANTIKUKLA_ACTOR collision_detection 0
+                                    end
+                                end
+                            
+                            end
+                                                        
+                            end_thread
+                            else
+                            end_thread
+                            end                                                
+                        end                                                                                
+                    
+                    if
+                    056D:   actor ANTIKUKLA_ACTOR defined
+                        then
+                        //заставл€ем дохнуть его снова с переводом в idle состо€ние
+                        0792: disembark_instantly_actor ANTIKUKLA_ACTOR
+                        gosub @ANTIKUKLA_PLAY_RANDOM_DEATH_ANIM
+                        wait 250
+                        if
+                        056D:   actor ANTIKUKLA_ACTOR defined
+                            then
+                            if or
+                            actor.Animation(ANTIKUKLA_ACTOR) == "FLOOR_hit"
+                            actor.Animation(ANTIKUKLA_ACTOR) == "FLOOR_hit_f"
+                            actor.Animation(ANTIKUKLA_ACTOR) == "KO_skid_back"
+                            actor.Animation(ANTIKUKLA_ACTOR) == "KO_skid_front"
+                            actor.Animation(ANTIKUKLA_ACTOR) == "KO_spin_L"
+                            actor.Animation(ANTIKUKLA_ACTOR) == "KO_spin_R"
+                            actor.Animation(ANTIKUKLA_ACTOR) == "KO_shot_face"
+                            actor.Animation(ANTIKUKLA_ACTOR) == "Drown"
+                                then
+                                //пед сдох успешно, выходим нахуй из скрипта
+                                end_thread
+                                end
+                            if
+                            actor.Animation(ANTIKUKLA_ACTOR) ==  "crckdeth1" 
+                                then
+                                //пед сдох успешно, выходим нахуй из скрипта
+                                end_thread
+                                end   
+                            end
+                        end                            
+                    
+                    until 856D: not  actor ANTIKUKLA_ACTOR defined
+                                        
+                    else
+                    end_thread
+                    end
+                end    
+            end
+        end
+    end    
+        
+end
+
+end_thread
+
+:ANTIKUKLA_PLAY_RANDOM_DEATH_ANIM
+
+089F: get_actor ANTIKUKLA_ACTOR pedtype_to 4@
+if and
+09A8:   actor ANTIKUKLA_ACTOR headshoted //уникальна€ анимаци€ смерти в голову дл€ Ќ≈ зараженного
+not 4@ == 23
+    then
+    01B9: set_actor ANTIKUKLA_ACTOR armed_weapon_to 0
+    0829: actor ANTIKUKLA_ACTOR perform_animation "KO_shot_face" IFP_file "PED" rate 4.0 time 0 and_dies
+    return
+    end
+if
+04AD:   actor ANTIKUKLA_ACTOR in_water
+    then
+    0829: actor ANTIKUKLA_ACTOR perform_animation "Drown" IFP_file "PED" rate 4.0 time 0 and_dies
+    return
+    end    
+
+//рандомайзим анимацию смерти, хули нет
+random_int 3@ 0 to 6
+
+if
+3@ == 0
+then
+0829: actor ANTIKUKLA_ACTOR perform_animation "FLOOR_hit" IFP_file "PED" rate 4.0 time 0 and_dies
+end
+
+if
+3@ == 1
+then
+0829: actor ANTIKUKLA_ACTOR perform_animation "FLOOR_hit_f" IFP_file "PED" rate 4.0 time 0 and_dies
+end
+
+if
+3@ == 2
+then
+0829: actor ANTIKUKLA_ACTOR perform_animation "KO_skid_back" IFP_file "PED" rate 4.0 time 0 and_dies
+end
+
+if
+3@ == 3
+then
+0829: actor ANTIKUKLA_ACTOR perform_animation "KO_skid_front" IFP_file "PED" rate 4.0 time 0 and_dies
+end
+
+if
+3@ == 4
+then
+0829: actor ANTIKUKLA_ACTOR perform_animation "KO_spin_L" IFP_file "PED" rate 4.0 time 0 and_dies
+end
+
+if
+3@ == 5
+then
+0829: actor ANTIKUKLA_ACTOR perform_animation "KO_spin_R" IFP_file "PED" rate 4.0 time 0 and_dies
+end
+
+return
+
+:ANTKUK2
+thread 'ANTIKUK2'
+
+if
+056D:   actor ANTIKUKLA_ACTOR defined
+then
+0982: set_actor ANTIKUKLA_ACTOR stay_in_car_when_dead 0
+end
+
+while true
+wait 0
+
+if and
+056D:   actor ANTIKUKLA_ACTOR defined
+056E:   car 1@ defined
+    then
+    if and
+    8184:   actor ANTIKUKLA_ACTOR health < 1
+    047A:   actor ANTIKUKLA_ACTOR driving_bike
+        then
+        
+        if
+        2@ == 0
+        then
+        0489: set_actor ANTIKUKLA_ACTOR muted 1
+        094E: set_actor ANTIKUKLA_ACTOR mute_pain_audio 1
+        0982: set_actor ANTIKUKLA_ACTOR stay_in_car_when_dead 0
+        09C9: disembark_actor ANTIKUKLA_ACTOR from_car 1@ and_freeze_actor_position
+        036A: put_actor ANTIKUKLA_ACTOR in_car 1@
+        0687: clear_actor ANTIKUKLA_ACTOR task
+        0762: AS_actor ANTIKUKLA_ACTOR dies
+        else
+        0489: set_actor ANTIKUKLA_ACTOR muted 1
+        094E: set_actor ANTIKUKLA_ACTOR mute_pain_audio 1
+        0982: set_actor ANTIKUKLA_ACTOR stay_in_car_when_dead 0
+        09C9: disembark_actor ANTIKUKLA_ACTOR from_car 1@ and_freeze_actor_position
+        0430: put_actor ANTIKUKLA_ACTOR into_car 1@ passenger_seat 0
+        0687: clear_actor ANTIKUKLA_ACTOR task
+        0762: AS_actor ANTIKUKLA_ACTOR dies
+        end        
+            
+        while 056E:   car 1@ defined
+        wait 0
+        
+        if and
+        056D:   actor ANTIKUKLA_ACTOR defined    
+        056E:   car 1@ defined
+        then
+        if        
+        047A:   actor ANTIKUKLA_ACTOR driving_bike
+            then
+            if or
+            actor.Animation(ANTIKUKLA_ACTOR) == "FLOOR_hit"
+            actor.Animation(ANTIKUKLA_ACTOR) == "CAR_dead_LHS"
+            actor.Animation(ANTIKUKLA_ACTOR) == "CAR_dead_RHS"
+                then                
+                if
+                2@ == 0
+                    then
+                    0489: set_actor ANTIKUKLA_ACTOR muted 1
+                    094E: set_actor ANTIKUKLA_ACTOR mute_pain_audio 1
+                    0982: set_actor ANTIKUKLA_ACTOR stay_in_car_when_dead 0
+                    09C9: disembark_actor ANTIKUKLA_ACTOR from_car 1@ and_freeze_actor_position
+                    036A: put_actor ANTIKUKLA_ACTOR in_car 1@
+                    0687: clear_actor ANTIKUKLA_ACTOR task
+                    0762: AS_actor ANTIKUKLA_ACTOR dies
+                    else
+                    0489: set_actor ANTIKUKLA_ACTOR muted 1
+                    094E: set_actor ANTIKUKLA_ACTOR mute_pain_audio 1
+                    0982: set_actor ANTIKUKLA_ACTOR stay_in_car_when_dead 0
+                    09C9: disembark_actor ANTIKUKLA_ACTOR from_car 1@ and_freeze_actor_position
+                    0430: put_actor ANTIKUKLA_ACTOR into_car 1@ passenger_seat 0
+                    0687: clear_actor ANTIKUKLA_ACTOR task
+                    0762: AS_actor ANTIKUKLA_ACTOR dies
+                    end
+                end
+            else
+            if or
+            actor.Animation(ANTIKUKLA_ACTOR) == "CAR_dead_LHS"
+            actor.Animation(ANTIKUKLA_ACTOR) == "CAR_dead_RHS"
+                then
+                if
+                0E4D: random_percent 50
+                    then
+                    0792: disembark_instantly_actor ANTIKUKLA_ACTOR
+                    0829: actor ANTIKUKLA_ACTOR perform_animation "KO_spin_L" IFP_file "PED" rate 4.0 time 0 and_dies
+                    else
+                    0792: disembark_instantly_actor ANTIKUKLA_ACTOR
+                    0829: actor ANTIKUKLA_ACTOR perform_animation "KO_spin_R" IFP_file "PED" rate 4.0 time 0 and_dies
+                    end
+                end
+            end  
+        end
+                    
+        if
+        056E:   car 1@ defined
+            then
+            02E3: 23@ = car 1@ speed
+            if and
+            23@ > 1.0
+            not car.Wrecked(1@)
+                then        
+                car.SetDriverBehaviour(1@,0)
+                0918: set_car 1@ engine_operation 0
+                wait 1000
+                end
+            end
+                
+        end    
+            
+        end_thread
+        else
+        if
+        056D:   actor ANTIKUKLA_ACTOR defined
+            then
+            if
+            actor.Dead(ANTIKUKLA_ACTOR)
+                then
+                if or
+                actor.Animation(ANTIKUKLA_ACTOR) == "CAR_dead_LHS"
+                actor.Animation(ANTIKUKLA_ACTOR) == "CAR_dead_RHS"
+                    then
+                    if
+                    0E4D: random_percent 50
+                        then
+                        0792: disembark_instantly_actor ANTIKUKLA_ACTOR
+                        0829: actor ANTIKUKLA_ACTOR perform_animation "KO_spin_L" IFP_file "PED" rate 4.0 time 0 and_dies
+                        else
+                        0792: disembark_instantly_actor ANTIKUKLA_ACTOR
+                        0829: actor ANTIKUKLA_ACTOR perform_animation "KO_spin_R" IFP_file "PED" rate 4.0 time 0 and_dies
+                        end
+                    end
+                end
+            end
+        end
+    else
+    end_thread
+    end
+
+end
+
+end_thread
+
+:ANTKUK3
+thread 'ANTIKUK3'
+
+while true
+wait 0
+
+if and
+056D:   actor ANTIKUKLA_ACTOR defined
+056E:   car 1@ defined
+    then
+    if
+    01C1:   car 1@ stopped    
+        then
+        if
+        actor.Dead(ANTIKUKLA_ACTOR)
+            then                     
+            0489: set_actor ANTIKUKLA_ACTOR muted 1
+            094E: set_actor ANTIKUKLA_ACTOR mute_pain_audio 1
+            0982: set_actor ANTIKUKLA_ACTOR stay_in_car_when_dead 0
+            09C9: disembark_actor ANTIKUKLA_ACTOR from_car 1@ and_freeze_actor_position 
+            0430: put_actor ANTIKUKLA_ACTOR into_car 1@ passenger_seat 2@
+            0687: clear_actor ANTIKUKLA_ACTOR task
+            0762: AS_actor ANTIKUKLA_ACTOR dies        
+            end_thread
+            end
+        else
+        if
+        actor.Animation(ANTIKUKLA_ACTOR) == "FLOOR_hit"
+            then     
+            09C9: disembark_actor ANTIKUKLA_ACTOR from_car 1@ and_freeze_actor_position
+            0430: put_actor ANTIKUKLA_ACTOR into_car 1@ passenger_seat 2@
+            end
+        end
+    else
+    end_thread
+    end
+
+end
+
+end_thread
+
+:ANT_PRE
+thread 'ANT_PRE'
+
+while 056D:   actor ANTIKUKLA_ACTOR defined
+wait 0
+
+if and
+056D:   actor ANTIKUKLA_ACTOR defined
+not ANTIKUKLA_ACTOR == -69
+    then
+    if or
+    8184:   actor ANTIKUKLA_ACTOR health < 1
+    actor.Dead(ANTIKUKLA_ACTOR)
+        then
+        create_thread @ANTKUKL ANTIKUKLA_ACTOR
+        end_thread
+        end
+    end
+
+end
+
+end_thread

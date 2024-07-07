@@ -1,0 +1,413 @@
+const
+YAR_PED_HANDLE = 20@
+YAR_CAR_HANDLE = 19@
+YAR_MOMENT_CHASE_FLAG = 21@
+YAR_MOMENT_KOLESO_FLAG = 22@
+YAR_MOMENT_KILLED_FLAG = 18@
+end
+
+:YAR_MNT
+thread 'YAR_MNT'
+
+if
+UNITED_MAP == 1
+then
+end_thread
+end
+
+:YAR_START
+
+while true
+wait 0
+
+if and
+0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos 1684.5597 -1168.9865 23.4198 radius 180.0
+$SAVESTATUS == 0
+$ONMISSION == 0
+    then    
+    break
+    end
+
+end
+
+while not model.Available(3192)
+wait 0
+model.Load(3192)
+mload
+end
+
+if
+CARMA_VERY_BAD_FLAG == 1
+then    
+YAR_PED_HANDLE = actor.Create(26,3192,1699.9879, -1171.1387, 22.8386)
+else
+YAR_PED_HANDLE = actor.Create(29,3192,1699.9879, -1171.1387, 22.8386)
+end
+
+077A: set_actor YAR_PED_HANDLE acquaintance 0 to_actors_pedtype 0 // see ped.dat
+actor.Angle(YAR_PED_HANDLE) = 0.0     
+actor.SetWalkStyle(YAR_PED_HANDLE,"GANG2")
+0446: set_actor YAR_PED_HANDLE dismemberment_possible 0
+060B: set_actor YAR_PED_HANDLE decision_maker_to $DEC_PEOPLE
+actor.Health(YAR_PED_HANDLE) = 1000
+02A9: set_actor YAR_PED_HANDLE immune_to_nonplayer 1
+0337: set_actor YAR_PED_HANDLE visibility 0
+0619: enable_actor YAR_PED_HANDLE collision_detection 0
+actor.LockInCurrentPosition(YAR_PED_HANDLE,true)
+create_thread @PED_BKP YAR_PED_HANDLE 371
+07DD: set_actor YAR_PED_HANDLE attack_rate 100 // previously known as temper_to
+actor.WeaponAccuracy(YAR_PED_HANDLE) = 25
+
+:CAR_CREATE_YAR
+if
+model.Available(1699)
+then
+    
+YAR_CAR_HANDLE = Car.Create(1699, 1684.5625, -1168.9851, 23.4214)
+car.Angle(YAR_CAR_HANDLE) = 90.2412
+car.SetImmunities(YAR_CAR_HANDLE,1,1,1,1,1)
+    
+if
+model.Available(1699)
+then
+//model.Destroy(1699)
+end
+    
+else
+model.Load(1699)
+mload
+wait 0
+jump to @CAR_CREATE_YAR
+end    
+    
+/////////////////////////////////////////
+    
+0A97: 11@ = car YAR_CAR_HANDLE struct 
+11@ += 9 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+08BD: set 12@ bit 2 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+0A97: 11@ = car YAR_CAR_HANDLE struct 
+11@ += 4 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+08BD: set 12@ bit 1 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+24@ = 0.0 
+0A97: 22@ = car YAR_CAR_HANDLE struct 
+0A8E: 23@ = 22@ + 5 // int 
+0A8C: write_memory 23@ size 4 value 24@ virtual_protect 0 
+08C3: clear 12@ bit 1 
+08C3: clear 12@ bit 2 
+0A97: 11@ = car YAR_CAR_HANDLE struct 
+11@ += 18 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+08BD: set 12@ bit 2 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 2
+
+/////////////////////////////////////////
+
+while true
+wait 0
+
+if and
+YAR_MOMENT_KOLESO_FLAG == 0
+YAR_MOMENT_CHASE_FLAG == 1
+051C:   car YAR_CAR_HANDLE damaged_by_actor YAR_PED_HANDLE
+    then
+    YAR_MOMENT_KOLESO_FLAG = 1
+    random_int 0@ 0 2
+    04FE: deflate_tire 0@ on_car YAR_CAR_HANDLE
+    end
+
+if and
+actor.InCar(PLAYER_ACTOR,YAR_CAR_HANDLE)
+YAR_MOMENT_CHASE_FLAG == 0
+    then
+    
+    v$ST_DIALOG[0] = "YARTXT1"
+    $DIALOG_COUNT = 0
+    $DIALOG_NOT_SKIP = 1
+    create_thread @DG_SYS2
+        
+    //////////////////////////////////////////
+    0A97: 10@ = car YAR_CAR_HANDLE struct
+    0A8E: 2@ = 10@ + 0x45C 
+    0A8C: write_memory 2@ size 2 value 65000 virtual_protect 1
+    //////////////////////////////////////////
+    car.SetImmunities(YAR_CAR_HANDLE,0,0,0,0,0)
+    $HORDE_OFF_TIMER_COUNTER += 999999999
+    
+    $ONMISSION = 1
+    
+    YAR_MOMENT_CHASE_FLAG = 1
+    
+    0337: set_actor YAR_PED_HANDLE visibility 1
+    0619: enable_actor YAR_PED_HANDLE collision_detection 1
+    actor.LockInCurrentPosition(YAR_PED_HANDLE,false)
+    0E24: fix_char YAR_PED_HANDLE ground 0 brightness 0 and_fade_in 1
+    
+    create_thread @PED_BKP YAR_PED_HANDLE 371
+    
+    0781: get_weapon_with_ID 95 model_to 1@
+    
+    while not model.Available(1@)
+    wait 0
+    model.Load(1@)
+    mload
+    end
+    
+    actor.GiveWeaponAndAmmo(YAR_PED_HANDLE,95,99999)
+    
+    0615: define_AS_pack_begin 0@
+    05D3: AS_actor -1 goto_point 1696.0437 -1168.7451 23.8281 mode 7 time 10000 ms // versionA
+    0672: AS_actor -1 attack_car YAR_CAR_HANDLE
+    0616: define_AS_pack_end 0@
+    0618: assign_actor YAR_PED_HANDLE to_AS_pack 0@
+    061B: remove_references_to_AS_pack 0@
+    
+    MISSION_MARKER = marker.CreateAboveActor(YAR_PED_HANDLE)
+    
+    MAIN_QUEST_MUSIC_FLAG = 1
+    $MUSIC_MISSION = Audiostream.Load("audio\sounds\other\adventure\yar_music.mp3")
+    Audiostream.PerformAction($MUSIC_MISSION, PLAY)
+    Audiostream.Loop($MUSIC_MISSION, 1)
+    Audiostream.Volume($MUSIC_MISSION) = 0.0
+    
+    /////////////////////Плавное нарастание/////////////////////
+    
+    $MUSIC_FADE_NUMBER += 1
+    if
+    $MUSIC_FADE_NUMBER > 4
+        then
+        $MUSIC_FADE_NUMBER = 0 
+        end    
+    
+    0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int) 
+    0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+    
+    $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+    $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+    $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+    create_thread @MUS_FAD
+    
+    wait 1 
+    
+    ////////////////////////////////////////////////////////
+    
+    0@ = 0
+    
+    repeat
+    wait 0
+    
+    while 0364:   actor YAR_PED_HANDLE spotted_actor PLAYER_ACTOR
+    wait 0
+    end
+    
+    if and
+    not actor.InCar(PLAYER_ACTOR,YAR_CAR_HANDLE)
+    0@ == 0
+        then
+        0@ = 1
+        0687: clear_actor YAR_PED_HANDLE task
+        05E2: AS_actor YAR_PED_HANDLE kill_actor PLAYER_ACTOR
+        end
+    
+    if and
+    actor.InCar(PLAYER_ACTOR,YAR_CAR_HANDLE)
+    0@ == 1
+        then
+        0@ = 0
+        0687: clear_actor YAR_PED_HANDLE task
+        0672: AS_actor YAR_PED_HANDLE attack_car YAR_CAR_HANDLE
+        end
+    
+    if
+    actor.Dead(PLAYER_ACTOR)
+        then
+        v$ST_DIALOG[0] = "YARTXT2"
+        $DIALOG_COUNT = 0
+        $DIALOG_NOT_SKIP = 1
+        create_thread @DG_SYS2
+        end_thread
+        end
+        
+    if
+    actor.Dead(YAR_PED_HANDLE)
+        then            
+        YAR_MOMENT_KILLED_FLAG = 1
+        v$ST_DIALOG[0] = "YARTXT8"
+        $DIALOG_COUNT = 0
+        $DIALOG_NOT_SKIP = 1
+        create_thread @DG_SYS2
+        break
+        end    
+    
+    until 8EE5: not locate_char_distance_to_car YAR_PED_HANDLE car YAR_CAR_HANDLE radius 180.0
+    
+    marker.Disable(MISSION_MARKER)
+    if
+    YAR_MOMENT_KILLED_FLAG == 0
+    then
+    actor.DestroyWithFade(YAR_PED_HANDLE)
+    else
+    actor.RemoveReferences(YAR_PED_HANDLE)
+    end        
+    
+    /////////////////////Плавное затухание/////////////////////
+    
+    $MUSIC_FADE_NUMBER += 1
+    if
+    $MUSIC_FADE_NUMBER > 4
+        then
+        $MUSIC_FADE_NUMBER = 0 
+        end    
+    
+    0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+    $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+    
+    $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+    $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+    $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+    create_thread @MUS_FAD
+    
+    wait 1
+    
+    while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+    wait 0
+    end
+    
+    MAIN_QUEST_MUSIC_FLAG = 0
+    
+    ///////////////////////////////////////////////////////////
+    
+    if
+    YAR_MOMENT_KILLED_FLAG == 0
+    then
+    v$ST_DIALOG[0] = "YARTXT3"
+    v$ST_DIALOG[1] = "YARTXT4"
+    $DIALOG_COUNT = 1
+    $DIALOG_NOT_SKIP = 1
+    create_thread @DG_SYS2
+    else
+    v$ST_DIALOG[0] = "YARTX4B"
+    $DIALOG_COUNT = 0
+    $DIALOG_NOT_SKIP = 1
+    create_thread @DG_SYS2
+    end
+    
+    repeat
+    wait 0
+    until $DIALOG_END == 1
+    
+    v$ST_DIALOG[0] = "YARTX5"
+    $DIALOG_COUNT = 0
+    $DIALOG_NOT_SKIP = 1
+    create_thread @DG_SYS2
+    
+    repeat
+    wait 0
+    until $DIALOG_END == 1
+    
+    player.CanMove(PLAYER_CHAR,false)
+    0221: set_player PLAYER_CHAR apply_brakes_to_car 1
+    
+    repeat
+    wait 0
+    until 01C1:   car YAR_CAR_HANDLE stopped
+    
+    068B: set_car YAR_CAR_HANDLE all_disembark
+    0221: set_player PLAYER_CHAR apply_brakes_to_car 0
+    
+    repeat
+    wait 0
+    until not actor.InCar(PLAYER_ACTOR,YAR_CAR_HANDLE)
+        
+    0D0C: get_car YAR_CAR_HANDLE component "boot_dummy" matrix_pointer_to 1@ // IF and SET
+    0D06: get_matrix 1@ position_to 2@ 3@ 4@
+    1@ = car.Angle(YAR_CAR_HANDLE)
+    0087: 5@ = 1@ // (float)
+    5@ -= 180.0
+    0EF0: get_coord_from_angled_distance 2@ 3@ angle 5@ dist 1.5 store_to 6@ 7@
+    07CD: AS_actor PLAYER_ACTOR walk_to 6@ 7@ 4@ stop_with_angle 1@ within_radius 1.0
+    
+    repeat
+    wait 0
+    camera.Restore_WithJumpCut()
+    until 0101:   actor PLAYER_ACTOR in_sphere 6@ 7@ 4@ radius 1.0 1.0 3.0 sphere 0 stopped
+    
+    camera.Restore_WithJumpCut()
+    04E1: open_and_freeze_car_trunk YAR_CAR_HANDLE          
+    
+    v$ST_DIALOG[0] = "YARTXT6"
+    $DIALOG_COUNT = 0
+    $DIALOG_NOT_SKIP = 1
+    create_thread @DG_SYS2
+    
+    repeat
+    wait 0
+    until $DIALOG_END == 1
+    
+    random_int 0@ 5 to 8
+    005E: $BANKA += 0@  // (int)
+    random_int 0@ 4 to 7   
+    005E: $HEAL += 0@  // (int)
+    random_int 0@ 4 to 7  
+    005E: $BINT += 0@  // (int)
+    random_int 0@ 4 to 7  
+    005E: $JIMMY += 0@  // (int)
+    $RADIO += 1
+    $REPAIR_KIT += 1
+    
+    player.CanMove(PLAYER_CHAR,true)
+    
+    $ONMISSION = 0
+    car.RemoveReferences(YAR_CAR_HANDLE)                
+        
+    random_int 0@ 900000 3600000
+    
+    repeat
+    wait 0
+    
+    if and
+    $CHEATS_ON == 1
+    0AB0:   key_pressed 69
+    0AB0:   key_pressed 81
+        then
+        0085: 32@ = 0@ // (int)
+        end
+    
+    if and
+    $ONMISSION == 0
+    $SAVESTATUS == 0
+    $HUD_REMOVE == 0
+    89E7: not  player PLAYER_CHAR not_frozen
+    002D:   32@ >= 0@  // (int) 
+        then
+        break
+        end
+    
+    until false
+    
+//    v$ST_DIALOG[0] = "YARTXT7"
+//    $DIALOG_COUNT = 0
+//    $DIALOG_NOT_SKIP = 1
+//    create_thread @DG_SYS2
+    
+    end_thread
+    
+    end
+
+if or
+8EEA: not locate_char_distance_to_coordinates PLAYER_ACTOR pos 1684.5597 -1168.9865 23.4198 radius 180.0
+$SAVESTATUS == 1
+$ONMISSION == 1
+    then
+    actor.DestroyInstantly(YAR_PED_HANDLE)
+    car.Destroy(YAR_CAR_HANDLE)
+    jump to @YAR_START  
+    end
+
+end
+
+end_thread

@@ -1,0 +1,1075 @@
+const
+TRAIN_TRY_TO_CREATE_FLAG = 26@
+TRAIN_CREATED_FLAG = 27@
+TRAIN_FINDED_COORD_FLAG = 28@
+TRAIN_OPPOSITTE_COORD_FLAG = 29@
+TRAIN_DAMAGE_TIMER = 25@
+TRAIN_SPAWNED_BY_CHEAT = 24@
+end
+
+:TRAINS
+thread 'TRAINS'
+end_thread
+
+0662: printstring "----------New trains algorithm by Den_spb----------"
+
+if or
+UNITED_MAP == 1
+$GAMEMODE_WAR == 1
+then
+end_thread
+end
+
+gosub @TRAIN_RANDOM_TIMER
+
+32@ = 0
+
+while true
+wait 250
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,#STREAK)
+actor.DrivingVehicleType(PLAYER_ACTOR,#STREAKC)
+actor.DrivingVehicleType(PLAYER_ACTOR,#FREIGHT)
+    then
+    
+    if or
+    $GAME_SPEED == 1.0
+    $GAME_SPEED == 0.2
+    then
+    TRAIN_DAMAGE_TIMER += 8
+    end
+    
+    1@ = actor.CurrentCar(PLAYER_ACTOR)
+    02E3: 2@ = car 1@ speed
+    if
+    2@ > 1.0
+        then
+        3@ = car.Health(1@)
+        if
+        3@ > 250
+            then
+            if
+            TRAIN_DAMAGE_TIMER > 165
+                then
+                TRAIN_DAMAGE_TIMER = 0
+                3@ = car.Health(1@)
+                3@ -= 10
+                car.Health(1@) = 3@
+                end
+            else
+            081D: set_car 1@ engine_broken 1
+            02D4: car 1@ turn_off_engine
+            end
+        end
+    end
+
+if
+$CHEAT_TYPE_FLAG == 1
+    then
+    if
+    0ADC:   test_cheat "THOMAS"
+        then
+        $CHEAT_CODE_ACTIVATED = 1
+        0085: 32@ = 31@ // (int)
+        TRAIN_SPAWNED_BY_CHEAT = 1
+        end
+    end
+    
+if and
+TRAIN_TRY_TO_CREATE_FLAG == 1
+TRAIN_CREATED_FLAG == 1
+    then
+    TRAIN_CREATED_FLAG = 0
+    TRAIN_TRY_TO_CREATE_FLAG = 0
+    end    
+
+if and
+$SAVESTATUS_TRUE == 0
+001D:   32@ > 31@  // (int)
+TRAIN_TRY_TO_CREATE_FLAG == 0 
+    then                        
+    TRAIN_TRY_TO_CREATE_FLAG = 1
+    end        
+    
+if and
+$SAVESTATUS_TRUE == 0
+TRAIN_TRY_TO_CREATE_FLAG == 1
+TRAIN_CREATED_FLAG = 0
+33@ > 1000 
+    then
+    
+    33@ = 0                            
+    repeat
+    wait 0
+    gosub @TRAIN_TRY_TO_CREATE
+    
+    if or
+    33@ > 100
+    $SAVESTATUS_TRUE == 1
+    TRAIN_CREATED_FLAG == 1
+    then
+    break
+    end
+    
+    until false
+    33@ = 0
+    
+    end    
+
+end
+
+end_thread
+
+:TRAIN_TRY_TO_CREATE
+
+    TRAIN_CREATED_FLAG = 0
+    TRAIN_FINDED_COORD_FLAG = 0
+    TRAIN_OPPOSITTE_COORD_FLAG = 0
+    gosub @TRAIN_TRACK_GET_CLOSEST_NODE
+    
+    if
+    TRAIN_FINDED_COORD_FLAG == 0
+    then
+    gosub @TRAIN_TRACK_GET_CLOSEST_NODE2
+    end
+    
+    if
+    TRAIN_FINDED_COORD_FLAG == 0
+    then
+    else
+    TRAIN_CREATED_FLAG = 1
+    gosub @TRAIN_RANDOM_TIMER
+    
+    repeat
+    wait 0
+    
+    model.Load(#STREAK)
+    model.Load(#STREAKC)
+    model.Load(#FREIGHT)
+    model.Load(#FREIFLAT)
+    model.Load(#FREIBOX)
+    mload
+    
+    if and
+    model.Available(#STREAK)
+    model.Available(#STREAKC)
+    model.Available(#FREIGHT)
+    model.Available(#FREIFLAT)
+    model.Available(#FREIBOX)
+        then
+        break
+        end
+    
+    until false
+    
+    if
+    TRAIN_OPPOSITTE_COORD_FLAG == 0
+    then        
+    if and
+    0@ == 2192.47                                              
+    1@ == -357.99
+        then
+        random_int 2@ 10 14
+        06D8: 8@ = create_train_at 0@ 1@ 60.0 type 2@ direction 1
+        else
+        if and
+        0@ == 2122.11 
+        1@ == -647.61
+            then
+            random_int 2@ 10 14
+            06D8: 8@ = create_train_at 0@ 1@ 70.0 type 2@ direction 1
+            else
+            random_int 2@ 10 14                
+            06D8: 8@ = create_train_at 0@ 1@ 0.0 type 2@ direction 1
+            end
+        end
+    
+    else
+    random_int 2@ 10 14
+    06D8: 8@ = create_train_at 0@ 1@ 0.0 type 2@ direction 0
+    end
+    
+    if and
+    TRAIN_SPAWNED_BY_CHEAT == 1
+    056E:   car 8@ defined
+    then
+    TRAIN_SPAWNED_BY_CHEAT = 0 
+    1@ = marker.CreateAboveCar(8@) 
+    07E0: set_marker 1@ type_to 1
+    end
+    
+    //model.Destroy(#STREAK)
+    //model.Destroy(#STREAKC)
+    //model.Destroy(#FREIGHT)
+    //model.Destroy(#FREIFLAT)
+    //model.Destroy(#FREIBOX)
+    
+    if
+    056E:   car 8@ defined
+    then
+    046C: 1@ = car 8@ driver
+    if
+    056D:   actor 1@ defined
+        then
+        06DD: set_train 8@ speed 0.0
+        06DC: set_train 8@ acc 0.0
+        car.Health(8@) = CAR_HEALTH_MAX
+        car.SetImmunities(8@,1,0,0,0,0)
+        081D: set_car 8@ engine_broken 1
+        02D4: car 8@ turn_off_engine                                                
+        0321: AS_actor 1@ die_headshotted
+        actor.RemoveReferences(1@)        
+        car.RemoveReferences(8@)                       
+        end
+    else
+    wait 0
+    jump to @TRAIN_TRY_TO_CREATE
+    end
+    
+    end
+
+return
+
+:TRAIN_RANDOM_TIMER
+
+32@ = 0
+
+if
+$FREEMODE == 1
+then
+random_int 31@ 2340000 4680000
+
+for 0@ = 1 to $MONTHS_PASSED
+31@ += 1560000
+end
+
+else
+random_int 31@ 300000 600000 
+end
+
+return
+
+:TRAIN_TRACK_GET_CLOSEST_NODE
+
+actor.StorePos(PLAYER_ACTOR,3@,4@,6@)
+if or
+3@ < 956.0
+4@ < 1281.0
+    then
+    if
+    3@ >= 0.0
+        then
+        if
+        4@ >= 0.0
+            then
+            21@ = 1
+            else
+            21@ = 2
+            end
+        else
+        if
+        4@ >= 0.0
+            then
+            21@ = 4
+            else
+            21@ = 3
+            end
+        end
+    end
+
+if
+21@ == 1
+then
+    jump @kvad_1t1
+end
+if
+21@ == 2
+then
+    jump @kvad_2t1
+end
+if
+21@ == 3
+then
+    jump @kvad_3t1
+end
+if
+21@ == 4
+then
+    jump @kvad_4t1
+end                    
+                    :kvad_1t1 
+                    0@ = -598.09
+                    1@ = 1188.22
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@ 
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT 
+                    0@ = -325.94
+                    1@ = 1248.88
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = -35.79
+                    1@ = 1293.15
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 241.37
+                    1@ = 1229.34
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 536.14
+                    1@ = 1247.17
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 739.12
+                    1@ = 1461.33
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 742.99
+                    1@ = 1697.59
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 742.51
+                    1@ = 1787.34
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 740.75
+                    1@ = 2026.49
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 726.84
+                    1@ = 2321.07
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 801.16
+                    1@ = 2609.48
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 1072.24
+                    1@ = 2722.62
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 1236.12
+                    1@ = 2632.27
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 1481.99
+                    1@ = 2632.34
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 1774.87
+                    1@ = 2675.03
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 2021.92
+                    1@ = 2694.18
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 2229.69
+                    1@ = 2690.17
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 2519.59
+                    1@ = 2639.43
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 2552.81
+                    1@ = 2344.89
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 2735.05
+                    1@ = 2111.73
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 2781.06
+                    1@ = 1816.16
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 2856.25
+                    1@ = 1531.03
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 2864.77
+                    1@ = 1239.22
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 2764.76
+                    1@ = 983.25
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 2764.79
+                    1@ = 743.27
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    if
+                            21@ == 4
+                    then
+                            return
+                    end
+                    :kvad_2t1
+                    0@ = 2765.28
+                    1@ = 528.72
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 2781.32
+                    1@ = 239.50
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 2827.61
+                    1@ = 36.33
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 2763.10
+                    1@ = -250.25
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 2467.57
+                    1@ = -275.00
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 2192.47                                                // point 1
+                    1@ = -357.99
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 2122.11                                                // point 2 
+                    1@ = -647.61
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 2284.98
+                    1@ = -897.82
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 2284.99
+                    1@ = -1186.05
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 2273.19
+                    1@ = -1484.06
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 2198.65
+                    1@ = -1760.34
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 1989.68
+                    1@ = -1953.75
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 1696.98
+                    1@ = -1953.73
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 1398.43
+                    1@ = -1948.14
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 1197.64
+                    1@ = -1779.76
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 1002.70
+                    1@ = -1556.24
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 815.00
+                    1@ = -1366.51
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 778.25
+                    1@ = -1333.63
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    if
+                            21@ == 1
+                    then
+                            return
+                    end
+                    :kvad_3t1
+                    wait 0
+                    0@ = 589.52
+                    1@ = -1187.75
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 335.44
+                    1@ = -1061.40
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = 49.59
+                    1@ = -1018.00
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = -237.89
+                    1@ = -1069.90
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = -470.71
+                    1@ = -1253.47
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = -742.62
+                    1@ = -1133.88
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = -847.02
+                    1@ = -1404.64
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = -1113.11
+                    1@ = -1514.30
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = -1392.21
+                    1@ = -1509.24
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = -1676.36
+                    1@ = -1465.42
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = -1876.64
+                    1@ = -1258.10
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = -1976.75
+                    1@ = -995.47
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = -1978.81
+                    1@ = -717.47
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    if
+                            21@ == 2
+                    then
+                            return
+                    end
+                    :kvad_4t1
+                    0@ = -1980.12
+                    1@ = -592.06
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = -1960.09
+                    1@ = -296.04
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = -1944.42
+                    1@ = -11.95
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = -1942.72
+                    1@ = 171.88
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = -1756.16
+                    1@ = 399.26
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = -1523.12
+                    1@ = 568.50
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = -1290.21
+                    1@ = 737.81
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = -1082.96
+                    1@ = 888.28
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = -992.44
+                    1@ = 954.08
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    0@ = -760.64
+                    1@ = 1122.39
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                            2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT
+                    if
+                            21@ == 3
+                    then
+                            return
+                    end
+                    jump @kvad_1t1
+                    
+:TRAIN_TRACK_COORD_GOT
+TRAIN_FINDED_COORD_FLAG = 1
+return
+
+:TRAIN_TRACK_GET_CLOSEST_NODE2
+
+actor.StorePos(PLAYER_ACTOR,3@,4@,6@)
+if or
+3@ < 956.0
+4@ < 1281.0
+    then
+    if
+    3@ >= 0.0
+        then
+        if
+        4@ >= 0.0
+            then
+            21@ = 1
+            else
+            21@ = 2
+            end
+        else
+        if
+        4@ >= 0.0
+            then
+            21@ = 4
+            else
+            21@ = 3
+            end
+        end
+    end
+    
+if
+21@ == 1
+then
+    jump @kvad_1t4
+end
+if
+21@ == 2
+then
+    jump @kvad_2t4
+end
+if
+21@ == 3
+then
+    jump @kvad_3t4
+end
+if
+21@ == 4
+then
+    jump @kvad_4t4
+end
+                    :kvad_4t4
+                    0@ = 515.98
+                    1@ = 1240.23
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 226.84
+                    1@ = 1238.51
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = -53.40
+                    1@ = 1296.12
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = -347.38
+                    1@ = 1247.21
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = -631.83
+                    1@ = 1185.07
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = -880.27
+                    1@ = 1040.72
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = -1030.44
+                    1@ = 931.37
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = -1240.99
+                    1@ = 778.43
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = -1342.19
+                    1@ = 704.87
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    if
+                            21@ == 1
+                    then
+                            return
+                    end
+                    :kvad_3t4    //----------------------------------------------------------------------------??????? ?????. ????? ????? 3
+                    wait 0
+                    0@ = -1498.99
+                    1@ = 590.90
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = -1601.06
+                    1@ = 516.83
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = -1837.42
+                    1@ = 347.58
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = -1948.42
+                    1@ = 100.00
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = -1950.42
+                    1@ = -190.28
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = -1982.39
+                    1@ = -488.08
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = -1982.55
+                    1@ = -768.10
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = -1971.89
+                    1@ = -1059.67
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = -1846.91
+                    1@ = -1309.37
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = -1629.08
+                    1@ = -1486.73
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = -1347.52
+                    1@ = -1513.87
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = -1053.53
+                    1@ = -1508.42
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = -835.57
+                    1@ = -1370.31
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = -718.41
+                    1@ = -1128.25
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    if
+                            21@ == 4
+                    then
+                            return
+                    end
+                    :kvad_2t4    //------------------------------------------------------------------------------??????? ?????. ????? ????? 2
+                    0@ = -596.65
+                    1@ = -1164.91
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = -349.44
+                    1@ = -1223.16
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = -137.48
+                    1@ = -1027.47
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 151.78
+                    1@ = -1026.41
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 438.87
+                    1@ = -1107.08
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 690.56
+                    1@ = -1266.07
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 910.87
+                    1@ = -1464.63
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 1097.41
+                    1@ = -1669.80
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 1293.72
+                    1@ = -1894.03
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 1573.67
+                    1@ = -1957.68
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 1857.49
+                    1@ = -1957.93
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 2152.76
+                    1@ = -1957.85
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 2205.95
+                    1@ = -1686.16
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 2288.74
+                    1@ = -1407.02
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 2288.95
+                    1@ = -1110.09
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 2281.21
+                    1@ = -816.01
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 2078.88
+                    1@ = -607.04
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    if
+                            21@ == 3
+                    then
+                            return
+                    end
+                    :kvad_1t4    //-------------------------------------------------------------------------------??????? ?????. ????? ????? 1
+                    0@ = 2062.91
+                    1@ = -593.55
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 2087.84
+                    1@ = -365.31
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 2367.59
+                    1@ = -284.31
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 2661.26
+                    1@ = -298.92
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 2832.24
+                    1@ = -92.44
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 2805.30
+                    1@ = 182.18
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 2769.17
+                    1@ = 442.68
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 2768.74
+                    1@ = 701.56
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 2768.72
+                    1@ = 983.27
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 2868.74
+                    1@ = 1239.21
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 2860.00
+                    1@ = 1532.27
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 2785.01
+                    1@ = 1782.76
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 2765.17
+                    1@ = 2066.97
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 2563.53
+                    1@ = 2264.64
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 2551.77
+                    1@ = 2560.03
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 2342.07
+                    1@ = 2694.16
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 2092.40
+                    1@ = 2694.22
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 1797.40
+                    1@ = 2682.39
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 1510.13
+                    1@ = 2636.25
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 1212.03
+                    1@ = 2637.34
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 957.59
+                    1@ = 2762.66
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 768.57
+                    1@ = 2550.89
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 725.39
+                    1@ = 2288.51
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 736.95
+                    1@ = 2009.09
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 738.76
+                    1@ = 1746.69
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 735.12
+                    1@ = 1461.95
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    0@ = 616.45
+                    1@ = 1297.93
+                    0509: 2@ = distance_between_XY 3@ 4@ and_XY 0@ 1@
+                        2@ > 600.0
+                    jf @TRAIN_TRACK_COORD_GOT2
+                    if
+                            21@ == 2
+                    then
+                            return
+                    end
+                    jump @kvad_4t4
+                    
+:TRAIN_TRACK_COORD_GOT2
+TRAIN_FINDED_COORD_FLAG = 1
+TRAIN_OPPOSITTE_COORD_FLAG = 1
+return

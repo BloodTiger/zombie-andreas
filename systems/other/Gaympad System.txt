@@ -1,0 +1,2488 @@
+const
+FUNC_MENU_CURR_DRAW_WEP_ID = 28@
+FUNC_MENU_CURR_DRAW_WEP_ID2 = 23@
+FUNC_MENU_TOTAL_ROWS = 21@
+FUNC_MENU_DRAW_Y_OFFSET = -100.0
+FUNC_MENU_DRAW_X_OFFSET = 27@
+FUNC_MENU_DRAW_X_START = 20@
+FUNC_MENU_EXIT_FLAG = $FUNC_MENU_EXIT_FLAG
+end
+
+:GAYMPAD
+thread 'GAYMPAD'
+
+while true
+wait 0
+
+if
+not actor.Driving(PLAYER_ACTOR)
+then
+0A8C: write_memory 0xB73574 size 1 value 1 virtual_protect 0 //Выключаем стрельбу на LCTRL
+else
+0A8C: write_memory 0xB73574 size 1 value 0 virtual_protect 0 //Возвращаем стрельбу на LCTRL
+end
+
+/////////////////////////////////////////WEP SELECT MENU/////////////////////////////////////////
+
+if
+0A4B:   controls_set_to_joystick
+then
+
+if
+FUNC_MENU_ACTIVE_FLAG == 0
+    then
+    0@ = 18
+    else
+    0@ = 20
+    0@ = 20
+    gosub @DAMN_NOT_WHEEL_OF_THIS_FUNCTIONAL_MENU
+    0@ = 20
+    0@ = 20
+    end
+    
+else
+
+if
+FUNC_MENU_ACTIVE_FLAG == 0
+    then
+    0@ = 8
+    else
+    0@ = 20
+    0@ = 20
+    gosub @DAMN_NOT_WHEEL_OF_THIS_FUNCTIONAL_MENU
+    0@ = 20
+    0@ = 20
+    end
+
+end    
+
+0A8D: 1@ = read_memory 0xB73575 size 1 virtual_protect 0
+if
+FUNC_MENU_EXIT_FLAG == 1
+then
+1@ = 0
+end
+        
+if and
+not actor.Driving(PLAYER_ACTOR)
+09E7:   player PLAYER_CHAR not_frozen
+8597: not  actor PLAYER_ACTOR crouching
+$HUD_REMOVE == 0
+8A32: not actor PLAYER_ACTOR on_turret_of_car
+not $INF_SIDE == 1
+1@ == 0
+8AD2: not 2@ = player PLAYER_CHAR targeted_actor //IF and SET
+    then
+    
+    if and
+    0A4B:   controls_set_to_joystick 
+    0E3E: is_button_just_pressed 0 button 15
+    0E3E: is_button_just_pressed 0 button 14
+    $GAMEMODE_SURVIVAL == 1
+        then
+        0901: enable_player 0 jump_key 0
+        07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 0        
+        ORIGIN_ABILITY_ACTIVE = -1  
+        wait 0
+        0901: enable_player 0 jump_key 1
+        07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 1               
+        end
+        
+    if or
+    0E3E: is_button_just_pressed 0 button 0@
+    FUNC_MENU_EXIT_FLAG == 1
+        then
+        06AC: 1@ = actor PLAYER_ACTOR movement_speed
+        
+        if
+        FUNC_MENU_ACTIVE_FLAG == 1
+        then
+        1@ = 5.0
+        end
+            
+        if and
+        FUNC_MENU_ACTIVE_FLAG == 0
+        1@ > 4.5
+            then
+            wait 0
+            FUNC_MENU_ACTIVE_FLAG = 1
+            FUNC_MENU_EXIT_FLAG = 0
+            015D: set_gamespeed 0.0 
+            $PANEL_OPEN2 = 1
+            0992: set_player PLAYER_CHAR weapons_scrollable 0
+            FUNC_MENU_ROW1_WEP_ID = -1
+            FUNC_MENU_ROW2_WEP_ID = -1
+            FUNC_MENU_ROW3_WEP_ID = -1
+            FUNC_MENU_ROW4_WEP_ID = -1
+            FUNC_MENU_ROW5_WEP_ID = -1
+            FUNC_MENU_ROW6_WEP_ID = -1
+            FUNC_MENU_ROW7_WEP_ID = -1
+            FUNC_MENU_ROW8_WEP_ID = -1
+            FUNC_MENU_ROW9_WEP_ID = -1
+            FUNC_MENU_ROW10_WEP_ID = -1
+            FUNC_MENU_ROW11_WEP_ID = -1
+            FUNC_MENU_ROW12_WEP_ID = -1
+            gosub @DRAW_WEP_ADJUST_ROW_PRE
+            else
+            FUNC_MENU_ACTIVE_FLAG = 0
+            FUNC_MENU_EXIT_FLAG = 0
+            $SLOWMODE_ACTIVE = 0
+            $PANEL_OPEN2 = 0
+            015D: set_gamespeed 1.0
+            0992: set_player PLAYER_CHAR weapons_scrollable 1
+            end    
+        end
+    end
+    
+if
+0800:   in_two_players_mode
+    then    
+    if and //E - использовать
+    0E3E: is_button_just_pressed 1 button 11
+    not FUNC_MENU_ACTIVE_FLAG == 1
+    not $HUD_REMOVE == 1
+        then
+        if and
+        056D:   actor COOP_ACTOR defined
+        not COOP_ACTOR == -69
+            then
+            if or
+            003A:   COOP_ACTOR == $SURVIVER[0] // (int)
+            003A:   COOP_ACTOR == $SURVIVER[1] // (int)
+            003A:   COOP_ACTOR == $SURVIVER[2] // (int)
+            003A:   COOP_ACTOR == $SURVIVER[3] // (int)
+            003A:   COOP_ACTOR == $SURVIVER[4] // (int)
+                then
+                if and
+                not Actor.Dead(COOP_ACTOR)
+                not Actor.Driving(COOP_ACTOR)     
+                044B:   actor COOP_ACTOR on_foot 
+                09E7:   player PLAYER_CHAR not_frozen
+                02A0:   actor COOP_ACTOR stopped
+                8597:   actor COOP_ACTOR crouching
+                not $PANEL_OPEN == 1
+                not $PANEL_OPEN2 == 1
+                    then
+                    if 
+                    0AA2: 0@ = load_library "User32.dll"
+                        then
+                        if 
+                        0AA4: 1@ = get_proc_address "keybd_event" library 0@
+                            then
+                            JUST_2P_PRESSED_E_KEY = 1                                              
+                            0AA5: call 1@ num_params 4 pop 0 0 0 0 $KEY_USE
+                            wait 0
+                            0AA5: call 1@ num_params 4 pop 0 0 0x02 0 $KEY_USE
+                            0AA3: free_library 0@
+                            JUST_2P_PRESSED_E_KEY = 0                                   
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end                    
+
+if and
+0A4B:   controls_set_to_joystick
+09E7:   player PLAYER_CHAR not_frozen
+not BLACK_MENU_OPENED_FLAG == 1
+then    
+/////////////////////////////////////////GAYMPAD LOOP/////////////////////////////////////////
+
+if
+not actor.Driving(PLAYER_ACTOR)
+    then
+    
+    /////////////////////////////////////////NOT DRIVING BUTTONS/////////////////////////////////////////
+    
+    if and //X - быстрое лечение (побег из преисподней)
+    0E3E: is_button_just_pressed 0 button 10
+    $CANALS_CHALLENGE_FLAG == 1
+    not FUNC_MENU_ACTIVE_FLAG == 1
+        then
+        if 
+        0AA2: 0@ = load_library "User32.dll"
+            then
+            if 
+            0AA4: 1@ = get_proc_address "keybd_event" library 0@
+                then           
+                0AA5: call 1@ num_params 4 pop 0 0 0 0 $KEY_FAST_USE_HEAL
+                wait 0
+                0AA5: call 1@ num_params 4 pop 0 0 0x02 0 $KEY_FAST_USE_HEAL
+                0AA3: free_library 0@                                   
+                end
+            end
+        end
+        
+    if and //Z - быстрый жор (побег из преисподней)
+    0E3E: is_button_just_pressed 0 button 9
+    $CANALS_CHALLENGE_FLAG == 1
+    not FUNC_MENU_ACTIVE_FLAG == 1
+        then
+        if 
+        0AA2: 0@ = load_library "User32.dll"
+            then
+            if 
+            0AA4: 1@ = get_proc_address "keybd_event" library 0@
+                then           
+                0AA5: call 1@ num_params 4 pop 0 0 0 0 $KEY_FAST_USE_FOOD
+                wait 0
+                0AA5: call 1@ num_params 4 pop 0 0 0x02 0 $KEY_FAST_USE_FOOD
+                0AA3: free_library 0@                                   
+                end
+            end
+        end
+        
+    if and //M - открыть карту каналов (побег из преисподней)
+    0E3E: is_button_just_pressed 0 button 8
+    $CANALS_CHALLENGE_FLAG == 1
+    not FUNC_MENU_ACTIVE_FLAG == 1
+        then
+        if 
+        0AA2: 0@ = load_library "User32.dll"
+            then
+            if 
+            0AA4: 1@ = get_proc_address "keybd_event" library 0@
+                then           
+                0AA5: call 1@ num_params 4 pop 0 0 0 0 0x4D
+                wait 0
+                0AA5: call 1@ num_params 4 pop 0 0 0x02 0 0x4D
+                0AA3: free_library 0@                                   
+                end
+            end
+        end
+        
+    if and //M - открыть карту каналов (выживание)
+    0E3E: is_button_just_pressed 0 button 15
+    $CANALS_CHALLENGE_FLAG == 0
+    not FUNC_MENU_ACTIVE_FLAG == 1
+    not $PANEL_OPEN == 1
+    not $PANEL_OPEN2 == 1
+    03EE:   player PLAYER_CHAR controllable
+    PLAYER_IN_CANALS_FLAG == 1
+        then
+        if 
+        0AA2: 0@ = load_library "User32.dll"
+            then
+            if 
+            0AA4: 1@ = get_proc_address "keybd_event" library 0@
+                then           
+                0AA5: call 1@ num_params 4 pop 0 0 0 0 0x4D
+                wait 0
+                0AA5: call 1@ num_params 4 pop 0 0 0x02 0 0x4D
+                0AA3: free_library 0@                                   
+                end
+            end
+        end            
+    
+    if and //X - быстрое лечение (оборона лагеря)
+    0E3E: is_button_just_pressed 0 button 10
+    $DEFENSE_CHALLENGE_FLAG == 1
+    not FUNC_MENU_ACTIVE_FLAG == 1
+        then
+        if 
+        0AA2: 0@ = load_library "User32.dll"
+            then
+            if 
+            0AA4: 1@ = get_proc_address "keybd_event" library 0@
+                then           
+                0AA5: call 1@ num_params 4 pop 0 0 0 0 $KEY_FAST_USE_HEAL
+                wait 0
+                0AA5: call 1@ num_params 4 pop 0 0 0x02 0 $KEY_FAST_USE_HEAL
+                0AA3: free_library 0@                                   
+                end
+            end
+        end
+        
+    if and //X - быстрое лечение (удержание)
+    0E3E: is_button_just_pressed 0 button 10
+    $GAMEMODE_HOLD == 1
+    not FUNC_MENU_ACTIVE_FLAG == 1
+        then
+        if 
+        0AA2: 0@ = load_library "User32.dll"
+            then
+            if 
+            0AA4: 1@ = get_proc_address "keybd_event" library 0@
+                then           
+                0AA5: call 1@ num_params 4 pop 0 0 0 0 $KEY_FAST_USE_HEAL
+                wait 0
+                0AA5: call 1@ num_params 4 pop 0 0 0x02 0 $KEY_FAST_USE_HEAL
+                0AA3: free_library 0@                                   
+                end
+            end
+        end                                
+        
+    if and //E - использовать
+    0E3E: is_button_just_pressed 0 button 11
+    not FUNC_MENU_ACTIVE_FLAG == 1
+    not $PANEL_OPEN2 == 1
+    not $HUD_REMOVE == 1
+        then
+        if 
+        0AA2: 0@ = load_library "User32.dll"
+            then
+            if 
+            0AA4: 1@ = get_proc_address "keybd_event" library 0@
+                then                                              
+                0AA5: call 1@ num_params 4 pop 0 0 0 0 $KEY_USE
+                wait 0
+                wait 0
+                0AA5: call 1@ num_params 4 pop 0 0 0x02 0 $KEY_USE
+                0AA3: free_library 0@                                   
+                end
+            end
+        end
+        
+    if and //R - перезарядка снайперской винтовки.
+    0E3E: is_button_just_pressed 0 button 5
+    0E3E: is_button_just_pressed 0 button 7
+    not FUNC_MENU_ACTIVE_FLAG == 1
+    not $PANEL_OPEN2 == 1
+    not $HUD_REMOVE == 1
+        then
+        0470: 0@ = actor PLAYER_ACTOR current_weapon
+        if or
+        0@ == 34
+        0@ == 80
+        0@ == 96
+        0@ == 97
+        0@ == 147
+        0@ == 176
+        0@ == 206
+            then
+            if 
+            0AA2: 0@ = load_library "User32.dll"
+                then
+                if 
+                0AA4: 1@ = get_proc_address "keybd_event" library 0@
+                    then                                              
+                    0AA5: call 1@ num_params 4 pop 0 0 0 0 82
+                    wait 0
+                    0AA5: call 1@ num_params 4 pop 0 0 0x02 0 82
+                    0AA3: free_library 0@                                   
+                    end
+                end
+            end
+        end                                                              
+        
+    if and //Y - Cтoять нa мecтe\идти зa игpoкoм cтpeляя в зoмби
+    0E3E: is_button_just_pressed 0 button 9
+    $PANEL_OPEN == 0
+    not FUNC_MENU_ACTIVE_FLAG == 1
+    not $NOT_ALLOW_COMMANDS == 1
+        then
+        if 
+        0AA2: 0@ = load_library "User32.dll"
+            then
+            if 
+            0AA4: 1@ = get_proc_address "keybd_event" library 0@
+                then
+                if
+                $COMMAND_STAY_IN_CAR == 0
+                then                                              
+                0AA5: call 1@ num_params 4 pop 0 0 0 0 $KEY_COMMAND_STAY_FOLLOW
+                wait 0
+                0AA5: call 1@ num_params 4 pop 0 0 0x02 0 $KEY_COMMAND_STAY_FOLLOW
+                else
+                0AA5: call 1@ num_params 4 pop 0 0 0 0 $KEY_COMMAND_STAY_IN_CAR
+                wait 0
+                0AA5: call 1@ num_params 4 pop 0 0 0x02 0 $KEY_COMMAND_STAY_IN_CAR
+                end
+                0AA3: free_library 0@                                   
+                end
+            end
+        end                                 
+    
+    if and //T - Бeжaть зa игpoкoм нe oбpaщaя внимaния нa зoмби\cлeдoвaть зa игpoкoм, cтpeляя в зoмби
+    0E3E: is_button_just_pressed 0 button 8
+    $PANEL_OPEN == 0
+    not FUNC_MENU_ACTIVE_FLAG == 1
+    not $NOT_ALLOW_COMMANDS == 1
+        then
+        if 
+        0AA2: 0@ = load_library "User32.dll"
+            then
+            if 
+            0AA4: 1@ = get_proc_address "keybd_event" library 0@
+                then                                              
+                0AA5: call 1@ num_params 4 pop 0 0 0 0 $KEY_COMMAND_FOLLOW2
+                wait 0
+                0AA5: call 1@ num_params 4 pop 0 0 0x02 0 $KEY_COMMAND_FOLLOW2
+                0AA3: free_library 0@                                   
+                end
+            end
+        end                                 
+            
+    else                                         
+    
+    /////////////////////////////////////////DRIVING BUTTONS/////////////////////////////////////////
+    
+    if and
+    0E3E: is_button_just_pressed 0 button 8
+    not $ZOMBIE_DERBY_FLAG == 1
+        then
+        if 
+        0AA2: 0@ = load_library "User32.dll"
+            then
+            if 
+            0AA4: 1@ = get_proc_address "keybd_event" library 0@
+                then                                              
+                0AA5: call 1@ num_params 4 pop 0 0 0 0 $KEY_COMMAND_SIT_IN_CAR
+                wait 0
+                0AA5: call 1@ num_params 4 pop 0 0 0x02 0 $KEY_COMMAND_SIT_IN_CAR
+                0AA3: free_library 0@                                   
+                end
+            end
+        end                                 
+    
+    if and
+    0E3E: is_button_just_pressed 0 button 9
+    not $ZOMBIE_DERBY_FLAG == 1
+        then
+        if 
+        0AA2: 0@ = load_library "User32.dll"
+            then
+            if 
+            0AA4: 1@ = get_proc_address "keybd_event" library 0@
+                then                                              
+                0AA5: call 1@ num_params 4 pop 0 0 0 0 $KEY_COMMAND_STAY_IN_CAR
+                wait 0
+                0AA5: call 1@ num_params 4 pop 0 0 0x02 0 $KEY_COMMAND_STAY_IN_CAR
+                0AA3: free_library 0@                                   
+                end
+            end
+        end
+        
+    if and //L - открыть меню сохранения трансспорта
+    0E3E: is_button_just_pressed 0 button 10
+    not $ZOMBIE_DERBY_FLAG == 1
+        then
+        if 
+        0AA2: 0@ = load_library "User32.dll"
+            then
+            if 
+            0AA4: 1@ = get_proc_address "keybd_event" library 0@
+                then
+                if
+                82A0: not  actor PLAYER_ACTOR stopped
+                then                
+                0AA5: call 1@ num_params 4 pop 0 0 0 0 $KEY_FAST_USE_FOOD_CAR
+                wait 0
+                0AA5: call 1@ num_params 4 pop 0 0 0x02 0 $KEY_FAST_USE_FOOD_CAR
+                else                                              
+                0AA5: call 1@ num_params 4 pop 0 0 0 0 0x4C
+                wait 0
+                0AA5: call 1@ num_params 4 pop 0 0 0x02 0 0x4C
+                end
+                0AA3: free_library 0@                                   
+                end
+            end
+        end
+     
+    if and //Z - закрыть двери
+    0E3E: is_button_just_pressed 0 button 11
+    not TEAMMATE_ASKING_FOOD == 1
+    not $ZOMBIE_DERBY_FLAG == 1
+        then
+        if 
+        0AA2: 0@ = load_library "User32.dll"
+            then
+            if 
+            0AA4: 1@ = get_proc_address "keybd_event" library 0@
+                then                                              
+                0AA5: call 1@ num_params 4 pop 0 0 0 0 $KEY_CLOSE_DOOR
+                wait 0
+                0AA5: call 1@ num_params 4 pop 0 0 0x02 0 $KEY_CLOSE_DOOR
+                0AA3: free_library 0@                                   
+                end
+            end
+        end    
+                        
+    end                        
+    
+/////////////////////////////////////////GAYMPAD LOOP END/////////////////////////////////////////    
+end 
+end
+
+end_thread
+
+:DAMN_NOT_WHEEL_OF_THIS_FUNCTIONAL_MENU
+
+if
+FUNC_MENU_ACTIVE_FLAG == 1  
+    then
+        
+    gosub @DRAW_WEP_ADJUST_ROW    
+//    0AD1: show_formatted_text_highpriority "SELECTED ROW: %d, ID: %d ~n~ IDS: %d %d %d %d %d %d %d %d %d %d %d %d TOTAL ROWS: %d" time 2000 FUNC_MENU_SELECTED_ROW FUNC_MENU_SELECTED_ROW_WEP_ID FUNC_MENU_ROW1_WEP_ID FUNC_MENU_ROW2_WEP_ID FUNC_MENU_ROW3_WEP_ID FUNC_MENU_ROW4_WEP_ID FUNC_MENU_ROW5_WEP_ID FUNC_MENU_ROW6_WEP_ID FUNC_MENU_ROW7_WEP_ID FUNC_MENU_ROW8_WEP_ID FUNC_MENU_ROW9_WEP_ID FUNC_MENU_ROW10_WEP_ID FUNC_MENU_ROW11_WEP_ID FUNC_MENU_ROW12_WEP_ID FUNC_MENU_TOTAL_ROWS        
+    gosub @DRAW_WEPS                                         
+    
+    if
+    0E45: frame_mod 2
+    then
+    
+    if
+    0A4B:   controls_set_to_joystick
+    then    
+    00E2: get_player 0 key 2 state_to 0@
+    else
+    00E2: get_player 0 key 0 state_to 0@
+    end
+    
+    if
+    0E10: is_mouse_wheel_up
+        then
+        0@ = 228
+        end
+        
+    if
+    0E11: is_mouse_wheel_down
+        then
+        0@ = -227
+        end
+    
+    else
+    0@ = 0    
+    end        
+                   
+    if
+    0@ > 0
+        then                
+        FUNC_MENU_SELECTED_ROW += 1
+        if
+        001E:   FUNC_MENU_SELECTED_ROW > FUNC_MENU_TOTAL_ROWS // (int)
+            then
+            FUNC_MENU_SELECTED_ROW = 0
+            end        
+        end
+        
+    if
+    0@ < 0
+        then               
+        FUNC_MENU_SELECTED_ROW -= 1
+        if
+        FUNC_MENU_SELECTED_ROW < 0
+            then
+            008A: FUNC_MENU_SELECTED_ROW = FUNC_MENU_TOTAL_ROWS // (int)
+            end
+        end    
+        
+    end            
+
+return
+
+:DRAW_WEP_ADJUST_ROW_PRE
+
+0@ = 0
+FUNC_MENU_TOTAL_ROWS = -1
+
+for 2@ = 1 to 12
+gosub @DRAW_WEP_ADJUST_ROW_PRE_GOSUB                                               
+end
+
+FUNC_MENU_SELECTED_ROW -= 1
+
+return
+
+:DRAW_WEP_ADJUST_ROW_PRE_GOSUB
+
+if
+2@ == 1
+then
+1@ = 0
+FUNC_MENU_CURR_DRAW_WEP_ID = 6928
+else
+04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 2@ weapon 1@ ammo FUNC_MENU_CURR_DRAW_WEP_ID model FUNC_MENU_CURR_DRAW_WEP_ID2
+end
+
+if and
+FUNC_MENU_ROW1_WEP_ID == -1
+FUNC_MENU_CURR_DRAW_WEP_ID > 0
+    then    
+    if and
+    803C: not  FUNC_MENU_ROW1_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW2_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW3_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW4_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW5_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW6_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW7_WEP_ID == 1@  // (int)
+        then
+        if and
+        803C: not  FUNC_MENU_ROW8_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW9_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW10_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW11_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW12_WEP_ID == 1@  // (int)
+            then
+            0@ += 1
+            FUNC_MENU_TOTAL_ROWS += 1
+            008A: FUNC_MENU_ROW1_WEP_ID = 1@ // (int)
+            if
+            02D8:   actor PLAYER_ACTOR current_weapon == FUNC_MENU_ROW1_WEP_ID
+                then
+                008A: FUNC_MENU_SELECTED_ROW = 0@ // (int)
+                008A: FUNC_MENU_SELECTED_ROW_WEP_ID = 1@ // (int)
+                return
+                end
+            end
+        end    
+    end
+    
+if and
+FUNC_MENU_ROW2_WEP_ID == -1
+FUNC_MENU_CURR_DRAW_WEP_ID > 0
+    then    
+    if and
+    803C: not  FUNC_MENU_ROW1_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW2_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW3_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW4_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW5_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW6_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW7_WEP_ID == 1@  // (int)
+        then
+        if and
+        803C: not  FUNC_MENU_ROW8_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW9_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW10_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW11_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW12_WEP_ID == 1@  // (int)
+            then
+            0@ += 1
+            FUNC_MENU_TOTAL_ROWS += 1
+            008A: FUNC_MENU_ROW2_WEP_ID = 1@ // (int)
+            if
+            02D8:   actor PLAYER_ACTOR current_weapon == FUNC_MENU_ROW2_WEP_ID
+                then
+                008A: FUNC_MENU_SELECTED_ROW = 0@ // (int)
+                008A: FUNC_MENU_SELECTED_ROW_WEP_ID = 1@ // (int)
+                return
+                end
+            end
+        end    
+    end
+    
+if and
+FUNC_MENU_ROW3_WEP_ID == -1
+FUNC_MENU_CURR_DRAW_WEP_ID > 0
+    then
+    if and
+    803C: not  FUNC_MENU_ROW1_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW2_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW3_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW4_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW5_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW6_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW7_WEP_ID == 1@  // (int)
+        then
+        if and
+        803C: not  FUNC_MENU_ROW8_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW9_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW10_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW11_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW12_WEP_ID == 1@  // (int)
+            then
+            0@ += 1
+            FUNC_MENU_TOTAL_ROWS += 1
+            008A: FUNC_MENU_ROW3_WEP_ID = 1@ // (int)
+            if
+            02D8:   actor PLAYER_ACTOR current_weapon == FUNC_MENU_ROW3_WEP_ID
+                then
+                008A: FUNC_MENU_SELECTED_ROW = 0@ // (int)
+                008A: FUNC_MENU_SELECTED_ROW_WEP_ID = 1@ // (int)
+                return
+                end
+            end
+        end
+    end     
+    
+if and
+FUNC_MENU_ROW4_WEP_ID == -1
+FUNC_MENU_CURR_DRAW_WEP_ID > 0
+    then
+    if and
+    803C: not  FUNC_MENU_ROW1_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW2_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW3_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW4_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW5_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW6_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW7_WEP_ID == 1@  // (int)
+        then
+        if and
+        803C: not  FUNC_MENU_ROW8_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW9_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW10_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW11_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW12_WEP_ID == 1@  // (int)
+            then
+            0@ += 1
+            FUNC_MENU_TOTAL_ROWS += 1
+            008A: FUNC_MENU_ROW4_WEP_ID = 1@ // (int)
+            if
+            02D8:   actor PLAYER_ACTOR current_weapon == FUNC_MENU_ROW4_WEP_ID
+                then
+                008A: FUNC_MENU_SELECTED_ROW = 0@ // (int)
+                008A: FUNC_MENU_SELECTED_ROW_WEP_ID = 1@ // (int)
+                return
+                end
+            end
+        end
+    end
+    
+if and
+FUNC_MENU_ROW5_WEP_ID == -1
+FUNC_MENU_CURR_DRAW_WEP_ID > 0
+    then
+    if and
+    803C: not  FUNC_MENU_ROW1_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW2_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW3_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW4_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW5_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW6_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW7_WEP_ID == 1@  // (int)
+        then
+        if and
+        803C: not  FUNC_MENU_ROW8_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW9_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW10_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW11_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW12_WEP_ID == 1@  // (int)
+            then
+            0@ += 1
+            FUNC_MENU_TOTAL_ROWS += 1
+            008A: FUNC_MENU_ROW5_WEP_ID = 1@ // (int)
+            if
+            02D8:   actor PLAYER_ACTOR current_weapon == FUNC_MENU_ROW5_WEP_ID
+                then
+                008A: FUNC_MENU_SELECTED_ROW = 0@ // (int)
+                008A: FUNC_MENU_SELECTED_ROW_WEP_ID = 1@ // (int)
+                return
+                end
+            end
+        end
+    end
+    
+if and
+FUNC_MENU_ROW6_WEP_ID == -1
+FUNC_MENU_CURR_DRAW_WEP_ID > 0
+    then
+    if and
+    803C: not  FUNC_MENU_ROW1_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW2_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW3_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW4_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW5_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW6_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW7_WEP_ID == 1@  // (int)
+        then
+        if and
+        803C: not  FUNC_MENU_ROW8_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW9_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW10_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW11_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW12_WEP_ID == 1@  // (int)
+            then
+            0@ += 1
+            FUNC_MENU_TOTAL_ROWS += 1
+            008A: FUNC_MENU_ROW6_WEP_ID = 1@ // (int)
+            if
+            02D8:   actor PLAYER_ACTOR current_weapon == FUNC_MENU_ROW6_WEP_ID
+                then
+                008A: FUNC_MENU_SELECTED_ROW = 0@ // (int)
+                008A: FUNC_MENU_SELECTED_ROW_WEP_ID = 1@ // (int)
+                return
+                end
+            end
+        end
+    end
+    
+if and
+FUNC_MENU_ROW7_WEP_ID == -1
+FUNC_MENU_CURR_DRAW_WEP_ID > 0
+    then
+    if and
+    803C: not  FUNC_MENU_ROW1_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW2_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW3_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW4_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW5_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW6_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW7_WEP_ID == 1@  // (int)
+        then
+        if and
+        803C: not  FUNC_MENU_ROW8_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW9_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW10_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW11_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW12_WEP_ID == 1@  // (int)
+            then
+            0@ += 1
+            FUNC_MENU_TOTAL_ROWS += 1
+            008A: FUNC_MENU_ROW7_WEP_ID = 1@ // (int)
+            if
+            02D8:   actor PLAYER_ACTOR current_weapon == FUNC_MENU_ROW7_WEP_ID
+                then
+                008A: FUNC_MENU_SELECTED_ROW = 0@ // (int)
+                008A: FUNC_MENU_SELECTED_ROW_WEP_ID = 1@ // (int)
+                return
+                end
+            end
+        end
+    end
+    
+if and
+FUNC_MENU_ROW8_WEP_ID == -1
+FUNC_MENU_CURR_DRAW_WEP_ID > 0
+    then
+    if and
+    803C: not  FUNC_MENU_ROW1_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW2_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW3_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW4_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW5_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW6_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW7_WEP_ID == 1@  // (int)
+        then
+        if and
+        803C: not  FUNC_MENU_ROW8_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW9_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW10_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW11_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW12_WEP_ID == 1@  // (int)
+            then
+            0@ += 1
+            FUNC_MENU_TOTAL_ROWS += 1
+            008A: FUNC_MENU_ROW8_WEP_ID = 1@ // (int)
+            if
+            02D8:   actor PLAYER_ACTOR current_weapon == FUNC_MENU_ROW8_WEP_ID
+                then
+                008A: FUNC_MENU_SELECTED_ROW = 0@ // (int)
+                008A: FUNC_MENU_SELECTED_ROW_WEP_ID = 1@ // (int)
+                return
+                end
+            end
+        end
+    end
+    
+if and
+FUNC_MENU_ROW9_WEP_ID == -1
+FUNC_MENU_CURR_DRAW_WEP_ID > 0
+    then
+    if and
+    803C: not  FUNC_MENU_ROW1_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW2_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW3_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW4_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW5_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW6_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW7_WEP_ID == 1@  // (int)
+        then
+        if and
+        803C: not  FUNC_MENU_ROW8_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW9_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW10_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW11_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW12_WEP_ID == 1@  // (int)
+            then
+            0@ += 1
+            FUNC_MENU_TOTAL_ROWS += 1
+            008A: FUNC_MENU_ROW9_WEP_ID = 1@ // (int)
+            if
+            02D8:   actor PLAYER_ACTOR current_weapon == FUNC_MENU_ROW9_WEP_ID
+                then
+                008A: FUNC_MENU_SELECTED_ROW = 0@ // (int)
+                008A: FUNC_MENU_SELECTED_ROW_WEP_ID = 1@ // (int)
+                return
+                end
+            end
+        end                                       
+    end
+    
+if and
+FUNC_MENU_ROW10_WEP_ID == -1
+FUNC_MENU_CURR_DRAW_WEP_ID > 0
+    then
+    if and
+    803C: not  FUNC_MENU_ROW1_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW2_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW3_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW4_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW5_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW6_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW7_WEP_ID == 1@  // (int)
+        then
+        if and
+        803C: not  FUNC_MENU_ROW8_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW9_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW10_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW11_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW12_WEP_ID == 1@  // (int)
+            then
+            0@ += 1
+            FUNC_MENU_TOTAL_ROWS += 1
+            008A: FUNC_MENU_ROW10_WEP_ID = 1@ // (int)
+            if
+            02D8:   actor PLAYER_ACTOR current_weapon == FUNC_MENU_ROW10_WEP_ID
+                then
+                008A: FUNC_MENU_SELECTED_ROW = 0@ // (int)
+                008A: FUNC_MENU_SELECTED_ROW_WEP_ID = 1@ // (int)
+                return
+                end
+            end
+        end
+    end
+    
+if and
+FUNC_MENU_ROW11_WEP_ID == -1
+FUNC_MENU_CURR_DRAW_WEP_ID > 0
+    then
+    if and
+    803C: not  FUNC_MENU_ROW1_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW2_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW3_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW4_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW5_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW6_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW7_WEP_ID == 1@  // (int)
+        then
+        if and
+        803C: not  FUNC_MENU_ROW8_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW9_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW10_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW11_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW12_WEP_ID == 1@  // (int)
+            then
+            0@ += 1
+            FUNC_MENU_TOTAL_ROWS += 1
+            008A: FUNC_MENU_ROW11_WEP_ID = 1@ // (int)
+            if
+            02D8:   actor PLAYER_ACTOR current_weapon == FUNC_MENU_ROW11_WEP_ID
+                then
+                008A: FUNC_MENU_SELECTED_ROW = 0@ // (int)
+                008A: FUNC_MENU_SELECTED_ROW_WEP_ID = 1@ // (int)
+                return
+                end
+            end
+        end
+    end 
+    
+if and
+FUNC_MENU_ROW12_WEP_ID == -1
+FUNC_MENU_CURR_DRAW_WEP_ID > 0
+    then
+    if and
+    803C: not  FUNC_MENU_ROW1_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW2_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW3_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW4_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW5_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW6_WEP_ID == 1@  // (int)
+    803C: not  FUNC_MENU_ROW7_WEP_ID == 1@  // (int)
+        then
+        if and
+        803C: not  FUNC_MENU_ROW8_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW9_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW10_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW11_WEP_ID == 1@  // (int)
+        803C: not  FUNC_MENU_ROW12_WEP_ID == 1@  // (int)
+            then
+            0@ += 1
+            FUNC_MENU_TOTAL_ROWS += 1
+            008A: FUNC_MENU_ROW12_WEP_ID = 1@ // (int)
+            if
+            02D8:   actor PLAYER_ACTOR current_weapon == FUNC_MENU_ROW12_WEP_ID
+                then
+                008A: FUNC_MENU_SELECTED_ROW = 0@ // (int)
+                008A: FUNC_MENU_SELECTED_ROW_WEP_ID = 1@ // (int)
+                return
+                end
+            end
+        end
+    end      
+
+return
+
+:DRAW_WEP_ADJUST_ROW
+
+if
+0A4B:   controls_set_to_joystick
+then
+25@ = 18
+else
+25@ = 8
+end
+
+if
+FUNC_MENU_SELECTED_ROW == 0
+    then
+    008B: FUNC_MENU_SELECTED_ROW_WEP_ID = FUNC_MENU_ROW1_WEP_ID // (int)    
+    if
+    0E3E: is_button_just_pressed 0 button 25@    
+        then
+        01B9: set_actor PLAYER_ACTOR armed_weapon_to FUNC_MENU_ROW1_WEP_ID
+        FUNC_MENU_EXIT_FLAG = 1
+        end    
+    end
+    
+if
+FUNC_MENU_SELECTED_ROW == 1
+    then
+    008B: FUNC_MENU_SELECTED_ROW_WEP_ID = FUNC_MENU_ROW2_WEP_ID // (int)    
+    if
+    0E3E: is_button_just_pressed 0 button 25@    
+        then
+        01B9: set_actor PLAYER_ACTOR armed_weapon_to FUNC_MENU_ROW2_WEP_ID
+        FUNC_MENU_EXIT_FLAG = 1
+        end    
+    end
+    
+if
+FUNC_MENU_SELECTED_ROW == 2
+    then
+    008B: FUNC_MENU_SELECTED_ROW_WEP_ID = FUNC_MENU_ROW3_WEP_ID // (int)    
+    if
+    0E3E: is_button_just_pressed 0 button 25@    
+        then
+        01B9: set_actor PLAYER_ACTOR armed_weapon_to FUNC_MENU_ROW3_WEP_ID
+        FUNC_MENU_EXIT_FLAG = 1
+        end    
+    end
+    
+if
+FUNC_MENU_SELECTED_ROW == 3
+    then
+    008B: FUNC_MENU_SELECTED_ROW_WEP_ID = FUNC_MENU_ROW4_WEP_ID // (int)    
+    if
+    0E3E: is_button_just_pressed 0 button 25@    
+        then
+        01B9: set_actor PLAYER_ACTOR armed_weapon_to FUNC_MENU_ROW4_WEP_ID
+        FUNC_MENU_EXIT_FLAG = 1
+        end    
+    end
+    
+if
+FUNC_MENU_SELECTED_ROW == 4
+    then
+    008B: FUNC_MENU_SELECTED_ROW_WEP_ID = FUNC_MENU_ROW5_WEP_ID // (int)    
+    if
+    0E3E: is_button_just_pressed 0 button 25@   
+        then
+        01B9: set_actor PLAYER_ACTOR armed_weapon_to FUNC_MENU_ROW5_WEP_ID
+        FUNC_MENU_EXIT_FLAG = 1
+        end    
+    end
+    
+if
+FUNC_MENU_SELECTED_ROW == 5
+    then
+    008B: FUNC_MENU_SELECTED_ROW_WEP_ID = FUNC_MENU_ROW6_WEP_ID // (int)    
+    if
+    0E3E: is_button_just_pressed 0 button 25@  
+        then
+        01B9: set_actor PLAYER_ACTOR armed_weapon_to FUNC_MENU_ROW6_WEP_ID
+        FUNC_MENU_EXIT_FLAG = 1
+        end    
+    end
+    
+if
+FUNC_MENU_SELECTED_ROW == 6
+    then
+    008B: FUNC_MENU_SELECTED_ROW_WEP_ID = FUNC_MENU_ROW7_WEP_ID // (int)    
+    if
+    0E3E: is_button_just_pressed 0 button 25@   
+        then
+        01B9: set_actor PLAYER_ACTOR armed_weapon_to FUNC_MENU_ROW7_WEP_ID
+        FUNC_MENU_EXIT_FLAG = 1
+        end    
+    end
+    
+if
+FUNC_MENU_SELECTED_ROW == 7
+    then
+    008B: FUNC_MENU_SELECTED_ROW_WEP_ID = FUNC_MENU_ROW8_WEP_ID // (int)    
+    if
+    0E3E: is_button_just_pressed 0 button 25@   
+        then
+        01B9: set_actor PLAYER_ACTOR armed_weapon_to FUNC_MENU_ROW8_WEP_ID
+        FUNC_MENU_EXIT_FLAG = 1
+        end    
+    end 
+    
+if
+FUNC_MENU_SELECTED_ROW == 8
+    then
+    008B: FUNC_MENU_SELECTED_ROW_WEP_ID = FUNC_MENU_ROW9_WEP_ID // (int)    
+    if
+    0E3E: is_button_just_pressed 0 button 25@    
+        then
+        01B9: set_actor PLAYER_ACTOR armed_weapon_to FUNC_MENU_ROW9_WEP_ID
+        FUNC_MENU_EXIT_FLAG = 1
+        end    
+    end
+    
+if
+FUNC_MENU_SELECTED_ROW == 9
+    then
+    008B: FUNC_MENU_SELECTED_ROW_WEP_ID = FUNC_MENU_ROW10_WEP_ID // (int)    
+    if
+    0E3E: is_button_just_pressed 0 button 25@   
+        then
+        01B9: set_actor PLAYER_ACTOR armed_weapon_to FUNC_MENU_ROW10_WEP_ID
+        FUNC_MENU_EXIT_FLAG = 1
+        end    
+    end
+    
+if
+FUNC_MENU_SELECTED_ROW == 10
+    then
+    008B: FUNC_MENU_SELECTED_ROW_WEP_ID = FUNC_MENU_ROW11_WEP_ID // (int)    
+    if
+    0E3E: is_button_just_pressed 0 button 25@    
+        then
+        01B9: set_actor PLAYER_ACTOR armed_weapon_to FUNC_MENU_ROW11_WEP_ID
+        FUNC_MENU_EXIT_FLAG = 1
+        end    
+    end 
+    
+if
+FUNC_MENU_SELECTED_ROW == 11
+    then
+    008B: FUNC_MENU_SELECTED_ROW_WEP_ID = FUNC_MENU_ROW12_WEP_ID // (int)    
+    if
+    0E3E: is_button_just_pressed 0 button 25@   
+        then
+        01B9: set_actor PLAYER_ACTOR armed_weapon_to FUNC_MENU_ROW12_WEP_ID
+        FUNC_MENU_EXIT_FLAG = 1
+        end    
+    end                                          
+
+return
+      
+:DRAW_WEP_INFO_BY_ID
+
+///////////////////////////////////////////////////
+
+if or
+FUNC_MENU_CURR_DRAW_WEP_ID == 92
+FUNC_MENU_CURR_DRAW_WEP_ID == 107
+then
+
+03F0: enable_text_draw 1
+0349: set_text_draw_font 1 
+0342: set_text_draw_centered 1
+03E0: draw_text_behind_textures 1
+03E3: set_texture_to_be_drawn_antialiased 1 
+033F: set_text_draw_letter_size 0.22 1.1 
+081C: draw_text_outline 1 RGBA 0 0 0 $HUD_ALPHA
+
+0340: set_text_draw_RGBA 225 225 225 $HUD_ALPHA
+
+if
+UNITED_MAP == 1
+then    
+0349: set_text_draw_font UNITED_HUD_FONT_NUMBER
+end
+
+if
+UNITED_MAP == 0
+then
+
+if and
+0491:   actor PLAYER_ACTOR has_weapon 16
+$GRND_LNCHR_MOLOTOV == 0
+then
+041A: 0@ = actor PLAYER_ACTOR weapon 16 ammo
+29@ = 162.0
+29@ -= FUNC_MENU_DRAW_Y_OFFSET
+0087: 30@ = FUNC_MENU_DRAW_X_START
+005B: 30@ += FUNC_MENU_DRAW_X_OFFSET
+045A: draw_text_1number 30@ 29@ GXT 'DISP0' number 0@
+end
+                
+if and
+0491:   actor PLAYER_ACTOR has_weapon 17
+$GRND_LNCHR_MOLOTOV == 0
+then
+041A: 0@ = actor PLAYER_ACTOR weapon 17 ammo
+29@ = 162.0
+29@ -= FUNC_MENU_DRAW_Y_OFFSET
+0087: 30@ = FUNC_MENU_DRAW_X_START
+005B: 30@ += FUNC_MENU_DRAW_X_OFFSET
+045A: draw_text_1number 30@ 29@ GXT 'DISP0' number 0@
+end
+                
+if and
+0491:   actor PLAYER_ACTOR has_weapon 18
+$GRND_LNCHR_MOLOTOV == 1
+then
+041A: 0@ = actor PLAYER_ACTOR weapon 18 ammo
+29@ = 162.0
+29@ -= FUNC_MENU_DRAW_Y_OFFSET
+0087: 30@ = FUNC_MENU_DRAW_X_START
+005B: 30@ += FUNC_MENU_DRAW_X_OFFSET
+045A: draw_text_1number 30@ 29@ GXT 'DISP0' number 0@
+end
+
+else
+
+////////////////////////////////////////////////////////////////
+
+if
+STORIES_MAP == 1
+then
+
+if
+$UNITED_III_SPAWN == 1
+then
+
+if and
+0491:   actor PLAYER_ACTOR has_weapon 177
+$GRND_LNCHR_MOLOTOV == 0
+then
+041A: 0@ = actor PLAYER_ACTOR weapon 177 ammo
+29@ = 133.5
+29@ -= FUNC_MENU_DRAW_Y_OFFSET
+0087: 30@ = FUNC_MENU_DRAW_X_START
+005B: 30@ += FUNC_MENU_DRAW_X_OFFSET
+045A: draw_text_1number 30@ 29@ GXT 'DISP0' number 0@
+end
+                
+if and
+0491:   actor PLAYER_ACTOR has_weapon 178
+$GRND_LNCHR_MOLOTOV == 0
+then
+041A: 0@ = actor PLAYER_ACTOR weapon 178 ammo
+29@ = 133.5
+29@ -= FUNC_MENU_DRAW_Y_OFFSET
+0087: 30@ = FUNC_MENU_DRAW_X_START
+005B: 30@ += FUNC_MENU_DRAW_X_OFFSET
+045A: draw_text_1number 30@ 29@ GXT 'DISP0' number 0@
+end
+                
+if and
+0491:   actor PLAYER_ACTOR has_weapon 179
+$GRND_LNCHR_MOLOTOV == 1
+then
+041A: 0@ = actor PLAYER_ACTOR weapon 179 ammo
+29@ = 133.5
+29@ -= FUNC_MENU_DRAW_Y_OFFSET
+0087: 30@ = FUNC_MENU_DRAW_X_START
+005B: 30@ += FUNC_MENU_DRAW_X_OFFSET
+045A: draw_text_1number 30@ 133.5 GXT 'DISP0' number 0@
+end
+
+else
+
+if and
+0491:   actor PLAYER_ACTOR has_weapon 207
+$GRND_LNCHR_MOLOTOV == 0
+then
+041A: 0@ = actor PLAYER_ACTOR weapon 207 ammo
+29@ = 133.5
+29@ -= FUNC_MENU_DRAW_Y_OFFSET
+0087: 30@ = FUNC_MENU_DRAW_X_START
+005B: 30@ += FUNC_MENU_DRAW_X_OFFSET
+045A: draw_text_1number 30@ 29@ GXT 'DISP0' number 0@
+end
+                
+if and
+0491:   actor PLAYER_ACTOR has_weapon 208
+$GRND_LNCHR_MOLOTOV == 0
+then
+041A: 0@ = actor PLAYER_ACTOR weapon 208 ammo
+29@ = 133.5
+29@ -= FUNC_MENU_DRAW_Y_OFFSET
+0087: 30@ = FUNC_MENU_DRAW_X_START
+005B: 30@ += FUNC_MENU_DRAW_X_OFFSET
+045A: draw_text_1number 30@ 29@ GXT 'DISP0' number 0@
+end
+                
+if and
+0491:   actor PLAYER_ACTOR has_weapon 209
+$GRND_LNCHR_MOLOTOV == 1
+then
+041A: 0@ = actor PLAYER_ACTOR weapon 209 ammo
+29@ = 133.5
+29@ -= FUNC_MENU_DRAW_Y_OFFSET
+0087: 30@ = FUNC_MENU_DRAW_X_START
+005B: 30@ += FUNC_MENU_DRAW_X_OFFSET
+045A: draw_text_1number 30@ 29@ GXT 'DISP0' number 0@
+end
+
+end
+
+else
+
+if
+$UNITED_III_SPAWN == 0
+then
+
+if and
+0491:   actor PLAYER_ACTOR has_weapon 132
+$GRND_LNCHR_MOLOTOV == 0
+then
+041A: 0@ = actor PLAYER_ACTOR weapon 132 ammo
+29@ = 164.0
+29@ -= FUNC_MENU_DRAW_Y_OFFSET
+0087: 30@ = FUNC_MENU_DRAW_X_START
+005B: 30@ += FUNC_MENU_DRAW_X_OFFSET
+045A: draw_text_1number 30@ 29@ GXT 'DISP0' number 0@
+end
+                
+if and
+0491:   actor PLAYER_ACTOR has_weapon 133
+$GRND_LNCHR_MOLOTOV == 0
+then
+041A: 0@ = actor PLAYER_ACTOR weapon 133 ammo
+29@ = 164.0
+29@ -= FUNC_MENU_DRAW_Y_OFFSET
+0087: 30@ = FUNC_MENU_DRAW_X_START
+005B: 30@ += FUNC_MENU_DRAW_X_OFFSET
+045A: draw_text_1number 30@ 29@ GXT 'DISP0' number 0@
+end
+                
+if and
+0491:   actor PLAYER_ACTOR has_weapon 134
+$GRND_LNCHR_MOLOTOV == 1
+then
+041A: 0@ = actor PLAYER_ACTOR weapon 134 ammo
+29@ = 164.0
+29@ -= FUNC_MENU_DRAW_Y_OFFSET
+0087: 30@ = FUNC_MENU_DRAW_X_START
+005B: 30@ += FUNC_MENU_DRAW_X_OFFSET
+045A: draw_text_1number 30@ 29@ GXT 'DISP0' number 0@
+end
+
+else
+
+if and
+0491:   actor PLAYER_ACTOR has_weapon 17
+$GRND_LNCHR_MOLOTOV == 0
+then
+041A: 0@ = actor PLAYER_ACTOR weapon 17 ammo
+29@ = 153.5
+29@ -= FUNC_MENU_DRAW_Y_OFFSET
+0087: 30@ = FUNC_MENU_DRAW_X_START
+005B: 30@ += FUNC_MENU_DRAW_X_OFFSET
+045A: draw_text_1number 30@ 29@ GXT 'DISP0' number 0@
+end
+                
+if and
+0491:   actor PLAYER_ACTOR has_weapon 115
+$GRND_LNCHR_MOLOTOV == 0
+then
+041A: 0@ = actor PLAYER_ACTOR weapon 115 ammo
+29@ = 153.5
+29@ -= FUNC_MENU_DRAW_Y_OFFSET
+0087: 30@ = FUNC_MENU_DRAW_X_START
+005B: 30@ += FUNC_MENU_DRAW_X_OFFSET
+045A: draw_text_1number 30@ 29@ GXT 'DISP0' number 0@
+end
+                
+if and
+0491:   actor PLAYER_ACTOR has_weapon 118
+$GRND_LNCHR_MOLOTOV == 1
+then
+041A: 0@ = actor PLAYER_ACTOR weapon 118 ammo
+29@ = 153.5
+29@ -= FUNC_MENU_DRAW_Y_OFFSET
+0087: 30@ = FUNC_MENU_DRAW_X_START
+005B: 30@ += FUNC_MENU_DRAW_X_OFFSET
+045A: draw_text_1number 30@ 29@ GXT 'DISP0' number 0@
+end
+
+end
+
+end
+
+////////////////////////////////////////////////////////////////
+
+end
+
+end
+
+///////////////////////////////////////////////////
+
+0085: 13@ = 28@ // (int)
+
+if
+$FIST_HUD_ALWAYS == 1
+then
+13@ = 0
+end
+
+if
+13@ == 46
+then
+13@ = 112
+end
+
+if
+13@ == 0
+then
+13@ = 46
+end
+
+03F0: enable_text_draw 1    
+03E3: set_texture_to_be_drawn_antialiased 1
+29@ = 145.0
+29@ -= FUNC_MENU_DRAW_Y_OFFSET
+0087: 30@ = FUNC_MENU_DRAW_X_START
+005B: 30@ += FUNC_MENU_DRAW_X_OFFSET 
+038D: draw_texture 13@ position 30@ 29@ size 35.0 40.0 RGBA 255 255 255 $HUD_ALPHA
+if
+07D6:   28@ == FUNC_MENU_SELECTED_ROW_WEP_ID // @ == $ (int)
+then
+
+if
+UNITED_MAP == 0
+then
+038D: draw_texture 114 position 30@ 29@ size 35.0 40.0 RGBA 255 255 255 $HUD_ALPHA
+else
+038D: draw_texture CROSS_TEXTURE_NUMBER position 30@ 29@ size 35.0 40.0 RGBA 255 255 255 $HUD_ALPHA
+end
+
+end 
+
+0@ = 0
+
+if or
+28@ == 34
+28@ == 80
+28@ == 120
+28@ == 146
+28@ == 147
+28@ == 151 
+28@ == 43 
+    then
+    0@ = 1
+    end
+    
+if or
+28@ == 119
+28@ == 135
+28@ == 96
+28@ == 97
+28@ == 109
+28@ == 93
+    then
+    0@ = 1
+    end    
+
+0085: 5@ = 28@ // (int)
+
+if
+$FIST_HUD_ALWAYS == 1
+then
+5@ = 0
+end
+
+if
+5@ < 22
+    then
+    0@ = 1
+    end
+    
+if or
+5@ == 106
+5@ == 108
+5@ == 110
+5@ == 115
+5@ == 118
+5@ == 44
+5@ == 45
+    then
+    0@ = 1
+    end
+    
+if or
+5@ == 121
+5@ == 122
+5@ == 123
+5@ == 124
+5@ == 125
+5@ == 126
+5@ == 127
+5@ == 128
+    then
+    0@ = 1
+    end
+    
+if or
+5@ == 129
+5@ == 130
+5@ == 131
+5@ == 132
+5@ == 133
+5@ == 134
+    then
+    0@ = 1
+    end
+    
+if or
+5@ == 154
+5@ == 155
+5@ == 156
+5@ == 157
+5@ == 158
+5@ == 159
+5@ == 160
+5@ == 161
+    then  
+    0@ = 1
+    end
+    
+if or    
+5@ == 162
+5@ == 163
+5@ == 164
+    then
+    0@ = 1
+    end
+    
+if or
+5@ == 184
+5@ == 185
+5@ == 186
+5@ == 187
+5@ == 188
+5@ == 189
+5@ == 190
+5@ == 191
+    then  
+    0@ = 1
+    end
+    
+if or    
+5@ == 192
+5@ == 193
+5@ == 194
+    then
+    0@ = 1
+    end
+    
+if or    
+5@ == 175
+5@ == 176
+5@ == 183
+5@ == 205
+5@ == 206
+5@ == 213
+    then
+    0@ = 1
+    end
+    
+if or    
+5@ == 177
+5@ == 178
+5@ == 179
+5@ == 207
+5@ == 208
+5@ == 209
+    then
+    0@ = 1
+    end
+        
+///////////////////////////////////////////////////////     
+    
+if
+PLAYER_USING_MELEE_FLAG == 0
+then
+
+if
+0@ == 1
+then
+PLAYER_USING_MELEE_FLAG = 1
+end
+
+else
+
+if
+0@ == 0
+then
+PLAYER_USING_MELEE_FLAG = 0
+end
+
+end
+
+///////////////////////////////////////////////////////
+
+if and
+not 28@ == 34
+not 28@ == 80
+not 28@ == 120
+not 28@ == 146
+not 28@ == 147
+not 28@ == 151 
+not 28@ == 43 
+    then
+    if and
+    not 28@ == 119
+    not 28@ == 135
+    not 28@ == 96
+    not 28@ == 97
+    not 28@ == 175
+    not 28@ == 176
+    not 28@ == 205
+    not 28@ == 206
+        then
+        if and
+        not 28@ == 93
+        not 28@ == 109
+            then
+            else
+            PLAYER_USING_MELEE_FLAG = 0
+            end
+        else
+        PLAYER_USING_MELEE_FLAG = 0
+        end
+    else
+    PLAYER_USING_MELEE_FLAG = 0
+    end      
+
+0085: 13@ = 28@ // (int)
+
+if
+$FIST_HUD_ALWAYS == 1
+then
+13@ = 0
+end 
+
+1@ = 0
+
+gosub @WEAPON_HUD_AMMO_WEAPON_CHECK2
+
+if
+not 1@ == 1
+then
+return
+end
+ 
+0085: 15@ = FUNC_MENU_CURR_DRAW_WEP_ID2 // (int) 
+0A96: 16@ = actor PLAYER_ACTOR struct 
+15@ *= 28 
+16@ += 1440 
+005A: 16@ += 15@ // (int) 
+16@ += 8 
+0A8D: 17@ = read_memory 16@ size 4 virtual_protect 0
+
+if and
+FUNC_MENU_TOTAL_ROWS == 3
+FUNC_MENU_CURR_DRAW_WEP_ID2 == 2
+then
+jump to @SHITSKIP
+else
+
+if or
+003B:   16@ == 22@  // (int)
+17@ == 0
+    then
+    
+    repeat
+    16@ += 28 
+    0A8D: 17@ = read_memory 16@ size 4 virtual_protect 0
+    until 17@ > 0
+    
+    end
+
+end
+
+0085: 22@ = 16@ // (int)
+
+:SHITSKIP
+
+//if
+//07D6:   28@ == FUNC_MENU_SELECTED_ROW_WEP_ID // @ == $ (int)
+//then
+//0AD1: show_formatted_text_highpriority "AMMO IN MAGAZINE %d, MEM %i, SLOT ID %d, TOTAL ROWS %d" time 2000 17@ 16@ FUNC_MENU_CURR_DRAW_WEP_ID2 FUNC_MENU_TOTAL_ROWS
+//end  
+041A: 19@ = actor PLAYER_ACTOR weapon 28@ ammo 
+0062: 19@ -= 17@ // (int)
+if
+19@ < 0
+then
+19@ = 0
+end
+
+1@ = 0
+
+0085: 13@ = 28@ // (int)
+
+if
+$FIST_HUD_ALWAYS == 1
+then
+13@ = 0
+end 
+
+if or
+13@ == 25
+13@ == 35
+13@ == 37
+13@ == 38  
+13@ == 16
+13@ == 17  
+13@ == 18
+13@ == 73  
+    then
+    1@ = 1
+    end
+    
+if or
+13@ == 113
+13@ == 118
+13@ == 119
+13@ == 120
+13@ == 115
+13@ == 109  
+    then
+    1@ = 1
+    end   
+
+//////////////////////////////
+    
+if or
+13@ == 110
+13@ == 121
+13@ == 122  
+13@ == 123
+13@ == 124
+13@ == 125
+13@ == 126 
+    then
+    1@ = 2
+    end 
+    
+if or    
+13@ == 127  
+13@ == 128
+13@ == 129  
+13@ == 130
+13@ == 131
+13@ == 106
+13@ == 108
+    then
+    1@ = 2
+    end
+    
+if or
+13@ == 154
+13@ == 155
+13@ == 156
+13@ == 157
+13@ == 158
+13@ == 159
+13@ == 160
+13@ == 161
+    then  
+    1@ = 2
+    end
+    
+if or    
+13@ == 162
+13@ == 163
+13@ == 164
+    then
+    1@ = 2
+    end
+    
+if or
+13@ == 184
+13@ == 185
+13@ == 186
+13@ == 187
+13@ == 188
+13@ == 189
+13@ == 190
+13@ == 191
+    then  
+    1@ = 2
+    end
+    
+if or    
+13@ == 192
+13@ == 193
+13@ == 194
+    then
+    1@ = 2
+    end                 
+    
+//////////////////////////////    
+    
+if or
+13@ == 132
+13@ == 133  
+13@ == 134  
+13@ == 135
+13@ == 138  
+    then
+    1@ = 1
+    end   
+    
+if or
+13@ == 140
+13@ == 146
+13@ == 148
+13@ == 150  
+13@ == 39
+13@ == 36
+13@ == 41  
+    then
+    1@ = 1
+    end  
+    
+if or
+13@ == 42
+13@ == 43
+13@ == 91
+13@ == 172
+13@ == 174
+13@ == 175
+13@ == 177
+    then
+    1@ = 1
+    end
+    
+if or
+13@ == 178
+13@ == 179
+13@ == 180
+13@ == 182
+13@ == 183
+13@ == 202
+13@ == 204
+    then
+    1@ = 1
+    end
+    
+if or
+13@ == 205
+13@ == 207
+13@ == 208
+13@ == 209
+13@ == 210
+13@ == 212
+    then
+    1@ = 1
+    end
+    
+if
+13@ == 213
+    then
+    1@ = 1
+    end                                        
+
+if   
+1@ == 1
+then    
+
+041A: 24@ = actor PLAYER_ACTOR weapon 13@ ammo
+if and
+24@ < 9999
+not 13@ == 92
+not 13@ == 107   
+then 
+
+03F0: enable_text_draw 1
+0349: set_text_draw_font 1 
+0342: set_text_draw_centered 1
+03E0: draw_text_behind_textures 1
+03E3: set_texture_to_be_drawn_antialiased 1 
+033F: set_text_draw_letter_size 0.22 1.1 
+081C: draw_text_outline 1 RGBA 0 0 0 $HUD_ALPHA  
+
+if
+UNITED_MAP == 1
+then    
+0349: set_text_draw_font UNITED_HUD_FONT_NUMBER
+end
+
+0340: set_text_draw_RGBA 225 225 225 $HUD_ALPHA
+
+if
+UNITED_MAP == 0
+then
+
+if
+not 13@ == 43
+then
+29@ = 162.0
+29@ -= FUNC_MENU_DRAW_Y_OFFSET
+0087: 30@ = FUNC_MENU_DRAW_X_START
+005B: 30@ += FUNC_MENU_DRAW_X_OFFSET
+045A: draw_text_1number 30@ 29@ GXT 'DISP0' number 24@
+else
+29@ = 164.0
+29@ -= FUNC_MENU_DRAW_Y_OFFSET
+0087: 30@ = FUNC_MENU_DRAW_X_START
+005B: 30@ += FUNC_MENU_DRAW_X_OFFSET
+045A: draw_text_1number 30@ 29@ GXT 'DISP0' number 24@ 
+end
+   
+else
+
+if and
+$UNITED_VC_FLAG == 1
+STORIES_MAP == 0
+then
+29@ = 164.0
+29@ -= FUNC_MENU_DRAW_Y_OFFSET
+0087: 30@ = FUNC_MENU_DRAW_X_START
+005B: 30@ += FUNC_MENU_DRAW_X_OFFSET
+045A: draw_text_1number 30@ 29@ GXT 'DISP0' number 24@ 
+else
+29@ = 153.5
+29@ -= FUNC_MENU_DRAW_Y_OFFSET
+0087: 30@ = FUNC_MENU_DRAW_X_START
+005B: 30@ += FUNC_MENU_DRAW_X_OFFSET
+045A: draw_text_1number 30@ 29@ GXT 'DISP0' number 24@ 
+end
+
+end
+
+end  
+
+end  
+
+if and
+19@ < 9999
+1@ == 0
+not 13@ == 92
+not 13@ == 107
+then
+03F0: enable_text_draw 1  
+0349: set_text_draw_font 1 
+0342: set_text_draw_centered 1
+03E0: draw_text_behind_textures 1
+03E3: set_texture_to_be_drawn_antialiased 1 
+033F: set_text_draw_letter_size 0.22 1.1 
+081C: draw_text_outline 1 RGBA 0 0 0 $HUD_ALPHA      
+
+if
+UNITED_MAP == 1
+then    
+0349: set_text_draw_font UNITED_HUD_FONT_NUMBER
+end
+ 
+0340: set_text_draw_RGBA 225 225 225 $HUD_ALPHA
+
+if
+UNITED_MAP == 0
+then
+29@ = 162.0
+29@ -= FUNC_MENU_DRAW_Y_OFFSET
+0087: 30@ = FUNC_MENU_DRAW_X_START
+005B: 30@ += FUNC_MENU_DRAW_X_OFFSET
+045B: draw_text_2numbers 30@ 29@ GXT 'DISP2' numbers 19@ 17@  
+else
+
+if and
+$UNITED_VC_FLAG == 1
+STORIES_MAP == 0
+then
+29@ = 164.0
+29@ -= FUNC_MENU_DRAW_Y_OFFSET
+0087: 30@ = FUNC_MENU_DRAW_X_START
+005B: 30@ += FUNC_MENU_DRAW_X_OFFSET
+045B: draw_text_2numbers 30@ 29@ GXT 'DISP2' numbers 19@ 17@
+else
+29@ = 153.5
+29@ -= FUNC_MENU_DRAW_Y_OFFSET
+0087: 30@ = FUNC_MENU_DRAW_X_START
+005B: 30@ += FUNC_MENU_DRAW_X_OFFSET
+045B: draw_text_2numbers 30@ 29@ GXT 'DISP2' numbers 19@ 17@  
+end
+
+end
+
+end
+
+26@ = 0
+
+if or
+13@ == 110
+13@ == 121
+13@ == 122
+13@ == 123
+13@ == 124
+13@ == 125
+13@ == 126
+13@ == 127
+    then  
+    26@ = 1
+    end
+
+if or    
+13@ == 128
+13@ == 129
+13@ == 130
+13@ == 131
+13@ == 106
+13@ == 108
+    then
+    26@ = 1
+    end
+    
+if or
+13@ == 154
+13@ == 155
+13@ == 156
+13@ == 157
+13@ == 158
+13@ == 159
+13@ == 160
+13@ == 161
+    then  
+    26@ = 1
+    end
+    
+if or    
+13@ == 162
+13@ == 163
+13@ == 164
+    then
+    26@ = 1
+    end
+    
+if or
+13@ == 184
+13@ == 185
+13@ == 186
+13@ == 187
+13@ == 188
+13@ == 189
+13@ == 190
+13@ == 191
+    then  
+    26@ = 1
+    end
+    
+if or    
+13@ == 192
+13@ == 193
+13@ == 194
+    then
+    26@ = 1
+    end                        
+
+if and
+13@ > 15
+26@ == 0
+    then
+    if or
+    13@ < 40
+    13@ >= 70
+        then
+        if and
+        not 13@ == 46 
+        $MX_WP_AM_EN == 1
+            then
+            03F0: enable_text_draw 1  
+            0349: set_text_draw_font 1 
+            0342: set_text_draw_centered 1
+            03E0: draw_text_behind_textures 1
+            03E3: set_texture_to_be_drawn_antialiased 1 
+            033F: set_text_draw_letter_size 0.22 1.1 
+            
+            if
+            UNITED_MAP == 1
+            then    
+            0349: set_text_draw_font UNITED_HUD_FONT_NUMBER
+            end
+            
+            081C: draw_text_outline 1 RGBA 0 0 0 $HUD_ALPHA
+            0340: set_text_draw_RGBA 225 225 225 $HUD_ALPHA
+            
+            //////////////////////////////
+            
+            if and
+            13@ == 92
+            UNITED_MAP == 0
+            then
+            
+            if
+            $GRND_LNCHR_MOLOTOV == 0
+            then
+            
+            if
+            0491:   actor PLAYER_ACTOR has_weapon 17
+            then
+            13@ = 17
+            else
+            13@ = 16
+            end
+            
+            else
+            13@ = 18
+            end
+            
+            end
+            
+            //////////////////////////////
+            
+            if and
+            13@ == 92
+            UNITED_MAP == 1
+            then
+            
+            if
+            $GRND_LNCHR_MOLOTOV == 0
+            then
+            
+            if
+            $UNITED_III_SPAWN == 1
+            then
+            13@ = 178
+            else
+            13@ = 208
+            end
+            
+            if
+            0491:   actor PLAYER_ACTOR has_weapon 13@
+            then
+            
+            if
+            $UNITED_III_SPAWN == 1
+            then
+            13@ = 178
+            else
+            13@ = 208
+            end
+            
+            else
+            
+            if
+            $UNITED_III_SPAWN == 1
+            then
+            13@ = 177
+            else
+            13@ = 207
+            end
+            
+            end
+            
+            else
+            
+            if
+            $UNITED_III_SPAWN == 1
+            then
+            13@ = 179
+            else
+            13@ = 209
+            end
+            
+            end
+            
+            end
+            
+            //////////////////////////////            
+            
+            if and
+            13@ == 107
+            UNITED_MAP == 0
+            then
+            
+            if
+            $GRND_LNCHR_MOLOTOV == 0
+            then
+            
+            if
+            0491:   actor PLAYER_ACTOR has_weapon 17
+            then
+            13@ = 17
+            else
+            13@ = 16
+            end
+            
+            else
+            13@ = 18
+            end
+            
+            end
+            
+            //////////////////////////////                                
+            
+            gosub @WEAPON_HUD_MAX_AMMO_CHECK              
+                    
+            if or
+            $GAMEMODE_HOLD == 1
+            $DEFENSE_CHALLENGE_FLAG == 1
+            $GAMEMODE_WAR == 1
+            then                
+            15@ *= 2                
+            end
+            
+            if
+            PERK_AMMO == 1
+            then
+            0093: 15@ = integer 15@ to_float
+            15@ *= 1.10
+            0092: 15@ = float 15@ to_integer
+            end
+                    
+            if
+            PERK_AMMO == 2
+            then
+            0093: 15@ = integer 15@ to_float
+            15@ *= 1.20
+            0092: 15@ = float 15@ to_integer
+            end
+                    
+            if
+            PERK_AMMO == 3
+            then
+            0093: 15@ = integer 15@ to_float
+            15@ *= 1.30
+            0092: 15@ = float 15@ to_integer
+            end
+            
+            if
+            SURVIVAL_CUSTOM_WEAPON_NABOR == 3
+            then
+            0093: 15@ = integer 15@ to_float
+            15@ *= 1.25
+            0092: 15@ = float 15@ to_integer
+            end  
+            
+            if and
+            not LCVC_MAP_NUM2 == 0
+            not STORIES_MAP == 1
+            then
+            29@ = 115.0
+            29@ -= FUNC_MENU_DRAW_Y_OFFSET
+            0087: 30@ = FUNC_MENU_DRAW_X_START
+            005B: 30@ += FUNC_MENU_DRAW_X_OFFSET
+            045A: draw_text_1number 30@ 29@ GXT 'DISP10' number 15@
+            else
+            29@ = 113.0
+            29@ -= FUNC_MENU_DRAW_Y_OFFSET
+            0087: 30@ = FUNC_MENU_DRAW_X_START
+            005B: 30@ += FUNC_MENU_DRAW_X_OFFSET
+            045A: draw_text_1number 30@ 29@ GXT 'DISP10' number 15@
+            end
+              
+            end 
+        end
+    end
+    
+return 
+
+:DRAW_WEPS
+
+FUNC_MENU_DRAW_X_OFFSET = 0.0
+FUNC_MENU_DRAW_X_START = 320.0
+    
+for FUNC_MENU_CURR_DRAW_WEP_ID2 = 0 to FUNC_MENU_TOTAL_ROWS
+    
+if and
+FUNC_MENU_CURR_DRAW_WEP_ID2 == 0
+not FUNC_MENU_ROW1_WEP_ID == -1
+    then
+    FUNC_MENU_DRAW_X_OFFSET -= 17.5                                              
+    end
+        
+if and
+FUNC_MENU_CURR_DRAW_WEP_ID2 == 1
+not FUNC_MENU_ROW2_WEP_ID == -1
+    then
+    FUNC_MENU_DRAW_X_OFFSET -= 17.5                                              
+    end
+        
+if and
+FUNC_MENU_CURR_DRAW_WEP_ID2 == 2
+not FUNC_MENU_ROW3_WEP_ID == -1
+    then
+    FUNC_MENU_DRAW_X_OFFSET -= 17.5                                              
+    end
+        
+if and
+FUNC_MENU_CURR_DRAW_WEP_ID2 == 3
+not FUNC_MENU_ROW4_WEP_ID == -1
+    then
+    FUNC_MENU_DRAW_X_OFFSET -= 17.5                                              
+    end
+        
+if and
+FUNC_MENU_CURR_DRAW_WEP_ID2 == 5
+not FUNC_MENU_ROW6_WEP_ID == -1
+    then
+    FUNC_MENU_DRAW_X_OFFSET -= 17.5                                              
+    end
+        
+if and
+FUNC_MENU_CURR_DRAW_WEP_ID2 == 6
+not FUNC_MENU_ROW7_WEP_ID == -1
+    then
+    FUNC_MENU_DRAW_X_OFFSET -= 17.5                                              
+    end
+        
+if and
+FUNC_MENU_CURR_DRAW_WEP_ID2 == 7
+not FUNC_MENU_ROW8_WEP_ID == -1
+    then
+    FUNC_MENU_DRAW_X_OFFSET -= 17.5                                              
+    end 
+        
+if and
+FUNC_MENU_CURR_DRAW_WEP_ID2 == 8
+not FUNC_MENU_ROW9_WEP_ID == -1
+    then
+    FUNC_MENU_DRAW_X_OFFSET -= 17.5                                              
+    end
+        
+if and
+FUNC_MENU_CURR_DRAW_WEP_ID2 == 9
+not FUNC_MENU_ROW10_WEP_ID == -1
+    then
+    FUNC_MENU_DRAW_X_OFFSET -= 17.5                                              
+    end
+        
+if and
+FUNC_MENU_CURR_DRAW_WEP_ID2 == 10
+not FUNC_MENU_ROW11_WEP_ID == -1
+    then
+    FUNC_MENU_DRAW_X_OFFSET -= 17.5                                              
+    end
+        
+if and
+FUNC_MENU_CURR_DRAW_WEP_ID2 == 11
+not FUNC_MENU_ROW12_WEP_ID == -1
+    then
+    FUNC_MENU_DRAW_X_OFFSET -= 17.5                                              
+    end
+        
+end                                           
+    
+    for FUNC_MENU_CURR_DRAW_WEP_ID2 = 0 to FUNC_MENU_TOTAL_ROWS
+    
+    if and
+    FUNC_MENU_CURR_DRAW_WEP_ID2 == 0
+    not FUNC_MENU_ROW1_WEP_ID == -1
+        then
+        0085: FUNC_MENU_CURR_DRAW_WEP_ID = FUNC_MENU_ROW1_WEP_ID // (int)
+        gosub @DRAW_WEP_INFO_BY_ID
+        FUNC_MENU_DRAW_X_OFFSET += 40.0
+        end
+        
+    if and
+    FUNC_MENU_CURR_DRAW_WEP_ID2 == 1
+    not FUNC_MENU_ROW2_WEP_ID == -1
+        then
+        0085: FUNC_MENU_CURR_DRAW_WEP_ID = FUNC_MENU_ROW2_WEP_ID // (int)
+        gosub @DRAW_WEP_INFO_BY_ID
+        FUNC_MENU_DRAW_X_OFFSET += 40.0
+        end
+        
+    if and
+    FUNC_MENU_CURR_DRAW_WEP_ID2 == 2
+    not FUNC_MENU_ROW3_WEP_ID == -1
+        then
+        0085: FUNC_MENU_CURR_DRAW_WEP_ID = FUNC_MENU_ROW3_WEP_ID // (int)
+        gosub @DRAW_WEP_INFO_BY_ID
+        FUNC_MENU_DRAW_X_OFFSET += 40.0
+        end
+        
+    if and
+    FUNC_MENU_CURR_DRAW_WEP_ID2 == 3
+    not FUNC_MENU_ROW4_WEP_ID == -1
+        then
+        0085: FUNC_MENU_CURR_DRAW_WEP_ID = FUNC_MENU_ROW4_WEP_ID // (int)
+        gosub @DRAW_WEP_INFO_BY_ID
+        FUNC_MENU_DRAW_X_OFFSET += 40.0
+        end
+        
+    if and
+    FUNC_MENU_CURR_DRAW_WEP_ID2 == 4
+    not FUNC_MENU_ROW5_WEP_ID == -1
+        then
+        0085: FUNC_MENU_CURR_DRAW_WEP_ID = FUNC_MENU_ROW5_WEP_ID // (int)
+        gosub @DRAW_WEP_INFO_BY_ID
+        FUNC_MENU_DRAW_X_OFFSET += 40.0
+        end
+        
+    if and
+    FUNC_MENU_CURR_DRAW_WEP_ID2 == 5
+    not FUNC_MENU_ROW6_WEP_ID == -1
+        then
+        0085: FUNC_MENU_CURR_DRAW_WEP_ID = FUNC_MENU_ROW6_WEP_ID // (int)
+        gosub @DRAW_WEP_INFO_BY_ID
+        FUNC_MENU_DRAW_X_OFFSET += 40.0
+        end
+        
+    if and
+    FUNC_MENU_CURR_DRAW_WEP_ID2 == 6
+    not FUNC_MENU_ROW7_WEP_ID == -1
+        then
+        0085: FUNC_MENU_CURR_DRAW_WEP_ID = FUNC_MENU_ROW7_WEP_ID // (int)
+        gosub @DRAW_WEP_INFO_BY_ID
+        FUNC_MENU_DRAW_X_OFFSET += 40.0
+        end
+        
+    if and
+    FUNC_MENU_CURR_DRAW_WEP_ID2 == 7
+    not FUNC_MENU_ROW8_WEP_ID == -1
+        then
+        0085: FUNC_MENU_CURR_DRAW_WEP_ID = FUNC_MENU_ROW8_WEP_ID // (int)
+        gosub @DRAW_WEP_INFO_BY_ID
+        FUNC_MENU_DRAW_X_OFFSET += 40.0
+        end
+        
+    if and
+    FUNC_MENU_CURR_DRAW_WEP_ID2 == 8
+    not FUNC_MENU_ROW9_WEP_ID == -1
+        then
+        0085: FUNC_MENU_CURR_DRAW_WEP_ID = FUNC_MENU_ROW9_WEP_ID // (int)
+        gosub @DRAW_WEP_INFO_BY_ID
+        FUNC_MENU_DRAW_X_OFFSET += 40.0
+        end
+        
+    if and
+    FUNC_MENU_CURR_DRAW_WEP_ID2 == 9
+    not FUNC_MENU_ROW10_WEP_ID == -1
+        then
+        0085: FUNC_MENU_CURR_DRAW_WEP_ID = FUNC_MENU_ROW10_WEP_ID // (int)
+        gosub @DRAW_WEP_INFO_BY_ID
+        FUNC_MENU_DRAW_X_OFFSET += 40.0
+        end
+        
+    if and
+    FUNC_MENU_CURR_DRAW_WEP_ID2 == 10
+    not FUNC_MENU_ROW11_WEP_ID == -1
+        then
+        0085: FUNC_MENU_CURR_DRAW_WEP_ID = FUNC_MENU_ROW11_WEP_ID // (int)
+        gosub @DRAW_WEP_INFO_BY_ID
+        FUNC_MENU_DRAW_X_OFFSET += 40.0
+        end
+        
+    if and
+    FUNC_MENU_CURR_DRAW_WEP_ID2 == 11
+    not FUNC_MENU_ROW12_WEP_ID == -1
+        then
+        0085: FUNC_MENU_CURR_DRAW_WEP_ID = FUNC_MENU_ROW12_WEP_ID // (int)
+        gosub @DRAW_WEP_INFO_BY_ID
+        FUNC_MENU_DRAW_X_OFFSET += 40.0
+        end
+        
+    end    
+        
+return
+
+:WEAPON_HUD_AMMO_WEAPON_CHECK2
+
+if and
+13@ > 15  
+not 13@ == 40     
+not 13@ == 151
+    then
+    if or
+    13@ < 44
+    13@ >= 70
+        then
+        1@ = 1
+        end
+    end
+
+return                      
