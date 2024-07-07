@@ -1,0 +1,244 @@
+const
+ARMY_RANDOM_CARGOBOB_PILOT = 20@
+ARMY_RANDOM_CARGOBOB = 10@
+end
+
+:RND_CARG
+thread 'RND_CARG'
+
+if
+UNITED_MAP == 1
+then
+end_thread
+end                
+
+:RANDOM_ARMY_CARGOBOB_WAIT
+0209: 0@ = random_int_in_ranges $RANDOM_CARGOBOB_WAIT_SPAWN_MIN $RANDOM_CARGOBOB_WAIT_SPAWN_MAX
+32@ = 0 
+jump @RANDOM_ARMY_CARGOBOB_WAIT_CHECK
+
+:RANDOM_ARMY_CARGOBOB_WAIT_CHECK
+wait 1000
+077E: get_active_interior_to 1@
+if and
+$SAVESTATUS == 0
+1@ == 0
+jf @RANDOM_ARMY_CARGOBOB_WAIT_CHECK_PAUSE
+if  
+001D:   32@ > 0@  // (int)
+jf @RANDOM_ARMY_CARGOBOB_WAIT_CHECK
+32@ = 0
+jump @RANDOM_ARMY_CARGOBOB_SPAWN_START
+
+:RANDOM_ARMY_CARGOBOB_WAIT_CHECK_PAUSE
+wait 1000
+077E: get_active_interior_to 1@
+if and
+$SAVESTATUS == 0
+1@ == 0
+jf @RANDOM_ARMY_CARGOBOB_WAIT_CHECK_PAUSE
+jump @RANDOM_ARMY_CARGOBOB_WAIT_CHECK
+
+:RANDOM_ARMY_CARGOBOB_SPAWN_START
+gosub @RANDOM_ARMY_CARGOBOB_COORD_SET
+
+if
+UNITED_MAP == 0
+then
+
+:CAR_CREATE_ARMY_CARGOBOB
+if
+model.Available(#CARGOBOB)
+then
+ARMY_RANDOM_CARGOBOB = car.Create(#CARGOBOB,2@,3@,4@)
+
+if
+model.Available(#CARGOBOB)
+then
+//model.Destroy(#CARGOBOB)
+end
+
+else
+model.Load(#CARGOBOB)
+mload
+wait 0
+jump to @CAR_CREATE_ARMY_CARGOBOB
+end
+
+else
+
+if
+$UNITED_VC_FLAG == 0
+then
+
+:CAR_CREATE_ARMY_CARGOBOB2
+if
+model.Available(#CARGOBOB)
+then
+ARMY_RANDOM_CARGOBOB = car.Create(#CARGOBOB,2@,3@,4@)
+
+if
+model.Available(#CARGOBOB)
+then
+//model.Destroy(#CARGOBOB)
+end
+
+else
+model.Load(#CARGOBOB)
+mload
+wait 0
+jump to @CAR_CREATE_ARMY_CARGOBOB2
+end
+
+else
+
+:CAR_CREATE_ARMY_CARGOBOB3
+if
+model.Available(#CARGOBOB)
+then
+ARMY_RANDOM_CARGOBOB = car.Create(#CARGOBOB,2@,3@,4@)
+
+if
+model.Available(#CARGOBOB)
+then
+//model.Destroy(#CARGOBOB)
+end
+
+else
+model.Load(#CARGOBOB)
+mload
+wait 0
+jump to @CAR_CREATE_ARMY_CARGOBOB3
+end
+
+end
+
+end
+ 
+random_float 5@ 0.0 360.0
+car.SetImmunities(ARMY_RANDOM_CARGOBOB,1,1,1,1,1)
+car.Angle(ARMY_RANDOM_CARGOBOB) = 5@
+0825: set_helicopter ARMY_RANDOM_CARGOBOB instant_rotor_start
+07BB: set_heli ARMY_RANDOM_CARGOBOB horizontal_thrust_power 5
+car.SetSpeedInstantly(ARMY_RANDOM_CARGOBOB,10.0)
+08F2: set_car ARMY_RANDOM_CARGOBOB targettable_by_heatseeker 0
+
+if
+UNITED_MAP == 0
+then
+
+///////////////////////////////////////////////////////////////////////////////
+
+if and
+8583: not  player PLAYER_CHAR in_zone 'VE'
+8583: not  player PLAYER_CHAR in_zone 'BONE'
+8583: not  player PLAYER_CHAR in_zone 'ROBAD'
+8583: not  player PLAYER_CHAR in_zone 'ROBAD1'
+then
+6@ = 0
+else
+6@ = 1
+end
+
+if
+6@ == 0
+then
+
+0842: 0@ = player PLAYER_CHAR town_number
+
+if
+not 0@ == 0
+then
+1@ = #ARMYPILOT
+else
+1@ = #ARMYPILOT2
+end
+
+else
+1@ = #ARMYPILOT3
+end
+
+///////////////////////////////////////////////////////////////////////////////
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+
+ARMY_RANDOM_CARGOBOB_PILOT = actor.CreateAsDriver(27,1@,ARMY_RANDOM_CARGOBOB)
+
+else
+
+if
+$UNITED_VC_FLAG == 1
+then
+
+while not model.Available($VC_ARMY_SKIN)
+wait 0
+model.Load($VC_ARMY_SKIN)
+mload
+end
+
+ARMY_RANDOM_CARGOBOB_PILOT = actor.CreateAsDriver(27,$VC_ARMY_SKIN,ARMY_RANDOM_CARGOBOB)
+
+else
+
+while not model.Available($III_ARMY_SKIN)
+wait 0
+model.Load($III_ARMY_SKIN)
+mload
+end
+
+ARMY_RANDOM_CARGOBOB_PILOT = actor.CreateAsDriver(27,$III_ARMY_SKIN,ARMY_RANDOM_CARGOBOB)
+
+end
+
+end
+
+actor.SetImmunities(ARMY_RANDOM_CARGOBOB_PILOT,1,1,1,1,1)
+actor.Health(ARMY_RANDOM_CARGOBOB_PILOT) = 5000
+077A: set_actor ARMY_RANDOM_CARGOBOB_PILOT acquaintance 0 to_actors_pedtype $ZOMBIE_SET_PEDTYPE // see ped.dat
+060B: set_actor ARMY_RANDOM_CARGOBOB_PILOT decision_maker_to $DEC_PEOPLE
+
+///////////////////////////////////////////////////////////////////////////////
+
+0407: store_coords_to 11@ 12@ 13@ from_car ARMY_RANDOM_CARGOBOB with_offset 0.0 4000.0 0.0
+04A2: set_heli ARMY_RANDOM_CARGOBOB fly_to 11@ 12@ 13@ altitude_between 200.0 and 250.0
+
+:RANDOM_ARMY_CARGOBOB_CHECK1
+wait 0
+if
+056D:   actor ARMY_RANDOM_CARGOBOB_PILOT defined
+jf @RANDOM_ARMY_CARGOBOB_NOT_DEFINED
+if and
+0104:   actor PLAYER_ACTOR near_actor ARMY_RANDOM_CARGOBOB_PILOT radius 2000.0 2000.0 2000.0 sphere 0
+$SAVESTATUS == 0 
+jf @RANDOM_ARMY_CARGOBOB_DELETE
+jump @RANDOM_ARMY_CARGOBOB_CHECK1
+
+:RANDOM_ARMY_CARGOBOB_DELETE
+actor.DestroyInstantly(ARMY_RANDOM_CARGOBOB_PILOT)
+actor.RemoveReferences(ARMY_RANDOM_CARGOBOB_PILOT)
+car.Destroy(ARMY_RANDOM_CARGOBOB)
+car.RemoveReferences(ARMY_RANDOM_CARGOBOB)
+jump @RANDOM_ARMY_CARGOBOB_WAIT
+
+:RANDOM_ARMY_CARGOBOB_NOT_DEFINED
+jump @RANDOM_ARMY_CARGOBOB_WAIT
+
+:RANDOM_ARMY_CARGOBOB_COORD_SET
+wait 0
+0208: 27@ = random_float_in_ranges 1560.0 -1560.0 
+0208: 28@ = random_float_in_ranges -1560.0 1560.0
+04C4: store_coords_to 2@ 3@ 4@ from_actor PLAYER_ACTOR with_offset 27@ 28@ 1.0
+Actor.StorePos(PLAYER_ACTOR, 27@, 28@, 29@)
+0509: 30@ = distance_between_XY 2@ 3@ and_XY 27@ 28@ 
+0092: 30@ = float 30@ to_integer
+if 
+30@ > 1500 
+jf @RANDOM_ARMY_CARGOBOB_COORD_SET
+4@ = 0.0
+02CE: 4@ = ground_z_at 2@ 3@ 4@
+4@ += 190.0
+return

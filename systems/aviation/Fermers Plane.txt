@@ -1,0 +1,829 @@
+const
+FERMERS_PLANE_TARGET_FINDED = 18@
+FERMERS_PLANE_TARGET = 20@
+FERMERS_PLANE = 21@
+FERMERS_PLANE_PILOT = $FERMERS_PLANE_PILOT
+end
+
+:F_PLANE
+thread 'F_PLANE'
+
+if
+UNITED_MAP == 1
+then
+end_thread
+end
+
+FERMERS_PLANE_SHIT_31 = 0xC88740
+FERMERS_PLANE_SHIT_30 = 0 
+
+:FERMERS_PLANE_SPAWN_CHECK
+0209: 0@ = random_int_in_ranges $FERMERS_PLANE_SPAWN_MIN $FERMERS_PLANE_SPAWN_MAX
+1@ = 0
+0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "FERMER_PLANE_SPAWNED"                                                                               
+jump @FERMERS_PLANE_START_COUNT 
+
+:FERMERS_PLANE_START_COUNT
+wait 1000
+077E: get_active_interior_to 2@
+if and
+$SAVESTATUS == 0
+$SAVING_PLACE_FLAG == 0
+$SURV_PROCENT > 0.0
+2@ == 0
+not PLAYER_IN_NEST_FLAG == 1 
+jf @FERMERS_PLANE_START_COUNT_PAUSE
+
+if
+$NEAR_SALV_POINT == 0
+then    
+1@ += 1
+end
+
+if or
+003B:   0@ == 1@  // (int)
+001D:   1@ > 0@  // (int)
+jf @FERMERS_PLANE_START_COUNT
+1@ = 0
+jump @FERMERS_PLANE_START
+
+:FERMERS_PLANE_START_COUNT_PAUSE
+wait 1000
+077E: get_active_interior_to 2@
+if and
+$SAVESTATUS == 0
+$SAVING_PLACE_FLAG == 0
+$SURV_PROCENT > 0.0
+2@ == 0
+not PLAYER_IN_NEST_FLAG == 1
+jf @FERMERS_PLANE_START_COUNT_PAUSE
+jump @FERMERS_PLANE_START_COUNT
+
+:FERMERS_PLANE_START          
+wait 0    
+if and
+$SAVESTATUS == 0
+$SAVING_PLACE_FLAG == 0
+$SURV_PROCENT > 0.0
+2@ == 0
+not PLAYER_IN_NEST_FLAG == 1
+jf @FERMERS_PLANE_SPAWN_CHECK
+0208: 27@ = random_float_in_ranges 360.0 -360.0 
+0208: 28@ = random_float_in_ranges -360.0 360.0
+04C4: store_coords_to 9@ 10@ 11@ from_actor PLAYER_ACTOR with_offset 27@ 28@ 1.0
+8@ += 90.0
+Actor.StorePos(PLAYER_ACTOR, 6@, 7@, 8@)
+0509: 17@ = distance_between_XY 6@ 7@ and_XY 9@ 10@
+0092: 17@ = float 17@ to_integer  
+if 
+  17@ > 300 
+jf @FERMERS_PLANE_START 
+if and
+8AE2: not 30@ = random_vehicle_near_point 9@ 10@ 11@ in_radius 5.0 find_next 1 pass_wrecked 0 //IF and SET
+8AE1: not 31@ = random_actor_near_point 9@ 10@ 11@ in_radius 2.0 find_next 1 pass_deads 0
+jf @FERMERS_PLANE_START 
+
+while $MODEL_LOADING_END_FLAG == 0
+wait 0
+if and
+$SAVESTATUS == 0
+$SAVING_PLACE_FLAG == 0
+$SURV_PROCENT > 0.0
+2@ == 0
+not PLAYER_IN_NEST_FLAG == 1
+jf @FERMERS_PLANE_SPAWN_CHECK
+end
+    
+while not model.Available(#RUSTLER)
+wait 0  
+model.Load(#RUSTLER)
+mload   
+end    
+
+11@ += 100.0 
+FERMERS_PLANE = car.Create(#RUSTLER,9@, 10@, 11@) 
+random_float 0@ 0.0 to 360.0
+car.Angle(FERMERS_PLANE) = 0@
+car.DoorStatus(FERMERS_PLANE,2)
+car.Health(FERMERS_PLANE) = 5000
+
+0229: set_car FERMERS_PLANE primary_color_to $FERMERS_CAR_COLOR1 secondary_color_to $FERMERS_CAR_COLOR2
+
+actor.StorePos(PLAYER_ACTOR,1@,2@,3@)
+02CE: 3@ = ground_z_at 2@ 3@ 4@
+3@ += 30.0
+04D2: set_plane FERMERS_PLANE fly_autopilot_around_point 1@ 2@ 3@ altitude_between 100.0 and 3@  
+
+while not model.Available(#FERMER1)
+wait 0  
+model.Load(#FERMER1)
+mload   
+end
+
+FERMERS_PLANE_PILOT = actor.CreateAsDriver(28,#FERMER1,FERMERS_PLANE)
+
+if
+model.Available(#FERMER1)
+then
+//model.Destroy(#FERMER1)
+end
+
+actor.SetImmunities(FERMERS_PLANE_PILOT,1,1,1,1,1)  
+actor.Health(FERMERS_PLANE_PILOT) = 5000 
+060B: set_actor FERMERS_PLANE_PILOT decision_maker_to $DEC_PEOPLE
+
+if
+not $PEOPLE_ATTACK_PLAYER_FLAG == 1
+then
+08F2: set_car FERMERS_PLANE targettable_by_heatseeker 0
+end   
+
+FERMERS_PLANE_TARGET_FINDED = 0
+
+33@ = 0
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "FERMER_PLANE_SPAWNED"
+
+:FERMERS_PLANE_CHECK
+wait 0 
+
+if
+FERMERS_PLANE_TARGET_FINDED == 1     
+    then
+    if
+    056D:   actor FERMERS_PLANE_TARGET defined
+        then
+        if or
+        32@ > 10000
+        actor.Dead(FERMERS_PLANE_TARGET)
+            then
+            FERMERS_PLANE_TARGET_FINDED = 0
+            32@ = 0
+            end
+        else
+        FERMERS_PLANE_TARGET_FINDED = 0
+        32@ = 0
+        end          
+    end         
+    
+if
+856E: not  car FERMERS_PLANE defined
+    then    
+    
+    if
+    056D:   actor FERMERS_PLANE_PILOT defined
+    then
+    actor.DestroyWithFade(FERMERS_PLANE_PILOT)  
+    end     
+           
+    jump to @FERMERS_PLANE_SPAWN_CHECK         
+    end          
+  
+if or
+8205: not  actor PLAYER_ACTOR near_car FERMERS_PLANE radius 600.0 600.0 240.0 flag 0
+$SAVESTATUS == 1
+    then
+    actor.DestroyInstantly(FERMERS_PLANE_PILOT)        
+    car.Destroy(FERMERS_PLANE)           
+    jump to @FERMERS_PLANE_SPAWN_CHECK
+    end  
+
+if
+056E:   car FERMERS_PLANE defined
+    then
+    if
+    car.Wrecked(FERMERS_PLANE)
+        then
+        actor.DestroyInstantly(FERMERS_PLANE_PILOT)  
+        car.RemoveReferences(FERMERS_PLANE)         
+        jump to @FERMERS_PLANE_SPAWN_CHECK
+        end
+    else
+    jump to @FERMERS_PLANE_SPAWN_CHECK
+    end
+
+if and
+33@ > 50
+FERMERS_PLANE_TARGET_FINDED == 1
+056E:   car FERMERS_PLANE defined
+$ACTIVE_INTERIOR == 0
+$INT_ENTERING_FLAG == 0
+    then                      
+    if
+    056D:   actor FERMERS_PLANE_TARGET defined
+        then
+        if
+        0364:   actor FERMERS_PLANE_PILOT spotted_actor FERMERS_PLANE_TARGET
+            then         
+            gosub @FERMERS_PLANE_MINIGUN_SHOOT          
+            33@ = 0    
+            end
+        end
+    end
+
+if 
+FERMERS_PLANE_TARGET_FINDED == 0
+    then
+    32@ = 0    
+    gosub @FIND_TARGET6           
+    if
+    056D:   actor FERMERS_PLANE_TARGET defined
+        then
+        actor.StorePos(FERMERS_PLANE_TARGET,0@,1@,2@) 
+        02CE: 2@ = ground_z_at 0@ 1@ 2@
+        2@ += 30.0        
+        if
+        056E:   car FERMERS_PLANE defined
+            then        
+            04D2: set_plane FERMERS_PLANE fly_autopilot_around_point 0@ 1@ 2@ altitude_between 30.0 and 2@                            
+            FERMERS_PLANE_TARGET_FINDED = 1 
+            32@ = 0
+            end
+        end
+    end
+       
+jump @FERMERS_PLANE_CHECK
+
+:FERMERS_PLANE_MINIGUN_SHOOT
+
+if
+856D: not  actor FERMERS_PLANE_TARGET defined
+then
+return
+end
+
+if
+87D6: not  FERMERS_PLANE_TARGET == PLAYER_ACTOR // @ == $ (int)
+then
+random_float 1@ -0.15 0.15
+random_float 3@ -0.05 0.05
+04C4: store_coords_to 5@ 6@ 7@ from_actor FERMERS_PLANE_TARGET with_offset 1@ 0.0 3@ 
+gosub @FERMERS_PLANE_BULLET_CREATE
+else
+random_float 1@ -0.25 0.25
+random_float 3@ -0.15 0.15
+04C4: store_coords_to 5@ 6@ 7@ from_actor FERMERS_PLANE_TARGET with_offset 1@ 0.0 3@
+gosub @FERMERS_PLANE_BULLET_CREATE
+end
+
+if
+$GAME_SPEED >= 1.0
+then
+
+0AB9: get_mp3 $2MINIGUN_SOUND2 state_to 0@
+if
+not 0@ == -1
+then
+Audiostream.PerformAction($2MINIGUN_SOUND2, STOP)
+end
+
+audiostream.LinkToActor($2MINIGUN_SOUND,FERMERS_PLANE_PILOT)
+audiostream.Loop($2MINIGUN_SOUND,0)
+audiostream.Volume($2MINIGUN_SOUND) = $SOUNDS_VOLUME
+audiostream.PerformAction($2MINIGUN_SOUND,PLAY)
+else
+
+0AB9: get_mp3 $2MINIGUN_SOUND state_to 0@
+if
+not 0@ == -1
+then
+Audiostream.PerformAction($2MINIGUN_SOUND, STOP)
+end
+
+audiostream.LinkToActor($2MINIGUN_SOUND2,FERMERS_PLANE_PILOT)
+audiostream.Loop($2MINIGUN_SOUND2,0)
+audiostream.Volume($2MINIGUN_SOUND2) = $SOUNDS_VOLUME
+audiostream.PerformAction($2MINIGUN_SOUND2,PLAY)
+end
+
+return
+
+:FERMERS_PLANE_NOT_DEFINED
+
+if
+056D:   actor FERMERS_PLANE_PILOT defined
+then
+actor.DestroyInstantly(FERMERS_PLANE_PILOT) 
+end
+
+jump to @FERMERS_PLANE_SPAWN_CHECK
+
+:FIND_TARGET6
+wait 0
+
+if or
+$SAVESTATUS == 1
+32@ > 5000
+    then
+    return
+    end
+    
+gosub @FERMERS_PLANE_TARGET_FIND    
+
+if
+25@ == 1 
+jf @FIND_TARGET6
+
+089F: get_actor FERMERS_PLANE_TARGET pedtype_to 0@
+
+if and
+87D6: not  FERMERS_PLANE_TARGET == FERMERS_PLANE_PILOT // @ == $ (int)
+not 0@ == 26
+not 0@ == 28
+not 0@ == 5
+jf @FIND_TARGET6
+
+return
+
+:FERMERS_PLANE_TARGET_FIND
+
+25@ = 0
+
+008B: 1@ = $CREATURE_RANDOM // (int)
+
+if
+1@ == PLAYER_CREATURE_NUMBER
+then
+008B: 1@ = $CREATURE_RANDOM // (int)
+end
+
+if 
+$PEOPLE_ATTACK_PLAYER_FLAG == 1
+then
+
+random_int 2@ 0 3
+if
+2@ == 1
+then
+1@ = PLAYER_CREATURE_NUMBER
+end
+
+end
+
+008B: FERMERS_PLANE_TARGET = $CREATURE[1@] // (int)
+
+if and
+056D:   actor FERMERS_PLANE_TARGET defined
+056E:   car FERMERS_PLANE defined
+    then   
+    if
+    0202:   actor FERMERS_PLANE_TARGET near_car FERMERS_PLANE radius 300.0 300.0 sphere 0
+        then    
+        25@ = 1
+        end
+    end
+
+return
+
+/////////////////////Союзники атакуют марадеров которых увидили///////////////
+
+:RANDOM_FERMER_PLANE_ATTACK_PEOPLE1
+
+if
+$PLAYER_SURVIVOR_SIDE == 1
+    then
+    return
+    end
+
+092B: 3@ = group PLAYER_GROUP member 0@
+
+if
+07D6:   3@ == COOP_ACTOR // @ == $ (int)
+then
+return
+end
+
+if
+056D:  actor 3@ defined
+jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_BEGIN
+
+if
+056D:   actor FERMERS_PLANE_PILOT defined
+jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_BEGIN    
+
+if
+056D:   actor 3@ defined
+jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_BEGIN
+
+if
+$MISSION14_ACTIVE == 1
+    then
+    if
+    not 0@ == 1
+    jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_BEGIN
+    end
+    
+if
+$QUEST_TYPE == 9
+    then
+    if
+    87D6: not  3@ == $VERSUS_PEOPLE[1] // @ == $ (int)
+    jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_BEGIN
+    end
+
+if or
+00DF:   actor 3@ driving
+0449:   actor 3@ in_a_car
+    then
+    if
+    $HUNTER_ON_PLAYER == 0
+    //$PEOPLE_DONT_ATTACK == 0
+    //$COMMAND_STAY_IN_CAR == 0
+        then                     
+        gosub @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_IN_CAR
+        end
+    end 
+
+if and 
+not actor.Driving(PLAYER_ACTOR)
+$RANDOM_CAR_FLAG == 0  
+89DE:   actor 3@ entering_car  
+80DF:   actor 3@ in_a_car
+jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_BEGIN
+if or
+0364:   actor 3@ spotted_actor FERMERS_PLANE_PILOT
+0364:   actor FERMERS_PLANE_PILOT spotted_actor 3@
+jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_BEGIN
+if
+00F2:   actor 3@ near_actor FERMERS_PLANE_PILOT radius 50.0 50.0 sphere 0
+jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_BEGIN
+if and
+$HUNTER_ON_PLAYER == 0
+$PEOPLE_DONT_ATTACK == 0
+$COMMAND_STAY_IN_CAR == 0
+jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_BEGIN
+if
+not actor.Animation(3@) == "FLOOR_hit"
+jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_BEGIN
+if
+$HUNTER_ON_GROUP == 0
+jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_BEGIN  
+if
+044B:   actor 3@ on_foot
+jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_BEGIN  
+if
+82E0: not actor 3@ firing_weapon
+jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_BEGIN
+062E: get_actor 3@ task 1506 status_store_to 1@ // ret 7 if not found
+if 
+1@ == 7
+jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_BEGIN  
+if and
+not actor.Animation(3@) == "colt45_fire_2hands"
+not actor.Animation(3@) == "python_fire" 
+not actor.Animation(3@) == "shotgun_fire" 
+not actor.Animation(3@) == "buddy_fire" 
+not actor.Animation(3@) == "UZI_fire"
+not actor.Animation(3@) == "RIFLE_fire" 
+jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_BEGIN  
+if and
+not actor.Animation(3@) == "FLAME_fire" 
+not actor.Animation(3@) == "RocketFire" 
+not actor.Animation(3@) == "WEAPON_sniper" 
+not actor.Animation(3@) == "WEAPON_throw"
+not actor.Animation(3@) == "BOM_PLANT"   
+jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_BEGIN       
+if and
+not actor.Animation(3@) == "colt45_crouchfire"
+not actor.Animation(3@) == "python_crouchfire" 
+not actor.Animation(3@) == "shotgun_crouchfire" 
+not actor.Animation(3@) == "buddy_crouchfire" 
+not actor.Animation(3@) == "UZI_crouchfire"
+not actor.Animation(3@) == "RIFLE_crouchfire" 
+jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "colt45_reload"
+not actor.Animation(3@) == "python_reload" 
+not actor.Animation(3@) == "shotgun_reload" 
+not actor.Animation(3@) == "buddy_reload" 
+not actor.Animation(3@) == "UZI_reload"
+not actor.Animation(3@) == "RIFLE_load" 
+jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "colt45_crouchreload"
+not actor.Animation(3@) == "python_crouchreload" 
+not actor.Animation(3@) == "shotgun_crouchreload" 
+not actor.Animation(3@) == "buddy_crouchreload" 
+not actor.Animation(3@) == "UZI_crouchreload"
+not actor.Animation(3@) == "RIFLE_crouchload" 
+jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_BEGIN  
+if and
+not actor.Animation(3@) == "GunMove_BWD"
+not actor.Animation(3@) == "GunMove_FWD"
+not actor.Animation(3@) == "GunMove_L"
+not actor.Animation(3@) == "GunMove_R"
+not actor.Animation(3@) == "Gun_2_IDLE"
+not actor.Animation(3@) == "GUN_BUTT"
+not actor.Animation(3@) == "GUN_BUTT_crouch"
+not actor.Animation(3@) == "Gun_stand" 
+jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "CLIMB_idle"
+not actor.Animation(3@) == "CLIMB_jump"
+not actor.Animation(3@) == "CLIMB_jump2fall"
+not actor.Animation(3@) == "CLIMB_jump_B"
+not actor.Animation(3@) == "CLIMB_Pull"
+not actor.Animation(3@) == "CLIMB_Stand"
+not actor.Animation(3@) == "CLIMB_Stand_finish" 
+jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "Crouch_Roll_L"
+not actor.Animation(3@) == "Crouch_Roll_R"
+not actor.Animation(3@) == "gas_cwr"
+not actor.Animation(3@) == "getup"
+not actor.Animation(3@) == "getup_front"
+not actor.Animation(3@) == "GunCrouchBwd"
+not actor.Animation(3@) == "GunCrouchFwd"
+8E47: not is_char_fighting 3@
+jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_BEGIN  
+if or
+0364:   actor 3@ spotted_actor FERMERS_PLANE_PILOT
+0364:   actor FERMERS_PLANE_PILOT spotted_actor 3@
+0364:   actor PLAYER_ACTOR spotted_actor FERMERS_PLANE_PILOT
+0364:   actor FERMERS_PLANE_PILOT spotted_actor PLAYER_ACTOR
+jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_IN_CAR_RETURN 
+05C1: AS_actor 3@ speak_from_audio_table $PEOPLE_ZOMBIE_ATTACK_AUDIO_TABLE
+if
+056D:   actor 3@ defined
+jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_BEGIN 
+Actor.StorePos(FERMERS_PLANE_PILOT,2@,4@,5@) 
+Actor.StorePos(3@,27@,28@,29@)   
+if
+06BD:   no_obstacles_between 27@ 28@ 29@ and 2@ 4@ 5@ solid 1 car 1 actor 0 object 0 particle 0 
+jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Driving(PLAYER_ACTOR)
+89DE:   actor PLAYER_ACTOR entering_car
+80DF:   actor PLAYER_ACTOR in_a_car
+80DF:   actor 3@ in_a_car
+jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_BEGIN
+//0647: AS_actor 3@ clear_look_task
+//05B9: AS_actor 3@ stay_idle 50 ms 
+wait 50
+if
+056D:   actor 3@ defined  
+then
+05E2: AS_actor 3@ kill_actor FERMERS_PLANE_PILOT
+end
+
+jump @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_BEGIN   
+                                
+:RANDOM_FERMER_PLANE_ATTACK_PEOPLE_IN_CAR  
+//0AD1: show_formatted_text_highpriority "SHOOT FUCK" time 1000 
+//wait 1000
+//if
+//00DF:   actor PLAYER_ACTOR in_a_car  
+//jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_IN_CAR_RETURN 
+if and
+not actor.Animation(3@) == "Gang_DrivebyLHS"
+not actor.Animation(3@) == "Gang_DrivebyLHS_Bwd"
+not actor.Animation(3@) == "Gang_DrivebyLHS_Fwd"
+not actor.Animation(3@) == "Gang_DrivebyRHS"
+not actor.Animation(3@) == "Gang_DrivebyRHS_Bwd"
+not actor.Animation(3@) == "Gang_DrivebyRHS_Fwd" 
+jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_IN_CAR_RETURN 
+if and
+not actor.Animation(3@) == "Gang_DrivebyTop_LHS"
+not actor.Animation(3@) == "Gang_DrivebyTop_RHS" 
+jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_IN_CAR_RETURN 
+if 
+00F2:   actor 3@ near_actor FERMERS_PLANE_PILOT radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_IN_CAR_RETURN
+if or
+0364:   actor 3@ spotted_actor FERMERS_PLANE_PILOT
+0364:   actor FERMERS_PLANE_PILOT spotted_actor 3@
+0364:   actor PLAYER_ACTOR spotted_actor FERMERS_PLANE_PILOT
+0364:   actor FERMERS_PLANE_PILOT spotted_actor PLAYER_ACTOR
+jf @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_IN_CAR_RETURN
+
+///////////////////////////////////////////////////////////////////////////
+if and
+0@ == 0
+TEAMMATE1_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 1
+TEAMMATE2_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 2
+TEAMMATE3_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 3
+TEAMMATE4_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 4
+TEAMMATE5_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @RANDOM_FERMER_PLANE_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+///////////////////////////////////////////////////////////////////////////
+
+if and
+8E42: not is_char_doing_task_id 3@ 243
+not $COMMAND_STAY_IN_CAR == 1
+then
+06C9: remove_actor 3@ from_group
+0631: put_actor 3@ in_group PLAYER_GROUP
+end          
+0713: actor 3@ driveby_actor -1 car FERMERS_PLANE point 0.0 0.0 0.0 radius $AI_FIND_RADIUS1 8 1 firing_rate 360
+
+///////////////////////////////////////////////////////////////////////////
+if
+0@ == 0
+    then
+    TEAMMATE1_ATTACK_TIMER = 0
+    end
+if
+0@ == 1
+    then
+    TEAMMATE2_ATTACK_TIMER = 0
+    end
+if
+0@ == 2
+    then
+    TEAMMATE3_ATTACK_TIMER = 0
+    end
+if
+0@ == 3
+    then
+    TEAMMATE4_ATTACK_TIMER = 0
+    end
+if
+0@ == 4
+    then
+    TEAMMATE5_ATTACK_TIMER = 0
+    end
+///////////////////////////////////////////////////////////////////////////
+ 
+return       
+
+:RANDOM_FERMER_PLANE_ATTACK_PEOPLE_IN_CAR_RETURN
+return
+
+:RANDOM_FERMER_PLANE_ATTACK_PEOPLE_BEGIN
+return
+
+:FERMERS_PLANE_BULLET_CREATE
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+random_int 0@ 0 2
+
+if
+0@ == 0
+then
+0D0C: get_car FERMERS_PLANE component "misc_a" matrix_pointer_to 1@ // IF and SET
+else
+0D0C: get_car FERMERS_PLANE component "misc_a2" matrix_pointer_to 1@ // IF and SET
+end
+
+0D06: get_matrix 1@ position_to 2@ 3@ 4@
+0509: 8@ = distance_between_XY 2@ 3@ and_XY 5@ 6@ //8@ is distance between two points
+0063: 5@ -= 2@
+0063: 6@ -= 3@
+0063: 7@ -= 4@
+7@ *= -1.0
+0604: get_Z_angle_for_point 5@ 6@ store_to 9@
+0604: get_Z_angle_for_point 8@ 7@ store_to 10@
+0174: 11@ = car FERMERS_PLANE Z_angle //car z angle
+06BE: 12@ = car FERMERS_PLANE y_angle //car y angle
+
+if
+0@ == 0
+then
+0D0C: get_car FERMERS_PLANE component "misc_a" matrix_pointer_to 1@ // IF and SET
+else
+0D0C: get_car FERMERS_PLANE component "misc_a2" matrix_pointer_to 1@ // IF and SET
+end
+
+0D06: get_matrix 1@ position_to 5@ 6@ 7@
+0D06: get_matrix 1@ position_to 2@ 3@ 4@
+0063: 7@ -= 4@
+0509: 8@ = distance_between_XY 2@ 3@ and_XY 5@ 6@
+0604: get_Z_angle_for_point 8@ 7@ store_to 13@ // car x angle
+13@ -= 270.0
+0087: 14@ = 9@
+0087: 19@ = 10@
+0063: 9@ -= 11@ 
+02F7: 15@ = cosine 9@
+006B: 15@ *= 13@
+02F6: 16@ = sine 9@
+006B: 16@ *= 12@
+005B: 10@ += 15@
+0063: 10@ -= 16@
+9@ += 93.0
+10@ += 115.0
+
+if
+10@ < 394.0
+then
+else
+10@ = 394.0
+0087: 19@ = 10@
+19@ -= 110.0
+005B: 19@ += 16@
+0063: 19@ -= 15@
+end
+
+19@ -= 270.0
+19@ *= -1.0
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+$SAVESTATUS == 0
+then
+
+if
+0@ == 0
+then
+0D0C: get_car FERMERS_PLANE component "misc_a" matrix_pointer_to 1@ // IF and SET
+else
+0D0C: get_car FERMERS_PLANE component "misc_a2" matrix_pointer_to 1@ // IF and SET
+end
+
+0D06: get_matrix 1@ position_to 2@ 3@ 4@
+
+064B: 15@ = create_particle "gunsmoke" at 2@ 3@ 4@ type 1
+064F: remove_references_to_particle 15@
+
+064B: 15@ = create_particle "gunflash" at 2@ 3@ 4@ type 1
+064F: remove_references_to_particle 15@
+
+else
+return
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+ 
+0A8C: write_memory FERMERS_PLANE_SHIT_31 size 4 value 38 virtual_protect 0 //weapon type
+FERMERS_PLANE_SHIT_31 += 4
+0A97: 16@ = car FERMERS_PLANE struct
+0A8C: write_memory FERMERS_PLANE_SHIT_31 size 4 value 16@ virtual_protect 0 //object or vehicle that the bullet was fired from
+FERMERS_PLANE_SHIT_31 += 4 
+0A8D: 16@ = read_memory 0xB7CB84 size 4 virtual_protect 0 //get current time
+16@ += 4000 
+0093: 16@ = integer 16@ to_float
+0A8C: write_memory FERMERS_PLANE_SHIT_31 size 4 value 16@ virtual_protect 0 //time of removal of bullet
+FERMERS_PLANE_SHIT_31 += 4 
+0A8C: write_memory FERMERS_PLANE_SHIT_31 size 1 value 1 virtual_protect 0 //bullet exist flag
+FERMERS_PLANE_SHIT_31 += 4 //skip padding
+0A8C: write_memory FERMERS_PLANE_SHIT_31 size 4 value 2@ virtual_protect 0 //x pos 
+FERMERS_PLANE_SHIT_31 += 4 
+0A8C: write_memory FERMERS_PLANE_SHIT_31 size 4 value 3@ virtual_protect 0 //y pos
+FERMERS_PLANE_SHIT_31 += 4 
+0A8C: write_memory FERMERS_PLANE_SHIT_31 size 4 value 4@ virtual_protect 0 //z pos
+FERMERS_PLANE_SHIT_31 += 4
+02F7: 9@ = cosine 19@
+9@ *= 1000.0
+02F6: 11@ = sine 19@
+11@ *= 1000.0 //velocity Z
+02F7: 10@ = cosine 14@
+006B: 10@ *= 9@ //velocity Y
+02F6: 8@ = sine 14@
+006B: 9@ *= 8@ //velocity X
+9@ *= -1.0
+0208: 5@ = random_float_in_ranges -15.0 15.0 //gun accuracy x pos
+0208: 6@ = random_float_in_ranges -15.0 15.0 //gun accuracy y pos
+0208: 7@ = random_float_in_ranges -15.0 15.0 //gun accuracy z pos
+005B: 9@ += 5@
+005B: 10@ += 6@
+005B: 11@ += 7@
+0A8C: write_memory FERMERS_PLANE_SHIT_31 size 4 value 9@ virtual_protect 0 //x pos 
+FERMERS_PLANE_SHIT_31 += 4 
+0A8C: write_memory FERMERS_PLANE_SHIT_31 size 4 value 10@ virtual_protect 0 //y pos
+FERMERS_PLANE_SHIT_31 += 4 
+0A8C: write_memory FERMERS_PLANE_SHIT_31 size 4 value 11@ virtual_protect 0 //z pos
+FERMERS_PLANE_SHIT_31 += 4
+if
+87D6: not  FERMERS_PLANE_TARGET == PLAYER_ACTOR // @ == $ (int)
+then 
+0A8C: write_memory FERMERS_PLANE_SHIT_31 size 2 value 155 virtual_protect 0
+else
+0A8C: write_memory FERMERS_PLANE_SHIT_31 size 2 value 55 virtual_protect 0
+end
+FERMERS_PLANE_SHIT_31 += 4
+FERMERS_PLANE_SHIT_30 += 1
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+//0AD1: show_formatted_text_highpriority "X: %f, Y: %f, Z: %f, XV: %f, YV: %f, ZV: %f" time 2000 11@ 12@ 13@ 14@ 15@ 16@
+
+if
+FERMERS_PLANE_SHIT_30 > 8
+then
+FERMERS_PLANE_SHIT_31 = 0xC88740
+FERMERS_PLANE_SHIT_30 = 0
+end
+
+return

@@ -1,0 +1,404 @@
+const
+ARMY_RANDOM_HYDRA_PILOT = 20@
+ARMY_RANDOM_HYDRA = 10@
+ARMY_RANDOM_HYDRA_AGRED_ON_PLAYER = 21@
+end
+
+:RND_HYD
+thread 'RND_HYD'
+
+if
+UNITED_MAP == 1
+then
+end_thread
+end                
+
+:RANDOM_HYDRA_WAIT
+0209: 0@ = random_int_in_ranges $RANDOM_HYDRA_WAIT_SPAWN_MIN $RANDOM_HYDRA_WAIT_SPAWN_MAX
+32@ = 0 
+jump @RANDOM_HYDRA_WAIT_CHECK
+
+:RANDOM_HYDRA_WAIT_CHECK
+wait 250
+
+if
+CSF_PIZDEC_ON_FLAG == 1
+then
+jump to @RANDOM_HYDRA_SPAWN_START
+end
+
+077E: get_active_interior_to 1@
+if and
+$SAVESTATUS == 0
+1@ == 0
+jf @RANDOM_HYDRA_WAIT_CHECK_PAUSE
+if  
+001D:   32@ > 0@  // (int)
+jf @RANDOM_HYDRA_WAIT_CHECK
+32@ = 0
+jump @RANDOM_HYDRA_SPAWN_START
+
+:RANDOM_HYDRA_WAIT_CHECK_PAUSE
+wait 250
+
+if
+CSF_PIZDEC_ON_FLAG == 1
+then
+jump to @RANDOM_HYDRA_SPAWN_START
+end
+
+077E: get_active_interior_to 1@
+if and
+$SAVESTATUS == 0
+1@ == 0
+jf @RANDOM_HYDRA_WAIT_CHECK_PAUSE
+jump @RANDOM_HYDRA_WAIT_CHECK
+
+:RANDOM_HYDRA_SPAWN_START
+gosub @RANDOM_HYDRA_COORD_SET
+
+if
+SNOW_ADDON_INSTALLED_FLAG == 0
+then
+1@ = #HYDRA
+else
+1@ = #BEAGLE
+end
+
+if
+UNITED_MAP == 0
+then
+
+:CAR_CREATE_ARMY_HYDRA
+if
+model.Available(1@)
+then
+ARMY_RANDOM_HYDRA = car.Create(1@,2@,3@,4@)
+
+if
+model.Available(1@)
+then
+//model.Destroy(1@)
+end
+
+else
+model.Load(1@)
+mload
+wait 0
+jump to @CAR_CREATE_ARMY_HYDRA
+end
+
+else
+
+if
+$UNITED_VC_FLAG == 0
+then
+
+:CAR_CREATE_ARMY_HYDRA2
+if
+model.Available(1@)
+then
+ARMY_RANDOM_HYDRA = car.Create(1@,2@,3@,4@)
+
+if
+model.Available(1@)
+then
+//model.Destroy(1@)
+end
+
+else
+model.Load(1@)
+mload
+wait 0
+jump to @CAR_CREATE_ARMY_HYDRA2
+end
+
+else
+
+:CAR_CREATE_ARMY_HYDRA3
+if
+model.Available(1@)
+then
+ARMY_RANDOM_HYDRA = car.Create(1@,2@,3@,4@)
+
+if
+model.Available(1@)
+then
+//model.Destroy(1@)
+end
+
+else
+model.Load(1@)
+mload
+wait 0
+jump to @CAR_CREATE_ARMY_HYDRA3
+end
+
+end
+
+end
+
+if
+not CSF_PIZDEC_ON_FLAG == 1
+then 
+car.SetImmunities(ARMY_RANDOM_HYDRA,1,1,1,0,1)
+else
+car.Health(ARMY_RANDOM_HYDRA) = 300
+end
+
+if
+not CSF_PIZDEC_ON_FLAG == 1
+then
+random_float 5@ 0.0 360.0
+car.Angle(ARMY_RANDOM_HYDRA) = 5@
+else
+car.Angle(ARMY_RANDOM_HYDRA) = 217.0
+end
+
+car.SetSpeedInstantly(ARMY_RANDOM_HYDRA,50.0)
+
+if
+not CSF_PIZDEC_ON_FLAG == 1
+then
+08F2: set_car ARMY_RANDOM_HYDRA targettable_by_heatseeker 0
+end
+
+if
+CSF_PIZDEC_ON_FLAG == 0
+then
+070F: plane ARMY_RANDOM_HYDRA fly_direction 5@ altitude_between 200.0 and 200.0
+0742: set_plane ARMY_RANDOM_HYDRA unknown_trajectory 0.5
+0745: set_hydra ARMY_RANDOM_HYDRA thrust_to_horizontal
+else
+
+if
+not CSF_ENEMIES_DOWN == 666
+then
+0710: plane ARMY_RANDOM_HYDRA follow_actor PLAYER_ACTOR follow_car CSF_AIRCRAFT_HANDLE radius 100.0
+else
+0742: set_plane ARMY_RANDOM_HYDRA unknown_trajectory 1.5
+0745: set_hydra ARMY_RANDOM_HYDRA thrust_to_horizontal 
+08A2: set_hydra ARMY_RANDOM_HYDRA attack_with_rockets_car_of_player PLAYER_CHAR radius 30.0
+end
+
+end
+
+car.SetMaxSpeed(ARMY_RANDOM_HYDRA,100.0)
+if
+CSF_PIZDEC_ON_FLAG == 1
+then
+26@ = marker.CreateAboveCar(ARMY_RANDOM_HYDRA)
+marker.SetIconSize(26@,2)
+end
+
+if
+UNITED_MAP == 0
+then
+
+///////////////////////////////////////////////////////////////////////////////
+
+if and
+8583: not  player PLAYER_CHAR in_zone 'VE'
+8583: not  player PLAYER_CHAR in_zone 'BONE'
+8583: not  player PLAYER_CHAR in_zone 'ROBAD'
+8583: not  player PLAYER_CHAR in_zone 'ROBAD1'
+then
+6@ = 0
+else
+6@ = 1
+end
+
+if
+6@ == 0
+then
+
+0842: 0@ = player PLAYER_CHAR town_number
+
+if
+not 0@ == 0
+then
+1@ = #ARMYPILOT
+else
+1@ = #ARMYPILOT2
+end
+
+else
+1@ = #ARMYPILOT3
+end
+
+///////////////////////////////////////////////////////////////////////////////
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+
+ARMY_RANDOM_HYDRA_PILOT = actor.CreateAsDriver(27,1@,ARMY_RANDOM_HYDRA)
+
+else
+
+if
+$UNITED_VC_FLAG == 1
+then
+
+while not model.Available($VC_ARMY_SKIN)
+wait 0
+model.Load($VC_ARMY_SKIN)
+mload
+end
+
+ARMY_RANDOM_HYDRA_PILOT = actor.CreateAsDriver(27,$VC_ARMY_SKIN,ARMY_RANDOM_HYDRA)
+
+else
+
+while not model.Available($III_ARMY_SKIN)
+wait 0
+model.Load($III_ARMY_SKIN)
+mload
+end
+
+ARMY_RANDOM_HYDRA_PILOT = actor.CreateAsDriver(27,$III_ARMY_SKIN,ARMY_RANDOM_HYDRA)
+
+end
+
+end
+
+if
+not CSF_PIZDEC_ON_FLAG == 1
+then
+actor.SetImmunities(ARMY_RANDOM_HYDRA_PILOT,1,1,1,1,1)
+end
+
+actor.Health(ARMY_RANDOM_HYDRA_PILOT) = 1000
+077A: set_actor ARMY_RANDOM_HYDRA_PILOT acquaintance 0 to_actors_pedtype $ZOMBIE_SET_PEDTYPE // see ped.dat
+060B: set_actor ARMY_RANDOM_HYDRA_PILOT decision_maker_to $DEC_PEOPLE
+
+///////////////////////////////////////////////////////////////////////////////
+
+:RANDOM_HYDRA_CHECK1
+wait 0
+if
+056D:   actor ARMY_RANDOM_HYDRA_PILOT defined
+jf @RANDOM_HYDRA_NOT_DEFINED
+if and
+0104:   actor PLAYER_ACTOR near_actor ARMY_RANDOM_HYDRA_PILOT radius 2000.0 2000.0 2000.0 sphere 0
+$SAVESTATUS == 0
+jf @RANDOM_HYDRA_DELETE
+
+if
+$STATE_DESTRUCTION_FLAG == 69
+then
+jump to @RANDOM_HYDRA_DELETE
+end
+
+if and
+ARMY_RANDOM_HYDRA_AGRED_ON_PLAYER == 1
+CSF_PIZDEC_ON_FLAG == 0
+    then
+    marker.Disable(26@)
+    070F: plane ARMY_RANDOM_HYDRA fly_direction 45.0 altitude_between 200.0 and 300.0
+    ARMY_RANDOM_HYDRA_AGRED_ON_PLAYER = 2
+    end
+
+if
+CSF_PIZDEC_ON_FLAG == 1
+    then
+    
+    if
+    car.Wrecked(ARMY_RANDOM_HYDRA)
+    then
+    marker.Disable(26@)
+    car.RemoveReferences(ARMY_RANDOM_HYDRA)
+    actor.RemoveReferences(ARMY_RANDOM_HYDRA_PILOT)
+    CSF_ENEMIES_DOWN += 1
+    end_thread
+    end
+    
+    random_int 0@ 0 to 1000
+    if and
+    0@ == 500
+    not car.Wrecked(ARMY_RANDOM_HYDRA)    
+        then
+        
+        ARMY_RANDOM_HYDRA_AGRED_ON_PLAYER = 1
+                        
+        0A97: 13@ = car ARMY_RANDOM_HYDRA struct
+        if
+        not CSF_ENEMIES_DOWN == 666
+        then   
+        0A97: 15@ = car CSF_AIRCRAFT_HANDLE struct
+        else
+        0A97: 15@ = car $PARK_CAR[52] struct
+        end
+                 
+        0407: store_coords_to 0@ 11@ 12@ from_car ARMY_RANDOM_HYDRA with_offset 3.0 2.0 -2.0
+        car.StorePos(CSF_AIRCRAFT_HANDLE,2@,3@,4@) 
+        0D60: create_projectile_type 20 launched_from_entity 13@ origin 0@ 11@ 12@ target 2@ 3@ 4@ target_entity 15@ force 1.0 // IF and SET          
+        0407: store_coords_to 0@ 11@ 12@ from_car ARMY_RANDOM_HYDRA with_offset -3.0 2.0 -2.0 
+        0D60: create_projectile_type 20 launched_from_entity 13@ origin 0@ 11@ 12@ target 2@ 3@ 4@ target_entity 15@ force 1.0 // IF and SET
+        
+        if
+        056D:   actor $ARMY69_2[0] defined
+        then
+        if
+        82E0:   actor $ARMY69_2[0] firing_weapon
+            then        
+            099F: AS_actor $ARMY69_2[0] ignore_weapon_range 1
+            05E2: AS_actor $ARMY69_2[0] kill_actor ARMY_RANDOM_HYDRA_PILOT
+            end
+        end
+                                 
+        end 
+    end
+    
+jump @RANDOM_HYDRA_CHECK1
+
+:RANDOM_HYDRA_DELETE
+actor.DestroyInstantly(ARMY_RANDOM_HYDRA_PILOT)
+car.Destroy(ARMY_RANDOM_HYDRA)
+
+if
+$STATE_DESTRUCTION_FLAG == 69
+then
+end_thread
+end
+
+jump @RANDOM_HYDRA_WAIT
+
+:RANDOM_HYDRA_NOT_DEFINED
+jump @RANDOM_HYDRA_WAIT
+
+:RANDOM_HYDRA_COORD_SET
+wait 0
+
+if
+not CSF_PIZDEC_ON_FLAG == 1 
+then
+0208: 27@ = random_float_in_ranges 1560.0 -1560.0 
+0208: 28@ = random_float_in_ranges -1560.0 1560.0
+04C4: store_coords_to 2@ 3@ 4@ from_actor PLAYER_ACTOR with_offset 27@ 28@ 1.0
+else
+0208: 27@ = random_float_in_ranges 360.0 -360.0 
+0208: 28@ = random_float_in_ranges 360.0 360.0
+0407: store_coords_to 2@ 3@ 4@ from_car CSF_AIRCRAFT_HANDLE with_offset 27@ 28@ 1.0
+end
+
+Actor.StorePos(PLAYER_ACTOR, 27@, 28@, 29@)
+0509: 30@ = distance_between_XY 2@ 3@ and_XY 27@ 28@ 
+0092: 30@ = float 30@ to_integer
+if
+not CSF_PIZDEC_ON_FLAG == 1 
+then
+if 
+30@ > 1500 
+jf @RANDOM_HYDRA_COORD_SET
+else
+if
+30@ > 300
+jf @RANDOM_HYDRA_COORD_SET
+end
+4@ = 0.0
+02CE: 4@ = ground_z_at 2@ 3@ 4@
+4@ += 190.0
+return

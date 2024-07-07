@@ -1,0 +1,2480 @@
+:BD_HELI
+thread 'BD_HELI'  
+
+const
+BANDITS_HELI_TARGET_FINDED = 12@
+BANDITS_HELI_DIED = 13@
+BANDIT_HELI_TAKEN_DAMAGE_BY_PLAYER = 21@
+BANDIT_HELI_MARK = 22@
+end
+
+:BANDIT_HELI_SPAWN_CHECK
+0209: 0@ = random_int_in_ranges $BANDIT_HELI_SPAWN_MIN $BANDIT_HELI_SPAWN_MAX
+1@ = 0
+jump @BANDIT_HELI_START_COUNT 
+
+:BANDIT_HELI_START_COUNT
+wait 1000
+
+while FRACTIONS_SPAWNED_COUNT > 0
+wait 0
+
+if or
+CAMP_RAID_FLAG_BANDITS == 1
+OOS_MARK == 156546
+$GAMEMODE_WAR == 1 
+ZAME_HUENEMY_FLAG == 1
+BANDIT_HELI_SPAWN_FLAG == 1
+    then
+    break
+    end
+
+end
+
+//////////////////////////////////////////////////////////////////////////////
+
+if
+GLOBAL_SPAWN_TIMER_RANDOM_RESET_BANDITS_HELI == 1
+then
+
+repeat
+wait 0
+0209: 0@ = random_int_in_ranges $BANDIT_HELI_SPAWN_MIN $BANDIT_HELI_SPAWN_MAX
+0209: 30@ = random_int_in_ranges $BANDIT_HELI_SPAWN_MIN $BANDIT_HELI_SPAWN_MAX
+
+if
+$FREEMODE == 0
+then
+0209: 1@ = random_int_in_ranges TIMER_RESET_LONG_ADD4_MIN TIMER_RESET_LONG_ADD4_MAX
+else
+0209: 1@ = random_int_in_ranges TIMER_RESET_LONG_ADD4_MIN TIMER_RESET_LONG_ADD4_MAX
+end
+
+0062: 30@ -= 1@  // (int)
+until 801D: not  30@ > 0@  // (int)
+
+0085: 1@ = 30@ // (int)
+0AF1: write_int 30@ to_ini_file "saves\ZACM.set" section "SCR" key "BANDITS_HELI_NEW_TIMER_AFTER_SAVE"
+0AF1: write_int 0@ to_ini_file "saves\ZACM.set" section "SCR" key "BANDITS_HELI_SPAWN_TIMER"
+ 
+GLOBAL_SPAWN_TIMER_RANDOM_RESET_BANDITS_HELI = 0
+end
+
+//////////////////////////////////////////////////////////////////////////////
+
+if
+ZAME_HUENEMY_FLAG == 1
+then
+jump to @BANDIT_HELI_START
+end
+
+if and
+$SAVESTATUS == 0
+$SAVING_PLACE_FLAG == 0
+$BANDITS_PROCENT > 0.0
+$ACTIVE_INTERIOR == 0
+not $QUEST_TYPE == 1
+not $QUEST_TYPE == 5
+not NO_MORE_BANDITS_CAMPS == 1
+not PLAYER_IN_NEST_FLAG == 1 
+jf @BANDIT_HELI_START_COUNT_PAUSE
+if and
+$NOTSPAWN_ETC == 0
+CARMA_VERY_BAD_FLAG == 0
+jf @BANDIT_HELI_START_COUNT_PAUSE
+
+if
+$NEAR_SALV_POINT == 0
+then    
+1@ += 1
+end
+
+if or
+003B:   0@ == 1@  // (int)
+001D:   1@ > 0@  // (int)
+BANDIT_HELI_SPAWN_FLAG == 1
+jf @BANDIT_HELI_START_COUNT
+1@ = 0
+BANDIT_HELI_SPAWN_FLAG = 0
+jump @BANDIT_HELI_START
+
+:BANDIT_HELI_START_COUNT_PAUSE
+wait 1000
+
+if and
+OOS_MARK == 156546
+BANDIT_HELI_SPAWN_FLAG == 1
+then
+1@ = 0
+BANDIT_HELI_SPAWN_FLAG = 0
+jump @BANDIT_HELI_START2
+end
+
+if and
+$SAVESTATUS == 0
+$SAVING_PLACE_FLAG == 0
+$BANDITS_PROCENT > 0.0
+$ACTIVE_INTERIOR == 0
+not $QUEST_TYPE == 1
+not $QUEST_TYPE == 5
+not NO_MORE_BANDITS_CAMPS == 1
+not PLAYER_IN_NEST_FLAG == 1
+jf @BANDIT_HELI_START_COUNT_PAUSE
+if and
+$NOTSPAWN_ETC == 0
+CARMA_VERY_BAD_FLAG == 0
+jf @BANDIT_HELI_START_COUNT_PAUSE
+jump @BANDIT_HELI_START_COUNT
+
+:BANDIT_HELI_START          
+wait 0     
+if and
+$SAVESTATUS == 0
+$SAVING_PLACE_FLAG == 0
+$BANDITS_PROCENT > 0.0
+$ACTIVE_INTERIOR == 0
+not $QUEST_TYPE == 1
+not $QUEST_TYPE == 5
+not NO_MORE_BANDITS_CAMPS == 1
+not PLAYER_IN_NEST_FLAG == 1
+jf @BANDIT_HELI_SPAWN_CHECK
+if and
+$NOTSPAWN_ETC == 0
+CARMA_VERY_BAD_FLAG == 0
+jf @BANDIT_HELI_SPAWN_CHECK
+:BANDIT_HELI_START2
+0208: 27@ = random_float_in_ranges 360.0 -360.0 
+0208: 28@ = random_float_in_ranges -360.0 360.0
+04C4: store_coords_to 9@ 10@ 11@ from_actor PLAYER_ACTOR with_offset 27@ 28@ 1.0
+8@ += 90.0
+Actor.StorePos(PLAYER_ACTOR, 6@, 7@, 8@)
+0509: 17@ = distance_between_XY 6@ 7@ and_XY 9@ 10@
+0092: 17@ = float 17@ to_integer  
+if 
+  17@ > 300 
+jf @BANDIT_HELI_START 
+if and
+8AE2: not 30@ = random_vehicle_near_point 9@ 10@ 11@ in_radius 5.0 find_next 1 pass_wrecked 0 //IF and SET
+8AE1: not 31@ = random_actor_near_point 9@ 10@ 11@ in_radius 2.0 find_next 1 pass_deads 0
+jf @BANDIT_HELI_START 
+
+while $MODEL_LOADING_END_FLAG == 0
+wait 0
+if and
+$SAVESTATUS == 0
+$SAVING_PLACE_FLAG == 0
+$BANDITS_PROCENT > 0.0
+$ACTIVE_INTERIOR == 0
+not $QUEST_TYPE == 1
+not $QUEST_TYPE == 5
+not NO_MORE_BANDITS_CAMPS == 1
+not PLAYER_IN_NEST_FLAG == 1
+jf @BANDIT_HELI_SPAWN_CHECK
+if and
+$NOTSPAWN_ETC == 0
+CARMA_VERY_BAD_FLAG == 0
+jf @BANDIT_HELI_SPAWN_CHECK
+end
+
+if
+UNITED_MAP == 0
+then
+  
+11@ += 100.0
+
+:CAR_CREATE_BANDIT_HELI
+if
+model.Available(#MAVERICK)
+then 
+19@ = car.Create(#MAVERICK,9@, 10@, 11@)
+if
+model.Available(#MAVERICK)
+then
+//model.Destroy(#MAVERICK)
+end
+
+else
+model.Load(#MAVERICK)
+mload
+wait 0
+jump to @CAR_CREATE_BANDIT_HELI
+end
+
+random_float 0@ 0.0 360.0 
+car.Angle(19@) = 0@
+car.DoorStatus(19@,2)
+
+if
+$GAMEMODE_WAR == 1
+then
+car.Health(19@) = 4000
+else
+car.Health(19@) = 2500
+end
+
+if
+UNITED_MAP == 0
+then
+0229: set_car 19@ primary_color_to $BANDITS_CAR_COLOR1 secondary_color_to $BANDITS_CAR_COLOR2
+else
+
+if    
+$UNITED_VC_FLAG == 0
+then
+0229: set_car 19@ primary_color_to 1 secondary_color_to 1
+else
+0229: set_car 19@ primary_color_to 6 secondary_color_to 6
+end
+
+end
+
+if
+not OOS_MARK == 156546
+then
+
+while not model.Available(#BANDIT1)
+wait 0
+model.Load(#BANDIT1)
+mload
+end
+
+18@ = actor.CreateAsDriver(25,#BANDIT1,19@)
+
+if
+model.Available(#BANDIT1)
+then
+//model.Destroy(#BANDIT1)
+end
+
+else
+
+while not model.Available(3179)
+wait 0
+model.Load(3179)
+mload
+end
+
+18@ = actor.CreateAsDriver(25,3179,19@)
+
+if
+model.Available(3179)
+then
+//model.Destroy(3179)
+end
+
+end
+
+actor.SetImmunities(18@,1,1,1,1,1)
+actor.Health(18@) = 5000
+077A: set_actor 18@ acquaintance 0 to_actors_pedtype $ZOMBIE_SET_PEDTYPE // see ped.dat
+060B: set_actor 18@ decision_maker_to $DEC_PEOPLE
+
+    
+while not model.Available(#ROCKETLA)
+wait 0  
+model.Load(#ROCKETLA)
+mload   
+end 
+
+random_int 0@ 0 2
+
+if
+CAMP_RAID_BANDITS_C == 1
+then
+0@ = 0
+end
+
+if
+CAMP_RAID_BANDITS_C == 2
+then
+0@ = 1
+end
+
+if
+OOS_MARK == 156546
+then
+0@ = 2
+end
+
+if
+0@ == 0
+then
+
+while not model.Available(#BANDIT1)
+wait 0
+model.Load(#BANDIT1)
+mload
+end
+
+$BANDIT[5] = Actor.Create(25, #BANDIT1, 0.0, 0.0, 0.0)
+
+if
+model.Available(#BANDIT1)
+then
+//model.Destroy(#BANDIT1)
+end
+
+while not model.Available(#BANDIT2)
+wait 0
+model.Load(#BANDIT2)
+mload
+end
+
+$BANDIT[6] = Actor.Create(25, #BANDIT2, 0.0, 0.0, 0.0)
+
+if
+model.Available(#BANDIT2)
+then
+//model.Destroy(#BANDIT2)
+end
+
+while not model.Available(#BANDIT3)
+wait 0
+model.Load(#BANDIT3)
+mload
+end
+
+$BANDIT[7] = Actor.Create(25, #BANDIT3, 0.0, 0.0, 0.0)
+
+if
+model.Available(#BANDIT3)
+then
+//model.Destroy(#BANDIT3)
+end
+
+while not model.Available(#BANDIT4)
+wait 0
+model.Load(#BANDIT4)
+mload
+end
+
+$BANDIT[8] = Actor.Create(25, #BANDIT4, 0.0, 0.0, 0.0)
+
+if
+model.Available(#BANDIT4)
+then
+//model.Destroy(#BANDIT4)
+end
+
+else
+
+if
+OOS_MARK == 156546
+then
+//////////////////////////////////////////////////////////////////
+
+while not model.Available(3180)
+wait 0
+model.Load(3180)
+mload
+end
+
+$BANDIT[5] = Actor.Create(25, 3180, 0.0, 0.0, 0.0)
+
+if
+model.Available(3180)
+then
+//model.Destroy(3180)
+end
+
+while not model.Available(3181)
+wait 0
+model.Load(3181)
+mload
+end
+
+$BANDIT[6] = Actor.Create(25, 3181, 0.0, 0.0, 0.0)
+
+if
+model.Available(3181)
+then
+//model.Destroy(3181)
+end
+
+while not model.Available(3182)
+wait 0
+model.Load(3182)
+mload
+end
+
+$BANDIT[7] = Actor.Create(25, 3182, 0.0, 0.0, 0.0)
+
+if
+model.Available(3182)
+then
+//model.Destroy(3182)
+end
+
+while not model.Available(3183)
+wait 0
+model.Load(3183)
+mload
+end
+
+$BANDIT[8] = Actor.Create(25, 3183, 0.0, 0.0, 0.0)
+
+if
+model.Available(3183)
+then
+//model.Destroy(3183)
+end
+
+//////////////////////////////////////////////////////////////////
+else
+
+while not model.Available(#BANDIT5)
+wait 0
+model.Load(#BANDIT5)
+mload
+end
+
+$BANDIT[5] = Actor.Create(25, #BANDIT5, 0.0, 0.0, 0.0)
+
+if
+model.Available(#BANDIT5)
+then
+//model.Destroy(#BANDIT5)
+end
+
+while not model.Available(#BANDIT6)
+wait 0
+model.Load(#BANDIT6)
+mload
+end
+
+$BANDIT[6] = Actor.Create(25, #BANDIT6, 0.0, 0.0, 0.0)
+
+if
+model.Available(#BANDIT6)
+then
+//model.Destroy(#BANDIT6)
+end
+
+while not model.Available(#BANDIT7)
+wait 0
+model.Load(#BANDIT7)
+mload
+end
+
+$BANDIT[7] = Actor.Create(25, #BANDIT7, 0.0, 0.0, 0.0)
+
+if
+model.Available(#BANDIT7)
+then
+//model.Destroy(#BANDIT7)
+end
+
+while not model.Available(#BANDIT8)
+wait 0
+model.Load(#BANDIT8)
+mload
+end
+
+$BANDIT[8] = Actor.Create(25, #BANDIT8, 0.0, 0.0, 0.0)
+
+if
+model.Available(#BANDIT8)
+then
+//model.Destroy(#BANDIT8)
+end
+
+end
+
+end
+
+else
+
+if
+$UNITED_VC_FLAG == 1
+then
+
+11@ += 100.0
+
+:CAR_CREATE_BANDIT_HELI2
+if
+model.Available($VC_MAVERICK_ID)
+then 
+19@ = car.Create($VC_MAVERICK_ID,9@, 10@, 11@)
+if
+model.Available($VC_MAVERICK_ID)
+then
+//model.Destroy($VC_MAVERICK_ID)
+end
+
+else
+model.Load($VC_MAVERICK_ID)
+mload
+wait 0
+jump to @CAR_CREATE_BANDIT_HELI2
+end
+
+random_float 0@ 0.0 360.0 
+car.Angle(19@) = 0@
+car.DoorStatus(19@,2)
+
+if
+$GAMEMODE_WAR == 1
+then
+car.Health(19@) = 4000
+else
+car.Health(19@) = 2500
+end
+
+0229: set_car 19@ primary_color_to 6 secondary_color_to 6
+
+while not model.Available($VC_BANDITS_SKIN1)
+wait 0
+model.Load($VC_BANDITS_SKIN1)
+mload
+end
+
+18@ = actor.CreateAsDriver(25,$VC_BANDITS_SKIN1,19@)
+
+if
+model.Available($VC_BANDITS_SKIN1)
+then
+//model.Destroy($VC_BANDITS_SKIN1)
+end
+
+actor.SetImmunities(18@,1,1,1,1,1)
+actor.Health(18@) = 5000
+077A: set_actor 18@ acquaintance 0 to_actors_pedtype $ZOMBIE_SET_PEDTYPE // see ped.dat
+060B: set_actor 18@ decision_maker_to $DEC_PEOPLE        
+
+while not model.Available($VC_BANDITS_SKIN1)
+wait 0
+model.Load($VC_BANDITS_SKIN1)
+mload
+end
+
+$BANDIT[5] = Actor.Create(25, $VC_BANDITS_SKIN1, 0.0, 0.0, 0.0)
+
+if
+model.Available($VC_BANDITS_SKIN1)
+then
+//model.Destroy($VC_BANDITS_SKIN1)
+end
+
+while not model.Available($VC_BANDITS_SKIN2)
+wait 0
+model.Load($VC_BANDITS_SKIN2)
+mload
+end
+
+$BANDIT[6] = Actor.Create(25, $VC_BANDITS_SKIN2, 0.0, 0.0, 0.0)
+
+if
+model.Available($VC_BANDITS_SKIN2)
+then
+//model.Destroy($VC_BANDITS_SKIN2)
+end
+
+while not model.Available($VC_BANDITS_SKIN2)
+wait 0
+model.Load($VC_BANDITS_SKIN2)
+mload
+end
+
+$BANDIT[7] = Actor.Create(25, $VC_BANDITS_SKIN2, 0.0, 0.0, 0.0)
+
+if
+model.Available($VC_BANDITS_SKIN2)
+then
+//model.Destroy($VC_BANDITS_SKIN2)
+end
+
+while not model.Available($VC_BANDITS_SKIN1)
+wait 0
+model.Load($VC_BANDITS_SKIN1)
+mload
+end
+
+$BANDIT[8] = Actor.Create(25, $VC_BANDITS_SKIN1, 0.0, 0.0, 0.0)
+
+if
+model.Available($VC_BANDITS_SKIN1)
+then
+//model.Destroy($VC_BANDITS_SKIN1)
+end 
+
+else
+
+11@ += 100.0
+
+:CAR_CREATE_BANDIT_HELI3
+if
+model.Available($III_MAVERICK_ID)
+then 
+19@ = car.Create($III_MAVERICK_ID,9@, 10@, 11@)
+if
+model.Available($III_MAVERICK_ID)
+then
+//model.Destroy($III_MAVERICK_ID)
+end
+
+else
+model.Load($III_MAVERICK_ID)
+mload
+wait 0
+jump to @CAR_CREATE_BANDIT_HELI3
+end
+
+random_float 0@ 0.0 360.0 
+car.Angle(19@) = 0@
+car.DoorStatus(19@,2)
+
+if
+$GAMEMODE_WAR == 1
+then
+car.Health(19@) = 4000
+else
+car.Health(19@) = 2500
+end
+
+0229: set_car 19@ primary_color_to 1 secondary_color_to 1
+
+while not model.Available($III_BANDITS_SKIN1)
+wait 0
+model.Load($III_BANDITS_SKIN1)
+mload
+end
+
+18@ = actor.CreateAsDriver(25,$III_BANDITS_SKIN1,19@)
+
+if
+model.Available($III_BANDITS_SKIN1)
+then
+//model.Destroy($III_BANDITS_SKIN1)
+end
+
+actor.SetImmunities(18@,1,1,1,1,1)
+actor.Health(18@) = 5000
+077A: set_actor 18@ acquaintance 0 to_actors_pedtype $ZOMBIE_SET_PEDTYPE // see ped.dat
+060B: set_actor 18@ decision_maker_to $DEC_PEOPLE        
+
+while not model.Available($III_BANDITS_SKIN1)
+wait 0
+model.Load($III_BANDITS_SKIN1)
+mload
+end
+
+$BANDIT[5] = Actor.Create(25, $III_BANDITS_SKIN1, 0.0, 0.0, 0.0)
+
+if
+model.Available($III_BANDITS_SKIN1)
+then
+//model.Destroy($III_BANDITS_SKIN1)
+end
+
+while not model.Available($III_BANDITS_SKIN2)
+wait 0
+model.Load($III_BANDITS_SKIN2)
+mload
+end
+
+$BANDIT[6] = Actor.Create(25, $III_BANDITS_SKIN2, 0.0, 0.0, 0.0)
+
+if
+model.Available($III_BANDITS_SKIN2)
+then
+//model.Destroy($III_BANDITS_SKIN2)
+end
+
+while not model.Available($III_BANDITS_SKIN2)
+wait 0
+model.Load($III_BANDITS_SKIN2)
+mload
+end
+
+$BANDIT[7] = Actor.Create(25, $III_BANDITS_SKIN2, 0.0, 0.0, 0.0)
+
+if
+model.Available($III_BANDITS_SKIN2)
+then
+//model.Destroy($III_BANDITS_SKIN2)
+end
+
+while not model.Available($III_BANDITS_SKIN1)
+wait 0
+model.Load($III_BANDITS_SKIN1)
+mload
+end
+
+$BANDIT[8] = Actor.Create(25, $III_BANDITS_SKIN1, 0.0, 0.0, 0.0)
+
+if
+model.Available($III_BANDITS_SKIN1)
+then
+//model.Destroy($III_BANDITS_SKIN1)
+end 
+
+end
+
+end
+
+if
+UNITED_MAP == 0
+then
+
+if
+OOS_MARK == 156546
+then
+
+0781: get_weapon_with_ID 101 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+actor.GiveWeaponAndAmmo($BANDIT[5],101,99999)
+
+0781: get_weapon_with_ID 105 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+actor.GiveWeaponAndAmmo($BANDIT[6],105,99999)
+
+0781: get_weapon_with_ID 101 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+actor.GiveWeaponAndAmmo($BANDIT[7],101,99999)
+
+0781: get_weapon_with_ID 105 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+actor.GiveWeaponAndAmmo($BANDIT[8],105,99999)
+
+else
+
+0781: get_weapon_with_ID 30 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+actor.GiveWeaponAndAmmo($BANDIT[5],30,99999)
+
+0781: get_weapon_with_ID 30 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+actor.GiveWeaponAndAmmo($BANDIT[6],30,99999)
+
+0781: get_weapon_with_ID 30 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+actor.GiveWeaponAndAmmo($BANDIT[7],30,99999)
+
+0781: get_weapon_with_ID 30 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+actor.GiveWeaponAndAmmo($BANDIT[8],30,99999)
+
+end
+
+actor.WeaponAccuracy($BANDIT[5]) = $BANDITS_HELI_ACCURACY
+actor.WeaponAccuracy($BANDIT[6]) = $BANDITS_HELI_ACCURACY
+actor.WeaponAccuracy($BANDIT[7]) = $BANDITS_HELI_ACCURACY
+actor.WeaponAccuracy($BANDIT[8]) = $BANDITS_HELI_ACCURACY
+
+else
+
+actor.WeaponAccuracy($BANDIT[5]) = $BANDITS_HELI_ACCURACY
+actor.WeaponAccuracy($BANDIT[6]) = $BANDITS_HELI_ACCURACY
+actor.WeaponAccuracy($BANDIT[7]) = $BANDITS_HELI_ACCURACY
+actor.WeaponAccuracy($BANDIT[8]) = $BANDITS_HELI_ACCURACY
+
+if
+$UNITED_VC_FLAG == 1
+then
+
+if
+STORIES_MAP == 0
+then
+
+0781: get_weapon_with_ID 145 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+actor.GiveWeaponAndAmmo($BANDIT[5],145,99999)
+
+0781: get_weapon_with_ID 145 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+actor.GiveWeaponAndAmmo($BANDIT[6],145,99999)
+
+0781: get_weapon_with_ID 145 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+actor.GiveWeaponAndAmmo($BANDIT[7],145,99999)
+
+0781: get_weapon_with_ID 145 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+actor.GiveWeaponAndAmmo($BANDIT[8],145,99999)
+else
+
+0781: get_weapon_with_ID 201 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+actor.GiveWeaponAndAmmo($BANDIT[5],201,99999)
+
+0781: get_weapon_with_ID 201 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+                                             
+actor.GiveWeaponAndAmmo($BANDIT[6],201,99999)
+
+0781: get_weapon_with_ID 201 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+actor.GiveWeaponAndAmmo($BANDIT[7],201,99999)
+
+0781: get_weapon_with_ID 201 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+actor.GiveWeaponAndAmmo($BANDIT[8],201,99999)
+end
+
+else
+
+if
+STORIES_MAP == 0
+then
+
+0781: get_weapon_with_ID 112 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+actor.GiveWeaponAndAmmo($BANDIT[5],112,99999)
+
+0781: get_weapon_with_ID 112 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+actor.GiveWeaponAndAmmo($BANDIT[6],112,99999)
+
+0781: get_weapon_with_ID 112 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+actor.GiveWeaponAndAmmo($BANDIT[7],112,99999)
+
+0781: get_weapon_with_ID 112 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+actor.GiveWeaponAndAmmo($BANDIT[8],112,99999)
+else
+
+0781: get_weapon_with_ID 171 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+actor.GiveWeaponAndAmmo($BANDIT[5],171,99999)
+
+0781: get_weapon_with_ID 171 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+actor.GiveWeaponAndAmmo($BANDIT[6],171,99999)
+
+0781: get_weapon_with_ID 171 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+actor.GiveWeaponAndAmmo($BANDIT[7],171,99999)
+
+0781: get_weapon_with_ID 171 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+actor.GiveWeaponAndAmmo($BANDIT[8],171,99999)
+end
+
+end
+
+end
+
+077A: set_actor 18@ acquaintance 0 to_actors_pedtype $ZOMBIE_SET_PEDTYPE // see ped.dat 
+077A: set_actor 18@ acquaintance 0 to_actors_pedtype 0 // see ped.dat 
+077A: set_actor 18@ acquaintance 0 to_actors_pedtype 26 // see ped.dat 
+077A: set_actor 18@ acquaintance 0 to_actors_pedtype 27 // see ped.dat    
+077A: set_actor 18@ acquaintance 0 to_actors_pedtype 28 // see ped.dat  
+
+if
+UNITED_MAP == 0
+then
+06A7: put_actor $BANDIT[5] into_turret_on_car 19@ at_car_offset -1.2 0.0 -0.1 position 1 shooting_angle 360.0 360.0 with_weapon 30
+06A7: put_actor $BANDIT[6] into_turret_on_car 19@ at_car_offset -1.2 2.0 -0.1 position 1 shooting_angle 360.0 360.0 with_weapon 30
+06A7: put_actor $BANDIT[7] into_turret_on_car 19@ at_car_offset 1.2 0.0 -0.1 position 1 shooting_angle 360.0 360.0 with_weapon 30
+06A7: put_actor $BANDIT[8] into_turret_on_car 19@ at_car_offset 1.2 2.0 -0.1 position 1 shooting_angle 360.0 360.0 with_weapon 30  
+else
+
+if
+$UNITED_VC_FLAG == 1
+then
+
+if
+STORIES_MAP == 0
+then
+06A7: put_actor $BANDIT[5] into_turret_on_car 19@ at_car_offset -1.2 0.0 -0.1 position 1 shooting_angle 360.0 360.0 with_weapon 145
+06A7: put_actor $BANDIT[6] into_turret_on_car 19@ at_car_offset -1.2 2.0 -0.1 position 1 shooting_angle 360.0 360.0 with_weapon 145
+06A7: put_actor $BANDIT[7] into_turret_on_car 19@ at_car_offset 1.2 0.0 -0.1 position 1 shooting_angle 360.0 360.0 with_weapon 145
+06A7: put_actor $BANDIT[8] into_turret_on_car 19@ at_car_offset 1.2 2.0 -0.1 position 1 shooting_angle 360.0 360.0 with_weapon 145
+else
+06A7: put_actor $BANDIT[5] into_turret_on_car 19@ at_car_offset -1.2 0.0 -0.1 position 1 shooting_angle 360.0 360.0 with_weapon 201
+06A7: put_actor $BANDIT[6] into_turret_on_car 19@ at_car_offset -1.2 2.0 -0.1 position 1 shooting_angle 360.0 360.0 with_weapon 201
+06A7: put_actor $BANDIT[7] into_turret_on_car 19@ at_car_offset 1.2 0.0 -0.1 position 1 shooting_angle 360.0 360.0 with_weapon 201
+06A7: put_actor $BANDIT[8] into_turret_on_car 19@ at_car_offset 1.2 2.0 -0.1 position 1 shooting_angle 360.0 360.0 with_weapon 201
+end
+
+else
+
+if
+STORIES_MAP == 0
+then
+06A7: put_actor $BANDIT[5] into_turret_on_car 19@ at_car_offset -1.2 0.0 -0.1 position 1 shooting_angle 360.0 360.0 with_weapon 112
+06A7: put_actor $BANDIT[6] into_turret_on_car 19@ at_car_offset -1.2 2.0 -0.1 position 1 shooting_angle 360.0 360.0 with_weapon 112
+06A7: put_actor $BANDIT[7] into_turret_on_car 19@ at_car_offset 1.2 0.0 -0.1 position 1 shooting_angle 360.0 360.0 with_weapon 112
+06A7: put_actor $BANDIT[8] into_turret_on_car 19@ at_car_offset 1.2 2.0 -0.1 position 1 shooting_angle 360.0 360.0 with_weapon 112
+else
+06A7: put_actor $BANDIT[5] into_turret_on_car 19@ at_car_offset -1.2 0.0 -0.1 position 1 shooting_angle 360.0 360.0 with_weapon 171
+06A7: put_actor $BANDIT[6] into_turret_on_car 19@ at_car_offset -1.2 2.0 -0.1 position 1 shooting_angle 360.0 360.0 with_weapon 171
+06A7: put_actor $BANDIT[7] into_turret_on_car 19@ at_car_offset 1.2 0.0 -0.1 position 1 shooting_angle 360.0 360.0 with_weapon 171
+06A7: put_actor $BANDIT[8] into_turret_on_car 19@ at_car_offset 1.2 2.0 -0.1 position 1 shooting_angle 360.0 360.0 with_weapon 171
+end
+
+end
+
+end
+ 
+099F: AS_actor $BANDIT[5] ignore_weapon_range 1
+099F: AS_actor $BANDIT[6] ignore_weapon_range 1
+099F: AS_actor $BANDIT[7] ignore_weapon_range 1
+099F: AS_actor $BANDIT[8] ignore_weapon_range 1
+081A: set_actor $BANDIT[5] weapon_skill_to HELI_WEAP_SKILL
+081A: set_actor $BANDIT[6] weapon_skill_to HELI_WEAP_SKILL
+081A: set_actor $BANDIT[7] weapon_skill_to HELI_WEAP_SKILL
+081A: set_actor $BANDIT[8] weapon_skill_to HELI_WEAP_SKILL 
+0946: set_actor $BANDIT[5] actions_uninterupted_by_weapon_fire HELI_UTIRPD_WEP_FIRE
+0946: set_actor $BANDIT[6] actions_uninterupted_by_weapon_fire HELI_UTIRPD_WEP_FIRE
+0946: set_actor $BANDIT[7] actions_uninterupted_by_weapon_fire HELI_UTIRPD_WEP_FIRE
+0946: set_actor $BANDIT[8] actions_uninterupted_by_weapon_fire HELI_UTIRPD_WEP_FIRE
+0446: set_actor $BANDIT[5] dismemberment_possible 0
+0446: set_actor $BANDIT[6] dismemberment_possible 0
+0446: set_actor $BANDIT[7] dismemberment_possible 0
+0446: set_actor $BANDIT[8] dismemberment_possible 0
+060B: set_actor $BANDIT[5] decision_maker_to $DEC_PEOPLE 
+060B: set_actor $BANDIT[6] decision_maker_to $DEC_PEOPLE 
+060B: set_actor $BANDIT[7] decision_maker_to $DEC_PEOPLE 
+060B: set_actor $BANDIT[8] decision_maker_to $DEC_PEOPLE
+
+for 0@ = 5 to 8
+if and
+not $PLAYER_BANDIT_SIDE == 1
+not $BANDITS_DONT_ATTACK_PLAYER_FLAG == 1
+    then
+    0770: set_actor $BANDIT[0@] target_priority 1
+    else
+    0568: set_actor $BANDIT[0@] untargetable 1
+    end
+end
+
+actor.SetImmunities($BANDIT[5],0,1,1,0,0)
+actor.SetImmunities($BANDIT[6],0,1,1,0,0)
+actor.SetImmunities($BANDIT[7],0,1,1,0,0)
+actor.SetImmunities($BANDIT[8],0,1,1,0,0) 
+
+gosub @BANDITS_HELI_RANDOM_HEALTH
+
+actor.Health($BANDIT[5]) = 0@
+
+gosub @BANDITS_HELI_RANDOM_HEALTH
+
+actor.Health($BANDIT[6]) = 0@
+
+gosub @BANDITS_HELI_RANDOM_HEALTH
+
+actor.Health($BANDIT[7]) = 0@
+
+gosub @BANDITS_HELI_RANDOM_HEALTH
+
+actor.Health($BANDIT[8]) = 0@     
+
+0825: set_helicopter 19@ instant_rotor_start    
+07BB: set_heli 19@ horizontal_thrust_power 2
+
+if
+$BANDITS_DONT_ATTACK_PLAYER_FLAG == 1
+then
+08F2: set_car 19@ targettable_by_heatseeker 0
+end
+
+0726: heli 19@ follow_actor PLAYER_ACTOR follow_car -1 radius 30.0 
+
+BANDITS_HELI_TARGET_FINDED = 0
+BANDITS_HELI_DIED = 0
+BANDIT_HELI_TAKEN_DAMAGE_BY_PLAYER = 0
+
+$HELBAND_THROW_MOLOTOV_TIMER = 0
+$HELBAND_THROW_MOLOTOV_FLAG = 0
+gosub @HELBAND_RANDOM_THROW_TIME
+
+32@ = 0
+FRACTIONS_SPAWNED_COUNT += 1
+BANDIT_HELI_CHASE_FLAG = 0
+
+if or
+CAMP_RAID_FLAG == 1
+OOS_MARK == 156546
+ZAME_HUENEMY_FLAG == 1
+then
+BANDIT_HELI_MARK = marker.CreateAboveCar(19@)
+marker.SetIconSize(BANDIT_HELI_MARK,2)
+RAID_HELI_SPAWNED_FLAG = 1
+end
+
+if
+$GAMEMODE_EDITOR == 1
+then
+
+for 0@ = 5 to 8
+087E: set_actor $BANDIT[0@] weapon_droppable 0
+end
+
+else
+
+for 0@ = 5 to 8
+if
+0E4D: random_percent 70
+    then
+    087E: set_actor $BANDIT[0@] weapon_droppable 0
+    end
+end
+
+end   
+
+:BANDIT_HELI_CHECK
+wait 0
+
+if
+not $GAME_SPEED == 0.0
+then
+$HELBAND_THROW_MOLOTOV_TIMER += 6
+end 
+
+random_int 0@ 0 5
+gosub @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE1
+
+if
+056E:   car 19@ defined
+    then
+    
+    if and
+    BANDIT_HELI_CHASE_FLAG == 0
+    $BANDITS_DONT_ATTACK_PLAYER_FLAG == 0
+    $ACTIVE_INTERIOR == 0
+    $INT_ENTERING_FLAG == 0    
+    then
+    if or
+    0364:   actor PLAYER_ACTOR spotted_actor $BANDIT[5]
+    0364:   actor PLAYER_ACTOR spotted_actor $BANDIT[6]
+    0364:   actor PLAYER_ACTOR spotted_actor $BANDIT[7]
+    0364:   actor PLAYER_ACTOR spotted_actor $BANDIT[8]
+    051A:   actor PLAYER_ACTOR damaged_by_actor $BANDIT[5]
+    051A:   actor PLAYER_ACTOR damaged_by_actor $BANDIT[6]
+    051A:   actor PLAYER_ACTOR damaged_by_actor $BANDIT[7]
+    051A:   actor PLAYER_ACTOR damaged_by_actor $BANDIT[8]
+        then
+        BANDIT_HELI_CHASE_FLAG = 1
+        end
+    end
+    
+    if
+    051C:   car 19@ damaged_by_actor PLAYER_ACTOR
+        then
+        BANDIT_HELI_TAKEN_DAMAGE_BY_PLAYER += 1
+        if or
+        04C8:   actor PLAYER_ACTOR driving_flying_vehicle
+        actor.DrivingVehicleType(PLAYER_ACTOR,RHINO_MODEL_NUMBER)
+        then
+        BANDIT_HELI_TAKEN_DAMAGE_BY_PLAYER += 25
+        end
+        054F: clear_car 19@ damage
+        end
+    end 
+
+if
+BANDITS_HELI_TARGET_FINDED == 1     
+    then
+    if
+    056D:   actor 14@ defined
+        then
+        
+        if and
+        ORIGIN_ABILITY_ACTIVE == 6
+        07D6:   14@ == PLAYER_ACTOR // @ == $ (int)
+        then
+        32@ += 11000
+        end
+        
+        if
+        32@ > 10000
+            then
+            BANDITS_HELI_TARGET_FINDED = 0
+            end
+        end          
+    end
+    
+if
+856E: not  car 19@ defined
+    then
+    
+    if
+    056D:   actor 18@ defined
+    then
+    actor.DestroyWithFade(18@)  
+    end
+    
+    if
+    075C:   marker BANDIT_HELI_MARK enabled
+    then
+    marker.Disable(BANDIT_HELI_MARK)
+    end
+    
+    if or
+    CAMP_RAID_FLAG == 1
+    OOS_MARK == 156546
+    then
+    RAID_HELI_SPAWNED_FLAG = 0
+    end
+    
+    if
+    056D:   actor $BANDIT[5] defined
+    then
+    actor.DestroyWithFade($BANDIT[5])
+    $BANDIT[5] = -69  
+    end
+    
+    if
+    056D:   actor $BANDIT[6] defined
+    then
+    actor.DestroyWithFade($BANDIT[6])
+    $BANDIT[6] = -69  
+    end
+    
+    if
+    056D:   actor $BANDIT[7] defined
+    then
+    actor.DestroyWithFade($BANDIT[7])
+    $BANDIT[7] = -69  
+    end
+    
+    if
+    056D:   actor $BANDIT[8] defined
+    then
+    actor.DestroyWithFade($BANDIT[8])
+    $BANDIT[8] = -69  
+    end
+    
+    FRACTIONS_SPAWNED_COUNT -= 1
+    BANDIT_HELI_CHASE_FLAG = 0
+    
+    if and
+    ZAME_HUENEMY_FLAG == 1
+    ZAME_HUENEMY_TYPE == 4
+    then
+    ZAME_HUENEMY_FLAG = 2
+    end_thread
+    end
+    
+    if
+    $GAMEMODE_EDITOR == 1
+    then
+    end_thread
+    end 
+        
+    jump to @BANDIT_HELI_SPAWN_CHECK         
+    end    
+
+if
+056E:   car 19@ defined
+    then    
+    if or
+    car.Wrecked(19@)
+    8185: not  car 19@ health >= 250
+        then                 
+        
+        0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_BANDIT_HELI_KILLED"        
+        
+        if
+        BANDIT_HELI_TAKEN_DAMAGE_BY_PLAYER > 25
+        then
+        $BANDIT_HELI_KILLED += 1
+        end
+        
+        if
+        $CHEATED_FLAG == 0 
+        then   
+        0@ += 1
+        end        
+         
+        0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_BANDIT_HELI_KILLED"
+        
+        0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT80_GOT"
+        0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_BANDIT_HELI_KILLED"            
+            
+        if and
+        0@ == 0
+        1@ >= 50
+        $CHEATED_FLAG == 0
+            then
+            v$ACHIEVEMNT = "ACH80"
+            $ACHIEVEMENT_GOT_FLAG = 1                
+            0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT80_GOT"                
+            end
+        
+        
+        if or
+        $FREEMODE == 1
+        $GAMEMODE_WAR == 1
+        then
+        
+        if
+        $GAMEMODE_WAR == 0
+        then
+        $BANDITS_PROCENT -= BANDITS_HELI_MINUS
+        else
+        $BANDITS_PROCENT -= BANDITS_HELI_MINUS_WAR
+        end
+        
+        end        
+        
+        if
+        056D:   actor 18@ defined
+        then                             
+        05BE: AS_actor 18@ die
+        actor.RemoveReferences(18@)  
+        end
+        
+        if
+        075C:   marker BANDIT_HELI_MARK enabled
+        then
+        marker.Disable(BANDIT_HELI_MARK)
+        end
+        
+        if or
+        CAMP_RAID_FLAG == 1
+        OOS_MARK == 156546
+        then
+        RAID_HELI_SPAWNED_FLAG = 0
+        end
+        
+        if
+        056D:   actor $BANDIT[5] defined
+        then                       
+        0465: remove_actor $BANDIT[5] from_turret_mode     
+        05BE: AS_actor $BANDIT[5] die
+        actor.RemoveReferences($BANDIT[5])
+        $BANDIT[5] = -69  
+        end
+        
+        if
+        056D:   actor $BANDIT[6] defined
+        then              
+        0465: remove_actor $BANDIT[6] from_turret_mode      
+        05BE: AS_actor $BANDIT[6] die    
+        actor.RemoveReferences($BANDIT[6])
+        $BANDIT[6] = -69  
+        end
+        
+        if
+        056D:   actor $BANDIT[7] defined
+        then                
+        0465: remove_actor $BANDIT[7] from_turret_mode     
+        05BE: AS_actor $BANDIT[7] die   
+        actor.RemoveReferences($BANDIT[7])
+        $BANDIT[7] = -69  
+        end
+        
+        if
+        056D:   actor $BANDIT[8] defined
+        then        
+        0465: remove_actor $BANDIT[8] from_turret_mode
+        05BE: AS_actor $BANDIT[8] die
+        actor.RemoveReferences($BANDIT[8])
+        $BANDIT[8] = -69  
+        end                
+        
+        if
+        056E:   car 19@ defined
+        then           
+        wait 200        
+        car.RemoveReferences(19@)
+        end                     
+        
+        FRACTIONS_SPAWNED_COUNT -= 1
+        BANDIT_HELI_CHASE_FLAG = 0
+        
+        if and
+        ZAME_HUENEMY_FLAG == 1
+        ZAME_HUENEMY_TYPE == 4
+        then
+        ZAME_HUENEMY_FLAG = 2
+        end_thread
+        end
+        
+        if
+        $GAMEMODE_EDITOR == 1
+        then
+        end_thread
+        end
+         
+        jump to @BANDIT_HELI_SPAWN_CHECK
+        end
+    else
+    
+    if
+    056D:   actor 18@ defined
+    then                     
+    actor.RemoveReferences(18@)
+    05BE: AS_actor 18@ die  
+    end
+        
+    if
+    075C:   marker BANDIT_HELI_MARK enabled
+    then
+    marker.Disable(BANDIT_HELI_MARK)
+    end
+        
+    if or
+    CAMP_RAID_FLAG == 1
+    OOS_MARK == 156546
+    then
+    RAID_HELI_SPAWNED_FLAG = 0
+    end
+        
+    if
+    056D:   actor $BANDIT[5] defined
+    then                       
+    0465: remove_actor $BANDIT[5] from_turret_mode     
+    05BE: AS_actor $BANDIT[5] die
+    actor.RemoveReferences($BANDIT[5])
+    $BANDIT[5] = -69  
+    end
+        
+    if
+    056D:   actor $BANDIT[6] defined
+    then              
+    0465: remove_actor $BANDIT[6] from_turret_mode      
+    05BE: AS_actor $BANDIT[6] die    
+    actor.RemoveReferences($BANDIT[6])
+    $BANDIT[6] = -69  
+    end
+        
+    if
+    056D:   actor $BANDIT[7] defined
+    then                
+    0465: remove_actor $BANDIT[7] from_turret_mode     
+    05BE: AS_actor $BANDIT[7] die   
+    actor.RemoveReferences($BANDIT[7])
+    $BANDIT[7] = -69  
+    end
+        
+    if
+    056D:   actor $BANDIT[8] defined
+    then        
+    0465: remove_actor $BANDIT[8] from_turret_mode
+    05BE: AS_actor $BANDIT[8] die
+    actor.RemoveReferences($BANDIT[8])
+    $BANDIT[8] = -69  
+    end
+    
+    FRACTIONS_SPAWNED_COUNT -= 1
+    BANDIT_HELI_CHASE_FLAG = 0
+    
+    if and
+    ZAME_HUENEMY_FLAG == 1
+    ZAME_HUENEMY_TYPE == 4
+    then
+    ZAME_HUENEMY_FLAG = 2
+    end_thread
+    end
+    
+    if
+    $GAMEMODE_EDITOR == 1
+    then
+    end_thread
+    end
+    
+    jump to @BANDIT_HELI_SPAWN_CHECK   
+    end
+    
+///////////////////////////////////////////////////////////////////                           
+
+if and
+001C:   $HELBAND_THROW_MOLOTOV_TIMER > $HELBAND_THROW_TIME2 // (int)
+$HELBAND_THROW_MOLOTOV_FLAG == 0
+BANDITS_HELI_DIED == 0
+    then
+    random_int $HELBAND_THROW_MOLOTOV_ACTOR 5 9    
+    if and
+    not actor.Dead($BANDIT[$HELBAND_THROW_MOLOTOV_ACTOR])   
+    not actor.Driving($BANDIT[$HELBAND_THROW_MOLOTOV_ACTOR])
+    82D8: not  actor $BANDIT[$HELBAND_THROW_MOLOTOV_ACTOR] current_weapon == 34
+    82D8: not  actor $BANDIT[$HELBAND_THROW_MOLOTOV_ACTOR] current_weapon == 120
+    82D8: not  actor $BANDIT[$HELBAND_THROW_MOLOTOV_ACTOR] current_weapon == 146
+    82D8: not  actor $BANDIT[$HELBAND_THROW_MOLOTOV_ACTOR] current_weapon == 175
+    82D8: not  actor $BANDIT[$HELBAND_THROW_MOLOTOV_ACTOR] current_weapon == 205 
+        then
+        0470: $HELBAND_THROW_PREV_WEAP = actor $BANDIT[$HELBAND_THROW_MOLOTOV_ACTOR] current_weapon    
+        
+        random_int 3@ 0 2        
+        
+        if
+        3@ == 0
+        then
+
+        ///////////////////////////////////////////////////////////////
+
+        if
+        UNITED_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 18 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($BANDIT[$HELBAND_THROW_MOLOTOV_ACTOR],18,1)
+        $HELBAND_THROW_MOLOTOV_WEP = 18
+        else
+        
+        if
+        $UNITED_VC_FLAG == 1
+        then
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 134 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($BANDIT[$HELBAND_THROW_MOLOTOV_ACTOR],134,1)
+        $HELBAND_THROW_MOLOTOV_WEP = 134
+        else
+        
+        0781: get_weapon_with_ID 209 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($BANDIT[$HELBAND_THROW_MOLOTOV_ACTOR],209,1)
+        $HELBAND_THROW_MOLOTOV_WEP = 209
+        end
+        
+        else
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 118 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($BANDIT[$HELBAND_THROW_MOLOTOV_ACTOR],118,1)
+        $HELBAND_THROW_MOLOTOV_WEP = 118
+        else
+        
+        0781: get_weapon_with_ID 179 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($BANDIT[$HELBAND_THROW_MOLOTOV_ACTOR],179,1)
+        $HELBAND_THROW_MOLOTOV_WEP = 179
+        end
+        
+        end
+        
+        end
+        
+        else
+
+        if
+        UNITED_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 16 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($BANDIT[$HELBAND_THROW_MOLOTOV_ACTOR],16,1)
+        $HELBAND_THROW_MOLOTOV_WEP = 16
+        else
+        
+        if
+        $UNITED_VC_FLAG == 1
+        then
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 132 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($BANDIT[$HELBAND_THROW_MOLOTOV_ACTOR],132,1)
+        $HELBAND_THROW_MOLOTOV_WEP = 132
+        else
+        
+        0781: get_weapon_with_ID 207 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($BANDIT[$HELBAND_THROW_MOLOTOV_ACTOR],207,1)
+        $HELBAND_THROW_MOLOTOV_WEP = 207
+        end
+        
+        else
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 115 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($BANDIT[$HELBAND_THROW_MOLOTOV_ACTOR],115,1)
+        $HELBAND_THROW_MOLOTOV_WEP = 115
+        else
+        
+        0781: get_weapon_with_ID 177 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($BANDIT[$HELBAND_THROW_MOLOTOV_ACTOR],177,1)
+        $HELBAND_THROW_MOLOTOV_WEP = 177
+        end
+        
+        end
+        
+        end
+        
+        ///////////////////////////////////////////////////////////////
+
+        end   
+        
+        $HELBAND_THROW_MOLOTOV_FLAG = 1
+        
+        if
+        $HELBAND_THROW_MOLOTOV_ACTOR == 5
+        then
+        06A7: put_actor $BANDIT[5] into_turret_on_car 19@ at_car_offset -1.2 0.0 -0.1 position 1 shooting_angle 360.0 360.0 with_weapon $HELBAND_THROW_MOLOTOV_WEP
+        end
+        
+        if
+        $HELBAND_THROW_MOLOTOV_ACTOR == 6
+        then
+        06A7: put_actor $BANDIT[6] into_turret_on_car 19@ at_car_offset -1.2 2.0 -0.1 position 1 shooting_angle 360.0 360.0 with_weapon $HELBAND_THROW_MOLOTOV_WEP
+        end
+        
+        if
+        $HELBAND_THROW_MOLOTOV_ACTOR == 7
+        then
+        06A7: put_actor $BANDIT[7] into_turret_on_car 19@ at_car_offset 1.2 0.0 -0.1 position 1 shooting_angle 360.0 360.0 with_weapon $HELBAND_THROW_MOLOTOV_WEP
+        end
+        
+        if
+        $HELBAND_THROW_MOLOTOV_ACTOR == 8
+        then
+        06A7: put_actor $BANDIT[8] into_turret_on_car 19@ at_car_offset 1.2 2.0 -0.1 position 1 shooting_angle 360.0 360.0 with_weapon $HELBAND_THROW_MOLOTOV_WEP
+        end
+        
+        end
+    end
+    
+///////////////////////////////////////////////////////////////////            
+    
+if
+$HELBAND_THROW_MOLOTOV_FLAG == 1
+    then
+    if
+    not actor.Dead($BANDIT[$HELBAND_THROW_MOLOTOV_ACTOR])
+        then
+        
+        if
+        056D:   actor 14@ defined
+        then
+        if and
+        00F2:   actor $BANDIT[$HELBAND_THROW_MOLOTOV_ACTOR] near_actor 14@ radius 20.0 20.0 sphere 0
+        not actor.Animation($BANDIT[$HELBAND_THROW_MOLOTOV_ACTOR]) == "WEAPON_throw"
+            then
+            
+            if or
+            $HELBAND_THROW_MOLOTOV_ACTOR == 5
+            $HELBAND_THROW_MOLOTOV_ACTOR == 6
+            then
+            0407: store_coords_to 25@ 26@ 27@ from_car 19@ with_offset -5.0 0.0 0.0
+            else
+            0407: store_coords_to 25@ 26@ 27@ from_car 19@ with_offset 5.0 0.0 0.0
+            end
+            
+            0668: AS_actor $BANDIT[$HELBAND_THROW_MOLOTOV_ACTOR] rotate_and_shoot_at 25@ 26@ 27@ 2000 ms
+            end
+        end
+        
+        if
+        actor.Animation($BANDIT[$HELBAND_THROW_MOLOTOV_ACTOR]) == "WEAPON_throw"   
+            then
+            0613: 0@ = actor $BANDIT[$HELBAND_THROW_MOLOTOV_ACTOR] animation "WEAPON_throw" time
+            if
+            0@ >= 0.98
+                then                                     
+                $HELBAND_THROW_MOLOTOV_TIMER = 0                                                    
+                $HELBAND_THROW_MOLOTOV_FLAG = 0
+                gosub @HELBAND_RANDOM_THROW_TIME
+                
+                if
+                $HELBAND_THROW_MOLOTOV_ACTOR == 5
+                then
+                06A7: put_actor $BANDIT[5] into_turret_on_car 19@ at_car_offset -1.2 0.0 -0.1 position 1 shooting_angle 360.0 360.0 with_weapon $HELBAND_THROW_PREV_WEAP
+                end
+                
+                if
+                $HELBAND_THROW_MOLOTOV_ACTOR == 6
+                then
+                06A7: put_actor $BANDIT[6] into_turret_on_car 19@ at_car_offset -1.2 2.0 -0.1 position 1 shooting_angle 360.0 360.0 with_weapon $HELBAND_THROW_PREV_WEAP
+                end
+                
+                if
+                $HELBAND_THROW_MOLOTOV_ACTOR == 7
+                then
+                06A7: put_actor $BANDIT[7] into_turret_on_car 19@ at_car_offset 1.2 0.0 -0.1 position 1 shooting_angle 360.0 360.0 with_weapon $HELBAND_THROW_PREV_WEAP
+                end
+                
+                if
+                $HELBAND_THROW_MOLOTOV_ACTOR == 8
+                then
+                06A7: put_actor $BANDIT[8] into_turret_on_car 19@ at_car_offset 1.2 2.0 -0.1 position 1 shooting_angle 360.0 360.0 with_weapon $HELBAND_THROW_PREV_WEAP
+                end
+                                                           
+                end
+            end
+        else
+        $HELBAND_THROW_MOLOTOV_TIMER = 0            
+        $HELBAND_THROW_MOLOTOV_FLAG = 0
+        gosub @HELBAND_RANDOM_THROW_TIME
+        end
+    end
+    
+///////////////////////////////////////////////////////////////////             
+    
+if
+BANDITS_HELI_DIED == 0
+    then
+    if and
+    actor.Dead($BANDIT[5])
+    actor.Dead($BANDIT[6])
+    actor.Dead($BANDIT[7])
+    actor.Dead($BANDIT[8])
+    not car.Wrecked(19@)
+        then          
+        BANDITS_HELI_DIED = 1
+        
+        if or
+        $FREEMODE == 1
+        $GAMEMODE_WAR == 1
+        then
+        
+        if
+        $GAMEMODE_WAR == 0
+        then
+        $BANDITS_PROCENT -= BANDITS_HELI_MINUS
+        else
+        $BANDITS_PROCENT -= BANDITS_HELI_MINUS_WAR
+        end
+        
+        end
+        
+        car.Health(19@) = 100
+        end
+    end
+
+///////////////////////////////////////////////////////////////////
+
+for 0@ = 5 to 8
+    
+if
+056D:   actor $BANDIT[0@] defined
+then
+
+if and
+actor.Dead($BANDIT[0@])
+0A32:  actor $BANDIT[0@] on_turret_of_car
+then
+0465: remove_actor $BANDIT[0@] from_turret_mode
+
+0A96: 2@ = actor $BANDIT[0@] struct
+0A8E: 2@ = 2@ + 0x764
+0A8D: 1@ = read_memory 2@ size 2 virtual_protect 1
+0A8D: 2@ = read_memory 0xB6F5F0 size 2 virtual_protect 1
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////            
+
+if
+0800:   in_two_players_mode
+then
+0A8D: 27@ = read_memory 0xB7CF28 size 2 virtual_protect 1
+else
+27@ = -69
+end
+        
+if or
+003B:   1@ == 2@  // (int)
+003B:   1@ == 27@  // (int)
+then            
+        
+0AF0: 27@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_BANDITS_KILLED"        
+        
+if
+$CHEATED_FLAG == 0 
+then               
+27@ += 1
+end
+        
+$BANDITS_KILLED += 1
+$TEMP_XP = BANDITS_XP_PLUS
+008D: $TEMP_XP = integer $TEMP_XP to_float
+0069: $TEMP_XP *= $XP_COEFF // (float)
+008C: $TEMP_XP = float $TEMP_XP to_integer
+0058: $PLAYER_XP += $TEMP_XP // (int)                    
+         
+0AF1: write_int 27@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_BANDITS_KILLED"
+        
+end
+        
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+end
+
+end
+
+end
+
+///////////////////////////////////////////////////////////////////    
+
+if and
+$ACTIVE_INTERIOR == 0
+$INT_ENTERING_FLAG == 0
+not ZAME_HUENEMY_FLAG == 1
+    then
+    if
+    056E:   car 19@ defined
+        then    
+        if
+        8205: not  actor PLAYER_ACTOR near_car 19@ radius 600.0 600.0 240.0 flag 0
+            then
+            jump to @BANDIT_HELI_DELETE
+            end    
+        end
+    end
+    
+if
+056E:   car 19@ defined
+    then    
+    if
+    $ACTIVE_INTERIOR == 0
+        then
+        car.LockInCurrentPosition(19@,false)
+        else
+        car.LockInCurrentPosition(19@,true)
+        end    
+    end    
+
+///////////////////////////////////////////////////////////////////
+
+if   
+$SAVESTATUS == 1
+then
+
+:BANDIT_HELI_DELETE
+
+if
+056E:   car 19@ defined
+then   
+car.Destroy(19@)
+end
+
+if
+056D:   actor 18@ defined
+then
+actor.DestroyWithFade(18@) 
+end
+    
+if
+056D:   actor $BANDIT[5] defined
+then
+actor.DestroyWithFade($BANDIT[5])
+$BANDIT[5] = -69  
+end
+    
+if
+056D:   actor $BANDIT[6] defined
+then
+actor.DestroyWithFade($BANDIT[6])
+$BANDIT[6] = -69  
+end
+    
+if
+056D:   actor $BANDIT[7] defined
+then
+actor.DestroyWithFade($BANDIT[7])
+$BANDIT[7] = -69  
+end
+    
+if
+056D:   actor $BANDIT[8] defined
+then
+actor.DestroyWithFade($BANDIT[8])
+$BANDIT[8] = -69  
+end
+
+FRACTIONS_SPAWNED_COUNT -= 1
+BANDIT_HELI_CHASE_FLAG = 0
+
+if and
+ZAME_HUENEMY_FLAG == 1
+ZAME_HUENEMY_TYPE == 4
+then
+ZAME_HUENEMY_FLAG = 2
+end_thread
+end
+
+if
+$GAMEMODE_EDITOR == 1
+then
+end_thread
+end
+
+jump to @BANDIT_HELI_SPAWN_CHECK
+end
+
+if and
+BANDITS_HELI_TARGET_FINDED == 0
+BANDITS_HELI_DIED == 0
+jf @BANDIT_HELI_CHECK
+
+if
+056E:   car 19@ defined
+then
+car.StorePos(19@,25@,26@,27@)
+else
+jump to @BANDIT_HELI_DELETE
+end
+
+32@ = 0
+
+gosub @FIND_TARGET2  
+
+if or
+$SAVESTATUS == 1
+not $ACTIVE_INTERIOR == 0
+then
+jump to @BANDIT_HELI_CHECK
+end
+
+if or
+856D: not  actor 14@ defined
+856E: not  car 19@ defined
+then 
+jump to @BANDIT_HELI_CHECK
+end 
+ 
+0726: heli 19@ follow_actor 14@ follow_car -1 radius 30.0      
+
+///////////////////////////////////////////////////////////////////////
+
+if and
+15@ == 0   
+87D6: not  14@ == PLAYER_ACTOR // @ == $ (int)
+then
+
+for 0@ = 5 to 8
+0A96: 1@ = actor $BANDIT[0@] struct
+0A8E: 1@ = 1@ + 0x71A                    
+0A8D: 2@ = read_memory 1@ size 1 virtual_protect 1 
+                        
+2@ += 30                   
+                         
+if
+2@ > 95
+then
+2@ = 95
+end                                            
+                          
+0A8C: write_memory 1@ size 4 value 2@ virtual_protect 1
+                    
+actor.WeaponAccuracy($BANDIT[0@]) = 2@
+
+end
+                    
+15@ = 1
+end   
+
+//////////////////////////////////////////////////////////////////////   
+
+if and
+15@ == 1
+07D6:   14@ == PLAYER_ACTOR // @ == $ (int)
+then
+
+for 0@ = 5 to 8
+0A96: 1@ = actor $BANDIT[0@] struct
+0A8E: 1@ = 1@ + 0x71A                    
+0A8D: 2@ = read_memory 1@ size 1 virtual_protect 1 
+                        
+2@ -= 30                                                                                     
+                          
+0A8C: write_memory 1@ size 4 value 2@ virtual_protect 1
+                    
+actor.WeaponAccuracy($BANDIT[0@]) = 2@
+
+end
+                    
+15@ = 0
+end    
+
+//////////////////////////////////////////////////////////////////////  
+
+for 0@ = 5 to 8   
+0687: clear_actor $BANDIT[0@] task
+
+if
+056D:   actor 14@ defined
+then     
+05E2: AS_actor $BANDIT[0@] kill_actor 14@
+end
+
+end       
+
+BANDITS_HELI_TARGET_FINDED = 1
+32@ = 0   
+jump @BANDIT_HELI_CHECK
+
+:FIND_TARGET2
+wait 0
+
+if or
+$SAVESTATUS == 1
+32@ > 5000
+    then
+    008B: 14@ = PLAYER_ACTOR // (int)
+    return
+    end
+
+gosub @BANDITS_HELI_TARGET_FIND
+
+if
+25@ == 1
+jf @FIND_TARGET2
+if and
+87D6: not  14@ == $BANDIT[5] // @ == $ (int)
+87D6: not  14@ == $BANDIT[6] // @ == $ (int)
+87D6: not  14@ == $BANDIT[7] // @ == $ (int)
+87D6: not  14@ == $BANDIT[8] // @ == $ (int)
+803B: not  14@ == 18@  // (int)
+jf @FIND_TARGET2  
+089F: get_actor 14@ pedtype_to 0@  
+if and
+not 0@ == 25
+not 0@ == 29
+jf @FIND_TARGET2
+
+return
+
+:BANDITS_HELI_TARGET_FIND
+
+25@ = 0
+
+008B: 1@ = $CREATURE_RANDOM // (int)      
+
+if
+1@ == PLAYER_CREATURE_NUMBER
+then
+008B: 1@ = $CREATURE_RANDOM // (int)
+end
+
+if and
+$BANDITS_DONT_ATTACK_PLAYER_FLAG == 0
+$PLAYER_BANDIT_SIDE == 0
+then
+
+random_int 2@ 0 3
+if
+2@ == 1
+then
+1@ = PLAYER_CREATURE_NUMBER
+end
+
+end  
+
+008B: 14@ = $CREATURE[1@] // (int)   
+
+if and
+056D:   actor 14@ defined
+056E:   car 19@ defined
+    then      
+    if
+    0202:   actor $CREATURE[1@] near_car 19@ radius 300.0 300.0 sphere 0
+        then
+        25@ = 1
+        end
+    end
+
+return
+
+:BANDITS_HELI_RANDOM_HEALTH
+008B: 0@ = $BANDITS_HEALTH // (int)
+0093: 0@ = integer 0@ to_float
+random_float 1@ 0.85 1.35 
+006B: 0@ *= 1@  // (float)  
+0092: 0@ = float 0@ to_integer 
+return
+
+/////////////////////Союзники атакуют марадеров которых увидили///////////////
+
+:RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE1
+
+if or
+$PLAYER_BANDITS_SIDE == 1
+$BANDITS_DONT_ATTACK_PLAYER_FLAG == 1
+    then
+    return
+    end
+
+092B: 3@ = group PLAYER_GROUP member 0@
+
+if
+07D6:   3@ == COOP_ACTOR // @ == $ (int)
+then
+return
+end
+
+if
+056D:  actor 3@ defined
+jf @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_BEGIN
+
+if
+056D:   actor $BANDIT[5] defined
+jf @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_BEGIN    
+
+if
+056D:   actor 3@ defined
+jf @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_BEGIN
+
+if
+$MISSION14_ACTIVE == 1
+    then
+    if
+    not 0@ == 1
+    jf @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_BEGIN
+    end
+    
+if
+$QUEST_TYPE == 9
+    then
+    if
+    87D6: not  3@ == $VERSUS_PEOPLE[1] // @ == $ (int)
+    jf @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_BEGIN
+    end
+
+if or
+00DF:   actor 3@ driving
+0449:   actor 3@ in_a_car
+    then
+    if
+    $HUNTER_ON_PLAYER == 0
+    //$PEOPLE_DONT_ATTACK == 0
+    //$COMMAND_STAY_IN_CAR == 0
+        then                     
+        gosub @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_IN_CAR
+        end
+    end 
+
+if and 
+not actor.Driving(PLAYER_ACTOR)
+$RANDOM_CAR_FLAG == 0  
+89DE:   actor 3@ entering_car  
+80DF:   actor 3@ in_a_car
+jf @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_BEGIN
+if
+00F2:   actor 3@ near_actor $BANDIT[5] radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+jf @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_BEGIN
+if and
+$HUNTER_ON_PLAYER == 0
+$PEOPLE_DONT_ATTACK == 0
+$COMMAND_STAY_IN_CAR == 0
+jf @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_BEGIN
+if
+not actor.Animation(3@) == "FLOOR_hit"
+jf @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_BEGIN
+if
+$HUNTER_ON_GROUP == 0
+jf @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_BEGIN  
+if
+044B:   actor 3@ on_foot
+jf @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_BEGIN  
+if
+82E0: not actor 3@ firing_weapon
+jf @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_BEGIN
+062E: get_actor 3@ task 1506 status_store_to 1@ // ret 7 if not found
+if 
+1@ == 7
+jf @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_BEGIN  
+if and
+not actor.Animation(3@) == "colt45_fire_2hands"
+not actor.Animation(3@) == "python_fire" 
+not actor.Animation(3@) == "shotgun_fire" 
+not actor.Animation(3@) == "buddy_fire" 
+not actor.Animation(3@) == "UZI_fire"
+not actor.Animation(3@) == "RIFLE_fire" 
+jf @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_BEGIN  
+if and
+not actor.Animation(3@) == "FLAME_fire" 
+not actor.Animation(3@) == "RocketFire" 
+not actor.Animation(3@) == "WEAPON_sniper" 
+not actor.Animation(3@) == "WEAPON_throw"
+not actor.Animation(3@) == "BOM_PLANT"   
+jf @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_BEGIN       
+if and
+not actor.Animation(3@) == "colt45_crouchfire"
+not actor.Animation(3@) == "python_crouchfire" 
+not actor.Animation(3@) == "shotgun_crouchfire" 
+not actor.Animation(3@) == "buddy_crouchfire" 
+not actor.Animation(3@) == "UZI_crouchfire"
+not actor.Animation(3@) == "RIFLE_crouchfire" 
+jf @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "colt45_reload"
+not actor.Animation(3@) == "python_reload" 
+not actor.Animation(3@) == "shotgun_reload" 
+not actor.Animation(3@) == "buddy_reload" 
+not actor.Animation(3@) == "UZI_reload"
+not actor.Animation(3@) == "RIFLE_load" 
+jf @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "colt45_crouchreload"
+not actor.Animation(3@) == "python_crouchreload" 
+not actor.Animation(3@) == "shotgun_crouchreload" 
+not actor.Animation(3@) == "buddy_crouchreload" 
+not actor.Animation(3@) == "UZI_crouchreload"
+not actor.Animation(3@) == "RIFLE_crouchload" 
+jf @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "GunMove_BWD"
+not actor.Animation(3@) == "GunMove_FWD"
+not actor.Animation(3@) == "GunMove_L"
+not actor.Animation(3@) == "GunMove_R"
+not actor.Animation(3@) == "Gun_2_IDLE"
+not actor.Animation(3@) == "GUN_BUTT"
+not actor.Animation(3@) == "GUN_BUTT_crouch"
+not actor.Animation(3@) == "Gun_stand" 
+jf @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "CLIMB_idle"
+not actor.Animation(3@) == "CLIMB_jump"
+not actor.Animation(3@) == "CLIMB_jump2fall"
+not actor.Animation(3@) == "CLIMB_jump_B"
+not actor.Animation(3@) == "CLIMB_Pull"
+not actor.Animation(3@) == "CLIMB_Stand"
+not actor.Animation(3@) == "CLIMB_Stand_finish" 
+jf @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "Crouch_Roll_L"
+not actor.Animation(3@) == "Crouch_Roll_R"
+not actor.Animation(3@) == "gas_cwr"
+not actor.Animation(3@) == "getup"
+not actor.Animation(3@) == "getup_front"
+not actor.Animation(3@) == "GunCrouchBwd"
+not actor.Animation(3@) == "GunCrouchFwd"
+8E47: not is_char_fighting 3@
+jf @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_BEGIN   
+if or
+0364:   actor 3@ spotted_actor $BANDIT[5]
+0364:   actor $BANDIT[5] spotted_actor 3@
+jf @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_BEGIN
+05C1: AS_actor 3@ speak_from_audio_table $PEOPLE_ZOMBIE_ATTACK_AUDIO_TABLE
+if
+056D:   actor 3@ defined
+jf @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_BEGIN 
+if and
+not actor.Driving(PLAYER_ACTOR)
+89DE:   actor PLAYER_ACTOR entering_car
+80DF:   actor PLAYER_ACTOR in_a_car
+80DF:   actor 3@ in_a_car
+jf @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_BEGIN
+//0647: AS_actor 3@ clear_look_task
+//05B9: AS_actor 3@ stay_idle 50 ms 
+wait 50
+if
+056D:   actor 3@ defined  
+then
+05E2: AS_actor 3@ kill_actor $BANDIT[5]
+end
+
+jump @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_BEGIN   
+                                
+:RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_IN_CAR   
+if and
+not actor.Animation(3@) == "Gang_DrivebyLHS"
+not actor.Animation(3@) == "Gang_DrivebyLHS_Bwd"
+not actor.Animation(3@) == "Gang_DrivebyLHS_Fwd"
+not actor.Animation(3@) == "Gang_DrivebyRHS"
+not actor.Animation(3@) == "Gang_DrivebyRHS_Bwd"
+not actor.Animation(3@) == "Gang_DrivebyRHS_Fwd" 
+jf @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_IN_CAR_RETURN 
+if and
+not actor.Animation(3@) == "Gang_DrivebyTop_LHS"
+not actor.Animation(3@) == "Gang_DrivebyTop_RHS" 
+jf @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_IN_CAR_RETURN 
+if 
+00F2:   actor 3@ near_actor $BANDIT[5] radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+jf @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_IN_CAR_RETURN
+if or
+0364:   actor 3@ spotted_actor $BANDIT[5]
+0364:   actor $BANDIT[5] spotted_actor 3@
+0364:   actor PLAYER_ACTOR spotted_actor $BANDIT[5]
+0364:   actor $BANDIT[5] spotted_actor PLAYER_ACTOR
+jf @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_IN_CAR_RETURN
+
+///////////////////////////////////////////////////////////////////////////
+if and
+0@ == 0
+TEAMMATE1_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 1
+TEAMMATE2_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 2
+TEAMMATE3_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 3
+TEAMMATE4_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 4
+TEAMMATE5_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+///////////////////////////////////////////////////////////////////////////
+
+if and
+8E42: not is_char_doing_task_id 3@ 243
+not $COMMAND_STAY_IN_CAR == 1
+then
+06C9: remove_actor 3@ from_group
+0631: put_actor 3@ in_group PLAYER_GROUP
+end          
+0713: actor 3@ driveby_actor -1 car 19@ point 0.0 0.0 0.0 radius $AI_FIND_RADIUS1 8 1 firing_rate 360
+
+///////////////////////////////////////////////////////////////////////////
+if
+0@ == 0
+    then
+    TEAMMATE1_ATTACK_TIMER = 0
+    end
+if
+0@ == 1
+    then
+    TEAMMATE2_ATTACK_TIMER = 0
+    end
+if
+0@ == 2
+    then
+    TEAMMATE3_ATTACK_TIMER = 0
+    end
+if
+0@ == 3
+    then
+    TEAMMATE4_ATTACK_TIMER = 0
+    end
+if
+0@ == 4
+    then
+    TEAMMATE5_ATTACK_TIMER = 0
+    end
+///////////////////////////////////////////////////////////////////////////
+ 
+return       
+
+:RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_IN_CAR_RETURN
+return
+
+:RANDOM_BANIDT_HELI_CAR_ATTACK_PEOPLE_BEGIN
+return
+
+:HELBAND_RANDOM_THROW_TIME
+0084: $HELBAND_THROW_TIME2 = $BANDITS_THROW_TIME // (int) 
+008D: $HELBAND_THROW_TIME2 = integer $HELBAND_THROW_TIME2 to_float
+random_int 0@ $BANDITS_THROW_TIME_MIN $BANDITS_THROW_TIME_MAX
+006D: $HELBAND_THROW_TIME2 *= 0@ // (float)     
+008C: $HELBAND_THROW_TIME2 = float $HELBAND_THROW_TIME2 to_integer
+return
