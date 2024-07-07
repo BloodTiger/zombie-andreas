@@ -1,0 +1,2327 @@
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:TRIGGERS_SETTINGS
+    
+Player.CanMove(PLAYER_CHAR) = False
+Cinema.Radar(0)
+0512: show_permanent_text_box 'SE469'
+08D4: $PANEL = create_panel_with_title 'SE431' position 72.0 160.0 width 150.0 columns 1 interactive 1 background 1 alignment 1
+
+if
+8A4B: not  controls_set_to_joystick
+then 
+08DB: set_panel $PANEL column 0 header 'dummy' data 'SE432' 'SE433' 'SE434' 'SE435' 'SE436' 'SE437' 'SE454' 'SE455' 'SE517' 'dummy' 'dummy' 'dummy'
+else
+08DB: set_panel $PANEL column 0 header 'dummy' data 'SE432' 'SE433' 'SE434' 'SE435' 'SE436' 'SE437' 'SE454' 'SE455' 'SE517' 'dummy' 'dummy' 'dummy'
+end
+ 
+wait 100   
+
+:TRIGGERS_SETTINGS_CLOSE_CHECK
+wait 0 
+if 
+00E1:   player 0 pressed_key 15 
+jf @TRIGGERS_SETTINGS_SELECTED_CHECK    
+08DA: remove_panel $PANEL 
+Text.RemoveTextBox
+wait 100 
+jump @ZAME_MAIN_MENU  
+
+:TRIGGERS_SETTINGS_SELECTED_CHECK
+wait 0 
+if 
+00E1:   player 0 pressed_key 16 
+jf @TRIGGERS_SETTINGS_CLOSE_CHECK
+
+08D7: ZAME_TEMP_TRIGGER_TYPE = panel $PANEL active_row 
+ZAME_TEMP_TRIGGER_TYPE += 1
+ZAME_TEMP_TRIGGER_ZONE_TYPE = 0
+08DA: remove_panel $PANEL 
+Text.RemoveTextBox
+
+if
+8A4B: not  controls_set_to_joystick
+then
+0871: init_jump_table ZAME_TEMP_TRIGGER_TYPE total_jumps 12 default_jump 0 @ZAME_OPEN_CHECK jumps 0 @ZAME_OPEN_CHECK 1 @ZAME_TIGGER_3D_SOUND 2 @ZAME_TIGGER_FAIL_TIMER 3 @ZAME_TIGGER_LADDER 4 @ZAME_TRIGGER_TEXT 5 @ZAME_TRIGGER_DAMAGEZONE 6 @ZAME_TRIGGER_TXDZAPISKA 
+0872: jump_table_jumps 7 @ZAME_TRIGGER_EXPLOSION 8 @ZAME_TRIGGER_FIRE 9 @ZAME_TRIGGER_GAMEZONE 10 @ZAME_OPEN_CHECK 11 @ZAME_OPEN_CHECK 12 @ZAME_OPEN_CHECK 13 @ZAME_OPEN_CHECK 14 @ZAME_OPEN_CHECK 15 @ZAME_OPEN_CHECK
+else
+0871: init_jump_table ZAME_TEMP_TRIGGER_TYPE total_jumps 12 default_jump 0 @ZAME_OPEN_CHECK jumps 0 @ZAME_OPEN_CHECK 1 @ZAME_OPEN_CHECK 2 @ZAME_OPEN_CHECK 3 @ZAME_OPEN_CHECK 4 @ZAME_OPEN_CHECK 5 @ZAME_OPEN_CHECK 6 @ZAME_OPEN_CHECK 
+0872: jump_table_jumps 7 @ZAME_OPEN_CHECK 8 @ZAME_OPEN_CHECK 9 @ZAME_OPEN_CHECK 10 @ZAME_OPEN_CHECK 11 @ZAME_OPEN_CHECK 12 @ZAME_OPEN_CHECK 13 @ZAME_OPEN_CHECK 14 @ZAME_OPEN_CHECK 15 @ZAME_OPEN_CHECK
+end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:ZAME_TRIGGER_SET_PARAMS
+
+0AD3: v$RACE_FILE = format "TRG%d" ZAME_TRIGGERS_COUNT
+
+if
+not ZAME_TEMP_TRIGGER_ZONE_TYPE == -69
+then
+                          
+///////////////Выбор типа активации триггера///////////////////
+
+text.ClearAll()
+text.RemoveTextBox()
+
+while true
+wait 0
+
+text.ShowH('SE439A',10,1)
+    
+if
+0E3E: is_button_just_pressed 0 button 11
+    then    
+    ZAME_TEMP_TRIGGER_ZONE_TYPE = 1
+    0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "SPHERE_ZONE"
+    text.ClearAll()
+    break
+    end
+    
+if
+0E3E: is_button_just_pressed 0 button 10
+    then
+    ZAME_TEMP_TRIGGER_ZONE_TYPE = 0
+    0AF1: write_int 0 to_ini_file "me\temp.dat" section v$RACE_FILE key "SPHERE_ZONE"
+    text.ClearAll()
+    break
+    end
+    
+if
+0E3E: is_button_just_pressed 0 button 15
+    then
+    gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS
+    text.ClearAll()
+    ZAME_TEMP_FUCKEEE45 = 1
+    return
+    end    
+    
+end
+
+end
+
+///////////////Выбор единоразовости триггера///////////////////
+
+gosub @TRIGGER_TIME_TO_REPEAT_SELECT
+if
+ZAME_TEMP_FUCKEEE45 == 2
+then
+text.ClearAll()
+ZAME_TEMP_FUCKEEE45 = 1
+return
+end
+
+if
+not ZAME_TEMP_TRIGGER_ZONE_TYPE == -69
+then
+
+text.ClearAll()
+text.RemoveTextBox()
+
+while true
+wait 0
+
+text.ShowH('SE452',10,1)
+    
+if
+0E3E: is_button_just_pressed 0 button 11
+    then    
+    0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_ONCE"
+    text.ClearAll()
+    break
+    end
+    
+if
+0E3E: is_button_just_pressed 0 button 10
+    then
+    0AF1: write_int 0 to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_ONCE"    
+    text.ClearAll()
+    break
+    end
+    
+if
+0E3E: is_button_just_pressed 0 button 15
+    then
+    gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS
+    text.ClearAll()
+    ZAME_TEMP_FUCKEEE45 = 1
+    return
+    end    
+    
+end
+
+end
+
+if
+not ZAME_TEMP_TRIGGER_ZONE_TYPE == -69
+then
+
+if
+ZAME_TEMP_TRIGGER_ZONE_TYPE == 1
+then
+
+///////////////Выбор позиции сферы///////////////////
+
+text.ClearAll()
+text.RemoveTextBox()
+player.CanMove(PLAYER_CHAR,true)
+
+0512: show_permanent_text_box 'SE443'
+
+while true
+wait 0
+    
+if
+0E3E: is_button_just_pressed 0 button 15
+    then
+    actor.StorePos(PLAYER_ACTOR,0@,1@,2@)
+    0AF3: write_float 0@ to_ini_file "me\temp.dat" section v$RACE_FILE key "SPHERE_X"
+    0AF3: write_float 1@ to_ini_file "me\temp.dat" section v$RACE_FILE key "SPHERE_Y"
+    0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "SPHERE_Z"    
+    player.CanMove(PLAYER_CHAR,false)
+    text.ClearAll()
+    gosub @TRIGGER_SPHERE_RADIUS_SELECT
+    if
+    ZAME_TEMP_FUCKEEE45 == 2
+    then
+    text.ClearAll()
+    ZAME_TEMP_FUCKEEE45 = 1
+    return
+    end 
+       
+    0AF2: get_float 4@ from_ini_file "me\temp.dat" section v$RACE_FILE key "SPHERE_RADIUS"
+    ZAME_OBJECT_HANLDE = Object.Init(ZAME_TRIGGER_SPHERE_OBJECT_ID, 0@, 1@, 2@)    
+    008A: ZAME_TEMP_OBJ_VAR1 = ZAME_OBJECT_HANLDE // (int)
+    0566: link_object ZAME_OBJECT_HANLDE to_interior $ACTIVE_INTERIOR
+    08D2: object ZAME_OBJECT_HANLDE scale_model 4@
+    0D11: set_object ZAME_OBJECT_HANLDE alpha 50 // IF and SET
+    jump to @ZAME_TRIGGER_SETTINGS_END_JUMP
+    end
+    
+if
+0E3E: is_button_just_pressed 0 button 11
+    then
+    gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS
+    text.ClearAll()
+    ZAME_TEMP_FUCKEEE45 = 1
+    return
+    end
+    
+end    
+    
+else
+
+///////////////Выбор левой нижней позиции куба///////////////////
+
+text.ClearAll()
+text.RemoveTextBox()
+player.CanMove(PLAYER_CHAR,true)
+
+0512: show_permanent_text_box 'SE441'
+
+while true
+wait 0
+    
+if
+0E3E: is_button_just_pressed 0 button 15
+    then
+    actor.StorePos(PLAYER_ACTOR,2@,3@,4@)
+    0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "CUBE_X1"
+    0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "CUBE_Y1"
+    0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "CUBE_Z1"
+    ZAME_OBJECT_HANLDE = Object.Init(ZAME_TRIGGER_CUBE_EDGE_OBJECT_ID, 2@, 3@, 4@)
+    008A: ZAME_TEMP_OBJ_VAR1 = ZAME_OBJECT_HANLDE // (int)
+    0566: link_object ZAME_OBJECT_HANLDE to_interior $ACTIVE_INTERIOR
+    player.CanMove(PLAYER_CHAR,false)
+    text.ClearAll()
+    break
+    end
+    
+if
+0E3E: is_button_just_pressed 0 button 11
+    then
+    gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS
+    text.ClearAll()
+    ZAME_TEMP_FUCKEEE45 = 1
+    return
+    end
+    
+end                        
+
+///////////////Выбор правой верхней позиции куба///////////////////
+
+text.ClearAll()
+text.RemoveTextBox()
+player.CanMove(PLAYER_CHAR,true)
+
+0512: show_permanent_text_box 'SE442'
+
+while true
+wait 0
+    
+if
+0E3E: is_button_just_pressed 0 button 15
+    then
+    actor.StorePos(PLAYER_ACTOR,6@,7@,8@)
+    
+    if
+    0045:   8@ == 4@  // (float)
+    then      
+    8@ += 0.25
+    4@ -= 0.25
+    0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "CUBE_Z1"
+    end
+    
+    0AF3: write_float 6@ to_ini_file "me\temp.dat" section v$RACE_FILE key "CUBE_X2"
+    0AF3: write_float 7@ to_ini_file "me\temp.dat" section v$RACE_FILE key "CUBE_Y2"
+    0AF3: write_float 8@ to_ini_file "me\temp.dat" section v$RACE_FILE key "CUBE_Z2"
+    ZAME_OBJECT_HANLDE = Object.Init(ZAME_TRIGGER_CUBE_EDGE_OBJECT_ID, 6@, 7@, 8@)
+    008A: ZAME_TEMP_OBJ_VAR2 = ZAME_OBJECT_HANLDE // (int)
+    0566: link_object ZAME_OBJECT_HANLDE to_interior $ACTIVE_INTERIOR
+    player.CanMove(PLAYER_CHAR,false)
+    text.ClearAll()
+    
+    if
+    80A4: not  actor PLAYER_ACTOR sphere 0 in_cube_cornerA 2@ 3@ 4@ cornerB 6@ 7@ 8@
+    then
+    
+    ///////////////Подтверждение корректности зоны куба///////////////////
+    
+    text.ClearAll()
+    text.RemoveTextBox()
+    player.CanMove(PLAYER_CHAR,true)
+    
+    0512: show_permanent_text_box 'SE478'
+    
+    while 80A4: not  actor PLAYER_ACTOR sphere 0 in_cube_cornerA 2@ 3@ 4@ cornerB 6@ 7@ 8@
+    wait 0
+        
+    if
+    0E3E: is_button_just_pressed 0 button 11
+        then
+        gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS
+        text.ClearAll()
+        ZAME_TEMP_FUCKEEE45 = 1
+        return
+        end
+        
+    end
+    
+    end
+    
+    gosub @CUBE_CREATE_GRANI
+    break
+    end
+    
+if
+0E3E: is_button_just_pressed 0 button 11
+    then
+    gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS
+    text.ClearAll()
+    ZAME_TEMP_FUCKEEE45 = 1
+    return
+    end
+    
+end
+                            
+//////////////////////////
+
+end
+
+end
+
+:ZAME_TRIGGER_SETTINGS_END_JUMP
+
+if
+not ZAME_TEMP_TRIGGER_ZONE_TYPE == -69
+then
+
+gosub @TRIGGER_ACTIVATE_FROM_TARGET_NUM_SELECT
+if
+ZAME_TEMP_FUCKEEE45 == 2
+then
+text.ClearAll()
+ZAME_TEMP_FUCKEEE45 = 1
+return
+end
+
+gosub @TRIGGER_DEACTIVATE_FROM_TARGET_NUM_SELECT
+if
+ZAME_TEMP_FUCKEEE45 == 2
+then
+text.ClearAll()
+ZAME_TEMP_FUCKEEE45 = 1
+return
+end
+
+else                                    
+0AF1: write_int -9999 to_ini_file "me\temp.dat" section v$RACE_FILE key "ACTIVATE_FROM_OBJ"
+0AF1: write_int 9999 to_ini_file "me\temp.dat" section v$RACE_FILE key "DEACTIVATE_FROM_OBJ"
+end
+
+return
+
+:TRIGGER_TIME_TO_REPEAT_SELECT
+
+06D1: v$SNAME3 = "" // v$ // Sunday
+06D1: v$SNAME2 = "" // v$ // Sunday
+
+29@ = 0
+33@ = 0
+KEYS_TYPED_NUM = 0
+
+ZAME_NAME_AUD_TYPING_FLAG = 2
+    
+0AE0: remove_dynamic_GXT_entry "F_NAME"
+0ADF: add_dynamic_GXT_entry "F_NAME" text ""
+
+0512: show_permanent_text_box 'SE446'
+
+while true
+wait 0
+
+if
+8A2A: not  text_box 'SE446' displayed
+    then
+    0512: show_permanent_text_box 'SE446'
+    end
+
+CURRENT_LAYOUT = 1
+gosub @OBJECT_ID_SELECT_KEYS_CHECK
+
+if
+8846: not  string v$SNAME3 empty // v$
+then
+0384: show_text_1string GXT "SE451" string "F_NAME" time 99999999 1
+else
+0384: show_text_1string GXT "SE451" string v$NAME3 time 99999999 1
+end
+
+if and
+0E3E: is_button_just_pressed 0 button 15
+33@ > 500
+    then
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5                    
+    ZAME_NAME_AUD_TYPING_FLAG = 0
+    gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS     
+    ZAME_TEMP_FUCKEEE45 = 2
+    return    
+    end
+
+if and
+0E3E: is_button_just_pressed 0 button 16
+33@ > 500
+8846: not  string v$SNAME3 empty // v$
+    then
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5
+    ZAME_NAME_AUD_TYPING_FLAG = 0        
+    
+    0AF5: write_string v$SNAME3 to_ini_file "me\temp.dat" section v$RACE_FILE key "UNTIL_REPEAT_WAIT_TIME"    
+    return
+    
+    end
+
+end
+
+:TRIGGER_SPHERE_RADIUS_SELECT
+
+06D1: v$SNAME3 = "" // v$ // Sunday
+06D1: v$SNAME2 = "" // v$ // Sunday
+
+29@ = 0
+33@ = 0
+KEYS_TYPED_NUM = 0
+
+ZAME_NAME_AUD_TYPING_FLAG = 2
+    
+0AE0: remove_dynamic_GXT_entry "F_NAME"
+0ADF: add_dynamic_GXT_entry "F_NAME" text ""
+
+0512: show_permanent_text_box 'SE438'
+
+while true
+wait 0
+
+if
+8A2A: not  text_box 'SE438' displayed
+    then
+    0512: show_permanent_text_box 'SE438'
+    end
+
+CURRENT_LAYOUT = 1
+gosub @OBJECT_ID_SELECT_KEYS_CHECK
+
+if
+8846: not  string v$SNAME3 empty // v$
+then
+0384: show_text_1string GXT "SE444" string "F_NAME" time 99999999 1
+else
+0384: show_text_1string GXT "SE444" string v$NAME3 time 99999999 1
+end
+
+if and
+0E3E: is_button_just_pressed 0 button 15
+33@ > 500
+    then
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5                    
+    ZAME_NAME_AUD_TYPING_FLAG = 0
+    gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS     
+    ZAME_TEMP_FUCKEEE45 = 2
+    return   
+    end
+
+if and
+0E3E: is_button_just_pressed 0 button 16
+33@ > 500
+8846: not  string v$SNAME3 empty // v$
+    then
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5
+    ZAME_NAME_AUD_TYPING_FLAG = 0        
+    
+    0AF5: write_string v$SNAME3 to_ini_file "me\temp.dat" section v$RACE_FILE key "SPHERE_RADIUS"    
+    return
+    
+    end
+
+end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:TRIGGER_ACTIVATE_FROM_TARGET_NUM_SELECT
+
+06D1: v$SNAME3 = "" // v$ // Sunday
+06D1: v$SNAME2 = "" // v$ // Sunday
+
+29@ = 0
+33@ = 0
+KEYS_TYPED_NUM = 0
+
+ZAME_NAME_AUD_TYPING_FLAG = 2
+    
+0AE0: remove_dynamic_GXT_entry "F_NAME"
+0ADF: add_dynamic_GXT_entry "F_NAME" text ""
+
+0512: show_permanent_text_box 'SE448'
+
+while true
+wait 0
+
+if
+8A2A: not  text_box 'SE440' displayed
+    then
+    0512: show_permanent_text_box 'SE440'
+    end
+
+CURRENT_LAYOUT = 1
+gosub @OBJECT_ID_SELECT_KEYS_CHECK
+
+if
+8846: not  string v$SNAME3 empty // v$
+then
+0384: show_text_1string GXT "SE448" string "F_NAME" time 99999999 1
+else
+0384: show_text_1string GXT "SE448" string v$NAME3 time 99999999 1
+end
+
+if and
+0E3E: is_button_just_pressed 0 button 15
+33@ > 500
+    then
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5                    
+    ZAME_NAME_AUD_TYPING_FLAG = 0
+    gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS     
+    ZAME_TEMP_FUCKEEE45 = 2
+    return   
+    end
+
+if and
+0E3E: is_button_just_pressed 0 button 16
+33@ > 500
+8846: not  string v$SNAME3 empty // v$
+    then
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5
+    ZAME_NAME_AUD_TYPING_FLAG = 0        
+    
+    0AF5: write_string v$SNAME3 to_ini_file "me\temp.dat" section v$RACE_FILE key "ACTIVATE_FROM_OBJ"    
+    return
+    
+    end
+
+end
+
+:TRIGGER_DEACTIVATE_FROM_TARGET_NUM_SELECT
+
+06D1: v$SNAME3 = "" // v$ // Sunday
+06D1: v$SNAME2 = "" // v$ // Sunday
+
+29@ = 0
+33@ = 0
+KEYS_TYPED_NUM = 0
+
+ZAME_NAME_AUD_TYPING_FLAG = 2
+    
+0AE0: remove_dynamic_GXT_entry "F_NAME"
+0ADF: add_dynamic_GXT_entry "F_NAME" text ""
+
+0512: show_permanent_text_box 'SE440B'
+
+while true
+wait 0
+
+if
+8A2A: not  text_box 'SE440B' displayed
+    then
+    0512: show_permanent_text_box 'SE440B'
+    end
+
+CURRENT_LAYOUT = 1
+gosub @OBJECT_ID_SELECT_KEYS_CHECK
+
+if
+8846: not  string v$SNAME3 empty // v$
+then
+0384: show_text_1string GXT "SE449" string "F_NAME" time 99999999 1
+else
+0384: show_text_1string GXT "SE449" string v$NAME3 time 99999999 1
+end
+
+if and
+0E3E: is_button_just_pressed 0 button 15
+33@ > 500
+    then
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5                    
+    ZAME_NAME_AUD_TYPING_FLAG = 0
+    gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS     
+    ZAME_TEMP_FUCKEEE45 = 2
+    return    
+    end
+
+if and
+0E3E: is_button_just_pressed 0 button 16
+33@ > 500
+8846: not  string v$SNAME3 empty // v$
+    then
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5
+    ZAME_NAME_AUD_TYPING_FLAG = 0        
+    
+    0AF5: write_string v$SNAME3 to_ini_file "me\temp.dat" section v$RACE_FILE key "DEACTIVATE_FROM_OBJ"    
+    return
+    
+    end
+
+end
+
+:AUDIO_GAIN_LEVEL_SELECT
+
+06D1: v$SNAME3 = "" // v$ // Sunday
+06D1: v$SNAME2 = "" // v$ // Sunday
+
+29@ = 0
+33@ = 0
+KEYS_TYPED_NUM = 0
+
+ZAME_NAME_AUD_TYPING_FLAG = 2
+    
+0AE0: remove_dynamic_GXT_entry "F_NAME"
+0ADF: add_dynamic_GXT_entry "F_NAME" text ""
+
+0512: show_permanent_text_box 'SE450B'
+
+while true
+wait 0
+
+if
+8A2A: not  text_box 'SE450B' displayed
+    then
+    0512: show_permanent_text_box 'SE450B'
+    end
+
+CURRENT_LAYOUT = 1
+gosub @OBJECT_ID_SELECT_KEYS_CHECK
+
+if
+8846: not  string v$SNAME3 empty // v$
+then
+0384: show_text_1string GXT "SE450" string "F_NAME" time 99999999 1 
+0089: 0@ = $SOUNDS_VOLUME // (float)
+0AF5: write_string v$SNAME3 to_ini_file "me\temp.dat" section v$RACE_FILE key "GAIN_LEVEL" 
+0AF2: 1@ = get_float_from_ini_file "me\temp.dat" section v$RACE_FILE key "GAIN_LEVEL" 
+1@ /= 100.0
+005B: 0@ += 1@  // (float)
+audiostream.Volume(ZAME_TEMP_FUCKEEE45) = 0@
+else
+0384: show_text_1string GXT "SE450" string v$NAME3 time 99999999 1
+Audiostream.Volume(ZAME_TEMP_FUCKEEE45) = $SOUNDS_VOLUME
+end
+
+if and
+0E3E: is_button_just_pressed 0 button 15
+33@ > 500
+    then
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5                    
+    ZAME_NAME_AUD_TYPING_FLAG = 0
+    gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS     
+    ZAME_TEMP_FUCKEEE45 = 2
+    return   
+    end
+
+if and
+0E3E: is_button_just_pressed 0 button 16
+33@ > 500
+8846: not  string v$SNAME3 empty // v$
+    then    
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5
+    ZAME_NAME_AUD_TYPING_FLAG = 0        
+    
+    0AF5: write_string v$SNAME3 to_ini_file "me\temp.dat" section v$RACE_FILE key "GAIN_LEVEL"    
+    return
+    
+    end
+
+end
+
+:ZAME_TIGGER_3D_SOUND
+
+0AD3: v$RACE_FILE = format "TRG%d" ZAME_TRIGGERS_COUNT
+ZAME_TEMP_TRIGGER_ZONE_TYPE = 0
+
+///////////////Безусловное воспроизведение на точке или при входе в зону///////////////////
+
+text.ClearAll()
+text.RemoveTextBox()
+
+while true
+wait 0
+
+text.ShowH('SE445',10,1)
+    
+if
+0E3E: is_button_just_pressed 0 button 11
+    then    
+    0AF1: write_int 0 to_ini_file "me\temp.dat" section v$RACE_FILE key "PLAY_ALWAYS"
+    text.ClearAll()
+    break
+    end
+    
+if
+0E3E: is_button_just_pressed 0 button 10
+    then
+    0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "PLAY_ALWAYS"
+    ZAME_TEMP_TRIGGER_ZONE_TYPE = -69
+    text.ClearAll()
+    break
+    end
+    
+if
+0E3E: is_button_just_pressed 0 button 15
+    then
+    gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS
+    text.ClearAll()
+    jump to @TRIGGERS_SETTINGS
+    end    
+    
+end
+
+gosub @ZAME_TRIGGER_SET_PARAMS
+if
+ZAME_TEMP_FUCKEEE45 == 1
+then
+ZAME_TEMP_FUCKEEE45 = 0
+jump to @TRIGGERS_SETTINGS
+end
+
+06D1: v$SNAME3 = "" // v$ // Sunday
+06D1: v$SNAME2 = "" // v$ // Sunday
+
+29@ = 0
+33@ = 0
+KEYS_TYPED_NUM = 0
+
+ZAME_NAME_AUD_TYPING_FLAG = 1
+    
+0AE0: remove_dynamic_GXT_entry "F_NAME"
+0ADF: add_dynamic_GXT_entry "F_NAME" text ""
+
+0512: show_permanent_text_box 'SE230'
+
+while true
+wait 0
+
+CURRENT_LAYOUT = 1
+gosub @FXT_NAME_SELECT_KEYS_CHECK
+
+if
+8846: not  string v$SNAME3 empty // v$
+then
+0384: show_text_1string GXT "SE200" string "F_NAME" time 99999999 1
+else
+0384: show_text_1string GXT "SE200" string v$NAME3 time 99999999 1
+end
+
+if and
+0E3D: is_key_just_pressed 17
+33@ > 500
+    then
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5                    
+    ZAME_NAME_AUD_TYPING_FLAG = 0
+    gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS     
+    jump @TRIGGERS_SETTINGS    
+    end
+
+if and
+0E3E: is_button_just_pressed 0 button 16
+33@ > 500
+8846: not  string v$SNAME3 empty // v$
+    then
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5
+    0AD3: v$NOTES_FILE = format "me\%d\%s" ZAME_MISSION_LOAD_NUMBER v$SNAME3
+    if
+    0AAB:   file_exists v$NOTES_FILE
+        then                  
+    
+        text.ClearAll()
+        text.RemoveTextBox()
+        
+        0@ = 0
+        $OTKZ_NGRDA_FLG = 0
+        
+        create_thread @ZAM_MUS
+        
+        while true
+        wait 0
+        text.ShowH('SE240',100,1)
+            
+        if
+        0E3E: is_button_just_pressed 0 button 11
+            then
+            text.ClearAll()
+            0@ = 1        
+            break
+            end
+            
+        if
+        0E3E: is_button_just_pressed 0 button 10
+            then
+            text.ClearAll()        
+            break
+            end
+            
+        if
+        0E3E: is_button_just_pressed 0 button 15
+            then
+            gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS
+            text.ClearAll()
+            jump to @TRIGGERS_SETTINGS
+            end    
+            
+        end
+        
+        repeat    
+        wait 0
+        $OTKZ_NGRDA_FLG = 1        
+        0AAA: 1@ = thread 'ZAM_MUS' pointer
+        until 1@ == 0
+        
+        if
+        0@ == 0
+        then
+        jump to @DO_FUCKING_AUDNAME_SETTING_AGAIN
+        end
+        
+        0AF5: write_string v$NOTES_FILE to_ini_file "me\temp.dat" section v$RACE_FILE key "AUD_NAME"
+        ZAME_TEMP_FUCKEEE45 = Audiostream.Load(v$NOTES_FILE)
+        Audiostream.Volume(ZAME_TEMP_FUCKEEE45) = $SOUNDS_VOLUME 
+        Audiostream.Loop(ZAME_TEMP_FUCKEEE45, 1)
+        Audiostream.PerformAction(ZAME_TEMP_FUCKEEE45, PLAY)
+        
+        :DO_FUCKING_GAIN_SETTING_AGAIN
+        gosub @AUDIO_GAIN_LEVEL_SELECT
+        if
+        ZAME_TEMP_FUCKEEE45 == 2
+        then
+        text.ClearAll()
+        ZAME_TEMP_FUCKEEE45 = 1
+        return
+        end
+        
+        0@ = 0
+        
+        while true
+        wait 0
+        text.ShowH('SE450C',100,1)
+            
+        if
+        0E3E: is_button_just_pressed 0 button 11
+            then
+            text.ClearAll()
+            0@ = 1        
+            break
+            end
+            
+        if
+        0E3E: is_button_just_pressed 0 button 10
+            then
+            text.ClearAll()        
+            break
+            end
+            
+        if
+        0E3E: is_button_just_pressed 0 button 15
+            then
+            gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS
+            text.ClearAll()
+            jump to @TRIGGERS_SETTINGS
+            end    
+            
+        end    
+        
+        if
+        0@ == 0
+        then
+        jump to @DO_FUCKING_GAIN_SETTING_AGAIN
+        end   
+        
+        audiostream.Release(ZAME_TEMP_FUCKEEE45)         
+            
+        //////////////////////////
+        
+        if
+        0@ == 1
+            then
+            
+            ///////////////Зациклить ли звук///////////////////
+
+            text.ClearAll()
+            text.RemoveTextBox()
+            
+            while true
+            wait 0
+            
+            text.ShowH('SE447',10,1)
+                
+            if
+            0E3E: is_button_just_pressed 0 button 11
+                then    
+                0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "SOUND_LOOP"
+                text.ClearAll()
+                break
+                end
+                
+            if
+            0E3E: is_button_just_pressed 0 button 10
+                then
+                0AF1: write_int 0 to_ini_file "me\temp.dat" section v$RACE_FILE key "SOUND_LOOP"
+                text.ClearAll()
+                break
+                end
+                
+            if
+            0E3E: is_button_just_pressed 0 button 15
+                then
+                gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS
+                text.ClearAll()
+                jump to @TRIGGERS_SETTINGS
+                end    
+                
+            end    
+        
+            0AD3: v$RACE_FILE = format "TRG%d" ZAME_TRIGGERS_COUNT            
+            
+            0AF1: write_int ZAME_TEMP_TRIGGER_TYPE to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_TYPE"
+            0AF1: write_int $ACTIVE_INTERIOR to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_INT"                                    
+            
+            ///////////////Выбор позиции для звука///////////////////
+
+            text.ClearAll()
+            text.RemoveTextBox()
+            player.CanMove(PLAYER_CHAR,true)
+            
+            0512: show_permanent_text_box 'SE460'
+            
+            while true
+            wait 0
+                
+            if
+            0E3E: is_button_just_pressed 0 button 15
+                then
+                player.CanMove(PLAYER_CHAR,false)
+                text.ClearAll()
+                break
+                end
+                
+            if
+            0E3E: is_button_just_pressed 0 button 11
+                then
+                gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS
+                text.ClearAll()
+                jump to @TRIGGERS_SETTINGS
+                end
+                
+            end    
+                
+            Player.CanMove(PLAYER_CHAR) = true
+            actor.StorePos(PLAYER_ACTOR,2@,3@,4@)
+            0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "SOUND_X"
+            0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "SOUND_Y"
+            0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "SOUND_Z"
+            
+            if
+            ZAME_TEMP_TRIGGER_ZONE_TYPE == -69
+            then
+            0AF1: write_int 0 to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_ONCE"
+            0AF1: write_int ZAME_TEMP_TRIGGER_TYPE to_ini_file "me\temp.dat" section v$RACE_FILE key "SPHERE_ZONE"      
+            0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "SOUND_X"
+            0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "SOUND_Y"
+            0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "SOUND_Z"
+            0AF3: write_float -1.0 to_ini_file "me\temp.dat" section v$RACE_FILE key "SPHERE_RADIUS"                  
+            end
+            
+            0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_IS_FINISHED"
+            gosub @ZAME_SBROS_FULLY_CREATED_TRIGGER_OBJECTS_TEMP                        
+            
+            0@ = 0
+            0@ = Marker.CreateIconAndSphere2(ZAME_3DAUDIO_TRIGGER_ICON_ID, 2@,3@,4@)
+            1@ = Object.Init(ZAME_3DAUDIO_OBJECT_ID, 2@, 3@, 4@)
+            0566: link_object 1@ to_interior $ACTIVE_INTERIOR
+            0581: enable_radar 1 
+            03E6: remove_text_box
+            
+            0AF1: write_int ZAME_TRIGGERS_COUNT to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "TRIGGERS_COUNT"
+            gosub @ZAME_CREATE_TRIGGER_THREAD_AFTER_CREATION            
+            ZAME_TRIGGERS_COUNT += 1            
+            
+            wait 100
+            
+            if
+            ZAME_RECREATE_TRIGGER_FLAG == 0
+            then
+            00BC: show_text_highpriority GXT 'SE459' time 2000 flag 1
+            gosub @zame_created_trigger_sound
+            else
+            00BC: show_text_highpriority GXT 'SE459B' time 2000 flag 1
+            gosub @zame_recreated_trigger_sound
+            gosub @MISSION_SAVE_INITIALIZATION
+            end
+            
+            ZAME_NAME_AUD_TYPING_FLAG = 0            
+             
+            jump @TRIGGERS_SETTINGS
+            
+            else
+            :DO_FUCKING_AUDNAME_SETTING_AGAIN
+            0512: show_permanent_text_box 'SE230'
+            end        
+        else
+        text.ShowH('SE235',1000,1)
+        wait 1000
+        0512: show_permanent_text_box 'SE230'
+        end
+    
+    end
+
+end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:ZAME_TIGGER_FAIL_TIMER
+
+0AD3: v$RACE_FILE = format "TRG%d" ZAME_TRIGGERS_COUNT
+
+gosub @ZAME_TRIGGER_SET_PARAMS
+if
+ZAME_TEMP_FUCKEEE45 == 1
+then
+ZAME_TEMP_FUCKEEE45 = 0
+jump to @TRIGGERS_SETTINGS
+end
+
+0581: enable_radar 1 
+0512: show_permanent_text_box 'se82' 
+5@ = 1
+wait 100 
+
+:ZAME_TIGGER_FAIL_TIMER_27238
+wait 0 
+01E5: show_text_1number_highpriority GXT 'se78' number 5@ time 300 flag 1 
+if and
+80E1:   not player 0 pressed_key 11
+8E10: not is_mouse_wheel_up 
+jf @ZAME_TIGGER_FAIL_TIMER_27519 
+if and
+80E1:   not player 0 pressed_key 10
+8E11: not is_mouse_wheel_down 
+jf @ZAME_TIGGER_FAIL_TIMER_27555 
+if 
+00E1:   player 0 pressed_key 16 
+jf @ZAME_TIGGER_FAIL_TIMER_27482
+ 
+0AF1: write_int ZAME_TEMP_TRIGGER_TYPE to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_TYPE"
+0AF1: write_int $ACTIVE_INTERIOR to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_INT"
+0AF1: write_int 5@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TIMER_SECONDS"
+Actor.StorePos(PLAYER_ACTOR, 2@,3@,4@)
+0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_X"
+0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_Y"
+0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_Z"
+
+0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_IS_FINISHED"
+gosub @ZAME_SBROS_FULLY_CREATED_TRIGGER_OBJECTS_TEMP
+
+0AF1: write_int ZAME_TRIGGERS_COUNT to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "TRIGGERS_COUNT"
+gosub @ZAME_CREATE_TRIGGER_THREAD_AFTER_CREATION             
+ZAME_TRIGGERS_COUNT += 1 
+                         
+gosub @CALCULATE_CENTER_OF_CUBE_ZONE2
+0@ = 0
+0@ = marker.CreateIconAndSphere2(ZAME_FAILTIMER_TRIGGER_ICON_ID, 2@,3@,4@)
+ZAME_OBJECT_HANLDE = Object.Init(ZAME_FAILTIMER_OBJECT_ID, 2@, 3@, 4@)
+0566: link_object ZAME_OBJECT_HANLDE to_interior $ACTIVE_INTERIOR
+ 
+Player.CanMove(PLAYER_CHAR) = False
+0581: enable_radar 0
+
+if
+ZAME_RECREATE_OBJECTIVE_FLAG == 0
+then
+00BC: show_text_highpriority GXT 'SE459' time 2000 flag 1
+gosub @zame_created_trigger_sound
+else
+00BC: show_text_highpriority GXT 'SE459B' time 2000 flag 1
+gosub @zame_recreated_trigger_sound
+gosub @MISSION_SAVE_INITIALIZATION
+end
+
+jump @TARGETS_SETTINGS 
+
+:ZAME_TIGGER_FAIL_TIMER_27482
+if 
+00E1:   player 0 pressed_key 15 
+jf @ZAME_TIGGER_FAIL_TIMER_27238 
+Player.CanMove(PLAYER_CHAR) = False
+0581: enable_radar 0 
+03E6: remove_text_box 
+jump @TARGETS_SETTINGS 
+
+:ZAME_TIGGER_FAIL_TIMER_27519
+
+if
+80E1:   not player 0 pressed_key 14
+then 
+5@ += 1
+else
+5@ += 10
+end
+ 
+if and
+8E10: not is_mouse_wheel_up
+8E11: not is_mouse_wheel_down
+then 
+wait 100
+end
+ 
+jump @ZAME_TIGGER_FAIL_TIMER_27238 
+
+:ZAME_TIGGER_FAIL_TIMER_27555
+
+if
+80E1:   not player 0 pressed_key 14
+then 
+5@ -= 1
+else
+5@ -= 10
+end
+ 
+if 
+5@ < 1 
+then
+5@ = 1
+end
+ 
+if and
+8E10: not is_mouse_wheel_up
+8E11: not is_mouse_wheel_down
+then 
+wait 100
+end
+ 
+jump @ZAME_TIGGER_FAIL_TIMER_27238 
+
+:ZAME_TIGGER_LADDER
+
+0AD3: v$RACE_FILE = format "TRG%d" ZAME_TRIGGERS_COUNT
+
+///////////////Выбор позиции входа для телепорта///////////////////
+
+text.ClearAll()
+text.RemoveTextBox()
+player.CanMove(PLAYER_CHAR,true)
+
+0512: show_permanent_text_box 'SE461'
+
+while true
+wait 0
+    
+if
+0E3E: is_button_just_pressed 0 button 15
+    then
+    actor.StorePos(PLAYER_ACTOR,0@,1@,2@)
+    3@ = actor.Angle(PLAYER_ACTOR)
+    0AF3: write_float 0@ to_ini_file "me\temp.dat" section v$RACE_FILE key "LADDER_X1"
+    0AF3: write_float 1@ to_ini_file "me\temp.dat" section v$RACE_FILE key "LADDER_Y1"
+    0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "LADDER_Z1"
+    0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "LADDER_A1"
+    player.CanMove(PLAYER_CHAR,false)
+    text.ClearAll()
+    break
+    end
+    
+if
+0E3E: is_button_just_pressed 0 button 11
+    then
+    gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS
+    text.ClearAll()
+    jump to @TRIGGERS_SETTINGS
+    end
+    
+end                        
+
+///////////////Выбор позиции выхода для телепорта///////////////////
+
+text.ClearAll()
+text.RemoveTextBox()
+player.CanMove(PLAYER_CHAR,true)
+
+0512: show_permanent_text_box 'SE462'
+
+while true
+wait 0
+    
+if
+0E3E: is_button_just_pressed 0 button 15
+    then
+    actor.StorePos(PLAYER_ACTOR,0@,1@,2@)
+    3@ = actor.Angle(PLAYER_ACTOR)
+    0AF3: write_float 0@ to_ini_file "me\temp.dat" section v$RACE_FILE key "LADDER_X2"
+    0AF3: write_float 1@ to_ini_file "me\temp.dat" section v$RACE_FILE key "LADDER_Y2"
+    0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "LADDER_Z2"
+    0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "LADDER_A2"
+    0AF3: write_float 0@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_X"
+    0AF3: write_float 1@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_Y"
+    0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_Z"
+    player.CanMove(PLAYER_CHAR,false)
+    text.ClearAll()
+    break
+    end
+    
+if
+0E3E: is_button_just_pressed 0 button 11
+    then
+    gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS
+    text.ClearAll()
+    jump to @TRIGGERS_SETTINGS
+    end
+    
+end
+                            
+//////////////////////////
+
+gosub @TRIGGER_ACTIVATE_FROM_TARGET_NUM_SELECT
+if
+ZAME_TEMP_FUCKEEE45 == 2
+then
+gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS
+text.ClearAll()
+jump to @TRIGGERS_SETTINGS
+end
+
+gosub @TRIGGER_DEACTIVATE_FROM_TARGET_NUM_SELECT
+if
+ZAME_TEMP_FUCKEEE45 == 2
+then
+gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS
+text.ClearAll()
+jump to @TRIGGERS_SETTINGS
+end
+
+0AD3: v$RACE_FILE = format "TRG%d" ZAME_TRIGGERS_COUNT            
+            
+0AF1: write_int ZAME_TEMP_TRIGGER_TYPE to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_TYPE"
+0AF1: write_int $ACTIVE_INTERIOR to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_INT"  
+
+0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_IS_FINISHED"
+gosub @ZAME_SBROS_FULLY_CREATED_TRIGGER_OBJECTS_TEMP                        
+
+0AF2: get_float 0@ from_ini_file "me\temp.dat" section v$RACE_FILE key "LADDER_X1"
+0AF2: get_float 1@ from_ini_file "me\temp.dat" section v$RACE_FILE key "LADDER_Y1"
+0AF2: get_float 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "LADDER_Z1"            
+5@ = 0
+5@ = Marker.CreateIconAndSphere2(ZAME_LADDER_TRIGGER_ICON_ID,0@,1@,2@)
+5@ = Object.Init(ZAME_LADDER_OBJECT_ID, 0@,1@,2@)
+0566: link_object 5@ to_interior $ACTIVE_INTERIOR
+0581: enable_radar 1 
+03E6: remove_text_box
+
+0AF1: write_int ZAME_TRIGGERS_COUNT to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "TRIGGERS_COUNT"
+gosub @ZAME_CREATE_TRIGGER_THREAD_AFTER_CREATION
+ZAME_TRIGGERS_COUNT += 1
+
+wait 100
+
+if
+ZAME_RECREATE_TRIGGER_FLAG == 0
+then
+00BC: show_text_highpriority GXT 'SE459' time 2000 flag 1
+gosub @zame_created_trigger_sound
+else
+00BC: show_text_highpriority GXT 'SE459B' time 2000 flag 1
+gosub @zame_recreated_trigger_sound
+gosub @MISSION_SAVE_INITIALIZATION
+end
+
+ZAME_NAME_AUD_TYPING_FLAG = 0
+ 
+jump @TRIGGERS_SETTINGS
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:ZAME_TRIGGER_TEXT
+
+gosub @ZAME_TRIGGER_SET_PARAMS
+if
+ZAME_TEMP_FUCKEEE45 == 1
+then
+ZAME_TEMP_FUCKEEE45 = 0
+jump to @TRIGGERS_SETTINGS
+end
+
+06D1: v$SNAME3 = "" // v$ // Sunday
+06D1: v$SNAME2 = "" // v$ // Sunday
+
+29@ = 0
+33@ = 0
+KEYS_TYPED_NUM = 0
+    
+0AE0: remove_dynamic_GXT_entry "F_NAME"
+0ADF: add_dynamic_GXT_entry "F_NAME" text ""
+
+if
+0A4B:   controls_set_to_joystick
+then
+0512: show_permanent_text_box 'SE80B'
+ACTIVATE_KBRD_PANEL = 1
+KBRD_PANEL_CHRTC = 1
+CAPSLOCK_ON_FLAG = 1
+$PANEL_OPEN2 = 1
+else
+0512: show_permanent_text_box 'SE80'
+end
+
+while true
+wait 0
+
+015D: set_gamespeed 1.0
+CURRENT_LAYOUT = 1
+gosub @FXT_NAME_SELECT_KEYS_CHECK
+
+if
+8846: not  string v$SNAME3 empty // v$
+then
+0384: show_text_1string GXT "GAME898" string "F_NAME" time 99999999 1
+else
+0384: show_text_1string GXT "GAME898" string v$NAME3 time 99999999 1
+end
+
+if
+0A4B:   controls_set_to_joystick
+then
+if and
+0E3E: is_button_just_pressed 0 button 15
+33@ > 500
+    then
+    jump to @FXT_VVOD_EXIT_JOY_JUMP2
+    end
+end
+
+if and
+0E3D: is_key_just_pressed 17
+33@ > 500
+    then
+    :FXT_VVOD_EXIT_JOY_JUMP2
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    0581: enable_radar 1 
+    03E6: remove_text_box
+    
+    if
+    ACTIVATE_KBRD_PANEL == 1
+    then
+    ACTIVATE_KBRD_PANEL = 0
+    $PANEL_OPEN2 = 0
+    end
+    
+    gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS
+    text.ClearAll()
+    jump to @TRIGGERS_SETTINGS
+    end
+    
+if
+8846: not  string v$SNAME3 empty // v$
+    then
+    09FD: get_gxt_string v$SNAME3 width_to 0@  // ~k~~PED_SPRINT~ Select
+    if
+    0@ > 0
+        then
+        
+        03F0: enable_text_draw 1 
+        03E0: draw_text_behind_textures 1
+        03E3: set_texture_to_be_drawn_antialiased 1 
+        0342: set_text_draw_centered 1
+        0344: set_text_draw_linewidth 640.0 for_centered_text
+        033F: set_text_draw_letter_size 0.2 1.1 
+        081C: draw_text_outline 1 RGBA 0 0 0 $HUD_ALPHA 
+        0340: set_text_draw_RGBA 255 255 255 $HUD_ALPHA   
+            
+        if
+        UNITED_MAP == 1
+        then    
+        0349: set_text_draw_font UNITED_HUD_FONT_NUMBER
+        end
+        
+        033E: set_draw_text_position 320.0 15.0 GXT v$SNAME3  // Push
+        
+        end
+    end    
+
+if and
+0E3E: is_button_just_pressed 0 button 16
+33@ > 500
+8846: not  string v$SNAME3 empty // v$
+    then
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5
+    09FD: get_gxt_string v$SNAME3 width_to 0@  // ~k~~PED_SPRINT~ Select
+    if
+    0@ > 0
+        then
+        
+        if
+        ACTIVATE_KBRD_PANEL == 1
+        then
+        ACTIVATE_KBRD_PANEL = 0
+        $PANEL_OPEN2 = 0
+        end    
+        
+        0AF1: write_int ZAME_TEMP_TRIGGER_TYPE to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_TYPE"
+        0AF1: write_int $ACTIVE_INTERIOR to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_INT"
+        Actor.StorePos(PLAYER_ACTOR, 2@,3@,4@)
+        0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_X"
+        0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_Y"
+        0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_Z"                
+        
+        //////////////////////////////
+
+        text.ClearAll()
+        text.RemoveTextBox()
+                
+        while true
+        wait 0
+        text.ShowH('SE282',100,1)
+                    
+        if
+        0E3E: is_button_just_pressed 0 button 11
+            then
+            text.ClearAll()                    
+            break
+            end
+                    
+        if
+        0E3E: is_button_just_pressed 0 button 10
+            then
+            0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "SHOW_AS_TEXTBOX"
+            text.ClearAll()        
+            break
+            end
+            
+        if
+        0E3E: is_button_just_pressed 0 button 15
+            then
+            gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS
+            text.ClearAll()
+            jump to @TRIGGERS_SETTINGS
+            end    
+                    
+        end                                    
+        
+        0AF5: write_string v$SNAME3 to_ini_file "me\temp.dat" section v$RACE_FILE key "FXT_ID"    
+        Player.CanMove(PLAYER_CHAR) = true        
+        gosub @CALCULATE_CENTER_OF_CUBE_ZONE2
+        0@ = 0
+        0@ = Marker.CreateIconAndSphere2(ZAME_TEXT_TRIGGER_ICON_ID, 2@,3@,4@)
+        1@ = Object.Init(ZAME_TEXT_OBJECT_ID, 2@, 3@, 4@)
+        0566: link_object 1@ to_interior $ACTIVE_INTERIOR
+        0581: enable_radar 1 
+        03E6: remove_text_box
+        
+        0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_IS_FINISHED"
+        gosub @ZAME_SBROS_FULLY_CREATED_TRIGGER_OBJECTS_TEMP
+        
+        0AF1: write_int ZAME_TRIGGERS_COUNT to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "TRIGGERS_COUNT"
+        gosub @ZAME_CREATE_TRIGGER_THREAD_AFTER_CREATION             
+        ZAME_TRIGGERS_COUNT += 1
+        
+        wait 100
+        
+        if
+        ZAME_RECREATE_OBJECTIVE_FLAG == 0
+        then
+        00BC: show_text_highpriority GXT 'SE459' time 2000 flag 1
+        gosub @zame_created_trigger_sound
+        else
+        00BC: show_text_highpriority GXT 'SE459B' time 2000 flag 1
+        gosub @zame_recreated_trigger_sound
+        gosub @MISSION_SAVE_INITIALIZATION
+        end
+                
+        jump @TRIGGERS_SETTINGS
+        
+        else
+        text.ShowH('SE236',1000,1)
+        wait 1000
+        0512: show_permanent_text_box 'SE80'        
+        end
+        
+        end
+
+end
+
+:ZAME_TRIGGER_DAMAGEZONE
+
+gosub @ZAME_TRIGGER_SET_PARAMS
+if
+ZAME_TEMP_FUCKEEE45 == 1
+then
+ZAME_TEMP_FUCKEEE45 = 0
+jump to @TRIGGERS_SETTINGS
+end
+
+06D1: v$SNAME3 = "" // v$ // Sunday
+06D1: v$SNAME2 = "" // v$ // Sunday
+
+29@ = 0
+33@ = 0
+KEYS_TYPED_NUM = 0
+
+ZAME_NAME_AUD_TYPING_FLAG = 2
+    
+0AE0: remove_dynamic_GXT_entry "F_NAME"
+0ADF: add_dynamic_GXT_entry "F_NAME" text ""
+
+0512: show_permanent_text_box 'SE453'
+
+while true
+wait 0
+
+CURRENT_LAYOUT = 1
+gosub @OBJECT_ID_SELECT_KEYS_CHECK
+
+if
+8846: not  string v$SNAME3 empty // v$
+then
+0384: show_text_1string GXT "SE456" string "F_NAME" time 99999999 1
+else
+0384: show_text_1string GXT "SE456" string v$NAME3 time 99999999 1
+end
+
+if and
+0E3D: is_key_just_pressed 17
+33@ > 500
+    then
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5
+    ZAME_NAME_AUD_TYPING_FLAG = 0
+    gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS                
+    text.ClearAll()
+    jump to @TRIGGERS_SETTINGS  
+    end
+
+if and
+0E3E: is_button_just_pressed 0 button 16
+33@ > 500
+8846: not  string v$SNAME3 empty // v$
+    then
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    
+    0AF1: write_int ZAME_TEMP_TRIGGER_TYPE to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_TYPE"
+    0AF1: write_int $ACTIVE_INTERIOR to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_INT"
+    Actor.StorePos(PLAYER_ACTOR, 2@,3@,4@)
+    0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_X"
+    0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_Y"
+    0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_Z"  
+        
+    0AF5: write_string v$SNAME3 to_ini_file "me\temp.dat" section v$RACE_FILE key "DAMAGE_COUNT"        
+    
+    text.RemoveTextBox()
+    text.ClearAll()            
+            
+    gosub @CALCULATE_CENTER_OF_CUBE_ZONE2
+    0@ = 0
+    0@ = Marker.CreateIconAndSphere2(ZAME_DAMAGEZONE_TRIGGER_ICON_ID, 2@,3@,4@)
+    1@ = Object.Init(ZAME_DAMAGEZONE_OBJECT_ID, 2@, 3@, 4@)
+    0566: link_object 1@ to_interior $ACTIVE_INTERIOR
+    0581: enable_radar 1 
+    03E6: remove_text_box
+    Player.CanMove(PLAYER_CHAR) = true
+        
+    0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_IS_FINISHED"
+    gosub @ZAME_SBROS_FULLY_CREATED_TRIGGER_OBJECTS_TEMP
+    
+    0AF1: write_int ZAME_TRIGGERS_COUNT to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "TRIGGERS_COUNT"
+    gosub @ZAME_CREATE_TRIGGER_THREAD_AFTER_CREATION            
+    ZAME_TRIGGERS_COUNT += 1
+        
+    wait 100
+        
+    if
+    ZAME_RECREATE_OBJECTIVE_FLAG == 0
+    then
+    00BC: show_text_highpriority GXT 'SE459' time 2000 flag 1
+    gosub @zame_created_trigger_sound
+    else
+    00BC: show_text_highpriority GXT 'SE459B' time 2000 flag 1
+    gosub @zame_recreated_trigger_sound
+    gosub @MISSION_SAVE_INITIALIZATION
+    end
+        
+    ZAME_NAME_AUD_TYPING_FLAG = 0    
+         
+    jump @TRIGGERS_SETTINGS       
+    
+    end        
+
+end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:ZAME_TRIGGER_TXDZAPISKA
+
+gosub @ZAME_TRIGGER_SET_PARAMS
+if
+ZAME_TEMP_FUCKEEE45 == 1
+then
+ZAME_TEMP_FUCKEEE45 = 0
+jump to @TRIGGERS_SETTINGS
+end
+
+///////////////В стиле записки, которую нужно подобрать?///////////////////
+
+text.ClearAll()
+text.RemoveTextBox()
+
+while true
+wait 0
+
+text.ShowH('SE464',10,1)
+    
+if
+0E3E: is_button_just_pressed 0 button 11
+    then    
+    0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "ZAPISKA_STYLE"
+    text.ClearAll()
+    break
+    end
+    
+if
+0E3E: is_button_just_pressed 0 button 10
+    then
+    0AF1: write_int 0 to_ini_file "me\temp.dat" section v$RACE_FILE key "ZAPISKA_STYLE"
+    text.ClearAll()      
+    jump to @SKIP_ZAPISKA_COORD
+    end
+    
+if
+0E3E: is_button_just_pressed 0 button 15
+    then
+    gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS
+    text.ClearAll()
+    jump to @TRIGGERS_SETTINGS
+    end    
+    
+end    
+
+///////////////Выбор позиции для записки///////////////////
+
+text.ClearAll()
+text.RemoveTextBox()
+player.CanMove(PLAYER_CHAR,true)
+
+0512: show_permanent_text_box 'SE463'
+
+while true
+wait 0
+    
+if
+0E3E: is_button_just_pressed 0 button 15
+    then
+    player.CanMove(PLAYER_CHAR,false)
+    text.ClearAll()
+    break
+    end
+    
+if
+0E3E: is_button_just_pressed 0 button 11
+    then
+    gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS
+    text.ClearAll()
+    jump to @TRIGGERS_SETTINGS
+    end
+    
+end    
+
+:SKIP_ZAPISKA_COORD
+    
+Player.CanMove(PLAYER_CHAR) = true
+actor.StorePos(PLAYER_ACTOR,2@,3@,4@)
+0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "ZAPISKA_X"
+0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "ZAPISKA_Y"
+0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "ZAPISKA_Z"
+
+06D1: v$SNAME3 = "" // v$ // Sunday
+06D1: v$SNAME2 = "" // v$ // Sunday
+
+29@ = 0
+33@ = 0
+KEYS_TYPED_NUM = 0
+
+ZAME_NAME_AUD_TYPING_FLAG = 2
+    
+0AE0: remove_dynamic_GXT_entry "F_NAME"
+0ADF: add_dynamic_GXT_entry "F_NAME" text ""
+
+0512: show_permanent_text_box 'SE246'
+
+while true
+wait 0
+
+CURRENT_LAYOUT = 1
+gosub @FXT_NAME_SELECT_KEYS_CHECK
+
+if
+8846: not  string v$SNAME3 empty // v$
+then
+0384: show_text_1string GXT "SE247" string "F_NAME" time 99999999 1
+else
+0384: show_text_1string GXT "SE247" string v$NAME3 time 99999999 1
+end
+
+if and
+0E3D: is_key_just_pressed 17
+33@ > 500
+    then
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5
+    ZAME_NAME_AUD_TYPING_FLAG = 0
+    gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS                
+    text.ClearAll()
+    jump to @TRIGGERS_SETTINGS
+    end
+
+if and
+0E3E: is_button_just_pressed 0 button 16
+33@ > 500
+8846: not  string v$SNAME3 empty // v$
+    then
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()    
+        
+    if or
+    ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG == 1
+    ZAME_RECREATE_OBJECTIVE_FLAG == 2
+    then
+    0AD3: v$RACE_FILE = format "%s" v$RACB_FILE
+    end
+    
+    ZAME_MISSION_PNG_PREVIEW_DRAW_FLAG = 0    
+    gosub @ZAME_OBJC_PICTURES_CHECK        
+    wait 5
+    if
+    ZAME_MISSION_PNG_PREVIEW_DRAW_FLAG == 1
+        then            
+        
+        0AD3: v$RACE_FILE = format "TRG%d" ZAME_TRIGGERS_COUNT
+        
+        0AF1: write_int ZAME_TEMP_TRIGGER_TYPE to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_TYPE"
+        0AF1: write_int $ACTIVE_INTERIOR to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_INT"
+        0AF5: write_string v$SNAME3 to_ini_file "me\temp.dat" section v$RACE_FILE key "TEXTURE_NAME"  
+        Actor.StorePos(PLAYER_ACTOR, 2@,3@,4@)
+        0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_X"
+        0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_Y"
+        0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_Z"                   
+        
+        text.RemoveTextBox()
+        text.ClearAll()                            
+                                               
+        gosub @CALCULATE_CENTER_OF_CUBE_ZONE2
+        0@ = 0
+        0@ = Marker.CreateIconAndSphere2(ZAME_ZAPISKA_TRIGGER_ICON_ID, 2@,3@,4@)
+        1@ = Object.Init(ZAME_ZAPISKA_OBJECT_ID, 2@, 3@, 4@)
+        0566: link_object 1@ to_interior $ACTIVE_INTERIOR
+        0581: enable_radar 1 
+        03E6: remove_text_box
+        Player.CanMove(PLAYER_CHAR) = true
+        
+        0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_IS_FINISHED"
+        gosub @ZAME_SBROS_FULLY_CREATED_TRIGGER_OBJECTS_TEMP
+        
+        0AF1: write_int ZAME_TRIGGERS_COUNT to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "TRIGGERS_COUNT"
+        gosub @ZAME_CREATE_TRIGGER_THREAD_AFTER_CREATION            
+        ZAME_TRIGGERS_COUNT += 1
+        
+        wait 100
+        
+        if
+        ZAME_RECREATE_OBJECTIVE_FLAG == 0
+        then
+        00BC: show_text_highpriority GXT 'SE459' time 2000 flag 1
+        gosub @zame_created_trigger_sound
+        else
+        00BC: show_text_highpriority GXT 'SE459B' time 2000 flag 1
+        gosub @zame_recreated_trigger_sound
+        gosub @MISSION_SAVE_INITIALIZATION
+        end
+        
+        ZAME_NAME_AUD_TYPING_FLAG = 0        
+         
+        jump @TRIGGERS_SETTINGS
+        
+        else
+        text.ShowH('SE238',1000,1)
+        wait 1000
+        end
+    
+    end        
+
+end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:ZAME_TRIGGER_EXPLOSION
+
+gosub @ZAME_TRIGGER_SET_PARAMS
+if
+ZAME_TEMP_FUCKEEE45 == 1
+then
+ZAME_TEMP_FUCKEEE45 = 0
+jump to @TRIGGERS_SETTINGS
+end 
+
+///////////////Выбор позиции для взрыва///////////////////
+
+text.ClearAll()
+text.RemoveTextBox()
+player.CanMove(PLAYER_CHAR,true)
+
+0512: show_permanent_text_box 'SE465'
+
+while true
+wait 0
+    
+if
+0E3E: is_button_just_pressed 0 button 15
+    then
+    player.CanMove(PLAYER_CHAR,false)
+    text.ClearAll()
+    break
+    end
+    
+if
+0E3E: is_button_just_pressed 0 button 11
+    then
+    gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS
+    text.ClearAll()
+    jump to @TRIGGERS_SETTINGS
+    end
+    
+end    
+    
+Player.CanMove(PLAYER_CHAR) = true
+actor.StorePos(PLAYER_ACTOR,2@,3@,4@)
+0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "EXPLOSION_X"
+0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "EXPLOSION_Y"
+0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "EXPLOSION_Z"
+
+:ZAME_TRIGGER_EXPLOSION_27207
+0581: enable_radar 1 
+0512: show_permanent_text_box 'SE224' 
+5@ = 0
+actor.StorePos(PLAYER_ACTOR,2@,3@,4@)
+020C: create_explosion_with_radius 5@ at 2@ 3@ 4@
+wait 100 
+
+:ZAME_TRIGGER_EXPLOSION_27238
+wait 0 
+01E5: show_text_1number_highpriority GXT 'SE225' number 5@ time 300 flag 1 
+if and
+80E1:   not player 0 pressed_key 11
+8E10: not is_mouse_wheel_up 
+jf @ZAME_TRIGGER_EXPLOSION_27519 
+if and
+80E1:   not player 0 pressed_key 10
+8E11: not is_mouse_wheel_down  
+jf @ZAME_TRIGGER_EXPLOSION_27555 
+if 
+00E1:   player 0 pressed_key 16 
+jf @ZAME_TRIGGER_EXPLOSION_27482 
+
+0AD3: v$RACE_FILE = format "TRG%d" ZAME_TRIGGERS_COUNT
+        
+0AF1: write_int ZAME_TEMP_TRIGGER_TYPE to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_TYPE"
+0AF1: write_int $ACTIVE_INTERIOR to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_INT"
+0AF1: write_int 5@ to_ini_file "me\temp.dat" section v$RACE_FILE key "EXPLOSION_TYPE"
+Actor.StorePos(PLAYER_ACTOR, 2@,3@,4@)
+0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_X"
+0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_Y"
+0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_Z"                   
+        
+text.RemoveTextBox()
+text.ClearAll()                            
+                                         
+gosub @CALCULATE_CENTER_OF_CUBE_ZONE2
+0@ = 0
+0@ = Marker.CreateIconAndSphere2(ZAME_EXPLOSION_TRIGGER_ICON_ID, 2@,3@,4@)
+1@ = Object.Init(ZAME_EXPLOSION_TRIGGER_OBJECT_ID, 2@, 3@, 4@)
+0566: link_object 1@ to_interior $ACTIVE_INTERIOR
+0581: enable_radar 1 
+03E6: remove_text_box
+Player.CanMove(PLAYER_CHAR) = true
+        
+0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_IS_FINISHED"
+gosub @ZAME_SBROS_FULLY_CREATED_TRIGGER_OBJECTS_TEMP
+
+0AF1: write_int ZAME_TRIGGERS_COUNT to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "TRIGGERS_COUNT"
+gosub @ZAME_CREATE_TRIGGER_THREAD_AFTER_CREATION            
+ZAME_TRIGGERS_COUNT += 1
+
+031A: remove_all_fires
+ 
+Player.CanMove(PLAYER_CHAR) = False
+0581: enable_radar 0
+
+if
+ZAME_RECREATE_OBJECTIVE_FLAG == 0
+then
+00BC: show_text_highpriority GXT 'se459' time 2000 flag 1
+gosub @zame_created_trigger_sound
+else
+00BC: show_text_highpriority GXT 'se459b' time 2000 flag 1
+gosub @zame_recreated_trigger_sound
+gosub @MISSION_SAVE_INITIALIZATION
+end
+ 
+jump @TRIGGERS_SETTINGS
+
+:ZAME_TRIGGER_EXPLOSION_25351
+077E: get_active_interior_to 19@ 
+if 
+  4@ > 900.0 
+jf @ZAME_TRIGGER_EXPLOSION_25435 
+0167: 0@ = create_marker_at 2@ 3@ 4@ color 2 flag 2 
+Marker.SetIconSize(0@, 3)
+return 
+
+:ZAME_TRIGGER_EXPLOSION_25435
+return 
+
+:ZAME_TRIGGER_EXPLOSION_25437
+077E: get_active_interior_to 19@ 
+if 
+  4@ > 900.0 
+jf @ZAME_TRIGGER_EXPLOSION_25521 
+0167: 0@ = create_marker_at 2@ 3@ 4@ color 2 flag 2 
+Marker.SetIconSize(0@, 3)
+return 
+
+:ZAME_TRIGGER_EXPLOSION_25521
+return
+
+:ZAME_TRIGGER_EXPLOSION_27482
+if 
+00E1:   player 0 pressed_key 15 
+jf @ZAME_TRIGGER_EXPLOSION_27238
+031A: remove_all_fires 
+Player.CanMove(PLAYER_CHAR) = False
+0581: enable_radar 0 
+03E6: remove_text_box 
+jump @TARGETS_SETTINGS2
+
+:ZAME_TRIGGER_EXPLOSION_27519
+5@ += 1
+
+if
+5@ < 13 
+then
+actor.StorePos(PLAYER_ACTOR,2@,3@,4@)
+031A: remove_all_fires
+020C: create_explosion_with_radius 5@ at 2@ 3@ 4@
+else
+wait 100
+jump to @ZAME_TRIGGER_EXPLOSION_27609
+end
+ 
+if and
+8E10: not is_mouse_wheel_up
+8E11: not is_mouse_wheel_down
+then 
+wait 100
+end
+ 
+jump @ZAME_TRIGGER_EXPLOSION_27238 
+
+:ZAME_TRIGGER_EXPLOSION_27555 
+5@ -= 1
+
+if
+5@ > 0 
+then 
+actor.StorePos(PLAYER_ACTOR,2@,3@,4@)
+031A: remove_all_fires
+020C: create_explosion_with_radius 5@ at 2@ 3@ 4@
+else
+wait 100
+jump to @ZAME_TRIGGER_EXPLOSIONb_27609
+end
+
+if and
+8E10: not is_mouse_wheel_up
+8E11: not is_mouse_wheel_down
+then 
+wait 100
+end
+
+jump @ZAME_TRIGGER_EXPLOSION_27238 
+
+:ZAME_TRIGGER_EXPLOSION_27609
+5@ = 0 
+
+if and
+8E10: not is_mouse_wheel_up
+8E11: not is_mouse_wheel_down
+then 
+wait 100
+end
+ 
+jump @ZAME_TRIGGER_EXPLOSION_27238
+
+:ZAME_TRIGGER_EXPLOSIONb_27609
+5@ = 12 
+
+if and
+8E10: not is_mouse_wheel_up
+8E11: not is_mouse_wheel_down
+then 
+wait 100
+end
+ 
+jump @ZAME_TRIGGER_EXPLOSION_27238
+
+:ZAME_TRIGGER_FIRE
+
+gosub @ZAME_TRIGGER_SET_PARAMS
+if
+ZAME_TEMP_FUCKEEE45 == 1
+then
+ZAME_TEMP_FUCKEEE45 = 0
+jump to @TRIGGERS_SETTINGS
+end
+
+///////////////Выбор позиции для огня///////////////////
+
+text.ClearAll()
+text.RemoveTextBox()
+player.CanMove(PLAYER_CHAR,true)
+
+0512: show_permanent_text_box 'SE466'
+
+while true
+wait 0
+    
+if
+0E3E: is_button_just_pressed 0 button 15
+    then
+    player.CanMove(PLAYER_CHAR,false)
+    text.ClearAll()
+    break
+    end
+    
+if
+0E3E: is_button_just_pressed 0 button 11
+    then
+    gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS
+    text.ClearAll()
+    jump to @TRIGGERS_SETTINGS
+    end
+    
+end    
+    
+Player.CanMove(PLAYER_CHAR) = true
+actor.StorePos(PLAYER_ACTOR,2@,3@,4@)
+0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "FIRE_X"
+0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "FIRE_Y"
+0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "FIRE_Z"
+
+gosub @TRIGGER_FIRE_SIZE_SELECT
+gosub @TRIGGER_FIRE_PROPAGATION_SELECT
+
+0AD3: v$RACE_FILE = format "TRG%d" ZAME_TRIGGERS_COUNT
+        
+0AF1: write_int ZAME_TEMP_TRIGGER_TYPE to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_TYPE"
+0AF1: write_int $ACTIVE_INTERIOR to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_INT"
+Actor.StorePos(PLAYER_ACTOR, 2@,3@,4@)
+0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_X"
+0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_Y"
+0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_Z"                   
+        
+text.RemoveTextBox()
+text.ClearAll()                            
+                                       
+gosub @CALCULATE_CENTER_OF_CUBE_ZONE2
+0@ = 0
+0@ = Marker.CreateIconAndSphere2(ZAME_FIRE_TRIGGER_ICON_ID, 2@,3@,4@)
+1@ = Object.Init(ZAME_FIRE_OBJECT_ID, 2@, 3@, 4@)
+0566: link_object 1@ to_interior $ACTIVE_INTERIOR
+0581: enable_radar 1 
+03E6: remove_text_box
+Player.CanMove(PLAYER_CHAR) = true
+        
+0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_IS_FINISHED"
+gosub @ZAME_SBROS_FULLY_CREATED_TRIGGER_OBJECTS_TEMP
+
+0AF1: write_int ZAME_TRIGGERS_COUNT to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "TRIGGERS_COUNT" 
+gosub @ZAME_CREATE_TRIGGER_THREAD_AFTER_CREATION           
+ZAME_TRIGGERS_COUNT += 1
+
+031A: remove_all_fires
+ 
+Player.CanMove(PLAYER_CHAR) = False
+0581: enable_radar 0
+
+if
+ZAME_RECREATE_OBJECTIVE_FLAG == 0
+then
+00BC: show_text_highpriority GXT 'se459' time 2000 flag 1
+gosub @zame_created_trigger_sound
+else
+00BC: show_text_highpriority GXT 'se459b' time 2000 flag 1
+gosub @zame_recreated_trigger_sound
+gosub @MISSION_SAVE_INITIALIZATION
+end
+ 
+jump @TRIGGERS_SETTINGS
+
+:TRIGGER_FIRE_SIZE_SELECT
+
+06D1: v$SNAME3 = "" // v$ // Sunday
+06D1: v$SNAME2 = "" // v$ // Sunday
+
+29@ = 0
+33@ = 0
+KEYS_TYPED_NUM = 0
+
+ZAME_NAME_AUD_TYPING_FLAG = 2
+    
+0AE0: remove_dynamic_GXT_entry "F_NAME"
+0ADF: add_dynamic_GXT_entry "F_NAME" text ""
+
+0512: show_permanent_text_box 'SE457'
+
+while true
+wait 0
+
+if
+8A2A: not  text_box 'SE457' displayed
+    then
+    0512: show_permanent_text_box 'SE457'
+    end
+
+CURRENT_LAYOUT = 1
+gosub @OBJECT_ID_SELECT_KEYS_CHECK
+
+if
+8846: not  string v$SNAME3 empty // v$
+then
+0384: show_text_1string GXT "SE467" string "F_NAME" time 99999999 1
+else
+0384: show_text_1string GXT "SE467" string v$NAME3 time 99999999 1
+end
+
+if and
+0E3E: is_button_just_pressed 0 button 16
+33@ > 500
+8846: not  string v$SNAME3 empty // v$
+    then
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5
+    ZAME_NAME_AUD_TYPING_FLAG = 0        
+    
+    0AF5: write_string v$SNAME3 to_ini_file "me\temp.dat" section v$RACE_FILE key "FIRE_SIZE"    
+    return
+    
+    end
+
+end
+
+:TRIGGER_FIRE_PROPAGATION_SELECT
+
+06D1: v$SNAME3 = "" // v$ // Sunday
+06D1: v$SNAME2 = "" // v$ // Sunday
+
+29@ = 0
+33@ = 0
+KEYS_TYPED_NUM = 0
+
+ZAME_NAME_AUD_TYPING_FLAG = 2
+    
+0AE0: remove_dynamic_GXT_entry "F_NAME"
+0ADF: add_dynamic_GXT_entry "F_NAME" text ""
+
+0512: show_permanent_text_box 'SE457B'
+
+while true
+wait 0
+
+if
+8A2A: not  text_box 'SE457B' displayed
+    then
+    0512: show_permanent_text_box 'SE457B'
+    end
+
+CURRENT_LAYOUT = 1
+gosub @OBJECT_ID_SELECT_KEYS_CHECK
+
+if
+8846: not  string v$SNAME3 empty // v$
+then
+0384: show_text_1string GXT "SE468" string "F_NAME" time 99999999 1
+else
+0384: show_text_1string GXT "SE468" string v$NAME3 time 99999999 1
+end
+
+if and
+0E3E: is_button_just_pressed 0 button 16
+33@ > 500
+8846: not  string v$SNAME3 empty // v$
+    then
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5
+    ZAME_NAME_AUD_TYPING_FLAG = 0        
+    
+    0AF5: write_string v$SNAME3 to_ini_file "me\temp.dat" section v$RACE_FILE key "FIRE_PROPOGATION"    
+    return
+    
+    end
+
+end
+
+:ZAME_TRIGGER_GAMEZONE
+
+gosub @ZAME_TRIGGER_SET_PARAMS
+if
+ZAME_TEMP_FUCKEEE45 == 1
+then
+ZAME_TEMP_FUCKEEE45 = 0
+jump to @TRIGGERS_SETTINGS
+end
+
+text.RemoveTextBox()
+text.ClearAll()
+
+0AF1: write_int ZAME_TEMP_TRIGGER_TYPE to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_TYPE"
+0AF1: write_int $ACTIVE_INTERIOR to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_INT"
+Actor.StorePos(PLAYER_ACTOR, 2@,3@,4@)
+0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_X"
+0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_Y"
+0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_Z"  
+
+text.RemoveTextBox()
+text.ClearAll()
+
+gosub @CALCULATE_CENTER_OF_CUBE_ZONE2
+0@ = 0
+0@ = Marker.CreateIconAndSphere2(ZAME_GAMEZONE_TRIGGER_ICON_ID, 2@,3@,4@)
+1@ = Object.Init(ZAME_GAMEZONE_OBJECT_ID, 2@, 3@, 4@)
+0566: link_object 1@ to_interior $ACTIVE_INTERIOR
+0581: enable_radar 1 
+03E6: remove_text_box
+Player.CanMove(PLAYER_CHAR) = true
+
+0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "TRIGGER_IS_FINISHED"
+gosub @ZAME_SBROS_FULLY_CREATED_TRIGGER_OBJECTS_TEMP
+
+0AF1: write_int ZAME_TRIGGERS_COUNT to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "TRIGGERS_COUNT"
+gosub @ZAME_CREATE_TRIGGER_THREAD_AFTER_CREATION
+ZAME_TRIGGERS_COUNT += 1
+
+wait 100
+
+if
+ZAME_RECREATE_OBJECTIVE_FLAG == 0
+then
+00BC: show_text_highpriority GXT 'SE459' time 2000 flag 1
+gosub @zame_created_trigger_sound
+else
+00BC: show_text_highpriority GXT 'SE459B' time 2000 flag 1
+gosub @zame_recreated_trigger_sound
+gosub @MISSION_SAVE_INITIALIZATION
+end
+
+ZAME_NAME_AUD_TYPING_FLAG = 0
+ 
+jump @TRIGGERS_SETTINGS   

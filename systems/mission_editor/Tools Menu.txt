@@ -1,0 +1,3535 @@
+:zame_menu_37888
+0512: show_permanent_text_box 'SE124' 
+08D4: $PANEL = create_panel_with_title 'se12' position 72.0 160.0 width 150.0 columns 1 interactive 1 background 1 alignment 1 
+08DB: set_panel $PANEL column 0 header 'dummy' data 'se30' 'SE62' 'SE64' 'SE216' 'SE407' 'SE31' 'SE474' 'SE217' 'dummy' 'dummy' 'dummy' 'dummy'
+
+if
+ZAME_OBJECTIVES_COUNT < 2
+then
+08D9: set_panel $PANEL row 7 enable 0
+end
+
+wait 100 
+
+:zame_menu_38064
+wait 0 
+if 
+00E1:   player 0 pressed_key 15 
+jf @zame_menu_38097 
+08DA: remove_panel $PANEL 
+jump @ZAME_MAIN_MENU 
+
+:zame_menu_38097
+wait 0 
+if 
+00E1:   player 0 pressed_key 16 
+jf @zame_menu_38064 
+08D7: 24@ = panel $PANEL active_row 
+08DA: remove_panel $PANEL 
+03E6: remove_text_box 
+0871: init_jump_table 24@ total_jumps 8 default_jump 0 @ZAME_MAIN_MENU jumps 0 @zame_menu_38261 1 @ZAME_TOOLS_RECREATE_SOMETHING 2 @ZAME_TOOLS_DELETE_SOMETHING 3 @ZAME_INT_VIEW 4 @ZAME_NIGHTVISION 5 @ZAME_JETPACK 6 @ZAME_OBJS_ID
+0872: jump_table_jumps 7 @ZAME_OBJS_TP 8 @ZAME_MAIN_MENU 9 @ZAME_MAIN_MENU 10 @ZAME_MAIN_MENU 11 @ZAME_MAIN_MENU 12 @ZAME_MAIN_MENU 13 @ZAME_MAIN_MENU 14 @ZAME_MAIN_MENU 15 @ZAME_MAIN_MENU
+
+:ZAME_OBJS_TP
+0581: enable_radar 1
+0619: enable_actor PLAYER_ACTOR collision_detection 0
+player.CanMove(PLAYER_CHAR,true)
+0E68: set_player_control_pad 0 1 
+0E69: set_player_control_pad_movement 0 0
+0D10: set_actor PLAYER_ACTOR alpha 0 // IF and SET
+PLAYER_NO_ITEMS_FLAG = 1
+wait 250
+
+if
+ZAME_START_FROM_OBJ_FLAG == 0
+then
+0512: show_permanent_text_box 'SE219' 
+else
+0512: show_permanent_text_box 'SE473' 
+end 
+
+if
+ZAME_LATEST_SELECTED_OBJECTIVE < 0
+then
+//0085: ZAME_OBJECTIVES_COUNT2 = ZAME_OBJECTIVES_COUNT // (int)
+0AF0: get_int ZAME_OBJECTIVES_COUNT2 from_ini_file "me\temp2.dat" section "OBJECTIVES_ORDER" key "TOTAL"
+//ZAME_OBJECTIVES_COUNT2 -= 1
+0085: 24@ = ZAME_OBJECTIVES_COUNT2 // (int)
+else
+0AF0: get_int ZAME_OBJECTIVES_COUNT2 from_ini_file "me\temp2.dat" section "OBJECTIVES_ORDER" key "TOTAL"
+0085: 24@ = ZAME_LATEST_SELECTED_OBJECTIVE // (int)   
+end
+
+if
+0AF0: 0@ = get_int_from_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "EDITOR_LAUNCH_OBJ_SAVED_NUM"
+then
+0AF0: 24@ = get_int_from_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "EDITOR_LAUNCH_OBJ_SAVED_NUM"    
+end
+
+//0AD3: v$RACE_FILE = format "OBJ%d" 24@
+0AD3: v$ZMEB_FILE = format "%d" 24@
+0AF4: v$RACE_FILE = read_string_from_ini_file "me\temp2.dat" section "OBJECTIVES_ORDER" key v$ZMEB_FILE
+gosub @ZAME_TP_TO_OBJ
+
+repeat
+wait 0
+
+ZAME_TEMP_FUCKEEE = 999
+if
+8AF0: not get_int ZAME_TEMP_FUCKEEE20 from_ini_file "me\temp2.dat" section "OBJECTIVES_EXTRA" key v$ZMEB_FILE
+then   
+0AF0: get_int ZAME_TEMP_FUCKEEE20 from_ini_file "me\temp2.dat" section "OBJECTIVES_USUAL" key v$ZMEB_FILE
+0AF5: write_string v$RACE_FILE to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "EDITOR_LAST_SELECTED_OBJ_STRING"      
+{$INCLUDE ZAME Objectives Scan 2.txt}
+else
+0AF0: get_int ZAME_TEMP_FUCKEEE20 from_ini_file "me\temp2.dat" section "OBJECTIVES_EXTRA" key v$ZMEB_FILE
+0AF5: write_string v$RACE_FILE to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "EDITOR_LAST_SELECTED_OBJ_STRING"  
+{$INCLUDE ZAME Objectives Scan Extra 2.txt}
+end
+
+//0AD1: show_formatted_text_highpriority "%d" time 2000 24@
+
+if
+ZAME_START_FROM_OBJ_FLAG == 0
+then
+
+if
+8A2A: not  text_box 'SE219' displayed
+then
+0512: show_permanent_text_box 'SE219' 
+end 
+
+else
+
+if
+8A2A: not  text_box 'SE473' displayed
+then
+0512: show_permanent_text_box 'SE473' 
+end 
+
+end
+
+00E2: get_player 0 key 1 state_to 0@
+if and
+0@ == -128
+32@ > 85
+    then
+    :SCAN_OBJ_PLUS
+    32@ = 0
+    
+    if
+    00E1:   player 0 pressed_key 14
+    then
+    24@ += 10
+    else
+    24@ += 1
+    end
+    
+//    0AD3: v$RACE_FILE = format "OBJ%d" 24@
+    0AD3: v$ZMEB_FILE = format "%d" 24@
+    0AF4: v$RACE_FILE = read_string_from_ini_file "me\temp2.dat" section "OBJECTIVES_ORDER" key v$ZMEB_FILE
+    
+    if
+    001D:   24@ > ZAME_OBJECTIVES_COUNT2  // (int)
+    then
+    24@ = 0
+//    0AD3: v$RACE_FILE = format "OBJ%d" 24@
+    0AD3: v$ZMEB_FILE = format "%d" 24@
+    0AF4: v$RACE_FILE = read_string_from_ini_file "me\temp2.dat" section "OBJECTIVES_ORDER" key v$ZMEB_FILE
+    end
+    
+    0AD1: show_formatted_text_highpriority "%s %s" time 2000 v$ZMEB_FILE v$RACE_FILE
+    
+    if or
+    0AF0: get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "DO_NOT_EXIST_PLEASE"
+    8AF2: not get_float 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_X"
+        then
+        //ass
+        
+        :ASS1_ASS2
+        24@ += 1
+        if
+        001D:   24@ > ZAME_OBJECTIVES_COUNT2  // (int)
+        then
+        24@ = 0
+        end
+        
+//        0AD3: v$RACE_FILE = format "OBJ%d" 24@
+        0AD3: v$ZMEB_FILE = format "%d" 24@
+        0AF4: v$RACE_FILE = read_string_from_ini_file "me\temp2.dat" section "OBJECTIVES_ORDER" key v$ZMEB_FILE
+        if or
+        0AF0: get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "DO_NOT_EXIST_PLEASE"
+        8AF2: not get_float 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_X"
+        then
+        jump to @ASS1_ASS2
+        else
+        gosub @ZAME_TP_TO_OBJ
+        end
+        
+        else    
+//        0AD3: v$RACE_FILE = format "OBJ%d" 24@
+        0AD3: v$ZMEB_FILE = format "%d" 24@
+        0AF4: v$RACE_FILE = read_string_from_ini_file "me\temp2.dat" section "OBJECTIVES_ORDER" key v$ZMEB_FILE
+        gosub @ZAME_TP_TO_OBJ    
+        end
+    
+    end
+    
+00E2: get_player 0 key 1 state_to 0@
+if and
+0@ == 128
+32@ > 85
+    then
+    :SCAN_OBJ_MINUS
+    32@ = 0
+    
+    if
+    00E1:   player 0 pressed_key 14
+    then
+    24@ -= 10
+    else
+    24@ -= 1
+    end
+    
+//    0AD3: v$RACE_FILE = format "OBJ%d" 24@
+    0AD3: v$ZMEB_FILE = format "%d" 24@
+    0AF4: v$RACE_FILE = read_string_from_ini_file "me\temp2.dat" section "OBJECTIVES_ORDER" key v$ZMEB_FILE
+    
+    if
+    24@ < 0
+    then
+    0085: 24@ = ZAME_OBJECTIVES_COUNT2 // (int)
+//    0AD3: v$RACE_FILE = format "OBJ%d" 24@
+    0AD3: v$ZMEB_FILE = format "%d" 24@
+    0AF4: v$RACE_FILE = read_string_from_ini_file "me\temp2.dat" section "OBJECTIVES_ORDER" key v$ZMEB_FILE
+    end
+    
+    0AD1: show_formatted_text_highpriority "%s %s" time 2000 v$ZMEB_FILE v$RACE_FILE
+    
+    if or
+    0AF0: get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "DO_NOT_EXIST_PLEASE"
+    8AF2: not get_float 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_X"
+        then
+        //ass
+        
+        :2ASS1_ASS2
+        24@ -= 1
+        if
+        24@ < 0
+        then
+        0085: 24@ = ZAME_OBJECTIVES_COUNT2 // (int)
+        end
+        
+//        0AD3: v$RACE_FILE = format "OBJ%d" 24@
+        0AD3: v$ZMEB_FILE = format "%d" 24@
+        0AF4: v$RACE_FILE = read_string_from_ini_file "me\temp2.dat" section "OBJECTIVES_ORDER" key v$ZMEB_FILE
+        if or
+        0AF0: get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "DO_NOT_EXIST_PLEASE"
+        8AF2: not get_float 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_X"
+        then
+        jump to @2ASS1_ASS2
+        else
+        gosub @ZAME_TP_TO_OBJ
+        end
+        
+        else    
+//        0AD3: v$RACE_FILE = format "OBJ%d" 24@
+        0AD3: v$ZMEB_FILE = format "%d" 24@
+        0AF4: v$RACE_FILE = read_string_from_ini_file "me\temp2.dat" section "OBJECTIVES_ORDER" key v$ZMEB_FILE
+        gosub @ZAME_TP_TO_OBJ    
+        end
+    
+    end
+    
+if and
+0E3E: is_button_just_pressed 0 button 4
+ZAME_START_FROM_OBJ_FLAG == 0
+    then
+    if and
+    8AF0: not get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "DO_NOT_EXIST_PLEASE"
+    0AF2: get_float 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_X"
+        then
+        :ZAME_RECREATE_USUAL_OBJ_JUMP
+        
+        if or
+        29@ == 24
+        29@ == 26
+        then
+        text.ClearAll()
+        text.ShowH('SE430',2000,1)
+        wait 2000
+        jump to @ZAME_OBJS_TP
+        end
+        
+        0085: ZAME_RECREATE_INDEX = 24@ // (int)
+        0AD3: v$RACE_FILE = format "OBJ%d" ZAME_RECREATE_INDEX
+        0AF0: get_int 29@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_TYPE"
+        ZAME_TEMP_FUCKEEE = 0
+        0619: enable_actor PLAYER_ACTOR collision_detection 1
+        player.CanMove(PLAYER_CHAR) = true
+        0E68: set_player_control_pad 0 1 
+        0E69: set_player_control_pad_movement 0 1
+        0D10: set_actor PLAYER_ACTOR alpha 255 // IF and SET   
+        jump to @RECREATE_OBJECTIVE_JUMP
+        end
+    end
+    
+if and
+0E3E: is_button_just_pressed 0 button 15
+ZAME_START_FROM_OBJ_FLAG >= 1
+    then
+    if and
+    8AF0: not get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "DO_NOT_EXIST_PLEASE"
+    0AF2: get_float 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_X"
+        then
+        
+        :ZAME_START_FROM_OBJ_JUMP
+        
+        //////////////////////////////
+
+        text.ClearAll()
+        text.RemoveTextBox()
+        player.CanMove(PLAYER_CHAR,true)
+        0619: enable_actor PLAYER_ACTOR collision_detection 1
+        0E68: set_player_control_pad 0 1 
+        0E69: set_player_control_pad_movement 0 1
+        0D10: set_actor PLAYER_ACTOR alpha 255 // IF and SET
+        
+        $SOUND_OFF_1 = 1
+        fade 0 250
+        wait 250
+        
+        0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "EDITOR_START"
+        0AF1: write_int ZAME_MISSION_LOAD_NUMBER to_ini_file "saves/ZACM.set" section "SCR" key "EDITOR_LOAD_MIS_NUM"
+        0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "NO_INIT_TEXT_FLAG"
+        0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "EDITOR_LAUNCH_MISSION"
+        0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "EDITOR_LAUNCH_FROM_OBJ"
+        0AF1: write_int 24@ to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "EDITOR_LAUNCH_OBJ_SAVED_NUM"
+        0AF5: write_string v$RACE_FILE to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "EDITOR_LAUNCH_OBJ_STRING"
+        0AF0: get_int 1@ from_ini_file "saves\ZACM.set" section "SCR" key "EDITOR_LAUNCH_FROM_OBJ_NO_SIM_MODE"
+        if
+        1@ == 1
+        then
+        0AF1: write_int 24@ to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "EDITOR_LAUNCH_OBJ_NUM"
+        end
+                
+        gosub @MISSION_SAVE_INITIALIZATION
+        0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
+        wait 9999
+        
+        end    
+    end
+    
+if and
+0E3E: is_button_just_pressed 0 button 15
+ZAME_START_FROM_OBJ_FLAG == 0
+    then    
+    if and
+    8AF0: not get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "DO_NOT_EXIST_PLEASE"
+    0AF2: get_float 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_X"
+        then
+        :ZAME_CREATE_EXTRA_OBJ_JUMP
+        
+        //////////////////////////////
+
+        text.ClearAll()
+        text.RemoveTextBox()
+        player.CanMove(PLAYER_CHAR,true)
+        0619: enable_actor PLAYER_ACTOR collision_detection 1
+        0E68: set_player_control_pad 0 1 
+        0E69: set_player_control_pad_movement 0 1
+        0D10: set_actor PLAYER_ACTOR alpha 255 // IF and SET
+        
+        0512: show_permanent_text_box 'SE288'
+        
+        while true
+        wait 0
+            
+        if
+        0E3E: is_button_just_pressed 0 button 15
+            then
+            player.CanMove(PLAYER_CHAR,false)
+            text.ClearAll()
+            break
+            end
+            
+        if
+        0E3E: is_button_just_pressed 0 button 11
+            then
+            text.ClearAll()        
+            jump to @ZAME_OBJS_TP
+            end
+            
+        end
+            
+        //////////////////////////////
+        
+        0AD3: v$ZMEB_FILE = format "OBJ%dA" 24@        
+        if
+        8AF2: not get_float 1@ from_ini_file "me\temp.dat" section v$ZMEB_FILE key "OBJECTIVE_X"
+            then
+            0AD3: v$RACB_FILE = format "OBJ%dA" 24@
+            jump to @CREATE_EXTRA_OBJECTIVE_JUMP_BETWEEN_OBJECTIVES
+            end
+        
+        0AD3: v$ZMEB_FILE = format "OBJ%dB" 24@        
+        if
+        8AF2: not get_float 1@ from_ini_file "me\temp.dat" section v$ZMEB_FILE key "OBJECTIVE_X"
+            then
+            0AD3: v$RACB_FILE = format "OBJ%dB" 24@
+            jump to @CREATE_EXTRA_OBJECTIVE_JUMP_BETWEEN_OBJECTIVES
+            end
+            
+        0AD3: v$ZMEB_FILE = format "OBJ%dC" 24@        
+        if
+        8AF2: not get_float 1@ from_ini_file "me\temp.dat" section v$ZMEB_FILE key "OBJECTIVE_X"
+            then
+            0AD3: v$RACB_FILE = format "OBJ%dC" 24@
+            jump to @CREATE_EXTRA_OBJECTIVE_JUMP_BETWEEN_OBJECTIVES
+            end
+            
+        0AD3: v$ZMEB_FILE = format "OBJ%dD" 24@        
+        if
+        8AF2: not get_float 1@ from_ini_file "me\temp.dat" section v$ZMEB_FILE key "OBJECTIVE_X"
+            then
+            0AD3: v$RACB_FILE = format "OBJ%dD" 24@
+            jump to @CREATE_EXTRA_OBJECTIVE_JUMP_BETWEEN_OBJECTIVES
+            end
+            
+        0AD3: v$ZMEB_FILE = format "OBJ%dE" 24@        
+        if
+        8AF2: not get_float 1@ from_ini_file "me\temp.dat" section v$ZMEB_FILE key "OBJECTIVE_X"
+            then
+            0AD3: v$RACB_FILE = format "OBJ%dE" 24@
+            jump to @CREATE_EXTRA_OBJECTIVE_JUMP_BETWEEN_OBJECTIVES
+            end
+            
+        0AD3: v$ZMEB_FILE = format "OBJ%dF" 24@        
+        if
+        8AF2: not get_float 1@ from_ini_file "me\temp.dat" section v$ZMEB_FILE key "OBJECTIVE_X"
+            then
+            0AD3: v$RACB_FILE = format "OBJ%dF" 24@
+            jump to @CREATE_EXTRA_OBJECTIVE_JUMP_BETWEEN_OBJECTIVES
+            end
+            
+        0AD3: v$ZMEB_FILE = format "OBJ%dG" 24@        
+        if
+        8AF2: not get_float 1@ from_ini_file "me\temp.dat" section v$ZMEB_FILE key "OBJECTIVE_X"
+            then
+            0AD3: v$RACB_FILE = format "OBJ%dG" 24@
+            jump to @CREATE_EXTRA_OBJECTIVE_JUMP_BETWEEN_OBJECTIVES
+            end
+            
+        0AD3: v$ZMEB_FILE = format "OBJ%dH" 24@        
+        if
+        8AF2: not get_float 1@ from_ini_file "me\temp.dat" section v$ZMEB_FILE key "OBJECTIVE_X"
+            then
+            0AD3: v$RACB_FILE = format "OBJ%dH" 24@
+            jump to @CREATE_EXTRA_OBJECTIVE_JUMP_BETWEEN_OBJECTIVES
+            end
+            
+        0AD3: v$ZMEB_FILE = format "OBJ%dI" 24@        
+        if
+        8AF2: not get_float 1@ from_ini_file "me\temp.dat" section v$ZMEB_FILE key "OBJECTIVE_X"
+            then
+            0AD3: v$RACB_FILE = format "OBJ%dI" 24@
+            jump to @CREATE_EXTRA_OBJECTIVE_JUMP_BETWEEN_OBJECTIVES
+            end
+            
+        0AD3: v$ZMEB_FILE = format "OBJ%dJ" 24@        
+        if
+        8AF2: not get_float 1@ from_ini_file "me\temp.dat" section v$ZMEB_FILE key "OBJECTIVE_X"
+            then
+            0AD3: v$RACB_FILE = format "OBJ%dJ" 24@
+            jump to @CREATE_EXTRA_OBJECTIVE_JUMP_BETWEEN_OBJECTIVES
+            end
+            
+        0AD3: v$ZMEB_FILE = format "OBJ%dK" 24@        
+        if
+        8AF2: not get_float 1@ from_ini_file "me\temp.dat" section v$ZMEB_FILE key "OBJECTIVE_X"
+            then
+            0AD3: v$RACB_FILE = format "OBJ%dK" 24@
+            jump to @CREATE_EXTRA_OBJECTIVE_JUMP_BETWEEN_OBJECTIVES
+            end
+            
+        0AD3: v$ZMEB_FILE = format "OBJ%dL" 24@        
+        if
+        8AF2: not get_float 1@ from_ini_file "me\temp.dat" section v$ZMEB_FILE key "OBJECTIVE_X"
+            then
+            0AD3: v$RACB_FILE = format "OBJ%dL" 24@
+            jump to @CREATE_EXTRA_OBJECTIVE_JUMP_BETWEEN_OBJECTIVES
+            end
+            
+        0AD3: v$ZMEB_FILE = format "OBJ%dM" 24@        
+        if
+        8AF2: not get_float 1@ from_ini_file "me\temp.dat" section v$ZMEB_FILE key "OBJECTIVE_X"
+            then
+            0AD3: v$RACB_FILE = format "OBJ%dM" 24@
+            jump to @CREATE_EXTRA_OBJECTIVE_JUMP_BETWEEN_OBJECTIVES
+            end
+            
+        0AD3: v$ZMEB_FILE = format "OBJ%dN" 24@        
+        if
+        8AF2: not get_float 1@ from_ini_file "me\temp.dat" section v$ZMEB_FILE key "OBJECTIVE_X"
+            then
+            0AD3: v$RACB_FILE = format "OBJ%dN" 24@
+            jump to @CREATE_EXTRA_OBJECTIVE_JUMP_BETWEEN_OBJECTIVES
+            end
+            
+        0AD3: v$ZMEB_FILE = format "OBJ%dO" 24@        
+        if
+        8AF2: not get_float 1@ from_ini_file "me\temp.dat" section v$ZMEB_FILE key "OBJECTIVE_X"
+            then
+            0AD3: v$RACB_FILE = format "OBJ%dO" 24@
+            jump to @CREATE_EXTRA_OBJECTIVE_JUMP_BETWEEN_OBJECTIVES
+            end
+            
+        0AD3: v$ZMEB_FILE = format "OBJ%dP" 24@        
+        if
+        8AF2: not get_float 1@ from_ini_file "me\temp.dat" section v$ZMEB_FILE key "OBJECTIVE_X"
+            then
+            0AD3: v$RACB_FILE = format "OBJ%dP" 24@
+            jump to @CREATE_EXTRA_OBJECTIVE_JUMP_BETWEEN_OBJECTIVES
+            end
+            
+        0AD3: v$ZMEB_FILE = format "OBJ%dQ" 24@        
+        if
+        8AF2: not get_float 1@ from_ini_file "me\temp.dat" section v$ZMEB_FILE key "OBJECTIVE_X"
+            then
+            0AD3: v$RACB_FILE = format "OBJ%dQ" 24@
+            jump to @CREATE_EXTRA_OBJECTIVE_JUMP_BETWEEN_OBJECTIVES
+            end
+            
+        0AD3: v$ZMEB_FILE = format "OBJ%dR" 24@        
+        if
+        8AF2: not get_float 1@ from_ini_file "me\temp.dat" section v$ZMEB_FILE key "OBJECTIVE_X"
+            then
+            0AD3: v$RACB_FILE = format "OBJ%dR" 24@
+            jump to @CREATE_EXTRA_OBJECTIVE_JUMP_BETWEEN_OBJECTIVES
+            end
+            
+        0AD3: v$ZMEB_FILE = format "OBJ%dS" 24@        
+        if
+        8AF2: not get_float 1@ from_ini_file "me\temp.dat" section v$ZMEB_FILE key "OBJECTIVE_X"
+            then
+            0AD3: v$RACB_FILE = format "OBJ%dS" 24@
+            jump to @CREATE_EXTRA_OBJECTIVE_JUMP_BETWEEN_OBJECTIVES
+            end
+            
+        0AD3: v$ZMEB_FILE = format "OBJ%dT" 24@        
+        if
+        8AF2: not get_float 1@ from_ini_file "me\temp.dat" section v$ZMEB_FILE key "OBJECTIVE_X"
+            then
+            0AD3: v$RACB_FILE = format "OBJ%dT" 24@
+            jump to @CREATE_EXTRA_OBJECTIVE_JUMP_BETWEEN_OBJECTIVES
+            end
+            
+        0AD3: v$ZMEB_FILE = format "OBJ%dU" 24@        
+        if
+        8AF2: not get_float 1@ from_ini_file "me\temp.dat" section v$ZMEB_FILE key "OBJECTIVE_X"
+            then
+            0AD3: v$RACB_FILE = format "OBJ%dU" 24@
+            jump to @CREATE_EXTRA_OBJECTIVE_JUMP_BETWEEN_OBJECTIVES
+            end
+            
+        0AD3: v$ZMEB_FILE = format "OBJ%dV" 24@        
+        if
+        8AF2: not get_float 1@ from_ini_file "me\temp.dat" section v$ZMEB_FILE key "OBJECTIVE_X"
+            then
+            0AD3: v$RACB_FILE = format "OBJ%dV" 24@
+            jump to @CREATE_EXTRA_OBJECTIVE_JUMP_BETWEEN_OBJECTIVES
+            end
+            
+        0AD3: v$ZMEB_FILE = format "OBJ%dW" 24@        
+        if
+        8AF2: not get_float 1@ from_ini_file "me\temp.dat" section v$ZMEB_FILE key "OBJECTIVE_X"
+            then
+            0AD3: v$RACB_FILE = format "OBJ%dW" 24@
+            jump to @CREATE_EXTRA_OBJECTIVE_JUMP_BETWEEN_OBJECTIVES
+            end
+            
+        0AD3: v$ZMEB_FILE = format "OBJ%dX" 24@        
+        if
+        8AF2: not get_float 1@ from_ini_file "me\temp.dat" section v$ZMEB_FILE key "OBJECTIVE_X"
+            then
+            0AD3: v$RACB_FILE = format "OBJ%dX" 24@
+            jump to @CREATE_EXTRA_OBJECTIVE_JUMP_BETWEEN_OBJECTIVES
+            end
+            
+        0AD3: v$ZMEB_FILE = format "OBJ%dY" 24@        
+        if
+        8AF2: not get_float 1@ from_ini_file "me\temp.dat" section v$ZMEB_FILE key "OBJECTIVE_X"
+            then
+            0AD3: v$RACB_FILE = format "OBJ%dY" 24@
+            jump to @CREATE_EXTRA_OBJECTIVE_JUMP_BETWEEN_OBJECTIVES
+            end
+            
+        0AD3: v$ZMEB_FILE = format "OBJ%dZ" 24@        
+        if
+        8AF2: not get_float 1@ from_ini_file "me\temp.dat" section v$ZMEB_FILE key "OBJECTIVE_X"
+            then
+            0AD3: v$RACB_FILE = format "OBJ%dZ" 24@
+            jump to @CREATE_EXTRA_OBJECTIVE_JUMP_BETWEEN_OBJECTIVES
+            else
+            text.ClearAll()
+            text.ShowH('SE287',2000,1)
+            wait 2000            
+            end                                                                                                
+        
+        end
+    end                    
+
+until 0E3E: is_button_just_pressed 0 button 16
+
+:SCAN_OBJS_EXIT
+
+0AF1: write_int 24@ to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "EDITOR_LAUNCH_OBJ_SAVED_NUM"
+0619: enable_actor PLAYER_ACTOR collision_detection 1
+player.CanMove(PLAYER_CHAR) = true
+0E68: set_player_control_pad 0 1 
+0E69: set_player_control_pad_movement 0 1
+0D10: set_actor PLAYER_ACTOR alpha 255 // IF and SET
+PLAYER_NO_ITEMS_FLAG = 0
+text.RemoveTextBox()
+ZAME_TEMP_FUCKEEE = 0
+ZAME_START_FROM_OBJ_FLAG = 0
+
+jump @ZAME_OPEN_CHECK
+
+:CREATE_EXTRA_OBJECTIVE_JUMP_BETWEEN_OBJECTIVES
+0AF1: write_int 24@ to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "EDITOR_LAUNCH_OBJ_SAVED_NUM"
+0619: enable_actor PLAYER_ACTOR collision_detection 1
+0E68: set_player_control_pad 0 1 
+0E69: set_player_control_pad_movement 0 0
+0D10: set_actor PLAYER_ACTOR alpha 255 // IF and SET
+PLAYER_NO_ITEMS_FLAG = 0
+ZAME_TEMP_FUCKEEE = 0
+ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG = 1
+jump to @TARGETS_SETTINGS
+
+:ZAME_TP_TO_OBJ
+
+if
+0AF2: get_float 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_X"
+then
+    
+//fade 0 250
+//$HUD_REMOVE = 1
+//wait 250
+
+0AF2: get_float 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_X"
+0AF2: get_float 3@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_Y"
+0AF2: get_float 4@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_Z"
+
+if
+0AF2: get_float 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_X"
+    then   
+    actor.PutAtNoOffset(PLAYER_ACTOR,2@,3@,4@)
+    0AF0: get_int ZAME_TEMP_FUCKEEE from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_INT"
+    if
+    ZAME_TEMP_FUCKEEE < -1
+    then
+    ZAME_TEMP_FUCKEEE = 0
+    end
+    
+    select_interior ZAME_TEMP_FUCKEEE
+    0860: link_actor PLAYER_ACTOR to_interior ZAME_TEMP_FUCKEEE
+    create_thread @REFR_3D
+    text.ClearAll()
+    0085: ZAME_LATEST_SELECTED_OBJECTIVE = 24@ // (int)
+    end       
+    
+//fade 1 250
+//$HUD_REMOVE = 0
+//wait 250
+
+end    
+
+return
+
+:ZAME_NIGHTVISION
+
+if
+099D:   night_vision_enabled
+then
+08B1: enable_night_vision 0
+else
+08B1: enable_night_vision 1
+end
+
+0581: enable_radar 1
+player.CanMove(PLAYER_CHAR) = true  
+0E68: set_player_control_pad 1 1 
+0E69: set_player_control_pad_movement 0 1
+
+jump @ZAME_OPEN_CHECK 
+
+:ZAME_JETPACK
+
+if
+8A0C: not  player PLAYER_CHAR on_jetpack
+then
+07A7: put_jetpack_on_actor PLAYER_ACTOR
+else
+0792: disembark_instantly_actor PLAYER_ACTOR
+end
+
+0581: enable_radar 1
+player.CanMove(PLAYER_CHAR) = true  
+0E68: set_player_control_pad 1 1 
+0E69: set_player_control_pad_movement 0 1
+
+jump @ZAME_OPEN_CHECK 
+
+:ZAME_OBJS_ID
+
+0EFE: get_loaded_library "viewmodelsinfo.sa.asi" store_to 0@
+0@ += 0x29720
+0A8D: 1@ = read_memory 0@ size 1 virtual_protect 0
+if
+1@ == 0
+then
+0A8C: write_memory 0@ size 1 value 1 virtual_protect 0
+ZAME_VIEW_OBJECTS_ID_MODE = 1
+else
+0A8C: write_memory 0@ size 1 value 0 virtual_protect 0
+ZAME_VIEW_OBJECTS_ID_MODE = 0
+end
+
+0581: enable_radar 1
+player.CanMove(PLAYER_CHAR) = true  
+0E68: set_player_control_pad 1 1 
+0E69: set_player_control_pad_movement 0 1
+
+jump @ZAME_OPEN_CHECK 
+
+:zame_menu_38261
+
+0581: enable_radar 1
+0AB6: store_target_marker_coords_to 0@ 1@ 2@ // IF and SET
+  
+Actor.PutAt(PLAYER_ACTOR, 0@, 1@, -100.0)
+renderer 0@ 1@
+renderer2 0@ 1@ 3@
+wait 0
+Actor.StorePos(PLAYER_ACTOR,0@,1@,3@)
+if
+3@ < 1.0
+then
+092E: get_water_height_at 0@ 1@ ignore_waves 0 store_to 3@
+Actor.PutAt(PLAYER_ACTOR, 0@, 1@, 3@)
+else
+Actor.PutAt(PLAYER_ACTOR, 0@, 1@, -100.0)
+end
+
+select_interior 0 
+0860: link_actor PLAYER_ACTOR to_interior 0
+09F1: play_audio_at_actor PLAYER_ACTOR event 1138 
+//0915: sync_weather_with_time_and_location_instantly  
+fade 1 100
+player.CanMove(PLAYER_CHAR) = true  
+0E68: set_player_control_pad 1 1 
+0E69: set_player_control_pad_movement 0 1
+ 
+jump @ZAME_OPEN_CHECK  
+
+:ZAME_INT_VIEW
+0581: enable_radar 1
+wait 250
+gosub @INTTOOL_ZAME_47 
+gosub @INTTOOL_ZAME_10094 
+jump @ZAME_OPEN_CHECK 
+
+:ZAME_TOOLS_RECREATE_SOMETHING
+0512: show_permanent_text_box 'se2' 
+08D4: $PANEL = create_panel_with_title 'se12' position 72.0 160.0 width 150.0 columns 1 interactive 1 background 1 alignment 1 
+08DB: set_panel $PANEL column 0 header 'dummy' data 'SE167' 'SE166' 'SE273' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 
+wait 100 
+
+:zame_menu_RECREATE_38064
+wait 0 
+if 
+00E1:   player 0 pressed_key 15 
+jf @zame_menu_RECREATE_38097 
+08DA: remove_panel $PANEL 
+jump @zame_menu_37888 
+
+:zame_menu_RECREATE_38097
+wait 0 
+if 
+00E1:   player 0 pressed_key 16 
+jf @zame_menu_RECREATE_38064 
+08D7: 24@ = panel $PANEL active_row 
+08DA: remove_panel $PANEL 
+03E6: remove_text_box 
+0871: init_jump_table 24@ total_jumps 3 default_jump 0 @ZAME_MAIN_MENU jumps 0 @ZAME_TOOLS_RECREATE_OBJECT 1 @ZAME_TOOLS_RECREATE_OBJECTIVE 2 @ZAME_TOOLS_RECREATE_PICKUP 3 @ZAME_MAIN_MENU 4 @ZAME_MAIN_MENU 5 @ZAME_MAIN_MENU 6 @ZAME_MAIN_MENU 
+0872: jump_table_jumps 7 @ZAME_MAIN_MENU 8 @ZAME_MAIN_MENU 9 @ZAME_MAIN_MENU 10 @ZAME_MAIN_MENU 11 @ZAME_MAIN_MENU 12 @ZAME_MAIN_MENU 13 @ZAME_MAIN_MENU 14 @ZAME_MAIN_MENU 15 @ZAME_MAIN_MENU  
+
+:ZAME_TOOLS_RECREATE_OBJECT
+
+0512: show_permanent_text_box 'SE164'
+
+0AF0: 24@ = get_int_from_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "OBJECTS_COUNT"
+Player.CanMove(PLAYER_CHAR) = true
+
+repeat
+wait 0
+
+if
+0E3E: is_button_just_pressed 0 button 15
+    then
+    text.ClearAll()
+    Player.CanMove(PLAYER_CHAR) = false
+    jump to @ZAME_TOOLS_RECREATE_SOMETHING
+    end
+
+if and
+33@ > 2000
+02A0:   actor PLAYER_ACTOR stopped
+then
+33@ = 0
+0AD1: show_formatted_text_highpriority "searching for nearest objects..." time 250
+wait 250
+
+for ZAME_RECREATE_INDEX = 0 to 24@
+                                  
+0AD3: v$RACE_FILE = format "OBE%d" ZAME_RECREATE_INDEX
+0AF0: get_int 29@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJ_ID"
+0AF2: get_float $X from_ini_file "me\temp.dat" section v$RACE_FILE key "POS_X"
+0AF2: get_float $Y from_ini_file "me\temp.dat" section v$RACE_FILE key "POS_Y"
+0AF2: get_float $Z from_ini_file "me\temp.dat" section v$RACE_FILE key "POS_Z"
+
+if and
+0101:   actor PLAYER_ACTOR in_sphere $X $Y $Z radius 2.5 2.5 5.5 sphere 0 stopped
+8AF0: not get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "DO_NOT_EXIST_PLEASE"
+    then
+    
+    0AF0: get_int 29@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJ_ID"
+    0AF2: get_float 15@ from_ini_file "me\temp.dat" section v$RACE_FILE key "ANGLE_X"
+    0AF2: get_float 14@ from_ini_file "me\temp.dat" section v$RACE_FILE key "ANGLE_Y"
+    0AF2: get_float 13@ from_ini_file "me\temp.dat" section v$RACE_FILE key "ANGLE_Z"      
+    
+    32@ = 0
+    
+    {$INCLUDE newopcodes\forallobjs_cleoplus}
+    if
+    03CA:   object obj exists
+        then
+        0984: 1@ = object obj model
+        if and
+        003B:   1@ == 29@  // (int)
+        0EEC: locate_object_distance_to_coordinates obj pos $X $Y $Z radius 0.1
+            then
+            jump to @SHIIIET2B
+            end
+        end
+        
+//        until false
+
+    {$INCLUDE newopcodes\end}
+    
+    :SHIIIET2B
+    
+    08D2: object obj scale_model 1.25
+    
+    while true
+    wait 0
+    
+    0AD1: show_formatted_text_highpriority "object number %d, id %d, pos %f %f %f, angle %f %f %f" time 500 25@ 29@ $X $Y $Z 15@ 14@ 13@
+    
+    if
+    0E3E: is_button_just_pressed 0 button 15
+        then
+        08D2: object obj scale_model 0.99
+        text.ClearAll()
+        Player.CanMove(PLAYER_CHAR) = false
+        jump to @ZAME_TOOLS_RECREATE_SOMETHING
+        end
+    
+    if
+    0E3E: is_button_just_pressed 0 button 16
+        then
+        08D2: object obj scale_model 0.99
+        break
+        end
+        
+    if
+    8101: not  actor PLAYER_ACTOR in_sphere $X $Y $Z radius 2.5 2.5 5.5 sphere 0 stopped
+        then
+        08D2: object obj scale_model 0.99
+        0AD1: show_formatted_text_highpriority "searching for others nearest objects..." time 1000
+        wait 1000
+        break
+        end    
+    
+    end
+    
+    08D2: object obj scale_model 0.99
+    
+    if
+    0E3E: is_button_just_pressed 0 button 16
+        then
+        
+        text.ClearAll()
+        Player.CanMove(PLAYER_CHAR) = false
+        
+//        repeat
+//        wait 0
+        
+//        0AE3: 0@ = random_object_near_point $X $Y $Z in_radius 2.5 find_next 1 //IF and SET
+        
+        while true
+        wait 0
+        
+        {$INCLUDE newopcodes\forallobjs_cleoplus}
+        if
+        03CA:   object obj exists
+            then
+            0984: 1@ = object obj model
+            if and
+            003B:   1@ == 29@  // (int)
+            0EEC: locate_object_distance_to_coordinates obj pos $X $Y $Z radius 0.1
+                then
+                jump to @SHIIIETB
+                end
+            end
+        
+//        until false
+
+        {$INCLUDE newopcodes\end}
+        
+        end
+        
+        :SHIIIETB
+        
+//        08D2: object obj scale_model 1.25
+//        
+//        while true
+//        wait 0
+//        text.ShowH('SE471',10,1)
+//        
+//        if
+//        0E3E: is_button_just_pressed 0 button 11
+//            then
+//            08D2: object obj scale_model 0.99
+//            break
+//            end
+//            
+//        if or
+//        0E3E: is_button_just_pressed 0 button 10
+//        0E3E: is_button_just_pressed 0 button 15
+//            then
+//            08D2: object obj scale_model 0.99
+//            text.ClearAll()
+//            jump to @ZAME_TOOLS_DELETE_OBJECT            
+//            end    
+//        
+//        end
+        
+        object.Destroy(obj)        
+        ZAME_RECREATE_OBJECT_FLAG = 1
+        ZAME_DUBLICATE_OBJ_MODE = 0        
+        jump to @OBJECTS_MENU_32814
+        end
+    
+    end            
+    
+end  
+
+end  
+
+until false
+
+return
+
+:ZAME_TOOLS_RECREATE_PICKUP
+
+0512: show_permanent_text_box 'SE164B'
+
+0AF0: 24@ = get_int_from_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "PICKUPS_COUNT"
+Player.CanMove(PLAYER_CHAR) = true
+
+repeat
+wait 0
+
+if
+0E3E: is_button_just_pressed 0 button 15
+    then
+    text.ClearAll()
+    Player.CanMove(PLAYER_CHAR) = false
+    jump to @ZAME_TOOLS_RECREATE_SOMETHING
+    end
+
+for ZAME_RECREATE_INDEX = 0 to 24@
+                                  
+0AD3: v$RACE_FILE = format "PIC%d" ZAME_RECREATE_INDEX
+0AF2: get_float $X from_ini_file "me\temp.dat" section v$RACE_FILE key "PICKUP_X"
+0AF2: get_float $Y from_ini_file "me\temp.dat" section v$RACE_FILE key "PICKUP_Y"
+0AF2: get_float $Z from_ini_file "me\temp.dat" section v$RACE_FILE key "PICKUP_Z" 
+
+if and
+0101:   actor PLAYER_ACTOR in_sphere $X $Y $Z radius 0.5 0.5 5.5 sphere 0 stopped
+8AF0: not get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "DO_NOT_EXIST_PLEASE"
+    then
+    
+    0AF0: get_int 29@ from_ini_file "me\temp.dat" section v$RACE_FILE key "PICKUP_ID"
+    0AF0: get_int ZAME_TEMP_FUCKEEE3 from_ini_file "me\temp.dat" section v$RACE_FILE key "PICKUP_TYPE"
+    0AF0: get_int 15@ from_ini_file "me\temp.dat" section v$RACE_FILE key "PICKUP_AMMO"
+    
+    if
+    ZAME_TEMP_FUCKEEE3 == 0
+    then
+    0AD1: show_formatted_text_highpriority "pickup number %d, id %d, pos %f %f %f, ammo %d" time 500 ZAME_RECREATE_INDEX 29@ $X $Y $Z 15@
+    else
+    0AD1: show_formatted_text_highpriority "pickup number %d, id %d, pos %f %f %f" time 500 ZAME_RECREATE_INDEX 29@ $X $Y $Z
+    end
+     
+    if
+    0E3E: is_button_just_pressed 0 button 16
+        then        
+        0AF0: 0@ = get_int_from_ini_file "me\temp.dat" section v$RACE_FILE key "PICKUP_HANDLE"
+        
+//        repeat
+//        wait 0
+//        
+//        0E33: get_pickup_this_coord $X $Y $Z only_available 0 store_to 0@        
+//        if
+//        09D1:   pickup 0@ created
+//            then
+//            0E34: get_pickup_model 0@ 1@
+//            if
+//            003B:   1@ == 29@  // (int)
+//                then
+//                break
+//                end
+//            end
+//        
+//        until false
+        
+        pickup.Destroy(0@)
+                
+        0AF0: get_int ZAME_TEMP_FUCKEEE3 from_ini_file "me\temp.dat" section v$RACE_FILE key "PICKUP_TYPE"
+        if
+        not ZAME_TEMP_FUCKEEE3 == 0
+        then
+        0AF0: get_int 270@ from_ini_file "me\temp.dat" section v$RACE_FILE key "PICKUP_ID"
+        else
+        270@ = 1
+        end
+        0AF2: get_float $X from_ini_file "me\temp.dat" section v$RACE_FILE key "PICKUP_X"
+        0AF2: get_float $Y from_ini_file "me\temp.dat" section v$RACE_FILE key "PICKUP_Y"
+        0AF2: get_float $Z from_ini_file "me\temp.dat" section v$RACE_FILE key "PICKUP_Z"
+        0AF0: get_int 9@ from_ini_file "me\temp.dat" section v$RACE_FILE key "PICKUP_AMMO"
+        
+        ZAME_RECREATE_PICKUP_FLAG = 1
+        
+        if
+        ZAME_TEMP_FUCKEEE3 == 0
+        then        
+        jump to @zame_menu_29108
+        end
+        
+        if
+        ZAME_TEMP_FUCKEEE3 == 1
+        then        
+        jump to @zame_menu_30683
+        end
+        
+        if
+        ZAME_TEMP_FUCKEEE3 == 2
+        then        
+        jump to @zame_menu_31553
+        end
+        
+        if
+        ZAME_TEMP_FUCKEEE3 == 3
+        then        
+        jump to @zame_menu_adrenaline_31553
+        end
+        
+        end
+    end
+    
+end    
+
+until false
+
+return
+
+:ZAME_TOOLS_RECREATE_OBJECTIVE
+
+0512: show_permanent_text_box 'SE165'
+
+0AF0: 24@ = get_int_from_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "OBJECTIVES_COUNT"
+Player.CanMove(PLAYER_CHAR) = true
+
+repeat
+wait 0
+
+if
+0E3E: is_button_just_pressed 0 button 15
+    then
+    text.ClearAll()
+    Player.CanMove(PLAYER_CHAR) = false
+    jump to @ZAME_TOOLS_RECREATE_SOMETHING
+    end
+
+for ZAME_RECREATE_INDEX = 0 to 24@
+0AD3: v$RACE_FILE = format "OBJ%d" ZAME_RECREATE_INDEX
+0AF0: get_int 29@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_TYPE"
+0AF2: get_float 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_X"
+0AF2: get_float 3@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_Y"
+0AF2: get_float 4@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_Z"    
+
+if and
+0101:   actor PLAYER_ACTOR in_sphere 2@ 3@ 4@ radius 2.5 2.5 2.5 sphere 0 stopped
+8AF0: not get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "DO_NOT_EXIST_PLEASE"
+    then
+    0AD1: show_formatted_text_highpriority "objective number: %d, type: %d" time 500 ZAME_RECREATE_INDEX 29@ 
+    if
+    0E3E: is_button_just_pressed 0 button 16
+        then        
+        
+        if
+        29@ == 24
+        then
+        text.ClearAll()
+        text.ShowH('SE430',2000,1)
+        wait 2000
+        jump to @ZAME_TOOLS_RECREATE_OBJECTIVE
+        end
+        
+        :RECREATE_OBJECTIVE_JUMP
+        
+        ZAME_RECREATE_OBJECTIVE_FLAG = 1
+        Player.CanMove(PLAYER_CHAR) = true
+        
+        :RECREATE_OBJECTIVE_JUMP2
+        
+        if
+        29@ == 0
+        then
+        jump to @zame_menu_25139
+        end
+        
+        if
+        29@ == 1
+        then
+        jump to @zame_menu_teleport_25139
+        end
+        
+        if
+        29@ == 2
+        then
+        jump to @ZAME_SPEC_INF_CREATE_MENU
+        end
+        
+        if
+        29@ == 3
+        then
+        jump to @ZAME_ZSPAWN_CORD_CREATE_MENU
+        end
+        
+        if
+        29@ == 4
+        then
+        jump to @zame_menu_26769
+        end
+        
+        if
+        29@ == 5
+        then
+        jump to @zame_menu_27207
+        end
+        
+        if
+        29@ == 6
+        then
+        jump to @zame_menu_27645
+        end
+        
+        if
+        29@ == 7
+        then
+        jump to @zame_menu_object_move
+        end
+        
+        if
+        29@ == 8
+        then
+        jump to @FXT_NAME_SELECT
+        end
+        
+        if
+        29@ == 9
+        then
+        jump to @ZAME_CAMERA_ACTION
+        end
+        
+        if
+        29@ == 10
+        then
+        jump to @ZAME_PICKUP_OBJECTIVE_PRE
+        end
+        
+        if
+        29@ == 11
+        then
+        jump to @zame_menu_explode_trigger_27207
+        end
+        
+        if
+        29@ == 12
+        then
+        jump to @zame_menu_object_destroy
+        end
+        
+        if
+        29@ == 13
+        then
+        jump to @zame_menu_weather_change_21732
+        end
+        
+        if
+        29@ == 14
+        then
+        jump to @AUD_NAME_SELECT
+        end
+        
+        if
+        29@ == 15
+        then
+        jump to @MUS_NAME_SELECT
+        end
+        
+        if
+        29@ == 16
+        then
+        jump to @IFP_NAME_SELECT
+        end
+        
+        if
+        29@ == 17
+        then
+        jump to @TXD_NAME_SELECT
+        end
+        
+        if
+        29@ == 18
+        then
+        jump to @FADE_IN_OUT_SELECT
+        end
+        
+        if
+        29@ == 19
+        then
+        jump to @SAVESTATUS_ON_OFF_SELECT
+        end
+        
+        if
+        29@ == 20
+        then
+        jump to @BOMBARDING_SELECT
+        end
+        
+        if
+        29@ == 21
+        then
+        jump to @OBJECTIVE_GOTO_SELECT
+        end
+        
+        if
+        29@ == 22
+        then
+        jump to @ZAME_HUMAN_ENEMY_CREATE_MENU
+        end
+        
+        if
+        29@ == 23
+        then
+        jump to @zame_ally_jump_pre
+        end                
+        
+        if
+        29@ == 25
+        then
+        jump to @CAM_SHAKE_SELECT
+        end
+        
+        if
+        29@ == 27
+        then
+        jump to @CHANGE_TIME_OBJECTIVE_21408
+        end
+        
+        end
+    end
+    
+end    
+
+until false
+
+return
+
+:ZAME_TOOLS_DELETE_SOMETHING
+0512: show_permanent_text_box 'se2' 
+08D4: $PANEL = create_panel_with_title 'se12' position 72.0 160.0 width 150.0 columns 1 interactive 1 background 1 alignment 1 
+08DB: set_panel $PANEL column 0 header 'dummy' data 'SE167' 'SE166' 'SE273' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 
+wait 100 
+
+:zame_menu_DELETE_38064
+wait 0 
+if 
+00E1:   player 0 pressed_key 15 
+jf @zame_menu_DELETE_38097 
+08DA: remove_panel $PANEL 
+jump @zame_menu_37888 
+
+:zame_menu_DELETE_38097
+wait 0 
+if 
+00E1:   player 0 pressed_key 16 
+jf @zame_menu_DELETE_38064 
+08D7: 24@ = panel $PANEL active_row 
+08DA: remove_panel $PANEL 
+03E6: remove_text_box 
+0871: init_jump_table 24@ total_jumps 3 default_jump 0 @ZAME_MAIN_MENU jumps 0 @ZAME_TOOLS_DELETE_OBJECT 1 @ZAME_TOOLS_DELETE_OBJECTIVE 2 @ZAME_TOOLS_DELETE_PICKUP 3 @ZAME_MAIN_MENU 4 @ZAME_MAIN_MENU 5 @ZAME_MAIN_MENU 6 @ZAME_MAIN_MENU 
+0872: jump_table_jumps 7 @ZAME_MAIN_MENU 8 @ZAME_MAIN_MENU 9 @ZAME_MAIN_MENU 10 @ZAME_MAIN_MENU 11 @ZAME_MAIN_MENU 12 @ZAME_MAIN_MENU 13 @ZAME_MAIN_MENU 14 @ZAME_MAIN_MENU 15 @ZAME_MAIN_MENU
+
+:ZAME_TOOLS_DELETE_OBJECT
+
+0512: show_permanent_text_box 'SE172'
+
+0AF0: 24@ = get_int_from_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "OBJECTS_COUNT"
+Player.CanMove(PLAYER_CHAR) = true
+
+32@ = 0
+
+:ZAME_TOOLS_DELETE_OBJECT2
+
+repeat
+wait 0
+
+if
+0E3E: is_button_just_pressed 0 button 15
+    then
+    text.ClearAll()
+    Player.CanMove(PLAYER_CHAR) = false
+    jump to @ZAME_TOOLS_DELETE_SOMETHING
+    end
+    
+if and
+33@ > 2000
+02A0:   actor PLAYER_ACTOR stopped
+then
+33@ = 0
+0AD1: show_formatted_text_highpriority "searching for nearest objects..." time 250
+wait 250
+    
+for 25@ = 0 to 24@
+
+0AD3: v$RACE_FILE = format "OBE%d" 25@
+0AF2: get_float $X from_ini_file "me\temp.dat" section v$RACE_FILE key "POS_X"
+0AF2: get_float $Y from_ini_file "me\temp.dat" section v$RACE_FILE key "POS_Y"
+0AF2: get_float $Z from_ini_file "me\temp.dat" section v$RACE_FILE key "POS_Z"   
+
+if and
+0101:   actor PLAYER_ACTOR in_sphere $X $Y $Z radius 2.5 2.5 5.5 sphere 0 stopped
+8AF0: not get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "DO_NOT_EXIST_PLEASE"
+    then
+    0AF0: get_int 29@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJ_ID"
+    0AF2: get_float 15@ from_ini_file "me\temp.dat" section v$RACE_FILE key "ANGLE_X"
+    0AF2: get_float 14@ from_ini_file "me\temp.dat" section v$RACE_FILE key "ANGLE_Y"
+    0AF2: get_float 13@ from_ini_file "me\temp.dat" section v$RACE_FILE key "ANGLE_Z"      
+    
+    32@ = 0
+    
+    {$INCLUDE newopcodes\forallobjs_cleoplus}
+    if
+    03CA:   object obj exists
+        then
+        0984: 1@ = object obj model
+        if and
+        003B:   1@ == 29@  // (int)
+        0EEC: locate_object_distance_to_coordinates obj pos $X $Y $Z radius 0.1
+            then
+            jump to @SHIIIET2
+            end
+        end
+        
+//        until false
+
+    {$INCLUDE newopcodes\end}
+    
+    :SHIIIET2
+    
+    08D2: object obj scale_model 1.25
+    
+    while true
+    wait 0
+    
+    0AD1: show_formatted_text_highpriority "object number %d, id %d, pos %f %f %f, angle %f %f %f" time 500 25@ 29@ $X $Y $Z 15@ 14@ 13@
+    
+    if
+    0E3E: is_button_just_pressed 0 button 15
+        then
+        08D2: object obj scale_model 0.99
+        text.ClearAll()
+        Player.CanMove(PLAYER_CHAR) = false
+        jump to @ZAME_TOOLS_DELETE_SOMETHING
+        end
+    
+    if
+    0E3E: is_button_just_pressed 0 button 16
+        then
+        08D2: object obj scale_model 0.99
+        break
+        end
+        
+    if
+    8101: not  actor PLAYER_ACTOR in_sphere $X $Y $Z radius 2.5 2.5 5.5 sphere 0 stopped
+        then
+        08D2: object obj scale_model 0.99
+        0AD1: show_formatted_text_highpriority "searching for others nearest objects..." time 1000
+        wait 1000
+        break
+        end    
+    
+    end
+    
+    08D2: object obj scale_model 0.99
+    
+    if
+    0E3E: is_button_just_pressed 0 button 16
+        then
+        
+        text.ClearAll()
+        Player.CanMove(PLAYER_CHAR) = false
+        
+//        repeat
+//        wait 0
+        
+//        0AE3: 0@ = random_object_near_point $X $Y $Z in_radius 2.5 find_next 1 //IF and SET
+        
+        while true
+        wait 0
+        
+        {$INCLUDE newopcodes\forallobjs_cleoplus}
+        if
+        03CA:   object obj exists
+            then
+            0984: 1@ = object obj model
+            if and
+            003B:   1@ == 29@  // (int)
+            0EEC: locate_object_distance_to_coordinates obj pos $X $Y $Z radius 0.1
+                then
+                jump to @SHIIIET
+                end
+            end
+        
+//        until false
+
+        {$INCLUDE newopcodes\end}
+        
+        end
+        
+        :SHIIIET
+        
+        08D2: object obj scale_model 1.25
+        
+        while true
+        wait 0
+        text.ShowH('SE470',10,1)
+        
+        if
+        0E3E: is_button_just_pressed 0 button 11
+            then
+            08D2: object obj scale_model 0.99
+            break
+            end
+            
+        if
+        0E3E: is_button_just_pressed 0 button 10
+            then
+            08D2: object obj scale_model 0.99
+            text.ClearAll()
+            jump to @ZAME_TOOLS_DELETE_OBJECT            
+            end    
+        
+        end
+        
+        object.Destroy(obj)
+//        09A2: destroy_object_with_fade obj
+        0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "DO_NOT_EXIST_PLEASE"
+        01E5: show_text_1number_highpriority GXT 'SE170' number 25@ time 5000 flag 1
+                                        
+        jump to @ZAME_TOOLS_DELETE_SOMETHING
+        end
+    end
+    
+end   
+
+end 
+
+until false
+
+return
+
+:ZAME_TOOLS_DELETE_PICKUP
+
+0512: show_permanent_text_box 'SE172B'
+
+0AF0: 24@ = get_int_from_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "PICKUPS_COUNT"
+Player.CanMove(PLAYER_CHAR) = true
+
+repeat
+wait 0
+
+if
+0E3E: is_button_just_pressed 0 button 15
+    then
+    text.ClearAll()
+    Player.CanMove(PLAYER_CHAR) = false
+    jump to @ZAME_TOOLS_DELETE_SOMETHING
+    end
+
+for 25@ = 0 to 24@
+
+0AD3: v$RACE_FILE = format "PIC%d" 25@
+0AF2: get_float $X from_ini_file "me\temp.dat" section v$RACE_FILE key "PICKUP_X"
+0AF2: get_float $Y from_ini_file "me\temp.dat" section v$RACE_FILE key "PICKUP_Y"
+0AF2: get_float $Z from_ini_file "me\temp.dat" section v$RACE_FILE key "PICKUP_Z"    
+
+if and
+0101:   actor PLAYER_ACTOR in_sphere $X $Y $Z radius 0.5 0.5 5.5 sphere 0 stopped
+8AF0: not get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "DO_NOT_EXIST_PLEASE"
+29@ > 0
+    then
+    0AF0: get_int 29@ from_ini_file "me\temp.dat" section v$RACE_FILE key "PICKUP_ID"
+    0AF0: get_int 15@ from_ini_file "me\temp.dat" section v$RACE_FILE key "PICKUP_AMMO"
+    0AD1: show_formatted_text_highpriority "pickup number %d, id %d, pos %f %f %f, ammo %d" time 500 25@ 29@ $X $Y $Z 15@
+    if
+    0E3E: is_button_just_pressed 0 button 16
+        then
+        0AF0: 0@ = get_int_from_ini_file "me\temp.dat" section v$RACE_FILE key "PICKUP_HANDLE"
+        
+//        repeat
+//        wait 0
+//        
+//        0E33: get_pickup_this_coord $X $Y $Z only_available 0 store_to 0@        
+//        if
+//        09D1:   pickup 0@ created
+//            then
+//            0E34: get_pickup_model 0@ 1@
+//            if
+//            003B:   1@ == 29@  // (int)
+//                then
+//                break
+//                end
+//            end
+//        
+//        until false
+        
+        pickup.Destroy(0@)
+        0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "DO_NOT_EXIST_PLEASE"
+        01E5: show_text_1number_highpriority GXT 'SE170B' number 25@ time 5000 flag 1
+        Player.CanMove(PLAYER_CHAR) = false
+                                        
+        jump to @ZAME_TOOLS_DELETE_SOMETHING
+        end
+    end
+    
+end    
+
+until false
+
+return
+
+:ZAME_TOOLS_DELETE_OBJECTIVE
+
+0512: show_permanent_text_box 'SE173'
+
+0AF0: 24@ = get_int_from_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "OBJECTIVES_COUNT"
+24@ -= 1
+Player.CanMove(PLAYER_CHAR) = true
+
+repeat
+wait 0
+
+if
+0E3E: is_button_just_pressed 0 button 15
+    then
+    text.ClearAll()
+    Player.CanMove(PLAYER_CHAR) = false
+    jump to @ZAME_TOOLS_DELETE_SOMETHING
+    end
+
+for 25@ = 0 to 24@
+0AD3: v$RACE_FILE = format "OBJ%d" 25@
+0AF0: get_int 29@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_TYPE"
+0AF2: get_float 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_X"
+0AF2: get_float 3@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_Y"
+0AF2: get_float 4@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_Z"    
+
+if and
+0101:   actor PLAYER_ACTOR in_sphere 2@ 3@ 4@ radius 2.5 2.5 2.5 sphere 0 stopped
+8AF0: not get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "DO_NOT_EXIST_PLEASE"
+    then
+    0AD1: show_formatted_text_highpriority "objective number: %d, type: %d" time 500 25@ 29@ 
+    if
+    0E3E: is_button_just_pressed 0 button 16
+        then        
+        
+        0AF1: write_int 25@ to_ini_file "saves/ZACM.set" section "SCR" key "EDITOR_RECREATED_INDEX_NUM"
+        0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "DO_NOT_EXIST_PLEASE"
+        01E5: show_text_1number_highpriority GXT 'SE171' number 25@ time 5000 flag 1
+        ZAME_RECREATE_OBJECTIVE_FLAG = 1
+        Player.CanMove(PLAYER_CHAR) = false
+        
+        gosub @MISSION_SAVE_INITIALIZATION                        
+        
+        jump to @ZAME_TOOLS_DELETE_SOMETHING
+        
+        end
+    end
+    
+end    
+
+until false
+
+return
+
+:ZAME_EXTRA_SCANSHIT_READ_WAIT_OR_NOT_NEXT_OBJ
+
+0AF0: 29@ = get_int_from_ini_file from_ini_file "me\temp.dat" section v$RACE_FILE key "NO_WAIT_FOR_NEXT_OBJECTIVE"
+if
+29@ == 1
+then
+03F0: enable_text_draw 1 
+03E0: draw_text_behind_textures 1
+03E3: set_texture_to_be_drawn_antialiased 1 
+0342: set_text_draw_centered 1
+0344: set_text_draw_linewidth 640.0 for_centered_text
+033F: set_text_draw_letter_size 0.2 1.1 
+081C: draw_text_outline 1 RGBA 0 0 0 $HUD_ALPHA 
+0340: set_text_draw_RGBA 255 255 255 $HUD_ALPHA   
+    
+if
+UNITED_MAP == 1
+then    
+0349: set_text_draw_font UNITED_HUD_FONT_NUMBER
+end
+
+033E: set_draw_text_position 320.0 380.0 GXT "SE504"  // Push
+
+else
+
+03F0: enable_text_draw 1 
+03E0: draw_text_behind_textures 1
+03E3: set_texture_to_be_drawn_antialiased 1 
+0342: set_text_draw_centered 1
+0344: set_text_draw_linewidth 640.0 for_centered_text
+033F: set_text_draw_letter_size 0.2 1.1 
+081C: draw_text_outline 1 RGBA 0 0 0 $HUD_ALPHA 
+0340: set_text_draw_RGBA 255 255 255 $HUD_ALPHA   
+    
+if
+UNITED_MAP == 1
+then    
+0349: set_text_draw_font UNITED_HUD_FONT_NUMBER
+end
+
+033E: set_draw_text_position 320.0 380.0 GXT "SE505"  // Push
+
+end
+
+return
+
+:ZAME_EXTRA_SCANSHIT_READ_FXT_MODE
+
+0AF0: 29@ = get_int_from_ini_file from_ini_file "me\temp.dat" section v$RACE_FILE key "SHOW_AS_TEXTBOX"
+if
+29@ == 1
+then
+03F0: enable_text_draw 1 
+03E0: draw_text_behind_textures 1
+03E3: set_texture_to_be_drawn_antialiased 1 
+0342: set_text_draw_centered 1
+0344: set_text_draw_linewidth 640.0 for_centered_text
+033F: set_text_draw_letter_size 0.2 1.1 
+081C: draw_text_outline 1 RGBA 0 0 0 $HUD_ALPHA 
+0340: set_text_draw_RGBA 255 255 255 $HUD_ALPHA   
+    
+if
+UNITED_MAP == 1
+then    
+0349: set_text_draw_font UNITED_HUD_FONT_NUMBER
+end
+
+033E: set_draw_text_position 320.0 390.0 GXT "SE507"  // Push
+
+else
+
+03F0: enable_text_draw 1 
+03E0: draw_text_behind_textures 1
+03E3: set_texture_to_be_drawn_antialiased 1 
+0342: set_text_draw_centered 1
+0344: set_text_draw_linewidth 640.0 for_centered_text
+033F: set_text_draw_letter_size 0.2 1.1 
+081C: draw_text_outline 1 RGBA 0 0 0 $HUD_ALPHA 
+0340: set_text_draw_RGBA 255 255 255 $HUD_ALPHA   
+    
+if
+UNITED_MAP == 1
+then    
+0349: set_text_draw_font UNITED_HUD_FONT_NUMBER
+end
+
+033E: set_draw_text_position 320.0 390.0 GXT "SE506"  // Push
+
+end
+
+return
+
+:INTTOOL_ZAME_47
+0512: show_permanent_text_box 'INTHLP' 
+Player.CanMove(PLAYER_CHAR) = True
+1@ = -1 
+Actor.StorePos(PLAYER_ACTOR, $TRADER_SPHERE_X[0], $TRADER_SPHERE_X[1], $TRADER_SPHERE_X[2])
+$TRADER_SPHERE_X[3] = actor.Angle(PLAYER_ACTOR)
+077E: get_active_interior_to NO_INIT_TEXT_FLAG 
+
+:INTTOOL_ZAME_91
+80E1:   not player 0 pressed_key 16 
+jf @INTTOOL_ZAME_10005 
+if 
+0AB0:   key_pressed 13 
+jf @INTTOOL_ZAME_126 
+jump @INTTOOL_ZAME_10005 
+
+:INTTOOL_ZAME_126
+wait 0 
+if 
+00E1:   player 0 pressed_key 15 
+jf @INTTOOL_ZAME_156 
+jump @INTTOOL_ZAME_10007 
+return 
+
+:INTTOOL_ZAME_156
+if 
+00E1:   player 0 pressed_key 10 
+jf @INTTOOL_ZAME_211 
+
+:INTTOOL_ZAME_173
+wait 0 
+80E1:   not player 0 pressed_key 10 
+jf @INTTOOL_ZAME_173 
+8@ = 0 
+28@ += -1 
+9@ += -1 
+
+:INTTOOL_ZAME_211
+if 
+00E1:   player 0 pressed_key 11 
+jf @INTTOOL_ZAME_266 
+
+:INTTOOL_ZAME_228
+wait 0 
+80E1:   not player 0 pressed_key 11 
+jf @INTTOOL_ZAME_228 
+8@ = 1 
+28@ += 1 
+9@ += 1 
+
+:INTTOOL_ZAME_266
+if 
+00E1:   player 0 pressed_key 8 
+jf @INTTOOL_ZAME_314 
+
+:INTTOOL_ZAME_283
+wait 0 
+80E1:   not player 0 pressed_key 8 
+jf @INTTOOL_ZAME_283 
+28@ += -10 
+9@ += -10 
+
+:INTTOOL_ZAME_314
+if 
+00E1:   player 0 pressed_key 9 
+jf @INTTOOL_ZAME_362 
+
+:INTTOOL_ZAME_331
+wait 0 
+80E1:   not player 0 pressed_key 9 
+jf @INTTOOL_ZAME_331 
+28@ += 10 
+9@ += 10 
+
+:INTTOOL_ZAME_362
+if 
+  28@ > 153 
+jf @INTTOOL_ZAME_395 
+28@ = 0 
+9@ = 0 
+
+:INTTOOL_ZAME_395
+if 
+  0 > 28@ 
+jf @INTTOOL_ZAME_429 
+28@ = 153 
+9@ = 153 
+
+:INTTOOL_ZAME_429
+if 
+803B:   not  28@ == 1@ // (int) 
+jf @INTTOOL_ZAME_9998 
+
+:INTTOOL_ZAME_448
+wait 0 
+if and
+  28@ > -1 
+  11 > 28@ 
+jf @INTTOOL_ZAME_484 
+jump @INTTOOL_ZAME_936 
+
+:INTTOOL_ZAME_484
+if and
+  28@ > 10 
+  21 > 28@ 
+jf @INTTOOL_ZAME_516 
+jump @INTTOOL_ZAME_1548 
+
+:INTTOOL_ZAME_516
+if and
+  28@ > 20 
+  31 > 28@ 
+jf @INTTOOL_ZAME_548 
+jump @INTTOOL_ZAME_2105 
+
+:INTTOOL_ZAME_548
+if and
+  28@ > 30 
+  41 > 28@ 
+jf @INTTOOL_ZAME_580 
+jump @INTTOOL_ZAME_2722 
+
+:INTTOOL_ZAME_580
+if and
+  28@ > 40 
+  51 > 28@ 
+jf @INTTOOL_ZAME_612 
+jump @INTTOOL_ZAME_3279 
+
+:INTTOOL_ZAME_612
+if and
+  28@ > 50 
+  61 > 28@ 
+jf @INTTOOL_ZAME_644 
+jump @INTTOOL_ZAME_3856 
+
+:INTTOOL_ZAME_644
+if and
+  28@ > 60 
+  71 > 28@ 
+jf @INTTOOL_ZAME_676 
+jump @INTTOOL_ZAME_4433 
+
+:INTTOOL_ZAME_676
+if and
+  28@ > 70 
+  81 > 28@ 
+jf @INTTOOL_ZAME_708 
+jump @INTTOOL_ZAME_4990 
+
+:INTTOOL_ZAME_708
+if and
+  28@ > 80 
+  91 > 28@ 
+jf @INTTOOL_ZAME_740 
+jump @INTTOOL_ZAME_5547 
+
+:INTTOOL_ZAME_740
+if and
+  28@ > 90 
+  101 > 28@ 
+jf @INTTOOL_ZAME_772 
+jump @INTTOOL_ZAME_6184 
+
+:INTTOOL_ZAME_772
+if and
+  28@ > 100 
+  111 > 28@ 
+jf @INTTOOL_ZAME_804 
+jump @INTTOOL_ZAME_6781 
+
+:INTTOOL_ZAME_804
+if and
+  28@ > 110 
+  121 > 28@ 
+jf @INTTOOL_ZAME_836 
+jump @INTTOOL_ZAME_7398 
+
+:INTTOOL_ZAME_836
+if and
+  28@ > 120 
+  131 > 28@ 
+jf @INTTOOL_ZAME_869 
+jump @INTTOOL_ZAME_7975 
+
+:INTTOOL_ZAME_869
+if and
+  28@ > 130 
+  141 > 28@ 
+jf @INTTOOL_ZAME_903 
+jump @INTTOOL_ZAME_8535 
+
+:INTTOOL_ZAME_903
+if 
+  28@ > 140 
+jf @INTTOOL_ZAME_929 
+jump @INTTOOL_ZAME_9142 
+
+:INTTOOL_ZAME_929
+jump @INTTOOL_ZAME_10007 
+
+:INTTOOL_ZAME_936
+if 
+  28@ == 0 
+jf @INTTOOL_ZAME_991 
+3@ = -1266.59 
+4@ = -216.34 
+5@ = 1055.58 
+6@ = 7 
+
+:INTTOOL_ZAME_991
+if 
+  28@ == 1 
+jf @INTTOOL_ZAME_1046 
+3@ = 964.38 
+4@ = 2157.33 
+5@ = 1010.02 
+6@ = 1 
+
+:INTTOOL_ZAME_1046
+if 
+  28@ == 2 
+jf @INTTOOL_ZAME_1101 
+3@ = 286.15 
+4@ = -40.64 
+5@ = 1000.57 
+6@ = 1 
+
+:INTTOOL_ZAME_1101
+if 
+  28@ == 3 
+jf @INTTOOL_ZAME_1156 
+3@ = 285.849 
+4@ = -81.7867 
+5@ = 1001.516 
+6@ = 4 
+
+:INTTOOL_ZAME_1156
+if 
+  28@ == 4 
+jf @INTTOOL_ZAME_1211 
+3@ = 294.3226 
+4@ = -109.3972 
+5@ = 1001.516 
+6@ = 6 
+
+:INTTOOL_ZAME_1211
+if 
+  28@ == 5 
+jf @INTTOOL_ZAME_1266 
+3@ = 313.1814 
+4@ = -141.3382 
+5@ = 999.6016 
+6@ = 7 
+
+:INTTOOL_ZAME_1266
+if 
+  28@ == 6 
+jf @INTTOOL_ZAME_1321 
+3@ = 316.5298 
+4@ = -165.9228 
+5@ = 999.601 
+6@ = 6 
+
+:INTTOOL_ZAME_1321
+if 
+  28@ == 7 
+jf @INTTOOL_ZAME_1376 
+3@ = 1726.18 
+4@ = -1641.01 
+5@ = 19.27 
+6@ = 18 
+
+:INTTOOL_ZAME_1376
+if 
+  28@ == 8 
+jf @INTTOOL_ZAME_1431 
+3@ = 1703.75 
+4@ = -1668.48 
+5@ = 19.22 
+6@ = 18 
+
+:INTTOOL_ZAME_1431
+if 
+  28@ == 9 
+jf @INTTOOL_ZAME_1486 
+3@ = 493.39 
+4@ = -22.72 
+5@ = 999.69 
+6@ = 17 
+
+:INTTOOL_ZAME_1486
+if 
+  28@ == 10 
+jf @INTTOOL_ZAME_1541 
+3@ = 501.98 
+4@ = -69.15 
+5@ = 997.84 
+6@ = 11 
+
+:INTTOOL_ZAME_1541
+jump @INTTOOL_ZAME_9870 
+
+:INTTOOL_ZAME_1548
+if 
+  28@ == 11 
+jf @INTTOOL_ZAME_1603 
+3@ = 418.65 
+4@ = -82.64 
+5@ = 1000.96 
+6@ = 3 
+
+:INTTOOL_ZAME_1603
+if 
+  28@ == 12 
+jf @INTTOOL_ZAME_1658 
+3@ = 412.02 
+4@ = -52.65 
+5@ = 1000.96 
+6@ = 12 
+
+:INTTOOL_ZAME_1658
+if 
+  28@ == 13 
+jf @INTTOOL_ZAME_1713 
+3@ = 411.63 
+4@ = -21.43 
+5@ = 1000.8 
+6@ = 2 
+
+:INTTOOL_ZAME_1713
+if 
+  28@ == 14 
+jf @INTTOOL_ZAME_1768 
+3@ = 1527.23 
+4@ = -11.57 
+5@ = 1001.27 
+6@ = 3 
+
+:INTTOOL_ZAME_1768
+if 
+  28@ == 15 
+jf @INTTOOL_ZAME_1823 
+3@ = 1523.51 
+4@ = -47.82 
+5@ = 1001.27 
+6@ = 2 
+
+:INTTOOL_ZAME_1823
+if 
+  28@ == 16 
+jf @INTTOOL_ZAME_1878 
+3@ = 1494.43 
+4@ = 1305.63 
+5@ = 1092.29 
+6@ = 3 
+
+:INTTOOL_ZAME_1878
+if 
+  28@ == 17 
+jf @INTTOOL_ZAME_1933 
+3@ = 744.54 
+4@ = 1437.67 
+5@ = 1101.74 
+6@ = 6 
+
+:INTTOOL_ZAME_1933
+if 
+  28@ == 18 
+jf @INTTOOL_ZAME_1988 
+3@ = 940.92 
+4@ = -17.01 
+5@ = 1000.18 
+6@ = 3 
+
+:INTTOOL_ZAME_1988
+if 
+  28@ == 19 
+jf @INTTOOL_ZAME_2043 
+3@ = 964.11 
+4@ = -53.21 
+5@ = 1000.18 
+6@ = 3 
+
+:INTTOOL_ZAME_2043
+if 
+  28@ == 20 
+jf @INTTOOL_ZAME_2098 
+3@ = 2807.62 
+4@ = -1171.9 
+5@ = 1024.58 
+6@ = 8 
+
+:INTTOOL_ZAME_2098
+jump @INTTOOL_ZAME_9870 
+
+:INTTOOL_ZAME_2105
+if 
+  28@ == 21 
+jf @INTTOOL_ZAME_2160 
+3@ = 2496.05 
+4@ = -1696.009 
+5@ = 1014.742 
+6@ = 3 
+
+:INTTOOL_ZAME_2160
+if 
+  28@ == 22 
+jf @INTTOOL_ZAME_2235 
+if 
+  8@ == 1 
+jf @INTTOOL_ZAME_2203 
+28@ += 1 
+
+:INTTOOL_ZAME_2203
+if 
+  8@ == 0 
+jf @INTTOOL_ZAME_2228 
+28@ += -1 
+
+:INTTOOL_ZAME_2228
+jump @INTTOOL_ZAME_448 
+
+:INTTOOL_ZAME_2235
+if 
+  28@ == 23 
+jf @INTTOOL_ZAME_2310 
+if 
+  8@ == 1 
+jf @INTTOOL_ZAME_2278 
+28@ += 1 
+
+:INTTOOL_ZAME_2278
+if 
+  8@ == 0 
+jf @INTTOOL_ZAME_2303 
+28@ += -1 
+
+:INTTOOL_ZAME_2303
+jump @INTTOOL_ZAME_448 
+
+:INTTOOL_ZAME_2310
+if 
+  28@ == 24 
+jf @INTTOOL_ZAME_2385 
+if 
+  8@ == 1 
+jf @INTTOOL_ZAME_2353 
+28@ += 1 
+
+:INTTOOL_ZAME_2353
+if 
+  8@ == 0 
+jf @INTTOOL_ZAME_2378 
+28@ += -1 
+
+:INTTOOL_ZAME_2378
+jump @INTTOOL_ZAME_448 
+
+:INTTOOL_ZAME_2385
+if 
+  28@ == 25 
+jf @INTTOOL_ZAME_2440 
+3@ = 2543.66 
+4@ = -1303.63 
+5@ = 1024.07 
+6@ = 2 
+
+:INTTOOL_ZAME_2440
+if 
+  28@ == 26 
+jf @INTTOOL_ZAME_2495 
+3@ = 1133.07 
+4@ = -9.57 
+5@ = 999.75 
+6@ = 12 
+
+:INTTOOL_ZAME_2495
+if 
+  28@ == 27 
+jf @INTTOOL_ZAME_2550 
+3@ = 2364.94 
+4@ = -1127.46 
+5@ = 1049.91 
+6@ = 8 
+
+:INTTOOL_ZAME_2550
+if 
+  28@ == 28 
+jf @INTTOOL_ZAME_2605 
+3@ = 2193.97 
+4@ = -1210.64 
+5@ = 1047.8 
+6@ = 6 
+
+:INTTOOL_ZAME_2605
+if 
+  28@ == 29 
+jf @INTTOOL_ZAME_2660 
+3@ = 255.14 
+4@ = -41.53 
+5@ = 1001.07 
+6@ = 14 
+
+:INTTOOL_ZAME_2660
+if 
+  28@ == 30 
+jf @INTTOOL_ZAME_2715 
+3@ = 2317.31 
+4@ = -1010.77 
+5@ = 1053.72 
+6@ = 9 
+
+:INTTOOL_ZAME_2715
+jump @INTTOOL_ZAME_9870 
+
+:INTTOOL_ZAME_2722
+if 
+  28@ == 31 
+jf @INTTOOL_ZAME_2777 
+3@ = 2285.34 
+4@ = -1137.63 
+5@ = 1049.93 
+6@ = 11 
+
+:INTTOOL_ZAME_2777
+if 
+  28@ == 32 
+jf @INTTOOL_ZAME_2832 
+3@ = 2262.777 
+4@ = -1137.931 
+5@ = 1050.633 
+6@ = 10 
+
+:INTTOOL_ZAME_2832
+if 
+  28@ == 33 
+jf @INTTOOL_ZAME_2887 
+3@ = 2257.352 
+4@ = -1212.03 
+5@ = 1049.023 
+6@ = 10 
+
+:INTTOOL_ZAME_2887
+if 
+  28@ == 34 
+jf @INTTOOL_ZAME_2942 
+3@ = 2492.39 
+4@ = -1707.66 
+5@ = 1017.35 
+6@ = 3 
+
+:INTTOOL_ZAME_2942
+if 
+  28@ == 35 
+jf @INTTOOL_ZAME_2997 
+3@ = 2333.8 
+4@ = -1073.6 
+5@ = 1048.05 
+6@ = 6 
+
+:INTTOOL_ZAME_2997
+if 
+  28@ == 36 
+jf @INTTOOL_ZAME_3052 
+3@ = 2332.68 
+4@ = -1142.33 
+5@ = 1053.32 
+6@ = 12 
+
+:INTTOOL_ZAME_3052
+if 
+  28@ == 37 
+jf @INTTOOL_ZAME_3107 
+3@ = 2319.48 
+4@ = -1210.72 
+5@ = 1048.07 
+6@ = 6 
+
+:INTTOOL_ZAME_3107
+if 
+  28@ == 38 
+jf @INTTOOL_ZAME_3162 
+3@ = 2252.354 
+4@ = -1139.902 
+5@ = 1050.633 
+6@ = 9 
+
+:INTTOOL_ZAME_3162
+if 
+  28@ == 39 
+jf @INTTOOL_ZAME_3217 
+3@ = 2237.568 
+4@ = -1072.15 
+5@ = 1049.023 
+6@ = 2 
+
+:INTTOOL_ZAME_3217
+if 
+  28@ == 40 
+jf @INTTOOL_ZAME_3272 
+3@ = 2232.65 
+4@ = -1112.23 
+5@ = 1049.88 
+6@ = 5 
+
+:INTTOOL_ZAME_3272
+jump @INTTOOL_ZAME_9870 
+
+:INTTOOL_ZAME_3279
+if 
+  28@ == 41 
+jf @INTTOOL_ZAME_3334 
+3@ = 2215.88 
+4@ = -1075.59 
+5@ = 1049.51 
+6@ = 1 
+
+:INTTOOL_ZAME_3334
+if 
+  28@ == 42 
+jf @INTTOOL_ZAME_3389 
+3@ = 161.2649 
+4@ = -90.9918 
+5@ = 1001.805 
+6@ = 18 
+
+:INTTOOL_ZAME_3389
+if 
+  28@ == 43 
+jf @INTTOOL_ZAME_3444 
+3@ = 207.74 
+4@ = -109.02 
+5@ = 1004.27 
+6@ = 15 
+
+:INTTOOL_ZAME_3444
+if 
+  28@ == 44 
+jf @INTTOOL_ZAME_3499 
+3@ = 226.29 
+4@ = -7.43 
+5@ = 1001.26 
+6@ = 5 
+
+:INTTOOL_ZAME_3499
+if 
+  28@ == 45 
+jf @INTTOOL_ZAME_3554 
+3@ = 204.33 
+4@ = -166.7 
+5@ = 999.58 
+6@ = 14 
+
+:INTTOOL_ZAME_3554
+if 
+  28@ == 46 
+jf @INTTOOL_ZAME_3609 
+3@ = 207.06 
+4@ = -138.81 
+5@ = 1002.52 
+6@ = 3 
+
+:INTTOOL_ZAME_3609
+if 
+  28@ == 47 
+jf @INTTOOL_ZAME_3664 
+3@ = 460.1 
+4@ = -88.43 
+5@ = 998.62 
+6@ = 4 
+
+:INTTOOL_ZAME_3664
+if 
+  28@ == 48 
+jf @INTTOOL_ZAME_3739 
+if 
+  8@ == 1 
+jf @INTTOOL_ZAME_3707 
+28@ += 1 
+
+:INTTOOL_ZAME_3707
+if 
+  8@ == 0 
+jf @INTTOOL_ZAME_3732 
+28@ += -1 
+
+:INTTOOL_ZAME_3732
+jump @INTTOOL_ZAME_448 
+
+:INTTOOL_ZAME_3739
+if 
+  28@ == 49 
+jf @INTTOOL_ZAME_3794 
+3@ = -1320.94 
+4@ = -602.38 
+5@ = 1062.63 
+6@ = 4 
+
+:INTTOOL_ZAME_3794
+if 
+  28@ == 50 
+jf @INTTOOL_ZAME_3849 
+3@ = -2029.72 
+4@ = -118.07 
+5@ = 1034.17 
+6@ = 3 
+
+:INTTOOL_ZAME_3849
+jump @INTTOOL_ZAME_9870 
+
+:INTTOOL_ZAME_3856
+if 
+  28@ == 51 
+jf @INTTOOL_ZAME_3911 
+3@ = -2029.72 
+4@ = -122.41 
+5@ = 34.17 
+6@ = 0 
+
+:INTTOOL_ZAME_3911
+if 
+  28@ == 52 
+jf @INTTOOL_ZAME_3986 
+if 
+  8@ == 1 
+jf @INTTOOL_ZAME_3954 
+28@ += 1 
+
+:INTTOOL_ZAME_3954
+if 
+  8@ == 0 
+jf @INTTOOL_ZAME_3979 
+28@ += -1 
+
+:INTTOOL_ZAME_3979
+jump @INTTOOL_ZAME_448 
+
+:INTTOOL_ZAME_3986
+if 
+  28@ == 53 
+jf @INTTOOL_ZAME_4041 
+3@ = -2027.92 
+4@ = -105.18 
+5@ = 1034.27 
+6@ = 3 
+
+:INTTOOL_ZAME_4041
+if 
+  28@ == 54 
+jf @INTTOOL_ZAME_4096 
+3@ = 364.892 
+4@ = -73.1152 
+5@ = 1001.508 
+6@ = 10 
+
+:INTTOOL_ZAME_4096
+if 
+  28@ == 55 
+jf @INTTOOL_ZAME_4151 
+3@ = 365.67 
+4@ = -10.71 
+5@ = 1000.87 
+6@ = 9 
+
+:INTTOOL_ZAME_4151
+if 
+  28@ == 56 
+jf @INTTOOL_ZAME_4206 
+3@ = 377.1 
+4@ = -192.44 
+5@ = 999.64 
+6@ = 17 
+
+:INTTOOL_ZAME_4206
+if 
+  28@ == 57 
+jf @INTTOOL_ZAME_4261 
+3@ = 372.35 
+4@ = -131.65 
+5@ = 1000.45 
+6@ = 5 
+
+:INTTOOL_ZAME_4261
+if 
+  28@ == 58 
+jf @INTTOOL_ZAME_4316 
+3@ = 452.49 
+4@ = -18.18 
+5@ = 1000.18 
+6@ = 1 
+
+:INTTOOL_ZAME_4316
+if 
+  28@ == 59 
+jf @INTTOOL_ZAME_4371 
+3@ = 2350.34 
+4@ = -1181.65 
+5@ = 1027.0 
+6@ = 5 
+
+:INTTOOL_ZAME_4371
+if 
+  28@ == 60 
+jf @INTTOOL_ZAME_4426 
+3@ = 833.82 
+4@ = 7.42 
+5@ = 1003.18 
+6@ = 3 
+
+:INTTOOL_ZAME_4426
+jump @INTTOOL_ZAME_9870 
+
+:INTTOOL_ZAME_4433
+if 
+  28@ == 61 
+jf @INTTOOL_ZAME_4488 
+3@ = 1302.52 
+4@ = -1.79 
+5@ = 999.93 
+6@ = 18 
+
+:INTTOOL_ZAME_4488
+if 
+  28@ == 62 
+jf @INTTOOL_ZAME_4543 
+3@ = 244.41 
+4@ = 305.03 
+5@ = 998.23 
+6@ = 1 
+
+:INTTOOL_ZAME_4543
+if 
+  28@ == 63 
+jf @INTTOOL_ZAME_4598 
+3@ = 271.89 
+4@ = 306.63 
+5@ = 998.33 
+6@ = 2 
+
+:INTTOOL_ZAME_4598
+if 
+  28@ == 64 
+jf @INTTOOL_ZAME_4653 
+3@ = 291.28 
+4@ = 310.03 
+5@ = 998.16 
+6@ = 3 
+
+:INTTOOL_ZAME_4653
+if 
+  28@ == 65 
+jf @INTTOOL_ZAME_4708 
+3@ = 302.18 
+4@ = 300.72 
+5@ = 998.23 
+6@ = 4 
+
+:INTTOOL_ZAME_4708
+if 
+  28@ == 66 
+jf @INTTOOL_ZAME_4763 
+3@ = 322.2 
+4@ = 302.5 
+5@ = 998.23 
+6@ = 5 
+
+:INTTOOL_ZAME_4763
+if 
+  28@ == 67 
+jf @INTTOOL_ZAME_4818 
+3@ = 344.92 
+4@ = 305.03 
+5@ = 998.23 
+6@ = 6 
+
+:INTTOOL_ZAME_4818
+if 
+  28@ == 68 
+jf @INTTOOL_ZAME_4873 
+3@ = 772.11 
+4@ = -3.9 
+5@ = 999.69 
+6@ = 5 
+
+:INTTOOL_ZAME_4873
+if 
+  28@ == 69 
+jf @INTTOOL_ZAME_4928 
+3@ = 774.21 
+4@ = -48.92 
+5@ = 999.69 
+6@ = 6 
+
+:INTTOOL_ZAME_4928
+if 
+  28@ == 70 
+jf @INTTOOL_ZAME_4983 
+3@ = 773.58 
+4@ = -77.1 
+5@ = 999.69 
+6@ = 7 
+
+:INTTOOL_ZAME_4983
+jump @INTTOOL_ZAME_9870 
+
+:INTTOOL_ZAME_4990
+if 
+  28@ == 71 
+jf @INTTOOL_ZAME_5045 
+3@ = 2.38 
+4@ = 33.1 
+5@ = 1198.85 
+6@ = 1 
+
+:INTTOOL_ZAME_5045
+if 
+  28@ == 72 
+jf @INTTOOL_ZAME_5100 
+3@ = 2265.79 
+4@ = 1619.58 
+5@ = 1089.5 
+6@ = 1 
+
+:INTTOOL_ZAME_5100
+if 
+  28@ == 73 
+jf @INTTOOL_ZAME_5155 
+3@ = 2265.78 
+4@ = 1675.93 
+5@ = 1089.5 
+6@ = 1 
+
+:INTTOOL_ZAME_5155
+if 
+  28@ == 74 
+jf @INTTOOL_ZAME_5210 
+3@ = 318.57 
+4@ = 1118.21 
+5@ = 1082.98 
+6@ = 5 
+
+:INTTOOL_ZAME_5210
+if 
+  28@ == 75 
+jf @INTTOOL_ZAME_5265 
+3@ = 203.78 
+4@ = -48.49 
+5@ = 1000.8 
+6@ = 1 
+
+:INTTOOL_ZAME_5265
+if 
+  28@ == 76 
+jf @INTTOOL_ZAME_5320 
+3@ = 225.76 
+4@ = 1240.0 
+5@ = 1081.15 
+6@ = 2 
+
+:INTTOOL_ZAME_5320
+if 
+  28@ == 77 
+jf @INTTOOL_ZAME_5375 
+3@ = 223.04 
+4@ = 1289.26 
+5@ = 1081.2 
+6@ = 1 
+
+:INTTOOL_ZAME_5375
+if 
+  28@ == 78 
+jf @INTTOOL_ZAME_5430 
+3@ = 260.98 
+4@ = 1286.55 
+5@ = 1079.3 
+6@ = 4 
+
+:INTTOOL_ZAME_5430
+if 
+  28@ == 79 
+jf @INTTOOL_ZAME_5485 
+3@ = 260.94 
+4@ = 1238.51 
+5@ = 1083.26 
+6@ = 9 
+
+:INTTOOL_ZAME_5485
+if 
+  28@ == 80 
+jf @INTTOOL_ZAME_5540 
+3@ = 234.05 
+4@ = 1064.88 
+5@ = 1083.31 
+6@ = 6 
+
+:INTTOOL_ZAME_5540
+jump @INTTOOL_ZAME_9870 
+
+:INTTOOL_ZAME_5547
+if 
+  28@ == 81 
+jf @INTTOOL_ZAME_5622 
+if 
+  8@ == 1 
+jf @INTTOOL_ZAME_5590 
+28@ += 1 
+
+:INTTOOL_ZAME_5590
+if 
+  8@ == 0 
+jf @INTTOOL_ZAME_5615 
+28@ += -1 
+
+:INTTOOL_ZAME_5615
+jump @INTTOOL_ZAME_448 
+
+:INTTOOL_ZAME_5622
+if 
+  28@ == 82 
+jf @INTTOOL_ZAME_5697 
+if 
+  8@ == 1 
+jf @INTTOOL_ZAME_5665 
+28@ += 1 
+
+:INTTOOL_ZAME_5665
+if 
+  8@ == 0 
+jf @INTTOOL_ZAME_5690 
+28@ += -1 
+
+:INTTOOL_ZAME_5690
+jump @INTTOOL_ZAME_448 
+
+:INTTOOL_ZAME_5697
+if 
+  28@ == 83 
+jf @INTTOOL_ZAME_5772 
+if 
+  8@ == 1 
+jf @INTTOOL_ZAME_5740 
+28@ += 1 
+
+:INTTOOL_ZAME_5740
+if 
+  8@ == 0 
+jf @INTTOOL_ZAME_5765 
+28@ += -1 
+
+:INTTOOL_ZAME_5765
+jump @INTTOOL_ZAME_448 
+
+:INTTOOL_ZAME_5772
+if 
+  28@ == 84 
+jf @INTTOOL_ZAME_5847 
+if 
+  8@ == 1 
+jf @INTTOOL_ZAME_5815 
+28@ += 1 
+
+:INTTOOL_ZAME_5815
+if 
+  8@ == 0 
+jf @INTTOOL_ZAME_5840 
+28@ += -1 
+
+:INTTOOL_ZAME_5840
+jump @INTTOOL_ZAME_448 
+
+:INTTOOL_ZAME_5847
+if 
+  28@ == 85 
+jf @INTTOOL_ZAME_5902 
+3@ = 1205.45 
+4@ = -5.2255 
+5@ = 1000.922 
+6@ = 2 
+
+:INTTOOL_ZAME_5902
+if 
+  28@ == 86 
+jf @INTTOOL_ZAME_5957 
+3@ = 1263.08 
+4@ = -785.31 
+5@ = 1090.96 
+6@ = 5 
+
+:INTTOOL_ZAME_5957
+if 
+  28@ == 87 
+jf @INTTOOL_ZAME_6012 
+3@ = 2233.91 
+4@ = 1710.73 
+5@ = 1010.18 
+6@ = 1 
+
+:INTTOOL_ZAME_6012
+if 
+  28@ == 88 
+jf @INTTOOL_ZAME_6067 
+3@ = 2268.74 
+4@ = 1647.52 
+5@ = 1083.23 
+6@ = 1 
+
+:INTTOOL_ZAME_6067
+if 
+  28@ == 89 
+jf @INTTOOL_ZAME_6122 
+3@ = 2138.61 
+4@ = 1599.54 
+5@ = 1007.41 
+6@ = 1 
+
+:INTTOOL_ZAME_6122
+if 
+  28@ == 90 
+jf @INTTOOL_ZAME_6177 
+3@ = 1299.08 
+4@ = -795.23 
+5@ = 1083.03 
+6@ = 5 
+
+:INTTOOL_ZAME_6177
+jump @INTTOOL_ZAME_9870 
+
+:INTTOOL_ZAME_6184
+if 
+  28@ == 91 
+jf @INTTOOL_ZAME_6239 
+3@ = 446.62 
+4@ = 509.32 
+5@ = 1000.42 
+6@ = 12 
+
+:INTTOOL_ZAME_6239
+if 
+  28@ == 92 
+jf @INTTOOL_ZAME_6294 
+3@ = 2216.34 
+4@ = -1150.51 
+5@ = 1024.8 
+6@ = 15 
+
+:INTTOOL_ZAME_6294
+if 
+  28@ == 93 
+jf @INTTOOL_ZAME_6369 
+if 
+  8@ == 1 
+jf @INTTOOL_ZAME_6337 
+28@ += 1 
+
+:INTTOOL_ZAME_6337
+if 
+  8@ == 0 
+jf @INTTOOL_ZAME_6362 
+28@ += -1 
+
+:INTTOOL_ZAME_6362
+jump @INTTOOL_ZAME_448 
+
+:INTTOOL_ZAME_6369
+if 
+  28@ == 94 
+jf @INTTOOL_ZAME_6424 
+3@ = 516.27 
+4@ = -16.61 
+5@ = 1000.46 
+6@ = 3 
+
+:INTTOOL_ZAME_6424
+if 
+  28@ == 95 
+jf @INTTOOL_ZAME_6479 
+3@ = 388.87 
+4@ = 173.81 
+5@ = 1007.39 
+6@ = 3 
+
+:INTTOOL_ZAME_6479
+if 
+  28@ == 96 
+jf @INTTOOL_ZAME_6534 
+3@ = -2661.85 
+4@ = 1426.39 
+5@ = 23.0 
+6@ = 0 
+
+:INTTOOL_ZAME_6534
+if 
+  28@ == 97 
+jf @INTTOOL_ZAME_6589 
+3@ = -2661.01 
+4@ = 1415.74 
+5@ = 922.31 
+6@ = 3 
+
+:INTTOOL_ZAME_6589
+if 
+  28@ == 98 
+jf @INTTOOL_ZAME_6664 
+if 
+  8@ == 1 
+jf @INTTOOL_ZAME_6632 
+28@ += 1 
+
+:INTTOOL_ZAME_6632
+if 
+  8@ == 0 
+jf @INTTOOL_ZAME_6657 
+28@ += -1 
+
+:INTTOOL_ZAME_6657
+jump @INTTOOL_ZAME_448 
+
+:INTTOOL_ZAME_6664
+if 
+  28@ == 99 
+jf @INTTOOL_ZAME_6719 
+3@ = -2637.45 
+4@ = 1404.63 
+5@ = 905.46 
+6@ = 3 
+
+:INTTOOL_ZAME_6719
+if 
+  28@ == 100 
+jf @INTTOOL_ZAME_6774 
+3@ = 246.78 
+4@ = 63.9 
+5@ = 1002.64 
+6@ = 6 
+
+:INTTOOL_ZAME_6774
+jump @INTTOOL_ZAME_9870 
+
+:INTTOOL_ZAME_6781
+if 
+  28@ == 101 
+jf @INTTOOL_ZAME_6836 
+3@ = 246.38 
+4@ = 109.25 
+5@ = 1002.28 
+6@ = 10 
+
+:INTTOOL_ZAME_6836
+if 
+  28@ == 102 
+jf @INTTOOL_ZAME_6891 
+3@ = 288.75 
+4@ = 169.35 
+5@ = 1006.18 
+6@ = 3 
+
+:INTTOOL_ZAME_6891
+if 
+  28@ == 103 
+jf @INTTOOL_ZAME_6946 
+3@ = 238.66 
+4@ = 141.05 
+5@ = 1002.05 
+6@ = 3 
+
+:INTTOOL_ZAME_6946
+if 
+  28@ == 104 
+jf @INTTOOL_ZAME_7001 
+3@ = -2239.57 
+4@ = 130.02 
+5@ = 1034.42 
+6@ = 6 
+
+:INTTOOL_ZAME_7001
+if 
+  28@ == 105 
+jf @INTTOOL_ZAME_7076 
+if 
+  8@ == 1 
+jf @INTTOOL_ZAME_7044 
+28@ += 1 
+
+:INTTOOL_ZAME_7044
+if 
+  8@ == 0 
+jf @INTTOOL_ZAME_7069 
+28@ += -1 
+
+:INTTOOL_ZAME_7069
+jump @INTTOOL_ZAME_448 
+
+:INTTOOL_ZAME_7076
+if 
+  28@ == 106 
+jf @INTTOOL_ZAME_7151 
+if 
+  8@ == 1 
+jf @INTTOOL_ZAME_7119 
+28@ += 1 
+
+:INTTOOL_ZAME_7119
+if 
+  8@ == 0 
+jf @INTTOOL_ZAME_7144 
+28@ += -1 
+
+:INTTOOL_ZAME_7144
+jump @INTTOOL_ZAME_448 
+
+:INTTOOL_ZAME_7151
+if 
+  28@ == 107 
+jf @INTTOOL_ZAME_7206 
+3@ = 2464.11 
+4@ = -1698.66 
+5@ = 1012.51 
+6@ = 2 
+
+:INTTOOL_ZAME_7206
+if 
+  28@ == 108 
+jf @INTTOOL_ZAME_7281 
+if 
+  8@ == 1 
+jf @INTTOOL_ZAME_7249 
+28@ += 1 
+
+:INTTOOL_ZAME_7249
+if 
+  8@ == 0 
+jf @INTTOOL_ZAME_7274 
+28@ += -1 
+
+:INTTOOL_ZAME_7274
+jump @INTTOOL_ZAME_448 
+
+:INTTOOL_ZAME_7281
+if 
+  28@ == 109 
+jf @INTTOOL_ZAME_7336 
+3@ = -100.33 
+4@ = -22.82 
+5@ = 999.74 
+6@ = 3 
+
+:INTTOOL_ZAME_7336
+if 
+  28@ == 110 
+jf @INTTOOL_ZAME_7391 
+3@ = 140.28 
+4@ = 1368.98 
+5@ = 1082.97 
+6@ = 5 
+
+:INTTOOL_ZAME_7391
+jump @INTTOOL_ZAME_9870 
+
+:INTTOOL_ZAME_7398
+if 
+  28@ == 111 
+jf @INTTOOL_ZAME_7473 
+if 
+  8@ == 1 
+jf @INTTOOL_ZAME_7441 
+28@ += 1 
+
+:INTTOOL_ZAME_7441
+if 
+  8@ == 0 
+jf @INTTOOL_ZAME_7466 
+28@ += -1 
+
+:INTTOOL_ZAME_7466
+jump @INTTOOL_ZAME_448 
+
+:INTTOOL_ZAME_7473
+if 
+  28@ == 112 
+jf @INTTOOL_ZAME_7528 
+3@ = 83.35 
+4@ = 1324.44 
+5@ = 1082.89 
+6@ = 9 
+
+:INTTOOL_ZAME_7528
+if 
+  28@ == 113 
+jf @INTTOOL_ZAME_7583 
+3@ = -285.55 
+4@ = 1470.98 
+5@ = 1083.45 
+6@ = 15 
+
+:INTTOOL_ZAME_7583
+if 
+  28@ == 114 
+jf @INTTOOL_ZAME_7638 
+3@ = -262.6 
+4@ = 1456.62 
+5@ = 1083.45 
+6@ = 4 
+
+:INTTOOL_ZAME_7638
+if 
+  28@ == 115 
+jf @INTTOOL_ZAME_7693 
+3@ = -42.58 
+4@ = 1408.11 
+5@ = 1083.45 
+6@ = 8 
+
+:INTTOOL_ZAME_7693
+if 
+  28@ == 116 
+jf @INTTOOL_ZAME_7748 
+3@ = -68.29 
+4@ = 1353.47 
+5@ = 1079.28 
+6@ = 6 
+
+:INTTOOL_ZAME_7748
+if 
+  28@ == 117 
+jf @INTTOOL_ZAME_7803 
+3@ = 1412.64 
+4@ = -1.79 
+5@ = 999.93 
+6@ = 1 
+
+:INTTOOL_ZAME_7803
+if 
+  28@ == 118 
+jf @INTTOOL_ZAME_7858 
+3@ = 1212.02 
+4@ = -28.66 
+5@ = 1000.09 
+6@ = 3 
+
+:INTTOOL_ZAME_7858
+if 
+  28@ == 119 
+jf @INTTOOL_ZAME_7913 
+3@ = 1038.51 
+4@ = -0.66 
+5@ = 1000.09 
+6@ = 3 
+
+:INTTOOL_ZAME_7913
+if 
+  28@ == 120 
+jf @INTTOOL_ZAME_7968 
+3@ = 2333.11 
+4@ = -1075.1 
+5@ = 1048.04 
+6@ = 6 
+
+:INTTOOL_ZAME_7968
+jump @INTTOOL_ZAME_9870 
+
+:INTTOOL_ZAME_7975
+if 
+  28@ == 121 
+jf @INTTOOL_ZAME_8030 
+3@ = 2253.14 
+4@ = -1140.09 
+5@ = 1049.65 
+6@ = 9 
+
+:INTTOOL_ZAME_8030
+if 
+  28@ == 122 
+jf @INTTOOL_ZAME_8085 
+3@ = 2261.4 
+4@ = -1135.94 
+5@ = 1049.64 
+6@ = 10 
+
+:INTTOOL_ZAME_8085
+if 
+  28@ == 123 
+jf @INTTOOL_ZAME_8140 
+3@ = 2233.8 
+4@ = -1113.36 
+5@ = 1049.91 
+6@ = 5 
+
+:INTTOOL_ZAME_8140
+if 
+  28@ == 124 
+jf @INTTOOL_ZAME_8195 
+3@ = 2324.42 
+4@ = -1147.54 
+5@ = 1049.72 
+6@ = 12 
+
+:INTTOOL_ZAME_8195
+if 
+  28@ == 125 
+jf @INTTOOL_ZAME_8250 
+3@ = 2365.3 
+4@ = -1132.92 
+5@ = 1049.91 
+6@ = 8 
+
+:INTTOOL_ZAME_8250
+if 
+  28@ == 126 
+jf @INTTOOL_ZAME_8305 
+3@ = 2282.91 
+4@ = -1138.29 
+5@ = 1049.91 
+6@ = 11 
+
+:INTTOOL_ZAME_8305
+if 
+  28@ == 127 
+jf @INTTOOL_ZAME_8360 
+3@ = 2194.79 
+4@ = -1204.35 
+5@ = 1048.05 
+6@ = 6 
+
+:INTTOOL_ZAME_8360
+if 
+  28@ == 128 
+jf @INTTOOL_ZAME_8416 
+3@ = 2268.39 
+4@ = -1210.45 
+5@ = 1046.57 
+6@ = 10 
+
+:INTTOOL_ZAME_8416
+if 
+  28@ == 129 
+jf @INTTOOL_ZAME_8472 
+3@ = 2308.79 
+4@ = -1210.88 
+5@ = 1048.03 
+6@ = 6 
+
+:INTTOOL_ZAME_8472
+if 
+  28@ == 130 
+jf @INTTOOL_ZAME_8528 
+3@ = 2216.54 
+4@ = -1076.29 
+5@ = 1049.52 
+6@ = 1 
+
+:INTTOOL_ZAME_8528
+jump @INTTOOL_ZAME_9870 
+
+:INTTOOL_ZAME_8535
+if 
+  28@ == 131 
+jf @INTTOOL_ZAME_8591 
+3@ = 2237.59 
+4@ = -1078.87 
+5@ = 1048.07 
+6@ = 2 
+
+:INTTOOL_ZAME_8591
+if 
+  28@ == 132 
+jf @INTTOOL_ZAME_8647 
+3@ = 2317.82 
+4@ = -1024.75 
+5@ = 1049.21 
+6@ = 9 
+
+:INTTOOL_ZAME_8647
+if 
+  28@ == 133 
+jf @INTTOOL_ZAME_8703 
+3@ = 2526.46 
+4@ = -1679.09 
+5@ = 1014.5 
+6@ = 1 
+
+:INTTOOL_ZAME_8703
+if 
+  28@ == 134 
+jf @INTTOOL_ZAME_8759 
+3@ = -204.44 
+4@ = -8.47 
+5@ = 1001.3 
+6@ = 17 
+
+:INTTOOL_ZAME_8759
+if 
+  28@ == 135 
+jf @INTTOOL_ZAME_8835 
+if 
+  8@ == 1 
+jf @INTTOOL_ZAME_8803 
+28@ += 1 
+
+:INTTOOL_ZAME_8803
+if 
+  8@ == 0 
+jf @INTTOOL_ZAME_8828 
+28@ += -1 
+
+:INTTOOL_ZAME_8828
+jump @INTTOOL_ZAME_448 
+
+:INTTOOL_ZAME_8835
+if 
+  28@ == 136 
+jf @INTTOOL_ZAME_8911 
+if 
+  8@ == 1 
+jf @INTTOOL_ZAME_8879 
+28@ += 1 
+
+:INTTOOL_ZAME_8879
+if 
+  8@ == 0 
+jf @INTTOOL_ZAME_8904 
+28@ += -1 
+
+:INTTOOL_ZAME_8904
+jump @INTTOOL_ZAME_448 
+
+:INTTOOL_ZAME_8911
+if 
+  28@ == 137 
+jf @INTTOOL_ZAME_8967 
+3@ = 2015.45 
+4@ = 1017.09 
+5@ = 995.88 
+6@ = 10 
+
+:INTTOOL_ZAME_8967
+if 
+  28@ == 138 
+jf @INTTOOL_ZAME_9023 
+3@ = 681.48 
+4@ = -451.15 
+5@ = -26.62 
+6@ = 1 
+
+:INTTOOL_ZAME_9023
+if 
+  28@ == 139 
+jf @INTTOOL_ZAME_9079 
+3@ = 447.74 
+4@ = 1400.44 
+5@ = 1083.34 
+6@ = 2 
+
+:INTTOOL_ZAME_9079
+if 
+  28@ == 140 
+jf @INTTOOL_ZAME_9135 
+3@ = 490.81 
+4@ = 1401.49 
+5@ = 1079.34 
+6@ = 2 
+
+:INTTOOL_ZAME_9135
+jump @INTTOOL_ZAME_9870 
+
+:INTTOOL_ZAME_9142
+if 
+  28@ == 141 
+jf @INTTOOL_ZAME_9198 
+3@ = 22.78 
+4@ = 1404.96 
+5@ = 1083.45 
+6@ = 5 
+
+:INTTOOL_ZAME_9198
+if 
+  28@ == 142 
+jf @INTTOOL_ZAME_9254 
+3@ = 27.13 
+4@ = 1341.15 
+5@ = 1083.45 
+6@ = 10 
+
+:INTTOOL_ZAME_9254
+if 
+  28@ == 143 
+jf @INTTOOL_ZAME_9310 
+3@ = 295.14 
+4@ = 1474.47 
+5@ = 1079.52 
+6@ = 15 
+
+:INTTOOL_ZAME_9310
+if 
+  28@ == 144 
+jf @INTTOOL_ZAME_9366 
+3@ = 385.8 
+4@ = 1471.77 
+5@ = 1079.21 
+6@ = 15 
+
+:INTTOOL_ZAME_9366
+if 
+  28@ == 145 
+jf @INTTOOL_ZAME_9422 
+3@ = 375.97 
+4@ = 1417.27 
+5@ = 1080.41 
+6@ = 15 
+
+:INTTOOL_ZAME_9422
+if 
+  28@ == 146 
+jf @INTTOOL_ZAME_9478 
+3@ = 328.49 
+4@ = 1480.59 
+5@ = 1083.45 
+6@ = 15 
+
+:INTTOOL_ZAME_9478
+if 
+  28@ == 147 
+jf @INTTOOL_ZAME_9534 
+3@ = -2158.72 
+4@ = 641.29 
+5@ = 1051.37 
+6@ = 1 
+
+:INTTOOL_ZAME_9534
+if 
+  28@ == 148 
+jf @INTTOOL_ZAME_9590 
+3@ = -30.95 
+4@ = -89.61 
+5@ = 1002.55 
+6@ = 18 
+
+:INTTOOL_ZAME_9590
+if 
+  28@ == 149 
+jf @INTTOOL_ZAME_9646 
+3@ = -25.13 
+4@ = -139.07 
+5@ = 1002.55 
+6@ = 16 
+
+:INTTOOL_ZAME_9646
+if 
+  28@ == 150 
+jf @INTTOOL_ZAME_9702 
+3@ = -25.88 
+4@ = -185.87 
+5@ = 1002.55 
+6@ = 17 
+
+:INTTOOL_ZAME_9702
+if 
+  28@ == 151 
+jf @INTTOOL_ZAME_9758 
+3@ = -26.69 
+4@ = -55.71 
+5@ = 1002.55 
+6@ = 6 
+
+:INTTOOL_ZAME_9758
+if 
+  28@ == 152 
+jf @INTTOOL_ZAME_9814 
+3@ = -27.31 
+4@ = -29.28 
+5@ = 1002.55 
+6@ = 4 
+
+:INTTOOL_ZAME_9814
+if 
+  28@ == 153 
+jf @INTTOOL_ZAME_9870 
+3@ = 6.09 
+4@ = -29.27 
+5@ = 1002.55 
+6@ = 10 
+
+:INTTOOL_ZAME_9870
+//fade 0 500 
+//wait 500 
+
+:INTTOOL_ZAME_9882
+wait 0 
+   Player.Defined(PLAYER_CHAR)
+jf @INTTOOL_ZAME_9882 
+select_interior 6@ 
+0860: link_actor PLAYER_ACTOR to_interior 6@ 
+if 
+  6@ == 0 
+jf @INTTOOL_ZAME_9936 
+jump @INTTOOL_ZAME_9936 
+
+:INTTOOL_ZAME_9936
+Actor.PutAt(PLAYER_ACTOR, 3@, 4@, 5@)
+Camera.SetBehindPlayer
+Camera.Restore_WithJumpCut
+Text.Show1Number('NUMBER', 28@, 5000, 1) // ~1~
+//wait 500
+create_thread @REFR_3D 
+fade 1 500 
+//wait 500 
+//0084: 1@ = 28@ // (int) 
+0085: 1@ = 28@ // (int)
+
+:INTTOOL_ZAME_9998
+jump @INTTOOL_ZAME_91 
+
+:INTTOOL_ZAME_10005
+return 
+
+:INTTOOL_ZAME_10007
+$HUD_REMOVE = 1
+//fade 0 500 
+//wait 500 
+select_interior NO_INIT_TEXT_FLAG 
+0860: link_actor PLAYER_ACTOR to_interior NO_INIT_TEXT_FLAG 
+if 
+  NO_INIT_TEXT_FLAG == 0 
+jf @INTTOOL_ZAME_10057 
+jump @INTTOOL_ZAME_10057 
+
+:INTTOOL_ZAME_10057
+Actor.PutAt(PLAYER_ACTOR, $TRADER_SPHERE_X[0], $TRADER_SPHERE_X[1], $TRADER_SPHERE_X[2])
+actor.Angle(PLAYER_ACTOR) = $TRADER_SPHERE_X[3] 
+Camera.SetBehindPlayer
+Camera.Restore_WithJumpCut
+//wait 500
+create_thread @REFR_3D 
+//fade 1 500 
+//wait 500
+$HUD_REMOVE = 0 
+return 
+
+:INTTOOL_ZAME_10094
+Text.RemoveTextBox
+7@ = 0  
+return      

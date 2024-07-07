@@ -1,0 +1,2527 @@
+:OBJECTS_MENU
+0512: show_permanent_text_box 'se2' 
+08D4: $PANEL = create_panel_with_title 'se118' position 72.0 160.0 width 150.0 columns 1 interactive 1 background 1 alignment 1
+if
+8A4B: not  controls_set_to_joystick
+then 
+08DB: set_panel $PANEL column 0 header 'dummy' data 'SE151' 'SE152' 'SE153' 'SE213' 'SE400' 'SE401' 'SE402' 'SE121' 'SE329' 'SE476' 'dummy' 'dummy'
+else
+08DB: set_panel $PANEL column 0 header 'dummy' data 'SE151' 'SE152' 'SE153' 'SE213' 'SE400' 'SE401' 'SE402' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy'
+end
+
+if
+UNITED_MAP == 1
+then
+08D9: set_panel $PANEL row 6 enable 0
+end
+ZAME_DUBLICATE_OBJ_MODE = 0 
+wait 100 
+
+:OBJECTS_MENU_32617
+wait 0 
+if 
+00E1:   player 0 pressed_key 15 
+jf @OBJECTS_MENU_32650 
+08DA: remove_panel $PANEL 
+jump @ZAME_MAIN_MENU
+
+:OBJECTS_MENU_38485
+08DA: remove_panel $PANEL 
+03E6: remove_text_box 
+0581: enable_radar 1 
+Player.CanMove(PLAYER_CHAR) = True
+0E68: set_player_control_pad 1 1 
+0E69: set_player_control_pad_movement 0 1
+wait 100 
+jump @ZAME_OPEN_CHECK
+
+:OBJECTS_MENU_32814_2
+100@ = 69
+gosub @OBJECT_ID_SELECT
+if
+ZAME_TEMP_FUCKEEE == 699
+then
+ZAME_TEMP_FUCKEEE = 0
+jump to @OBJECTS_MENU
+end
+
+0AF0: 29@ = get_int_from_ini_file "me\temp3.dat" section v$RACE_FILE key "FXT_ID"
+0B00: delete_file "me\temp3.dat"  // IF and SET
+jump to @OBJECTS_MENU_32814  
+
+:OBJECTS_MENU_32650
+wait 0 
+if 
+00E1:   player 0 pressed_key 16 
+jf @OBJECTS_MENU_32617 
+08D7: 24@ = panel $PANEL active_row 
+08DA: remove_panel $PANEL 
+03E6: remove_text_box
+
+if
+24@ == 9
+then                
+jump to @OBJECTS_MENU_DUBLICATE_OBJ
+end
+
+if and
+not 24@ == 7
+not 24@ == 8
+then
+100@ = 0
+else
+
+if
+24@ == 7
+then
+100@ = 69
+gosub @OBJECT_ID_SELECT
+if
+ZAME_TEMP_FUCKEEE == 699
+then
+ZAME_TEMP_FUCKEEE = 0
+jump to @OBJECTS_MENU
+end
+
+0AF0: 29@ = get_int_from_ini_file "me\temp3.dat" section v$RACE_FILE key "FXT_ID"
+0B00: delete_file "me\temp3.dat"  // IF and SET  
+else
+100@ = 69
+gosub @OBJECT_MODEL_TYPE_SELECT
+if
+ZAME_TEMP_FUCKEEE == 699
+then
+ZAME_TEMP_FUCKEEE = 0
+jump to @OBJECTS_MENU
+end
+
+end
+
+end
+
+////////////////////////////////////////////////////////////////////////// 
+
+:OBJECTS_MENU_32814
+0581: enable_radar 1 
+Player.CanMove(PLAYER_CHAR) = true
+0E68: set_player_control_pad 0 1 
+0E69: set_player_control_pad_movement 0 0
+Actor.LockInCurrentPosition(PLAYER_ACTOR) = True
+0619: enable_actor PLAYER_ACTOR collision_detection 0
+
+if
+ZAME_MOUSE_OBJECT_MODE == 0
+then
+
+if
+0A4B:   controls_set_to_joystick
+then   
+0512: show_permanent_text_box 'objhel2'
+else   
+0512: show_permanent_text_box 'objhelp'  
+end    
+
+else
+0512: show_permanent_text_box 'objhel3'
+end                                   
+
+ZAME_TEMP_FUCKEEE4 = 0
+
+//Выключаем свободную камеру наблюдения если она была активирована
+0AF0: 0@ = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "CARMA_FREE_CAM_TURNED_FLAG"
+0652: 1@ = integer_stat 271
+if and
+0@ == 1
+1@ == 1
+then
+0AF1: write_int 0 to_ini_file "saves\ZACM.set" section "SCR" key "CARMA_FREE_CAM_TURNED_FLAG"
+0627: update_integer_stat 271 to 2
+end
+
+if
+ZAME_RECREATE_OBJECT_FLAG == 0
+then 
+04C4: store_coords_to $X $Y $Z from_actor PLAYER_ACTOR with_offset 0.0 5.0 0.0 
+04C4: store_coords_to $X2 $Y2 $Z2 from_actor PLAYER_ACTOR with_offset 1.0 -2.0 0.0
+end
+
+if
+ZAME_DUBLICATE_OBJ_MODE == 1
+then
+0088: $X = ZAME_DUBLICATE_OBJ_X // (float)
+0088: $Y = ZAME_DUBLICATE_OBJ_Y // (float)
+0088: $Z = ZAME_DUBLICATE_OBJ_Z // (float)
+end
+
+ZAME_OBJECT_HANLDE = 1024
+if
+ZAME_RECREATE_OBJECT_FLAG == 0
+then
+gosub @zame_object_get_id_by_category
+end
+ 
+ZAME_OBJECT_HANLDE = Object.Create(29@, $X, $Y, $Z)
+Object.PutAt(ZAME_OBJECT_HANLDE, $X, $Y, $Z)
+
+if and
+ZAME_RECREATE_OBJECT_FLAG == 0
+not ZAME_DUBLICATE_OBJ_MODE == 1
+then
+13@ = actor.Angle(PLAYER_ACTOR)
+0092: 13@ = float 13@ to_integer
+0093: 13@ = integer 13@ to_float
+object.Angle(ZAME_OBJECT_HANLDE) = 13@
+14@ = 0.0 
+15@ = 0.0
+else                                   
+if
+not ZAME_DUBLICATE_OBJ_MODE == 1
+    then                      
+    0453: set_object ZAME_OBJECT_HANLDE XYZ_rotation 15@ 14@ 13@
+    else
+    0087: 13@ = ZAME_DUBLICATE_OBJ_A // (float)
+    14@ = 0.0
+    15@ = 0.0
+    0453: set_object ZAME_OBJECT_HANLDE XYZ_rotation 15@ 14@ 13@
+    end 
+end
+
+30@ = -3.0
+31@ = 1.0
+34@ = 0.0
+35@ = 1.0
+gosub @FORMAT_MOVE_SPEED_STRING
+
+077E: get_active_interior_to 19@ 
+0566: link_object ZAME_OBJECT_HANLDE to_interior 19@
+33@ = 0 
+
+if
+ZAME_LATEST_OBJECT_CAM_MODE == 1
+then
+0930: (unknown) 1
+0936: set_camera 1@ 2@ 3@ position_to 1@ 2@ 3@ GENERAL_FP_CAM_TIMER ms 1
+Player.CanMove(PLAYER_CHAR) = true
+0E68: set_player_control_pad 0 1 
+0E69: set_player_control_pad_movement 0 0
+Actor.LockInCurrentPosition(PLAYER_ACTOR) = True
+0619: enable_actor PLAYER_ACTOR collision_detection 0
+///////////////////////////////////////////////////
+068D: get_camera_position_to 1@ 2@ 3@
+0AF3: write_float 1@ to_ini_file "moonloader\Spectate Camera.ini" section "SCR" key "FREE_CAM_X"
+0AF3: write_float 2@ to_ini_file "moonloader\Spectate Camera.ini" section "SCR" key "FREE_CAM_Y"
+0AF3: write_float 3@ to_ini_file "moonloader\Spectate Camera.ini" section "SCR" key "FREE_CAM_Z"
+0AF3: write_float $X to_ini_file "moonloader\Spectate Camera.ini" section "SCR" key "FREE_CAM_AT_X"
+0AF3: write_float $Y to_ini_file "moonloader\Spectate Camera.ini" section "SCR" key "FREE_CAM_AT_Y"
+0AF3: write_float $Z to_ini_file "moonloader\Spectate Camera.ini" section "SCR" key "FREE_CAM_AT_Z"
+0E27: get_angle_from_two_coords 1@ 2@ and $X $Y to 7@
+0AF3: write_float 7@ to_ini_file "moonloader\Spectate Camera.ini" section "SCR" key "FREE_CAM_ANGLE"
+ZAME_SPEC_MOD_FREE_CAM = 1
+0930: (unknown) 0
+///////////////////////////////////////////////////
+0337: set_actor PLAYER_ACTOR visibility 0
+actor.StorePos(PLAYER_ACTOR,ZAME_TEMP_X,ZAME_TEMP_Y,ZAME_TEMP_Z)
+ZAME_TEMP_A = actor.Angle(PLAYER_ACTOR)
+actor.PutAtNoOffset(PLAYER_ACTOR,1@,2@,3@)
+actor.Angle(PLAYER_ACTOR) = 7@
+///////////////////////////////////////////////////
+camera.Restore_WithJumpCut()
+0E68: set_player_control_pad 0 1 
+0E69: set_player_control_pad_movement 0 1
+actor.LockInCurrentPosition(PLAYER_ACTOR,true)
+0627: update_integer_stat 271 to 1
+0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "CARMA_FREE_CAM_TURNED_FLAG"    
+//0AD1: show_formatted_text_highpriority "Free cam ON." time 2000
+//gosub @ZAME_FREECAMS_CHECK
+end
+
+if
+ZAME_MOUSE_OBJECT_MODE == 1
+then
+0930: (unknown) 0
+camera.Restore_WithJumpCut()
+ZAME_MOUSE_OBJECT_MODE = 1
+$PANEL_OPEN = 1
+0459: end_thread_named 'JIGGLE'
+Player.CanMove(PLAYER_CHAR) = true
+0E68: set_player_control_pad 0 1 
+0E69: set_player_control_pad_movement 0 1
+Actor.LockInCurrentPosition(PLAYER_ACTOR) = false
+0619: enable_actor PLAYER_ACTOR collision_detection 1
+
+/////////////////////////////////////////////////////////////////
+
+if
+UNITED_MAP == 0
+then
+1@ = 22
+else
+
+if
+STORIES_MAP == 0
+then
+
+if
+$UNITED_III_SPAWN == 1
+then
+1@ = 111
+else
+1@ = 136
+end
+
+else
+
+if
+$UNITED_III_SPAWN == 1
+then
+1@ = 165
+else
+1@ = 195
+end
+
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+0781: get_weapon_with_ID 1@ model_to 2@
+        
+while not model.Available(2@)
+wait 0
+model.Load(2@)
+mload
+end
+        
+actor.GiveWeaponAndAmmo(PLAYER_ACTOR,1@,99999)
+
+/////////////////////////////////////////////////////////////////
+        
+end      
+
+wait 100
+
+32@ = 501 
+
+:OBJECTS_MENU_33042
+wait 0
+
+gosub @ZAME_PGPD_CHECK     
+
+if and
+ZAME_OBJHELP_CURR_PODSKAZKA == 0
+33@ > 10000
+    then
+    
+    33@ = 0
+    ZAME_OBJHELP_CURR_PODSKAZKA = 1
+    text.RemoveTextBox()
+    
+    /////////////////////////////////////////////
+    
+    if
+    ZAME_MOUSE_OBJECT_MODE == 0
+    then
+    
+    if
+    0A4B:   controls_set_to_joystick
+    then       
+    0512: show_permanent_text_box 'objhbl2'
+    else   
+    0512: show_permanent_text_box 'objhblp'  
+    end
+    
+    else
+    0512: show_permanent_text_box 'objhbl3' 
+    end
+    
+    /////////////////////////////////////////////
+    
+    end
+
+if and
+ZAME_OBJHELP_CURR_PODSKAZKA == 1
+33@ > 5000
+    then
+    
+    33@ = 0
+    ZAME_OBJHELP_CURR_PODSKAZKA = 0
+    text.RemoveTextBox()
+    
+    /////////////////////////////////////////////
+    
+    if
+    ZAME_MOUSE_OBJECT_MODE == 0
+    then
+    
+    if
+    0A4B:   controls_set_to_joystick
+    then   
+    0512: show_permanent_text_box 'objhel2'
+    else   
+    0512: show_permanent_text_box 'objhelp'  
+    end
+    
+    else
+    0512: show_permanent_text_box 'objhel3'
+    end
+    
+    /////////////////////////////////////////////
+    
+    end
+    
+0F17: get_model_name_pointer 29@ to 1@
+0AD1: show_formatted_text_highpriority "%d, %s ~n~X: %f Y: %f Z: %f, ~n~X: %f Y: %f Z: %f" time 500 29@ 1@ $X $Y $Z 15@ 14@ 13@
+gosub @DRAW_MOV_SPEED_TEXT
+
+if
+8A4B: not  controls_set_to_joystick
+then
+
+if and
+0AB0:   key_pressed 69
+32@ > 500
+not ZAME_MOUSE_OBJECT_MODE == 1
+    then  
+    32@ = 0
+    
+    if
+    ZAME_SPEC_MOD_FREE_CAM == 0
+    then
+    ZAME_LATEST_OBJECT_CAM_MODE = 1
+    else
+    ZAME_LATEST_OBJECT_CAM_MODE = 0
+    end
+    
+    gosub @ZAME_FREECAMS_CHECK    
+    end
+    
+if
+0E3E: is_button_just_pressed 0 button 19
+    then
+    35@ = 1.0    
+    gosub @FORMAT_MOVE_SPEED_STRING
+    end        
+
+if and
+0E10: is_mouse_wheel_up
+0AB0:   key_pressed 18
+80E1: not  player 0 pressed_key 4
+    then
+    35@ += 0.2
+    gosub @FORMAT_MOVE_SPEED_STRING
+    end
+
+if and
+0E11: is_mouse_wheel_down
+0AB0:   key_pressed 18
+80E1: not  player 0 pressed_key 4
+    then
+    if
+    35@ > 0.19
+        then    
+        35@ -= 0.2
+        gosub @FORMAT_MOVE_SPEED_STRING 
+        if
+        35@ < 0.2
+            then
+            35@ = 0.05
+            gosub @FORMAT_MOVE_SPEED_STRING      
+            end   
+        else
+        35@ -= 0.2
+        gosub @FORMAT_MOVE_SPEED_STRING
+        if
+        35@ < 0.05
+            then
+            35@ = 0.025
+            gosub @FORMAT_MOVE_SPEED_STRING
+            end
+        end 
+    end
+
+if and
+0E10: is_mouse_wheel_up
+8AB0: not  key_pressed 16
+8AB0: not  key_pressed 17
+8AB0: not  key_pressed 18
+    then
+    0@ = 0.2 
+    006B: 0@ *= 35@  // (float)
+    005B: 30@ += 0@  // (float)
+    end
+
+if and
+0E11: is_mouse_wheel_down
+8AB0: not  key_pressed 16
+8AB0: not  key_pressed 17
+8AB0: not  key_pressed 18
+    then
+    0@ = 0.2 
+    006B: 0@ *= 35@  // (float)
+    0063: 30@ -= 0@  // (float)
+    end
+
+if and
+0E10: is_mouse_wheel_up
+8AB0: not  key_pressed 16
+0AB0:   key_pressed 17
+8AB0: not  key_pressed 18
+    then
+    0@ = 0.2 
+    006B: 0@ *= 35@  // (float)
+    005B: 31@ += 0@  // (float)
+    end
+
+if and
+0E11: is_mouse_wheel_down
+8AB0: not  key_pressed 16
+0AB0:   key_pressed 17
+8AB0: not  key_pressed 18
+    then
+    0@ = 0.2 
+    006B: 0@ *= 35@  // (float)
+    0063: 31@ -= 0@  // (float)
+    end
+
+if and
+0E10: is_mouse_wheel_up
+8AB0: not  key_pressed 17
+0AB0:   key_pressed 16
+8AB0: not  key_pressed 18
+    then
+    0@ = 0.2 
+    006B: 0@ *= 35@  // (float)
+    005B: 34@ += 0@  // (float)
+    end
+
+if and
+0E11: is_mouse_wheel_down
+8AB0: not  key_pressed 17
+0AB0:   key_pressed 16
+8AB0: not  key_pressed 18
+    then
+    0@ = 0.2 
+    006B: 0@ *= 35@  // (float)
+    0063: 34@ -= 0@  // (float)
+    end
+    
+end    
+
+if
+not 100@ == 69
+then 
+if
+80E1:   not player 0 pressed_key 11 
+jf @OBJECTS_MENU_33609 
+if 
+80E1:   not player 0 pressed_key 10 
+jf @OBJECTS_MENU_34254
+end
+
+if
+8A4B: not  controls_set_to_joystick
+then
+
+if and
+ZAME_SPEC_MOD_FREE_CAM == 0 
+ZAME_MOUSE_OBJECT_MODE == 0
+then
+0930: (unknown) 1
+0400: store_coords_to 1@ 2@ 3@ from_object ZAME_OBJECT_HANLDE with_offset 34@ 30@ 31@ 
+0936: set_camera 1@ 2@ 3@ position_to 1@ 2@ 3@ GENERAL_FP_CAM_TIMER ms 1
+Player.CanMove(PLAYER_CHAR) = true
+0E68: set_player_control_pad 0 1 
+0E69: set_player_control_pad_movement 0 0
+Actor.LockInCurrentPosition(PLAYER_ACTOR) = True
+0619: enable_actor PLAYER_ACTOR collision_detection 0
+end
+
+if
+ZAME_SPEC_MOD_FREE_CAM == 0 
+then
+
+if
+ZAME_MOUSE_OBJECT_MODE == 0
+    then           
+    if and
+    0AB0:   key_pressed 81
+    32@ > 500
+        then
+        32@ = 0
+        0930: (unknown) 0
+        camera.Restore_WithJumpCut()
+        ZAME_MOUSE_OBJECT_MODE = 1
+        $PANEL_OPEN = 1
+        0459: end_thread_named 'JIGGLE'
+        Player.CanMove(PLAYER_CHAR) = true
+        0E68: set_player_control_pad 0 1 
+        0E69: set_player_control_pad_movement 0 1
+        Actor.LockInCurrentPosition(PLAYER_ACTOR) = false
+        0619: enable_actor PLAYER_ACTOR collision_detection 1
+        
+        /////////////////////////////////////////////////////////////////
+
+        if
+        UNITED_MAP == 0
+        then
+        1@ = 22
+        else
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        if
+        $UNITED_III_SPAWN == 1
+        then
+        1@ = 111
+        else
+        1@ = 136
+        end
+        
+        else
+        
+        if
+        $UNITED_III_SPAWN == 1
+        then
+        1@ = 165
+        else
+        1@ = 195
+        end
+        
+        end
+        
+        end
+        
+        /////////////////////////////////////////////////////////////////
+        
+        0781: get_weapon_with_ID 1@ model_to 2@
+                
+        while not model.Available(2@)
+        wait 0
+        model.Load(2@)
+        mload
+        end
+                
+        actor.GiveWeaponAndAmmo(PLAYER_ACTOR,1@,99999)
+        
+        /////////////////////////////////////////////////////////////////
+        
+        33@ = 5001
+        ZAME_OBJHELP_CURR_PODSKAZKA = 1
+        
+        end      
+    else
+    if and
+    0AB0:   key_pressed 81
+    32@ > 500
+        then
+        32@ = 0
+        ZAME_MOUSE_OBJECT_MODE = 0
+        $PANEL_OPEN = 0
+        create_thread @JIGGLE
+        0930: (unknown) 1 
+        0400: store_coords_to 1@ 2@ 3@ from_object ZAME_OBJECT_HANLDE with_offset 34@ 30@ 31@ 
+        0936: set_camera 1@ 2@ 3@ position_to 1@ 2@ 3@ GENERAL_FP_CAM_TIMER ms 1
+        Player.CanMove(PLAYER_CHAR) = true
+        0E68: set_player_control_pad 0 1 
+        0E69: set_player_control_pad_movement 0 0
+        Actor.LockInCurrentPosition(PLAYER_ACTOR) = True
+        0619: enable_actor PLAYER_ACTOR collision_detection 0
+        
+        33@ = 5001
+        ZAME_OBJHELP_CURR_PODSKAZKA = 1
+        
+        end    
+    end
+
+end
+
+if
+not ZAME_MOUSE_OBJECT_MODE == 1
+then 
+if 
+8AB0:   not key_pressed 87 //FORWARD
+jf @OBJECTS_MENU_37163 
+if 
+8AB0:   not key_pressed 83 //BACKWARD
+jf @OBJECTS_MENU_37226 
+if 
+8AB0:   not key_pressed 65 //LEFT
+jf @OBJECTS_MENU_37289 
+if 
+8AB0:   not key_pressed 68 //RIGHT
+jf @OBJECTS_MENU_37352 
+if 
+8AB0:   not key_pressed 37 //LEFT ARROW
+jf @OBJECTS_MENU_37574 
+if 
+8AB0:   not key_pressed 39 //RIGHT ARROW
+jf @OBJECTS_MENU_37511 
+if 
+8AB0:   not key_pressed 38 //UP ARROW
+jf @OBJECTS_MENU_37637 
+if 
+8AB0:   not key_pressed 40 //DOWN ARROW
+jf @OBJECTS_MENU_37685
+else
+
+if
+80E1: not  player 0 pressed_key 14
+    then
+    //ASS
+    else
+    
+    player.CanMove(PLAYER_CHAR,false)
+    wait 0
+    0792: disembark_instantly_actor PLAYER_ACTOR
+    ////////////////////////////Entering Mouse Rotate mode////////////////////////////
+    068D: get_camera_position_to ZAME_CAM_X_SAVED ZAME_CAM_Y_SAVED ZAME_CAM_Z_SAVED
+    068E: get_camera_target_point_to ZAME_CAM_X2_SAVED ZAME_CAM_Y2_SAVED ZAME_CAM_Z2_SAVED 
+    camera.SetPosition(ZAME_CAM_X_SAVED ZAME_CAM_Y_SAVED ZAME_CAM_Z_SAVED,0.0,0.0,0.0)
+    camera.PointAt(ZAME_CAM_X2_SAVED ZAME_CAM_Y2_SAVED ZAME_CAM_Z2_SAVED,2)           
+    0337: set_actor PLAYER_ACTOR visibility 0                     
+    
+    while 00E1:  player 0 pressed_key 14
+    wait 0
+    
+    gosub @ZAME_PGPD_CHECK                                            
+    
+    ///////////////////PROCESS MOUSE ROTATE///////////////////
+    
+    0A4A: store_joystick_X_offset_to 21@ Y_offset_to 22@      
+    
+    0E23: get_mouse_sensibility_to 23@
+    23@ *= 50.0
+    006B: 21@ *= 23@  // (float)
+    006B: 22@ *= 23@  // (float)
+    if and
+    21@ > 0.0
+    21@ < 0.75    
+    then
+    21@ = 0.75
+    end
+    
+    if and
+    22@ > 0.0
+    22@ < 0.75    
+    then
+    22@ = 0.75
+    end     
+    
+    if and
+    80E1: not  player 0 pressed_key 4 //Z ROTATION
+    8AB0: not  key_pressed 18
+        then
+        0AD1: show_formatted_text_highpriority "Z ROTATION MODE~n~ Z ANGLE: %f" time 500 13@ //~n~MOUSE X: %f, Y: %f, SENS: %f 21@ 22@ 23@
+        
+        007B: 13@ += frame_delta_time * 21@ // (float)
+        if
+        13@ > 360.0
+        then
+        13@ = 0.0
+        end
+        
+        if
+        13@ < 0.0
+        then
+        13@ = 360.0
+        end
+        
+        0092: 13@ = float 13@ to_integer
+        0093: 13@ = integer 13@ to_float  
+        
+        else //X-Y ROTATION        
+        
+        if and
+        80E1: not  player 0 pressed_key 6
+        00E1:  player 0 pressed_key 17
+        then
+        //ROTATE X ONLY
+        007B: 14@ += frame_delta_time * 21@ // (float) 
+        0AD1: show_formatted_text_highpriority "X ROTATION MODE~n~ X ANGLE: %f" time 500 14@
+        else
+        if and
+        00E1:  player 0 pressed_key 6
+        80E1: not player 0 pressed_key 17
+            then
+            //ROTATE Y ONLY
+            007B: 15@ += frame_delta_time * 22@ // (float)
+            0AD1: show_formatted_text_highpriority "Y ROTATION MODE~n~ Y ANGLE: %f" time 500 15@
+            else
+            //ROTATE XY BOTH
+            007B: 14@ += frame_delta_time * 21@ // (float)
+            007B: 15@ += frame_delta_time * 22@ // (float)
+            0AD1: show_formatted_text_highpriority "XY ROTATION MODE~n~ X ANGLE: %f, Y ANGLE: %f" time 500 14@ 15@
+            end
+        end                      
+        
+        if
+        14@ > 360.0
+        then
+        14@ = 0.0
+        end
+        
+        if
+        14@ < 0.0
+        then
+        14@ = 360.0
+        end
+        
+        if
+        15@ > 360.0
+        then
+        15@ = 0.0
+        end
+        
+        if
+        15@ < 0.0
+        then
+        15@ = 360.0
+        end
+        
+        end
+    
+    0092: 14@ = float 14@ to_integer
+    0093: 14@ = integer 14@ to_float
+    0092: 15@ = float 15@ to_integer
+    0093: 15@ = integer 15@ to_float
+    
+    0453: set_object ZAME_OBJECT_HANLDE XYZ_rotation 15@ 14@ 13@           
+    
+    end
+    
+    ///////////////////PROCESS MOUSE ROTATE END///////////////////
+    
+    player.CanMove(PLAYER_CHAR,true)
+    0337: set_actor PLAYER_ACTOR visibility 1
+    camera.Restore_WithJumpCut()    
+    
+    end
+
+if and
+0E46: is_char_using_gun PLAYER_ACTOR
+8A32: not  actor PLAYER_ACTOR on_turret_of_car
+8800: not  in_two_players_mode
+    then 
+    if
+    00E1:   player 0 pressed_key 6
+        then        
+        Actor.StorePos(PLAYER_ACTOR, 18@, 19@, 20@)
+        0AC7: get_var_pointer 2@ = var 54@ 
+        0AC7: get_var_pointer 3@ = var 51@ 
+        0AA6: call_method 0x514970 struct 0xB6F028 num_params 6 pop 0 2@ 3@ 20@ 19@ 18@ 200.0 
+        if
+        not 2@ == -1
+            then
+            0A98: 12@ = object ZAME_OBJECT_HANLDE struct
+            if
+            0D3A: get_collision_between_points 51@ 52@ 53@ and 54@ 55@ 56@ flags 1 1 1 1 0 0 0 0 ignore_entity 12@ store_point_to 7@ 8@ 9@ entity_to 11@ colpoint_data_to 1 // IF and SET
+                then       
+                0088: $X = 7@ // (float)
+                0088: $Y = 8@ // (float)
+                
+                if or
+                0E10: is_mouse_wheel_up
+                0AB0:   key_pressed 33 
+                then
+                0@ = 0.05 
+                006B: 0@ *= 35@  // (float)
+//                0400: store_coords_to 4@ 5@ $Z from_object ZAME_OBJECT_HANLDE with_offset 0.0 0.0 0@
+                005F: $Z += 0@  // (float)
+                end          
+                
+                if or
+                0E11: is_mouse_wheel_down
+                0AB0:   key_pressed 34
+                then
+                0@ = -0.05 
+                006B: 0@ *= 35@  // (float)
+//                0400: store_coords_to 4@ 5@ $Z from_object ZAME_OBJECT_HANLDE with_offset 0.0 0.0 0@
+                005F: $Z += 0@  // (float)
+                end            
+                
+                if
+                8AB0: not  key_pressed 18
+                then  
+                Object.PutAt(ZAME_OBJECT_HANLDE, $X, $Y, $Z)
+                else
+                0E71: get_object_centre_of_mass_to_base_of_model ZAME_OBJECT_HANLDE 8@
+                005B: 9@ += 8@  // (float)
+                Object.PutAt(ZAME_OBJECT_HANLDE, $X, $Y, 9@)
+                0088: $Z = 9@ // (float)
+                end
+                                              
+                end
+            end       
+        end
+    else
+    gosub @ZAME_PGPD_CHECK
+    end
+
+end
+
+else
+
+0494: get_joystick 0 data_to 1@ 2@ 3@ 4@
+0093: 3@ = integer 3@ to_float
+4@ /= -2
+4@ *= 2
+0093: 4@ = integer 4@ to_float
+
+if or
+80E1: not  player 0 pressed_key 14
+00E1:  player 0 pressed_key 0
+00E1:  player 0 pressed_key 1
+then
+3@ = 0.0
+4@ = 0.0
+end
+
+if
+00E1:   player 0 pressed_key 8
+    then
+    0@ = 0.2 
+    006B: 0@ *= 35@  // (float)
+    005B: 30@ += 0@  // (float)
+    end
+
+if
+00E1:   player 0 pressed_key 9
+    then
+    0@ = 0.2 
+    006B: 0@ *= 35@  // (float)
+    0063: 30@ -= 0@  // (float)
+    end
+    
+if
+00E1:   player 0 pressed_key 6
+    then
+    0@ = 0.2 
+    006B: 0@ *= 35@  // (float)
+    005B: 34@ += 0@  // (float)
+    end
+
+if
+00E1:   player 0 pressed_key 4
+    then
+    0@ = 0.2 
+    006B: 0@ *= 35@  // (float)
+    0063: 34@ -= 0@  // (float)
+    end
+    
+if
+00E1:   player 0 pressed_key 18
+    then
+    0@ = 0.2 
+    006B: 0@ *= 35@  // (float)
+    005B: 31@ += 0@  // (float)
+    end
+
+if
+00E1:   player 0 pressed_key 19
+    then
+    0@ = 0.2 
+    006B: 0@ *= 35@  // (float)
+    0063: 31@ -= 0@  // (float)
+    end    
+
+if and
+3@ == 0.0
+4@ == 0.0
+    then
+    
+    if
+    ZAME_TEMP_FUCKEEE4 == 1
+    then
+    camera.Restore_WithJumpCut()
+    ZAME_TEMP_FUCKEEE4 = 0
+    end
+        
+    0930: (unknown) 1
+    0400: store_coords_to 1@ 2@ 3@ from_object ZAME_OBJECT_HANLDE with_offset 34@ 30@ 31@ 
+    0936: set_camera 1@ 2@ 3@ position_to 1@ 2@ 3@ GENERAL_FP_CAM_TIMER ms 1
+    Player.CanMove(PLAYER_CHAR) = true
+    0E68: set_player_control_pad 0 1 
+    0E69: set_player_control_pad_movement 0 0
+    Actor.LockInCurrentPosition(PLAYER_ACTOR) = True
+    0619: enable_actor PLAYER_ACTOR collision_detection 0
+    else
+    ZAME_TEMP_FUCKEEE4 = 1
+    0930: (unknown) 0
+    0400: store_coords_to 1@ 2@ 3@ from_object ZAME_OBJECT_HANLDE with_offset 34@ 30@ 31@
+    object.StorePos(ZAME_OBJECT_HANLDE,4@,5@,6@) 
+    camera.SetPosition(1@,2@,3@,0.0,0.0,0.0)
+    camera.PointAt(4@,5@,6@,2)
+    Player.CanMove(PLAYER_CHAR) = true
+    0E68: set_player_control_pad 0 1 
+    0E69: set_player_control_pad_movement 0 0
+    Actor.LockInCurrentPosition(PLAYER_ACTOR) = True
+    0619: enable_actor PLAYER_ACTOR collision_detection 0
+    
+    0494: get_joystick 0 data_to 1@ 2@ 3@ 4@
+    0093: 3@ = integer 3@ to_float
+    4@ /= -2
+    4@ *= 2
+    0093: 4@ = integer 4@ to_float
+    
+    if 
+    3@ < 0.0 //LEFT ARROW
+    jf @OBJECTS_MENU_37574_JOY 
+    if 
+    3@ > 0.0 //RIGHT ARROW
+    jf @OBJECTS_MENU_37511_JOY 
+    if 
+    4@ > 0.0 //UP ARROW
+    jf @OBJECTS_MENU_37637_JOY 
+    if 
+    4@ < 0.0 //DOWN ARROW
+    jf @OBJECTS_MENU_37685_JOY
+    
+    end            
+
+00E2: get_player 0 key 1 state_to 0@
+if
+0@ > 0
+    then
+    jump to @OBJECTS_MENU_37226_JOY //FORWARD
+    end
+if
+0@ < 0
+    then
+    jump to @OBJECTS_MENU_37163_JOY //BACKWARD
+    end
+    
+00E2: get_player 0 key 0 state_to 0@
+if
+0@ > 0
+    then
+    jump to @OBJECTS_MENU_37289_JOY //LEFT
+    end
+if
+0@ < 0
+    then
+    jump to @OBJECTS_MENU_37352_JOY //RIGHT
+    end
+    
+if
+00E1:  player 0 pressed_key 5
+    then
+    jump to @OBJECTS_MENU_37415_JOY //UP
+    end
+if
+00E1:  player 0 pressed_key 7
+    then
+    jump to @OBJECTS_MENU_37463_JOY //DOWN
+    end    
+
+end
+
+if
+not ZAME_MOUSE_OBJECT_MODE == 1
+then 
+if 
+00E1:    player 0 pressed_key 16 
+jf @OBJECTS_MENU_37099
+else
+if 
+00E1:    player 0 pressed_key 17 
+jf @OBJECTS_MENU_37099
+end
+
+//////////////////////////////
+
+if
+ZAME_RECREATE_OBJECT_FLAG == 0
+then
+
+text.ClearAll()
+text.RemoveTextBox()
+
+while true
+wait 0
+text.ShowH('SE212',100,1)
+    
+if
+0AB0:   key_pressed 49
+    then
+    text.ClearAll()        
+    break
+    end
+    
+if
+0AB0:   key_pressed 50
+    then
+    text.ClearAll()
+    0AD3: v$RACE_FILE = format "OBE%d" ZAME_OBJECTS_COUNT    
+    0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "CREATE_AFTER_OBJ_FLAG"
+    0AF1: write_int ZAME_OBJECTIVES_COUNT to_ini_file "me\temp.dat" section v$RACE_FILE key "CREATE_AFTER_OBJ_NUM"
+    break
+    end    
+    
+if
+0AB0:   key_pressed 51
+    then
+    text.ClearAll()
+    0AD3: v$RACE_FILE = format "OBE%d" ZAME_OBJECTS_COUNT    
+    0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "CREATE_AFTER_OBJ_FLAG"
+    0AF4: v$FUCK_CHRI = read_string_from_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "EDITOR_LAST_SELECTED_OBJ_STRING"
+    0@ = 1
+    0AD4: 0@ = scan_string v$FUCK_CHRI format "OBJ%d" 1@ //IF and SET
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file "me\temp.dat" section v$RACE_FILE key "CREATE_AFTER_OBJ_NUM"
+    break
+    end    
+    
+end
+
+end
+    
+//////////////////////////////
+
+if
+ZAME_RECREATE_OBJECT_FLAG == 0
+then
+0AD3: v$RACE_FILE = format "OBE%d" ZAME_OBJECTS_COUNT
+0AF1: write_int 29@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJ_ID"
+0AF1: write_int $ACTIVE_INTERIOR to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJ_INT"
+0AF3: write_float $X to_ini_file "me\temp.dat" section v$RACE_FILE key "POS_X"
+0AF3: write_float $Y to_ini_file "me\temp.dat" section v$RACE_FILE key "POS_Y"
+0AF3: write_float $Z to_ini_file "me\temp.dat" section v$RACE_FILE key "POS_Z"
+0AF3: write_float 15@ to_ini_file "me\temp.dat" section v$RACE_FILE key "ANGLE_X"
+0AF3: write_float 14@ to_ini_file "me\temp.dat" section v$RACE_FILE key "ANGLE_Y"
+0AF3: write_float 13@ to_ini_file "me\temp.dat" section v$RACE_FILE key "ANGLE_Z"
+0AF1: write_int ZAME_OBJECTS_COUNT to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "OBJECTS_COUNT"
+ZAME_OBJECT_MARKER_HANLDE = 0
+ZAME_OBJECT_MARKER_HANLDE = Marker.CreateAboveObject(ZAME_OBJECT_HANLDE)
+object.SetImmunities(ZAME_OBJECT_HANLDE,1,1,1,1,1)
+object.Indestructibility(ZAME_OBJECT_HANLDE,1)
+071F: set_object ZAME_OBJECT_HANLDE health_to 28000
+0392: make_object ZAME_OBJECT_HANLDE moveable 0
+0550: keep_object ZAME_OBJECT_HANLDE in_memory 1
+else
+0AD3: v$RACE_FILE = format "OBE%d" ZAME_RECREATE_INDEX
+0AF1: write_int 29@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJ_ID"
+0AF1: write_int $ACTIVE_INTERIOR to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJ_INT"
+0AF3: write_float $X to_ini_file "me\temp.dat" section v$RACE_FILE key "POS_X"
+0AF3: write_float $Y to_ini_file "me\temp.dat" section v$RACE_FILE key "POS_Y"
+0AF3: write_float $Z to_ini_file "me\temp.dat" section v$RACE_FILE key "POS_Z"
+0AF3: write_float 15@ to_ini_file "me\temp.dat" section v$RACE_FILE key "ANGLE_X"
+0AF3: write_float 14@ to_ini_file "me\temp.dat" section v$RACE_FILE key "ANGLE_Y"
+0AF3: write_float 13@ to_ini_file "me\temp.dat" section v$RACE_FILE key "ANGLE_Z"
+0AF1: write_int ZAME_OBJECTS_COUNT to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "OBJECTS_COUNT"
+ZAME_OBJECT_MARKER_HANLDE = 0
+ZAME_OBJECT_MARKER_HANLDE = Marker.CreateAboveObject(ZAME_OBJECT_HANLDE)
+object.SetImmunities(ZAME_OBJECT_HANLDE,1,1,1,1,1)
+object.Indestructibility(ZAME_OBJECT_HANLDE,1)
+071F: set_object ZAME_OBJECT_HANLDE health_to 28000
+0392: make_object ZAME_OBJECT_HANLDE moveable 0
+0550: keep_object ZAME_OBJECT_HANLDE in_memory 1
+end
+ 
+Actor.LockInCurrentPosition(PLAYER_ACTOR) = False
+0619: enable_actor PLAYER_ACTOR collision_detection 1
+if
+ZAME_SPEC_MOD_FREE_CAM == 1 
+then
+gosub @ZAME_FREECAMS_CHECK
+end 
+0930: (unknown) 0 
+Camera.SetBehindPlayer
+Camera.Restore_WithJumpCut
+0581: enable_radar 1 
+03E6: remove_text_box
+
+text.RemoveTextBox()
+text.ClearAll()
+
+if
+ZAME_RECREATE_OBJECT_FLAG == 0
+then
+01E5: show_text_1number_highpriority GXT 'SE138' number ZAME_OBJECTS_COUNT time 2000 flag 1
+gosub @zame_created_object_sound
+else
+01E5: show_text_1number_highpriority GXT 'SE169' number ZAME_RECREATE_INDEX time 2000 flag 1
+gosub @zame_recreated_object_sound
+end
+
+if
+ZAME_RECREATE_OBJECT_FLAG == 0
+then
+ZAME_OBJECTS_COUNT += 1
+end
+
+//Player.CanMove(PLAYER_CHAR) = True
+0E68: set_player_control_pad 1 1 
+0E69: set_player_control_pad_movement 0 1
+wait 100
+
+if
+ZAME_RECREATE_OBJECT_FLAG == 0
+then  
+jump @ZAME_OPEN_CHECK
+else
+ZAME_RECREATE_OBJECT_FLAG = 0
+Player.CanMove(PLAYER_CHAR) = false
+jump to @ZAME_TOOLS_RECREATE_SOMETHING
+end
+
+:ZAME_PGPD_CHECK
+
+if or
+0AB0:   key_pressed 33
+0AB0:   key_pressed 34
+    then
+            
+    if
+    0AB0:   key_pressed 33 
+    then
+    0@ = 0.05 
+    006B: 0@ *= 35@  // (float)
+//    0400: store_coords_to 4@ 5@ $Z from_object ZAME_OBJECT_HANLDE with_offset 0.0 0.0 0@
+    005F: $Z += 0@  // (float)
+    end          
+                
+    if
+    0AB0:   key_pressed 34
+    then
+    0@ = -0.05 
+    006B: 0@ *= 35@  // (float)
+//    0400: store_coords_to 4@ 5@ $Z from_object ZAME_OBJECT_HANLDE with_offset 0.0 0.0 0@
+    005F: $Z += 0@  // (float)
+    end            
+                  
+    Object.PutAt(ZAME_OBJECT_HANLDE, $X, $Y, $Z)
+                
+    end
+
+return
+
+:ZAME_FREECAMS_CHECK
+
+if
+ZAME_SPEC_MOD_FREE_CAM == 0 
+    then
+    ///////////////////////////////////////////////////
+    068D: get_camera_position_to 1@ 2@ 3@
+    068E: get_camera_target_point_to 4@ 5@ 6@
+    0AF3: write_float 1@ to_ini_file "moonloader\Spectate Camera.ini" section "SCR" key "FREE_CAM_X"
+    0AF3: write_float 2@ to_ini_file "moonloader\Spectate Camera.ini" section "SCR" key "FREE_CAM_Y"
+    0AF3: write_float 3@ to_ini_file "moonloader\Spectate Camera.ini" section "SCR" key "FREE_CAM_Z"
+    0AF3: write_float 4@ to_ini_file "moonloader\Spectate Camera.ini" section "SCR" key "FREE_CAM_AT_X"
+    0AF3: write_float 5@ to_ini_file "moonloader\Spectate Camera.ini" section "SCR" key "FREE_CAM_AT_Y"
+    0AF3: write_float 6@ to_ini_file "moonloader\Spectate Camera.ini" section "SCR" key "FREE_CAM_AT_Z"
+    0E27: get_angle_from_two_coords 1@ 2@ and 3@ 4@ to 7@
+    0AF3: write_float 7@ to_ini_file "moonloader\Spectate Camera.ini" section "SCR" key "FREE_CAM_ANGLE"
+    ZAME_SPEC_MOD_FREE_CAM = 1
+    0930: (unknown) 0
+    ///////////////////////////////////////////////////
+    0337: set_actor PLAYER_ACTOR visibility 0
+    actor.StorePos(PLAYER_ACTOR,ZAME_TEMP_X,ZAME_TEMP_Y,ZAME_TEMP_Z)
+    ZAME_TEMP_A = actor.Angle(PLAYER_ACTOR)
+    actor.PutAtNoOffset(PLAYER_ACTOR,1@,2@,3@)
+    actor.Angle(PLAYER_ACTOR) = 7@
+    ///////////////////////////////////////////////////
+    camera.Restore_WithJumpCut()
+    0E68: set_player_control_pad 0 1 
+    0E69: set_player_control_pad_movement 0 1
+    actor.LockInCurrentPosition(PLAYER_ACTOR,true)
+    0627: update_integer_stat 271 to 1
+    0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "CARMA_FREE_CAM_TURNED_FLAG"    
+//    0AD1: show_formatted_text_highpriority "Free cam ON." time 2000
+    else
+    ///////////////////////////////////////////////////
+    068D: get_camera_position_to 1@ 2@ 3@
+    068E: get_camera_target_point_to 4@ 5@ 6@
+    0AF3: write_float 1@ to_ini_file "moonloader\Spectate Camera.ini" section "SCR" key "FREE_CAM_X"
+    0AF3: write_float 2@ to_ini_file "moonloader\Spectate Camera.ini" section "SCR" key "FREE_CAM_Y"
+    0AF3: write_float 3@ to_ini_file "moonloader\Spectate Camera.ini" section "SCR" key "FREE_CAM_Z"
+    0AF3: write_float 4@ to_ini_file "moonloader\Spectate Camera.ini" section "SCR" key "FREE_CAM_AT_X"
+    0AF3: write_float 5@ to_ini_file "moonloader\Spectate Camera.ini" section "SCR" key "FREE_CAM_AT_Y"
+    0AF3: write_float 6@ to_ini_file "moonloader\Spectate Camera.ini" section "SCR" key "FREE_CAM_AT_Z"
+    0E27: get_angle_from_two_coords 1@ 2@ and 3@ 4@ to 7@
+    0AF3: write_float 7@ to_ini_file "moonloader\Spectate Camera.ini" section "SCR" key "FREE_CAM_ANGLE"
+    ///////////////////////////////////////////////////
+    ZAME_SPEC_MOD_FREE_CAM = 0
+    actor.LockInCurrentPosition(PLAYER_ACTOR,false)
+    Player.CanMove(PLAYER_CHAR) = true
+    0E68: set_player_control_pad 0 1 
+    0E69: set_player_control_pad_movement 0 0    
+    ///////////////////////////////////////////////////
+    0337: set_actor PLAYER_ACTOR visibility 1
+    actor.PutAtNoOffset(PLAYER_ACTOR,ZAME_TEMP_X,ZAME_TEMP_Y,ZAME_TEMP_Z)
+    actor.Angle(PLAYER_ACTOR) = ZAME_TEMP_A
+    ///////////////////////////////////////////////////    
+    0930: (unknown) 1
+    0400: store_coords_to 1@ 2@ 3@ from_object ZAME_OBJECT_HANLDE with_offset 34@ 30@ 31@ 
+    0936: set_camera 1@ 2@ 3@ position_to 1@ 2@ 3@ GENERAL_FP_CAM_TIMER ms 1    
+    0627: update_integer_stat 271 to 2
+    0AF1: write_int 0 to_ini_file "saves\ZACM.set" section "SCR" key "CARMA_FREE_CAM_TURNED_FLAG"        
+//    0AD1: show_formatted_text_highpriority "Free cam OFF." time 2000
+    end
+    
+return 
+
+//////////////////////////////////////////////////////////////////////////    
+
+:DRAW_MOV_SPEED_TEXT
+
+03F0: enable_text_draw 1  
+0349: set_text_draw_font 1 
+0342: set_text_draw_centered 1
+03E0: draw_text_behind_textures 1
+03E3: set_texture_to_be_drawn_antialiased 1 
+033F: set_text_draw_letter_size 0.22 1.1
+            
+081C: draw_text_outline 1 RGBA 0 0 0 255
+0340: set_text_draw_RGBA 255 255 255 255
+
+if
+UNITED_MAP == 1
+then    
+0349: set_text_draw_font UNITED_HUD_FONT_NUMBER
+end 
+   
+033E: set_draw_text_position 360.0 410.0 GXT 'MOVSPD'  // Push
+
+//////////////////////////////////////////////////////////////////////////
+
+03F0: enable_text_draw 1  
+0349: set_text_draw_font 1 
+0342: set_text_draw_centered 1
+03E0: draw_text_behind_textures 1
+03E3: set_texture_to_be_drawn_antialiased 1 
+033F: set_text_draw_letter_size 0.22 1.1
+            
+081C: draw_text_outline 1 RGBA 0 0 0 255
+0340: set_text_draw_RGBA 200 200 200 255
+
+if
+UNITED_MAP == 1
+then    
+0349: set_text_draw_font UNITED_HUD_FONT_NUMBER
+end 
+   
+045B: draw_text_2numbers 350.0 350.0 GXT 'DISP5' numbers 271@ ZAME_MAX_OBJS_IN_CATEGORY  // ~1~:~1~
+
+return
+
+//////////////////////////////////////////////////////////////////////////
+
+:FORMAT_MOVE_SPEED_STRING
+0AD3: FUCK_CHRISTOPHER = format "move speed: %f" 35@
+0AE0: remove_dynamic_GXT_entry "MOVSPD"                       
+0ADF: add_dynamic_GXT_entry "MOVSPD" text FUCK_CHRISTOPHER
+return
+
+////////////////////////////////////////////////////////////////////////// 
+
+:OBJECTS_MENU_33609
+271@ += 1 
+//01E5: show_text_1number_highpriority GXT 'se37' number 271@ time 300 flag 1 
+jump @OBJECTS_MENU_36902
+
+////////////////////////////////////////////////////////////////////////// 
+
+:OBJECTS_MENU_34254
+271@ -= 1 
+//01E5: show_text_1number_highpriority GXT 'se37' number 271@ time 300 flag 1 
+jump @OBJECTS_MENU_36902 
+
+////////////////////////////////////////////////////////////////////////// 
+
+:OBJECTS_MENU_36902
+gosub @zame_object_get_id_by_category 
+ZAME_OBJECT_HANLDE = Object.Create(29@, $X, $Y, $Z)
+Object.PutAt(ZAME_OBJECT_HANLDE, $X, $Y, $Z)
+0453: set_object ZAME_OBJECT_HANLDE XYZ_rotation 15@ 14@ 13@ 
+077E: get_active_interior_to 19@ 
+0566: link_object ZAME_OBJECT_HANLDE to_interior 19@ 
+gosub @DO_OBJCHANGE_ZADERZHKA
+jump @OBJECTS_MENU_33042 
+
+////////////////////////////////////////////////////////////////////////// 
+
+:OBJECTS_MENU_37099
+wait 0
+gosub @DRAW_MOV_SPEED_TEXT 
+if 
+00E1:   player 0 pressed_key 15 
+jf @OBJECTS_MENU_33042
+
+if
+ZAME_SPEC_MOD_FREE_CAM == 1 
+then
+gosub @ZAME_FREECAMS_CHECK
+end
+
+gosub @OBJECTS_MENU_37829  
+Actor.LockInCurrentPosition(PLAYER_ACTOR) = False
+0619: enable_actor PLAYER_ACTOR collision_detection 1
+0930: (unknown) 0 
+Camera.SetBehindPlayer
+Camera.Restore_WithJumpCut
+0581: enable_radar 0 
+03E6: remove_text_box
+0E68: set_player_control_pad 0 1 
+0E69: set_player_control_pad_movement 0 1
+Player.CanMove(PLAYER_CHAR) = false
+
+if
+ZAME_RECREATE_OBJECT_FLAG == 0
+then  
+jump @OBJECTS_MENU
+else
+gosub @RESTORE_OBJECT_RECREATE_INDEX
+ZAME_RECREATE_OBJECT_FLAG = 0
+jump to @ZAME_TOOLS_RECREATE_SOMETHING
+end
+
+//////////////////////////////////////////////////////////////////////////
+
+:RESTORE_OBJECT_RECREATE_INDEX
+
+0AD3: v$RACE_FILE = format "OBE%d" ZAME_RECREATE_INDEX
+0AF0: get_int 29@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJ_ID"
+0AF2: get_float $X from_ini_file "me\temp.dat" section v$RACE_FILE key "POS_X"
+0AF2: get_float $Y from_ini_file "me\temp.dat" section v$RACE_FILE key "POS_Y"
+0AF2: get_float $Z from_ini_file "me\temp.dat" section v$RACE_FILE key "POS_Z"
+0AF2: get_float 15@ from_ini_file "me\temp.dat" section v$RACE_FILE key "ANGLE_X"
+0AF2: get_float 14@ from_ini_file "me\temp.dat" section v$RACE_FILE key "ANGLE_Y"
+0AF2: get_float 13@ from_ini_file "me\temp.dat" section v$RACE_FILE key "ANGLE_Z"
+
+if
+8AF0: not get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "DO_NOT_EXIST_PLEASE"
+then
+
+if and
+ZAME_OBJECTIVES_COUNT2 == 1
+ZAME_MISSION_LAUNCH_FLAG == 1
+then
+
+else
+
+if or
+not ZAME_OBJECTIVES_COUNT2 == 1
+not ZAME_MISSION_LAUNCH_FLAG == 1
+then
+     
+ZAME_OBJECT_HANLDE = Object.Create(29@, $X, $Y, $Z)
+Object.PutAt(ZAME_OBJECT_HANLDE, $X, $Y, $Z)
+0453: set_object ZAME_OBJECT_HANLDE XYZ_rotation 15@ 14@ 13@
+0AF0: get_int ZAME_TEMP_FUCKEEE from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJ_INT"
+if
+ZAME_TEMP_FUCKEEE < -1
+then
+ZAME_TEMP_FUCKEEE = 0
+end
+0566: link_object ZAME_OBJECT_HANLDE to_interior ZAME_TEMP_FUCKEEE
+if
+not ZAME_MISSION_LAUNCH_FLAG == 1
+then
+ZAME_OBJECT_MARKER_HANLDE = 0
+ZAME_OBJECT_MARKER_HANLDE = Marker.CreateAboveObject(ZAME_OBJECT_HANLDE)
+marker.SetIconSize(ZAME_OBJECT_MARKER_HANLDE,1)
+object.SetImmunities(ZAME_OBJECT_HANLDE,1,1,1,1,1)
+object.Indestructibility(ZAME_OBJECT_HANLDE,1)
+071F: set_object ZAME_OBJECT_HANLDE health_to 28000
+end
+
+end
+
+end
+
+end
+
+return
+
+////////////////////////////////////////////////////////////////////////// 
+
+:OBJECTS_MENU_37163
+if 
+8AB0:   not key_pressed 16 
+jf @OBJECTS_MENU_37415
+0@ = 0.05 
+006B: 0@ *= 35@  // (float)
+0400: store_coords_to $X $Y $Z from_object ZAME_OBJECT_HANLDE with_offset 0.0 0@ 0.0 
+Object.PutAt(ZAME_OBJECT_HANLDE, $X, $Y, $Z)
+gosub @DO_OBJMOV_ZADERZHKA 
+jump @OBJECTS_MENU_33042 
+
+:OBJECTS_MENU_37226
+if 
+8AB0:   not key_pressed 16 
+jf @OBJECTS_MENU_37463
+0@ = -0.05 
+006B: 0@ *= 35@  // (float) 
+0400: store_coords_to $X $Y $Z from_object ZAME_OBJECT_HANLDE with_offset 0.0 0@ 0.0 
+Object.PutAt(ZAME_OBJECT_HANLDE, $X, $Y, $Z)
+gosub @DO_OBJMOV_ZADERZHKA 
+jump @OBJECTS_MENU_33042 
+
+:OBJECTS_MENU_37289
+if 
+8AB0:   not key_pressed 16 
+jf @OBJECTS_MENU_37415
+0@ = 0.05 
+006B: 0@ *= 35@  // (float) 
+0400: store_coords_to $X $Y $Z from_object ZAME_OBJECT_HANLDE with_offset 0@ 0.0 0.0 
+Object.PutAt(ZAME_OBJECT_HANLDE, $X, $Y, $Z)
+gosub @DO_OBJMOV_ZADERZHKA 
+jump @OBJECTS_MENU_33042 
+
+:OBJECTS_MENU_37352
+if 
+8AB0:   not key_pressed 16 
+jf @OBJECTS_MENU_37415
+0@ = -0.05 
+006B: 0@ *= 35@  // (float)  
+0400: store_coords_to $X $Y $Z from_object ZAME_OBJECT_HANLDE with_offset 0@ 0.0 0.0 
+Object.PutAt(ZAME_OBJECT_HANLDE, $X, $Y, $Z)
+gosub @DO_OBJMOV_ZADERZHKA 
+jump @OBJECTS_MENU_33042 
+
+:OBJECTS_MENU_37415
+0@ = 0.05 
+006B: 0@ *= 35@  // (float)
+0400: store_coords_to $X $Y $Z from_object ZAME_OBJECT_HANLDE with_offset 0.0 0.0 0@ 
+Object.PutAt(ZAME_OBJECT_HANLDE, $X, $Y, $Z)
+gosub @DO_OBJMOV_ZADERZHKA 
+jump @OBJECTS_MENU_33042 
+
+:OBJECTS_MENU_37463
+0@ = -0.05 
+006B: 0@ *= 35@  // (float)
+0400: store_coords_to $X $Y $Z from_object ZAME_OBJECT_HANLDE with_offset 0.0 0.0 0@ 
+Object.PutAt(ZAME_OBJECT_HANLDE, $X, $Y, $Z)
+gosub @DO_OBJMOV_ZADERZHKA 
+jump @OBJECTS_MENU_33042
+
+////////////////////////////////////////////////////////////////////////// 
+
+:OBJECTS_MENU_37163_JOY
+0@ = 0.05
+00E2: get_player 0 key 1 state_to 1@
+0095: make 1@ absolute_integer
+0093: 1@ = integer 1@ to_float
+1@ *= 0.125 
+006B: 0@ *= 1@  // (float)
+0400: store_coords_to $X $Y $Z from_object ZAME_OBJECT_HANLDE with_offset 0.0 0@ 0.0 
+Object.PutAt(ZAME_OBJECT_HANLDE, $X, $Y, $Z)
+gosub @DO_OBJMOV_ZADERZHKA 
+jump @OBJECTS_MENU_33042 
+
+:OBJECTS_MENU_37226_JOY
+0@ = -0.05
+00E2: get_player 0 key 1 state_to 1@
+0095: make 1@ absolute_integer
+0093: 1@ = integer 1@ to_float 
+1@ *= 0.125
+006B: 0@ *= 1@  // (float) 
+0400: store_coords_to $X $Y $Z from_object ZAME_OBJECT_HANLDE with_offset 0.0 0@ 0.0 
+Object.PutAt(ZAME_OBJECT_HANLDE, $X, $Y, $Z)
+gosub @DO_OBJMOV_ZADERZHKA 
+jump @OBJECTS_MENU_33042 
+
+:OBJECTS_MENU_37289_JOY
+0@ = 0.05
+00E2: get_player 0 key 0 state_to 1@
+0095: make 1@ absolute_integer
+0093: 1@ = integer 1@ to_float
+1@ *= 0.125 
+006B: 0@ *= 1@  // (float) 
+0400: store_coords_to $X $Y $Z from_object ZAME_OBJECT_HANLDE with_offset 0@ 0.0 0.0 
+Object.PutAt(ZAME_OBJECT_HANLDE, $X, $Y, $Z)
+gosub @DO_OBJMOV_ZADERZHKA 
+jump @OBJECTS_MENU_33042 
+
+:OBJECTS_MENU_37352_JOY
+0@ = -0.05
+00E2: get_player 0 key 0 state_to 1@
+0095: make 1@ absolute_integer
+0093: 1@ = integer 1@ to_float
+1@ *= 0.125 
+006B: 0@ *= 1@  // (float)  
+0400: store_coords_to $X $Y $Z from_object ZAME_OBJECT_HANLDE with_offset 0@ 0.0 0.0 
+Object.PutAt(ZAME_OBJECT_HANLDE, $X, $Y, $Z)
+gosub @DO_OBJMOV_ZADERZHKA 
+jump @OBJECTS_MENU_33042
+
+:OBJECTS_MENU_37415_JOY
+0@ = 0.05
+00E2: get_player 0 key 5 state_to 1@
+0095: make 1@ absolute_integer
+0093: 1@ = integer 1@ to_float
+1@ *= 0.025 
+006B: 0@ *= 1@  // (float)
+0400: store_coords_to $X $Y $Z from_object ZAME_OBJECT_HANLDE with_offset 0.0 0.0 0@ 
+Object.PutAt(ZAME_OBJECT_HANLDE, $X, $Y, $Z)
+gosub @DO_OBJMOV_ZADERZHKA 
+jump @OBJECTS_MENU_33042 
+
+:OBJECTS_MENU_37463_JOY
+0@ = -0.05
+00E2: get_player 0 key 7 state_to 1@
+0095: make 1@ absolute_integer
+0093: 1@ = integer 1@ to_float
+1@ *= 0.025 
+006B: 0@ *= 1@  // (float)
+0400: store_coords_to $X $Y $Z from_object ZAME_OBJECT_HANLDE with_offset 0.0 0.0 0@ 
+Object.PutAt(ZAME_OBJECT_HANLDE, $X, $Y, $Z)
+gosub @DO_OBJMOV_ZADERZHKA 
+jump @OBJECTS_MENU_33042
+
+:DO_OBJMOV_ZADERZHKA
+
+32@ = 0
+
+repeat
+gosub @DRAW_MOV_SPEED_TEXT
+wait 0
+gosub @DRAW_MOV_SPEED_TEXT
+until 32@ >= 10
+
+return
+
+:DO_OBJMOV2_ZADERZHKA
+
+32@ = 0
+
+repeat
+gosub @DRAW_MOV_SPEED_TEXT
+wait 0
+gosub @DRAW_MOV_SPEED_TEXT
+until 32@ >= 5
+
+return 
+
+:DO_OBJCHANGE_ZADERZHKA
+
+if and
+ZAME_MOUSE_OBJECT_MODE == 1
+8AB0: not  key_pressed 33
+8AB0: not  key_pressed 34
+80E1: not  player 0 pressed_key 11
+80E1: not  player 0 pressed_key 10
+then
+return
+end
+
+32@ = 0
+
+repeat
+gosub @DRAW_MOV_SPEED_TEXT
+wait 0
+gosub @DRAW_MOV_SPEED_TEXT
+until 32@ >= 100
+
+return
+
+////////////////////////////////////////////////////////////////////////// 
+
+:OBJECTS_MENU_37511
+if 
+0AB0:   key_pressed 16 
+jf @OBJECTS_MENU_37733 
+13@ += 1.0
+if
+13@ > 360.0
+then
+13@ = 0.0
+end 
+0453: set_object ZAME_OBJECT_HANLDE XYZ_rotation 15@ 14@ 13@ 
+gosub @DO_OBJMOV2_ZADERZHKA 
+jump @OBJECTS_MENU_33042 
+
+:OBJECTS_MENU_37574
+if 
+0AB0:   key_pressed 16 
+jf @OBJECTS_MENU_37781 
+13@ -= 1.0
+if
+13@ < 0.0
+then
+13@ = 360.0
+end 
+0453: set_object ZAME_OBJECT_HANLDE XYZ_rotation 15@ 14@ 13@ 
+gosub @DO_OBJMOV2_ZADERZHKA 
+jump @OBJECTS_MENU_33042 
+
+:OBJECTS_MENU_37637
+14@ += 1.0
+if
+14@ > 360.0
+then
+14@ = 0.0
+end 
+0453: set_object ZAME_OBJECT_HANLDE XYZ_rotation 15@ 14@ 13@ 
+gosub @DO_OBJMOV2_ZADERZHKA 
+jump @OBJECTS_MENU_33042 
+
+:OBJECTS_MENU_37685
+14@ -= 1.0
+if
+14@ < 0.0
+then
+14@ = 360.0
+end 
+0453: set_object ZAME_OBJECT_HANLDE XYZ_rotation 15@ 14@ 13@ 
+gosub @DO_OBJMOV2_ZADERZHKA 
+jump @OBJECTS_MENU_33042 
+
+:OBJECTS_MENU_37733
+15@ += 1.0
+if
+15@ > 360.0
+then
+15@ = 0.0
+end 
+0453: set_object ZAME_OBJECT_HANLDE XYZ_rotation 15@ 14@ 13@ 
+gosub @DO_OBJMOV2_ZADERZHKA 
+jump @OBJECTS_MENU_33042 
+
+:OBJECTS_MENU_37781
+15@ -= 1.0
+if
+15@ < 0.0
+then
+15@ = 360.0
+end 
+0453: set_object ZAME_OBJECT_HANLDE XYZ_rotation 15@ 14@ 13@ 
+gosub @DO_OBJMOV2_ZADERZHKA 
+jump @OBJECTS_MENU_33042
+
+//////////////////////////////////////////////////////////////////////////
+
+:OBJECTS_MENU_37511_JOY
+if 
+80E1: not  player 0 pressed_key 17
+jf @OBJECTS_MENU_37733_JOY
+0097: make 3@ absolute_float
+3@ *= 0.1
+005B: 13@ += 3@  // (float)
+0453: set_object ZAME_OBJECT_HANLDE XYZ_rotation 15@ 14@ 13@ 
+gosub @DO_OBJMOV2_ZADERZHKA 
+jump @OBJECTS_MENU_33042
+
+:OBJECTS_MENU_37574_JOY
+if 
+80E1: not  player 0 pressed_key 17 
+jf @OBJECTS_MENU_37733_JOY
+0097: make 3@ absolute_float
+3@ *= 0.1 
+0063: 13@ -= 3@  // (float)
+0453: set_object ZAME_OBJECT_HANLDE XYZ_rotation 15@ 14@ 13@ 
+gosub @DO_OBJMOV2_ZADERZHKA 
+jump @OBJECTS_MENU_33042 
+
+:OBJECTS_MENU_37637_JOY
+0097: make 4@ absolute_float
+4@ *= 0.1
+005B: 14@ += 4@  // (float) 
+0453: set_object ZAME_OBJECT_HANLDE XYZ_rotation 15@ 14@ 13@ 
+gosub @DO_OBJMOV2_ZADERZHKA 
+jump @OBJECTS_MENU_33042 
+
+:OBJECTS_MENU_37685_JOY
+0097: make 4@ absolute_float
+4@ *= 0.1
+0063: 14@ -= 4@  // (float) 
+0453: set_object ZAME_OBJECT_HANLDE XYZ_rotation 15@ 14@ 13@ 
+gosub @DO_OBJMOV2_ZADERZHKA 
+jump @OBJECTS_MENU_33042
+
+:OBJECTS_MENU_37733_JOY
+0097: make 3@ absolute_float
+3@ *= 0.1
+005B: 15@ += 3@  // (float)
+0453: set_object ZAME_OBJECT_HANLDE XYZ_rotation 15@ 14@ 13@ 
+gosub @DO_OBJMOV2_ZADERZHKA 
+jump @OBJECTS_MENU_33042 
+
+:OBJECTS_MENU_37781_JOY
+0097: make 3@ absolute_float
+3@ *= 0.1
+0063: 15@ -= 3@  // (float)
+0453: set_object ZAME_OBJECT_HANLDE XYZ_rotation 15@ 14@ 13@ 
+gosub @DO_OBJMOV2_ZADERZHKA 
+jump @OBJECTS_MENU_33042 
+
+////////////////////////////////////////////////////////////////////////// 
+
+:OBJECTS_MENU_37829
+if 
+03CA:   object ZAME_OBJECT_HANLDE exists 
+jf @OBJECTS_MENU_37857 
+Object.Destroy(ZAME_OBJECT_HANLDE)
+return 
+
+:OBJECTS_MENU_37857
+return
+
+//////////////////////////////////////////////////////////////////////////
+
+:OBJECT_MODEL_TYPE_SELECT
+
+06D1: v$SNAME3 = "" // v$ // Sunday
+06D1: v$SNAME2 = "" // v$ // Sunday
+
+29@ = 0
+33@ = 0
+KEYS_TYPED_NUM = 0
+    
+0AE0: remove_dynamic_GXT_entry "F_NAME"
+0ADF: add_dynamic_GXT_entry "F_NAME" text ""
+
+0512: show_permanent_text_box 'SE330'
+
+while true
+wait 0
+
+015D: set_gamespeed 1.0
+CURRENT_LAYOUT = 1
+gosub @MISSION_SELECT_KEYS_CHECK
+
+if
+8846: not  string v$SNAME3 empty // v$
+then
+0384: show_text_1string GXT "SE331" string "F_NAME" time 99999999 1
+else
+0384: show_text_1string GXT "SE331" string v$NAME3 time 99999999 1
+end
+
+if and
+0E3E: is_button_just_pressed 0 button 4
+33@ > 500
+    then  
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    ZAME_TEMP_FUCKEEE = 699        
+    return    
+    end
+
+if and
+0E3E: is_button_just_pressed 0 button 16
+33@ > 500
+8846: not  string v$SNAME3 empty // v$
+    then           
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5        
+    if
+    0E9C: get_model_by_name v$SNAME3 store_id 29@
+        then          
+        return
+        else
+        text.ShowH('SE332',1000,1)
+        wait 1000        
+        0512: show_permanent_text_box 'SE330'
+        end                        
+    end
+
+end
+
+jump to @OBJECT_MODEL_TYPE_SELECT
+
+//////////////////////////////////////////////////////////////////////////
+
+:OBJECT_ID_SELECT
+
+06D1: v$SNAME3 = "" // v$ // Sunday
+06D1: v$SNAME2 = "" // v$ // Sunday
+
+29@ = 0
+33@ = 0
+KEYS_TYPED_NUM = 0
+    
+0AE0: remove_dynamic_GXT_entry "F_NAME"
+0ADF: add_dynamic_GXT_entry "F_NAME" text ""
+
+if
+ZAME_TEMP_FUCKEEE == 1271
+then
+
+if
+0A4B:   controls_set_to_joystick
+then
+0512: show_permanent_text_box 'SE95B'
+ACTIVATE_KBRD_PANEL = 1
+KBRD_PANEL_CHRTC = 1
+CAPSLOCK_ON_FLAG = 1
+$PANEL_OPEN2 = 1
+else
+0512: show_permanent_text_box 'SE95'
+end
+
+else
+
+if
+0A4B:   controls_set_to_joystick
+then
+0512: show_permanent_text_box 'SE134B'
+ACTIVATE_KBRD_PANEL = 1
+KBRD_PANEL_CHRTC = 1
+CAPSLOCK_ON_FLAG = 1
+$PANEL_OPEN2 = 1
+else
+0512: show_permanent_text_box 'SE134'
+end
+
+end
+
+while true
+wait 0
+
+015D: set_gamespeed 1.0
+CURRENT_LAYOUT = 1
+gosub @OBJECT_ID_SELECT_KEYS_CHECK
+
+if
+not ZAME_TEMP_FUCKEEE == 1271
+then
+
+if
+8846: not  string v$SNAME3 empty // v$
+then
+0384: show_text_1string GXT "GAME899" string "F_NAME" time 99999999 1
+else
+0384: show_text_1string GXT "GAME899" string v$NAME3 time 99999999 1
+end
+
+else
+
+if
+8846: not  string v$SNAME3 empty // v$
+then
+0384: show_text_1string GXT "GAME900" string "F_NAME" time 99999999 1
+else
+0384: show_text_1string GXT "GAME900" string v$NAME3 time 99999999 1
+end
+
+end
+
+if
+0A4B:   controls_set_to_joystick
+then
+33@ = 501
+if and
+0E3E: is_button_just_pressed 0 button 15
+33@ > 500
+    then
+    jump to @OBJ_ID_VVOD_EXIT_JOY_JUMP
+    end
+end
+
+if and
+0E3E: is_button_just_pressed 0 button 15
+33@ > 500
+    then
+    :OBJ_ID_VVOD_EXIT_JOY_JUMP    
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    ZAME_TEMP_FUCKEEE = 699        
+    return    
+    end
+
+if and
+0E3E: is_button_just_pressed 0 button 16
+33@ > 500
+8846: not  string v$SNAME3 empty // v$
+    then
+    
+    if
+    ACTIVATE_KBRD_PANEL == 1
+    then
+    ACTIVATE_KBRD_PANEL = 0
+    $PANEL_OPEN2 = 0
+    end
+        
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5    
+    0AF5: write_string v$SNAME3 to_ini_file "me\temp3.dat" section v$RACE_FILE key "FXT_ID"
+    0AF0: 29@ = get_int_from_ini_file "me\temp3.dat" section v$RACE_FILE key "FXT_ID"
+    if and
+    29@ > 611
+    29@ <= 20000
+        then    
+        if
+        07DE:   model 29@ exists  // versionB    
+            then
+            return
+            else
+            0B00: delete_file "me\temp3.dat"  // IF and SET
+            text.ShowH('SE234',1000,1)
+            wait 1000
+            
+            if
+            ZAME_TEMP_FUCKEEE == 1271
+            then
+            0512: show_permanent_text_box 'SE95'
+            else
+            0512: show_permanent_text_box 'SE134'
+            end
+            
+            end
+        else
+        
+        0B00: delete_file "me\temp3.dat"  // IF and SET
+        text.ShowH('SE234',1000,1)
+        wait 1000
+            
+        if
+        ZAME_TEMP_FUCKEEE == 1271
+        then
+        0512: show_permanent_text_box 'SE95'
+        else
+        0512: show_permanent_text_box 'SE134'
+        end
+                        
+        end
+    end
+
+end
+
+jump to @OBJECT_ID_SELECT
+
+//////////////////////////////////////////////////////////////////////////
+
+:OBJECT_ID_SELECT_KEYS_CHECK
+
+if
+0A4B:   controls_set_to_joystick
+then
+
+if
+00E1:   player 0 pressed_key 14
+    then
+    KEYS_TYPED_NUM = -1
+    06D1: v$SNAME3 = "" // v$ // Sunday
+    06D1: v$SNAME2 = "" // v$ // Sunday
+    gosub @OBJECT_ID_SELECT_KEY_ADD
+    end
+    
+else
+
+if
+0E3D:   key_pressed 8 
+    then
+    KEYS_TYPED_NUM = -1
+    06D1: v$SNAME3 = "" // v$ // Sunday
+    06D1: v$SNAME2 = "" // v$ // Sunday
+    gosub @OBJECT_ID_SELECT_KEY_ADD
+    end
+
+end    
+
+if
+0E3D:   key_pressed 48
+    then        
+    06D1: v$SNAME2 = "0" // v$ // Sunday        
+    gosub @OBJECT_ID_SELECT_KEY_ADD    
+    end
+    
+if
+0E3D:   key_pressed 49
+    then        
+    06D1: v$SNAME2 = "1" // v$ // Sunday        
+    gosub @OBJECT_ID_SELECT_KEY_ADD    
+    end
+    
+if
+0E3D:   key_pressed 50
+    then        
+    06D1: v$SNAME2 = "2" // v$ // Sunday        
+    gosub @OBJECT_ID_SELECT_KEY_ADD    
+    end
+    
+if
+0E3D:   key_pressed 51
+    then        
+    06D1: v$SNAME2 = "3" // v$ // Sunday        
+    gosub @OBJECT_ID_SELECT_KEY_ADD    
+    end
+    
+if
+0E3D:   key_pressed 52
+    then        
+    06D1: v$SNAME2 = "4" // v$ // Sunday        
+    gosub @OBJECT_ID_SELECT_KEY_ADD    
+    end
+    
+if
+0E3D:   key_pressed 53
+    then        
+    06D1: v$SNAME2 = "5" // v$ // Sunday        
+    gosub @OBJECT_ID_SELECT_KEY_ADD    
+    end
+    
+if
+0E3D:   key_pressed 54
+    then        
+    06D1: v$SNAME2 = "6" // v$ // Sunday        
+    gosub @OBJECT_ID_SELECT_KEY_ADD    
+    end
+    
+if
+0E3D:   key_pressed 55
+    then        
+    06D1: v$SNAME2 = "7" // v$ // Sunday        
+    gosub @OBJECT_ID_SELECT_KEY_ADD    
+    end
+    
+if
+0E3D:   key_pressed 56
+    then        
+    06D1: v$SNAME2 = "8" // v$ // Sunday        
+    gosub @OBJECT_ID_SELECT_KEY_ADD    
+    end
+    
+if
+0E3D:   key_pressed 57
+    then        
+    06D1: v$SNAME2 = "9" // v$ // Sunday        
+    gosub @OBJECT_ID_SELECT_KEY_ADD    
+    end
+    
+return
+
+:OBJECT_ID_SELECT_KEY_ADD
+
+KEYS_TYPED_NUM += 1
+
+if
+KEYS_TYPED_NUM >= 6
+then
+Audiostream.Volume($MENU_INVALID_SOUND) = $SOUNDS_VOLUME 
+Audiostream.Loop($MENU_INVALID_SOUND, 0)
+Audiostream.PerformAction($MENU_INVALID_SOUND, PLAY)
+return
+end
+
+Audiostream.Volume($MENU_FOCUS_SOUND) = $SOUNDS_VOLUME 
+Audiostream.Loop($MENU_FOCUS_SOUND, 0)
+Audiostream.PerformAction($MENU_FOCUS_SOUND, PLAY)
+
+29@ = 1
+
+098B: v$SNAME3 = v$SNAME3 + v$SNAME2 // all string variables
+    
+0AE0: remove_dynamic_GXT_entry "F_NAME"
+0ADF: add_dynamic_GXT_entry "F_NAME" text v$SNAME3
+
+if
+not ZAME_TEMP_FUCKEEE == 1271
+then
+
+if
+8846: not  string v$SNAME3 empty // v$
+then
+0384: show_text_1string GXT "GAME899" string "F_NAME" time 99999999 1
+else
+0384: show_text_1string GXT "GAME899" string v$NAME3 time 99999999 1
+end
+
+else
+
+if
+8846: not  string v$SNAME3 empty // v$
+then
+0384: show_text_1string GXT "GAME900" string "F_NAME" time 99999999 1
+else
+0384: show_text_1string GXT "GAME900" string v$NAME3 time 99999999 1
+end
+
+end
+
+return
+
+:zame_object_get_id_by_category
+
+if
+03CA:   object ZAME_OBJECT_HANLDE exists
+then
+object.Destroy(ZAME_OBJECT_HANLDE)
+end
+
+if
+ZAME_OBJECT_HANLDE == 1024
+then
+   
+if
+24@ == 0
+    then
+    0085: 271@ = ZAME_CATEGORY1_LATEST_OBJ // (int)
+    end
+    
+if
+24@ == 1
+    then
+    0085: 271@ = ZAME_CATEGORY2_LATEST_OBJ // (int)
+    end   
+    
+if
+24@ == 2
+    then
+    0085: 271@ = ZAME_CATEGORY3_LATEST_OBJ // (int)
+    end    
+    
+if
+24@ == 3
+    then
+    0085: 271@ = ZAME_CATEGORY4_LATEST_OBJ // (int)
+    end
+    
+if
+24@ == 4
+    then
+    0085: 271@ = ZAME_CATEGORY5_LATEST_OBJ // (int)
+    end
+    
+if
+24@ == 5
+    then
+    0085: 271@ = ZAME_CATEGORY6_LATEST_OBJ // (int)
+    end      
+    
+if
+24@ == 6
+    then
+    0085: 271@ = ZAME_CATEGORY7_LATEST_OBJ // (int)
+    end           
+
+end
+
+if
+24@ == 7
+then
+return
+end
+
+if
+24@ == 0
+then
+gosub @zame_barriers_id_get
+0085: ZAME_CATEGORY1_LATEST_OBJ = 271@ // (int)
+end
+
+if
+24@ == 1
+then
+gosub @zame_fences_id_get
+0085: ZAME_CATEGORY2_LATEST_OBJ = 271@ // (int)
+end
+
+if
+24@ == 2
+then
+gosub @zame_trash_id_get
+0085: ZAME_CATEGORY3_LATEST_OBJ = 271@ // (int)
+end
+
+if
+24@ == 3
+then
+gosub @zame_effects_id_get
+0085: ZAME_CATEGORY4_LATEST_OBJ = 271@ // (int)
+end
+
+if
+24@ == 4
+then
+gosub @zame_extra_id_get
+0085: ZAME_CATEGORY5_LATEST_OBJ = 271@ // (int)
+end
+
+if
+24@ == 5
+then
+gosub @zame_extra2_id_get
+0085: ZAME_CATEGORY6_LATEST_OBJ = 271@ // (int)
+end
+
+if
+24@ == 6
+then
+gosub @zame_canals_id_get
+0085: ZAME_CATEGORY7_LATEST_OBJ = 271@ // (int)
+end
+
+return
+
+:zame_barriers_id_get
+
+0AF0: ZAME_MAX_OBJS_IN_CATEGORY = get_int_from_ini_file "me\dat\objects.ini" section "BARRIERS" key "MAX"
+if
+001D:   271@ > ZAME_MAX_OBJS_IN_CATEGORY  // (int)
+then
+271@ = 1
+end
+
+if
+271@ < 1
+then
+0085: 271@ = ZAME_MAX_OBJS_IN_CATEGORY // (int)
+end
+
+0085: 0@ = 271@ // (int)
+0AD3: v$RACE_FILE = format "%d" 0@
+0AF0: 29@ = get_int_from_ini_file "me\dat\objects.ini" section "BARRIERS" key v$RACE_FILE
+
+return
+
+:zame_fences_id_get
+
+0AF0: ZAME_MAX_OBJS_IN_CATEGORY = get_int_from_ini_file "me\dat\objects.ini" section "FENCES" key "MAX"
+if
+001D:   271@ > ZAME_MAX_OBJS_IN_CATEGORY  // (int)
+then
+271@ = 1
+end
+
+if
+271@ < 1
+then
+0085: 271@ = ZAME_MAX_OBJS_IN_CATEGORY // (int)
+end
+
+0085: 0@ = 271@ // (int)
+0AD3: v$RACE_FILE = format "%d" 0@
+0AF0: 29@ = get_int_from_ini_file "me\dat\objects.ini" section "FENCES" key v$RACE_FILE
+
+return
+
+:zame_trash_id_get
+
+0AF0: ZAME_MAX_OBJS_IN_CATEGORY = get_int_from_ini_file "me\dat\objects.ini" section "TRASH" key "MAX"
+if
+001D:   271@ > ZAME_MAX_OBJS_IN_CATEGORY  // (int)
+then
+271@ = 1
+end
+
+if
+271@ < 1
+then
+0085: 271@ = ZAME_MAX_OBJS_IN_CATEGORY // (int)
+end
+
+0085: 0@ = 271@ // (int)
+0AD3: v$RACE_FILE = format "%d" 0@
+0AF0: 29@ = get_int_from_ini_file "me\dat\objects.ini" section "TRASH" key v$RACE_FILE
+
+return
+
+:zame_effects_id_get
+
+0AF0: ZAME_MAX_OBJS_IN_CATEGORY = get_int_from_ini_file "me\dat\objects.ini" section "EFFECTS" key "MAX"
+if
+001D:   271@ > ZAME_MAX_OBJS_IN_CATEGORY  // (int)
+then
+271@ = 1
+end
+
+if
+271@ < 1
+then
+0085: 271@ = ZAME_MAX_OBJS_IN_CATEGORY // (int)
+end
+
+0085: 0@ = 271@ // (int)
+0AD3: v$RACE_FILE = format "%d" 0@
+0AF0: 29@ = get_int_from_ini_file "me\dat\objects.ini" section "EFFECTS" key v$RACE_FILE
+
+return
+
+:zame_extra_id_get
+
+0AF0: ZAME_MAX_OBJS_IN_CATEGORY = get_int_from_ini_file "me\dat\objects.ini" section "EXTRA1" key "MAX"
+if
+001D:   271@ > ZAME_MAX_OBJS_IN_CATEGORY  // (int)
+then
+271@ = 1
+end
+
+if
+271@ < 1
+then
+0085: 271@ = ZAME_MAX_OBJS_IN_CATEGORY // (int)
+end
+
+0085: 0@ = 271@ // (int)
+0AD3: v$RACE_FILE = format "%d" 0@
+0AF0: 29@ = get_int_from_ini_file "me\dat\objects.ini" section "EXTRA1" key v$RACE_FILE
+
+return
+
+:zame_extra2_id_get
+
+0AF0: ZAME_MAX_OBJS_IN_CATEGORY = get_int_from_ini_file "me\dat\objects.ini" section "EXTRA2" key "MAX"
+if
+001D:   271@ > ZAME_MAX_OBJS_IN_CATEGORY  // (int)
+then
+271@ = 1
+end
+
+if
+271@ < 1
+then
+0085: 271@ = ZAME_MAX_OBJS_IN_CATEGORY // (int)
+end
+
+0085: 0@ = 271@ // (int)
+0AD3: v$RACE_FILE = format "%d" 0@
+0AF0: 29@ = get_int_from_ini_file "me\dat\objects.ini" section "EXTRA2" key v$RACE_FILE
+
+return
+
+:zame_canals_id_get
+
+0AF0: ZAME_MAX_OBJS_IN_CATEGORY = get_int_from_ini_file "me\dat\objects.ini" section "CANALS" key "MAX"
+if
+001D:   271@ > ZAME_MAX_OBJS_IN_CATEGORY  // (int)
+then
+271@ = 1
+end
+
+if
+271@ < 1
+then
+0085: 271@ = ZAME_MAX_OBJS_IN_CATEGORY // (int)
+end
+
+0085: 0@ = 271@ // (int)
+0AD3: v$RACE_FILE = format "%d" 0@
+0AF0: 29@ = get_int_from_ini_file "me\dat\objects.ini" section "CANALS" key v$RACE_FILE
+
+return                  
+
+:OBJECTS_MENU_DUBLICATE_OBJ
+
+0581: enable_radar 1 
+Player.CanMove(PLAYER_CHAR) = True
+0E68: set_player_control_pad 1 1 
+0E69: set_player_control_pad_movement 0 1
+
+/////////////////////////////////////////////////////////////////
+
+if
+UNITED_MAP == 0
+then
+1@ = 22
+else
+
+if
+STORIES_MAP == 0
+then
+
+if
+$UNITED_III_SPAWN == 1
+then
+1@ = 111
+else
+1@ = 136
+end
+
+else
+
+if
+$UNITED_III_SPAWN == 1
+then
+1@ = 165
+else
+1@ = 195
+end
+
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+0781: get_weapon_with_ID 1@ model_to 2@
+        
+while not model.Available(2@)
+wait 0
+model.Load(2@)
+mload
+end
+        
+actor.GiveWeaponAndAmmo(PLAYER_ACTOR,1@,99999)
+
+/////////////////////////////////////////////////////////////////
+
+0512: show_permanent_text_box 'SE475'
+    
+while true
+wait 0
+
+if
+0E3E: is_button_just_pressed 0 button 15
+    then   
+    0581: enable_radar 0 
+    03E6: remove_text_box
+    0E68: set_player_control_pad 0 1 
+    0E69: set_player_control_pad_movement 0 1
+    Player.CanMove(PLAYER_CHAR) = false
+    jump @OBJECTS_MENU
+    end
+
+if and
+0E46: is_char_using_gun PLAYER_ACTOR
+8A32: not  actor PLAYER_ACTOR on_turret_of_car
+8800: not  in_two_players_mode
+    then 
+    Actor.StorePos(PLAYER_ACTOR, 18@, 19@, 20@)
+    0AC7: get_var_pointer 2@ = var 24@ 
+    0AC7: get_var_pointer 3@ = var 21@ 
+    0AA6: call_method 0x514970 struct 0xB6F028 num_params 6 pop 0 2@ 3@ 20@ 19@ 18@ 200.0 
+    if
+    not 2@ == -1
+        then
+        if
+        0D3A: get_collision_between_points 21@ 22@ 23@ and 24@ 25@ 26@ flags 1 1 1 1 0 0 0 0 ignore_entity 0 store_point_to 7@ 8@ 9@ entity_to 11@ colpoint_data_to 1 // IF and SET
+            then      
+            0D54: draw_corona_with_extra_params_texture 0 color 128 0 0 255 on_entity 0 at 7@ 8@ 9@ size 1.2 far_clip 2000.0 near_clip 1.5 flare 0 enable_reflection 1 check_obstacles 0 flash_while_fading 0 fade_speed 15.0 only_from_below 0       
+            0EEE: get_entity_coordinates 11@ store_to 15@ 16@ 17@
+            0EEF: get_entity_heading 11@ store_to 18@
+            18@ *= 57.2958643845                  
+            11@ += 0x22
+            0A8D: 14@ = read_memory 11@ size 2 virtual_protect 0 
+            if
+            14@ > 0
+                then
+                0F17: get_model_name_pointer 14@ to 1@             
+                0AD1: show_formatted_text_highpriority "id: %d, name: %s~n~ X: %.4f, Y: %.4f, Z: %.4f, A: %.2f" time 100 14@ 1@ 15@ 16@ 17@ 18@
+                if
+                00E1:   player 0 pressed_key 17
+                    then
+                    ZAME_DUBLICATE_OBJ_MODE = 1
+                    ZAME_RECREATE_OBJECT_FLAG = 0
+                    0087: ZAME_DUBLICATE_OBJ_X = 15@ // (float)
+                    0087: ZAME_DUBLICATE_OBJ_Y = 16@ // (float)
+                    0087: ZAME_DUBLICATE_OBJ_Z = 17@ // (float)
+                    0087: ZAME_DUBLICATE_OBJ_A = 18@ // (float)
+                    100@ = 69
+                    0085: 29@ = 14@ // (int)
+                    jump to @OBJECTS_MENU_32814
+                    end
+                if and
+                0AB0:   key_pressed 17
+                0E3D: is_key_just_pressed 67
+                    then                  
+                    0B21: write_clipboard_data_from 1@ size 512 
+                    end
+                end                                              
+            end
+        end
+    end
+
+end
+
+jump @ZAME_OPEN_CHECK                        
