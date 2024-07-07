@@ -1,0 +1,5470 @@
+const
+FERMERS_CAR = 21@
+FERMERS_CAR2 = 22@
+DEAD_TALK_RADIUS = 80.0
+DEAD_TALK_RADIUS_Z = 30.0
+end
+
+const
+FERMERS_PAIN_TIMER_MIN = 15
+FERMERS_PAIN_TIMER_MAX = 35
+FERMERS_ATTACK_TIMER_MIN = 20
+FERMERS_ATTACK_TIMER_MAX = 45
+FERMERS_HUNTER_TIMER_MIN = 250  
+FERMERS_HUNTER_TIMER_MAX = 450
+FERMERS_TANK_TIMER_MIN = 400  
+FERMERS_TANK_TIMER_MAX = 700
+FERMERS_HUNTER2_TIMER_MIN = 400  
+FERMERS_HUNTER2_TIMER_MAX = 700
+FERMERS_WITCH_TIMER_MIN = 400  
+FERMERS_WITCH_TIMER_MAX = 700
+FERMERS_CHARGER_TIMER_MIN = 400  
+FERMERS_CHARGER_TIMER_MAX = 700   
+end
+
+:FRMR_SP
+thread 'FRMR_SP' 
+
+if
+$ALLOW_FERMERS_CONVOY == 0
+    then
+    end_thread
+    end
+    
+:FERMERS_SPAWN1_START 
+0209: 0@ = random_int_in_ranges $FERMER_SPAWN_MIN $FERMER_SPAWN_MAX 
+1@ = 0
+
+while true
+wait 1000
+
+while 001C:   FRACTIONS_SPAWNED_COUNT > FRACTIONS_TO_SPAWN_COUNT // (int)
+wait 0
+
+if or
+FERMERS_RAID_HELP_FLAG == 1
+$FERMERS1_SPAWN_FLAG == 1
+$GAMEMODE_WAR == 1 
+    then
+    break
+    end
+
+end
+
+0842: 2@ = player PLAYER_CHAR town_number
+while not 2@ == 0
+wait 0
+0842: 2@ = player PLAYER_CHAR town_number
+end
+
+//////////////////////////////////////////////////////////////////////////////
+
+if
+GLOBAL_SPAWN_TIMER_RANDOM_RESET_FERMERS == 1
+then
+
+repeat
+wait 0
+0209: 0@ = random_int_in_ranges $FERMER_SPAWN_MIN $FERMER_SPAWN_MAX
+0209: 30@ = random_int_in_ranges $FERMER_SPAWN_MIN $FERMER_SPAWN_MAX
+
+if
+$FREEMODE == 0
+then
+0209: 1@ = random_int_in_ranges TIMER_RESET_ADD_MIN TIMER_RESET_ADD_MAX
+else
+0209: 1@ = random_int_in_ranges TIMER_RESET_ADD2_MIN TIMER_RESET_ADD2_MAX
+end
+
+0062: 30@ -= 1@  // (int)
+until 801D: not  30@ > 0@  // (int)
+
+0085: 1@ = 30@ // (int)
+0AF1: write_int 30@ to_ini_file "saves\ZACM.set" section "SCR" key "FERMERS_NEW_TIMER_AFTER_SAVE"
+0AF1: write_int 0@ to_ini_file "saves\ZACM.set" section "SCR" key "FERMERS_SPAWN_TIMER"
+ 
+GLOBAL_SPAWN_TIMER_RANDOM_RESET_FERMERS = 0
+end
+
+//////////////////////////////////////////////////////////////////////////////
+
+if
+FERMERS_RAID_HELP_FLAG == 1 
+    then
+    break
+    end
+
+if and
+$SAVESTATUS == 0
+$SAVING_PLACE_FLAG == 0
+$NOTSPAWN == 0
+$NOTSPAWN_ETC == 0
+$SAVEPLACE_ON == 0   
+$SURV_PROCENT > 0.0
+$ACTIVE_INTERIOR == 0
+UNITED_MAP == 0 
+    then    
+    
+    if
+    $NEAR_SALV_POINT == 0
+    then    
+    1@ += 1
+    end
+            
+    else
+    
+    while true
+    wait 0
+    
+    if or
+    FERMERS_RAID_HELP_FLAG == 1
+    $FERMERS1_SPAWN_FLAG == 1 
+        then
+        break
+        end
+    
+    if and
+    $SAVESTATUS == 0
+    $SAVING_PLACE_FLAG == 0
+    $NOTSPAWN == 0
+    $NOTSPAWN_ETC == 0
+    $SAVEPLACE_ON == 0
+    $SURV_PROCENT > 0.0
+    $ACTIVE_INTERIOR == 0
+    UNITED_MAP == 0
+        then
+        break
+        end
+    
+    end
+    
+    end
+    
+if or
+003B:   0@ == 1@  // (int)
+001D:   1@ > 0@  // (int)
+$FERMERS1_SPAWN_FLAG == 1
+FERMERS_RAID_HELP_FLAG == 1
+    then
+    1@ = 0
+    break
+    end    
+    
+end
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+gosub @FERMERS_SPAWN1_COORD_CHECK
+
+if
+$SAVESTATUS == 1
+then
+jump to @FERMERS_SPAWN1_START
+end
+
+0208: 30@ = random_float_in_ranges -2.0 2.0 
+005B: 9@ += 30@ // (float)
+0208: 30@ = random_float_in_ranges -2.0 2.0 
+005B: 10@ += 30@ // (float)
+
+11@ = -100.0
+
+$FERMER_SPAWNED = 1
+FRACTIONS_SPAWNED_COUNT += 1 
+$FERMERS1_SPAWN_FLAG = 0
+$FERMERS1_EXIT_FLAG = 0
+$FERMERS1_DAMAGE_FLAG = 0 
+$FERMERS1_CHASE_FLAG = 0
+$FERMERS1_CHASE2_FLAG = 0  
+$FERMERS1_BIKE_FLAG = 0
+$FERMERS_RANDOM_SPEC_WEAPON_FLAG = 0
+FERMERS_CAR_DELETED_REFERENCES_FLAG = 0
+FERMERS_CAR2_DELETED_REFERENCES_FLAG = 0
+FERM_SUSP_TIMES = 0
+random_int FERM_SUSP_TIMES2 4 6
+
+random_int $FERMERS1_BIKE_FLAG 0 to 2
+
+if
+FERMERS_RAID_HELP_FLAG == 1
+then
+$FERMERS1_BIKE_FLAG = 0
+end
+
+gosub @FERMERS_SPAWN1_TRANSPORT_AND_PEDS_CREATE
+
+for 0@ = 1 to 4
+create_thread @PED_BKP $FERMER[0@] 371
+if
+$PEOPLE_ATTACK_PLAYER_FLAG == 1
+    then
+    0770: set_actor $FERMER[0@] target_priority 1
+    else
+    0568: set_actor $FERMER[0@] untargetable 1
+    end
+end
+
+gosub @FERMERS_RANDOM_HP
+Actor.Health($FERMER[1]) = 0@
+gosub @FERMERS_RANDOM_HP
+Actor.Health($FERMER[2]) = 0@
+gosub @FERMERS_RANDOM_HP
+Actor.Health($FERMER[3]) = 0@
+gosub @FERMERS_RANDOM_HP
+Actor.Health($FERMER[4]) = 0@
+
+Actor.WeaponAccuracy($FERMER[1]) = $FERMER_ACCURACY
+Actor.WeaponAccuracy($FERMER[2]) = $FERMER_ACCURACY
+Actor.WeaponAccuracy($FERMER[3]) = $FERMER_ACCURACY 
+Actor.WeaponAccuracy($FERMER[4]) = $FERMER_ACCURACY
+
+081A: set_actor $FERMER[1] weapon_skill_to FRA_WEAP_SKILL
+081A: set_actor $FERMER[2] weapon_skill_to FRA_WEAP_SKILL
+081A: set_actor $FERMER[3] weapon_skill_to FRA_WEAP_SKILL
+081A: set_actor $FERMER[4] weapon_skill_to FRA_WEAP_SKILL
+ 
+0946: set_actor $FERMER[1] actions_uninterupted_by_weapon_fire ACT_UTIRPD_WEP_FIRE 
+0946: set_actor $FERMER[2] actions_uninterupted_by_weapon_fire ACT_UTIRPD_WEP_FIRE 
+0946: set_actor $FERMER[3] actions_uninterupted_by_weapon_fire ACT_UTIRPD_WEP_FIRE 
+0946: set_actor $FERMER[3] actions_uninterupted_by_weapon_fire ACT_UTIRPD_WEP_FIRE
+ 
+060B: set_actor $FERMER[1] decision_maker_to $DEC_PEOPLE 
+060B: set_actor $FERMER[2] decision_maker_to $DEC_PEOPLE 
+060B: set_actor $FERMER[3] decision_maker_to $DEC_PEOPLE 
+060B: set_actor $FERMER[4] decision_maker_to $DEC_PEOPLE
+
+0648: unknown_actor $FERMER[1] task_set 100.0 // float
+0648: unknown_actor $FERMER[2] task_set 100.0 // float
+0648: unknown_actor $FERMER[3] task_set 100.0 // float
+0648: unknown_actor $FERMER[4] task_set 100.0 // float
+
+09B5: set_actor $FERMER[1] signal_after_kill 0
+09B5: set_actor $FERMER[2] signal_after_kill 0
+09B5: set_actor $FERMER[3] signal_after_kill 0
+09B5: set_actor $FERMER[4] signal_after_kill 0
+
+if
+CAMP_RAID_FLAG == 1
+then
+
+for 5@ = 1 to 4
+
+if and
+0E4D: random_percent AMMO_DROP_FROM_RAIDS_CHANCE
+not $GAMEMODE_EDITOR == 1
+then
+//ass
+else
+087E: set_actor $FERMER[5@] weapon_droppable 0
+end
+
+end
+
+end
+ 
+0446: set_actor $FERMER[1] dismemberment_possible 0 
+0446: set_actor $FERMER[2] dismemberment_possible 0 
+0446: set_actor $FERMER[3] dismemberment_possible 0 
+0446: set_actor $FERMER[4] dismemberment_possible 0
+  
+04D8: set_actor $FERMER[1] drowns_in_water 0
+04D8: set_actor $FERMER[2] drowns_in_water 0
+04D8: set_actor $FERMER[3] drowns_in_water 0
+04D8: set_actor $FERMER[4] drowns_in_water 0
+
+0A28: set_actor $FERMER[1] swimming_speed_to 2.3
+0A28: set_actor $FERMER[2] swimming_speed_to 2.3
+0A28: set_actor $FERMER[3] swimming_speed_to 2.3
+0A28: set_actor $FERMER[4] swimming_speed_to 2.3
+
+if
+$GAMEMODE_WAR == 0
+then
+random_int 5@ $PEOPLE_MIN_MONEY $PEOPLE_MAX_MONEY  
+03FE: set_actor $FERMER[1] money 5@ 
+random_int 5@ $PEOPLE_MIN_MONEY $PEOPLE_MAX_MONEY  
+03FE: set_actor $FERMER[2] money 5@ 
+random_int 5@ $PEOPLE_MIN_MONEY $PEOPLE_MAX_MONEY  
+03FE: set_actor $FERMER[3] money 5@ 
+random_int 5@ $PEOPLE_MIN_MONEY $PEOPLE_MAX_MONEY  
+03FE: set_actor $FERMER[4] money 5@ 
+end
+
+Actor.SetWalkStyle($FERMER[1], "surv5")
+Actor.SetWalkStyle($FERMER[2], "surv5")
+Actor.SetWalkStyle($FERMER[3], "surv5")
+Actor.SetWalkStyle($FERMER[4], "surv5")
+
+29@ = 1 
+gosub @FERMERS_SPAWN1_WEAPON_CHECK 
+29@ = 2 
+gosub @FERMERS_SPAWN1_WEAPON_CHECK 
+29@ = 3 
+gosub @FERMERS_SPAWN1_WEAPON_CHECK 
+29@ = 4 
+gosub @FERMERS_SPAWN1_WEAPON_CHECK
+
+$FERMERS_THROW_MOLOTOV_TIMER = 0 
+$FERMERS_THROW_MOLOTOV_FLAG = 0
+
+gosub @FERMERS_RANDOM_THROW_TIME
+
+$FERMERS1_DEAD_FLAG = 0
+$FERMERS2_DEAD_FLAG = 0
+$FERMERS3_DEAD_FLAG = 0
+$FERMERS4_DEAD_FLAG = 0   
+
+for 0@ = 0 to 5
+$VAGINA4_FLAG[0@] = 0
+$VAGINA4_TIME[0@] = 0    
+$VAGINA4_ACCQ_FLAG[0@] = 0
+end
+
+$FERMERS_PAIN_TIMER = 0
+random_int $FERMERS_PAIN_TIMER2 FERMERS_PAIN_TIMER_MIN FERMERS_PAIN_TIMER_MAX
+$FERMERS_ATTACK_TIMER = 0
+random_int $FERMERS_ATTACK_TIMER2 FERMERS_ATTACK_TIMER_MIN FERMERS_ATTACK_TIMER_MAX
+$FERMERS_HUNTER_TIMER = 0
+random_int $FERMERS_HUNTER_TIMER2 FERMERS_HUNTER_TIMER_MIN FERMERS_HUNTER_TIMER_MAX
+
+$FERMERS_TANK_TIMER = 0
+random_int $FERMERS_TANK_TIMER2 FERMERS_TANK_TIMER_MIN FERMERS_TANK_TIMER_MAX  
+$FERMERS_HUNTER2_TIMER = 0
+random_int $FERMERS_HUNTER2_TIMER2 FERMERS_HUNTER2_TIMER_MIN FERMERS_HUNTER2_TIMER_MAX
+$FERMERS_WITCH_TIMER = 0
+random_int $FERMERS_WITCH_TIMER2 FERMERS_WITCH_TIMER_MIN FERMERS_WITCH_TIMER_MAX
+$FERMERS_CHARGER_TIMER = 0
+random_int $FERMERS_CHARGER_TIMER2 FERMERS_CHARGER_TIMER_MIN FERMERS_CHARGER_TIMER_MAX
+
+random_int 0@ 1 5
+
+33@ = 0
+
+////////////////////////////////////////////////Заставляем транспорт ехать////////////////////////////////////////////////
+
+car.SetMaxSpeed(FERMERS_CAR,50.0)  
+00AE: set_car FERMERS_CAR traffic_behaviour_to 2  
+03AB: set_car FERMERS_CAR strong 1
+if and
+not FERMERS_RAID_HELP_FLAG == 1
+not PODMOGA_BASE_FLAG == 3
+then 
+car.SetDriverBehaviour(FERMERS_CAR,1)
+else
+0704: car FERMERS_CAR drive_to CAMP_RAID_DEST_X CAMP_RAID_DEST_Y CAMP_RAID_DEST_Z
+08C6: set_actor $FERMER[1] stay_on_bike 1
+08C6: set_actor $FERMER[2] stay_on_bike 1
+08C6: set_actor $FERMER[3] stay_on_bike 1
+08C6: set_actor $FERMER[4] stay_on_bike 1
+
+if or
+not PODMOGA_BASE_FLAG == 3
+$CHEATS_ON == 1
+then
+FERMERS_RAID_HELP_MARK = marker.CreateAboveCar(FERMERS_CAR)
+07E0: set_marker FERMERS_RAID_HELP_MARK type_to 1
+marker.SetIconSize(FERMERS_RAID_HELP_MARK,2)
+marker.SetColor(FERMERS_RAID_HELP_MARK,1)
+end
+
+if
+not PODMOGA_BASE_FLAG == 3
+then
+car.SetImmunities(FERMERS_CAR,1,0,0,0,0)
+end
+
+end
+car.SetSpeedInstantly(FERMERS_CAR,15.0)
+
+32@ = 0
+0209: 30@ = random_int_in_ranges 5000 10000
+
+if
+$FERMERS1_BIKE_FLAG == 1
+then
+create_thread @ANTKUK2 $FERMER[1] FERMERS_CAR 1
+create_thread @ANTKUK2 $FERMER[2] FERMERS_CAR
+create_thread @ANTKUK2 $FERMER[3] FERMERS_CAR2 1
+create_thread @ANTKUK2 $FERMER[4] FERMERS_CAR2
+car.SetMaxSpeed(FERMERS_CAR2,50.0)  
+00AE: set_car FERMERS_CAR2 traffic_behaviour_to 2  
+03AB: set_car FERMERS_CAR2 strong 1 
+car.SetDriverBehaviour(FERMERS_CAR2,0)
+car.SetSpeedInstantly(FERMERS_CAR2,15.0)
+07F8: car FERMERS_CAR2 follow_car FERMERS_CAR radius 5.0
+else
+0982: set_actor $FERMER[1] stay_in_car_when_dead 0
+0982: set_actor $FERMER[2] stay_in_car_when_dead 1
+0982: set_actor $FERMER[3] stay_in_car_when_dead 1
+0982: set_actor $FERMER[4] stay_in_car_when_dead 1
+end
+
+if
+$PEOPLE_ATTACK_PLAYER_FLAG == 0
+then
+08F2: set_car FERMERS_CAR targettable_by_heatseeker 0
+if
+056E:   car FERMERS_CAR2 defined
+    then
+    08F2: set_car FERMERS_CAR2 targettable_by_heatseeker 0
+    end
+end
+
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "FERMERS_SPAWNED"
+
+while true
+wait 0
+
+////////////////////////////////////////////////Прибавляем значение к таймерам////////////////////////////////////////////////
+
+if
+not $GAME_SPEED == 0.0
+then
+$FERMERS_THROW_MOLOTOV_TIMER += 1 
+$FERMERS_PAIN_TIMER += 1
+$FERMERS_ATTACK_TIMER += 1
+$FERMERS_TANK_TIMER += 1
+$FERMERS_HUNTER_TIMER += 1
+$FERMERS_HUNTER2_TIMER += 1
+$FERMERS_WITCH_TIMER += 1
+
+if
+$WTH_AGRED_FLAG[$SPECLS_NUM] == 1
+then
+$FERMERS_WITCH_TIMER += 50
+end
+
+$FERMERS_CHARGER_TIMER += 1
+end    
+
+////////////////////////////////////////////////Страховочка (само по себе такое никогда не произойдет)////////////////////////////////////////////////
+
+if and
+056D:   actor $FERMER[1] defined
+056D:   actor $FERMER[2] defined
+056D:   actor $FERMER[3] defined
+056D:   actor $FERMER[4] defined
+    then
+    else
+    :FERMERS_NOT_DEFINED
+    
+    0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "FERMERS_SPAWNED"
+    
+    $FERMERS1_CHASE_FLAG = 0
+    $FERMER_SPAWNED = 0
+    $FERMERS1_DAMAGE_FLAG = 0
+    FRACTIONS_SPAWNED_COUNT -= 1
+    
+    if
+    FERMERS_RAID_HELP_FLAG == 1
+    then
+    
+    if
+    075C:   marker FERMERS_RAID_HELP_MARK enabled
+    then
+    marker.Disable(FERMERS_RAID_HELP_MARK)
+    end
+    
+    end
+    
+    if
+    FERMERS_RAID_HELP_FLAG == 1
+    then
+    FERMERS_RAID_HELP_FLAG = 0
+    end    
+    
+    if
+    056D:   actor $FERMER[1] defined
+    then
+    actor.DestroyWithFade($FERMER[1])
+    $FERMER[1] = -69  
+    end
+    
+    if
+    056D:   actor $FERMER[2] defined
+    then
+    actor.DestroyWithFade($FERMER[2])
+    $FERMER[2] = -69  
+    end
+    
+    if
+    056D:   actor $FERMER[3] defined
+    then
+    actor.DestroyWithFade($FERMER[3])
+    $FERMER[3] = -69  
+    end
+    
+    if
+    056D:   actor $FERMER[4] defined
+    then
+    actor.DestroyWithFade($FERMER[4])
+    $FERMER[4] = -69  
+    end        
+    
+    if
+    056E:   car FERMERS_CAR defined
+    then
+    
+    if
+    not actor.InCar(PLAYER_ACTOR,FERMERS_CAR)
+    then
+    car.Destroy(FERMERS_CAR)
+    end    
+    
+    end    
+    
+    if
+    056E:   car FERMERS_CAR2 defined
+    then
+    
+    if
+    not actor.InCar(PLAYER_ACTOR,FERMERS_CAR2)
+    then
+    car.Destroy(FERMERS_CAR2)
+    end    
+    
+    end    
+    
+    end
+
+////////////////////////////////////////////////Осуществляем проверку на смерть и выполняем AI код////////////////////////////////////////////////
+
+gosub @FERMERS_DEAD_CHECK
+gosub @FERMERS_AI_CHECK
+
+////////////////////////////////////////////////Проверка на то, что все военные мертвы////////////////////////////////////////////////
+
+if and       
+8184:   actor $FERMER[1] health < 1
+8184:   actor $FERMER[2] health < 1
+8184:   actor $FERMER[3] health < 1
+8184:   actor $FERMER[4] health < 1
+    then        
+    :FERMERS_SPAWN_DEAD    
+    wait 500
+    
+    0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "FERMERS_SPAWNED"
+    
+    gosub @FERMERS_DEAD_CHECK
+    
+    if
+    056E:   car FERMERS_CAR defined
+    then   
+    
+    if
+    not actor.InCar(PLAYER_ACTOR,FERMERS_CAR)
+    then
+    car.RemoveReferences(FERMERS_CAR)
+    if
+    056E:   car FERMERS_CAR defined
+    then
+    if
+    not actor.InCar(PLAYER_ACTOR,FERMERS_CAR)
+        then
+        wait 0
+        if
+        056E:   car FERMERS_CAR defined
+            then
+            00A9: set_car FERMERS_CAR to_normal_driver
+            end
+        end
+    end
+    
+    end        
+    
+    end
+        
+    if
+    056E:   car FERMERS_CAR2 defined
+    then   
+    
+    if
+    not actor.InCar(PLAYER_ACTOR,FERMERS_CAR2)
+    then
+    car.RemoveReferences(FERMERS_CAR2)
+    if
+    056E:   car FERMERS_CAR2 defined
+    then
+    if
+    not actor.InCar(PLAYER_ACTOR,FERMERS_CAR2)
+        then
+        wait 0
+        if
+        056E:   car FERMERS_CAR2 defined
+            then
+            00A9: set_car FERMERS_CAR2 to_normal_driver
+            end
+        end
+    end
+    
+    end        
+    
+    end
+    
+    Actor.RemoveReferences($FERMER[1])
+    Actor.RemoveReferences($FERMER[2])
+    Actor.RemoveReferences($FERMER[3])
+    Actor.RemoveReferences($FERMER[4])
+    $FERMER[1] = -69
+    $FERMER[2] = -69
+    $FERMER[3] = -69
+    $FERMER[4] = -69  
+    $FERMERS1_CHASE_FLAG = 0 
+    $FERMER_SPAWNED = 0
+    $FERMERS1_DAMAGE_FLAG = 0
+    FRACTIONS_SPAWNED_COUNT -= 1
+    
+    if
+    FERMERS_RAID_HELP_FLAG == 1
+    then
+    
+    if
+    075C:   marker FERMERS_RAID_HELP_MARK enabled
+    then
+    marker.Disable(FERMERS_RAID_HELP_MARK)
+    end
+    
+    end
+    
+    if
+    FERMERS_RAID_HELP_FLAG == 1
+    then
+    FERMERS_RAID_HELP_FLAG = 0
+    end
+    
+    if
+    PODMOGA_BASE_FLAG == 3
+    then
+    PODMOGA_BASE_FLAG = 0
+    end
+      
+    jump @FERMERS_SPAWN1_START        
+    end
+    
+////////////////////////////////////////////////Проверка на удаление фермеров////////////////////////////////////////////////
+
+if and
+$RADIO_HELP_FLAG == 0
+$SAVESTATUS == 0 
+then
+else
+jump to @FERMERS_SPAWN1_DELETE1
+end
+
+if or
+00F2:   actor $FERMER[1] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+00F2:   actor $FERMER[2] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+00F2:   actor $FERMER[3] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+00F2:   actor $FERMER[4] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0
+not $ACTIVE_INTERIOR == 0
+$INT_ENTERING_FLAG == 1
+FERMERS_RAID_HELP_FLAG == 1 
+    then
+    else    
+    :FERMERS_SPAWN1_DELETE1
+    
+    0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "FERMERS_SPAWNED"
+    
+    if
+    $FERMERS1_EXIT_FLAG == 1
+    then
+    actor.DestroyWithFade($FERMER[1])
+    actor.DestroyWithFade($FERMER[2])
+    actor.DestroyWithFade($FERMER[3])
+    actor.DestroyWithFade($FERMER[4]) 
+    else
+    actor.DestroyInstantly($FERMER[1])
+    actor.DestroyInstantly($FERMER[2])
+    actor.DestroyInstantly($FERMER[3])
+    actor.DestroyInstantly($FERMER[4]) 
+    end
+        
+    if
+    056E:   car FERMERS_CAR defined
+    then   
+    
+    if
+    not actor.InCar(PLAYER_ACTOR,FERMERS_CAR)
+    then
+    car.Destroy(FERMERS_CAR)
+    end    
+    
+    end
+        
+    if
+    056E:   car FERMERS_CAR2 defined
+    then   
+    
+    if
+    not actor.InCar(PLAYER_ACTOR,FERMERS_CAR2)
+    then
+    car.Destroy(FERMERS_CAR2)
+    end    
+    
+    end
+                 
+    0AF0: 2@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_CHASE_COUNT"        
+            
+    if and
+    $CHEATED_FLAG == 0
+    $FERMERS1_CHASE_FLAG == 1
+    $GAMEMODE_WAR == 0 
+    then               
+    2@ += 1
+    end
+    $STATS_CHASE_COUNT += 1                      
+             
+    0AF1: write_int 2@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_CHASE_COUNT"
+    
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT8_GOT"
+        
+        if and
+        1@ == 0
+        2@ >= 30
+        $CHEATED_FLAG == 0
+            then
+            v$ACHIEVEMNT = "ACH8"
+            $ACHIEVEMENT_GOT_FLAG = 1        
+            0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT8_GOT"        
+            end                      
+    
+    Actor.RemoveReferences($FERMER[1])
+    Actor.RemoveReferences($FERMER[2])
+    Actor.RemoveReferences($FERMER[3])
+    Actor.RemoveReferences($FERMER[4])
+    $FERMER[1] = -69
+    $FERMER[2] = -69
+    $FERMER[3] = -69
+    $FERMER[4] = -69 
+    $FERMERS1_CHASE_FLAG = 0 
+    $FERMER_SPAWNED = 0
+    $FERMERS1_DAMAGE_FLAG = 0
+    FRACTIONS_SPAWNED_COUNT -= 1
+    
+    if
+    FERMERS_RAID_HELP_FLAG == 1
+    then
+    
+    if
+    075C:   marker FERMERS_RAID_HELP_MARK enabled
+    then
+    marker.Disable(FERMERS_RAID_HELP_MARK)
+    end
+    
+    end
+    
+    if
+    FERMERS_RAID_HELP_FLAG == 1
+    then
+    FERMERS_RAID_HELP_FLAG = 0
+    end
+              
+    jump @FERMERS_SPAWN1_START    
+    end
+    
+////////////////////////////////////////////////Заставляем фермеров перелезать препятствия////////////////////////////////////////////////    
+    
+random_int 0@ 1 5
+if
+056D:   actor $FERMER[0@] defined
+    then
+    if and
+    0184:   actor $FERMER[0@] health > 0
+    874F: not  actor $FERMER[0@] ped_event == 33  
+    8818: not  actor $FERMER[0@] in_air 
+    33@ > 2000
+        then    
+        if and
+        not actor.Animation($FERMER[0@]) == "CLIMB_idle"
+        not actor.Animation($FERMER[0@]) == "CLIMB_jump"
+        not actor.Animation($FERMER[0@]) == "CLIMB_jump2fall"
+        not actor.Animation($FERMER[0@]) == "CLIMB_jump_B"
+        not actor.Animation($FERMER[0@]) == "CLIMB_Pull" 
+        not actor.Animation($FERMER[0@]) == "CLIMB_Stand"
+        not actor.Animation($FERMER[0@]) == "CLIMB_Stand_finish"             
+            then
+            if or
+            actor.Animation($FERMER[0@]) == "run_civi"  
+            actor.Animation($FERMER[0@]) == "sprint_civi"   
+            actor.Animation($FERMER[0@]) == "swat_run"
+            actor.Animation($FERMER[0@]) == "Swim_Breast"
+            actor.Animation($FERMER[0@]) == "Swim_Tread"
+            actor.Animation($FERMER[0@]) == "Swim_Under"     
+                then    
+                actor.StorePos($FERMER[0@], 3@, 4@, 5@) 
+                04C4: store_coords_to 27@ 28@ 29@ from_actor $FERMER[0@] with_offset 0.0 3.0 0.3                                 
+                if                         
+                86BD: not no_obstacles_between 27@ 28@ 29@ and 3@ 4@ 5@ solid 1 car 0 actor 0 object 1 particle 0   
+                    then    
+                    33@ = 0  
+                    0687: clear_actor $FERMER[0@] task
+                    wait 100                                                                                                                                                   
+                    078F: AS_actor $FERMER[0@] climb 1                                                                           
+                    end
+                end                                            
+            end 
+        end
+    end
+    
+////////////////////////////////////////////////Заставляем фермеров орать при стрельбе////////////////////////////////////////////////    
+    
+for 3@ = 1 to 5   
+
+if 
+056D:   actor $FERMER[3@] defined
+    then
+    if
+    02E0:   actor $FERMER[3@] firing_weapon
+        then
+        05C1: AS_actor $FERMER[3@] speak_from_audio_table $FERMERS_ATTACK_AUDIO_TABLE
+        end
+    end
+            
+end
+
+////////////////////////////////////////////////Голос получения урона от союзников////////////////////////////////////////////////
+
+if
+001C:   $FERMERS_PAIN_TIMER > $FERMERS_PAIN_TIMER2 // (int)
+then
+random_int 3@ 1 5
+if 
+056D:   actor $FERMER[3@] defined
+    then
+    if
+    $PLAYER_FERMERS_SIDE == 1     
+        then
+        if and       
+        not actor.Dead($FERMER[3@])
+        0104:   actor $FERMER[3@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+        $SPECTATING_FLAG == 0
+        $SCREWHUD_FLAG == 0
+        $PHRASES_OFF_FLAG == 0
+        051A:   actor $FERMER[3@] damaged_by_actor PLAYER_ACTOR
+            then           
+        
+            2@ = 0
+            1@ = 0                                     
+
+            if or
+            031D:   actor $FERMER[3@] hit_by_weapon 0
+            031D:   actor $FERMER[3@] hit_by_weapon 46
+            then
+            0467: clear_actor $FERMER[3@] last_weapon_damage
+            054E: clear_actor $FERMER[3@] damage
+            2@ = 1
+            1@ = 1            
+            else
+            0467: clear_actor $FERMER[3@] last_weapon_damage
+            054E: clear_actor $FERMER[3@] damage
+            2@ = 1
+            1@ = 0
+            end
+            
+            if
+            2@ == 1
+            then
+            
+            $FERMERS_PAIN_TIMER = 0
+            random_int $FERMERS_PAIN_TIMER2 FERMERS_PAIN_TIMER_MIN FERMERS_PAIN_TIMER_MAX            
+            
+            if
+            1@ == 0
+            then
+            gosub @RANDOM_DIALOG_DAMAGED_BY_WEAPON_FERMERS_FRIENDLY  
+            else
+            gosub @RANDOM_DIALOG_DAMAGED_BY_ZOMBIES_FERMERS_FRIENDLY  
+            end 
+        
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer
+            text.ClearAll()  
+                
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1
+            end            
+    
+            end
+        end
+    end
+end  
+
+////////////////////////////////////////////////Голос получения урона от врагов////////////////////////////////////////////////
+
+if
+001C:   $FERMERS_PAIN_TIMER > $FERMERS_PAIN_TIMER2 // (int)
+then
+random_int 3@ 1 5
+if
+056D:   actor $FERMER[3@] defined
+    then
+    if and    
+    not actor.Dead($FERMER[3@])
+    0104:   actor $FERMER[3@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0
+        then
+        
+        if
+        $PLAYER_FERMERS_SIDE == 1
+        then
+        
+        if
+        051A:   actor $FERMER[3@] damaged_by_actor PLAYER_ACTOR 
+        then
+        jump to @ASS221
+        end
+        
+        if and
+        056D:   actor COOP_ACTOR defined
+        not COOP_ACTOR == -69
+            then
+            if
+            051A:   actor $FERMER[3@] damaged_by_actor COOP_ACTOR
+                then
+                jump to @ASS221
+                end
+            end
+        
+        end
+        
+        2@ = 0
+        1@ = 0
+        
+        ///////////////////////
+        
+        for 0@ = 22 to 34
+        
+        if
+        031D:   actor $FERMER[3@] hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor $FERMER[3@] last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 70 to MAX_WEAPON_NUM_NORMAL
+        
+        if
+        031D:   actor $FERMER[3@] hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor $FERMER[3@] last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 111 to 121
+        
+        if
+        031D:   actor $FERMER[3@] hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor $FERMER[3@] last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 136 to 151
+        
+        if
+        031D:   actor $FERMER[3@] hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor $FERMER[3@] last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 165 to 183
+        
+        if
+        031D:   actor $FERMER[3@] hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor $FERMER[3@] last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 195 to 213
+        
+        if
+        031D:   actor $FERMER[3@] hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor $FERMER[3@] last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////        
+        
+        if and
+        031D:   actor $FERMER[3@] hit_by_weapon 0
+        851A: not  actor $FERMER[3@] damaged_by_actor PLAYER_ACTOR
+        then
+        
+        2@ = 1
+        1@ = 1
+        0467: clear_actor $FERMER[3@] last_weapon_damage
+        end
+        
+        if
+        2@ == 1
+        then
+        
+        $FERMERS_PAIN_TIMER = 0
+        random_int $FERMERS_PAIN_TIMER2 FERMERS_PAIN_TIMER_MIN FERMERS_PAIN_TIMER_MAX
+        
+        if
+        1@ == 0
+        then
+        gosub @RANDOM_DIALOG_DAMAGED_BY_WEAPON_FERMERS  
+        else
+        gosub @RANDOM_DIALOG_DAMAGED_BY_ZOMBIES_FERMERS  
+        end 
+    
+        09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+        0093: 3@ = integer 3@ to_float
+        3@ *= 8.0
+        0092: 3@ = float 3@ to_integer
+        text.ClearAll()  
+            
+        00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1
+        end            
+
+        end
+    end
+end
+    
+//////////////////////////////////////////////////////////////////////////////////////////////////      
+    
+:ASS221     
+
+if
+001C:   $FERMERS_ATTACK_TIMER > $FERMERS_ATTACK_TIMER2 // (int)
+then    
+random_int 3@ 1 5
+if 
+056D:   actor $FERMER[3@] defined
+    then
+    if and    
+    not actor.Dead($FERMER[3@])
+    0104:   actor $FERMER[3@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0
+    02E0:   actor $FERMER[3@] firing_weapon
+        then
+        
+        $FERMERS_ATTACK_TIMER = 0
+        random_int $FERMERS_ATTACK_TIMER2 FERMERS_ATTACK_TIMER_MIN FERMERS_ATTACK_TIMER_MAX
+                
+        gosub @RANDOM_DIALOG_ATTACK_FERMERS       
+    
+        09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+        0093: 3@ = integer 3@ to_float
+        3@ *= 8.0
+        0092: 3@ = float 3@ to_integer
+        text.ClearAll()  
+            
+        00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1
+        end            
+    end
+end     
+
+////////////////////////////////////////////////Голос про охотника////////////////////////////////////////////////      
+
+if
+001C:   $FERMERS_HUNTER_TIMER > $FERMERS_HUNTER_TIMER2 // (int)
+then
+random_int 3@ 1 5
+if 
+056D:   actor $FERMER[3@] defined
+    then
+    04DD: 0@ = actor $FERMER[3@] armour
+    if and    
+    not actor.Dead($FERMER[3@])
+    0104:   actor $FERMER[3@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0
+    0@ == 1
+        then
+        
+        $FERMERS_HUNTER_TIMER = 0
+        random_int $FERMERS_HUNTER_TIMER2 FERMERS_HUNTER_TIMER_MIN FERMERS_HUNTER_TIMER_MAX
+                
+        gosub @RANDOM_DIALOG_HUNTER2_FERMERS               
+                    
+        09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+        0093: 3@ = integer 3@ to_float
+        3@ *= 8.0
+        0092: 3@ = float 3@ to_integer  
+                    
+        00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  
+        end            
+    end
+end          
+
+////////////////////////////////////////////////Голос про танка////////////////////////////////////////////////      
+
+if
+001C:   $FERMERS_TANK_TIMER > $FERMERS_TANK_TIMER2 // (int)
+then
+random_int 3@ 1 5
+if and
+056D:   actor $FERMER[3@] defined  
+056D:   actor $TANK[$SPECLS_NUM] defined  
+    then
+    if and    
+    not actor.Dead($FERMER[3@])
+    not actor.Dead($TANK[$SPECLS_NUM])
+    0104:   actor $FERMER[3@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0  
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0
+    0104:   actor $TANK[$SPECLS_NUM] near_actor $FERMER[3@] radius 100.0 100.0 100.0 0      
+        then
+        if or
+        0364:   actor $FERMER[3@] spotted_actor $TANK[$SPECLS_NUM]   
+        0364:   actor $TANK[$SPECLS_NUM] spotted_actor $FERMER[3@]
+            then
+        
+            $FERMERS_TANK_TIMER = 0
+            random_int $FERMERS_TANK_TIMER2 FERMERS_TANK_TIMER_MIN FERMERS_TANK_TIMER_MAX 
+                    
+            gosub @RANDOM_DIALOG_TANK_NEAR_FERMERS                       
+                        
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer  
+                        
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1
+            end        
+         end    
+     end
+end   
+     
+////////////////////////////////////////////////Голос про охотника////////////////////////////////////////////////  
+
+if
+001C:   $FERMERS_HUNTER2_TIMER > $FERMERS_HUNTER2_TIMER2 // (int)
+then
+random_int 3@ 1 5    
+if and
+056D:   actor $FERMER[3@] defined  
+056D:   actor $HUNTER[$SPECLS_NUM] defined  
+    then
+    if and    
+    not actor.Dead($FERMER[3@])
+    not actor.Dead($HUNTER[$SPECLS_NUM])
+    0104:   actor $FERMER[3@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0  
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0
+    0104:   actor $HUNTER[$SPECLS_NUM] near_actor $FERMER[3@] radius 100.0 100.0 100.0 0      
+        then
+        if or
+        0364:   actor $FERMER[3@] spotted_actor $HUNTER[$SPECLS_NUM]   
+        0364:   actor $HUNTER[$SPECLS_NUM] spotted_actor $FERMER[3@]
+            then
+        
+            $FERMERS_HUNTER2_TIMER = 0
+            random_int $FERMERS_HUNTER2_TIMER2 FERMERS_HUNTER2_TIMER_MIN FERMERS_HUNTER2_TIMER_MAX
+                    
+            gosub @RANDOM_DIALOG_HUNTER_NEAR_FERMERS               
+                                
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer  
+                        
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1
+            end        
+         end    
+     end
+end                
+     
+////////////////////////////////////////////////Голос про ведьму////////////////////////////////////////////////      
+
+if
+001C:   $FERMERS_WITCH_TIMER > $FERMERS_WITCH_TIMER2 // (int)
+then
+random_int 3@ 1 5
+if and
+056D:   actor $FERMER[3@] defined  
+056D:   actor $WITCH[$SPECLS_NUM] defined  
+    then
+    if and    
+    not actor.Dead($FERMER[3@])
+    not actor.Dead($WITCH[$SPECLS_NUM])
+    0104:   actor $FERMER[3@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0  
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0
+    0104:   actor $WITCH[$SPECLS_NUM] near_actor $FERMER[3@] radius 100.0 100.0 100.0 0      
+        then
+        if or
+        0364:   actor $FERMER[3@] spotted_actor $WITCH[$SPECLS_NUM]   
+        0364:   actor $WITCH[$SPECLS_NUM] spotted_actor $FERMER[3@]
+            then
+        
+            $FERMERS_WITCH_TIMER = 0
+            random_int $FERMERS_WITCH_TIMER2 FERMERS_WITCH_TIMER_MIN FERMERS_WITCH_TIMER_MAX
+                    
+            gosub @RANDOM_DIALOG_WITCH_NEAR_FERMERS       
+                                        
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer  
+                        
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1
+            end        
+         end    
+     end
+end               
+     
+////////////////////////////////////////////////Голос про громилу////////////////////////////////////////////////      
+
+if
+001C:   $FERMERS_CHARGER_TIMER > $FERMERS_CHARGER_TIMER2 // (int)
+then
+random_int 3@ 1 5
+if and
+056D:   actor $FERMER[3@] defined  
+056D:   actor $CHARGER[$SPECLS_NUM] defined  
+    then
+    if and    
+    not actor.Dead($FERMER[3@])
+    not actor.Dead($CHARGER[$SPECLS_NUM])
+    0104:   actor $FERMER[3@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0  
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0
+    0104:   actor $CHARGER[$SPECLS_NUM] near_actor $FERMER[3@] radius 100.0 100.0 100.0 0      
+        then
+        if or
+        0364:   actor $FERMER[3@] spotted_actor $CHARGER[$SPECLS_NUM]   
+        0364:   actor $CHARGER[$SPECLS_NUM] spotted_actor $FERMER[3@]
+            then
+        
+            $FERMERS_CHARGER_TIMER = 0
+            random_int $FERMERS_CHARGER_TIMER2 FERMERS_CHARGER_TIMER_MIN FERMERS_CHARGER_TIMER_MAX
+                    
+            gosub @RANDOM_DIALOG_CHARGER_NEAR_FERMERS                       
+                        
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer  
+                        
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1 
+            end        
+         end    
+     end
+end
+
+////////////////////////////////////////////////Голос про хазмата////////////////////////////////////////////////      
+
+if
+not HAZMAT_HANDLE == -69
+then
+0209: 0@ = random_int_in_ranges HAZMAT_PHRASE_MIN HAZMAT_PHRASE_MAX
+if
+0@ == HAZMAT_PHRASE_SET
+    then
+    random_int 3@ 1 5
+    if and
+    056D:   actor $FERMER[3@] defined  
+    056D:   actor HAZMAT_HANDLE defined  
+        then
+        if and
+        not actor.Dead($FERMER[3@])
+        not actor.Dead(HAZMAT_HANDLE)
+        0104:   actor $FERMER[3@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0  
+        $SPECTATING_FLAG == 0
+        $SCREWHUD_FLAG == 0
+        $PHRASES_OFF_FLAG == 0
+        0104:   actor HAZMAT_HANDLE near_actor $FERMER[3@] radius 100.0 100.0 100.0 0      
+            then
+            if or
+            0364:   actor $FERMER[3@] spotted_actor HAZMAT_HANDLE   
+            0364:   actor HAZMAT_HANDLE spotted_actor $FERMER[3@]
+                then
+                               
+                gosub @RANDOM_DIALOG_HAZMAT_NEAR_FERMERS       
+                                            
+                09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+                0093: 3@ = integer 3@ to_float
+                3@ *= 8.0
+                0092: 3@ = float 3@ to_integer  
+                            
+                00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+                end        
+             end    
+         end
+    end
+end                                          
+
+////////////////////////////////////////////////Заставляем фермеров кидать гранаты////////////////////////////////////////////////                   
+
+if and
+001C:   $FERMERS_THROW_MOLOTOV_TIMER > $FERMERS_THROW_TIME2 // (int)
+$FERMERS_THROW_MOLOTOV_FLAG == 0
+    then
+    random_int $FERMERS_THROW_MOLOTOV_ACTOR 1 5    
+    if and
+    not actor.Dead($FERMER[$FERMERS_THROW_MOLOTOV_ACTOR])   
+    not actor.Driving($FERMER[$FERMERS_THROW_MOLOTOV_ACTOR])
+    82D8: not  actor $FERMER[$FERMERS_THROW_MOLOTOV_ACTOR] current_weapon == 33 
+        then    
+        0470: $FERMERS_THROW_PREV_WEAP = actor $FERMER[$FERMERS_THROW_MOLOTOV_ACTOR] current_weapon
+        
+        random_int 3@ 0 2        
+        
+        if
+        3@ == 0
+        then
+
+        ///////////////////////////////////////////////////////////////
+
+        if
+        UNITED_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 18 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($FERMER[$FERMERS_THROW_MOLOTOV_ACTOR],18,1)
+        else
+        
+        if
+        $UNITED_VC_FLAG == 1
+        then
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 134 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($FERMER[$FERMERS_THROW_MOLOTOV_ACTOR],134,1)
+        else
+        
+        0781: get_weapon_with_ID 209 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($FERMER[$FERMERS_THROW_MOLOTOV_ACTOR],209,1)
+        end
+        
+        else
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 118 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($FERMER[$FERMERS_THROW_MOLOTOV_ACTOR],118,1)
+        else
+        
+        0781: get_weapon_with_ID 179 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($FERMER[$FERMERS_THROW_MOLOTOV_ACTOR],179,1)
+        end
+        
+        end
+        
+        end
+        
+        else
+
+        if
+        UNITED_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 16 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($FERMER[$FERMERS_THROW_MOLOTOV_ACTOR],16,1)
+        else
+        
+        if
+        $UNITED_VC_FLAG == 1
+        then
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 132 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($FERMER[$FERMERS_THROW_MOLOTOV_ACTOR],132,1)
+        else
+        
+        0781: get_weapon_with_ID 207 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($FERMER[$FERMERS_THROW_MOLOTOV_ACTOR],207,1)
+        end
+        
+        else
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 115 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($FERMER[$FERMERS_THROW_MOLOTOV_ACTOR],115,1)
+        else
+        
+        0781: get_weapon_with_ID 177 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($FERMER[$FERMERS_THROW_MOLOTOV_ACTOR],177,1)
+        end
+        
+        end
+        
+        end
+        
+        ///////////////////////////////////////////////////////////////
+
+        end   
+        
+        $FERMERS_THROW_MOLOTOV_FLAG = 1
+        end
+    end
+    
+////////////////////////////////////////////////Проверка того, что военный кинул гранату////////////////////////////////////////////////    
+    
+if
+$FERMERS_THROW_MOLOTOV_FLAG == 1
+    then
+    if
+    not actor.Dead($FERMER[$FERMERS_THROW_MOLOTOV_ACTOR])
+        then
+        if
+        actor.Animation($FERMER[$FERMERS_THROW_MOLOTOV_ACTOR]) == "WEAPON_throw"   
+            then
+            
+            if and
+            0104:   actor $FERMER[$FERMERS_THROW_MOLOTOV_ACTOR] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+            $SPECTATING_FLAG == 0
+            $SCREWHUD_FLAG == 0
+            $PHRASES_OFF_FLAG == 0
+            then
+            
+            gosub @RANDOM_DIALOG_GRENADE_FERMERS  
+            
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer
+            text.ClearAll()  
+                
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1
+            
+            end
+            
+            actor.SetImmunities($FERMER[1],0,1,1,0,0)           
+            actor.SetImmunities($FERMER[2],0,1,1,0,0) 
+            actor.SetImmunities($FERMER[3],0,1,1,0,0) 
+            actor.SetImmunities($FERMER[4],0,1,1,0,0) 
+            
+            $FERMERS_THROW_MOLOTOV_TIMER = 0   
+            
+            gosub @FERMERS_RANDOM_THROW_TIME
+                     
+            $FERMERS_THROW_MOLOTOV_FLAG = 0
+            
+            while actor.Animation($FERMER[$FERMERS_THROW_MOLOTOV_ACTOR]) == "WEAPON_throw"    
+            wait 0
+            gosub @FERMERS_DEAD_CHECK
+            gosub @FERMERS_AI_CHECK     
+            
+            random_int 0@ 0 5
+            random_int 8@ 1 5    
+                
+            gosub @FERMERS1_ATTACK_PEOPLE1     
+            
+            if or
+            00F2:   actor $FERMER[1] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+            00F2:   actor $FERMER[2] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+            00F2:   actor $FERMER[3] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+            00F2:   actor $FERMER[4] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0
+            not $ACTIVE_INTERIOR == 0
+            $INT_ENTERING_FLAG == 1 
+            jf @FERMERS_SPAWN1_DELETE1  
+            if
+            $SAVESTATUS == 0
+            jf @FERMERS_SPAWN1_DELETE1 
+            if or
+            not Actor.Dead($FERMER[1])
+            not Actor.Dead($FERMER[2])
+            not Actor.Dead($FERMER[3])
+            not Actor.Dead($FERMER[4])
+            jf @FERMERS_SPAWN_DEAD 
+            end
+            
+            01B9: set_actor $FERMER[$FERMERS_THROW_MOLOTOV_ACTOR] armed_weapon_to $FERMERS_THROW_PREV_WEAP 
+            
+            32@ = 0
+            :FERMERS_THROW_IDLE
+            wait 0
+            gosub @FERMERS_DEAD_CHECK   
+            gosub @FERMERS_AI_CHECK  
+            
+            random_int 0@ 0 5
+            random_int 8@ 1 5    
+                
+            gosub @FERMERS1_ATTACK_PEOPLE1     
+            
+            if or
+            00F2:   actor $FERMER[1] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+            00F2:   actor $FERMER[2] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+            00F2:   actor $FERMER[3] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+            00F2:   actor $FERMER[4] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0
+            not $ACTIVE_INTERIOR == 0
+            $INT_ENTERING_FLAG == 1 
+            jf @FERMERS_SPAWN1_DELETE1  
+            if
+            $SAVESTATUS == 0
+            jf @FERMERS_SPAWN1_DELETE1 
+            if or
+            not Actor.Dead($FERMER[1])
+            not Actor.Dead($FERMER[2])
+            not Actor.Dead($FERMER[3])
+            not Actor.Dead($FERMER[4])
+            jf @FERMERS_SPAWN_DEAD 
+            if
+            32@ > 1999
+            jf @FERMERS_THROW_IDLE 
+            
+            actor.SetImmunities($FERMER[1],0,0,0,0,0) 
+            actor.SetImmunities($FERMER[2],0,0,0,0,0) 
+            actor.SetImmunities($FERMER[3],0,0,0,0,0) 
+            actor.SetImmunities($FERMER[4],0,0,0,0,0)       
+            
+            end
+        else
+        $FERMERS_THROW_MOLOTOV_TIMER = 0            
+        $FERMERS_THROW_MOLOTOV_FLAG = 0
+        gosub @FERMERS_RANDOM_THROW_TIME
+        end
+    end    
+    
+////////////////////////////////Заставляем союзников стрелять по военным////////////////////////////////    
+    
+random_int 0@ 0 5
+random_int 8@ 1 5        
+gosub @FERMERS1_ATTACK_PEOPLE1
+
+////////////////////////////////Замораживаем транспорт если игрок зашел в интерьер////////////////////////////////
+
+if
+056E:   car FERMERS_CAR defined
+    then    
+    if
+    $ACTIVE_INTERIOR == 0
+        then
+        car.LockInCurrentPosition(FERMERS_CAR,false)
+        else
+        car.LockInCurrentPosition(FERMERS_CAR,true)
+        end    
+    end
+        
+if
+056E:   car FERMERS_CAR2 defined
+    then    
+    if
+    $ACTIVE_INTERIOR == 0
+        then
+        car.LockInCurrentPosition(FERMERS_CAR2,false)
+        else
+        car.LockInCurrentPosition(FERMERS_CAR2,true)
+        end    
+    end
+
+////////////////////////////////Заставляем фермеров гнаться в погоню за игроком////////////////////////////////
+
+if
+$FERMERS1_CHASE_FLAG == 0
+    then
+    gosub @FERMERS_SPAWN1_SAME_CAR_CHECK
+    if and
+    $FERMERS1_EXIT_FLAG == 0
+    $FERMERS1_DAMAGE_FLAG == 0
+    $SIMULATING_FLAG == 0
+    $SPECTATING_FLAG == 0
+    $PEOPLE_ATTACK_PLAYER_FLAG == 1
+    1@ == 0 
+        then
+        random_int 0@ 1 5
+        if
+        056D:   actor $FERMER[0@] defined
+            then
+            if and
+            0364:   actor $FERMER[0@] spotted_actor PLAYER_ACTOR
+            0184:   actor $FERMER[0@] health > 0
+                then            
+                if 
+                not actor.Driving(PLAYER_ACTOR) 
+                    then
+                    
+                    if
+                    056E:   car FERMERS_CAR2 defined
+                    then
+                    
+                    if or
+                    00F2:   actor $FERMER[1] near_actor PLAYER_ACTOR radius 65.0 65.0 0
+                    00F2:   actor $FERMER[3] near_actor PLAYER_ACTOR radius 65.0 65.0 0
+                    051C:   car FERMERS_CAR2 damaged_by_actor PLAYER_ACTOR
+                    then
+                    jump to @FERMERS_BIKE_JUMP1
+                    end
+                    
+                    end
+                    
+                    if or
+                    00F2:   actor $FERMER[1] near_actor PLAYER_ACTOR radius 65.0 65.0 0
+                    00F2:   actor $FERMER[3] near_actor PLAYER_ACTOR radius 65.0 65.0 0    
+                    051C:   car FERMERS_CAR damaged_by_actor PLAYER_ACTOR 
+                        then
+                        
+                        :FERMERS_BIKE_JUMP1
+                                                                                                        
+                        for 0@ = 1 to 4
+                        
+                        if
+                        0184:   actor $FERMER[0@] health > 0
+                        then     
+                        0687: clear_actor $FERMER[0@] task
+                        wait 100   
+                        0633: AS_actor $FERMER[0@] exit_car
+                        end
+                        
+                        end                                    
+                        
+                        for 0@ = 1 to 4
+                        
+                        if
+                        0184:   actor $FERMER[0@] health > 0
+                        then   
+                        0687: clear_actor $FERMER[0@] task
+                        wait 100
+                        end
+                        
+                        if and
+                        0E4D: random_percent 50
+                        0800:   in_two_players_mode
+                        then
+                        008B: $VAGINA4[0@] = COOP_ACTOR // (int)
+                        05E2: AS_actor $FERMER[0@] kill_actor COOP_ACTOR
+                        else
+                        008B: $VAGINA4[0@] = PLAYER_ACTOR // (int)
+                        05E2: AS_actor $FERMER[0@] kill_actor PLAYER_ACTOR
+                        end
+                        
+                        $VAGINA4_FLAG[0@] = 1
+                        $VAGINA4_TIME[0@] = 0
+                        0568: set_actor $FERMER[0@] untargetable 0     
+                        end  
+                        
+                        gosub @FERMERS_RANDOM_SPEC_WEAPON
+                        $FERMERS1_CHASE_FLAG = 0
+                        $FERMERS1_EXIT_FLAG = 1
+                        08F2: set_car FERMERS_CAR targettable_by_heatseeker 0
+                        if
+                        056E:   car FERMERS_CAR2 defined
+                        then
+                        08F2: set_car FERMERS_CAR2 targettable_by_heatseeker 0
+                        end
+                        
+                        end
+                    else
+                    gosub @FERMERS_SPAWN1_SAME_CAR_CHECK
+                    if and
+                    1@ == 0
+                    $FERMERS1_CHASE_FLAG == 0
+                    $FERMERS1_EXIT_FLAG == 0
+                        then
+                        
+                        //////////////////////////////////////////////////////////////////////////////////////////////////
+                        
+                        0468: clear_car FERMERS_CAR last_weapon_damage
+                        if
+                        056E:   car FERMERS_CAR2 defined
+                        then
+                        0468: clear_car FERMERS_CAR2 last_weapon_damage
+                        end
+                        
+                        if and
+                        84C8: not  actor PLAYER_ACTOR driving_flying_vehicle
+                        84A9: not  actor PLAYER_ACTOR driving_heli
+                        $GAMEMODE_WAR == 0
+                        $PHRASES_OFF_FLAG == 0
+                        then  
+                        gosub @RANDOM_DIALOG_2ATTACK_FERMERS  
+                        09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+                        0093: 3@ = integer 3@ to_float
+                        3@ *= 8.0
+                        0092: 3@ = float 3@ to_integer  
+                        00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1
+                        end
+                        
+                        ////////////////////////////////////////////////////////////////////////////////////////////////// 
+    
+                        03C0: 24@ = actor PLAYER_ACTOR car
+                        00AD: set_car FERMERS_CAR max_speed_to 100.0
+                        03AB: set_car FERMERS_CAR strong 1 
+                        00AE: unknown_set_car FERMERS_CAR to_ignore_traffic_lights 2  
+                        
+                        Car.SetToPsychoDriver(FERMERS_CAR)
+                           
+                        05F2: set_car FERMERS_CAR follow_car 24@ keep_3o_clock
+                        
+                        //////////////////////////////////////////////////////////////////////////////////////////////////
+                        
+                        if
+                        056E:   car FERMERS_CAR2 defined
+                        then
+                        03C0: 24@ = actor PLAYER_ACTOR car
+                        00AD: set_car FERMERS_CAR2 max_speed_to 100.0
+                        03AB: set_car FERMERS_CAR2 strong 1 
+                        00AE: unknown_set_car FERMERS_CAR2 to_ignore_traffic_lights 2  
+                        Car.SetToPsychoDriver(FERMERS_CAR2)   
+                        05F2: set_car FERMERS_CAR2 follow_car 24@ keep_3o_clock
+                        end
+                        
+                        //////////////////////////////////////////////////////////////////////////////////////////////////
+                        
+                        random_int 0@ 2 5
+                        
+                        if and
+                        not CUSTOM_MODE_ONLY_MELEE == 1
+                        not $MUTATION_ACTIVE == 4
+                        then
+                        
+                        if
+                        $FERMERS1_BIKE_FLAG == 0
+                        then
+                        0713: actor $FERMER[0@] driveby_actor -1 car 24@ point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+                        else
+                        0713: actor $FERMER[2] driveby_actor -1 car 24@ point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+                        0713: actor $FERMER[4] driveby_actor -1 car 24@ point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+                        end
+                        
+                        end   
+                        
+                        $FERMERS1_DAMAGE_FLAG = 1
+                        $FERMERS1_CHASE_FLAG = 1
+                        
+                        if
+                        $PEOPLE_ATTACK_PLAYER_FLAG == 0
+                        then
+                        08F2: set_car FERMERS_CAR targettable_by_heatseeker 1
+                        if
+                        056E:   car FERMERS_CAR2 defined
+                            then
+                            08F2: set_car FERMERS_CAR2 targettable_by_heatseeker 1
+                            end
+                        end
+                        
+                        //////////////////////////////////////////////////////////////////////////////////////////////////
+                        
+                        end
+                    end            
+                end
+            end
+        end
+    else
+    
+    //////////////////////////////////////////////////////////////////////////////////////////////////        
+        
+    if
+    actor.Driving(PLAYER_ACTOR)
+        then
+        
+        if
+        $FERMERS1_BIKE_FLAG == 0
+            then
+            
+            if
+            ORIGIN_ABILITY_ACTIVE == 6
+            then
+            jump to @FERMERS_STOP_CHASING_PLAYER
+            end
+                        
+            if or
+            not actor.InCar($FERMER[1],FERMERS_CAR)
+            actor.Dead($FERMER[1])
+            not actor.InCar($FERMER[2],FERMERS_CAR)
+            not actor.InCar($FERMER[3],FERMERS_CAR)
+            not actor.InCar($FERMER[4],FERMERS_CAR)
+            02BF:   car FERMERS_CAR sunk
+            01F4:   car FERMERS_CAR flipped
+            not $ACTIVE_INTERIOR == 0
+                then
+                :FERMERS_STOP_CHASING_PLAYER                                
+                
+                for 0@ = 1 to 4
+                
+                if
+                0184:   actor $FERMER[0@] health > 0
+                then     
+                0687: clear_actor $FERMER[0@] task
+                wait 100   
+                0633: AS_actor $FERMER[0@] exit_car
+                end
+                
+                end                 
+                
+                for 0@ = 1 to 4
+                
+                if
+                0184:   actor $FERMER[0@] health > 0
+                then     
+                0687: clear_actor $FERMER[0@] task
+                wait 100
+                end
+                
+                if and
+                0E4D: random_percent 50
+                0800:   in_two_players_mode
+                then
+                008B: $VAGINA4[0@] = COOP_ACTOR // (int)
+                05E2: AS_actor $FERMER[0@] kill_actor COOP_ACTOR
+                else
+                008B: $VAGINA4[0@] = PLAYER_ACTOR // (int)
+                05E2: AS_actor $FERMER[0@] kill_actor PLAYER_ACTOR
+                end
+                
+                $VAGINA4_FLAG[0@] = 1
+                $VAGINA4_TIME[0@] = 0
+                0568: set_actor $FERMER[0@] untargetable 0   
+                end 
+                
+                gosub @FERMERS_RANDOM_SPEC_WEAPON 
+                $FERMERS1_CHASE_FLAG = 0
+                $FERMERS1_EXIT_FLAG = 1
+                08F2: set_car FERMERS_CAR targettable_by_heatseeker 0
+                if
+                056E:   car FERMERS_CAR2 defined
+                then
+                08F2: set_car FERMERS_CAR2 targettable_by_heatseeker 0
+                end
+                                
+                end                        
+            else            
+            if or
+            not actor.InCar($FERMER[1],FERMERS_CAR)
+            not actor.InCar($FERMER[2],FERMERS_CAR)
+            not actor.InCar($FERMER[3],FERMERS_CAR2)
+            not actor.InCar($FERMER[4],FERMERS_CAR2)
+            02BF:   car FERMERS_CAR sunk
+            02BF:   car FERMERS_CAR2 sunk
+            not $ACTIVE_INTERIOR == 0
+            ORIGIN_ABILITY_ACTIVE == 6
+                then
+                                                
+                for 0@ = 1 to 4
+                
+                if
+                0184:   actor $FERMER[0@] health > 0
+                then     
+                0687: clear_actor $FERMER[0@] task
+                wait 100   
+                0633: AS_actor $FERMER[0@] exit_car
+                end
+                
+                end                 
+                
+                for 0@ = 1 to 4
+                
+                if
+                0184:   actor $FERMER[0@] health > 0
+                then     
+                0687: clear_actor $FERMER[0@] task
+                wait 100
+                end
+                
+                if and
+                0E4D: random_percent 50
+                0800:   in_two_players_mode
+                then
+                008B: $VAGINA4[0@] = COOP_ACTOR // (int)
+                05E2: AS_actor $FERMER[0@] kill_actor COOP_ACTOR
+                else
+                008B: $VAGINA4[0@] = PLAYER_ACTOR // (int)
+                05E2: AS_actor $FERMER[0@] kill_actor PLAYER_ACTOR
+                end
+                
+                $VAGINA4_FLAG[0@] = 1
+                $VAGINA4_TIME[0@] = 0
+                0568: set_actor $FERMER[0@] untargetable 0   
+                end 
+                
+                gosub @FERMERS_RANDOM_SPEC_WEAPON 
+                $FERMERS1_CHASE_FLAG = 0
+                $FERMERS1_EXIT_FLAG = 1
+                08F2: set_car FERMERS_CAR targettable_by_heatseeker 0
+                if
+                056E:   car FERMERS_CAR2 defined
+                then
+                08F2: set_car FERMERS_CAR2 targettable_by_heatseeker 0
+                end
+                                
+                end            
+            end        
+        else
+        if
+        $FERMERS1_CHASE2_FLAG == 0
+            then
+            
+            car.SetDriverBehaviour(FERMERS_CAR,KillThePlayer)
+            if
+            056E:   car FERMERS_CAR2 defined
+            then
+            car.SetDriverBehaviour(FERMERS_CAR2,KillThePlayer)
+            end
+             
+            $FERMERS1_CHASE2_FLAG = 1
+            
+            if
+            $PEOPLE_ATTACK_PLAYER_FLAG == 0
+            then
+            08F2: set_car FERMERS_CAR targettable_by_heatseeker 1
+            if
+            056E:   car FERMERS_CAR2 defined
+                then
+                08F2: set_car FERMERS_CAR2 targettable_by_heatseeker 1
+                end
+            end            
+            
+            if and
+            not 0@ == 2
+            not 0@ == 3
+            not 0@ == 4
+            then
+            random_int 0@ 2 5
+            end
+            
+            if and
+            not CUSTOM_MODE_ONLY_MELEE == 1
+            not $MUTATION_ACTIVE == 4
+            then
+            
+            if
+            $FERMERS1_BIKE_FLAG == 0
+            then
+            0713: actor $FERMER[0@] driveby_actor PLAYER_ACTOR car -1 point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+            else
+            0713: actor $FERMER[2] driveby_actor PLAYER_ACTOR car -1 point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+            0713: actor $FERMER[4] driveby_actor PLAYER_ACTOR car -1 point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+            end
+            
+            end
+            
+            else
+            
+            if
+            $FERMERS1_BIKE_FLAG == 0
+                then                
+                if or
+                not actor.InCar($FERMER[1],FERMERS_CAR)
+                not actor.InCar($FERMER[2],FERMERS_CAR)
+                not actor.InCar($FERMER[3],FERMERS_CAR)
+                not actor.InCar($FERMER[4],FERMERS_CAR)
+                02BF:   car FERMERS_CAR sunk
+                ORIGIN_ABILITY_ACTIVE == 6
+                    then                                        
+                    
+                    for 0@ = 1 to 4
+                    
+                    if
+                    0184:   actor $FERMER[0@] health > 0
+                    then   
+                    0687: clear_actor $FERMER[0@] task
+                    wait 100               
+                    0633: AS_actor $FERMER[0@] exit_car
+                    end
+                    
+                    end                    
+                    
+                    for 0@ = 1 to 4
+                    
+                    if
+                    0184:   actor $FERMER[0@] health > 0
+                    then   
+                    0687: clear_actor $FERMER[0@] task
+                    wait 100
+                    end
+                    
+                    if and
+                    0E4D: random_percent 50
+                    0800:   in_two_players_mode
+                    then
+                    008B: $VAGINA4[0@] = COOP_ACTOR // (int)
+                    05E2: AS_actor $FERMER[0@] kill_actor COOP_ACTOR
+                    else
+                    008B: $VAGINA4[0@] = PLAYER_ACTOR // (int)
+                    05E2: AS_actor $FERMER[0@] kill_actor PLAYER_ACTOR
+                    end
+                    
+                    $VAGINA4_FLAG[0@] = 1
+                    $VAGINA4_TIME[0@] = 0
+                    0568: set_actor $FERMER[0@] untargetable 0     
+                    end 
+                    
+                    gosub @FERMERS_RANDOM_SPEC_WEAPON 
+                    $FERMERS1_CHASE_FLAG = 0
+                    $FERMERS1_CHASE2_FLAG = 0
+                    $FERMERS1_EXIT_FLAG = 1
+                    08F2: set_car FERMERS_CAR targettable_by_heatseeker 0
+                    if
+                    056E:   car FERMERS_CAR2 defined
+                    then
+                    08F2: set_car FERMERS_CAR2 targettable_by_heatseeker 0
+                    end
+                                        
+                    end                
+                else                
+                if or
+                not actor.InCar($FERMER[1],FERMERS_CAR)
+                not actor.InCar($FERMER[2],FERMERS_CAR)
+                not actor.InCar($FERMER[3],FERMERS_CAR2)
+                not actor.InCar($FERMER[4],FERMERS_CAR2)
+                02BF:   car FERMERS_CAR sunk
+                02BF:   car FERMERS_CAR2 sunk
+                ORIGIN_ABILITY_ACTIVE == 6
+                    then                                        
+                                        
+                    for 0@ = 1 to 4
+                    
+                    if
+                    0184:   actor $FERMER[0@] health > 0
+                    then   
+                    0687: clear_actor $FERMER[0@] task
+                    wait 100               
+                    0633: AS_actor $FERMER[0@] exit_car
+                    end
+                    
+                    end                    
+                    
+                    for 0@ = 1 to 4
+                    
+                    if
+                    0184:   actor $FERMER[0@] health > 0
+                    then   
+                    0687: clear_actor $FERMER[0@] task
+                    wait 100
+                    end
+                    
+                    if and
+                    0E4D: random_percent 50
+                    0800:   in_two_players_mode
+                    then
+                    008B: $VAGINA4[0@] = COOP_ACTOR // (int)
+                    05E2: AS_actor $FERMER[0@] kill_actor COOP_ACTOR
+                    else
+                    008B: $VAGINA4[0@] = PLAYER_ACTOR // (int)
+                    05E2: AS_actor $FERMER[0@] kill_actor PLAYER_ACTOR
+                    end
+                    
+                    $VAGINA4_FLAG[0@] = 1
+                    $VAGINA4_TIME[0@] = 0
+                    0568: set_actor $FERMER[0@] untargetable 0     
+                    end 
+                    
+                    gosub @FERMERS_RANDOM_SPEC_WEAPON 
+                    $FERMERS1_CHASE_FLAG = 0
+                    $FERMERS1_CHASE2_FLAG = 0
+                    $FERMERS1_EXIT_FLAG = 1
+                    08F2: set_car FERMERS_CAR targettable_by_heatseeker 0
+                    if
+                    056E:   car FERMERS_CAR2 defined
+                    then
+                    08F2: set_car FERMERS_CAR2 targettable_by_heatseeker 0
+                    end
+                    
+                    end                
+                end            
+            end        
+        end
+    
+    //////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+////////////////////////////////Заставляем фермеров выходить из транспорта////////////////////////////////    
+    
+if and
+$FERMERS1_EXIT_FLAG == 0
+$FERMERS1_CHASE_FLAG == 0
+FERMERS_RAID_HELP_FLAG == 0
+not PODMOGA_BASE_FLAG == 3
+056E:   car FERMERS_CAR defined  
+    then
+    
+    if
+    856E: not  car FERMERS_CAR defined
+    then
+    jump @FERMERS_NOT_DEFINED
+    end
+    
+    02E3: 2@ = car FERMERS_CAR speed        
+    if or
+    001D:   32@ > 30@  // (int)
+    2@ == 0.0
+    01C1:   car FERMERS_CAR stopped
+    01F4:   car FERMERS_CAR flipped
+    8202: not  actor PLAYER_ACTOR near_car FERMERS_CAR radius 160.0 160.0 sphere 0
+        then        
+        $FERMERS1_EXIT_FLAG = 1
+        08F2: set_car FERMERS_CAR targettable_by_heatseeker 0
+        if
+        056E:   car FERMERS_CAR2 defined
+        then
+        08F2: set_car FERMERS_CAR2 targettable_by_heatseeker 0
+        end                  
+
+        for 0@ = 1 to 4
+        
+        if
+        0184:   actor $FERMER[0@] health > 0
+        then    
+        0687: clear_actor $FERMER[0@] task
+        wait 100    
+        0633: AS_actor $FERMER[0@] exit_car
+        end
+        
+        end        
+        
+        gosub @FERMERS_RANDOM_SPEC_WEAPON
+        
+        if and
+        0104:   actor $FERMER[1] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+        $SPECTATING_FLAG == 0
+        $SCREWHUD_FLAG == 0
+        $PHRASES_OFF_FLAG == 0 
+        $GAMEMODE_WAR == 0
+            then
+            gosub @RANDOM_DIALOG_EXIT_FROM_CAR_FERMERS
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer
+            text.ClearAll()              
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1
+            end        
+        end
+    end
+    
+////////////////////////////////Заставляем фермеров выходить из транспорта (помощь в рейде)////////////////////////////////    
+
+if and
+$FERMERS1_EXIT_FLAG == 0
+$FERMERS1_CHASE_FLAG == 0
+PODMOGA_BASE_FLAG == 3
+056E:   car FERMERS_CAR defined  
+    then
+    jump to @ZAME_HUENEMY_EXIT_FERMERS_JUMP
+    end
+    
+if and
+$FERMERS1_EXIT_FLAG == 0
+$FERMERS1_CHASE_FLAG == 0
+FERMERS_RAID_HELP_FLAG == 1
+056E:   car FERMERS_CAR defined  
+    then
+    
+    :ZAME_HUENEMY_EXIT_FERMERS_JUMP
+    
+    if
+    856E: not  car FERMERS_CAR defined
+    then
+    jump @FERMERS_NOT_DEFINED
+    end
+    
+    if
+    86FC: not  car FERMERS_CAR stuck_check_enabled
+    then
+    03CC: enable_car FERMERS_CAR stuck_check_distance_to 2.0 time_to 2000
+    end
+    
+    if
+    UNITED_MAP == 0
+    then
+    1@ = 25.0
+    else
+    1@ = 15.0
+    end
+    
+    if and
+    01AD:   car FERMERS_CAR sphere 0 near_point CAMP_RAID_DEST_X CAMP_RAID_DEST_Y radius 1@ 1@
+    03CE:   car FERMERS_CAR stuck
+        then
+        jump to @FERMERS_RAID_EXIT_URGENTLY
+        end
+        
+    if
+    actor.Dead($FERMER[1])
+        then
+        jump to @FERMERS_RAID_EXIT_URGENTLY
+        end        
+        
+    if
+    UNITED_MAP == 0
+    then
+    1@ = 65.0
+    else
+    1@ = 30.0
+    end        
+        
+    0E65: get_car_collision_intensity FERMERS_CAR store_to 0@    
+    if and
+    01AD:   car FERMERS_CAR sphere 0 near_point CAMP_RAID_DEST_X CAMP_RAID_DEST_Y radius 1@ 1@
+    0@ > 20.0
+        then
+        jump to @FERMERS_RAID_EXIT_URGENTLY
+        end
+            
+    if or
+    01F4:   car FERMERS_CAR flipped
+    01AD:   car FERMERS_CAR sphere 0 near_point CAMP_RAID_DEST_X CAMP_RAID_DEST_Y radius 20.0 20.0
+        then
+        :FERMERS_RAID_EXIT_URGENTLY        
+        $FERMERS1_EXIT_FLAG = 1
+        08F2: set_car FERMERS_CAR targettable_by_heatseeker 0
+        if
+        056E:   car FERMERS_CAR2 defined
+        then
+        08F2: set_car FERMERS_CAR2 targettable_by_heatseeker 0
+        end                  
+
+        for 0@ = 1 to 4 
+        
+        if
+        0184:   actor $FERMER[0@] health > 0
+        then   
+        0687: clear_actor $FERMER[0@] task
+        wait 100    
+        0633: AS_actor $FERMER[0@] exit_car
+        end
+        
+        end
+        
+        gosub @FERMERS_RANDOM_SPEC_WEAPON        
+        
+        if and
+        0104:   actor $FERMER[1] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+        $SPECTATING_FLAG == 0
+        $SCREWHUD_FLAG == 0
+        $PHRASES_OFF_FLAG == 0 
+        $GAMEMODE_WAR == 0
+        not PODMOGA_BASE_FLAG == 3
+            then
+            gosub @RANDOM_DIALOG_EXIT_FROM_CAR_FERMERS
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer
+            text.ClearAll()              
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1
+                        
+            if
+            075C:   marker FERMERS_RAID_HELP_MARK enabled
+            then
+            marker.Disable(FERMERS_RAID_HELP_MARK)
+            end            
+            
+            end        
+        end
+    end    
+    
+////////////////////////////////Заставляем фермеров замечать игрока и атаковать в случае необходимости////////////////////////////////    
+    
+if
+$FERMERS1_DAMAGE_FLAG == 0
+    then
+    gosub @FERMERS_SPAWN1_SAME_CAR_CHECK
+    if and    
+    $SIMULATING_FLAG == 0
+    $SPECTATING_FLAG == 0
+    $PLAYER_FERMERS_SIDE == 0
+    $PLAYER_SWAT_SIDE == 0
+    FERMERS_RAID_HELP_FLAG == 0    
+    1@ == 0
+    $ACTIVE_INTERIOR == 0
+    $INT_ENTERING_FLAG == 0
+        then
+        
+        ///////////////////////////////////////////////////////////////////////////////////////////////
+        
+        0@ = 0
+        2@ = 1
+        
+        if and
+        CARMA_VERY_BAD_FLAG == 0
+        KARMA_SYS_ON_FLAG == 1
+            then            
+            if or
+            00F2:   actor $FERMER[1] near_actor PLAYER_ACTOR radius 80.0 80.0 0 
+            00F2:   actor $FERMER[2] near_actor PLAYER_ACTOR radius 80.0 80.0 0 
+            00F2:   actor $FERMER[3] near_actor PLAYER_ACTOR radius 80.0 80.0 0 
+            00F2:   actor $FERMER[4] near_actor PLAYER_ACTOR radius 80.0 80.0 0
+                then                
+                if or
+                0364:   actor $FERMER[1] spotted_actor PLAYER_ACTOR
+                0364:   actor $FERMER[2] spotted_actor PLAYER_ACTOR
+                0364:   actor $FERMER[3] spotted_actor PLAYER_ACTOR
+                0364:   actor $FERMER[4] spotted_actor PLAYER_ACTOR
+                    then                    
+                    if
+                    CARMA_BAD_POINTS >= 30
+                        then
+                        random_int 0@ 0 2000
+                        2@ = 1000
+                        else
+                        if
+                        CARMA_BAD_POINTS >= 60
+                            then
+                            random_int 0@ 0 1000
+                            2@ = 500
+                            end
+                        end                                
+                    end            
+                end       
+            end
+            
+        ///////////////////////////////////////////////////////////////////////////////////////////////    
+        
+        if and
+        056D:   actor COOP_ACTOR defined
+        not COOP_ACTOR == -69
+            then
+            if or
+            051A:   actor $FERMER[1] damaged_by_actor COOP_ACTOR
+            051A:   actor $FERMER[2] damaged_by_actor COOP_ACTOR
+            051A:   actor $FERMER[3] damaged_by_actor COOP_ACTOR
+            051A:   actor $FERMER[4] damaged_by_actor COOP_ACTOR
+                then
+                jump to @FERMERS_DAMAGED_BY_2P_JUMP
+                end
+            end
+                                                
+        if or
+        051A:   actor $FERMER[1] damaged_by_actor PLAYER_ACTOR
+        051A:   actor $FERMER[2] damaged_by_actor PLAYER_ACTOR
+        051A:   actor $FERMER[3] damaged_by_actor PLAYER_ACTOR
+        051A:   actor $FERMER[4] damaged_by_actor PLAYER_ACTOR
+        $PEOPLE_ATTACK_PLAYER_FLAG == 1
+        PODMOGA_BASE_FLAG == 3
+        003B:   0@ == 2@  // (int)
+            then
+            
+            :FERMERS_DAMAGED_BY_2P_JUMP
+            
+            if
+            003B:   0@ == 2@  // (int)
+            then
+            text.ShowTextBox('GAME785')
+            FERM_SUSP_TIMES += 1
+            
+            if
+            801C: not  FERM_SUSP_TIMES > FERM_SUSP_TIMES2 // (int)
+            then
+            
+            gosub @RANDOM_DIALOG_SUSP_FERMERS           
+            gosub @FERMERS_PHRASES_TIMERS_MINUS_SET
+                        
+            09FD: get_gxt_string v$PHRASE3 width_to 3@
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer  
+                        
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1
+            
+            end
+            
+            if
+            001C:   FERM_SUSP_TIMES > FERM_SUSP_TIMES2 // (int)
+                then
+                text.ShowTextBox('GAME784')
+                else
+                jump to @FERMERS_AGRO_SKIP
+                end
+            end
+              
+            if or
+            0364:   actor $FERMER[1] spotted_actor PLAYER_ACTOR
+            0364:   actor $FERMER[2] spotted_actor PLAYER_ACTOR
+            0364:   actor $FERMER[3] spotted_actor PLAYER_ACTOR
+            0364:   actor $FERMER[4] spotted_actor PLAYER_ACTOR        
+                then
+                :FERMERS_SPOTTED_PLAYER
+                0467: clear_actor $FERMER[1] last_weapon_damage
+                0467: clear_actor $FERMER[2] last_weapon_damage
+                0467: clear_actor $FERMER[3] last_weapon_damage
+                0467: clear_actor $FERMER[4] last_weapon_damage
+                $FERMERS1_DAMAGE_FLAG = 1                                 
+                
+                for 0@ = 1 to 4
+                
+                if and
+                actor.Driving($FERMER[0@])
+                0184:   actor $FERMER[0@] health > 0
+                then  
+                0687: clear_actor $FERMER[0@] task
+                wait 100      
+                0633: AS_actor $FERMER[0@] exit_car
+                end
+                
+                end                
+                
+                for 0@ = 1 to 4
+                
+                if
+                0184:   actor $FERMER[0@] health > 0
+                then   
+                0687: clear_actor $FERMER[0@] task
+                wait 100
+                end
+                
+                if and
+                0E4D: random_percent 50
+                0800:   in_two_players_mode
+                then
+                008B: $VAGINA4[0@] = COOP_ACTOR // (int)
+                05E2: AS_actor $FERMER[0@] kill_actor COOP_ACTOR
+                else
+                008B: $VAGINA4[0@] = PLAYER_ACTOR // (int)
+                05E2: AS_actor $FERMER[0@] kill_actor PLAYER_ACTOR
+                end
+                
+                $VAGINA4_FLAG[0@] = 1
+                $VAGINA4_TIME[0@] = 0
+                0568: set_actor $FERMER[0@] untargetable 0     
+                end 
+                
+                gosub @FERMERS_RANDOM_SPEC_WEAPON
+                
+                if
+                $PEOPLE_ATTACK_PLAYER_FLAG == 0
+                then
+                gosub @RANDOM_DIALOG_ATTACK_FERMERS_AGRED
+                else
+                gosub @RANDOM_DIALOG_ATTACK_FERMERS_SPOTTED
+                end
+                
+                if and
+                not $GAMEMODE_WAR == 1
+                $PHRASES_OFF_FLAG == 0
+                not PODMOGA_BASE_FLAG == 3
+                not $FIST_HUD_ALWAYS == 1
+                then
+                05C1: AS_actor PLAYER_ACTOR speak_from_audio_table $PLAYER_FIND_ENEMY_DIALOG_STRING    
+                09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+                0093: 3@ = integer 3@ to_float
+                3@ *= 8.0
+                0092: 3@ = float 3@ to_integer  
+                00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1
+                end
+                
+                end                 
+            end
+        end
+    else
+    
+    if and
+    $FERMERS1_DAMAGE_FLAG == 0
+    $SIMULATING_FLAG == 0
+    $SPECTATING_FLAG == 0
+    $PLAYER_FERMERS_SIDE == 0
+    FERMERS_RAID_HELP_FLAG == 0
+    $PLAYER_SWAT_SIDE == 0
+        then
+    
+        if
+        056E:   car FERMERS_CAR defined
+        then
+            
+        if
+        051C:   car FERMERS_CAR damaged_by_actor PLAYER_ACTOR
+            then
+            jump to @FERMERS_SPOTTED_PLAYER
+            end
+            
+        end
+            
+        if
+        056E:   car FERMERS_CAR2 defined
+        then
+            
+        if
+        051C:   car FERMERS_CAR2 damaged_by_actor PLAYER_ACTOR
+            then
+            jump to @FERMERS_SPOTTED_PLAYER
+            end
+            
+        end
+        
+        end    
+    end
+    
+:FERMERS_AGRO_SKIP    
+    
+////////////////////////////////Заставляем фермеров атаковать игрока если он украл их транспорт////////////////////////////////    
+    
+if and
+056E:   car FERMERS_CAR defined
+$PEOPLE_ATTACK_PLAYER_FLAG == 0
+$FERMERS1_DAMAGE_FLAG == 0
+$PLAYER_FERMERS_SIDE == 0
+FERMERS_RAID_HELP_FLAG == 0
+$PLAYER_SWAT_SIDE == 0
+    then
+    
+    if and
+    $FERMERS1_BIKE_FLAG == 1
+    056E:   car FERMERS_CAR2 defined
+        then
+        
+        if
+        actor.InCar(PLAYER_ACTOR,FERMERS_CAR2)
+        then
+        text.ShowTextBox('GME1445')
+        jump to @FERMERS_SPOTTED_PLAYER
+        end
+            
+        end
+    
+    if
+    actor.InCar(PLAYER_ACTOR,FERMERS_CAR)
+    then
+    text.ShowTextBox('GME1445')
+    jump to @FERMERS_SPOTTED_PLAYER
+    end
+    
+    end                            
+
+end
+
+end_thread
+
+:FERMERS_SPAWN1_SAME_CAR_CHECK
+
+1@ = 0
+
+if
+056E:   car FERMERS_CAR defined
+then
+
+2@ = 15423
+
+if and
+actor.DrivingVehicleType(PLAYER_ACTOR,2@)
+8205: not  actor PLAYER_ACTOR near_car FERMERS_CAR radius 45.0 45.0 45.0 flag 0
+847A: not  actor PLAYER_ACTOR driving_bike
+not actor.DrivingVehicleType(PLAYER_ACTOR,#QUAD)
+then
+1@ = 1
+end
+
+end
+
+return
+
+////////////////////////////////Союзники атакуют фермеров////////////////////////////////
+
+:FERMERS1_ATTACK_PEOPLE1
+
+if 
+$SIMULATING_FLAG == 1
+then
+return
+end
+
+if or
+$PLAYER_FERMERS_SIDE == 1
+$PEOPLE_ATTACK_PLAYER_FLAG == 0
+then
+return
+end
+
+if
+056D:   actor $FERMER[8@] defined
+jf @FERMERS1_ATTACK_PEOPLE_BEGIN
+092B: 3@ = group PLAYER_GROUP member 0@
+
+if
+07D6:   3@ == COOP_ACTOR // @ == $ (int)
+then
+return
+end
+
+if
+not 3@ == -1
+jf @FERMERS1_ATTACK_PEOPLE_BEGIN   
+if
+056D:   actor 3@ defined
+jf @FERMERS1_ATTACK_PEOPLE_BEGIN
+
+if
+$MISSION14_ACTIVE == 1
+    then
+    if
+    not 0@ == 1
+    jf @FERMERS1_ATTACK_PEOPLE_BEGIN
+    end
+    
+if
+$QUEST_TYPE == 9
+    then
+    if
+    87D6: not  3@ == $VERSUS_PEOPLE[1] // @ == $ (int)
+    jf @FERMERS1_ATTACK_PEOPLE_BEGIN
+    end
+
+if or
+00DF:   actor 3@ driving
+0449:   actor 3@ in_a_car
+    then
+    if
+    $HUNTER_ON_PLAYER == 0
+    //$PEOPLE_DONT_ATTACK == 0
+    //$COMMAND_STAY_IN_CAR == 0
+        then                     
+        gosub @FERMERS1_ATTACK_PEOPLE_IN_CAR
+        end
+    end
+
+if and 
+not actor.Driving(PLAYER_ACTOR)
+$RANDOM_CAR_FLAG == 0  
+89DE: not  actor 3@ entering_car  
+jf @FERMERS1_ATTACK_PEOPLE_BEGIN
+if or
+0364:   actor 3@ spotted_actor $FERMER[8@]
+0364:   actor $FERMER[8@] spotted_actor 3@
+jf @FERMERS1_ATTACK_PEOPLE_BEGIN
+if
+00F2:   actor 3@ near_actor $FERMER[8@] radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+jf @FERMERS1_ATTACK_PEOPLE_BEGIN
+if and
+$HUNTER_ON_PLAYER == 0
+$PEOPLE_DONT_ATTACK == 0
+jf @FERMERS1_ATTACK_PEOPLE_BEGIN
+if
+not actor.Animation(3@) == "FLOOR_hit"
+jf @FERMERS1_ATTACK_PEOPLE_BEGIN
+if
+$HUNTER_ON_GROUP == 0
+jf @FERMERS1_ATTACK_PEOPLE_BEGIN  
+if
+044B:   actor 3@ on_foot
+jf @FERMERS1_ATTACK_PEOPLE_BEGIN  
+if
+82E0: not actor 3@ firing_weapon
+jf @FERMERS1_ATTACK_PEOPLE_BEGIN
+062E: get_actor 3@ task 1506 status_store_to 1@ // ret 7 if not found
+if 
+1@ == 7
+jf @FERMERS1_ATTACK_PEOPLE_BEGIN  
+if and
+not actor.Animation(3@) == "colt45_fire_2hands"
+not actor.Animation(3@) == "python_fire" 
+not actor.Animation(3@) == "shotgun_fire" 
+not actor.Animation(3@) == "buddy_fire" 
+not actor.Animation(3@) == "UZI_fire"
+not actor.Animation(3@) == "RIFLE_fire" 
+jf @FERMERS1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "FLAME_fire" 
+not actor.Animation(3@) == "RocketFire" 
+not actor.Animation(3@) == "WEAPON_sniper"
+not actor.Animation(3@) == "WEAPON_throw"
+not actor.Animation(3@) == "BOM_PLANT" 
+jf @FERMERS1_ATTACK_PEOPLE_BEGIN 
+if and
+not actor.Animation(3@) == "colt45_crouchfire"
+not actor.Animation(3@) == "python_crouchfire" 
+not actor.Animation(3@) == "shotgun_crouchfire" 
+not actor.Animation(3@) == "buddy_crouchfire" 
+not actor.Animation(3@) == "UZI_crouchfire"
+not actor.Animation(3@) == "RIFLE_crouchfire" 
+jf @FERMERS1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "colt45_reload"
+not actor.Animation(3@) == "python_reload" 
+not actor.Animation(3@) == "shotgun_reload" 
+not actor.Animation(3@) == "buddy_reload" 
+not actor.Animation(3@) == "UZI_reload"
+not actor.Animation(3@) == "RIFLE_load" 
+jf @FERMERS1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "colt45_crouchreload"
+not actor.Animation(3@) == "python_crouchreload" 
+not actor.Animation(3@) == "shotgun_crouchreload" 
+not actor.Animation(3@) == "buddy_crouchreload" 
+not actor.Animation(3@) == "UZI_crouchreload"
+not actor.Animation(3@) == "RIFLE_crouchload" 
+jf @FERMERS1_ATTACK_PEOPLE_BEGIN 
+if and
+not actor.Animation(3@) == "GunMove_BWD"
+not actor.Animation(3@) == "GunMove_FWD"
+not actor.Animation(3@) == "GunMove_L"
+not actor.Animation(3@) == "GunMove_R"
+not actor.Animation(3@) == "Gun_2_IDLE"
+not actor.Animation(3@) == "GUN_BUTT"
+not actor.Animation(3@) == "GUN_BUTT_crouch"
+not actor.Animation(3@) == "Gun_stand" 
+jf @FERMERS1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "CLIMB_idle"
+not actor.Animation(3@) == "CLIMB_jump"
+not actor.Animation(3@) == "CLIMB_jump2fall"
+not actor.Animation(3@) == "CLIMB_jump_B"
+not actor.Animation(3@) == "CLIMB_Pull"
+not actor.Animation(3@) == "CLIMB_Stand"
+not actor.Animation(3@) == "CLIMB_Stand_finish" 
+jf @FERMERS1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "Crouch_Roll_L"
+not actor.Animation(3@) == "Crouch_Roll_R"
+not actor.Animation(3@) == "gas_cwr"
+not actor.Animation(3@) == "getup"
+not actor.Animation(3@) == "getup_front"
+not actor.Animation(3@) == "GunCrouchBwd"
+not actor.Animation(3@) == "GunCrouchFwd"
+8E47: not is_char_fighting 3@
+jf @FERMERS1_ATTACK_PEOPLE_BEGIN 
+05C1: AS_actor 3@ speak_from_audio_table $PEOPLE_ZOMBIE_ATTACK_AUDIO_TABLE
+if
+056D:   actor 3@ defined
+jf @FERMERS1_ATTACK_PEOPLE_BEGIN 
+if and
+not actor.Driving(PLAYER_ACTOR)
+89DE:   actor PLAYER_ACTOR entering_car
+80DF:   actor PLAYER_ACTOR in_a_car
+80DF:   actor 3@ in_a_car
+not actor.Dead(3@)
+not actor.Dead($FERMER[8@])
+jf @FERMERS1_ATTACK_PEOPLE_BEGIN 
+//0647: AS_actor 3@ clear_look_task
+//05B9: AS_actor 3@ stay_idle 50 ms 
+wait 50
+if
+056D:   actor 3@ defined  
+then
+05E2: AS_actor 3@ kill_actor $FERMER[8@]
+end
+
+jump @FERMERS1_ATTACK_PEOPLE_BEGIN
+
+//////////////////////////////////////////////////////////////////////////////////////////////////  
+
+:FERMERS1_ATTACK_PEOPLE_IN_CAR  
+if and
+not actor.Animation(3@) == "Gang_DrivebyLHS"
+not actor.Animation(3@) == "Gang_DrivebyLHS_Bwd"
+not actor.Animation(3@) == "Gang_DrivebyLHS_Fwd"
+not actor.Animation(3@) == "Gang_DrivebyRHS"
+not actor.Animation(3@) == "Gang_DrivebyRHS_Bwd"
+not actor.Animation(3@) == "Gang_DrivebyRHS_Fwd" 
+jf @FERMERS1_ATTACK_PEOPLE_IN_CAR_RETURN 
+if and
+not actor.Animation(3@) == "Gang_DrivebyTop_LHS"
+not actor.Animation(3@) == "Gang_DrivebyTop_RHS" 
+jf @FERMERS1_ATTACK_PEOPLE_IN_CAR_RETURN 
+if 
+00F2:   actor 3@ near_actor $FERMER[8@] radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+jf @FERMERS1_ATTACK_PEOPLE_IN_CAR_RETURN
+if or
+0364:   actor 3@ spotted_actor $FERMER[8@]
+0364:   actor $FERMER[8@] spotted_actor 3@
+0364:   actor PLAYER_ACTOR spotted_actor $FERMER[8@]
+0364:   actor $FERMER[8@] spotted_actor PLAYER_ACTOR
+jf @FERMERS1_ATTACK_PEOPLE_IN_CAR_RETURN
+
+///////////////////////////////////////////////////////////////////////////
+if and
+0@ == 0
+TEAMMATE1_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @FERMERS1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 1
+TEAMMATE2_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @FERMERS1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 2
+TEAMMATE3_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @FERMERS1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 3
+TEAMMATE4_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @FERMERS1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 4
+TEAMMATE5_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @FERMERS1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+///////////////////////////////////////////////////////////////////////////
+
+if and
+8E42: not is_char_doing_task_id 3@ 243
+not $COMMAND_STAY_IN_CAR == 1
+then
+06C9: remove_actor 3@ from_group
+0631: put_actor 3@ in_group PLAYER_GROUP
+end
+0713: actor 3@ driveby_actor $FERMER[8@] car -1 point 0.0 0.0 0.0 radius 180.0 8 1 firing_rate 360
+
+///////////////////////////////////////////////////////////////////////////
+if
+0@ == 0
+    then
+    TEAMMATE1_ATTACK_TIMER = 0
+    end
+if
+0@ == 1
+    then
+    TEAMMATE2_ATTACK_TIMER = 0
+    end
+if
+0@ == 2
+    then
+    TEAMMATE3_ATTACK_TIMER = 0
+    end
+if
+0@ == 3
+    then
+    TEAMMATE4_ATTACK_TIMER = 0
+    end
+if
+0@ == 4
+    then
+    TEAMMATE5_ATTACK_TIMER = 0
+    end
+///////////////////////////////////////////////////////////////////////////
+   
+return
+
+:FERMERS1_ATTACK_PEOPLE_IN_CAR_RETURN
+return
+
+:FERMERS1_ATTACK_PEOPLE_BEGIN 
+return
+
+:FERMERS_BANKA_CHECK
+
+if or
+$GAMEMODE_WAR == 1
+$DEFENSE_CHALLENGE_FLAG == 1
+    then
+    return
+    end
+    
+actor.StorePos($FERMER[27@],1@,2@,3@)
+06C3: get_number_of_fires_within_sphere_at 1@ 2@ 3@ radius 3.0 store_to 0@
+if
+0@ > 0
+then
+return
+end
+
+actor.StorePos($FERMER[27@],1@,2@,3@) 
+000F: 1@ -= 5.0
+000F: 2@ -= 5.0
+000F: 3@ -= 5.0
+actor.StorePos($FERMER[27@],4@,5@,6@) 
+000F: 4@ -= -5.0
+000F: 5@ -= -5.0
+000F: 6@ -= -5.0
+
+if
+0356:   explosion_type -1 in_cube_cornerA 1@ 2@ 3@ cornerB 4@ 5@ 6@
+then
+return
+end    
+
+random_int 0@ 0 7
+if
+not 0@ == 3
+then
+return
+end
+
+//////////////////////////////Создание пикапа еды//////////////////////////////
+                
+random_float 4@ -1.0 1.0
+random_float 5@ 1.0 -1.0
+                        
+04C4: store_coords_to 1@ 2@ 3@ from_actor $FERMER[27@] with_offset 4@ 5@ 0.0
+
+02CE: 3@ = ground_z_at 1@ 2@ 3@
+
+3@ += 1.0
+                    
+$FOOD_PICKUP_NUM += 1
+                
+if
+$FOOD_PICKUP_NUM > 28
+    then 
+    $FOOD_PICKUP_NUM = 0                              
+    end
+                
+if
+09D1:   pickup $FOOD_PICKUP[$FOOD_PICKUP_NUM] created
+    then   
+    pickup.Destroy($FOOD_PICKUP[$FOOD_PICKUP_NUM])
+    end 
+                
+$FOOD_PICKUP[$FOOD_PICKUP_NUM] = pickup.Create(2663,3,1@,2@,3@)
+
+return    
+
+:RANDOM_DIALOG_DEAD_FERMERS
+    
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH39_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH39_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return   
+
+:RANDOM_DIALOG_DAMAGED_BY_WEAPON_FERMERS_FRIENDLY
+    
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH95_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH95_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+:RANDOM_DIALOG_DAMAGED_BY_ZOMBIES_FERMERS_FRIENDLY
+    
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH96_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH96_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return 
+
+:RANDOM_DIALOG_DAMAGED_BY_WEAPON_FERMERS
+    
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH40_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH40_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+:RANDOM_DIALOG_DAMAGED_BY_ZOMBIES_FERMERS
+    
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH41_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH41_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+:RANDOM_DIALOG_GRENADE_FERMERS
+    
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH42_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH42_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return  
+
+:RANDOM_DIALOG_EXIT_FROM_CAR_FERMERS 
+   
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH44_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then     
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH44_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+:RANDOM_DIALOG_TANK_NEAR_FERMERS
+    
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH45_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH45_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+:RANDOM_DIALOG_HUNTER_NEAR_FERMERS
+    
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH46_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH46_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+:RANDOM_DIALOG_WITCH_NEAR_FERMERS
+    
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH47_" // v$ // Sunday
+
+if
+$WTH_AGRED_FLAG[$SPECLS_NUM] == 1
+then
+v$PHRASE1 = "PH47B_"
+end
+
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH47_" // v$ // Sunday
+
+if
+$WTH_AGRED_FLAG[$SPECLS_NUM] == 1
+then
+v$PHRASE1 = "PH47B_"
+end
+
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+:RANDOM_DIALOG_CHARGER_NEAR_FERMERS
+    
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH48_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH48_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+:RANDOM_DIALOG_HUNTER2_FERMERS
+    
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH49_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH49_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+:RANDOM_DIALOG_ATTACK_FERMERS
+
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH43_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0 
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH43_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+:RANDOM_DIALOG_2ATTACK_FERMERS 
+   
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH51_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH51_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+:RANDOM_DIALOG_ATTACK_FERMERS_AGRED 
+   
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH50_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH50_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+:RANDOM_DIALOG_ATTACK_FERMERS_SPOTTED 
+   
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH52_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH52_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+:RANDOM_DIALOG_SUSP_FERMERS 
+   
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH172_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH172_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+:RANDOM_DIALOG_HAZMAT_NEAR_FERMERS  
+
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH183_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH183_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return               
+
+//////////////////////////////////////////////////////////////////////////
+
+:FERMERS_ONFOOT_ATTACK_SYSTEM
+
+if
+$VAGINA4_FLAG[0@] == 1
+    then
+    $VAGINA4_TIME[0@] += 1
+    end               
+
+/////////////////Поиск цели бойцом///////////////////// 
+
+if and
+056D:   actor $FERMER[0@] defined
+$VAGINA4_FLAG[0@] == 0  
+    then
+    gosub @FERMERS_ONFOOT_ATTACK_SYSTEM_PLAYER_CHECK
+    random_int 2@ 0 3
+    if and
+    2@ == 1
+    19@ == 1
+    $FERMERS1_CHASE_FLAG == 0
+    $FERMERS1_CHASE2_FLAG == 0
+        then
+        if or
+        0364:  actor $FERMER[0@] spotted_actor PLAYER_ACTOR  
+        0364:  actor PLAYER_ACTOR spotted_actor $FERMER[0@]   
+        00F2:  actor $FERMER[0@] near_actor PLAYER_ACTOR radius 55.0 55.0 sphere 0  
+            then
+            if and
+            $ACTOR_DEAD == 0
+            $SPECTATING_FLAG == 0
+            00F2:  actor $FERMER[0@] near_actor PLAYER_ACTOR radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+                then       
+
+                008B: $VAGINA4[0@] = PLAYER_ACTOR // (int)                
+                $VAGINA4_FLAG[0@] = 1
+                $VAGINA4_TIME[0@] = 0
+                0568: set_actor $FERMER[0@] untargetable 0  
+                
+                if
+                $VAGINA4_ACCQ_FLAG[0@] == 1
+                then
+                0A96: 1@ = actor $FERMER[0@] struct
+                0A8E: 1@ = 1@ + 0x71A                    
+                0A8D: 2@ = read_memory 1@ size 1 virtual_protect 1 
+                    
+                2@ -= AI_ACQ_ADD_OTHER_TARGET                                         
+                                                                            
+                0A8C: write_memory 1@ size 4 value 2@ virtual_protect 1    
+                
+                actor.WeaponAccuracy($FERMER[0@]) = 2@
+                                
+                $VAGINA4_ACCQ_FLAG[0@] = 0
+                end    
+                    
+                gosub @FERMERS_ONFOOT_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST                                                       
+      
+                end
+            end   
+        else 
+        gosub @FERMERS_ONFOOT_ATTACK_SYSTEM_TARGET_FIND 
+        if and
+        25@ == 1
+        056D:   actor $VAGINA4[0@] defined
+            then    
+            gosub @FERMERS_ONFOOT_ATTACK_SYSTEM_TARGET_CHECK
+            if
+            056D:   actor $VAGINA4[0@] defined
+                then                
+                
+                if
+                DEBUG_OPPCODE_FLAG == 1
+                then
+                
+                DEBUG_STRING_NUMBER += 1
+                0AD3: v$DEBUG_FILE6 = format "FS%d" DEBUG_STRING_NUMBER
+                if
+                DEBUG_STRING_NUMBER > DEBUG_STRING_NUMBER_MAX
+                then
+                0B00: delete_file "debug\debug.ini"  // IF and SET
+                DEBUG_STRING_NUMBER = 0
+                end
+                0AF1: write_int $VAGINA4[0@] to_ini_file "debug\debug.ini" section "OPPCODE" key v$DEBUG_FILE6
+                
+                end
+                        
+                if and
+                not actor.Dead($VAGINA4[0@])   
+                0184:   actor $VAGINA4[0@] health > 0         
+                803A: not  $VAGINA4[0@] == $FERMER[0@] // (int) 
+                19@ == 1                 
+                    then
+                    if or
+                    0364:  actor $FERMER[0@] spotted_actor $VAGINA4[0@]
+                    0364:  actor $VAGINA4[0@] spotted_actor $FERMER[0@]
+                    051A:   actor $FERMER[0@] damaged_by_actor $VAGINA4[0@]
+                        then 
+                            
+                        $VAGINA4_FLAG[0@] = 1
+                        $VAGINA4_TIME[0@] = 0
+                        
+                        if
+                        $VAGINA4_ACCQ_FLAG[0@] == 0
+                        then
+                        0A96: 1@ = actor $FERMER[0@] struct
+                        0A8E: 1@ = 1@ + 0x71A                    
+                        0A8D: 2@ = read_memory 1@ size 1 virtual_protect 1 
+                            
+                        2@ += AI_ACQ_ADD_OTHER_TARGET                   
+                             
+                        if
+                        2@ > 95
+                        then
+                        2@ = 95
+                        end                                            
+                              
+                        0A8C: write_memory 1@ size 4 value 2@ virtual_protect 1
+                        
+                        actor.WeaponAccuracy($FERMER[0@]) = 2@                    
+                        
+                        $VAGINA4_ACCQ_FLAG[0@] = 1
+                        end    
+                            
+                        gosub @FERMERS_ONFOOT_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST                                                 
+                                   
+                        end                                                                                  
+                    end 
+                end
+            end
+        end               
+    end
+
+/////////////////Проверка на бездействие бойца если цель НЕ найдена/////////////////////     
+
+if and
+$VAGINA4_FLAG[0@] == 0
+0E45: frame_mod 15
+    then
+    if
+    056D:   actor $FERMER[0@] defined
+        then     
+        if
+        0184:   actor $FERMER[0@] health > 0 
+            then
+            06AC: 25@ = actor $FERMER[0@] movement_speed
+            gosub @FERMERS_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK
+            if and
+            19@ == 0
+            $ACTIVE_INTERIOR == 0        
+            25@ < 0.001
+            82E0: not  actor $FERMER[0@] firing_weapon 
+                then
+                if or
+                actor.Animation($FERMER[0@]) == "idle_stance"
+                actor.Animation($FERMER[0@]) == "Swim_Tread"
+                    then
+                    gosub @FERMERS_ONFOOT_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST  
+                    end
+                end
+            end
+        end
+    end
+    
+/////////////////Проверка на бездействие бойца если цель найдена/////////////////////     
+
+if and
+$VAGINA4_FLAG[0@] == 1
+0E45: frame_mod 15
+    then
+    if
+    056D:   actor $FERMER[0@] defined
+        then     
+        if
+        0184:   actor $FERMER[0@] health > 0 
+            then
+            062E: get_actor $FERMER[0@] task 1506 status_store_to 25@ // ret 7 if not found
+            gosub @FERMERS_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK 
+            if and
+            25@ == 7
+            19@ == 0
+                then
+                gosub @FERMERS_ONFOOT_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST  
+                end
+            end
+        end
+    end    
+     
+/////////////////Проверка на наличие цели атаки///////////////////// 
+
+if and
+056D:   actor $FERMER[0@] defined
+$VAGINA4_FLAG[0@] == 1 
+    then
+    if
+    056D:   actor $VAGINA4[0@] defined
+        then        
+        
+        if
+        DEBUG_OPPCODE_FLAG == 1
+        then
+        
+        DEBUG_STRING_NUMBER += 1
+        0AD3: v$DEBUG_FILE6 = format "FS%d" DEBUG_STRING_NUMBER
+        if
+        DEBUG_STRING_NUMBER > DEBUG_STRING_NUMBER_MAX
+        then
+        0B00: delete_file "debug\debug.ini"  // IF and SET
+        DEBUG_STRING_NUMBER = 0
+        end
+        0AF1: write_int $VAGINA4[0@] to_ini_file "debug\debug.ini" section "OPPCODE" key v$DEBUG_FILE6
+        
+        end
+         
+        if or
+        8184:   actor $VAGINA4[0@] health < 1  
+        actor.Dead($VAGINA4[0@])
+        80F2: not  actor $FERMER[0@] near_actor $VAGINA4[0@] radius $AI_FIND_RADIUS2 $AI_FIND_RADIUS2 sphere 0
+        $VAGINA4_TIME[0@] > 600        
+            then 
+            $VAGINA4_FLAG[0@] = 0
+            $VAGINA4_TIME[0@] = 0   
+            Actor.SetWalkStyle($FERMER[0@], "surv3")
+            end
+        else
+        $VAGINA4_FLAG[0@] = 0
+        $VAGINA4_TIME[0@] = 0
+        Actor.SetWalkStyle($FERMER[0@], "surv3")
+        end
+    end             
+
+return
+
+:FERMERS_ONFOOT_ATTACK_SYSTEM_TARGET_FIND
+
+25@ = 0
+
+008B: 1@ = $CREATURE_RANDOM // (int)
+0084: $VAGINA4[0@] = $CREATURE[1@] // (int)
+
+if and
+056D:   actor $VAGINA4[0@] defined
+not 1@ == PLAYER_CREATURE_NUMBER
+    then      
+    if
+    00F2:   actor $FERMER[0@] near_actor $VAGINA4[0@] radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+        then 
+        25@ = 1
+        end
+    end
+
+return
+
+:FERMERS_ONFOOT_ATTACK_SYSTEM_PLAYER_CHECK
+
+19@ = 0
+
+089F: get_actor $FERMER[0@] pedtype_to 11@  
+
+if
+11@ == 28
+    then
+    19@ = 0
+    
+    gosub @FERMERS_SPAWN1_SAME_CAR_CHECK
+    
+    if or
+    1@ == 1
+    $SPECTATING_FLAG == 1
+    then
+    19@ = 0
+    return
+    end
+    
+    if or
+    $FERMERS1_DAMAGE_FLAG == 1
+    $PEOPLE_ATTACK_PLAYER_FLAG == 1
+    then
+    19@ = 1
+    else
+    19@ = 0
+    end
+    
+    return
+    end
+       
+
+return   
+
+:FERMERS_ONFOOT_ATTACK_SYSTEM_TARGET_CHECK
+
+089F: get_actor $FERMER[0@] pedtype_to 11@ 
+
+if
+11@ == 28
+    then
+    19@ = 0
+    089F: get_actor $VAGINA4[0@] pedtype_to 12@ 
+    
+    if or
+    12@ == 23
+    12@ == 25
+    12@ == 27
+//    12@ == 28
+    12@ == 29  
+    then
+    19@ = 1
+    else
+    19@ = 0
+    end
+    
+    return
+    end    
+
+
+return 
+
+:FERMERS_ONFOOT_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST 
+
+if 
+02E0:   actor $FERMER[0@] firing_weapon 
+    then
+    return
+    end    
+
+if 
+$VAGINA4_FLAG[0@] == 1
+    then 
+    if and
+    056D:   actor $VAGINA4[0@] defined
+    056D:   actor $FERMER[0@] defined
+        then            
+        0687: clear_actor $FERMER[0@] task
+        wait 100
+        if and
+        056D:   actor $VAGINA4[0@] defined 
+        056D:   actor $FERMER[0@] defined
+            then  
+                
+            if
+            not actor.Driving($FERMER[0@])   
+            then                  
+            05E2: AS_actor $FERMER[0@] kill_actor $VAGINA4[0@]     
+            else
+            25@ = actor.CurrentCar($FERMER[0@])
+            046C: 27@ = car 25@ driver
+            
+            if and
+            87D6: not  27@ == $FERMER[0@] // @ == $ (int)
+            not CUSTOM_MODE_ONLY_MELEE == 1
+            not $MUTATION_ACTIVE == 4
+            then
+            
+            if and
+            82D8: not  actor $FERMER[0@] current_weapon == 33
+            82D8: not  actor $FERMER[0@] current_weapon == 73
+            then                        
+            0713: actor $FERMER[0@] driveby_actor $VAGINA4[0@] car -1 point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+            end
+            
+            end
+            
+            end
+            
+            Actor.SetWalkStyle($FERMER[0@], "surv5")
+            
+            actor.StorePos($FERMER[0@],1@,2@,3@)
+            actor.StorePos($VAGINA4[0@],27@,28@,29@)
+            
+            050A: 25@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 27@ 28@ 29@
+            0092: 25@ = float 25@ to_integer
+            
+            5@ = 150
+            
+            if
+            25@ > 100
+            then
+            25@ = 100
+            end
+            
+            0062: 5@ -= 25@  // (int)
+            
+            if
+            5@ < 10
+            then
+            5@ = 10
+            end            
+            
+            07DD: set_actor $FERMER[0@] attack_rate 5@ // previously known as temper_to            
+                                
+            return           
+            end
+        end
+    else       
+    if
+    056D:   actor $FERMER[0@] defined
+        then 
+        0687: clear_actor $FERMER[0@] task
+        wait 100         
+        if
+        056D:   actor $FERMER[0@] defined
+            then              
+            Actor.SetWalkStyle($FERMER[0@], "surv3")
+            
+            actor.StorePos($FERMER[0@],1@,2@,3@)
+            02C0: store_to 26@ 27@ 28@ ped_path_coords_closest_to 1@ 2@ 3@
+            0509: 30@ = distance_between_XY 1@ 2@ and_XY 26@ 27@
+            
+            if
+            CAMP_RAID_FLAG == 0
+            then
+            
+            if
+            30@ < AI_CAR_PATH_WALK_RADIUS
+            then                                        
+            05DE: AS_actor $FERMER[0@] walk_around_ped_path
+            else
+            random_float 30@ 30.0 100.0                                                                       
+            04C4: store_coords_to 1@ 2@ 3@ from_actor $FERMER[0@] with_offset 0.0 30@ 0.0
+            02C1: store_to 26@ 27@ 28@ car_path_coords_closest_to 1@ 2@ 3@
+            
+            0509: 3@ = distance_between_XY 0@ 1@ and_XY 26@ 27@
+            if
+            3@ < 5.0
+            then
+            random_float 3@ 0.0 360.0
+            05D4: AS_actor $FERMER[0@] rotate_angle 3@
+            end
+            
+            if
+            84AD: not  actor $FERMER[0@] in_water
+            then
+            05D3: AS_actor $FERMER[0@] goto_point 26@ 27@ 28@ mode 7 time ROAD_WALK_TIME ms // versionA
+            else
+            07E1: AS_actor $FERMER[0@] swim_to 26@ 27@ 28@
+            end
+            
+            end
+            
+            else
+            
+            05D6: clear_scmpath
+            
+            if
+            RAID_CAR_PATH_RANDOM_FLAG == 0
+            then
+            0AD3: v$RAID_FILE = format "CM%d" $ENTERED_CAMP_NUMBER
+            else
+            0AD3: v$RAID_FILE = format "CM%dB" $ENTERED_CAMP_NUMBER
+            end
+            
+            0AF0: 27@ = get_int_from_ini_file "data/raid.ini" section v$RAID_FILE key "POINTS"
+            
+            for 26@ = 0 to 27@
+            0AD3: v$RAID_FILE2 = format "PTH%d_X" 26@
+            0AF2: 1@ = get_float_from_ini_file "data/raid.ini" section v$RAID_FILE key v$RAID_FILE2
+            0AD3: v$RAID_FILE2 = format "PTH%d_Y" 26@ 
+            0AF2: 2@ = get_float_from_ini_file "data/raid.ini" section v$RAID_FILE key v$RAID_FILE2
+            0AD3: v$RAID_FILE2 = format "PTH%d_Z" 26@ 
+            0AF2: 3@ = get_float_from_ini_file "data/raid.ini" section v$RAID_FILE key v$RAID_FILE2
+            05D7: add_point_to_scmpath 1@ 2@ 3@
+            end
+                        
+            05D8: AS_assign_scmpath to_actor $FERMER[0@] flags 6 0
+            
+            end
+                                  
+            return           
+            end 
+        end
+    end  
+    
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////              
+
+:FERMERS_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK
+19@ = 0
+
+if and
+not actor.Animation($FERMER[0@]) == "colt45_fire_2hands"
+not actor.Animation($FERMER[0@]) == "python_fire" 
+not actor.Animation($FERMER[0@]) == "shotgun_fire" 
+not actor.Animation($FERMER[0@]) == "buddy_fire" 
+not actor.Animation($FERMER[0@]) == "UZI_fire"
+not actor.Animation($FERMER[0@]) == "RIFLE_fire" 
+jf @FERMERS_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2  
+if and
+not actor.Animation($FERMER[0@]) == "FLAME_fire" 
+not actor.Animation($FERMER[0@]) == "RocketFire" 
+not actor.Animation($FERMER[0@]) == "WEAPON_sniper" 
+not actor.Animation($FERMER[0@]) == "WEAPON_throw"
+jf @FERMERS_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2       
+if and
+not actor.Animation($FERMER[0@]) == "colt45_crouchfire"
+not actor.Animation($FERMER[0@]) == "python_crouchfire" 
+not actor.Animation($FERMER[0@]) == "shotgun_crouchfire" 
+not actor.Animation($FERMER[0@]) == "buddy_crouchfire" 
+not actor.Animation($FERMER[0@]) == "UZI_crouchfire"
+not actor.Animation($FERMER[0@]) == "RIFLE_crouchfire" 
+jf @FERMERS_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2
+if and
+not actor.Animation($FERMER[0@]) == "colt45_reload"
+not actor.Animation($FERMER[0@]) == "python_reload" 
+not actor.Animation($FERMER[0@]) == "shotgun_reload" 
+not actor.Animation($FERMER[0@]) == "buddy_reload" 
+not actor.Animation($FERMER[0@]) == "UZI_reload"
+not actor.Animation($FERMER[0@]) == "RIFLE_load" 
+not actor.Animation($FERMER[0@]) == "gas_cwr"
+jf @FERMERS_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2
+if and
+not actor.Animation($FERMER[0@]) == "colt45_crouchreload"
+not actor.Animation($FERMER[0@]) == "python_crouchreload" 
+not actor.Animation($FERMER[0@]) == "shotgun_crouchreload" 
+not actor.Animation($FERMER[0@]) == "buddy_crouchreload" 
+not actor.Animation($FERMER[0@]) == "UZI_crouchreload"
+not actor.Animation($FERMER[0@]) == "RIFLE_crouchload" 
+jf @FERMERS_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2 
+if and
+not actor.Animation($FERMER[0@]) == "GunMove_BWD"
+not actor.Animation($FERMER[0@]) == "GunMove_FWD"
+not actor.Animation($FERMER[0@]) == "GunMove_L"
+not actor.Animation($FERMER[0@]) == "GunMove_R"
+not actor.Animation($FERMER[0@]) == "Gun_2_IDLE"
+not actor.Animation($FERMER[0@]) == "GUN_BUTT"
+not actor.Animation($FERMER[0@]) == "GUN_BUTT_crouch"
+not actor.Animation($FERMER[0@]) == "Gun_stand" 
+jf @FERMERS_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2   
+if and
+not actor.Animation($FERMER[0@]) == "WEAPON_throw"
+not actor.Animation($FERMER[0@]) == "WEAPON_throwu"
+not actor.Animation($FERMER[0@]) == "WEAPON_start_throw"
+jf @FERMERS_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2
+  
+return
+
+:FERMERS_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2
+19@ = 1
+return
+
+:FERMERS_AI_CHECK    
+
+for 0@ = 1 to 4
+
+if
+056D:   actor $FERMER[0@] defined
+then
+gosub @FERMERS_ONFOOT_ATTACK_SYSTEM
+if
+0EA4: is_char_on_fire $FERMER[0@]
+    then    
+    0A96: 5@ = actor $FERMER[0@] struct
+    0A8E: 5@ = 5@ + 0x730 //CFire       
+    0A8D: 1@ = read_memory 5@ size 4 virtual_protect 0
+    0A8E: 2@ = 1@ + 0x14 //m_pEntityCreator
+    0A8D: 2@ = read_memory 2@ size 4 virtual_protect 0 
+    
+    for 25@ = 1 to 4    
+    0A96: 3@ = actor $FERMER[25@] struct       
+    if
+    07D6:   2@ == 3@ // @ == $ (int)
+        then
+        0A8E: 4@ = 1@ + 0x18 //m_nTimeToBurn
+        0A8C: write_memory 4@ size 4 value 0 virtual_protect 0
+        0A8E: 4@ = 1@ + 0x20 //m_nNumGenerationsAllowed
+        0A8C: write_memory 4@ size 1 value 0 virtual_protect 0
+        end 
+    end
+                  
+    end
+end
+
+end 
+
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+:FERMERS_DEAD_CHECK
+
+if and
+$FERMERS1_EXIT_FLAG == 1
+FERMERS_CAR_DELETED_REFERENCES_FLAG == 0
+    then
+    if and
+    056D:   actor $FERMER[1] defined
+    056D:   actor $FERMER[2] defined
+    056D:   actor $FERMER[3] defined
+    056D:   actor $FERMER[4] defined
+        then
+        if and
+        8449: not  actor $FERMER[1] in_a_car
+        8449: not  actor $FERMER[2] in_a_car
+        8449: not  actor $FERMER[3] in_a_car
+        8449: not  actor $FERMER[4] in_a_car
+            then
+            gosub @FERMERS_CAR_REMOVE_REFERENCES
+            end
+        end
+    end
+    
+if and
+$FERMERS1_EXIT_FLAG == 1
+FERMERS_CAR2_DELETED_REFERENCES_FLAG == 0
+    then
+    if and
+    056D:   actor $FERMER[1] defined
+    056D:   actor $FERMER[2] defined
+    056D:   actor $FERMER[3] defined
+    056D:   actor $FERMER[4] defined
+        then
+        if and
+        8449: not  actor $FERMER[1] in_a_car
+        8449: not  actor $FERMER[2] in_a_car
+        8449: not  actor $FERMER[3] in_a_car
+        8449: not  actor $FERMER[4] in_a_car
+            then
+            gosub @FERMERS_CAR2_REMOVE_REFERENCES
+            end
+        end
+    end
+    
+//////////////////////////////////////////////////////////////////////////////////////////////////         
+
+for 0@ = 1 to 4
+
+if
+056D:   actor $FERMER[0@] defined
+    then
+    if and
+    not actor.Dead($FERMER[0@])
+    $ACTIVE_INTERIOR == 0
+    $INT_ENTERING_FLAG == 0
+        then
+        actor.StorePos($FERMER[0@],25@,26@,27@)
+        if
+        27@ < Z_COORD_DELETE_PED      
+            then
+            
+            if
+            $FERMERS1_BIKE_FLAG == 1
+            then
+            04C4: store_coords_to 25@ 26@ 27@ from_actor $FERMER[0@] with_offset 0.0 0.0 1.5
+            0362: remove_actor $FERMER[0@] from_car_and_place_at 25@ 26@ 27@
+            end
+            
+            05BE: AS_actor $FERMER[0@] die
+            if
+            056E:   car FERMERS_CAR defined
+                then
+                00A9: set_car FERMERS_CAR to_normal_driver
+                if
+                056E:   car FERMERS_CAR2 defined
+                    then
+                    00A9: set_car FERMERS_CAR2 to_normal_driver
+                    end
+                end
+            end
+        end
+    end                   
+    
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+056D:   actor $FERMER[1] defined
+    then
+    if and
+    $FERMERS1_DEAD_FLAG == 0
+    actor.Dead($FERMER[1])    
+        then
+        
+        create_thread @ANTKUKL $FERMER[1] 0 0 0 0 1
+        
+        if or
+        $FREEMODE == 1
+        $GAMEMODE_WAR == 1
+        then
+        
+        if
+        $GAMEMODE_WAR == 0
+        then
+        $SURV_PROCENT -= SURV_CONVOYS_PROCENT_MINUS
+        else
+        
+        if
+        UNITED_MAP == 0
+        then
+        $SURV_PROCENT -= SURV_CONVOYS_PROCENT_MINUS_WAR
+        else
+        $SURV_PROCENT -= SURV_CONVOYS_PROCENT_MINUS_WAR_UNITED
+        end
+        
+        end
+        
+        end
+        
+        $FERMERS1_DEAD_FLAG = 1
+        
+        0A96: 0@ = actor $FERMER[1] struct
+        0A8E: 0@ = 0@ + 0x764
+        0A8D: 1@ = read_memory 0@ size 2 virtual_protect 1
+        0A8D: 2@ = read_memory 0xB6F5F0 size 2 virtual_protect 1
+        
+        if
+        CAMP_RAID_FLAG == 1
+        then
+        2@ = -69
+        end
+        
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////            
+        
+        if
+        0800:   in_two_players_mode
+        then
+        0A8D: 0@ = read_memory 0xB7CF28 size 2 virtual_protect 1
+        end
+        
+        if or
+        003B:   1@ == 2@  // (int)
+        003B:   1@ == 0@  // (int)
+        then            
+        
+        0AF0: 27@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_FERMERS_KILLED"        
+        
+        if
+        $CHEATED_FLAG == 0 
+        then               
+        27@ += 1
+        end
+        
+        $FERMERS_KILLED += 1
+        if
+        $GAMEMODE_WAR == 1
+        then
+        $INFECTED_SCORE += 1
+        end
+        
+        $TEMP_XP = USUAL_SURVIVOR_FRACTION_XP_PLUS
+        008D: $TEMP_XP = integer $TEMP_XP to_float
+        0069: $TEMP_XP *= $XP_COEFF // (float)
+        008C: $TEMP_XP = float $TEMP_XP to_integer
+        0058: $PLAYER_XP += $TEMP_XP // (int)
+        
+        if
+        KARMA_SYS_ON_FLAG == 1
+        then
+        
+        if
+        CARMA_VERY_BAD_FLAG == 0
+        then
+        CARMA_BAD_POINTS += 10
+        Audiostream.Loop($KARMA_BAD,0)
+        Audiostream.PerformAction($KARMA_BAD, PLAY)
+        Audiostream.Volume($KARMA_BAD) = $SOUNDS_VOLUME
+        CARMA_GOOD_POINTS -= 10
+        else
+        CARMA_BAD_POINTS += 3
+        Audiostream.Loop($KARMA_THUG,0)
+        Audiostream.PerformAction($KARMA_THUG, PLAY)
+        Audiostream.Volume($KARMA_THUG) = $SOUNDS_VOLUME
+        CARMA_GOOD_POINTS -= 5
+        end
+        
+        end                    
+         
+        0AF1: write_int 27@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_FERMERS_KILLED"
+        
+        end
+        
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////        
+        
+        27@ = 1
+        gosub @FERMERS_BANKA_CHECK
+        
+        0A96: 0@ = actor $FERMER[1] struct
+        0@ += 0x754
+        0A8D: 1@ = read_memory 0@ size 4 virtual_protect 0
+        2@ = 0    
+        0ECE: get_time_char_is_dead $FERMER[1] store_to 2@
+        
+        if and
+        0104:   actor $FERMER[1] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+        $SPECTATING_FLAG == 0
+        $SCREWHUD_FLAG == 0
+        $PHRASES_OFF_FLAG == 0
+        89A8: not  actor $FERMER[1] headshoted
+        not 1@ == 0x02
+        2@ > 500
+            then
+            gosub @RANDOM_DIALOG_DEAD_FERMERS   
+    
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer
+            text.ClearAll()  
+            
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1
+            end
+        end
+    end
+    
+//////////////////////////////////////////////////////////////////////////////////////////////////    
+        
+if
+056D:   actor $FERMER[2] defined
+    then
+    if and
+    $FERMERS2_DEAD_FLAG == 0
+    actor.Dead($FERMER[2])
+        then
+        
+        if
+        $FERMERS1_BIKE_FLAG == 1
+        then
+        create_thread @ANTKUKL $FERMER[2]
+        else
+        create_thread @ANTKUKL $FERMER[2] 0 0 0 0 0 1 0
+        end
+        
+        if or
+        $FREEMODE == 1
+        $GAMEMODE_WAR == 1
+        then
+        
+        if
+        $GAMEMODE_WAR == 0
+        then
+        $SURV_PROCENT -= SURV_CONVOYS_PROCENT_MINUS
+        else
+        
+        if
+        UNITED_MAP == 0
+        then
+        $SURV_PROCENT -= SURV_CONVOYS_PROCENT_MINUS_WAR
+        else
+        $SURV_PROCENT -= SURV_CONVOYS_PROCENT_MINUS_WAR_UNITED
+        end
+        
+        end
+        
+        end
+        
+        $FERMERS2_DEAD_FLAG = 1
+        
+        0A96: 0@ = actor $FERMER[2] struct
+        0A8E: 0@ = 0@ + 0x764
+        0A8D: 1@ = read_memory 0@ size 2 virtual_protect 1
+        0A8D: 2@ = read_memory 0xB6F5F0 size 2 virtual_protect 1
+        
+        if
+        CAMP_RAID_FLAG == 1
+        then
+        2@ = -69
+        end
+        
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////            
+        
+        if
+        0800:   in_two_players_mode
+        then
+        0A8D: 0@ = read_memory 0xB7CF28 size 2 virtual_protect 1
+        end
+        
+        if or
+        003B:   1@ == 2@  // (int)
+        003B:   1@ == 0@  // (int)
+        then        
+        
+        0AF0: 27@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_FERMERS_KILLED"        
+        
+        if
+        $CHEATED_FLAG == 0 
+        then               
+        27@ += 1
+        end
+        
+        $FERMERS_KILLED += 1
+        if
+        $GAMEMODE_WAR == 1
+        then
+        $INFECTED_SCORE += 1
+        end
+        
+        $TEMP_XP = USUAL_SURVIVOR_FRACTION_XP_PLUS
+        008D: $TEMP_XP = integer $TEMP_XP to_float
+        0069: $TEMP_XP *= $XP_COEFF // (float)
+        008C: $TEMP_XP = float $TEMP_XP to_integer
+        0058: $PLAYER_XP += $TEMP_XP // (int)
+        
+        if
+        KARMA_SYS_ON_FLAG == 1
+        then
+        
+        if
+        CARMA_VERY_BAD_FLAG == 0
+        then
+        CARMA_BAD_POINTS += 10
+        Audiostream.Loop($KARMA_BAD,0)
+        Audiostream.PerformAction($KARMA_BAD, PLAY)
+        Audiostream.Volume($KARMA_BAD) = $SOUNDS_VOLUME
+        CARMA_GOOD_POINTS -= 10
+        else
+        CARMA_BAD_POINTS += 3
+        Audiostream.Loop($KARMA_THUG,0)
+        Audiostream.PerformAction($KARMA_THUG, PLAY)
+        Audiostream.Volume($KARMA_THUG) = $SOUNDS_VOLUME
+        CARMA_GOOD_POINTS -= 5
+        end
+        
+        end                    
+         
+        0AF1: write_int 27@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_FERMERS_KILLED"
+        
+        end
+        
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////           
+        
+        27@ = 2
+        gosub @FERMERS_BANKA_CHECK     
+    
+        0A96: 0@ = actor $FERMER[2] struct
+        0@ += 0x754
+        0A8D: 1@ = read_memory 0@ size 4 virtual_protect 0
+        2@ = 0    
+        0ECE: get_time_char_is_dead $FERMER[2] store_to 2@
+    
+        if and
+        0104:   actor $FERMER[2] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+        $SPECTATING_FLAG == 0
+        $SCREWHUD_FLAG == 0
+        $PHRASES_OFF_FLAG == 0                
+        89A8: not  actor $FERMER[2] headshoted
+        not 1@ == 0x02
+        2@ > 500
+            then
+            gosub @RANDOM_DIALOG_DEAD_FERMERS   
+    
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer
+            text.ClearAll()  
+            
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1
+            end
+        end
+    end
+    
+//////////////////////////////////////////////////////////////////////////////////////////////////    
+        
+if
+056D:   actor $FERMER[3] defined
+    then
+    if and
+    $FERMERS3_DEAD_FLAG == 0
+    actor.Dead($FERMER[3])
+        then
+        
+        if
+        $FERMERS1_BIKE_FLAG == 1
+        then
+        create_thread @ANTKUKL $FERMER[3]
+        else
+        create_thread @ANTKUKL $FERMER[3] 0 0 0 0 0 1 1
+        end
+        
+        if or
+        $FREEMODE == 1
+        $GAMEMODE_WAR == 1
+        then
+        
+        if
+        $GAMEMODE_WAR == 0
+        then
+        $SURV_PROCENT -= SURV_CONVOYS_PROCENT_MINUS
+        else
+        
+        if
+        UNITED_MAP == 0
+        then
+        $SURV_PROCENT -= SURV_CONVOYS_PROCENT_MINUS_WAR
+        else
+        $SURV_PROCENT -= SURV_CONVOYS_PROCENT_MINUS_WAR_UNITED
+        end
+        
+        end
+        
+        end
+        
+        $FERMERS3_DEAD_FLAG = 1
+        
+        0A96: 0@ = actor $FERMER[3] struct
+        0A8E: 0@ = 0@ + 0x764
+        0A8D: 1@ = read_memory 0@ size 2 virtual_protect 1
+        0A8D: 2@ = read_memory 0xB6F5F0 size 2 virtual_protect 1
+        
+        if
+        CAMP_RAID_FLAG == 1
+        then
+        2@ = -69
+        end
+        
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////            
+        
+        if
+        0800:   in_two_players_mode
+        then
+        0A8D: 0@ = read_memory 0xB7CF28 size 2 virtual_protect 1
+        end
+        
+        if or
+        003B:   1@ == 2@  // (int)
+        003B:   1@ == 0@  // (int)
+        then
+                
+        0AF0: 27@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_FERMERS_KILLED"        
+        
+        if
+        $CHEATED_FLAG == 0 
+        then               
+        27@ += 1
+        end
+        
+        $FERMERS_KILLED += 1
+        if
+        $GAMEMODE_WAR == 1
+        then
+        $INFECTED_SCORE += 1
+        end
+        
+        $TEMP_XP = USUAL_SURVIVOR_FRACTION_XP_PLUS
+        008D: $TEMP_XP = integer $TEMP_XP to_float
+        0069: $TEMP_XP *= $XP_COEFF // (float)
+        008C: $TEMP_XP = float $TEMP_XP to_integer
+        0058: $PLAYER_XP += $TEMP_XP // (int)
+        
+        if
+        KARMA_SYS_ON_FLAG == 1
+        then
+        
+        if
+        CARMA_VERY_BAD_FLAG == 0
+        then
+        CARMA_BAD_POINTS += 10
+        Audiostream.Loop($KARMA_BAD,0)
+        Audiostream.PerformAction($KARMA_BAD, PLAY)
+        Audiostream.Volume($KARMA_BAD) = $SOUNDS_VOLUME
+        CARMA_GOOD_POINTS -= 10
+        else
+        CARMA_BAD_POINTS += 3
+        Audiostream.Loop($KARMA_THUG,0)
+        Audiostream.PerformAction($KARMA_THUG, PLAY)
+        Audiostream.Volume($KARMA_THUG) = $SOUNDS_VOLUME
+        CARMA_GOOD_POINTS -= 5
+        end
+        
+        end                    
+         
+        0AF1: write_int 27@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_FERMERS_KILLED"
+        
+        end
+        
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////            
+        
+        27@ = 3
+        gosub @FERMERS_BANKA_CHECK    
+        
+        0A96: 0@ = actor $FERMER[3] struct
+        0@ += 0x754
+        0A8D: 1@ = read_memory 0@ size 4 virtual_protect 0
+        2@ = 0    
+        0ECE: get_time_char_is_dead $FERMER[3] store_to 2@
+        
+        if and
+        0104:   actor $FERMER[3] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+        $SPECTATING_FLAG == 0
+        $SCREWHUD_FLAG == 0
+        $PHRASES_OFF_FLAG == 0
+        89A8: not  actor $FERMER[3] headshoted
+        not 1@ == 0x02
+        2@ > 500
+            then
+            gosub @RANDOM_DIALOG_DEAD_FERMERS   
+    
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer
+            text.ClearAll()  
+            
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1
+            end
+        end
+    end
+    
+//////////////////////////////////////////////////////////////////////////////////////////////////    
+        
+if
+056D:   actor $FERMER[4] defined
+    then
+    if and
+    $FERMERS4_DEAD_FLAG == 0
+    actor.Dead($FERMER[4])
+        then
+        
+        if
+        $FERMERS1_BIKE_FLAG == 1
+        then
+        create_thread @ANTKUKL $FERMER[4]
+        else
+        create_thread @ANTKUKL $FERMER[4] 0 0 0 0 0 1 2
+        end
+        
+        if or
+        $FREEMODE == 1
+        $GAMEMODE_WAR == 1
+        then
+        
+        if
+        $GAMEMODE_WAR == 0
+        then
+        $SURV_PROCENT -= SURV_CONVOYS_PROCENT_MINUS
+        else
+        
+        if
+        UNITED_MAP == 0
+        then
+        $SURV_PROCENT -= SURV_CONVOYS_PROCENT_MINUS_WAR
+        else
+        $SURV_PROCENT -= SURV_CONVOYS_PROCENT_MINUS_WAR_UNITED
+        end
+        
+        end
+        
+        end
+        
+        $FERMERS4_DEAD_FLAG = 1
+        
+        0A96: 0@ = actor $FERMER[4] struct
+        0A8E: 0@ = 0@ + 0x764
+        0A8D: 1@ = read_memory 0@ size 2 virtual_protect 1
+        0A8D: 2@ = read_memory 0xB6F5F0 size 2 virtual_protect 1
+        
+        if
+        CAMP_RAID_FLAG == 1
+        then
+        2@ = -69
+        end
+        
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////            
+        
+        if
+        0800:   in_two_players_mode
+        then
+        0A8D: 0@ = read_memory 0xB7CF28 size 2 virtual_protect 1
+        else
+        0@ = -69
+        end
+        
+        if or
+        003B:   1@ == 2@  // (int)
+        003B:   1@ == 0@  // (int)
+        then        
+        
+        0AF0: 27@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_FERMERS_KILLED"        
+        
+        if
+        $CHEATED_FLAG == 0 
+        then               
+        27@ += 1
+        end
+        
+        $FERMERS_KILLED += 1
+        if
+        $GAMEMODE_WAR == 1
+        then
+        $INFECTED_SCORE += 1
+        end
+        
+        $TEMP_XP = USUAL_SURVIVOR_FRACTION_XP_PLUS
+        008D: $TEMP_XP = integer $TEMP_XP to_float
+        0069: $TEMP_XP *= $XP_COEFF // (float)
+        008C: $TEMP_XP = float $TEMP_XP to_integer
+        0058: $PLAYER_XP += $TEMP_XP // (int)
+        
+        if
+        KARMA_SYS_ON_FLAG == 1
+        then
+        
+        if
+        CARMA_VERY_BAD_FLAG == 0
+        then
+        CARMA_BAD_POINTS += 10
+        Audiostream.Loop($KARMA_BAD,0)
+        Audiostream.PerformAction($KARMA_BAD, PLAY)
+        Audiostream.Volume($KARMA_BAD) = $SOUNDS_VOLUME
+        CARMA_GOOD_POINTS -= 10
+        else
+        CARMA_BAD_POINTS += 3
+        Audiostream.Loop($KARMA_THUG,0)
+        Audiostream.PerformAction($KARMA_THUG, PLAY)
+        Audiostream.Volume($KARMA_THUG) = $SOUNDS_VOLUME
+        CARMA_GOOD_POINTS -= 5
+        end
+        
+        end                      
+         
+        0AF1: write_int 27@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_FERMERS_KILLED"
+        
+        end
+        
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////            
+        
+        27@ = 4
+        gosub @FERMERS_BANKA_CHECK    
+        
+        0A96: 0@ = actor $FERMER[4] struct
+        0@ += 0x754
+        0A8D: 1@ = read_memory 0@ size 4 virtual_protect 0
+        2@ = 0    
+        0ECE: get_time_char_is_dead $FERMER[4] store_to 2@
+        
+        if and
+        0104:   actor $FERMER[4] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+        $SPECTATING_FLAG == 0
+        $SCREWHUD_FLAG == 0
+        $PHRASES_OFF_FLAG == 0
+        89A8: not  actor $FERMER[4] headshoted
+        not 1@ == 0x02
+        2@ > 500
+            then
+            gosub @RANDOM_DIALOG_DEAD_FERMERS   
+    
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer
+            text.ClearAll()  
+            
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1
+            end
+        end 
+    end            
+
+return
+
+:FERMERS_RANDOM_THROW_TIME
+0084: $FERMERS_THROW_TIME2 = $FERMERS_THROW_TIME // (int) 
+008D: $FERMERS_THROW_TIME2 = integer $FERMERS_THROW_TIME2 to_float
+random_int 14@ $FERMERS_THROW_TIME_MIN $FERMERS_THROW_TIME_MAX
+006D: $FERMERS_THROW_TIME2 *= 14@ // (float)     
+008C: $FERMERS_THROW_TIME2 = float $FERMERS_THROW_TIME2 to_integer
+return
+
+:FERMERS_RANDOM_SPEC_WEAPON
+wait 5
+
+if
+$FERMERS_RANDOM_SPEC_WEAPON_FLAG == 1
+then
+return
+else
+$FERMERS_RANDOM_SPEC_WEAPON_FLAG = 1
+end
+
+if
+$GAMEMODE_WAR == 1
+    then
+    random_int 0@ 0 3
+    if
+    0@ == 1
+        then
+        random_int 0@ 1 5        
+        
+        if
+        UNITED_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 35 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($FERMER[0@],35,3)
+        else
+        
+        if
+        $UNITED_VC_FLAG == 0
+        then
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 119 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($FERMER[0@],119,3)
+        else
+        
+        0781: get_weapon_with_ID 183 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($FERMER[0@],183,3)
+        end
+        
+        else
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 135 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($FERMER[0@],135,3)
+        else
+        
+        0781: get_weapon_with_ID 213 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($FERMER[0@],213,3)
+        end
+        
+        end
+        
+        end
+        
+        end  
+    end    
+    
+////////////////////////////////////////////////////////////////////////////////////    
+    
+random_int 0@ 0 4
+if and
+0@ == 2
+$GAMEMODE_WAR == 0
+$EASY_MODE == 0
+    then
+    random_int 0@ 1 5        
+
+    if
+    not MAIN_QUEST4_COMPLETED_FLAG == 1
+    then
+    25@ = 33
+    else
+    25@ = 96
+    end
+
+    0781: get_weapon_with_ID 25@ model_to 1@
+
+    while not model.Available(1@)
+    wait 0
+    model.Load(1@)
+    mload
+    end
+    
+//    048F: actor $FERMER[0@] remove_weapons    
+    actor.GiveWeaponAndAmmo($FERMER[0@],25@,99999)
+    actor.WeaponAccuracy($FERMER[0@]) = SNIPERS_ACCURACY
+        
+    end
+
+return
+
+:FERMERS_SPAWN1_WEAPON_CHECK
+wait 0
+
+if
+not MAIN_QUEST4_COMPLETED_FLAG == 1
+then  
+
+random_int 0@ 0 to 4
+
+if
+0@ == 0
+then
+10@ = 22
+end
+
+if
+0@ == 1
+then
+10@ = 73
+end
+
+if
+0@ == 2
+then
+10@ = 87
+end
+
+if
+0@ == 3
+then
+10@ = 30
+end
+
+else
+
+random_int 0@ 0 to 4
+
+if
+0@ == 0
+then
+10@ = 89
+end
+
+if
+0@ == 1
+then
+10@ = 100
+end
+
+if
+0@ == 2
+then
+10@ = 86
+end
+
+if
+0@ == 3
+then
+10@ = 105
+end
+
+end
+
+0781: get_weapon_with_ID 10@ model_to 11@
+ 
+if 
+07DE:   model 11@ exists // versionB 
+jf @FERMERS_SPAWN1_WEAPON_CHECK 
+
+while not model.Available(11@)
+wait 0
+model.Load(11@)
+mload
+end
+
+Actor.GiveWeaponAndAmmo($FERMER[29@], 10@, 99999)
+return
+
+:FERMERS_RANDOM_HP
+008B: 0@ = $FERMER_HEALTH // (int)
+0093: 0@ = integer 0@ to_float
+random_float 1@ 0.85 1.35 
+006B: 0@ *= 1@  // (float)  
+0092: 0@ = float 0@ to_integer 
+return
+
+:FERMERS_SPAWN1_TRANSPORT_AND_PEDS_CREATE
+
+///////////////////////////////////////////////////////////////////////////////////
+
+if
+$FERMERS1_BIKE_FLAG == 0
+then
+
+if
+not MAIN_QUEST4_COMPLETED_FLAG == 1
+then
+
+:CAR_CREATE_FERMERS_ON_CAR
+if
+model.Available(15423)
+then                       
+FERMERS_CAR = Car.Create(15423, 9@, 10@, 11@)
+
+if
+model.Available(15423)
+then
+//model.Destroy(15423)
+end
+
+else
+model.Load(15423)
+mload
+wait 0
+jump to @CAR_CREATE_FERMERS_ON_CAR
+end
+
+else
+
+:CAR_CREATE_FERMERS_ON_CAR_AFTERQUEST4
+if
+model.Available(15424)
+then                       
+FERMERS_CAR = Car.Create(15424, 9@, 10@, 11@)
+
+if
+model.Available(15424)
+then
+//model.Destroy(15424)
+end
+
+else
+model.Load(15424)
+mload
+wait 0
+jump to @CAR_CREATE_FERMERS_ON_CAR_AFTERQUEST4
+end
+
+end
+
+else
+
+if
+not MAIN_QUEST4_COMPLETED_FLAG == 1
+then
+
+:CAR_CREATE_FERMERS_ON_CAR2
+if
+model.Available(#QUAD)
+then
+FERMERS_CAR = Car.Create(#QUAD, 9@, 10@, 11@)
+else
+model.Load(#QUAD)
+mload
+wait 0
+jump to @CAR_CREATE_FERMERS_ON_CAR2
+end
+
+0407: store_coords_to 9@ 10@ 11@ from_car FERMERS_CAR with_offset 0.0 -8.0 0.0
+
+:CAR_CREATE_FERMERS_ON_CAR3
+if
+model.Available(#QUAD)
+then
+FERMERS_CAR2 = Car.Create(#QUAD, 9@, 10@, 11@)
+
+if
+model.Available(#QUAD)
+then
+//model.Destroy(#QUAD)
+end
+
+else
+model.Load(#QUAD)
+mload
+wait 0
+jump to @CAR_CREATE_FERMERS_ON_CAR3
+end
+
+else
+
+:CAR_CREATE_FERMERS_ON_CAR2_AFTERQUEST4
+if
+model.Available(15426)
+then
+FERMERS_CAR = Car.Create(15426, 9@, 10@, 11@)
+else
+model.Load(15426)
+mload
+wait 0
+jump to @CAR_CREATE_FERMERS_ON_CAR2_AFTERQUEST4
+end
+
+0407: store_coords_to 9@ 10@ 11@ from_car FERMERS_CAR with_offset 0.0 -8.0 0.0
+
+:CAR_CREATE_FERMERS_ON_CAR3_AFTERQUEST4
+if
+model.Available(15426)
+then
+FERMERS_CAR2 = Car.Create(15426, 9@, 10@, 11@)
+
+if
+model.Available(15426)
+then
+//model.Destroy(15426)
+end
+
+else
+model.Load(15426)
+mload
+wait 0
+jump to @CAR_CREATE_FERMERS_ON_CAR3_AFTERQUEST4
+end
+
+end
+
+end   
+
+if
+$GAMEMODE_WAR == 0
+then
+random_int 2@ 500 CAR_HEALTH_MAX
+else
+random_int 2@ 500 CAR_HEALTH_MAX
+end
+
+//0A97: 11@ = car FERMERS_CAR struct 
+//11@ += 19
+//0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+//08BD: set 12@ bit 2
+//0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+//08C3: clear 12@ bit 2
+
+car.Health(FERMERS_CAR) = 2@
+
+0878: set_car FERMERS_CAR dirt_level 20.0
+                             
+random_int 23@ 0 2
+06F8: get_nearest_route_for 9@ 10@ 11@ in_direction 23@ store_to 24@ 25@ 26@ Z_angle_to 13@   
+car.Angle(FERMERS_CAR) = 13@
+
+if
+$FERMERS1_BIKE_FLAG == 0
+then   
+0229: set_car FERMERS_CAR primary_color_to $FERMERS_CAR_COLOR1 secondary_color_to $FERMERS_CAR_COLOR2
+else
+0229: set_car FERMERS_CAR primary_color_to $FERMERS_CAR_COLOR1 secondary_color_to $FERMERS_CAR_COLOR1
+end
+
+if
+$FERMERS1_BIKE_FLAG == 0
+then
+0A97: 11@ = car FERMERS_CAR struct 
+11@ += 9
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+08BD: set 12@ bit 2
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 2
+end
+/////////////////////
+0A97: 11@ = car FERMERS_CAR struct 
+11@ += 4 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+08BD: set 12@ bit 1 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 1
+random_float $BENZIN_FERMERS $GASOLINE_MIN $GASOLINE_MAX
+$BENZIN_FERMERS *= 2.0 
+0A97: 0@ = car FERMERS_CAR struct 
+0A8E: 23@ = 0@ + 5 // int 
+0A8C: write_memory 23@ size 4 value $BENZIN_FERMERS virtual_protect 0
+
+if
+$FERMERS1_BIKE_FLAG == 1
+then
+
+if
+$GAMEMODE_WAR == 0
+then
+random_int 2@ 500 CAR_HEALTH_MAX
+else
+random_int 2@ 500 CAR_HEALTH_MAX
+end
+
+//0A97: 11@ = car FERMERS_CAR struct 
+//11@ += 19
+//0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+//08BD: set 12@ bit 2
+//0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+//08C3: clear 12@ bit 2
+
+car.Health(FERMERS_CAR2) = 2@
+
+0878: set_car FERMERS_CAR2 dirt_level 20.0
+
+random_int 23@ 0 2                             
+06F8: get_nearest_route_for 9@ 10@ 11@ in_direction 23@ store_to 24@ 25@ 26@ Z_angle_to 13@   
+car.Angle(FERMERS_CAR2) = 13@
+   
+0229: set_car FERMERS_CAR2 primary_color_to $FERMERS_CAR_COLOR1 secondary_color_to $FERMERS_CAR_COLOR1
+
+if
+$FERMERS1_BIKE_FLAG == 0
+then
+0A97: 11@ = car FERMERS_CAR2 struct 
+11@ += 9
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+08BD: set 12@ bit 2
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 2
+end
+/////////////////////
+0A97: 11@ = car FERMERS_CAR2 struct 
+11@ += 4 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+08BD: set 12@ bit 1 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 1
+random_float $BENZIN_FERMERS $GASOLINE_MIN $GASOLINE_MAX
+$BENZIN_FERMERS *= 2.0 
+0A97: 0@ = car FERMERS_CAR2 struct 
+0A8E: 23@ = 0@ + 5 // int 
+0A8C: write_memory 23@ size 4 value $BENZIN_FERMERS virtual_protect 0
+
+end 
+
+if
+$FERMERS1_BIKE_FLAG == 0
+then
+
+random_int 6@ 0 3
+if or
+6@ == 0
+6@ == 2
+    then
+    073C: car FERMERS_CAR damage_componentB 0
+    end
+
+random_int 6@ 0 3
+if or
+6@ == 0
+6@ == 2
+    then
+    073C: car FERMERS_CAR damage_componentB 1
+    end
+
+random_int 6@ 0 3
+if or
+6@ == 0
+6@ == 2
+    then
+    073C: car FERMERS_CAR damage_componentB 2
+    end
+
+random_int 6@ 0 3
+if or
+6@ == 0
+6@ == 2
+    then
+    073C: car FERMERS_CAR damage_componentB 3
+    end
+
+random_int 6@ 0 3
+if or
+6@ == 0
+6@ == 2
+    then
+    073C: car FERMERS_CAR damage_componentB 4
+    end
+
+random_int 6@ 0 3
+if or
+6@ == 0
+6@ == 2
+    then
+    073C: car FERMERS_CAR damage_componentB 5
+    end
+
+random_int 6@ 0 3
+if or
+6@ == 0
+6@ == 2
+    then
+    073C: car FERMERS_CAR damage_componentB 6
+    end
+    
+end    
+
+if
+$GAMEMODE_WAR == 0
+then
+Car.DoorStatus(FERMERS_CAR) = 2
+end
+///////////////////
+
+while not model.Available(#FERMER1)
+wait 0
+model.Load(#FERMER1)
+mload
+end
+
+$FERMER[1] = Actor.CreateAsDriver(28, #FERMER1, FERMERS_CAR)
+
+if
+model.Available(#FERMER1)
+then
+//model.Destroy(#FERMER1)
+end
+
+wait 5
+
+while not model.Available(#FERMER2)
+wait 0
+model.Load(#FERMER2)
+mload
+end
+
+$FERMER[2] = Actor.CreateAsPassenger(28, #FERMER2, FERMERS_CAR,0)
+
+if
+model.Available(#FERMER2)
+then
+//model.Destroy(#FERMER2)
+end
+ 
+wait 5
+
+///////////////////////////////////////////////////////////////////////////////
+
+if
+$FERMERS1_BIKE_FLAG == 0
+then
+
+while not model.Available(#FERMER3)
+wait 0
+model.Load(#FERMER3)
+mload
+end
+
+$FERMER[3] = Actor.CreateAsPassenger(28, #FERMER3, FERMERS_CAR,1)
+
+if
+model.Available(#FERMER3)
+then
+//model.Destroy(#FERMER3)
+end
+
+wait 5
+
+while not model.Available(#FERMER4)
+wait 0
+model.Load(#FERMER4)
+mload
+end
+
+$FERMER[4] = Actor.CreateAsPassenger(28, #FERMER4, FERMERS_CAR,2)
+
+if
+model.Available(#FERMER4)
+then
+//model.Destroy(#FERMER4)
+end
+
+else
+
+while not model.Available(#FERMER3)
+wait 0
+model.Load(#FERMER3)
+mload
+end
+
+$FERMER[3] = Actor.CreateAsDriver(28, #FERMER3, FERMERS_CAR2)
+
+if
+model.Available(#FERMER3)
+then
+//model.Destroy(#FERMER3)
+end
+
+wait 5
+
+while not model.Available(#FERMER4)
+wait 0
+model.Load(#FERMER4)
+mload
+end
+
+$FERMER[4] = Actor.CreateAsPassenger(28, #FERMER4, FERMERS_CAR2,0)
+
+if
+model.Available(#FERMER4)
+then
+//model.Destroy(#FERMER4)
+end
+
+end
+
+return
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:FERMERS_SPAWN1_COORD_CHECK
+wait 0
+0208: 9@ = random_float_in_ranges 160.0 -120.0 
+0208: 10@ = random_float_in_ranges -120.0 160.0
+04C4: store_coords_to 6@ 7@ 8@ from_actor PLAYER_ACTOR with_offset 9@ 10@ 0.0 
+02C1: store_to 9@ 10@ 11@ car_path_coords_closest_to 6@ 7@ 8@ 
+Actor.StorePos(PLAYER_ACTOR, 6@, 7@, 8@)
+050A: 17@ = distance_between_XYZ 6@ 7@ 8@ and_XYZ 9@ 10@ 11@ 
+0092: 18@ = float 17@ to_integer
+if and
+18@ >= 120 
+not 18@ >= 200 
+jf @FERMERS_SPAWN1_COORD_CHECK 
+if and
+8AE2: not 30@ = random_vehicle_near_point 9@ 10@ 11@ in_radius 10.0 find_next 0 pass_wrecked 1 //IF and SET
+8AE1: not 31@ = random_actor_near_point 9@ 10@ 11@ in_radius 5.0 find_next 0 pass_deads 0 //IF and SET
+jf @FERMERS_SPAWN1_COORD_CHECK
+
+gosub @FERMERS_SPAWN_ZONE_CHECK
+
+if
+6@ == 1
+jf @FERMERS_SPAWN1_COORD_CHECK
+
+return
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:FERMERS_SPAWN_ZONE_CHECK
+
+6@ = 1
+
+{$INCLUDE zone_check/Fractions Spawn Zone Check.txt}          
+
+return
+
+:FERMERS_CAR_REMOVE_REFERENCES
+
+if
+056E:   car FERMERS_CAR defined
+    then
+    if
+    0202:   actor PLAYER_ACTOR near_car FERMERS_CAR radius 10.0 10.0 sphere 0
+        then    
+        car.RemoveReferences(FERMERS_CAR)
+        if
+        056E:   car FERMERS_CAR defined
+        then
+        if
+        not actor.InCar(PLAYER_ACTOR,FERMERS_CAR)
+            then
+            wait 0
+            if
+            056E:   car FERMERS_CAR defined
+                then
+                00A9: set_car FERMERS_CAR to_normal_driver
+                end
+            end
+        end
+        
+        FERMERS_CAR_DELETED_REFERENCES_FLAG = 1    
+        end
+    end
+
+return
+
+:FERMERS_CAR2_REMOVE_REFERENCES
+
+if
+056E:   car FERMERS_CAR2 defined
+    then
+    if
+    0202:   actor PLAYER_ACTOR near_car FERMERS_CAR2 radius 10.0 10.0 sphere 0
+        then    
+        car.RemoveReferences(FERMERS_CAR2)
+        if
+        056E:   car FERMERS_CAR2 defined
+        then
+        if
+        not actor.InCar(PLAYER_ACTOR,FERMERS_CAR2)
+            then
+            wait 0
+            if
+            056E:   car FERMERS_CAR2 defined
+                then 
+                00A9: set_car FERMERS_CAR2 to_normal_driver
+                end
+            end
+        end
+        
+        FERMERS_CAR2_DELETED_REFERENCES_FLAG = 1    
+        end
+    end
+
+return
+
+:FERMERS_PHRASES_TIMERS_MINUS_SET
+$FERMERS_PAIN_TIMER = -35
+$FERMERS_ATTACK_TIMER = -45
+$FERMERS_HUNTER_TIMER = -750
+$FERMERS_TANK_TIMER = -750
+$FERMERS_HUNTER2_TIMER = -750
+$FERMERS_WITCH_TIMER = -750
+$FERMERS_CHARGER_TIMER = -750
+return    

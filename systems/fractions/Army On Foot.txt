@@ -1,0 +1,6958 @@
+const
+ARMY_CAR2 = 22@
+DEAD_TALK_RADIUS = 80.0
+DEAD_TALK_RADIUS_Z = 30.0
+end
+
+const
+ARMY_PAIN_TIMER_MIN = 15
+ARMY_PAIN_TIMER_MAX = 35
+ARMY_ATTACK_TIMER_MIN = 20
+ARMY_ATTACK_TIMER_MAX = 45
+ARMY_HUNTER_TIMER_MIN = 250  
+ARMY_HUNTER_TIMER_MAX = 450
+ARMY_TANK_TIMER_MIN = 400  
+ARMY_TANK_TIMER_MAX = 700
+ARMY_HUNTER2_TIMER_MIN = 400  
+ARMY_HUNTER2_TIMER_MAX = 700
+ARMY_WITCH_TIMER_MIN = 400  
+ARMY_WITCH_TIMER_MAX = 700
+ARMY_CHARGER_TIMER_MIN = 400  
+ARMY_CHARGER_TIMER_MAX = 700   
+end
+
+:ARMY_SP
+thread 'ARMY_SP' 
+
+if and
+$ALLOW_ARMY_CONVOY == 0
+not ZAME_HUENEMY_FLAG == 1
+    then
+    end_thread
+    end
+    
+:ARMY_SPAWN1_START 
+0209: 0@ = random_int_in_ranges $ARMY_SPAWN_MIN $ARMY_SPAWN_MAX 
+1@ = 0
+
+while true
+wait 1000
+
+while 001C:   FRACTIONS_SPAWNED_COUNT > FRACTIONS_TO_SPAWN_COUNT // (int)
+wait 0
+
+if or
+CAMP_RAID_FLAG_ARMY == 1
+$ARMY1_SPAWN_FLAG == 1
+$GAMEMODE_WAR == 1 
+    then
+    break
+    end
+
+end
+
+//////////////////////////////////////////////////////////////////////////////
+
+if
+GLOBAL_SPAWN_TIMER_RANDOM_RESET_ARMY == 1
+then
+
+repeat
+wait 0
+0209: 0@ = random_int_in_ranges $ARMY_SPAWN_MIN $ARMY_SPAWN_MAX
+0209: 30@ = random_int_in_ranges $ARMY_SPAWN_MIN $ARMY_SPAWN_MAX
+
+if
+$FREEMODE == 0
+then
+0209: 1@ = random_int_in_ranges TIMER_RESET_ADD_MIN TIMER_RESET_ADD_MAX
+else
+0209: 1@ = random_int_in_ranges TIMER_RESET_ADD2_MIN TIMER_RESET_ADD2_MAX
+end
+
+0062: 30@ -= 1@  // (int)
+until 801D: not  30@ > 0@  // (int)
+
+0085: 1@ = 30@ // (int)
+0AF1: write_int 30@ to_ini_file "saves\ZACM.set" section "SCR" key "ARMY_NEW_TIMER_AFTER_SAVE"
+0AF1: write_int 0@ to_ini_file "saves\ZACM.set" section "SCR" key "ARMY_SPAWN_TIMER"
+ 
+GLOBAL_SPAWN_TIMER_RANDOM_RESET_ARMY = 0
+end
+
+//////////////////////////////////////////////////////////////////////////////
+
+if
+CAMP_RAID_FLAG_ARMY == 1 
+    then
+    break
+    end
+
+if and
+$SAVESTATUS == 0
+$SAVING_PLACE_FLAG == 0
+$NOTSPAWN == 0
+$NOTSPAWN_ETC == 0
+$SAVEPLACE_ON == 0   
+$ARMY_PROCENT > 0.0
+$ACTIVE_INTERIOR == 0 
+    then
+    
+    if
+    $NEAR_SALV_POINT == 0
+    then    
+    1@ += 1
+    
+    if
+    SURVIVAL_CUSTOM_WEAPON_NABOR == 6
+        then
+        0085: 31@ = 0@ // (int)
+        31@ -= 30
+        0085: 30@ = 0@ // (int)
+        30@ -= 27
+//        0AD1: show_formatted_text_highpriority "%d > %d~n~ %d < %d" time 1000 1@ 31@ 1@ 30@
+        if and
+        001D:   1@ > 31@  // (int)
+        801D:   1@ < 30@  // (int)
+            then                
+            gosub @ARMY_ORIGIN_SPOTTED_PHRASE
+            1@ += 2        
+            end
+        end
+    
+    end
+            
+    else
+    
+    while true
+    wait 0
+    
+    if and
+    $SAVESTATUS == 0
+    $SAVING_PLACE_FLAG == 0
+    $NOTSPAWN == 0
+    $NOTSPAWN_ETC == 0
+    $SAVEPLACE_ON == 0
+    $ARMY_PROCENT > 0.0
+    $ACTIVE_INTERIOR == 0
+        then
+        break
+        end
+        
+    if or
+    CAMP_RAID_FLAG_ARMY == 1
+    $ARMY1_SPAWN_FLAG == 1 
+        then
+        break
+        end
+    
+    end
+    
+    end
+    
+if or
+003B:   0@ == 1@  // (int)
+001D:   1@ > 0@  // (int)
+$ARMY1_SPAWN_FLAG == 1
+CAMP_RAID_FLAG_ARMY == 1
+    then
+    1@ = 0
+    break
+    end    
+    
+end
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+ZAME_HUENEMY_FLAG == 1
+then
+0089: 9@ = ZAME_HUENEMY_POS_X // (float)
+0089: 10@ = ZAME_HUENEMY_POS_Y // (float)
+0089: 11@ = ZAME_HUENEMY_POS_Z // (float)
+else
+gosub @ARMY_SPAWN1_COORD_CHECK
+end
+
+if
+$SAVESTATUS == 1
+then
+jump to @ARMY_SPAWN1_START
+end
+
+0208: 30@ = random_float_in_ranges -2.0 2.0 
+005B: 9@ += 30@ // (float)
+0208: 30@ = random_float_in_ranges -2.0 2.0 
+005B: 10@ += 30@ // (float)
+
+11@ = -100.0 
+
+$ARMY_SPAWNED = 1
+FRACTIONS_SPAWNED_COUNT += 1 
+$ARMY1_SPAWN_FLAG = 0
+$ARMY1_EXIT_FLAG = 0
+$ARMY1_SPOTTED_FLAG = 0 
+$ARMY1_CHASE_FLAG = 0
+$ARMY1_CHASE2_FLAG = 0  
+$ARMY1_BIKE_FLAG = 0
+$ARMY1_CAR_TARAN_FLAG = 0
+$ARMY_RANDOM_SPEC_WEAPON_FLAG = 0
+ARMY_CAR_DELETED_REFERENCES_FLAG = 0
+ARMY_CAR2_DELETED_REFERENCES_FLAG = 0
+
+random_int $ARMY1_BIKE_FLAG 0 to 2
+if or
+CAMP_RAID_FLAG_ARMY == 1
+ZAME_HUENEMY_FLAG == 1
+then
+$ARMY1_BIKE_FLAG = 0
+end
+
+if
+UNITED_MAP == 0
+then
+else
+if
+STORIES_MAP == 0
+    then
+    if
+    $UNITED_VC_FLAG == 0
+        then
+        $ARMY1_BIKE_FLAG = 0
+        end
+    end
+end
+
+gosub @ARMY_SPAWN1_TRANSPORT_AND_PEDS_CREATE
+
+for 0@ = 1 to 4
+create_thread @PED_BKP $ARMY[0@] 371
+if and
+not $PLAYER_ARMY_SIDE == 1
+not $ARMY_DONT_ATTACK_PLAYER_FLAG == 1
+    then
+    0770: set_actor $ARMY[0@] target_priority 1
+    else
+    0568: set_actor $ARMY[0@] untargetable 1
+    end
+end
+
+gosub @ARMY_RANDOM_HP
+Actor.Health($ARMY[1]) = 0@
+gosub @ARMY_RANDOM_HP
+Actor.Health($ARMY[2]) = 0@
+gosub @ARMY_RANDOM_HP
+Actor.Health($ARMY[3]) = 0@
+gosub @ARMY_RANDOM_HP
+Actor.Health($ARMY[4]) = 0@
+
+Actor.WeaponAccuracy($ARMY[1]) = $ARMY_ACCURACY
+Actor.WeaponAccuracy($ARMY[2]) = $ARMY_ACCURACY
+Actor.WeaponAccuracy($ARMY[3]) = $ARMY_ACCURACY 
+Actor.WeaponAccuracy($ARMY[4]) = $ARMY_ACCURACY
+
+if and
+UNITED_MAP == 1
+STORIES_MAP == 0
+$UNITED_III_SPAWN == 1
+then
+081A: set_actor $ARMY[1] weapon_skill_to 0
+081A: set_actor $ARMY[2] weapon_skill_to 0
+081A: set_actor $ARMY[3] weapon_skill_to 0
+081A: set_actor $ARMY[4] weapon_skill_to 0
+else
+081A: set_actor $ARMY[1] weapon_skill_to FRA_WEAP_SKILL
+081A: set_actor $ARMY[2] weapon_skill_to FRA_WEAP_SKILL
+081A: set_actor $ARMY[3] weapon_skill_to FRA_WEAP_SKILL
+081A: set_actor $ARMY[4] weapon_skill_to FRA_WEAP_SKILL
+end
+ 
+0946: set_actor $ARMY[1] actions_uninterupted_by_weapon_fire ACT_UTIRPD_WEP_FIRE 
+0946: set_actor $ARMY[2] actions_uninterupted_by_weapon_fire ACT_UTIRPD_WEP_FIRE 
+0946: set_actor $ARMY[3] actions_uninterupted_by_weapon_fire ACT_UTIRPD_WEP_FIRE 
+0946: set_actor $ARMY[4] actions_uninterupted_by_weapon_fire ACT_UTIRPD_WEP_FIRE
+ 
+060B: set_actor $ARMY[1] decision_maker_to $DEC_PEOPLE 
+060B: set_actor $ARMY[2] decision_maker_to $DEC_PEOPLE 
+060B: set_actor $ARMY[3] decision_maker_to $DEC_PEOPLE 
+060B: set_actor $ARMY[4] decision_maker_to $DEC_PEOPLE
+
+0648: unknown_actor $ARMY[1] task_set 100.0 // float
+0648: unknown_actor $ARMY[2] task_set 100.0 // float
+0648: unknown_actor $ARMY[3] task_set 100.0 // float
+0648: unknown_actor $ARMY[4] task_set 100.0 // float
+
+09B5: set_actor $ARMY[1] signal_after_kill 0
+09B5: set_actor $ARMY[2] signal_after_kill 0
+09B5: set_actor $ARMY[3] signal_after_kill 0
+09B5: set_actor $ARMY[4] signal_after_kill 0
+
+if or
+CAMP_RAID_FLAG_ARMY == 1
+ZAME_HUENEMY_FLAG == 1
+then
+08C6: set_actor $ARMY[1] stay_on_bike 1
+08C6: set_actor $ARMY[2] stay_on_bike 1
+08C6: set_actor $ARMY[3] stay_on_bike 1
+08C6: set_actor $ARMY[4] stay_on_bike 1
+
+for 5@ = 1 to 4
+
+if and
+0E4D: random_percent AMMO_DROP_FROM_RAIDS_CHANCE
+not $GAMEMODE_EDITOR == 1
+then
+//ass
+else
+087E: set_actor $ARMY[5@] weapon_droppable 0
+end
+
+end
+
+end
+ 
+0446: set_actor $ARMY[1] dismemberment_possible 0 
+0446: set_actor $ARMY[2] dismemberment_possible 0 
+0446: set_actor $ARMY[3] dismemberment_possible 0 
+0446: set_actor $ARMY[4] dismemberment_possible 0
+
+if
+UNITED_MAP == 0
+then  
+04D8: set_actor $ARMY[1] drowns_in_water 0
+04D8: set_actor $ARMY[2] drowns_in_water 0
+04D8: set_actor $ARMY[3] drowns_in_water 0
+04D8: set_actor $ARMY[4] drowns_in_water 0
+0A28: set_actor $ARMY[1] swimming_speed_to 2.3
+0A28: set_actor $ARMY[2] swimming_speed_to 2.3
+0A28: set_actor $ARMY[3] swimming_speed_to 2.3
+0A28: set_actor $ARMY[4] swimming_speed_to 2.3
+else
+04D8: set_actor $ARMY[1] drowns_in_water 1
+04D8: set_actor $ARMY[2] drowns_in_water 1
+04D8: set_actor $ARMY[3] drowns_in_water 1
+04D8: set_actor $ARMY[4] drowns_in_water 1
+end
+
+if and
+$GAMEMODE_WAR == 0
+not $DEFENSE_CHALLENGE_FLAG == 1
+then
+random_int 5@ $PEOPLE_MIN_MONEY $PEOPLE_MAX_MONEY  
+03FE: set_actor $ARMY[1] money 5@ 
+random_int 5@ $PEOPLE_MIN_MONEY $PEOPLE_MAX_MONEY  
+03FE: set_actor $ARMY[2] money 5@ 
+random_int 5@ $PEOPLE_MIN_MONEY $PEOPLE_MAX_MONEY  
+03FE: set_actor $ARMY[3] money 5@ 
+random_int 5@ $PEOPLE_MIN_MONEY $PEOPLE_MAX_MONEY  
+03FE: set_actor $ARMY[4] money 5@ 
+end
+
+Actor.SetWalkStyle($ARMY[1], "surv5")
+Actor.SetWalkStyle($ARMY[2], "surv5")
+Actor.SetWalkStyle($ARMY[3], "surv5")
+Actor.SetWalkStyle($ARMY[4], "surv5")
+
+29@ = 1 
+gosub @ARMY_SPAWN1_WEAPON_CHECK 
+29@ = 2 
+gosub @ARMY_SPAWN1_WEAPON_CHECK 
+29@ = 3 
+gosub @ARMY_SPAWN1_WEAPON_CHECK 
+29@ = 4 
+gosub @ARMY_SPAWN1_WEAPON_CHECK
+
+$ARMY_THROW_MOLOTOV_TIMER = 0 
+$ARMY_THROW_MOLOTOV_FLAG = 0
+
+gosub @ARMY_RANDOM_THROW_TIME
+
+$ARMY1_DEAD_FLAG = 0
+$ARMY2_DEAD_FLAG = 0
+$ARMY3_DEAD_FLAG = 0
+$ARMY4_DEAD_FLAG = 0   
+
+for 0@ = 0 to 5
+$VAGINA2_FLAG[0@] = 0
+$VAGINA2_TIME[0@] = 0    
+$VAGINA2_ACCQ_FLAG[0@] = 0
+end
+
+$ARMY_PAIN_TIMER = 0
+random_int $ARMY_PAIN_TIMER2 ARMY_PAIN_TIMER_MIN ARMY_PAIN_TIMER_MAX
+$ARMY_ATTACK_TIMER = 0
+random_int $ARMY_ATTACK_TIMER2 ARMY_ATTACK_TIMER_MIN ARMY_ATTACK_TIMER_MAX
+$ARMY_HUNTER_TIMER = 0
+random_int $ARMY_HUNTER_TIMER2 ARMY_HUNTER_TIMER_MIN ARMY_HUNTER_TIMER_MAX
+
+$ARMY_TANK_TIMER = 0
+random_int $ARMY_TANK_TIMER2 ARMY_TANK_TIMER_MIN ARMY_TANK_TIMER_MAX  
+$ARMY_HUNTER2_TIMER = 0
+random_int $ARMY_HUNTER2_TIMER2 ARMY_HUNTER2_TIMER_MIN ARMY_HUNTER2_TIMER_MAX
+$ARMY_WITCH_TIMER = 0
+random_int $ARMY_WITCH_TIMER2 ARMY_WITCH_TIMER_MIN ARMY_WITCH_TIMER_MAX
+$ARMY_CHARGER_TIMER = 0
+random_int $ARMY_CHARGER_TIMER2 ARMY_CHARGER_TIMER_MIN ARMY_CHARGER_TIMER_MAX
+
+random_int 0@ 1 5
+
+33@ = 0
+
+////////////////////////////////////////////////Заставляем транспорт ехать////////////////////////////////////////////////
+
+if and
+CAMP_RAID_FLAG_ARMY == 0
+not ZAME_HUENEMY_FLAG == 1
+not PODMOGA_BASE_FLAG == 1
+then
+car.SetMaxSpeed(ARMY_CAR,50.0)  
+00AE: set_car ARMY_CAR traffic_behaviour_to 2  
+03AB: set_car ARMY_CAR strong 1 
+car.SetDriverBehaviour(ARMY_CAR,1)
+car.SetSpeedInstantly(ARMY_CAR,15.0)
+else
+
+if
+RAID_MISSION_CARREC_DRIVE_FLAG == 0
+then 
+car.SetMaxSpeed(ARMY_CAR,50.0)  
+00AE: set_car ARMY_CAR traffic_behaviour_to 2  
+03AB: set_car ARMY_CAR strong 1
+
+if
+not ZAME_HUENEMY_FLAG == 1
+then
+0704: car ARMY_CAR drive_to CAMP_RAID_DEST_X CAMP_RAID_DEST_Y CAMP_RAID_DEST_Z 
+else
+car.StorePos(ARMY_CAR,$TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+050A: 30@ = distance_between_XYZ $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3 and_XYZ CAMP_RAID_DEST_X CAMP_RAID_DEST_Y CAMP_RAID_DEST_Z
+if
+8026:   RAID_CAR_PATH_ABADON_RADIUS < 30@  // (float)
+    then
+    00A7: car ARMY_CAR drive_to CAMP_RAID_DEST_X CAMP_RAID_DEST_Y CAMP_RAID_DEST_Z
+    else
+    0704: car ARMY_CAR drive_to CAMP_RAID_DEST_X CAMP_RAID_DEST_Y CAMP_RAID_DEST_Z
+    00AF: set_car ARMY_CAR driver_behaviour_to 14
+    end
+end
+
+car.SetSpeedInstantly(ARMY_CAR,15.0)
+
+if
+not PODMOGA_BASE_FLAG == 1
+then
+car.SetImmunities(ARMY_CAR,1,0,0,0,0)
+end
+
+04E0: car ARMY_CAR abandon_path_radius RAID_CAR_PATH_ABADON_RADIUS
+end
+
+end
+
+32@ = 0
+if
+CAMP_RAID_FLAG_ARMY == 0
+then
+0209: 30@ = random_int_in_ranges 5000 10000
+else
+0209: 30@ = random_int_in_ranges 9099999 9999999
+end
+
+if
+$ARMY1_BIKE_FLAG == 1
+then
+create_thread @ANTKUK2 $ARMY[1] ARMY_CAR 1
+create_thread @ANTKUK2 $ARMY[2] ARMY_CAR
+create_thread @ANTKUK2 $ARMY[3] ARMY_CAR2 1
+create_thread @ANTKUK2 $ARMY[4] ARMY_CAR2
+car.SetMaxSpeed(ARMY_CAR2,50.0)  
+00AE: set_car ARMY_CAR2 traffic_behaviour_to 2  
+03AB: set_car ARMY_CAR2 strong 1 
+car.SetDriverBehaviour(ARMY_CAR2,0)
+car.SetSpeedInstantly(ARMY_CAR2,15.0)
+07F8: car ARMY_CAR2 follow_car ARMY_CAR radius 5.0
+
+if or
+CAMP_RAID_FLAG_ARMY == 1
+ZAME_HUENEMY_FLAG == 1
+then
+car.SetImmunities(ARMY_CAR2,1,0,0,0,0)
+04E0: car ARMY_CAR2 abandon_path_radius RAID_CAR_PATH_ABADON_RADIUS
+end
+
+else
+
+0982: set_actor $ARMY[1] stay_in_car_when_dead 0
+0982: set_actor $ARMY[2] stay_in_car_when_dead 1
+0982: set_actor $ARMY[3] stay_in_car_when_dead 1
+0982: set_actor $ARMY[4] stay_in_car_when_dead 1
+
+end
+
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ARMY_SPAWNED"
+
+while true
+wait 0
+
+//gosub @ARMY_DEBUG_WRITE
+
+////////////////////////////////////////////////Прибавляем значение к таймерам////////////////////////////////////////////////
+
+if
+not $GAME_SPEED == 0.0
+then
+$ARMY_THROW_MOLOTOV_TIMER += 1 
+$ARMY_PAIN_TIMER += 1
+$ARMY_ATTACK_TIMER += 1
+$ARMY_TANK_TIMER += 1
+$ARMY_HUNTER_TIMER += 1
+$ARMY_HUNTER2_TIMER += 1
+$ARMY_WITCH_TIMER += 1
+
+if
+$WTH_AGRED_FLAG[$SPECLS_NUM] == 1
+then
+$ARMY_WITCH_TIMER += 50
+end
+
+$ARMY_CHARGER_TIMER += 1
+end    
+
+////////////////////////////////////////////////Страховочка (само по себе такое никогда не произойдет)////////////////////////////////////////////////
+
+if and
+056D:   actor $ARMY[1] defined
+056D:   actor $ARMY[2] defined
+056D:   actor $ARMY[3] defined
+056D:   actor $ARMY[4] defined
+    then
+    else
+    :ARMY_NOT_DEFINED
+    
+    0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "ARMY_SPAWNED"
+    
+    $ARMY1_CHASE_FLAG = 0
+    $ARMY_SPAWNED = 0
+    $ARMY1_SPOTTED_FLAG = 0
+    FRACTIONS_SPAWNED_COUNT -= 1           
+    
+    if
+    056D:   actor $ARMY[1] defined
+    then
+    actor.DestroyWithFade($ARMY[1])
+    $ARMY[1] = -69  
+    end
+    
+    if
+    056D:   actor $ARMY[2] defined
+    then
+    actor.DestroyWithFade($ARMY[2])
+    $ARMY[2] = -69  
+    end
+    
+    if
+    056D:   actor $ARMY[3] defined
+    then
+    actor.DestroyWithFade($ARMY[3])
+    $ARMY[3] = -69  
+    end
+    
+    if
+    056D:   actor $ARMY[4] defined
+    then
+    actor.DestroyWithFade($ARMY[4])
+    $ARMY[4] = -69  
+    end        
+    
+    if
+    056E:   car ARMY_CAR defined
+    then
+    
+    if
+    not actor.InCar(PLAYER_ACTOR,ARMY_CAR)
+    then
+    car.Destroy(ARMY_CAR)
+    end    
+    
+    end    
+    
+    if
+    056E:   car ARMY_CAR2 defined
+    then
+    
+    if
+    not actor.InCar(PLAYER_ACTOR,ARMY_CAR2)
+    then
+    car.Destroy(ARMY_CAR2)
+    end    
+    
+    end 
+    
+    if
+    ZAME_HUENEMY_FLAG == 2
+    then
+    end_thread
+    end
+    
+    if
+    PODMOGA_BASE_FLAG == 1
+    then
+    PODMOGA_BASE_FLAG = 0
+    end
+    
+    if
+    $GAMEMODE_EDITOR == 1
+    then
+    end_thread
+    end
+    
+    jump @ARMY_SPAWN1_START   
+    
+    end
+
+////////////////////////////////////////////////Осуществляем проверку на смерть и выполняем AI код////////////////////////////////////////////////
+
+gosub @ARMY_DEAD_CHECK
+gosub @ARMY_AI_CHECK
+
+////////////////////////////////////////////////Проверка на то, что все военные мертвы////////////////////////////////////////////////
+
+if and       
+8184:   actor $ARMY[1] health < 1
+8184:   actor $ARMY[2] health < 1
+8184:   actor $ARMY[3] health < 1
+8184:   actor $ARMY[4] health < 1
+    then        
+    :ARMY_SPAWN_DEAD    
+    wait 500
+    
+    0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "ARMY_SPAWNED"
+    
+    gosub @ARMY_DEAD_CHECK
+    
+    if
+    056E:   car ARMY_CAR defined
+    then   
+    
+    if
+    not actor.InCar(PLAYER_ACTOR,ARMY_CAR)
+    then
+    car.RemoveReferences(ARMY_CAR)
+    if
+    056E:   car ARMY_CAR defined
+    then
+    if
+    not actor.InCar(PLAYER_ACTOR,ARMY_CAR)
+        then
+        wait 0
+        if
+        056E:   car ARMY_CAR defined
+            then
+            00A9: set_car ARMY_CAR to_normal_driver
+            end
+        end
+    end
+    
+    end        
+    
+    end
+        
+    if
+    056E:   car ARMY_CAR2 defined
+    then   
+    
+    if
+    not actor.InCar(PLAYER_ACTOR,ARMY_CAR2)
+    then
+    car.RemoveReferences(ARMY_CAR2)
+    if
+    056E:   car ARMY_CAR2 defined
+    then
+    if
+    not actor.InCar(PLAYER_ACTOR,ARMY_CAR2)
+        then
+        wait 0
+        if
+        056E:   car ARMY_CAR2 defined
+            then
+            00A9: set_car ARMY_CAR2 to_normal_driver
+            end
+        end
+    end
+    
+    end        
+    
+    end
+    
+    Actor.RemoveReferences($ARMY[1])
+    Actor.RemoveReferences($ARMY[2])
+    Actor.RemoveReferences($ARMY[3])
+    Actor.RemoveReferences($ARMY[4])
+    $ARMY[1] = -69
+    $ARMY[2] = -69
+    $ARMY[3] = -69
+    $ARMY[4] = -69  
+    $ARMY1_CHASE_FLAG = 0 
+    $ARMY_SPAWNED = 0
+    $ARMY1_SPOTTED_FLAG = 0
+    FRACTIONS_SPAWNED_COUNT -= 1
+    
+    if and
+    ZAME_HUENEMY_FLAG == 1
+    ZAME_HUENEMY_TYPE == 0
+    then
+    ZAME_HUENEMY_FLAG = 2
+    end_thread
+    end
+    
+    if
+    PODMOGA_BASE_FLAG == 1
+    then
+    PODMOGA_BASE_FLAG = 0
+    end
+    
+    if
+    $GAMEMODE_EDITOR == 1
+    then
+    end_thread
+    end    
+      
+    jump @ARMY_SPAWN1_START        
+    end
+    
+////////////////////////////////////////////////Проверка на удаление военных////////////////////////////////////////////////
+
+if and
+$RADIO_HELP_FLAG == 0
+$SAVESTATUS == 0
+RAID_DELETE_ARMY_FLAG == 0 
+then
+else
+jump to @ARMY_SPAWN1_DELETE1
+end
+
+if or
+00F2:   actor $ARMY[1] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+00F2:   actor $ARMY[2] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+00F2:   actor $ARMY[3] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+00F2:   actor $ARMY[4] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0
+not $ACTIVE_INTERIOR == 0
+$INT_ENTERING_FLAG == 1
+CAMP_RAID_FLAG_ARMY == 1
+ZAME_HUENEMY_FLAG == 1 
+    then
+    else    
+    :ARMY_SPAWN1_DELETE1
+    RAID_DELETE_ARMY_FLAG = 0
+    
+    0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "ARMY_SPAWNED"
+    
+    if
+    $ARMY1_EXIT_FLAG == 1
+    then
+    actor.DestroyWithFade($ARMY[1])
+    actor.DestroyWithFade($ARMY[2])
+    actor.DestroyWithFade($ARMY[3])
+    actor.DestroyWithFade($ARMY[4]) 
+    else
+    actor.DestroyInstantly($ARMY[1])
+    actor.DestroyInstantly($ARMY[2])
+    actor.DestroyInstantly($ARMY[3])
+    actor.DestroyInstantly($ARMY[4]) 
+    end
+        
+    if
+    056E:   car ARMY_CAR defined
+    then   
+    
+    if
+    not actor.InCar(PLAYER_ACTOR,ARMY_CAR)
+    then
+    car.Destroy(ARMY_CAR)
+    end    
+    
+    end
+        
+    if
+    056E:   car ARMY_CAR2 defined
+    then   
+    
+    if
+    not actor.InCar(PLAYER_ACTOR,ARMY_CAR2)
+    then
+    car.Destroy(ARMY_CAR2)
+    end    
+    
+    end
+                 
+    0AF0: 2@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_CHASE_COUNT"        
+            
+    if and
+    $CHEATED_FLAG == 0
+    $ARMY1_CHASE_FLAG == 1
+    $GAMEMODE_WAR == 0 
+    then               
+    2@ += 1
+    end
+    $STATS_CHASE_COUNT += 1                      
+             
+    0AF1: write_int 2@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_CHASE_COUNT"
+    
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT8_GOT"
+        
+        if and
+        1@ == 0
+        2@ >= 30
+        $CHEATED_FLAG == 0
+            then
+            v$ACHIEVEMNT = "ACH8"
+            $ACHIEVEMENT_GOT_FLAG = 1        
+            0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT8_GOT"        
+            end                      
+    
+    Actor.RemoveReferences($ARMY[1])
+    Actor.RemoveReferences($ARMY[2])
+    Actor.RemoveReferences($ARMY[3])
+    Actor.RemoveReferences($ARMY[4])
+    $ARMY[1] = -69
+    $ARMY[2] = -69
+    $ARMY[3] = -69
+    $ARMY[4] = -69 
+    $ARMY1_CHASE_FLAG = 0 
+    $ARMY_SPAWNED = 0
+    $ARMY1_SPOTTED_FLAG = 0
+    FRACTIONS_SPAWNED_COUNT -= 1
+    
+    if and
+    ZAME_HUENEMY_FLAG == 1
+    ZAME_HUENEMY_TYPE == 0
+    then
+    ZAME_HUENEMY_FLAG = 2
+    end_thread
+    end
+    
+    if
+    $GAMEMODE_EDITOR == 1
+    then
+    end_thread
+    end     
+              
+    jump @ARMY_SPAWN1_START    
+    end
+    
+////////////////////////////////////////////////Заставляем военных перелезать препятствия////////////////////////////////////////////////    
+    
+random_int 0@ 1 5
+if and
+056D:   actor $ARMY[0@] defined
+CAMP_RAID_FLAG_ARMY == 0
+    then
+    if and
+    0184:   actor $ARMY[0@] health > 0
+    874F: not  actor $ARMY[0@] ped_event == 33  
+    8818: not  actor $ARMY[0@] in_air 
+    33@ > 2000
+        then    
+        if and
+        not actor.Animation($ARMY[0@]) == "CLIMB_idle"
+        not actor.Animation($ARMY[0@]) == "CLIMB_jump"
+        not actor.Animation($ARMY[0@]) == "CLIMB_jump2fall"
+        not actor.Animation($ARMY[0@]) == "CLIMB_jump_B"
+        not actor.Animation($ARMY[0@]) == "CLIMB_Pull" 
+        not actor.Animation($ARMY[0@]) == "CLIMB_Stand"
+        not actor.Animation($ARMY[0@]) == "CLIMB_Stand_finish"             
+            then
+            if or
+            actor.Animation($ARMY[0@]) == "run_civi"  
+            actor.Animation($ARMY[0@]) == "sprint_civi"   
+            actor.Animation($ARMY[0@]) == "swat_run"
+            actor.Animation($ARMY[0@]) == "Swim_Breast"
+            actor.Animation($ARMY[0@]) == "Swim_Tread"
+            actor.Animation($ARMY[0@]) == "Swim_Under"     
+                then    
+                actor.StorePos($ARMY[0@], 3@, 4@, 5@) 
+                04C4: store_coords_to 27@ 28@ 29@ from_actor $ARMY[0@] with_offset 0.0 3.0 0.3                                 
+                if                         
+                86BD: not no_obstacles_between 27@ 28@ 29@ and 3@ 4@ 5@ solid 1 car 0 actor 0 object 1 particle 0   
+                    then    
+                    33@ = 0  
+                    0687: clear_actor $ARMY[0@] task
+                    wait 100                                                                                                                                                   
+                    078F: AS_actor $ARMY[0@] climb 1                                                                           
+                    end
+                end                                            
+            end 
+        end
+    end
+    
+////////////////////////////////////////////////Заставляем военных орать при стрельбе////////////////////////////////////////////////    
+    
+for 3@ = 1 to 5   
+
+if 
+056D:   actor $ARMY[3@] defined
+    then
+    if
+    02E0:   actor $ARMY[3@] firing_weapon
+        then
+        05C1: AS_actor $ARMY[3@] speak_from_audio_table $ARMY_ATTACK_AUDIO_TABLE
+        end
+    end
+            
+end
+
+////////////////////////////////////////////////Голос получения урона от союзников////////////////////////////////////////////////
+
+if
+001C:   $ARMY_PAIN_TIMER > $ARMY_PAIN_TIMER2 // (int)
+then
+random_int 3@ 1 5
+if 
+056D:   actor $ARMY[3@] defined
+    then
+    if or
+    $PLAYER_ARMY_SIDE == 1
+    $ARMY_DONT_ATTACK_PLAYER_FLAG == 1     
+        then
+        if and        
+        not actor.Dead($ARMY[3@])
+        0104:   actor $ARMY[3@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+        $SPECTATING_FLAG == 0
+        $SCREWHUD_FLAG == 0
+        $PHRASES_OFF_FLAG == 0
+        051A:   actor $ARMY[3@] damaged_by_actor PLAYER_ACTOR
+            then           
+        
+            2@ = 0
+            1@ = 0                                     
+
+            if or
+            031D:   actor $ARMY[3@] hit_by_weapon 0
+            031D:   actor $ARMY[3@] hit_by_weapon 46
+            then
+            0467: clear_actor $ARMY[3@] last_weapon_damage
+            054E: clear_actor $ARMY[3@] damage
+            2@ = 1
+            1@ = 1            
+            else
+            0467: clear_actor $ARMY[3@] last_weapon_damage
+            054E: clear_actor $ARMY[3@] damage
+            2@ = 1
+            1@ = 0
+            end
+            
+            if
+            2@ == 1
+            then
+            
+            $ARMY_PAIN_TIMER = 0
+            random_int $ARMY_PAIN_TIMER2 ARMY_PAIN_TIMER_MIN ARMY_PAIN_TIMER_MAX            
+            
+            if
+            1@ == 0
+            then
+            gosub @RANDOM_DIALOG_DAMAGED_BY_WEAPON_ARMY_FRIENDLY  
+            else
+            gosub @RANDOM_DIALOG_DAMAGED_BY_ZOMBIES_ARMY_FRIENDLY  
+            end 
+        
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer
+            text.ClearAll()  
+                
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+            end            
+    
+            end
+        end
+    end
+end  
+
+////////////////////////////////////////////////Голос получения урона от врагов////////////////////////////////////////////////
+
+if
+001C:   $ARMY_PAIN_TIMER > $ARMY_PAIN_TIMER2 // (int)
+then
+random_int 3@ 1 5
+if
+056D:   actor $ARMY[3@] defined
+    then
+    if and    
+    not actor.Dead($ARMY[3@])
+    0104:   actor $ARMY[3@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0
+        then
+        
+        if or
+        $PLAYER_ARMY_SIDE == 1
+        $ARMY_DONT_ATTACK_PLAYER_FLAG == 1
+        then
+        
+        if
+        051A:   actor $ARMY[3@] damaged_by_actor PLAYER_ACTOR 
+        then
+        jump to @ASS2
+        end
+        
+        end
+        
+        2@ = 0
+        1@ = 0
+        
+        ///////////////////////
+        
+        for 0@ = 22 to 34
+        
+        if
+        031D:   actor $ARMY[3@] hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor $ARMY[3@] last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 70 to MAX_WEAPON_NUM_NORMAL
+        
+        if
+        031D:   actor $ARMY[3@] hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor $ARMY[3@] last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 111 to 121
+        
+        if
+        031D:   actor $ARMY[3@] hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor $ARMY[3@] last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 136 to 151
+        
+        if
+        031D:   actor $ARMY[3@] hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor $ARMY[3@] last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 165 to 183
+        
+        if
+        031D:   actor $ARMY[3@] hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor $ARMY[3@] last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 195 to 213
+        
+        if
+        031D:   actor $ARMY[3@] hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor $ARMY[3@] last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////        
+        
+        if and
+        031D:   actor $ARMY[3@] hit_by_weapon 0
+        851A: not  actor $ARMY[3@] damaged_by_actor PLAYER_ACTOR
+        then
+        
+        2@ = 1
+        1@ = 1
+        0467: clear_actor $ARMY[3@] last_weapon_damage
+        end
+        
+        if
+        2@ == 1
+        then
+        
+        $ARMY_PAIN_TIMER = 0
+        random_int $ARMY_PAIN_TIMER2 ARMY_PAIN_TIMER_MIN ARMY_PAIN_TIMER_MAX
+        
+        if
+        1@ == 0
+        then
+        gosub @RANDOM_DIALOG_DAMAGED_BY_WEAPON_ARMY  
+        else
+        gosub @RANDOM_DIALOG_DAMAGED_BY_ZOMBIES_ARMY  
+        end 
+    
+        09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+        0093: 3@ = integer 3@ to_float
+        3@ *= 8.0
+        0092: 3@ = float 3@ to_integer
+        text.ClearAll()  
+            
+        00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+        end            
+
+        end
+    end
+end
+    
+//////////////////////////////////////////////////////////////////////////////////////////////////      
+    
+:ASS2     
+
+if
+001C:   $ARMY_ATTACK_TIMER > $ARMY_ATTACK_TIMER2 // (int)
+then    
+random_int 3@ 1 5
+if 
+056D:   actor $ARMY[3@] defined
+    then
+    if and    
+    not actor.Dead($ARMY[3@])
+    0104:   actor $ARMY[3@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0
+    02E0:   actor $ARMY[3@] firing_weapon
+        then
+        
+        $ARMY_ATTACK_TIMER = 0
+        random_int $ARMY_ATTACK_TIMER2 ARMY_ATTACK_TIMER_MIN ARMY_ATTACK_TIMER_MAX
+                
+        gosub @RANDOM_DIALOG_ATTACK_2ARMY       
+    
+        09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+        0093: 3@ = integer 3@ to_float
+        3@ *= 8.0
+        0092: 3@ = float 3@ to_integer
+        text.ClearAll()  
+            
+        00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+        end            
+    end
+end     
+
+////////////////////////////////////////////////Голос про охотника////////////////////////////////////////////////      
+
+if
+001C:   $ARMY_HUNTER_TIMER > $ARMY_HUNTER_TIMER2 // (int)
+then
+random_int 3@ 1 5
+if 
+056D:   actor $ARMY[3@] defined
+    then
+    04DD: 0@ = actor $ARMY[3@] armour
+    if and    
+    not actor.Dead($ARMY[3@])
+    0104:   actor $ARMY[3@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0
+    0@ == 1
+        then
+        
+        $ARMY_HUNTER_TIMER = 0
+        random_int $ARMY_HUNTER_TIMER2 ARMY_HUNTER_TIMER_MIN ARMY_HUNTER_TIMER_MAX
+                
+        gosub @RANDOM_DIALOG_HUNTER2_ARMY               
+                    
+        09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+        0093: 3@ = integer 3@ to_float
+        3@ *= 8.0
+        0092: 3@ = float 3@ to_integer  
+                    
+        00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.  
+        end            
+    end
+end          
+
+////////////////////////////////////////////////Голос про танка////////////////////////////////////////////////      
+
+if
+001C:   $ARMY_TANK_TIMER > $ARMY_TANK_TIMER2 // (int)
+then
+random_int 3@ 1 5
+if and
+056D:   actor $ARMY[3@] defined  
+056D:   actor $TANK[$SPECLS_NUM] defined  
+    then
+    if and    
+    not actor.Dead($ARMY[3@])
+    not actor.Dead($TANK[$SPECLS_NUM])
+    0104:   actor $ARMY[3@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0  
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0
+    0104:   actor $TANK[$SPECLS_NUM] near_actor $ARMY[3@] radius 100.0 100.0 100.0 0      
+        then
+        if or
+        0364:   actor $ARMY[3@] spotted_actor $TANK[$SPECLS_NUM]   
+        0364:   actor $TANK[$SPECLS_NUM] spotted_actor $ARMY[3@]
+            then
+        
+            $ARMY_TANK_TIMER = 0
+            random_int $ARMY_TANK_TIMER2 ARMY_TANK_TIMER_MIN ARMY_TANK_TIMER_MAX 
+                    
+            gosub @RANDOM_DIALOG_TANK_NEAR_ARMY                       
+                        
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer  
+                        
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+            end        
+         end    
+     end
+end       
+     
+////////////////////////////////////////////////Голос про охотника////////////////////////////////////////////////  
+
+if
+001C:   $ARMY_HUNTER2_TIMER > $ARMY_HUNTER2_TIMER2 // (int)
+then
+random_int 3@ 1 5    
+if and
+056D:   actor $ARMY[3@] defined  
+056D:   actor $HUNTER[$SPECLS_NUM] defined  
+    then
+    if and    
+    not actor.Dead($ARMY[3@])
+    not actor.Dead($HUNTER[$SPECLS_NUM])
+    0104:   actor $ARMY[3@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0  
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0
+    0104:   actor $HUNTER[$SPECLS_NUM] near_actor $ARMY[3@] radius 100.0 100.0 100.0 0      
+        then
+        if or
+        0364:   actor $ARMY[3@] spotted_actor $HUNTER[$SPECLS_NUM]   
+        0364:   actor $HUNTER[$SPECLS_NUM] spotted_actor $ARMY[3@]
+            then
+        
+            $ARMY_HUNTER2_TIMER = 0
+            random_int $ARMY_HUNTER2_TIMER2 ARMY_HUNTER2_TIMER_MIN ARMY_HUNTER2_TIMER_MAX
+                    
+            gosub @RANDOM_DIALOG_HUNTER_NEAR_ARMY               
+                                
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer  
+                        
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+            end        
+         end    
+     end
+end                
+     
+////////////////////////////////////////////////Голос про ведьму////////////////////////////////////////////////      
+
+if
+001C:   $ARMY_WITCH_TIMER > $ARMY_WITCH_TIMER2 // (int)
+then
+random_int 3@ 1 5
+if and
+056D:   actor $ARMY[3@] defined  
+056D:   actor $WITCH[$SPECLS_NUM] defined  
+    then
+    if and    
+    not actor.Dead($ARMY[3@])
+    not actor.Dead($WITCH[$SPECLS_NUM])
+    0104:   actor $ARMY[3@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0  
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0
+    0104:   actor $WITCH[$SPECLS_NUM] near_actor $ARMY[3@] radius 100.0 100.0 100.0 0      
+        then
+        if or
+        0364:   actor $ARMY[3@] spotted_actor $WITCH[$SPECLS_NUM]   
+        0364:   actor $WITCH[$SPECLS_NUM] spotted_actor $ARMY[3@]
+            then
+        
+            $ARMY_WITCH_TIMER = 0
+            random_int $ARMY_WITCH_TIMER2 ARMY_WITCH_TIMER_MIN ARMY_WITCH_TIMER_MAX
+                    
+            gosub @RANDOM_DIALOG_WITCH_NEAR_ARMY       
+                                        
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer  
+                        
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+            end        
+         end    
+     end
+end               
+     
+////////////////////////////////////////////////Голос про громилу////////////////////////////////////////////////      
+
+if
+001C:   $ARMY_CHARGER_TIMER > $ARMY_CHARGER_TIMER2 // (int)
+then
+random_int 3@ 1 5
+if and
+056D:   actor $ARMY[3@] defined  
+056D:   actor $CHARGER[$SPECLS_NUM] defined  
+    then
+    if and    
+    not actor.Dead($ARMY[3@])
+    not actor.Dead($CHARGER[$SPECLS_NUM])
+    0104:   actor $ARMY[3@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0  
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0
+    0104:   actor $CHARGER[$SPECLS_NUM] near_actor $ARMY[3@] radius 100.0 100.0 100.0 0      
+        then
+        if or
+        0364:   actor $ARMY[3@] spotted_actor $CHARGER[$SPECLS_NUM]   
+        0364:   actor $CHARGER[$SPECLS_NUM] spotted_actor $ARMY[3@]
+            then
+        
+            $ARMY_CHARGER_TIMER = 0
+            random_int $ARMY_CHARGER_TIMER2 ARMY_CHARGER_TIMER_MIN ARMY_CHARGER_TIMER_MAX
+                    
+            gosub @RANDOM_DIALOG_CHARGER_NEAR_ARMY                       
+                        
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer  
+                        
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00. 
+            end        
+         end    
+     end
+end
+
+////////////////////////////////////////////////Голос про хазмата////////////////////////////////////////////////      
+
+if
+not HAZMAT_HANDLE == -69
+then
+0209: 0@ = random_int_in_ranges HAZMAT_PHRASE_MIN HAZMAT_PHRASE_MAX
+if
+0@ == HAZMAT_PHRASE_SET
+    then
+    random_int 3@ 1 5
+    if and
+    056D:   actor $ARMY[3@] defined  
+    056D:   actor HAZMAT_HANDLE defined  
+        then
+        if and
+        not actor.Dead($ARMY[3@])
+        not actor.Dead(HAZMAT_HANDLE)
+        0104:   actor $ARMY[3@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0  
+        $SPECTATING_FLAG == 0
+        $SCREWHUD_FLAG == 0
+        $PHRASES_OFF_FLAG == 0
+        0104:   actor HAZMAT_HANDLE near_actor $ARMY[3@] radius 100.0 100.0 100.0 0      
+            then
+            if or
+            0364:   actor $ARMY[3@] spotted_actor HAZMAT_HANDLE   
+            0364:   actor HAZMAT_HANDLE spotted_actor $ARMY[3@]
+                then
+                               
+                gosub @RANDOM_DIALOG_HAZMAT_NEAR_ARMY       
+                                            
+                09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+                0093: 3@ = integer 3@ to_float
+                3@ *= 8.0
+                0092: 3@ = float 3@ to_integer  
+                            
+                00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+                end        
+             end    
+         end
+    end
+end                                    
+
+////////////////////////////////////////////////Заставляем военных кидать гранаты////////////////////////////////////////////////                   
+
+if and
+001C:   $ARMY_THROW_MOLOTOV_TIMER > $ARMY_THROW_TIME2 // (int)
+$ARMY_THROW_MOLOTOV_FLAG == 0
+    then
+    random_int $ARMY_THROW_MOLOTOV_ACTOR 1 5    
+    if and
+    not actor.Dead($ARMY[$ARMY_THROW_MOLOTOV_ACTOR]) 
+    not actor.Driving($ARMY[$ARMY_THROW_MOLOTOV_ACTOR])
+    82D8: not  actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR] current_weapon == 97
+    82D8: not  actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR] current_weapon == 120
+    82D8: not  actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR] current_weapon == 147
+    82D8: not  actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR] current_weapon == 176
+    82D8: not  actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR] current_weapon == 206       
+        then    
+        0470: $ARMY_THROW_PREV_WEAP = actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR] current_weapon
+        
+        ///////////////////////////////////////////////////////////////
+        
+        random_int 3@ 0 3
+        
+        if
+        actor.DrivingVehicleType(PLAYER_ACTOR,#RHINO)
+        then
+        3@ = 0
+        end
+        
+        if
+        3@ == 0
+        then        
+    
+        if
+        UNITED_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 18 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],18,1)
+        
+        0781: get_weapon_with_ID 92 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],92,1)
+        0856: set_actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR] enable_crouch 0
+        else
+            
+        if
+        $UNITED_VC_FLAG == 1
+        then
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 134 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],134,1)
+        
+        0781: get_weapon_with_ID 92 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],92,1)
+        0856: set_actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR] enable_crouch 0
+        
+        else
+        
+        0781: get_weapon_with_ID 209 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],209,1)
+        
+        0781: get_weapon_with_ID 92 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],92,1)
+        0856: set_actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR] enable_crouch 0
+        
+        end
+        
+        else
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 118 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],118,1)
+        
+        0781: get_weapon_with_ID 92 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],92,1)
+        0856: set_actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR] enable_crouch 0
+        
+        else
+        
+        0781: get_weapon_with_ID 179 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],179,1)
+        
+        0781: get_weapon_with_ID 92 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],92,1)
+        0856: set_actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR] enable_crouch 0
+        
+        end
+        
+        end
+            
+        end
+            
+        end
+        
+        ///////////////////////////////////////////////////////////////
+        
+        if
+        3@ == 1
+        then
+    
+        if
+        UNITED_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 16 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],16,1)
+        
+        0781: get_weapon_with_ID 92 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],92,1)
+        0856: set_actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR] enable_crouch 0
+        else
+            
+        if
+        $UNITED_VC_FLAG == 1
+        then
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 132 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],132,1)
+        
+        0781: get_weapon_with_ID 92 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],92,1)
+        0856: set_actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR] enable_crouch 0
+        
+        else
+        
+        0781: get_weapon_with_ID 207 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],207,1)
+        
+        0781: get_weapon_with_ID 92 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],92,1)
+        0856: set_actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR] enable_crouch 0
+        
+        end
+        
+        else
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 115 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],115,1)
+        
+        0781: get_weapon_with_ID 92 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],92,1)
+        0856: set_actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR] enable_crouch 0
+        
+        else
+        
+        0781: get_weapon_with_ID 177 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],177,1)
+        
+        0781: get_weapon_with_ID 92 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],92,1)
+        0856: set_actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR] enable_crouch 0
+        
+        end
+        
+        end
+            
+        end
+            
+        end
+            
+        if
+        3@ == 2
+        then
+    
+        if
+        UNITED_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 17 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],17,1)
+        
+        0781: get_weapon_with_ID 92 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],92,1)
+        0856: set_actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR] enable_crouch 0
+        else
+            
+        if
+        $UNITED_VC_FLAG == 1
+        then
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 133 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],133,1)
+        
+        0781: get_weapon_with_ID 92 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],92,1)
+        0856: set_actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR] enable_crouch 0
+        
+        else
+        
+        0781: get_weapon_with_ID 208 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],208,1)
+        
+        0781: get_weapon_with_ID 92 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],92,1)
+        0856: set_actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR] enable_crouch 0
+        
+        end
+        
+        else
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 115 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],115,1)
+        
+        0781: get_weapon_with_ID 92 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],92,1)
+        0856: set_actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR] enable_crouch 0
+        
+        else
+        
+        0781: get_weapon_with_ID 178 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],178,1)
+        
+        0781: get_weapon_with_ID 92 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[$ARMY_THROW_MOLOTOV_ACTOR],92,1)
+        0856: set_actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR] enable_crouch 0
+        
+        end
+        
+        end
+            
+        end  
+            
+        end  
+        
+        ///////////////////////////////////////////////////////////////
+                    
+        $ARMY_THROW_MOLOTOV_FLAG = 1
+        end
+    end
+    
+////////////////////////////////////////////////Проверка того, что военный кинул гранату////////////////////////////////////////////////    
+    
+if
+$ARMY_THROW_MOLOTOV_FLAG == 1
+    then
+    if
+    not actor.Dead($ARMY[$ARMY_THROW_MOLOTOV_ACTOR])
+        then
+        if
+        actor.Animation($ARMY[$ARMY_THROW_MOLOTOV_ACTOR]) == "WEAPON_throw"   
+            then
+            
+            if and
+            0104:   actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+            $SPECTATING_FLAG == 0
+            $SCREWHUD_FLAG == 0
+            $PHRASES_OFF_FLAG == 0
+            then
+            
+            gosub @RANDOM_DIALOG_GRENADE_ARMY  
+            
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer
+            text.ClearAll()  
+                
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+            
+            end
+            
+            actor.SetImmunities($ARMY[1],0,1,1,0,0)           
+            actor.SetImmunities($ARMY[2],0,1,1,0,0) 
+            actor.SetImmunities($ARMY[3],0,1,1,0,0) 
+            actor.SetImmunities($ARMY[4],0,1,1,0,0) 
+            
+            $ARMY_THROW_MOLOTOV_TIMER = 0   
+            
+            gosub @ARMY_RANDOM_THROW_TIME
+                     
+            $ARMY_THROW_MOLOTOV_FLAG = 0
+            
+            while actor.Animation($ARMY[$ARMY_THROW_MOLOTOV_ACTOR]) == "WEAPON_throw"    
+            wait 0
+            gosub @ARMY_DEAD_CHECK
+            gosub @ARMY_AI_CHECK     
+            
+            random_int 0@ 0 5
+            random_int 8@ 1 5    
+                
+            gosub @ARMY1_ATTACK_PEOPLE1     
+            
+            if or
+            00F2:   actor $ARMY[1] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+            00F2:   actor $ARMY[2] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+            00F2:   actor $ARMY[3] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+            00F2:   actor $ARMY[4] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0
+            not $ACTIVE_INTERIOR == 0
+            $INT_ENTERING_FLAG == 1
+            CAMP_RAID_FLAG_ARMY == 1
+            ZAME_HUENEMY_FLAG == 1 
+            jf @ARMY_SPAWN1_DELETE1  
+            if and
+            $SAVESTATUS == 0
+            RAID_DELETE_ARMY_FLAG == 0
+            jf @ARMY_SPAWN1_DELETE1 
+            if or
+            not Actor.Dead($ARMY[1])
+            not Actor.Dead($ARMY[2])
+            not Actor.Dead($ARMY[3])
+            not Actor.Dead($ARMY[4])
+            jf @ARMY_SPAWN_DEAD 
+            end
+            
+            01B9: set_actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR] armed_weapon_to $ARMY_THROW_PREV_WEAP 
+            
+            32@ = 0
+            :ARMY_THROW_IDLE
+            wait 0
+            gosub @ARMY_DEAD_CHECK   
+            gosub @ARMY_AI_CHECK  
+            
+            random_int 0@ 0 5
+            random_int 8@ 1 5    
+                
+            gosub @ARMY1_ATTACK_PEOPLE1     
+            
+            if or
+            00F2:   actor $ARMY[1] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+            00F2:   actor $ARMY[2] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+            00F2:   actor $ARMY[3] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+            00F2:   actor $ARMY[4] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0
+            not $ACTIVE_INTERIOR == 0
+            $INT_ENTERING_FLAG == 1
+            CAMP_RAID_FLAG_ARMY == 1
+            ZAME_HUENEMY_FLAG == 1 
+            jf @ARMY_SPAWN1_DELETE1  
+            if and
+            $SAVESTATUS == 0
+            RAID_DELETE_ARMY_FLAG == 0 
+            jf @ARMY_SPAWN1_DELETE1 
+            if or
+            not Actor.Dead($ARMY[1])
+            not Actor.Dead($ARMY[2])
+            not Actor.Dead($ARMY[3])
+            not Actor.Dead($ARMY[4])
+            jf @ARMY_SPAWN_DEAD 
+            if
+            32@ > 1999
+            jf @ARMY_THROW_IDLE 
+            
+            actor.SetImmunities($ARMY[1],0,0,0,0,0) 
+            actor.SetImmunities($ARMY[2],0,0,0,0,0) 
+            actor.SetImmunities($ARMY[3],0,0,0,0,0) 
+            actor.SetImmunities($ARMY[4],0,0,0,0,0)       
+            
+            end
+        else
+        $ARMY_THROW_MOLOTOV_TIMER = 0            
+        $ARMY_THROW_MOLOTOV_FLAG = 0
+        gosub @ARMY_RANDOM_THROW_TIME
+        end
+    end
+    
+////////////////////////////////////////////////Проверка того, что военный выстрелил из гранатомета////////////////////////////////////////////////    
+    
+if
+$ARMY_THROW_MOLOTOV_FLAG == 1
+    then
+    if
+    not actor.Dead($ARMY[$ARMY_THROW_MOLOTOV_ACTOR])
+        then
+        if
+        actor.Animation($ARMY[$ARMY_THROW_MOLOTOV_ACTOR]) == "buddy_fire"   
+            then
+            
+            if and
+            0104:   actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+            $SPECTATING_FLAG == 0
+            $SCREWHUD_FLAG == 0
+            $PHRASES_OFF_FLAG == 0
+            then
+            
+            gosub @RANDOM_DIALOG_GRENADE_ARMY  
+            
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer
+            text.ClearAll()  
+                
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+            
+            end
+            
+            actor.SetImmunities($ARMY[1],0,1,1,0,0)           
+            actor.SetImmunities($ARMY[2],0,1,1,0,0) 
+            actor.SetImmunities($ARMY[3],0,1,1,0,0) 
+            actor.SetImmunities($ARMY[4],0,1,1,0,0) 
+            
+            $ARMY_THROW_MOLOTOV_TIMER = 0   
+            
+            gosub @ARMY_RANDOM_THROW_TIME                                 
+            
+            while true    
+            wait 0
+            gosub @ARMY_DEAD_CHECK
+            gosub @ARMY_AI_CHECK     
+            
+            random_int 0@ 0 5
+            random_int 8@ 1 5    
+                
+            gosub @ARMY1_ATTACK_PEOPLE1     
+            
+            if or
+            00F2:   actor $ARMY[1] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+            00F2:   actor $ARMY[2] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+            00F2:   actor $ARMY[3] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+            00F2:   actor $ARMY[4] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0
+            not $ACTIVE_INTERIOR == 0
+            $INT_ENTERING_FLAG == 1
+            CAMP_RAID_FLAG_ARMY == 1
+            ZAME_HUENEMY_FLAG == 1 
+            jf @ARMY_SPAWN1_DELETE1  
+            if and
+            $SAVESTATUS == 0
+            RAID_DELETE_ARMY_FLAG == 0
+            jf @ARMY_SPAWN1_DELETE1 
+            if or
+            not Actor.Dead($ARMY[1])
+            not Actor.Dead($ARMY[2])
+            not Actor.Dead($ARMY[3])
+            not Actor.Dead($ARMY[4])
+            jf @ARMY_SPAWN_DEAD
+            
+            0613: 0@ = actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR] animation "buddy_fire" time
+            if
+            0@ > 0.95
+                then
+                break
+                end
+             
+            end            
+            
+            0555: remove_weapon 92 from_actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR]
+            01B9: set_actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR] armed_weapon_to $ARMY_THROW_PREV_WEAP
+            0856: set_actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR] enable_crouch 1
+            
+            $ARMY_THROW_MOLOTOV_FLAG = 0 
+            
+            32@ = 0
+            :ARMY_THROW_IDLE2
+            wait 0
+            gosub @ARMY_DEAD_CHECK   
+            gosub @ARMY_AI_CHECK  
+            
+            random_int 0@ 0 5
+            random_int 8@ 1 5    
+                
+            gosub @ARMY1_ATTACK_PEOPLE1     
+            
+            if or
+            00F2:   actor $ARMY[1] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+            00F2:   actor $ARMY[2] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+            00F2:   actor $ARMY[3] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+            00F2:   actor $ARMY[4] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0
+            not $ACTIVE_INTERIOR == 0
+            $INT_ENTERING_FLAG == 1
+            CAMP_RAID_FLAG_ARMY == 1
+            ZAME_HUENEMY_FLAG == 1 
+            jf @ARMY_SPAWN1_DELETE1  
+            if and
+            $SAVESTATUS == 0
+            RAID_DELETE_ARMY_FLAG == 0
+            jf @ARMY_SPAWN1_DELETE1 
+            if or
+            not Actor.Dead($ARMY[1])
+            not Actor.Dead($ARMY[2])
+            not Actor.Dead($ARMY[3])
+            not Actor.Dead($ARMY[4])
+            jf @ARMY_SPAWN_DEAD 
+            if
+            32@ > 1999
+            jf @ARMY_THROW_IDLE2 
+            
+            actor.SetImmunities($ARMY[1],0,0,0,0,0) 
+            actor.SetImmunities($ARMY[2],0,0,0,0,0) 
+            actor.SetImmunities($ARMY[3],0,0,0,0,0) 
+            actor.SetImmunities($ARMY[4],0,0,0,0,0)       
+            
+            end
+        else
+        $ARMY_THROW_MOLOTOV_TIMER = 0            
+        $ARMY_THROW_MOLOTOV_FLAG = 0
+        gosub @ARMY_RANDOM_THROW_TIME
+        end
+    end
+    
+////////////////////////////////Заставляем союзников стрелять по военным////////////////////////////////    
+    
+random_int 0@ 0 5
+random_int 8@ 1 5        
+gosub @ARMY1_ATTACK_PEOPLE1
+
+////////////////////////////////Замораживаем транспорт если игрок зашел в интерьер////////////////////////////////
+
+if
+056E:   car ARMY_CAR defined
+    then    
+    if
+    $ACTIVE_INTERIOR == 0
+        then
+        car.LockInCurrentPosition(ARMY_CAR,false)
+        else
+        car.LockInCurrentPosition(ARMY_CAR,true)
+        end    
+    end
+        
+if
+056E:   car ARMY_CAR2 defined
+    then    
+    if
+    $ACTIVE_INTERIOR == 0
+        then
+        car.LockInCurrentPosition(ARMY_CAR2,false)
+        else
+        car.LockInCurrentPosition(ARMY_CAR2,true)
+        end    
+    end
+
+////////////////////////////////Заставляем военных гнаться в погоню за игроком////////////////////////////////
+
+if
+$ARMY1_CHASE_FLAG == 0
+    then
+    gosub @ARMY_SPAWN1_SAME_CAR_CHECK
+    if and
+    $ARMY1_EXIT_FLAG == 0
+    $ARMY1_SPOTTED_FLAG == 0
+    $SIMULATING_FLAG == 0
+    $SPECTATING_FLAG == 0
+    $ARMY_DONT_ATTACK_PLAYER_FLAG == 0
+    1@ == 0
+    CAMP_RAID_FLAG_ARMY == 0
+    not ZAME_HUENEMY_FLAG == 1 
+        then
+        random_int 0@ 1 5
+        if
+        056D:   actor $ARMY[0@] defined
+            then
+            if and
+            0364:   actor $ARMY[0@] spotted_actor PLAYER_ACTOR
+            0184:   actor $ARMY[0@] health > 0
+                then            
+                if 
+                not actor.Driving(PLAYER_ACTOR) 
+                    then
+                    
+                    if
+                    056E:   car ARMY_CAR2 defined
+                    then
+                    
+                    if or
+                    00F2:   actor $ARMY[1] near_actor PLAYER_ACTOR radius 65.0 65.0 0
+                    00F2:   actor $ARMY[3] near_actor PLAYER_ACTOR radius 65.0 65.0 0
+                    051C:   car ARMY_CAR2 damaged_by_actor PLAYER_ACTOR
+                    then
+                    jump to @ARMY_BIKE_JUMP1
+                    end
+                    
+                    end
+                    
+                    if or
+                    00F2:   actor $ARMY[1] near_actor PLAYER_ACTOR radius 65.0 65.0 0
+                    00F2:   actor $ARMY[3] near_actor PLAYER_ACTOR radius 65.0 65.0 0    
+                    051C:   car ARMY_CAR damaged_by_actor PLAYER_ACTOR 
+                        then
+                        
+                        :ARMY_BIKE_JUMP1                                                                                
+                        
+                        for 0@ = 1 to 4
+                        
+                        if
+                        0184:   actor $ARMY[0@] health > 0
+                        then     
+                        0687: clear_actor $ARMY[0@] task
+                        wait 100   
+                        0633: AS_actor $ARMY[0@] exit_car
+                        end
+                        
+                        end                                    
+                        
+                        for 0@ = 1 to 4
+                        
+                        if
+                        0184:   actor $ARMY[0@] health > 0
+                        then   
+                        0687: clear_actor $ARMY[0@] task
+                        wait 100
+                        end
+                        
+                        if and
+                        0E4D: random_percent 50
+                        0800:   in_two_players_mode
+                        then
+                        008B: $VAGINA2[0@] = COOP_ACTOR // (int)
+                        05E2: AS_actor $ARMY[0@] kill_actor COOP_ACTOR
+                        else
+                        008B: $VAGINA2[0@] = PLAYER_ACTOR // (int)
+                        05E2: AS_actor $ARMY[0@] kill_actor PLAYER_ACTOR
+                        end
+                        
+                        $VAGINA2_FLAG[0@] = 1
+                        $VAGINA2_TIME[0@] = 0
+                        0568: set_actor $ARMY[0@] untargetable 0                             
+                        end
+                        
+                        gosub @ARMY_RANDOM_SPEC_WEAPON  
+                        
+                        $ARMY1_CHASE_FLAG = 0
+                        $ARMY1_EXIT_FLAG = 1
+                        08F2: set_car ARMY_CAR targettable_by_heatseeker 0
+                        if
+                        056E:   car ARMY_CAR2 defined
+                        then
+                        08F2: set_car ARMY_CAR2 targettable_by_heatseeker 0
+                        end
+                        
+                        end
+                    else
+                    gosub @ARMY_SPAWN1_SAME_CAR_CHECK
+                    if and
+                    1@ == 0
+                    $ARMY1_CHASE_FLAG == 0
+                    $ARMY1_EXIT_FLAG == 0
+                        then
+                        
+                        //////////////////////////////////////////////////////////////////////////////////////////////////
+                        
+                        0468: clear_car ARMY_CAR last_weapon_damage
+                        if
+                        056E:   car ARMY_CAR2 defined
+                        then
+                        0468: clear_car ARMY_CAR2 last_weapon_damage
+                        end
+                        
+                        if and
+                        84C8: not  actor PLAYER_ACTOR driving_flying_vehicle
+                        84A9: not  actor PLAYER_ACTOR driving_heli
+                        $GAMEMODE_WAR == 0
+                        $PHRASES_OFF_FLAG == 0
+                        then  
+                        gosub @RANDOM_DIALOG_2ATTACK_ARMY  
+                        09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+                        0093: 3@ = integer 3@ to_float
+                        3@ *= 8.0
+                        0092: 3@ = float 3@ to_integer  
+                        00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+                        end
+                        
+                        ////////////////////////////////////////////////////////////////////////////////////////////////// 
+    
+                        03C0: 24@ = actor PLAYER_ACTOR car
+                        00AD: set_car ARMY_CAR max_speed_to 100.0
+                        03AB: set_car ARMY_CAR strong 1 
+                        00AE: unknown_set_car ARMY_CAR to_ignore_traffic_lights 2  
+                        
+                        Car.SetToPsychoDriver(ARMY_CAR)
+                           
+                        05F2: set_car ARMY_CAR follow_car 24@ keep_3o_clock
+                        
+                        //////////////////////////////////////////////////////////////////////////////////////////////////
+                        
+                        if
+                        056E:   car ARMY_CAR2 defined
+                        then
+                        03C0: 24@ = actor PLAYER_ACTOR car
+                        00AD: set_car ARMY_CAR2 max_speed_to 100.0
+                        03AB: set_car ARMY_CAR2 strong 1 
+                        00AE: unknown_set_car ARMY_CAR2 to_ignore_traffic_lights 2  
+                        Car.SetToPsychoDriver(ARMY_CAR2)   
+                        05F2: set_car ARMY_CAR2 follow_car 24@ keep_3o_clock
+                        end
+                        
+                        //////////////////////////////////////////////////////////////////////////////////////////////////
+                        
+                        random_int 0@ 2 5
+                        
+                        if and
+                        not CUSTOM_MODE_ONLY_MELEE == 1
+                        not $MUTATION_ACTIVE == 4
+                        then
+                        
+                        if
+                        $ARMY1_BIKE_FLAG == 0
+                        then
+                        0713: actor $ARMY[0@] driveby_actor -1 car 24@ point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+                        else
+                        0713: actor $ARMY[2] driveby_actor -1 car 24@ point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+                        0713: actor $ARMY[4] driveby_actor -1 car 24@ point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+                        end
+                        
+                        end   
+                        
+                        $ARMY1_SPOTTED_FLAG = 1
+                        $ARMY1_CHASE_FLAG = 1
+                        
+                        //////////////////////////////////////////////////////////////////////////////////////////////////
+                        
+                        end
+                    end            
+                end
+            end
+        end
+    else
+    
+    //////////////////////////////////////////////////////////////////////////////////////////////////        
+        
+    if
+    actor.Driving(PLAYER_ACTOR)
+        then
+        
+        if
+        $ARMY1_BIKE_FLAG == 0
+            then
+            
+            if
+            ORIGIN_ABILITY_ACTIVE == 6
+            then
+            jump to @ARMY_STOP_CHASING_PLAYER
+            end
+                        
+            if or
+            not actor.InCar($ARMY[1],ARMY_CAR)
+            actor.Dead($ARMY[1])
+            not actor.InCar($ARMY[2],ARMY_CAR)
+            not actor.InCar($ARMY[3],ARMY_CAR)
+            not actor.InCar($ARMY[4],ARMY_CAR)
+            02BF:   car ARMY_CAR sunk
+            01F4:   car ARMY_CAR flipped
+            not $ACTIVE_INTERIOR == 0
+                then
+                :ARMY_STOP_CHASING_PLAYER
+                                                
+                for 0@ = 1 to 4
+                
+                if
+                0184:   actor $ARMY[0@] health > 0
+                then     
+                0687: clear_actor $ARMY[0@] task
+                wait 100   
+                0633: AS_actor $ARMY[0@] exit_car
+                end
+                
+                end                 
+                
+                for 0@ = 1 to 4
+                
+                if
+                0184:   actor $ARMY[0@] health > 0
+                then     
+                0687: clear_actor $ARMY[0@] task
+                wait 100
+                end
+                
+                if and
+                0E4D: random_percent 50
+                0800:   in_two_players_mode
+                then
+                008B: $VAGINA2[0@] = COOP_ACTOR // (int)
+                05E2: AS_actor $ARMY[0@] kill_actor COOP_ACTOR
+                else
+                008B: $VAGINA2[0@] = PLAYER_ACTOR // (int)
+                05E2: AS_actor $ARMY[0@] kill_actor PLAYER_ACTOR
+                end
+                
+                $VAGINA2_FLAG[0@] = 1
+                $VAGINA2_TIME[0@] = 0
+                0568: set_actor $ARMY[0@] untargetable 0   
+                end 
+                
+                gosub @ARMY_RANDOM_SPEC_WEAPON 
+                $ARMY1_CHASE_FLAG = 0
+                $ARMY1_EXIT_FLAG = 1
+                08F2: set_car ARMY_CAR targettable_by_heatseeker 0
+                if
+                056E:   car ARMY_CAR2 defined
+                then
+                08F2: set_car ARMY_CAR2 targettable_by_heatseeker 0
+                end
+                                
+                end                        
+            else            
+            if or
+            not actor.InCar($ARMY[1],ARMY_CAR)            
+            not actor.InCar($ARMY[2],ARMY_CAR)
+            not actor.InCar($ARMY[3],ARMY_CAR2)
+            not actor.InCar($ARMY[4],ARMY_CAR2)
+            02BF:   car ARMY_CAR sunk
+            02BF:   car ARMY_CAR2 sunk
+            not $ACTIVE_INTERIOR == 0
+            ORIGIN_ABILITY_ACTIVE == 6
+                then                                
+                
+                for 0@ = 1 to 4
+                
+                if
+                0184:   actor $ARMY[0@] health > 0
+                then     
+                0687: clear_actor $ARMY[0@] task
+                wait 100   
+                0633: AS_actor $ARMY[0@] exit_car
+                end
+                
+                end                 
+                
+                for 0@ = 1 to 4
+                
+                if
+                0184:   actor $ARMY[0@] health > 0
+                then     
+                0687: clear_actor $ARMY[0@] task
+                wait 100
+                end
+                
+                if and
+                0E4D: random_percent 50
+                0800:   in_two_players_mode
+                then
+                008B: $VAGINA2[0@] = COOP_ACTOR // (int)
+                05E2: AS_actor $ARMY[0@] kill_actor COOP_ACTOR
+                else
+                008B: $VAGINA2[0@] = PLAYER_ACTOR // (int)
+                05E2: AS_actor $ARMY[0@] kill_actor PLAYER_ACTOR
+                end
+                
+                $VAGINA2_FLAG[0@] = 1
+                $VAGINA2_TIME[0@] = 0
+                0568: set_actor $ARMY[0@] untargetable 0   
+                end 
+                
+                gosub @ARMY_RANDOM_SPEC_WEAPON 
+                $ARMY1_CHASE_FLAG = 0
+                $ARMY1_EXIT_FLAG = 1
+                08F2: set_car ARMY_CAR targettable_by_heatseeker 0
+                if
+                056E:   car ARMY_CAR2 defined
+                then
+                08F2: set_car ARMY_CAR2 targettable_by_heatseeker 0
+                end
+                                
+                end            
+            end        
+        else
+        if
+        $ARMY1_CHASE2_FLAG == 0
+            then
+            
+            car.SetDriverBehaviour(ARMY_CAR,KillThePlayer)
+            if
+            056E:   car ARMY_CAR2 defined
+            then
+            car.SetDriverBehaviour(ARMY_CAR2,KillThePlayer)
+            end
+             
+            $ARMY1_CHASE2_FLAG = 1            
+            
+            if and
+            not 0@ == 2
+            not 0@ == 3
+            not 0@ == 4
+            then
+            random_int 0@ 2 5
+            end
+            
+            if and
+            not CUSTOM_MODE_ONLY_MELEE == 1
+            not $MUTATION_ACTIVE == 4
+            then
+            
+            if
+            $ARMY1_BIKE_FLAG == 0
+            then
+            0713: actor $ARMY[0@] driveby_actor PLAYER_ACTOR car -1 point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+            else
+            0713: actor $ARMY[2] driveby_actor PLAYER_ACTOR car -1 point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+            0713: actor $ARMY[4] driveby_actor PLAYER_ACTOR car -1 point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+            end
+            
+            end
+            
+            else
+            
+            if
+            $ARMY1_BIKE_FLAG == 0
+                then                
+                if or
+                not actor.InCar($ARMY[1],ARMY_CAR)
+                actor.Dead($ARMY[1])
+                not actor.InCar($ARMY[2],ARMY_CAR)
+                not actor.InCar($ARMY[3],ARMY_CAR)
+                not actor.InCar($ARMY[4],ARMY_CAR)
+                02BF:   car ARMY_CAR sunk
+                ORIGIN_ABILITY_ACTIVE == 6
+                    then                                        
+                    
+                    for 0@ = 1 to 4
+                    
+                    if
+                    0184:   actor $ARMY[0@] health > 0
+                    then   
+                    0687: clear_actor $ARMY[0@] task
+                    wait 100               
+                    0633: AS_actor $ARMY[0@] exit_car
+                    end
+                    
+                    end                    
+                    
+                    for 0@ = 1 to 4
+                    
+                    if
+                    0184:   actor $ARMY[0@] health > 0
+                    then   
+                    0687: clear_actor $ARMY[0@] task
+                    wait 100
+                    end
+                    
+                    if and
+                    0E4D: random_percent 50
+                    0800:   in_two_players_mode
+                    then
+                    008B: $VAGINA2[0@] = COOP_ACTOR // (int)
+                    05E2: AS_actor $ARMY[0@] kill_actor COOP_ACTOR
+                    else
+                    008B: $VAGINA2[0@] = PLAYER_ACTOR // (int)
+                    05E2: AS_actor $ARMY[0@] kill_actor PLAYER_ACTOR
+                    end
+                    
+                    $VAGINA2_FLAG[0@] = 1
+                    $VAGINA2_TIME[0@] = 0
+                    0568: set_actor $ARMY[0@] untargetable 0     
+                    end 
+                    
+                    gosub @ARMY_RANDOM_SPEC_WEAPON 
+                    $ARMY1_CHASE_FLAG = 0
+                    $ARMY1_CHASE2_FLAG = 0
+                    $ARMY1_EXIT_FLAG = 1
+                    08F2: set_car ARMY_CAR targettable_by_heatseeker 0
+                    if
+                    056E:   car ARMY_CAR2 defined
+                    then
+                    08F2: set_car ARMY_CAR2 targettable_by_heatseeker 0
+                    end
+                                        
+                    end                
+                else                
+                if or
+                not actor.InCar($ARMY[1],ARMY_CAR)
+                not actor.InCar($ARMY[2],ARMY_CAR)
+                not actor.InCar($ARMY[3],ARMY_CAR2)
+                not actor.InCar($ARMY[4],ARMY_CAR2)
+                02BF:   car ARMY_CAR sunk
+                02BF:   car ARMY_CAR2 sunk
+                ORIGIN_ABILITY_ACTIVE == 6
+                    then                                        
+                                        
+                    for 0@ = 1 to 4
+                    
+                    if
+                    0184:   actor $ARMY[0@] health > 0
+                    then   
+                    0687: clear_actor $ARMY[0@] task
+                    wait 100               
+                    0633: AS_actor $ARMY[0@] exit_car
+                    end
+                    
+                    end                    
+                    
+                    for 0@ = 1 to 4
+                    
+                    if
+                    0184:   actor $ARMY[0@] health > 0
+                    then   
+                    0687: clear_actor $ARMY[0@] task
+                    wait 100
+                    end
+                    
+                    if and
+                    0E4D: random_percent 50
+                    0800:   in_two_players_mode
+                    then
+                    008B: $VAGINA2[0@] = COOP_ACTOR // (int)
+                    05E2: AS_actor $ARMY[0@] kill_actor COOP_ACTOR
+                    else
+                    008B: $VAGINA2[0@] = PLAYER_ACTOR // (int)
+                    05E2: AS_actor $ARMY[0@] kill_actor PLAYER_ACTOR
+                    end
+                    
+                    $VAGINA2_FLAG[0@] = 1
+                    $VAGINA2_TIME[0@] = 0
+                    0568: set_actor $ARMY[0@] untargetable 0     
+                    end 
+                    
+                    gosub @ARMY_RANDOM_SPEC_WEAPON 
+                    $ARMY1_CHASE_FLAG = 0
+                    $ARMY1_CHASE2_FLAG = 0
+                    $ARMY1_EXIT_FLAG = 1
+                    08F2: set_car ARMY_CAR targettable_by_heatseeker 0
+                    if
+                    056E:   car ARMY_CAR2 defined
+                    then
+                    08F2: set_car ARMY_CAR2 targettable_by_heatseeker 0
+                    end
+                    
+                    end                
+                end            
+            end        
+        end
+    
+    //////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+////////////////////////////////Заставляем военных выходить из транспорта////////////////////////////////    
+    
+if and
+$ARMY1_EXIT_FLAG == 0
+$ARMY1_CHASE_FLAG == 0
+056E:   car ARMY_CAR defined
+CAMP_RAID_FLAG_ARMY == 0
+not ZAME_HUENEMY_FLAG == 1
+not PODMOGA_BASE_FLAG == 1  
+    then
+    
+    if
+    856E: not  car ARMY_CAR defined
+    then
+    jump @ARMY_NOT_DEFINED
+    end
+    
+    02E3: 2@ = car ARMY_CAR speed
+    if or
+    001D:   32@ > 30@  // (int)
+    2@ == 0.0
+    01C1:   car ARMY_CAR stopped
+    01F4:   car ARMY_CAR flipped
+    8202: not  actor PLAYER_ACTOR near_car ARMY_CAR radius 160.0 160.0 sphere 0
+        then        
+        $ARMY1_EXIT_FLAG = 1
+        08F2: set_car ARMY_CAR targettable_by_heatseeker 0
+        if
+        056E:   car ARMY_CAR2 defined
+        then
+        08F2: set_car ARMY_CAR2 targettable_by_heatseeker 0
+        end                  
+
+        for 0@ = 1 to 4
+        
+        if
+        0184:   actor $ARMY[0@] health > 0
+        then    
+        0687: clear_actor $ARMY[0@] task
+        wait 100    
+        0633: AS_actor $ARMY[0@] exit_car
+        end
+        
+        end
+        
+        gosub @ARMY_RANDOM_SPEC_WEAPON        
+        
+        if and
+        0104:   actor $ARMY[1] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+        $SPECTATING_FLAG == 0
+        $SCREWHUD_FLAG == 0
+        $PHRASES_OFF_FLAG == 0
+        $GAMEMODE_WAR == 0
+            then
+            gosub @RANDOM_DIALOG_EXIT_FROM_CAR_ARMY
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer
+            text.ClearAll()              
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+            end        
+        end
+    end
+    
+////////////////////////////////Заставляем военных выходить из транспорта (рейд)////////////////////////////////    
+
+//abandon с путя не работает пошла эта игра нахуй сам сделаю
+if and
+$ARMY1_EXIT_FLAG == 0
+$ARMY1_CHASE_FLAG == 0
+056E:   car ARMY_CAR defined
+ZAME_HUENEMY_FLAG == 1
+not RAID_MISSION_CARREC_DRIVE_FLAG == 3
+then
+car.StorePos(ARMY_CAR,$TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+050A: 30@ = distance_between_XYZ $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3 and_XYZ CAMP_RAID_DEST_X CAMP_RAID_DEST_Y CAMP_RAID_DEST_Z
+if
+0026:   RAID_CAR_PATH_ABADON_RADIUS > 30@  // (float)
+    then
+    00A9: set_car ARMY_CAR to_normal_driver
+    0704: car ARMY_CAR drive_to CAMP_RAID_DEST_X CAMP_RAID_DEST_Y CAMP_RAID_DEST_Z
+    00AF: set_car ARMY_CAR driver_behaviour_to 14
+    RAID_MISSION_CARREC_DRIVE_FLAG = 3
+    end
+end
+
+if and
+$ARMY1_EXIT_FLAG == 0
+$ARMY1_CHASE_FLAG == 0
+056E:   car ARMY_CAR defined
+ZAME_HUENEMY_FLAG == 1
+not RAID_MISSION_CARREC_DRIVE_FLAG == 1
+not RAID_MISSION_CARREC_DRIVE_FLAG == 2  
+then
+jump to @ZAME_HUENEMY_EXIT_ARMY_JUMP
+end
+
+if and
+$ARMY1_EXIT_FLAG == 0
+$ARMY1_CHASE_FLAG == 0
+056E:   car ARMY_CAR defined
+PODMOGA_BASE_FLAG == 1
+not RAID_MISSION_CARREC_DRIVE_FLAG == 1
+not RAID_MISSION_CARREC_DRIVE_FLAG == 2  
+then
+jump to @ZAME_HUENEMY_EXIT_ARMY_JUMP
+end
+    
+if and
+$ARMY1_EXIT_FLAG == 0
+$ARMY1_CHASE_FLAG == 0
+056E:   car ARMY_CAR defined
+CAMP_RAID_FLAG_ARMY == 1
+not RAID_MISSION_CARREC_DRIVE_FLAG == 1
+not RAID_MISSION_CARREC_DRIVE_FLAG == 2  
+    then
+    
+    :ZAME_HUENEMY_EXIT_ARMY_JUMP
+    
+    if
+    856E: not  car ARMY_CAR defined
+    then
+    jump @ARMY_NOT_DEFINED
+    end
+    
+    if
+    86FC: not  car ARMY_CAR stuck_check_enabled
+    then
+    03CC: enable_car ARMY_CAR stuck_check_distance_to 2.0 time_to 2000
+    end
+    
+    if and
+    UNITED_MAP == 0
+    not $QUEST_CAMP_NUMBER == 14
+    then
+    1@ = 25.0
+    else
+    1@ = 15.0
+    end
+    
+    if and
+    01AD:   car ARMY_CAR sphere 0 near_point CAMP_RAID_DEST_X CAMP_RAID_DEST_Y radius 1@ 1@
+    03CE:   car ARMY_CAR stuck
+        then
+        jump to @ARMY_RAID_EXIT_URGENTLY
+        end
+        
+    if
+    actor.Dead($ARMY[1])
+        then
+        jump to @ARMY_RAID_EXIT_URGENTLY
+        end    
+    
+    if and
+    UNITED_MAP == 0
+    not $QUEST_CAMP_NUMBER == 14
+    then
+    1@ = 65.0
+    else
+    1@ = 30.0
+    end
+        
+    if and
+    01AD:   car ARMY_CAR sphere 0 near_point CAMP_RAID_DEST_X CAMP_RAID_DEST_Y radius 1@ 1@
+    $ARMY1_CAR_TARAN_FLAG == 0
+        then
+        $ARMY1_CAR_TARAN_FLAG = 1
+        00AE: set_car ARMY_CAR traffic_behaviour_to 3        
+        end
+        
+    if and
+    UNITED_MAP == 0
+    not $QUEST_CAMP_NUMBER == 14
+    then
+    1@ = 65.0
+    else
+    1@ = 30.0
+    end        
+        
+    0E65: get_car_collision_intensity ARMY_CAR store_to 0@    
+    if and
+    01AD:   car ARMY_CAR sphere 0 near_point CAMP_RAID_DEST_X CAMP_RAID_DEST_Y radius 1@ 1@
+    0@ > 20.0
+        then
+        jump to @ARMY_RAID_EXIT_URGENTLY
+        end    
+    
+    if
+    01AD:   car ARMY_CAR sphere 0 near_point CAMP_RAID_DEST_X CAMP_RAID_DEST_Y radius 10.0 10.0 
+        then
+        :ARMY_RAID_EXIT_URGENTLY        
+        $ARMY1_EXIT_FLAG = 1
+        08F2: set_car ARMY_CAR targettable_by_heatseeker 0
+        if
+        056E:   car ARMY_CAR2 defined
+        then
+        08F2: set_car ARMY_CAR2 targettable_by_heatseeker 0
+        end
+        
+        if
+        060E:   car ARMY_CAR assigned_to_path
+        then
+        05EC: release_car ARMY_CAR from_path
+        end
+        
+        00A9: set_car ARMY_CAR to_normal_driver                          
+
+        for 0@ = 1 to 4
+        
+        if
+        0184:   actor $ARMY[0@] health > 0
+        then    
+        0687: clear_actor $ARMY[0@] task
+        wait 100    
+        0633: AS_actor $ARMY[0@] exit_car
+        end
+        
+        end
+        
+        gosub @ARMY_RANDOM_SPEC_WEAPON        
+        
+        if and
+        0104:   actor $ARMY[1] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+        $SPECTATING_FLAG == 0
+        $SCREWHUD_FLAG == 0
+        $PHRASES_OFF_FLAG == 0
+        $GAMEMODE_WAR == 0
+        not PODMOGA_BASE_FLAG == 1
+            then
+            gosub @RANDOM_DIALOG_EXIT_FROM_CAR_ARMY_RAID
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer
+            text.ClearAll()              
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+            end        
+        end
+    end    
+    
+////////////////////////////////Заставляем военных замечать игрока и атаковать////////////////////////////////    
+    
+if
+$ARMY1_SPOTTED_FLAG == 0
+    then
+    gosub @ARMY_SPAWN1_SAME_CAR_CHECK
+    
+    if
+    $ARMY_DONT_ATTACK_PLAYER_FLAG == 1
+        then
+        if or
+        051A:   actor $ARMY[1] damaged_by_actor PLAYER_ACTOR
+        051A:   actor $ARMY[2] damaged_by_actor PLAYER_ACTOR
+        051A:   actor $ARMY[3] damaged_by_actor PLAYER_ACTOR
+        051A:   actor $ARMY[4] damaged_by_actor PLAYER_ACTOR
+            then
+            jump to @ARMY_SPOTTED_PLAYER
+            end
+        end
+    
+    if and    
+    $SIMULATING_FLAG == 0
+    $SPECTATING_FLAG == 0
+    $ARMY_DONT_ATTACK_PLAYER_FLAG == 0
+    CAMP_RAID_FLAG_ARMY == 0
+    not ZAME_HUENEMY_FLAG == 1
+    1@ == 0
+    $ACTIVE_INTERIOR == 0
+    $INT_ENTERING_FLAG == 0
+        then  
+        if or
+        0364:   actor $ARMY[1] spotted_actor PLAYER_ACTOR
+        0364:   actor $ARMY[2] spotted_actor PLAYER_ACTOR
+        0364:   actor $ARMY[3] spotted_actor PLAYER_ACTOR
+        0364:   actor $ARMY[4] spotted_actor PLAYER_ACTOR
+        051A:   actor $ARMY[1] damaged_by_actor PLAYER_ACTOR
+        051A:   actor $ARMY[2] damaged_by_actor PLAYER_ACTOR
+        051A:   actor $ARMY[3] damaged_by_actor PLAYER_ACTOR
+        051A:   actor $ARMY[4] damaged_by_actor PLAYER_ACTOR
+            then
+            :ARMY_SPOTTED_PLAYER
+            0467: clear_actor $ARMY[1] last_weapon_damage
+            0467: clear_actor $ARMY[2] last_weapon_damage
+            0467: clear_actor $ARMY[3] last_weapon_damage
+            0467: clear_actor $ARMY[4] last_weapon_damage
+            $ARMY1_SPOTTED_FLAG = 1
+                                                 
+            for 0@ = 1 to 4
+            
+            if and
+            actor.Driving($ARMY[0@])
+            0184:   actor $ARMY[0@] health > 0
+            then  
+            0687: clear_actor $ARMY[0@] task
+            wait 100      
+            0633: AS_actor $ARMY[0@] exit_car
+            end            
+            
+            end            
+            
+            for 0@ = 1 to 4
+            
+            if
+            0184:   actor $ARMY[0@] health > 0
+            then   
+            0687: clear_actor $ARMY[0@] task
+            wait 100
+            end
+            
+            if and
+            0E4D: random_percent 50
+            0800:   in_two_players_mode
+            then
+            008B: $VAGINA2[0@] = COOP_ACTOR // (int)
+            05E2: AS_actor $ARMY[0@] kill_actor COOP_ACTOR
+            else
+            008B: $VAGINA2[0@] = PLAYER_ACTOR // (int)
+            05E2: AS_actor $ARMY[0@] kill_actor PLAYER_ACTOR
+            end
+            
+            $VAGINA2_FLAG[0@] = 1
+            $VAGINA2_TIME[0@] = 0
+            0568: set_actor $ARMY[0@] untargetable 0     
+            end 
+            
+            gosub @ARMY_RANDOM_SPEC_WEAPON
+            gosub @RANDOM_DIALOG_ATTACK_ARMY
+            
+            if and
+            not $GAMEMODE_WAR == 1
+            $PHRASES_OFF_FLAG == 0
+            not PODMOGA_BASE_FLAG == 1
+            not $FIST_HUD_ALWAYS == 1
+            then
+            05C1: AS_actor PLAYER_ACTOR speak_from_audio_table $PLAYER_FIND_ENEMY_DIALOG_STRING    
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer  
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+            end
+            
+            end                 
+        end
+    end                        
+
+end
+
+end_thread
+
+:ARMY_SPAWN1_SAME_CAR_CHECK
+
+1@ = 0
+
+if
+056E:   car ARMY_CAR defined
+then
+
+if
+UNITED_MAP == 0
+then
+2@ = #PATRIOT
+else
+
+if
+$UNITED_VC_FLAG == 0
+then
+008B: 2@ = $III_ARMY_CAR // (int)
+else
+008B: 2@ = $VC_ARMY_CAR // (int)
+end
+
+end
+
+if and
+actor.DrivingVehicleType(PLAYER_ACTOR,2@)
+8205: not  actor PLAYER_ACTOR near_car ARMY_CAR radius 45.0 45.0 45.0 flag 0
+847A: not  actor PLAYER_ACTOR driving_bike
+not actor.DrivingVehicleType(PLAYER_ACTOR,#QUAD)
+then
+1@ = 1
+end
+
+end
+
+return
+
+////////////////////////////////Союзники атакуют военных////////////////////////////////
+
+:ARMY1_ATTACK_PEOPLE1
+
+if 
+$SIMULATING_FLAG == 1
+then
+return
+end
+
+if
+$ARMY1_SPOTTED_FLAG == 0
+then
+
+if or
+$PLAYER_ARMY_SIDE == 1
+$ARMY_DONT_ATTACK_PLAYER_FLAG == 1
+then
+return
+end
+
+end
+
+if
+056D:   actor $ARMY[8@] defined
+jf @ARMY1_ATTACK_PEOPLE_BEGIN
+092B: 3@ = group PLAYER_GROUP member 0@
+
+if
+07D6:   3@ == COOP_ACTOR // @ == $ (int)
+then
+return
+end
+
+if
+not 3@ == -1
+jf @ARMY1_ATTACK_PEOPLE_BEGIN   
+if
+056D:   actor 3@ defined
+jf @ARMY1_ATTACK_PEOPLE_BEGIN
+
+if
+$MISSION14_ACTIVE == 1
+    then
+    if
+    not 0@ == 1
+    jf @ARMY1_ATTACK_PEOPLE_BEGIN
+    end
+    
+if
+$QUEST_TYPE == 9
+    then
+    if
+    87D6: not  3@ == $VERSUS_PEOPLE[1] // @ == $ (int)
+    jf @ARMY1_ATTACK_PEOPLE_BEGIN
+    end
+
+if or
+00DF:   actor 3@ driving
+0449:   actor 3@ in_a_car
+    then
+    if
+    $HUNTER_ON_PLAYER == 0
+    //$PEOPLE_DONT_ATTACK == 0
+    //$COMMAND_STAY_IN_CAR == 0
+        then                     
+        gosub @ARMY1_ATTACK_PEOPLE_IN_CAR
+        end
+    end
+
+if and 
+not actor.Driving(PLAYER_ACTOR)
+$RANDOM_CAR_FLAG == 0  
+89DE: not  actor 3@ entering_car  
+jf @ARMY1_ATTACK_PEOPLE_BEGIN
+if or
+0364:   actor 3@ spotted_actor $ARMY[8@]
+0364:   actor $ARMY[8@] spotted_actor 3@
+jf @ARMY1_ATTACK_PEOPLE_BEGIN
+if
+00F2:   actor 3@ near_actor $ARMY[8@] radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+jf @ARMY1_ATTACK_PEOPLE_BEGIN
+if and
+$HUNTER_ON_PLAYER == 0
+$PEOPLE_DONT_ATTACK == 0
+jf @ARMY1_ATTACK_PEOPLE_BEGIN
+if
+not actor.Animation(3@) == "FLOOR_hit"
+jf @ARMY1_ATTACK_PEOPLE_BEGIN
+if
+$HUNTER_ON_GROUP == 0
+jf @ARMY1_ATTACK_PEOPLE_BEGIN  
+if
+044B:   actor 3@ on_foot
+jf @ARMY1_ATTACK_PEOPLE_BEGIN  
+if
+82E0: not actor 3@ firing_weapon
+jf @ARMY1_ATTACK_PEOPLE_BEGIN
+062E: get_actor 3@ task 1506 status_store_to 1@ // ret 7 if not found
+if 
+1@ == 7
+jf @ARMY1_ATTACK_PEOPLE_BEGIN  
+if and
+not actor.Animation(3@) == "colt45_fire_2hands"
+not actor.Animation(3@) == "python_fire" 
+not actor.Animation(3@) == "shotgun_fire" 
+not actor.Animation(3@) == "buddy_fire" 
+not actor.Animation(3@) == "UZI_fire"
+not actor.Animation(3@) == "RIFLE_fire" 
+jf @ARMY1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "FLAME_fire" 
+not actor.Animation(3@) == "RocketFire" 
+not actor.Animation(3@) == "WEAPON_sniper"
+not actor.Animation(3@) == "WEAPON_throw"
+not actor.Animation(3@) == "BOM_PLANT" 
+jf @ARMY1_ATTACK_PEOPLE_BEGIN 
+if and
+not actor.Animation(3@) == "colt45_crouchfire"
+not actor.Animation(3@) == "python_crouchfire" 
+not actor.Animation(3@) == "shotgun_crouchfire" 
+not actor.Animation(3@) == "buddy_crouchfire" 
+not actor.Animation(3@) == "UZI_crouchfire"
+not actor.Animation(3@) == "RIFLE_crouchfire" 
+jf @ARMY1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "colt45_reload"
+not actor.Animation(3@) == "python_reload" 
+not actor.Animation(3@) == "shotgun_reload" 
+not actor.Animation(3@) == "buddy_reload" 
+not actor.Animation(3@) == "UZI_reload"
+not actor.Animation(3@) == "RIFLE_load" 
+jf @ARMY1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "colt45_crouchreload"
+not actor.Animation(3@) == "python_crouchreload" 
+not actor.Animation(3@) == "shotgun_crouchreload" 
+not actor.Animation(3@) == "buddy_crouchreload" 
+not actor.Animation(3@) == "UZI_crouchreload"
+not actor.Animation(3@) == "RIFLE_crouchload" 
+jf @ARMY1_ATTACK_PEOPLE_BEGIN 
+if and
+not actor.Animation(3@) == "GunMove_BWD"
+not actor.Animation(3@) == "GunMove_FWD"
+not actor.Animation(3@) == "GunMove_L"
+not actor.Animation(3@) == "GunMove_R"
+not actor.Animation(3@) == "Gun_2_IDLE"
+not actor.Animation(3@) == "GUN_BUTT"
+not actor.Animation(3@) == "GUN_BUTT_crouch"
+not actor.Animation(3@) == "Gun_stand" 
+jf @ARMY1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "CLIMB_idle"
+not actor.Animation(3@) == "CLIMB_jump"
+not actor.Animation(3@) == "CLIMB_jump2fall"
+not actor.Animation(3@) == "CLIMB_jump_B"
+not actor.Animation(3@) == "CLIMB_Pull"
+not actor.Animation(3@) == "CLIMB_Stand"
+not actor.Animation(3@) == "CLIMB_Stand_finish" 
+jf @ARMY1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "Crouch_Roll_L"
+not actor.Animation(3@) == "Crouch_Roll_R"
+not actor.Animation(3@) == "gas_cwr"
+not actor.Animation(3@) == "getup"
+not actor.Animation(3@) == "getup_front"
+not actor.Animation(3@) == "GunCrouchBwd"
+not actor.Animation(3@) == "GunCrouchFwd"
+8E47: not is_char_fighting 3@
+jf @ARMY1_ATTACK_PEOPLE_BEGIN 
+05C1: AS_actor 3@ speak_from_audio_table $PEOPLE_ZOMBIE_ATTACK_AUDIO_TABLE
+if
+056D:   actor 3@ defined
+jf @ARMY1_ATTACK_PEOPLE_BEGIN 
+if and
+not actor.Driving(PLAYER_ACTOR)
+89DE:   actor PLAYER_ACTOR entering_car
+80DF:   actor PLAYER_ACTOR in_a_car
+80DF:   actor 3@ in_a_car
+not actor.Dead(3@)
+not actor.Dead($ARMY[8@])
+jf @ARMY1_ATTACK_PEOPLE_BEGIN 
+//0647: AS_actor 3@ clear_look_task
+//05B9: AS_actor 3@ stay_idle 50 ms 
+wait 50
+if
+056D:   actor 3@ defined  
+then
+05E2: AS_actor 3@ kill_actor $ARMY[8@]
+end
+
+jump @ARMY1_ATTACK_PEOPLE_BEGIN
+
+//////////////////////////////////////////////////////////////////////////////////////////////////  
+
+:ARMY1_ATTACK_PEOPLE_IN_CAR  
+if and
+not actor.Animation(3@) == "Gang_DrivebyLHS"
+not actor.Animation(3@) == "Gang_DrivebyLHS_Bwd"
+not actor.Animation(3@) == "Gang_DrivebyLHS_Fwd"
+not actor.Animation(3@) == "Gang_DrivebyRHS"
+not actor.Animation(3@) == "Gang_DrivebyRHS_Bwd"
+not actor.Animation(3@) == "Gang_DrivebyRHS_Fwd" 
+jf @ARMY1_ATTACK_PEOPLE_IN_CAR_RETURN 
+if and
+not actor.Animation(3@) == "Gang_DrivebyTop_LHS"
+not actor.Animation(3@) == "Gang_DrivebyTop_RHS" 
+jf @ARMY1_ATTACK_PEOPLE_IN_CAR_RETURN 
+if 
+00F2:   actor 3@ near_actor $ARMY[8@] radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+jf @ARMY1_ATTACK_PEOPLE_IN_CAR_RETURN
+if or
+0364:   actor 3@ spotted_actor $ARMY[8@]
+0364:   actor $ARMY[8@] spotted_actor 3@
+0364:   actor PLAYER_ACTOR spotted_actor $ARMY[8@]
+0364:   actor $ARMY[8@] spotted_actor PLAYER_ACTOR
+jf @ARMY1_ATTACK_PEOPLE_IN_CAR_RETURN
+
+///////////////////////////////////////////////////////////////////////////
+if and
+0@ == 0
+TEAMMATE1_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @ARMY1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 1
+TEAMMATE2_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @ARMY1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 2
+TEAMMATE3_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @ARMY1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 3
+TEAMMATE4_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @ARMY1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 4
+TEAMMATE5_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @ARMY1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+///////////////////////////////////////////////////////////////////////////
+
+if and
+8E42: not is_char_doing_task_id 3@ 243
+not $COMMAND_STAY_IN_CAR == 1
+then
+06C9: remove_actor 3@ from_group
+0631: put_actor 3@ in_group PLAYER_GROUP
+end
+0713: actor 3@ driveby_actor $ARMY[8@] car -1 point 0.0 0.0 0.0 radius 180.0 8 1 firing_rate 360
+
+///////////////////////////////////////////////////////////////////////////
+if
+0@ == 0
+    then
+    TEAMMATE1_ATTACK_TIMER = 0
+    end
+if
+0@ == 1
+    then
+    TEAMMATE2_ATTACK_TIMER = 0
+    end
+if
+0@ == 2
+    then
+    TEAMMATE3_ATTACK_TIMER = 0
+    end
+if
+0@ == 3
+    then
+    TEAMMATE4_ATTACK_TIMER = 0
+    end
+if
+0@ == 4
+    then
+    TEAMMATE5_ATTACK_TIMER = 0
+    end
+///////////////////////////////////////////////////////////////////////////
+   
+return
+
+:ARMY1_ATTACK_PEOPLE_IN_CAR_RETURN
+return
+
+:ARMY1_ATTACK_PEOPLE_BEGIN 
+return
+
+////////////////////////////////Проверка дропа рации////////////////////////////////
+
+:ARMY_RADIO_CHECK
+
+if or
+$GAMEMODE_WAR == 1
+$DEFENSE_CHALLENGE_FLAG == 1
+    then
+    return
+    end
+    
+actor.StorePos($ARMY[27@],1@,2@,3@)
+06C3: get_number_of_fires_within_sphere_at 1@ 2@ 3@ radius 3.0 store_to 0@
+if
+0@ > 0
+then
+return
+end
+
+actor.StorePos($ARMY[27@],1@,2@,3@) 
+000F: 1@ -= 5.0
+000F: 2@ -= 5.0
+000F: 3@ -= 5.0
+actor.StorePos($ARMY[27@],4@,5@,6@) 
+000F: 4@ -= -5.0
+000F: 5@ -= -5.0
+000F: 6@ -= -5.0
+
+if
+0356:   explosion_type -1 in_cube_cornerA 1@ 2@ 3@ cornerB 4@ 5@ 6@
+then
+return
+end    
+
+random_int 0@ 0 50
+if
+not 0@ == 25
+then
+return
+end
+
+//////////////////////////////Создание пикапа рации//////////////////////////////
+                
+random_float 4@ -1.0 1.0
+random_float 5@ 1.0 -1.0
+                        
+04C4: store_coords_to 1@ 2@ 3@ from_actor $ARMY[27@] with_offset 4@ 5@ 0.0
+
+02CE: 3@ = ground_z_at 1@ 2@ 3@
+
+3@ += 1.0
+                    
+$RADIO_PICKUP_NUM += 1
+                    
+if
+$RADIO_PICKUP_NUM > 18
+then 
+$RADIO_PICKUP_NUM = 0           
+end
+
+if
+09D1:   pickup $RADIO_PICKUP[$RADIO_PICKUP_NUM] created
+    then    
+    pickup.Destroy($RADIO_PICKUP[$RADIO_PICKUP_NUM])
+    end  
+                    
+$RADIO_PICKUP[$RADIO_PICKUP_NUM] = pickup.Create(#CELLPHONE,3,1@,2@,3@)  
+
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+:RANDOM_DIALOG_DEAD_ARMY
+
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH14_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1      
+    random_int 0@ 0 1@
+    end
+
+end
+
+v$PHRASE1 = "PH14_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+:RANDOM_DIALOG_DAMAGED_BY_WEAPON_ARMY
+
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH15_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end
+
+v$PHRASE1 = "PH15_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+:RANDOM_DIALOG_DAMAGED_BY_ZOMBIES_ARMY
+
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH16_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end
+
+v$PHRASE1 = "PH16_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+:RANDOM_DIALOG_DAMAGED_BY_WEAPON_ARMY_FRIENDLY
+
+for 1@ = 0 to 200
+
+v$PHRASE1 = "2PH91_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end
+
+v$PHRASE1 = "2PH91_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+:RANDOM_DIALOG_DAMAGED_BY_ZOMBIES_ARMY_FRIENDLY
+
+for 1@ = 0 to 200
+
+v$PHRASE1 = "2PH92_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end
+
+v$PHRASE1 = "2PH92_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+:RANDOM_DIALOG_GRENADE_ARMY
+
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH17_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end
+    
+random_int 0@ 0 5
+
+v$PHRASE1 = "PH17_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+:RANDOM_DIALOG_ATTACK_2ARMY
+
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH18_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end
+
+v$PHRASE1 = "PH18_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////  
+
+:RANDOM_DIALOG_EXIT_FROM_CAR_ARMY
+
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH19_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end
+
+v$PHRASE1 = "PH19_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////  
+
+:RANDOM_DIALOG_EXIT_FROM_CAR_ARMY_RAID
+
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH135_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end
+
+v$PHRASE1 = "PH135_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////       
+
+:RANDOM_DIALOG_TANK_NEAR_ARMY
+
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH20_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end
+
+v$PHRASE1 = "PH20_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+:RANDOM_DIALOG_HUNTER_NEAR_ARMY
+
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH21_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end
+
+v$PHRASE1 = "PH21_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+:RANDOM_DIALOG_WITCH_NEAR_ARMY
+
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH22_" // v$ // Sunday
+
+if
+$WTH_AGRED_FLAG[$SPECLS_NUM] == 1
+then
+v$PHRASE1 = "PH22B_"
+end
+
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end
+
+v$PHRASE1 = "PH22_" // v$ // Sunday
+
+if
+$WTH_AGRED_FLAG[$SPECLS_NUM] == 1
+then
+v$PHRASE1 = "PH22B_"
+end
+
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+:RANDOM_DIALOG_CHARGER_NEAR_ARMY
+
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH23_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end
+
+v$PHRASE1 = "PH23_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+:RANDOM_DIALOG_HUNTER2_ARMY
+
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH24_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then  
+    1@ += 1  
+    random_int 0@ 0 1@
+    end
+
+end
+
+v$PHRASE1 = "PH24_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+:RANDOM_DIALOG_ATTACK_ARMY  
+
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH25_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then  
+    1@ += 1  
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH25_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+:RANDOM_DIALOG_2ATTACK_ARMY  
+
+for 1@ = 0 to 200
+
+v$PHRASE1 = "2H26_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "2H26_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+:RANDOM_DIALOG_HAZMAT_NEAR_ARMY  
+
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH181_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH181_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return          
+
+//////////////////////////////////////////////////////////////////////////
+
+:ARMY_ONFOOT_ATTACK_SYSTEM
+
+if
+$VAGINA2_FLAG[0@] == 1
+    then
+    $VAGINA2_TIME[0@] += 1
+    end               
+
+/////////////////Поиск цели бойцом///////////////////// 
+
+if and
+056D:   actor $ARMY[0@] defined
+$VAGINA2_FLAG[0@] == 0  
+    then
+    gosub @ARMY_ONFOOT_ATTACK_SYSTEM_PLAYER_CHECK
+    random_int 2@ 0 3
+    if and
+    2@ == 1
+    19@ == 1
+    $ARMY1_CHASE_FLAG == 0
+    $ARMY1_CHASE2_FLAG == 0
+        then
+        if or
+        0364:  actor $ARMY[0@] spotted_actor PLAYER_ACTOR  
+        0364:  actor PLAYER_ACTOR spotted_actor $ARMY[0@]   
+//        00F2:  actor $ARMY[0@] near_actor PLAYER_ACTOR radius 55.0 55.0 sphere 0  
+            then
+            if and
+            $ACTOR_DEAD == 0
+            $SPECTATING_FLAG == 0
+            00F2:  actor $ARMY[0@] near_actor PLAYER_ACTOR radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+                then       
+
+                008B: $VAGINA2[0@] = PLAYER_ACTOR // (int)
+                $VAGINA2_FLAG[0@] = 1
+                $VAGINA2_TIME[0@] = 0
+                0568: set_actor $ARMY[0@] untargetable 0  
+                
+                if
+                $VAGINA2_ACCQ_FLAG[0@] == 1
+                then
+                0A96: 1@ = actor $ARMY[0@] struct
+                0A8E: 1@ = 1@ + 0x71A                    
+                0A8D: 2@ = read_memory 1@ size 1 virtual_protect 1 
+                    
+                2@ -= AI_ACQ_ADD_OTHER_TARGET                                         
+                                                                            
+                0A8C: write_memory 1@ size 4 value 2@ virtual_protect 1    
+                
+                actor.WeaponAccuracy($ARMY[0@]) = 2@                
+                
+                $VAGINA2_ACCQ_FLAG[0@] = 0
+                end    
+                    
+                gosub @ARMY_ONFOOT_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST                                                       
+      
+                end
+            end   
+        else
+        actor.StorePos($ARMY[0@],25@,26@,27@) 
+        gosub @ARMY_ONFOOT_ATTACK_SYSTEM_TARGET_FIND 
+        if and
+        25@ == 1
+        056D:   actor $VAGINA2[0@] defined
+            then    
+            gosub @ARMY_ONFOOT_ATTACK_SYSTEM_TARGET_CHECK
+            if
+            056D:   actor $VAGINA2[0@] defined
+                then                
+                
+                if
+                DEBUG_OPPCODE_FLAG == 1
+                then
+                
+                DEBUG_STRING_NUMBER += 1
+                0AD3: v$DEBUG_FILE4 = format "AR%d" DEBUG_STRING_NUMBER
+                if
+                DEBUG_STRING_NUMBER > DEBUG_STRING_NUMBER_MAX
+                then
+                0B00: delete_file "debug\debug.ini"  // IF and SET
+                DEBUG_STRING_NUMBER = 0
+                end
+                0AF1: write_int $VAGINA2[0@] to_ini_file "debug\debug.ini" section "OPPCODE" key v$DEBUG_FILE4
+                
+                end
+                        
+                if and
+                not actor.Dead($VAGINA2[0@])   
+                0184:   actor $VAGINA2[0@] health > 0         
+                803A: not  $VAGINA2[0@] == $ARMY[0@] // (int) 
+                19@ == 1                 
+                    then
+                    if or
+                    0364:  actor $ARMY[0@] spotted_actor $VAGINA2[0@]
+                    0364:  actor $VAGINA2[0@] spotted_actor $ARMY[0@]
+                    051A:   actor $ARMY[0@] damaged_by_actor $VAGINA2[0@]
+                        then 
+                            
+                        $VAGINA2_FLAG[0@] = 1
+                        $VAGINA2_TIME[0@] = 0
+                        
+                        if
+                        $VAGINA2_ACCQ_FLAG[0@] == 0
+                        then
+                        0A96: 1@ = actor $ARMY[0@] struct
+                        0A8E: 1@ = 1@ + 0x71A                    
+                        0A8D: 2@ = read_memory 1@ size 1 virtual_protect 1 
+                            
+                        2@ += AI_ACQ_ADD_OTHER_TARGET                   
+                             
+                        if
+                        2@ > 95
+                        then
+                        2@ = 95
+                        end                                            
+                              
+                        0A8C: write_memory 1@ size 4 value 2@ virtual_protect 1
+                        
+                        actor.WeaponAccuracy($ARMY[0@]) = 2@                    
+                        
+                        $VAGINA2_ACCQ_FLAG[0@] = 1
+                        end    
+                            
+                        gosub @ARMY_ONFOOT_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST                                                 
+                                   
+                        end                                                                                  
+                    end 
+                end
+            end
+        end               
+    end
+
+/////////////////Проверка на бездействие бойца если цель НЕ найдена/////////////////////     
+
+if and
+$VAGINA2_FLAG[0@] == 0
+0E45: frame_mod 15
+    then
+    if
+    056D:   actor $ARMY[0@] defined
+        then     
+        if
+        0184:   actor $ARMY[0@] health > 0 
+            then
+            06AC: 25@ = actor $ARMY[0@] movement_speed
+            gosub @ARMY_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK
+            if and
+            19@ == 0
+            $ACTIVE_INTERIOR == 0        
+            not actor.Animation($ARMY[0@]) == "buddy_fire"
+            25@ < 0.001
+            82E0: not  actor $ARMY[0@] firing_weapon 
+                then
+                if or
+                actor.Animation($ARMY[0@]) == "idle_stance"
+                actor.Animation($ARMY[0@]) == "Swim_Tread"
+                    then
+                    gosub @ARMY_ONFOOT_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST  
+                    end
+                end
+            end
+        end
+    end
+    
+/////////////////Проверка на бездействие бойца если цель найдена/////////////////////     
+
+if and
+$VAGINA2_FLAG[0@] == 1
+0E45: frame_mod 15
+    then
+    if
+    056D:   actor $ARMY[0@] defined
+        then     
+        if
+        0184:   actor $ARMY[0@] health > 0 
+            then
+            062E: get_actor $ARMY[0@] task 1506 status_store_to 25@ // ret 7 if not found
+            gosub @ARMY_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK
+            if and
+            25@ == 7
+            19@ == 0
+                then
+                gosub @ARMY_ONFOOT_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST  
+                end
+            end
+        end
+    end    
+     
+/////////////////Проверка на наличие цели атаки///////////////////// 
+
+if and
+056D:   actor $ARMY[0@] defined
+$VAGINA2_FLAG[0@] == 1 
+    then
+    if
+    056D:   actor $VAGINA2[0@] defined
+        then
+        
+        if
+        DEBUG_OPPCODE_FLAG == 1
+        then
+        
+        DEBUG_STRING_NUMBER += 1
+        0AD3: v$DEBUG_FILE4 = format "AR%d" DEBUG_STRING_NUMBER
+        if
+        DEBUG_STRING_NUMBER > DEBUG_STRING_NUMBER_MAX
+        then
+        0B00: delete_file "debug\debug.ini"  // IF and SET
+        DEBUG_STRING_NUMBER = 0
+        end
+        0AF1: write_int $VAGINA2[0@] to_ini_file "debug\debug.ini" section "OPPCODE" key v$DEBUG_FILE4
+        
+        end
+        
+        if and
+        8364: not  actor $ARMY[0@] spotted_actor $VAGINA2[0@]
+        CAMP_RAID_FLAG_ARMY == 1
+        then
+        jump to @ARMY_ONFOOT_SKIP_TARGET
+        end
+         
+        if or
+        8184:   actor $VAGINA2[0@] health < 1  
+        actor.Dead($VAGINA2[0@])
+        80F2: not  actor $ARMY[0@] near_actor $VAGINA2[0@] radius $AI_FIND_RADIUS2 $AI_FIND_RADIUS2 sphere 0
+        001C:   $VAGINA2_TIME[0@] > AI_TARGET_ALOST_TIMER // (int)        
+            then
+            :ARMY_ONFOOT_SKIP_TARGET 
+            $VAGINA2_FLAG[0@] = 0
+            $VAGINA2_TIME[0@] = 0   
+            Actor.SetWalkStyle($ARMY[0@], "swat")
+            end
+        else
+        $VAGINA2_FLAG[0@] = 0
+        $VAGINA2_TIME[0@] = 0
+        Actor.SetWalkStyle($ARMY[0@], "swat")
+        end
+    end             
+
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+:ARMY_ONFOOT_ATTACK_SYSTEM_TARGET_FIND
+
+25@ = 0
+
+008B: 1@ = $CREATURE_RANDOM // (int)
+
+if
+CAMP_RAID_FLAG_ARMY == 1
+then
+
+random_int 1@ 0 2
+if
+1@ == 0
+then
+random_int 1@ 47 58
+else
+random_int 1@ 41 46
+end
+
+if
+FERMERS_RAID_HELP_FLAG == 1
+    then
+    if
+    0E4D: random_percent 50
+        then
+        random_int 1@ 29 33
+        end
+    end
+    
+if
+PUNISHERS_RAID_HELP_FLAG == 1
+    then
+    if
+    0E4D: random_percent 50
+        then
+        random_int 1@ 37 41
+        end
+    end    
+
+end
+
+0084: $VAGINA2[0@] = $CREATURE[1@] // (int)
+
+if and
+CAMP_RAID_FLAG_ARMY == 1
+CAMP_RAID_GATE_OPENED == 0
+03CA:   object CAMP_RAID_GATE_OBJECT exists
+then
+0084: $VAGINA2[0@] = CAMP_RAID_GATE_ACTOR // (int)
+end
+
+if and
+056D:   actor $VAGINA2[0@] defined
+not 1@ == PLAYER_CREATURE_NUMBER
+    then      
+    if
+    00F2:   actor $ARMY[0@] near_actor $VAGINA2[0@] radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+        then 
+        25@ = 1
+        end
+    end
+
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+:ARMY_ONFOOT_ATTACK_SYSTEM_PLAYER_CHECK
+
+19@ = 0
+
+089F: get_actor $ARMY[0@] pedtype_to 11@  
+
+if
+11@ == 27
+    then
+    19@ = 0
+    
+    gosub @ARMY_SPAWN1_SAME_CAR_CHECK
+    
+    if
+    $ARMY1_SPOTTED_FLAG == 1
+    then
+    jump to @ARMY_ONFOOT_ATTACK_SYSTEM_PLAYER_CHECK_SKIP
+    end
+    
+    if or
+    $PLAYER_ARMY_SIDE == 1
+    $ARMY_DONT_ATTACK_PLAYER_FLAG == 1  
+    $SPECTATING_FLAG == 1
+    1@ == 1
+    then
+    19@ = 0
+    else
+    :ARMY_ONFOOT_ATTACK_SYSTEM_PLAYER_CHECK_SKIP
+    19@ = 1
+    end
+    
+    return
+    end    
+
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////   
+
+:ARMY_ONFOOT_ATTACK_SYSTEM_TARGET_CHECK
+
+089F: get_actor $ARMY[0@] pedtype_to 11@ 
+
+if
+11@ == 27
+    then
+    19@ = 0
+    089F: get_actor $VAGINA2[0@] pedtype_to 12@ 
+    
+    if or
+    12@ == 23
+    12@ == 25
+    12@ == 26
+    12@ == 28
+    12@ == 29  
+    then
+    19@ = 1
+    else
+    19@ = 0
+    end
+    
+    return
+    end        
+
+return
+
+////////////////////////////////////////////////////////////////////////////////////////////////// 
+
+:ARMY_ONFOOT_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST 
+
+if 
+02E0:   actor $ARMY[0@] firing_weapon 
+    then
+    return
+    end    
+
+if 
+$VAGINA2_FLAG[0@] == 1
+    then 
+    if and
+    056D:   actor $VAGINA2[0@] defined
+    056D:   actor $ARMY[0@] defined
+        then      
+        :FUCK1      
+        0687: clear_actor $ARMY[0@] task
+        wait 100
+        if and
+        056D:   actor $VAGINA2[0@] defined 
+        056D:   actor $ARMY[0@] defined
+            then  
+                
+            if
+            not actor.Driving($ARMY[0@])   
+            then                  
+            05E2: AS_actor $ARMY[0@] kill_actor $VAGINA2[0@]     
+            else
+            25@ = actor.CurrentCar($ARMY[0@])
+            046C: 27@ = car 25@ driver
+            
+            if and
+            87D6: not  27@ == $ARMY[0@] // @ == $ (int)
+            not CUSTOM_MODE_ONLY_MELEE == 1
+            not $MUTATION_ACTIVE == 4
+            then
+            
+            if and
+            82D8: not  actor $ARMY[0@] current_weapon == 97
+            82D8: not  actor $ARMY[0@] current_weapon == 120
+            82D8: not  actor $ARMY[0@] current_weapon == 147
+            82D8: not  actor $ARMY[0@] current_weapon == 176
+            82D8: not  actor $ARMY[0@] current_weapon == 206
+            then                        
+            0713: actor $ARMY[0@] driveby_actor $VAGINA2[0@] car -1 point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+            end
+            
+            end
+            
+            end
+            
+            Actor.SetWalkStyle($ARMY[0@], "surv5")
+            
+            actor.StorePos($ARMY[0@],1@,2@,3@)
+            actor.StorePos($VAGINA2[0@],27@,28@,29@)
+            
+            050A: 25@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 27@ 28@ 29@
+            0092: 25@ = float 25@ to_integer
+            
+            5@ = 150
+            
+            if
+            25@ > 100
+            then
+            25@ = 100
+            end
+            
+            0062: 5@ -= 25@  // (int)
+            
+            if
+            5@ < 10
+            then
+            5@ = 10
+            end            
+            
+            07DD: set_actor $ARMY[0@] attack_rate 5@ // previously known as temper_to            
+                                
+            return           
+            end
+        end
+    else       
+    if
+    056D:   actor $ARMY[0@] defined
+        then 
+        0687: clear_actor $ARMY[0@] task
+        wait 100         
+        if
+        056D:   actor $ARMY[0@] defined
+            then              
+            Actor.SetWalkStyle($ARMY[0@], "swat")
+            
+            actor.StorePos($ARMY[0@],1@,2@,3@)
+            02C0: store_to 26@ 27@ 28@ ped_path_coords_closest_to 1@ 2@ 3@
+            0509: 30@ = distance_between_XY 1@ 2@ and_XY 26@ 27@
+            
+            if
+            CAMP_RAID_FLAG_ARMY == 0
+            then
+            
+            if
+            30@ < AI_CAR_PATH_WALK_RADIUS
+            then                                        
+            05DE: AS_actor $ARMY[0@] walk_around_ped_path
+            else
+            random_float 30@ 30.0 100.0                                                                       
+            04C4: store_coords_to 1@ 2@ 3@ from_actor $ARMY[0@] with_offset 0.0 30@ 0.0
+            02C1: store_to 26@ 27@ 28@ car_path_coords_closest_to 1@ 2@ 3@
+            
+            0509: 3@ = distance_between_XY 0@ 1@ and_XY 26@ 27@
+            if
+            3@ < 5.0
+            then
+            random_float 3@ 0.0 360.0
+            05D4: AS_actor $ARMY[0@] rotate_angle 3@
+            end
+            
+            if
+            84AD: not  actor $ARMY[0@] in_water
+            then
+            05D3: AS_actor $ARMY[0@] goto_point 26@ 27@ 28@ mode 7 time ROAD_WALK_TIME ms // versionA
+            else
+            07E1: AS_actor $ARMY[0@] swim_to 26@ 27@ 28@
+            end
+            
+            end
+            
+            else            
+            05D6: clear_scmpath
+            
+            if
+            RAID_CAR_PATH_RANDOM_FLAG == 0
+            then
+            0AD3: v$RAID_FILE = format "CM%d" $ENTERED_CAMP_NUMBER
+            else
+            0AD3: v$RAID_FILE = format "CM%dB" $ENTERED_CAMP_NUMBER
+            end
+            
+            0AF0: 27@ = get_int_from_ini_file "data/raid.ini" section v$RAID_FILE key "POINTS"
+            
+            for 26@ = 0 to 27@
+            0AD3: v$RAID_FILE2 = format "PTH%d_X" 26@
+            0AF2: 1@ = get_float_from_ini_file "data/raid.ini" section v$RAID_FILE key v$RAID_FILE2
+            0AD3: v$RAID_FILE2 = format "PTH%d_Y" 26@ 
+            0AF2: 2@ = get_float_from_ini_file "data/raid.ini" section v$RAID_FILE key v$RAID_FILE2
+            0AD3: v$RAID_FILE2 = format "PTH%d_Z" 26@ 
+            0AF2: 3@ = get_float_from_ini_file "data/raid.ini" section v$RAID_FILE key v$RAID_FILE2
+            05D7: add_point_to_scmpath 1@ 2@ 3@
+            end
+                        
+            05D8: AS_assign_scmpath to_actor $ARMY[0@] flags 6 0
+            end
+                                  
+            return           
+            end 
+        end
+    end  
+    
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////              
+
+:ARMY_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK
+19@ = 0
+
+if and
+not actor.Animation($ARMY[0@]) == "colt45_fire_2hands"
+not actor.Animation($ARMY[0@]) == "python_fire" 
+not actor.Animation($ARMY[0@]) == "shotgun_fire" 
+not actor.Animation($ARMY[0@]) == "buddy_fire" 
+not actor.Animation($ARMY[0@]) == "UZI_fire"
+not actor.Animation($ARMY[0@]) == "RIFLE_fire" 
+jf @ARMY_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2  
+if and
+not actor.Animation($ARMY[0@]) == "FLAME_fire" 
+not actor.Animation($ARMY[0@]) == "RocketFire" 
+not actor.Animation($ARMY[0@]) == "WEAPON_sniper" 
+not actor.Animation($ARMY[0@]) == "WEAPON_throw"
+jf @ARMY_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2       
+if and
+not actor.Animation($ARMY[0@]) == "colt45_crouchfire"
+not actor.Animation($ARMY[0@]) == "python_crouchfire" 
+not actor.Animation($ARMY[0@]) == "shotgun_crouchfire" 
+not actor.Animation($ARMY[0@]) == "buddy_crouchfire" 
+not actor.Animation($ARMY[0@]) == "UZI_crouchfire"
+not actor.Animation($ARMY[0@]) == "RIFLE_crouchfire" 
+jf @ARMY_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2
+if and
+not actor.Animation($ARMY[0@]) == "colt45_reload"
+not actor.Animation($ARMY[0@]) == "python_reload" 
+not actor.Animation($ARMY[0@]) == "shotgun_reload" 
+not actor.Animation($ARMY[0@]) == "buddy_reload" 
+not actor.Animation($ARMY[0@]) == "UZI_reload"
+not actor.Animation($ARMY[0@]) == "RIFLE_load" 
+not actor.Animation($ARMY[0@]) == "gas_cwr"
+jf @ARMY_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2
+if and
+not actor.Animation($ARMY[0@]) == "colt45_crouchreload"
+not actor.Animation($ARMY[0@]) == "python_crouchreload" 
+not actor.Animation($ARMY[0@]) == "shotgun_crouchreload" 
+not actor.Animation($ARMY[0@]) == "buddy_crouchreload" 
+not actor.Animation($ARMY[0@]) == "UZI_crouchreload"
+not actor.Animation($ARMY[0@]) == "RIFLE_crouchload" 
+jf @ARMY_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2 
+if and
+not actor.Animation($ARMY[0@]) == "GunMove_BWD"
+not actor.Animation($ARMY[0@]) == "GunMove_FWD"
+not actor.Animation($ARMY[0@]) == "GunMove_L"
+not actor.Animation($ARMY[0@]) == "GunMove_R"
+not actor.Animation($ARMY[0@]) == "Gun_2_IDLE"
+not actor.Animation($ARMY[0@]) == "GUN_BUTT"
+not actor.Animation($ARMY[0@]) == "GUN_BUTT_crouch"
+not actor.Animation($ARMY[0@]) == "Gun_stand" 
+jf @ARMY_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2   
+if and
+not actor.Animation($ARMY[0@]) == "WEAPON_throw"
+not actor.Animation($ARMY[0@]) == "WEAPON_throwu"
+not actor.Animation($ARMY[0@]) == "WEAPON_start_throw"
+jf @ARMY_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2
+  
+return
+
+:ARMY_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2
+19@ = 1
+return
+
+:ARMY_AI_CHECK    
+
+for 0@ = 1 to 4
+
+if
+056D:   actor $ARMY[0@] defined
+then
+gosub @ARMY_ONFOOT_ATTACK_SYSTEM
+if
+0EA4: is_char_on_fire $ARMY[0@]
+    then    
+    0A96: 5@ = actor $ARMY[0@] struct
+    0A8E: 5@ = 5@ + 0x730 //CFire       
+    0A8D: 1@ = read_memory 5@ size 4 virtual_protect 0
+    0A8E: 2@ = 1@ + 0x14 //m_pEntityCreator
+    0A8D: 2@ = read_memory 2@ size 4 virtual_protect 0 
+    
+    for 25@ = 1 to 4    
+    0A96: 3@ = actor $ARMY[25@] struct       
+    if
+    07D6:   2@ == 3@ // @ == $ (int)
+        then
+        0A8E: 4@ = 1@ + 0x18 //m_nTimeToBurn
+        0A8C: write_memory 4@ size 4 value 0 virtual_protect 0
+        0A8E: 4@ = 1@ + 0x20 //m_nNumGenerationsAllowed
+        0A8C: write_memory 4@ size 1 value 0 virtual_protect 0
+        end 
+    end
+                  
+    end
+end
+
+end 
+
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+:ARMY_DEAD_CHECK
+
+if and
+$ARMY1_EXIT_FLAG == 1
+ARMY_CAR_DELETED_REFERENCES_FLAG == 0
+    then
+    if and
+    056D:   actor $ARMY[1] defined
+    056D:   actor $ARMY[2] defined
+    056D:   actor $ARMY[3] defined
+    056D:   actor $ARMY[4] defined
+        then
+        if and
+        8449: not  actor $ARMY[1] in_a_car
+        8449: not  actor $ARMY[2] in_a_car
+        8449: not  actor $ARMY[3] in_a_car
+        8449: not  actor $ARMY[4] in_a_car        
+            then            
+            gosub @ARMY_CAR_REMOVE_REFERENCES                            
+            end
+        end
+    end
+    
+if and
+$ARMY1_EXIT_FLAG == 1
+ARMY_CAR2_DELETED_REFERENCES_FLAG == 0
+    then
+    if and
+    056D:   actor $ARMY[1] defined
+    056D:   actor $ARMY[2] defined
+    056D:   actor $ARMY[3] defined
+    056D:   actor $ARMY[4] defined
+        then
+        if and
+        8449: not  actor $ARMY[1] in_a_car
+        8449: not  actor $ARMY[2] in_a_car
+        8449: not  actor $ARMY[3] in_a_car
+        8449: not  actor $ARMY[4] in_a_car        
+            then            
+            gosub @ARMY_CAR2_REMOVE_REFERENCES                            
+            end
+        end
+    end
+    
+//////////////////////////////////////////////////////////////////////////////////////////////////         
+
+for 0@ = 1 to 4
+
+if
+056D:   actor $ARMY[0@] defined
+    then
+    if and
+    not actor.Dead($ARMY[0@])
+    $ACTIVE_INTERIOR == 0
+    $INT_ENTERING_FLAG == 0
+        then
+        actor.StorePos($ARMY[0@],25@,26@,27@)
+        if
+        27@ < Z_COORD_DELETE_PED      
+            then
+            
+            if
+            $ARMY1_BIKE_FLAG == 1
+            then
+            04C4: store_coords_to 25@ 26@ 27@ from_actor $ARMY[0@] with_offset 0.0 0.0 1.5
+            0362: remove_actor $ARMY[0@] from_car_and_place_at 25@ 26@ 27@
+            end
+            
+            05BE: AS_actor $ARMY[0@] die
+            if
+            056E:   car ARMY_CAR defined
+                then
+                00A9: set_car ARMY_CAR to_normal_driver
+                if
+                056E:   car ARMY_CAR2 defined
+                    then
+                    00A9: set_car ARMY_CAR2 to_normal_driver
+                    end
+                end
+            end
+        end
+    end                   
+    
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+056D:   actor $ARMY[1] defined
+    then
+    if and
+    $ARMY1_DEAD_FLAG == 0
+    actor.Dead($ARMY[1])    
+        then
+        
+        create_thread @ANTKUKL $ARMY[1] 0 0 0 0 1
+        
+        if or
+        $FREEMODE == 1
+        $GAMEMODE_WAR == 1
+        then
+        
+        if
+        $GAMEMODE_WAR == 0
+        then
+        $ARMY_PROCENT -= ARMY_PROCENT_CONVOYS_MINUS        
+        else
+        
+        if
+        UNITED_MAP == 0
+        then
+        $ARMY_PROCENT -= ARMY_PROCENT_CONVOYS_MINUS_WAR
+        else
+        $ARMY_PROCENT -= ARMY_PROCENT_CONVOYS_MINUS_WAR_UNITED
+        end
+        
+        end
+        
+        end
+        
+        $ARMY1_DEAD_FLAG = 1
+        
+        0A96: 0@ = actor $ARMY[1] struct
+        0A8E: 0@ = 0@ + 0x764
+        0A8D: 1@ = read_memory 0@ size 2 virtual_protect 1
+        0A8D: 2@ = read_memory 0xB6F5F0 size 2 virtual_protect 1
+        
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////            
+        
+        if
+        0800:   in_two_players_mode
+        then
+        0A8D: 0@ = read_memory 0xB7CF28 size 2 virtual_protect 1
+        else
+        0@ = -69
+        end
+        
+        if or
+        003B:   1@ == 2@  // (int)
+        003B:   1@ == 0@  // (int)
+        then
+        
+        0AF0: 27@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_ARMY_KILLED"        
+        
+        if
+        $CHEATED_FLAG == 0 
+        then               
+        27@ += 1
+        end
+        
+        $ARMY_KILLED += 1
+        $TEMP_XP = ARMY_XP_PLUS
+        008D: $TEMP_XP = integer $TEMP_XP to_float
+        0069: $TEMP_XP *= $XP_COEFF // (float)
+        008C: $TEMP_XP = float $TEMP_XP to_integer
+        0058: $PLAYER_XP += $TEMP_XP // (int)                    
+         
+        0AF1: write_int 27@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_ARMY_KILLED"
+        
+        end
+        
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////        
+        
+        27@ = 1
+        gosub @ARMY_RADIO_CHECK
+        
+        0A96: 0@ = actor $ARMY[1] struct
+        0@ += 0x754
+        0A8D: 1@ = read_memory 0@ size 4 virtual_protect 0
+        2@ = 0
+        0ECE: get_time_char_is_dead $ARMY[1] store_to 2@
+        
+        if and
+        0104:   actor $ARMY[1] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+        $SPECTATING_FLAG == 0
+        $SCREWHUD_FLAG == 0
+        $PHRASES_OFF_FLAG == 0
+        89A8: not  actor $ARMY[1] headshoted
+        not 1@ == 0x02
+        2@ > 500
+            then
+            gosub @RANDOM_DIALOG_DEAD_ARMY   
+    
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer
+            text.ClearAll()  
+            
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+            end
+        end
+    end
+    
+//////////////////////////////////////////////////////////////////////////////////////////////////    
+        
+if
+056D:   actor $ARMY[2] defined
+    then
+    if and
+    $ARMY2_DEAD_FLAG == 0
+    actor.Dead($ARMY[2])
+        then
+        
+        if
+        $ARMY1_BIKE_FLAG == 1
+        then
+        create_thread @ANTKUKL $ARMY[2]
+        else
+        create_thread @ANTKUKL $ARMY[2] 0 0 0 0 0 1 0
+        end
+        
+        if or
+        $FREEMODE == 1
+        $GAMEMODE_WAR == 1
+        then
+        
+        if
+        $GAMEMODE_WAR == 0
+        then
+        $ARMY_PROCENT -= ARMY_PROCENT_CONVOYS_MINUS
+        else
+        
+        if
+        UNITED_MAP == 0
+        then
+        $ARMY_PROCENT -= ARMY_PROCENT_CONVOYS_MINUS_WAR
+        else
+        $ARMY_PROCENT -= ARMY_PROCENT_CONVOYS_MINUS_WAR_UNITED
+        end
+        
+        end
+        
+        end
+        
+        $ARMY2_DEAD_FLAG = 1
+        
+        0A96: 0@ = actor $ARMY[2] struct
+        0A8E: 0@ = 0@ + 0x764
+        0A8D: 1@ = read_memory 0@ size 2 virtual_protect 1
+        0A8D: 2@ = read_memory 0xB6F5F0 size 2 virtual_protect 1
+        
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////            
+        
+        if
+        0800:   in_two_players_mode
+        then
+        0A8D: 0@ = read_memory 0xB7CF28 size 2 virtual_protect 1
+        end
+        
+        if or
+        003B:   1@ == 2@  // (int)
+        003B:   1@ == 0@  // (int)
+        then        
+        
+        0AF0: 27@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_ARMY_KILLED"        
+        
+        if
+        $CHEATED_FLAG == 0 
+        then               
+        27@ += 1
+        end
+        
+        $ARMY_KILLED += 1
+        $TEMP_XP = ARMY_XP_PLUS
+        008D: $TEMP_XP = integer $TEMP_XP to_float
+        0069: $TEMP_XP *= $XP_COEFF // (float)
+        008C: $TEMP_XP = float $TEMP_XP to_integer
+        0058: $PLAYER_XP += $TEMP_XP // (int)                    
+         
+        0AF1: write_int 27@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_ARMY_KILLED"
+        
+        end
+        
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////           
+        
+        27@ = 2
+        gosub @ARMY_RADIO_CHECK
+        
+        0A96: 0@ = actor $ARMY[2] struct
+        0@ += 0x754
+        0A8D: 1@ = read_memory 0@ size 4 virtual_protect 0
+        2@ = 0
+        0ECE: get_time_char_is_dead $ARMY[2] store_to 2@     
+    
+        if and
+        0104:   actor $ARMY[2] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+        $SPECTATING_FLAG == 0
+        $SCREWHUD_FLAG == 0
+        $PHRASES_OFF_FLAG == 0
+        89A8: not  actor $ARMY[2] headshoted
+        not 1@ == 0x02
+        2@ > 500
+            then
+            gosub @RANDOM_DIALOG_DEAD_ARMY   
+    
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer
+            text.ClearAll()  
+            
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+            end
+        end
+    end
+    
+//////////////////////////////////////////////////////////////////////////////////////////////////    
+        
+if
+056D:   actor $ARMY[3] defined
+    then
+    if and
+    $ARMY3_DEAD_FLAG == 0
+    actor.Dead($ARMY[3])
+        then
+        
+        if
+        $ARMY1_BIKE_FLAG == 1
+        then
+        create_thread @ANTKUKL $ARMY[3]
+        else
+        create_thread @ANTKUKL $ARMY[3] 0 0 0 0 0 1 1
+        end 
+        
+        if or
+        $FREEMODE == 1
+        $GAMEMODE_WAR == 1
+        then
+        
+        if
+        $GAMEMODE_WAR == 0
+        then
+        $ARMY_PROCENT -= ARMY_PROCENT_CONVOYS_MINUS
+        else
+        
+        if
+        UNITED_MAP == 0
+        then
+        $ARMY_PROCENT -= ARMY_PROCENT_CONVOYS_MINUS_WAR
+        else
+        $ARMY_PROCENT -= ARMY_PROCENT_CONVOYS_MINUS_WAR_UNITED
+        end
+        
+        end
+        
+        end
+        
+        $ARMY3_DEAD_FLAG = 1                        
+        
+        0A96: 0@ = actor $ARMY[3] struct
+        0A8E: 0@ = 0@ + 0x764
+        0A8D: 1@ = read_memory 0@ size 2 virtual_protect 1
+        0A8D: 2@ = read_memory 0xB6F5F0 size 2 virtual_protect 1
+        
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////            
+        
+        if
+        0800:   in_two_players_mode
+        then
+        0A8D: 0@ = read_memory 0xB7CF28 size 2 virtual_protect 1
+        end
+        
+        if or
+        003B:   1@ == 2@  // (int)
+        003B:   1@ == 0@  // (int)
+        then
+        
+        0AF0: 27@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_ARMY_KILLED"
+        
+        if
+        $CHEATED_FLAG == 0 
+        then               
+        27@ += 1
+        end
+        
+        $ARMY_KILLED += 1
+        $TEMP_XP = ARMY_XP_PLUS
+        008D: $TEMP_XP = integer $TEMP_XP to_float
+        0069: $TEMP_XP *= $XP_COEFF // (float)
+        008C: $TEMP_XP = float $TEMP_XP to_integer
+        0058: $PLAYER_XP += $TEMP_XP // (int)                    
+         
+        0AF1: write_int 27@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_ARMY_KILLED"
+        
+        end
+        
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////            
+        
+        27@ = 3
+        gosub @ARMY_RADIO_CHECK
+        
+        0A96: 0@ = actor $ARMY[3] struct
+        0@ += 0x754
+        0A8D: 1@ = read_memory 0@ size 4 virtual_protect 0
+        2@ = 0
+        0ECE: get_time_char_is_dead $ARMY[3] store_to 2@    
+        
+        if and
+        0104:   actor $ARMY[3] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+        $SPECTATING_FLAG == 0
+        $SCREWHUD_FLAG == 0
+        $PHRASES_OFF_FLAG == 0
+        89A8: not  actor $ARMY[3] headshoted
+        not 1@ == 0x02
+        2@ > 500
+            then
+            gosub @RANDOM_DIALOG_DEAD_ARMY   
+    
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer
+            text.ClearAll()  
+            
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+            end
+        end
+    end
+    
+//////////////////////////////////////////////////////////////////////////////////////////////////    
+        
+if
+056D:   actor $ARMY[4] defined
+    then
+    if and
+    $ARMY4_DEAD_FLAG == 0
+    actor.Dead($ARMY[4])
+        then
+        
+        if
+        $ARMY1_BIKE_FLAG == 1
+        then
+        create_thread @ANTKUKL $ARMY[4]
+        else
+        create_thread @ANTKUKL $ARMY[4] 0 0 0 0 0 1 2
+        end
+        
+        if or
+        $FREEMODE == 1
+        $GAMEMODE_WAR == 1
+        then
+        
+        if
+        $GAMEMODE_WAR == 0
+        then
+        $ARMY_PROCENT -= ARMY_PROCENT_CONVOYS_MINUS
+        else
+        
+        if
+        UNITED_MAP == 0
+        then
+        $ARMY_PROCENT -= ARMY_PROCENT_CONVOYS_MINUS_WAR
+        else
+        $ARMY_PROCENT -= ARMY_PROCENT_CONVOYS_MINUS_WAR_UNITED
+        end
+        
+        end
+        
+        end
+        
+        $ARMY4_DEAD_FLAG = 1
+        
+        0A96: 0@ = actor $ARMY[4] struct
+        0A8E: 0@ = 0@ + 0x764
+        0A8D: 1@ = read_memory 0@ size 2 virtual_protect 1
+        0A8D: 2@ = read_memory 0xB6F5F0 size 2 virtual_protect 1
+        
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////            
+        
+        if
+        0800:   in_two_players_mode
+        then
+        0A8D: 0@ = read_memory 0xB7CF28 size 2 virtual_protect 1
+        end
+        
+        if or
+        003B:   1@ == 2@  // (int)
+        003B:   1@ == 0@  // (int)
+        then        
+        
+        0AF0: 27@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_ARMY_KILLED"        
+        
+        if
+        $CHEATED_FLAG == 0 
+        then               
+        27@ += 1
+        end
+        
+        $ARMY_KILLED += 1
+        $TEMP_XP = ARMY_XP_PLUS
+        008D: $TEMP_XP = integer $TEMP_XP to_float
+        0069: $TEMP_XP *= $XP_COEFF // (float)
+        008C: $TEMP_XP = float $TEMP_XP to_integer
+        0058: $PLAYER_XP += $TEMP_XP // (int)                      
+         
+        0AF1: write_int 27@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_ARMY_KILLED"
+        
+        end
+        
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////            
+        
+        27@ = 4
+        gosub @ARMY_RADIO_CHECK
+        
+        0A96: 0@ = actor $ARMY[4] struct
+        0@ += 0x754
+        0A8D: 1@ = read_memory 0@ size 4 virtual_protect 0
+        2@ = 0    
+        0ECE: get_time_char_is_dead $ARMY[4] store_to 2@
+        
+        if and
+        0104:   actor $ARMY[4] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+        $SPECTATING_FLAG == 0
+        $SCREWHUD_FLAG == 0
+        $PHRASES_OFF_FLAG == 0
+        89A8: not  actor $ARMY[4] headshoted
+        not 1@ == 0x02
+        2@ > 500
+            then
+            gosub @RANDOM_DIALOG_DEAD_ARMY   
+    
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer
+            text.ClearAll()  
+            
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+            end
+        end 
+    end            
+
+return
+
+:ARMY_RANDOM_THROW_TIME
+0084: $ARMY_THROW_TIME2 = $ARMY_THROW_TIME // (int) 
+008D: $ARMY_THROW_TIME2 = integer $ARMY_THROW_TIME2 to_float
+random_int 14@ $ARMY_THROW_TIME_MIN $ARMY_THROW_TIME_MAX
+006D: $ARMY_THROW_TIME2 *= 14@ // (float)     
+008C: $ARMY_THROW_TIME2 = float $ARMY_THROW_TIME2 to_integer
+return
+
+:ARMY_RANDOM_SPEC_WEAPON
+wait 5
+
+if
+$ARMY_RANDOM_SPEC_WEAPON_FLAG == 1
+then
+return
+else
+$ARMY_RANDOM_SPEC_WEAPON_FLAG = 1
+end
+
+if
+$GAMEMODE_WAR == 1
+    then
+    random_int 0@ 0 3
+    if
+    0@ == 1
+        then
+        random_int 0@ 1 5        
+        
+        if
+        UNITED_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 93 model_to 1@
+
+        while not model.Available(1@)
+        wait 0
+        model.Load(1@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[0@],93,8)
+        else
+        
+        if
+        $UNITED_VC_FLAG == 0
+        then
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 119 model_to 1@
+
+        while not model.Available(1@)
+        wait 0
+        model.Load(1@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[0@],119,3)
+        else
+        
+        0781: get_weapon_with_ID 183 model_to 1@
+
+        while not model.Available(1@)
+        wait 0
+        model.Load(1@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[0@],183,3)
+        end
+        
+        else
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 135 model_to 1@
+
+        while not model.Available(1@)
+        wait 0
+        model.Load(1@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[0@],135,3)
+        else
+        
+        0781: get_weapon_with_ID 213 model_to 1@
+
+        while not model.Available(1@)
+        wait 0
+        model.Load(1@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[0@],213,3)
+        end
+        
+        end
+        
+        end 
+        
+        end  
+    end
+    
+////////////////////////////////////////////////////////////////////////////////////           
+
+if
+UNITED_MAP == 0
+then
+    
+random_int 0@ 0 4
+if or
+0@ == 2
+CAMP_RAID_FLAG_ARMY == 1
+    then
+    random_int 0@ 1 5    
+//    048F: actor $ARMY[0@] remove_weapons        
+    
+    0781: get_weapon_with_ID 76 model_to 1@
+
+    while not model.Available(1@)
+    wait 0
+    model.Load(1@)
+    mload
+    end
+        
+    actor.GiveWeaponAndAmmo($ARMY[0@],76,99999)        
+    end            
+    
+random_int 0@ 0 4
+if or
+0@ == 2
+CAMP_RAID_FLAG_ARMY == 1
+    then
+    random_int 0@ 1 5    
+//    048F: actor $ARMY[0@] remove_weapons        
+
+    0781: get_weapon_with_ID 78 model_to 1@
+
+    while not model.Available(1@)
+    wait 0
+    model.Load(1@)
+    mload
+    end
+        
+    actor.GiveWeaponAndAmmo($ARMY[0@],78,99999)        
+    end
+    
+end
+
+////////////////////////////////////////////////////////////////////////////////////       
+    
+random_int 0@ 0 8
+if or
+0@ == 4
+CAMP_RAID_FLAG_ARMY == 1
+    then
+    
+    if and
+    $UNITED_III_SPAWN == 1
+    STORIES_MAP == 0
+    then
+    jump to @ARMY_DO_NOT_M60_ON_III
+    end
+    
+    if
+    $GAMEMODE_EDITOR == 1
+    then
+    jump to @ARMY_DO_NOT_M60_ON_III
+    end
+    
+    if or
+    not $UNITED_III_SPAWN == 1
+    STORIES_MAP == 1
+        then
+        random_int 0@ 1 5
+        
+//        048F: actor $ARMY[0@] remove_weapons            
+        
+        if
+        UNITED_MAP == 0
+        then
+        
+        random_int 1@ 0 2
+        
+        if
+        1@ == 0
+        then
+        
+        0781: get_weapon_with_ID 70 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+            
+        actor.GiveWeaponAndAmmo($ARMY[0@],70,99999)
+        else
+        
+        0781: get_weapon_with_ID 94 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[0@],94,99999)
+        end
+        
+        else
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 149 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[0@],149,99999)
+        else
+        
+        if
+        $UNITED_VC_FLAG == 1
+        then
+        
+        0781: get_weapon_with_ID 211 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[0@],211,99999)
+        else
+        
+        0781: get_weapon_with_ID 181 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($ARMY[0@],181,99999)
+        end
+        
+        end
+        
+        end
+            
+        end
+    end
+    
+:ARMY_DO_NOT_M60_ON_III    
+    
+////////////////////////////////////////////////////////////////////////////////////    
+    
+random_int 0@ 0 4
+if or
+0@ == 2
+CAMP_RAID_FLAG_ARMY == 1
+    then
+    if and
+    $GAMEMODE_WAR == 0
+    $EASY_MODE == 0
+        then
+        random_int 0@ 1 5        
+    
+        if
+        UNITED_MAP == 0
+        then
+        25@ = 97
+        else
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        if
+        $UNITED_VC_FLAG == 1
+        then
+        25@ = 147
+        else
+        25@ = 120
+        end
+        
+        else
+        
+        if
+        $UNITED_VC_FLAG == 1
+        then
+        25@ = 206
+        else
+        25@ = 176
+        end
+        
+        end
+        
+        end
+    
+        0781: get_weapon_with_ID 25@ model_to 1@
+    
+        while not model.Available(1@)
+        wait 0
+        model.Load(1@)
+        mload
+        end
+        
+    //    048F: actor $ARMY[0@] remove_weapons    
+        actor.GiveWeaponAndAmmo($ARMY[0@],25@,99999)
+        actor.WeaponAccuracy($ARMY[0@]) = SNIPERS_ACCURACY
+            
+        end
+    end
+
+return
+
+:ARMY_SPAWN1_WEAPON_CHECK
+wait 0  
+
+if
+UNITED_MAP == 0
+then
+
+random_int 0@ 0 to 2
+
+if 
+0@ == 0
+then
+10@ = 77
+else
+10@ = 75
+end
+
+else
+
+if
+$UNITED_VC_FLAG == 1
+then
+
+if
+STORIES_MAP == 0
+then
+random_int 0@ = 0 to 4
+
+if 
+0@ == 0
+then
+10@ = 144
+end
+
+if 
+0@ == 1
+then
+10@ = 140
+end
+
+if 
+0@ == 2
+then
+10@ = 144
+end
+
+if 
+0@ == 3
+then
+10@ = 140
+end
+
+else
+
+random_int 0@ = 0 to 4
+
+if 
+0@ == 0
+then
+10@ = 200
+end
+
+if 
+0@ == 1
+then
+10@ = 204
+end
+
+if 
+0@ == 2
+then
+10@ = 200
+end
+
+if 
+0@ == 3
+then
+10@ = 204
+end
+
+end
+
+else
+
+if
+STORIES_MAP == 0
+then
+random_int 0@ = 0 to 4
+
+if 
+0@ == 0
+then
+10@ = 116
+end
+
+if 
+0@ == 1
+then
+10@ = 113
+end
+
+if 
+0@ == 2
+then
+10@ = 116
+end
+
+if 
+0@ == 3
+then
+10@ = 113
+end
+
+else
+
+random_int 0@ = 0 to 4
+
+if 
+0@ == 0
+then
+10@ = 170
+end
+
+if 
+0@ == 1
+then
+10@ = 174
+end
+
+if 
+0@ == 2
+then
+10@ = 170
+end
+
+if 
+0@ == 3
+then
+10@ = 174
+end
+
+end
+
+end
+
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+0781: get_weapon_with_ID 10@ model_to 11@
+ 
+if 
+07DE:   model 11@ exists // versionB 
+jf @ARMY_SPAWN1_WEAPON_CHECK 
+
+while not model.Available(11@)
+wait 0
+model.Load(11@)
+mload
+end
+
+Actor.GiveWeaponAndAmmo($ARMY[29@], 10@, 99999)
+return
+
+:ARMY_RANDOM_HP
+008B: 0@ = $ARMY_HEALTH // (int)
+0093: 0@ = integer 0@ to_float
+random_float 1@ 0.85 1.35 
+006B: 0@ *= 1@  // (float)  
+0092: 0@ = float 0@ to_integer 
+return
+
+:ARMY_SPAWN1_TRANSPORT_AND_PEDS_CREATE
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+UNITED_MAP == 0
+then
+
+if
+$ARMY1_BIKE_FLAG == 0
+then
+
+:CAR_CREATE_ARMY_ON_CAR
+if
+model.Available(#PATRIOT)
+then
+ARMY_CAR = Car.Create(#PATRIOT, 9@, 10@, 11@)
+
+if
+model.Available(#PATRIOT)
+then
+//model.Destroy(#PATRIOT)
+end
+
+else
+model.Load(#PATRIOT)
+mload
+wait 0
+jump to @CAR_CREATE_ARMY_ON_CAR
+end
+
+else
+
+:CAR_CREATE_ARMY_ON_CAR2
+if
+model.Available(#SANCHEZ)
+then
+ARMY_CAR = Car.Create(#SANCHEZ, 9@, 10@, 11@)
+else
+model.Load(#SANCHEZ)
+mload
+wait 0
+jump to @CAR_CREATE_ARMY_ON_CAR2
+end
+
+0407: store_coords_to 9@ 10@ 11@ from_car ARMY_CAR with_offset 0.0 -8.0 0.0
+
+:CAR_CREATE_ARMY_ON_CAR3
+if
+model.Available(#SANCHEZ)
+then
+ARMY_CAR2 = Car.Create(#SANCHEZ, 9@, 10@, 11@)
+
+if
+model.Available(#SANCHEZ)
+then
+//model.Destroy(#SANCHEZ)
+end
+
+else
+model.Load(#SANCHEZ)
+mload
+wait 0
+jump to @CAR_CREATE_ARMY_ON_CAR3
+end
+
+end
+
+else
+
+if
+$UNITED_VC_FLAG == 1
+then
+
+if
+$ARMY1_BIKE_FLAG == 0
+then
+
+:CAR_CREATE_ARMY_ON_CAR4
+if
+model.Available($VC_ARMY_CAR)
+then
+ARMY_CAR = Car.Create($VC_ARMY_CAR, 9@, 10@, 11@)
+
+if
+model.Available($VC_ARMY_CAR)
+then
+//model.Destroy($VC_ARMY_CAR)
+end
+
+else
+model.Load($VC_ARMY_CAR)
+mload
+wait 0
+jump to @CAR_CREATE_ARMY_ON_CAR4
+end
+
+else
+
+:CAR_CREATE_ARMY_ON_CAR5
+if
+model.Available($VC_ARMY_BIKE)
+then
+ARMY_CAR = Car.Create($VC_ARMY_BIKE, 9@, 10@, 11@)
+else
+model.Load($VC_ARMY_BIKE)
+mload
+wait 0
+jump to @CAR_CREATE_ARMY_ON_CAR5
+end
+
+0229: set_car ARMY_CAR primary_color_to 37 secondary_color_to 37
+
+0407: store_coords_to 9@ 10@ 11@ from_car ARMY_CAR with_offset 0.0 -8.0 0.0
+
+:CAR_CREATE_ARMY_ON_CAR6
+if
+model.Available($VC_ARMY_BIKE)
+then
+ARMY_CAR2 = Car.Create($VC_ARMY_BIKE, 9@, 10@, 11@)
+
+if
+model.Available($VC_ARMY_BIKE)
+then
+//model.Destroy($VC_ARMY_BIKE)
+end
+
+else
+model.Load($VC_ARMY_BIKE)
+mload
+wait 0
+jump to @CAR_CREATE_ARMY_ON_CAR6
+end
+
+0229: set_car ARMY_CAR2 primary_color_to 37 secondary_color_to 37
+
+end
+
+else
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+$ARMY1_BIKE_FLAG == 0
+then
+
+:CAR_CREATE_ARMY_ON_CAR7
+if
+model.Available($III_ARMY_CAR)
+then
+ARMY_CAR = Car.Create($III_ARMY_CAR, 9@, 10@, 11@)
+
+if
+model.Available($III_ARMY_CAR)
+then
+//model.Destroy($III_ARMY_CAR)
+end
+
+else
+model.Load($III_ARMY_CAR)
+mload
+wait 0
+jump to @CAR_CREATE_ARMY_ON_CAR7
+end
+
+else
+
+:CAR_CREATE_ARMY_ON_CAR8
+if
+model.Available($III_ARMY_BIKE)
+then
+ARMY_CAR = Car.Create($III_ARMY_BIKE, 9@, 10@, 11@)
+else
+model.Load($III_ARMY_BIKE)
+mload
+wait 0
+jump to @CAR_CREATE_ARMY_ON_CAR8
+end
+
+0229: set_car ARMY_CAR primary_color_to 45 secondary_color_to 78
+
+0407: store_coords_to 9@ 10@ 11@ from_car ARMY_CAR with_offset 0.0 -8.0 0.0
+
+:CAR_CREATE_ARMY_ON_CAR9
+if
+model.Available($III_ARMY_BIKE)
+then
+ARMY_CAR2 = Car.Create($III_ARMY_BIKE, 9@, 10@, 11@)
+
+if
+model.Available($III_ARMY_BIKE)
+then
+//model.Destroy($III_ARMY_BIKE)
+end
+
+else
+model.Load($III_ARMY_BIKE)
+mload
+wait 0
+jump to @CAR_CREATE_ARMY_ON_CAR9
+end
+
+0229: set_car ARMY_CAR2 primary_color_to 45 secondary_color_to 78
+
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+end
+
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+$GAMEMODE_WAR == 0
+then
+random_int 2@ 500 CAR_HEALTH_MAX
+else
+random_int 2@ 500 CAR_HEALTH_MAX
+end
+
+car.Health(ARMY_CAR) = 2@
+
+0878: set_car ARMY_CAR dirt_level 20.0
+
+car.StorePos(ARMY_CAR, 6@, 7@, 8@)
+if
+ZAME_HUENEMY_FLAG == 0
+then
+02C1: store_to 9@ 10@ 11@ car_path_coords_closest_to 6@ 7@ 8@  
+end
+car.PutAt(ARMY_CAR,9@,10@,11@)       
+random_int 24@ 0 2
+
+if and
+CAMP_RAID_FLAG_ARMY == 0
+ZAME_HUENEMY_FLAG == 0
+then
+06F8: get_nearest_route_for 9@ 10@ 11@ in_direction 24@ store_to 25@ 26@ 27@ Z_angle_to 13@   
+car.Angle(ARMY_CAR) = 13@
+else
+if
+not ZAME_HUENEMY_FLAG == 1
+    then
+    0E27: get_angle_from_two_coords 9@ 10@ and $CAMP_X[$ENTERED_CAMP_NUMBER] $CAMP_Y[$ENTERED_CAMP_NUMBER] to 13@
+    car.Angle(ARMY_CAR) = 13@
+    else
+    car.Angle(ARMY_CAR) = ZAME_HUENEMY_POS_A
+    end
+end
+
+if
+$ARMY1_BIKE_FLAG == 0
+then          
+0A97: 11@ = car ARMY_CAR struct 
+11@ += 9 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+08BD: set 12@ bit 2 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 2
+end
+ 
+0A97: 11@ = car ARMY_CAR struct 
+11@ += 4 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+08BD: set 12@ bit 1 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 1 
+random_float $BENZIN_ARMY $GASOLINE_MIN $GASOLINE_MAX
+$BENZIN_ARMY *= 2.0 
+0A97: 0@ = car ARMY_CAR struct 
+0A8E: 23@ = 0@ + 5 // int 
+0A8C: write_memory 23@ size 4 value $BENZIN_ARMY virtual_protect 0
+
+////////////////////////////////////////////////////////////////////////////////////
+
+if
+$ARMY1_BIKE_FLAG == 1
+then
+
+if
+$GAMEMODE_WAR == 0
+then
+random_int 2@ 500 CAR_HEALTH_MAX
+else
+random_int 2@ 500 CAR_HEALTH_MAX
+end
+
+car.Health(ARMY_CAR2) = 2@
+
+0878: set_car ARMY_CAR2 dirt_level 20.0
+
+car.StorePos(ARMY_CAR2, 6@, 7@, 8@)
+if
+ZAME_HUENEMY_FLAG == 0
+then
+02C1: store_to 9@ 10@ 11@ car_path_coords_closest_to 6@ 7@ 8@  
+end
+car.PutAt(ARMY_CAR2,9@,10@,11@)
+       
+if and
+CAMP_RAID_FLAG_ARMY == 0
+ZAME_HUENEMY_FLAG == 0
+then
+06F8: get_nearest_route_for 9@ 10@ 11@ in_direction 24@ store_to 25@ 26@ 27@ Z_angle_to 13@   
+car.Angle(ARMY_CAR2) = 13@
+else
+if
+not ZAME_HUENEMY_FLAG == 1
+    then
+    0E27: get_angle_from_two_coords 9@ 10@ and $CAMP_X[$ENTERED_CAMP_NUMBER] $CAMP_Y[$ENTERED_CAMP_NUMBER] to 13@
+    car.Angle(ARMY_CAR2) = 13@
+    else
+    car.Angle(ARMY_CAR2) = ZAME_HUENEMY_POS_A
+    end
+end
+
+if
+$ARMY1_BIKE_FLAG == 0
+then          
+0A97: 11@ = car ARMY_CAR2 struct 
+11@ += 9 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+08BD: set 12@ bit 2 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 2
+end
+ 
+0A97: 11@ = car ARMY_CAR2 struct 
+11@ += 4 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+08BD: set 12@ bit 1 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 1 
+random_float $BENZIN_ARMY $GASOLINE_MIN $GASOLINE_MAX
+$BENZIN_ARMY *= 2.0 
+0A97: 0@ = car ARMY_CAR2 struct 
+0A8E: 23@ = 0@ + 5 // int 
+0A8C: write_memory 23@ size 4 value $BENZIN_ARMY virtual_protect 0
+
+end 
+
+////////////////////////////////////////////////////////////////////////////////////
+
+if
+$ARMY1_BIKE_FLAG == 0
+then
+
+random_int 6@ 0 3
+if or
+6@ == 0
+6@ == 2
+    then
+    073C: car ARMY_CAR damage_componentB 0
+    end
+
+random_int 6@ 0 3
+if or
+6@ == 0
+6@ == 2
+    then
+    073C: car ARMY_CAR damage_componentB 1
+    end
+
+random_int 6@ 0 3
+if or
+6@ == 0
+6@ == 2
+    then
+    073C: car ARMY_CAR damage_componentB 2
+    end
+
+random_int 6@ 0 3
+if or
+6@ == 0
+6@ == 2
+    then
+    073C: car ARMY_CAR damage_componentB 3
+    end
+
+random_int 6@ 0 3
+if or
+6@ == 0
+6@ == 2
+    then
+    073C: car ARMY_CAR damage_componentB 4
+    end
+
+random_int 6@ 0 3
+if or
+6@ == 0
+6@ == 2
+    then
+    073C: car ARMY_CAR damage_componentB 5
+    end
+
+random_int 6@ 0 3
+if or
+6@ == 0
+6@ == 2
+    then
+    073C: car ARMY_CAR damage_componentB 6
+    end
+    
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////    
+
+if
+$GAMEMODE_WAR == 0
+then
+Car.DoorStatus(ARMY_CAR) = 2
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+UNITED_MAP == 0
+then
+
+if and
+8583: not  player PLAYER_CHAR in_zone 'VE'
+8583: not  player PLAYER_CHAR in_zone 'BONE'
+8583: not  player PLAYER_CHAR in_zone 'ROBAD'
+8583: not  player PLAYER_CHAR in_zone 'ROBAD1'
+then
+6@ = 0
+else
+6@ = 1
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+6@ == 0
+then
+
+0842: 0@ = player PLAYER_CHAR town_number
+
+if
+not 0@ == 0
+then
+
+0229: set_car ARMY_CAR primary_color_to ARMY_CITY_COLOR secondary_color_to ARMY_CITY_COLOR
+if
+$ARMY1_BIKE_FLAG == 1
+then
+0229: set_car ARMY_CAR2 primary_color_to ARMY_CITY_COLOR secondary_color_to ARMY_CITY_COLOR
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////                   
+
+while not model.Available(#ARMY1)
+wait 0
+model.Load(#ARMY1)
+mload
+end
+
+$ARMY[1] = Actor.CreateAsDriver(27, #ARMY1, ARMY_CAR)
+
+if
+model.Available(#ARMY1)
+then
+//model.Destroy(#ARMY1)
+end
+
+wait 5
+
+while not model.Available(#ARMY2)
+wait 0
+model.Load(#ARMY2)
+mload
+end
+
+$ARMY[2] = Actor.CreateAsPassenger(27, #ARMY2, ARMY_CAR,0)
+
+if
+model.Available(#ARMY2)
+then
+//model.Destroy(#ARMY2)
+end
+
+wait 5
+
+while not model.Available(#ARMY3)
+wait 0
+model.Load(#ARMY3)
+mload
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+$ARMY1_BIKE_FLAG == 0
+then
+$ARMY[3] = Actor.CreateAsPassenger(27, #ARMY3, ARMY_CAR,1)
+
+if
+model.Available(#ARMY3)
+then
+//model.Destroy(#ARMY3)
+end
+
+wait 5
+
+while not model.Available(#ARMY4)
+wait 0
+model.Load(#ARMY4)
+mload
+end
+
+$ARMY[4] = Actor.CreateAsPassenger(27, #ARMY4, ARMY_CAR,2)
+
+if
+model.Available(#ARMY4)
+then
+//model.Destroy(#ARMY4)
+end
+
+else
+$ARMY[3] = Actor.CreateAsDriver(27, #ARMY3, ARMY_CAR2)
+
+if
+model.Available(#ARMY3)
+then
+//model.Destroy(#ARMY3)
+end
+
+wait 5
+
+while not model.Available(#ARMY4)
+wait 0
+model.Load(#ARMY4)
+mload
+end
+
+$ARMY[4] = Actor.CreateAsPassenger(27, #ARMY4, ARMY_CAR2,0)
+
+if
+model.Available(#ARMY4)
+then
+//model.Destroy(#ARMY4)
+end
+
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+  
+else
+
+0229: set_car ARMY_CAR primary_color_to ARMY_COUNTRY_COLOR secondary_color_to ARMY_COUNTRY_COLOR
+if
+$ARMY1_BIKE_FLAG == 1
+then
+0229: set_car ARMY_CAR2 primary_color_to ARMY_COUNTRY_COLOR secondary_color_to ARMY_COUNTRY_COLOR
+end
+
+while not model.Available(#ARMY5)
+wait 0
+model.Load(#ARMY5)
+mload
+end
+
+$ARMY[1] = Actor.CreateAsDriver(27, #ARMY5, ARMY_CAR)
+
+if
+model.Available(#ARMY5)
+then
+//model.Destroy(#ARMY5)
+end
+
+wait 5               
+
+while not model.Available(#ARMY6)
+wait 0
+model.Load(#ARMY6)
+mload
+end
+
+$ARMY[2] = Actor.CreateAsPassenger(27, #ARMY6, ARMY_CAR,0)
+
+if
+model.Available(#ARMY6)
+then
+//model.Destroy(#ARMY6)
+end
+
+wait 5               
+
+while not model.Available(#ARMY7)
+wait 0
+model.Load(#ARMY7)
+mload
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+$ARMY1_BIKE_FLAG == 0
+then
+
+$ARMY[3] = Actor.CreateAsPassenger(27, #ARMY7, ARMY_CAR,1)
+wait 5
+
+while not model.Available(#ARMY8)
+wait 0
+model.Load(#ARMY8)
+mload
+end
+
+$ARMY[4] = Actor.CreateAsPassenger(27, #ARMY8, ARMY_CAR,2)
+
+if
+model.Available(#ARMY8)
+then
+//model.Destroy(#ARMY8)
+end
+
+else
+$ARMY[3] = Actor.CreateAsDriver(27, #ARMY7, ARMY_CAR2)
+
+if
+model.Available(#ARMY7)
+then
+//model.Destroy(#ARMY7)
+end
+
+wait 5
+
+while not model.Available(#ARMY8)
+wait 0
+model.Load(#ARMY8)
+mload
+end
+
+$ARMY[4] = Actor.CreateAsPassenger(27, #ARMY8, ARMY_CAR2,0)
+
+if
+model.Available(#ARMY8)
+then
+//model.Destroy(#ARMY8)
+end
+
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+  
+end 
+
+else
+
+0229: set_car ARMY_CAR primary_color_to ARMY_DESERT_COLOR secondary_color_to ARMY_DESERT_COLOR
+if
+$ARMY1_BIKE_FLAG == 1
+then
+0229: set_car ARMY_CAR2 primary_color_to ARMY_DESERT_COLOR secondary_color_to ARMY_DESERT_COLOR
+end
+
+while not model.Available(#ARMY9)
+wait 0
+model.Load(#ARMY9)
+mload
+end
+
+$ARMY[1] = Actor.CreateAsDriver(27, #ARMY9, ARMY_CAR)
+
+if
+model.Available(#ARMY9)
+then
+//model.Destroy(#ARMY9)
+end
+
+wait 5
+
+while not model.Available(#ARMY10)
+wait 0
+model.Load(#ARMY10)
+mload
+end
+
+$ARMY[2] = Actor.CreateAsPassenger(27, #ARMY10, ARMY_CAR,0)
+
+if
+model.Available(#ARMY10)
+then
+//model.Destroy(#ARMY10)
+end
+
+wait 5
+
+while not model.Available(#ARMY11)
+wait 0
+model.Load(#ARMY11)
+mload
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+$ARMY1_BIKE_FLAG == 0
+then
+
+$ARMY[3] = Actor.CreateAsPassenger(27, #ARMY11, ARMY_CAR,1)
+
+if
+model.Available(#ARMY11)
+then
+//model.Destroy(#ARMY11)
+end
+
+wait 5                  
+
+while not model.Available(#ARMY12)
+wait 0
+model.Load(#ARMY12)
+mload
+end
+
+$ARMY[4] = Actor.CreateAsPassenger(27, #ARMY12, ARMY_CAR,2)
+
+if
+model.Available(#ARMY12)
+then
+//model.Destroy(#ARMY12)
+end
+
+else
+
+$ARMY[3] = Actor.CreateAsDriver(27, #ARMY11, ARMY_CAR2)
+
+if
+model.Available(#ARMY11)
+then
+//model.Destroy(#ARMY11)
+end
+
+wait 5                  
+
+while not model.Available(#ARMY12)
+wait 0
+model.Load(#ARMY12)
+mload
+end
+
+$ARMY[4] = Actor.CreateAsPassenger(27, #ARMY12, ARMY_CAR2,0)
+
+if
+model.Available(#ARMY12)
+then
+//model.Destroy(#ARMY12)
+end
+
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+  
+end
+
+else  
+
+if   
+$UNITED_VC_FLAG == 1
+then                   
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+$ARMY1_BIKE_FLAG == 0
+then
+
+while not model.Available($VC_ARMY_SKIN)
+wait 0
+model.Load($VC_ARMY_SKIN)
+mload
+end
+
+$ARMY[1] = Actor.CreateAsDriver(27, $VC_ARMY_SKIN, ARMY_CAR)
+
+if
+model.Available($VC_ARMY_SKIN)
+then
+//model.Destroy($VC_ARMY_SKIN)
+end
+
+wait 5
+
+while not model.Available($VC_ARMY_SKIN2)
+wait 0
+model.Load($VC_ARMY_SKIN2)
+mload
+end
+
+$ARMY[2] = Actor.CreateAsPassenger(27, $VC_ARMY_SKIN2, ARMY_CAR,0)
+
+if
+model.Available($VC_ARMY_SKIN)
+then
+//model.Destroy($VC_ARMY_SKIN)
+end
+
+wait 5
+
+while not model.Available($VC_ARMY_SKIN2)
+wait 0
+model.Load($VC_ARMY_SKIN2)
+mload
+end
+
+$ARMY[3] = Actor.CreateAsPassenger(27, $VC_ARMY_SKIN2, ARMY_CAR,1)
+
+if
+model.Available($VC_ARMY_SKIN)
+then
+//model.Destroy($VC_ARMY_SKIN)
+end
+
+wait 5
+
+while not model.Available($VC_ARMY_SKIN)
+wait 0
+model.Load($VC_ARMY_SKIN)
+mload
+end
+
+$ARMY[4] = Actor.CreateAsPassenger(27, $VC_ARMY_SKIN, ARMY_CAR,2)
+
+if
+model.Available($VC_ARMY_SKIN)
+then
+//model.Destroy($VC_ARMY_SKIN)
+end
+
+else
+
+while not model.Available($VC_ARMY_SKIN)
+wait 0
+model.Load($VC_ARMY_SKIN)
+mload
+end
+
+$ARMY[1] = Actor.CreateAsDriver(27, $VC_ARMY_SKIN, ARMY_CAR)
+
+if
+model.Available($VC_ARMY_SKIN)
+then
+//model.Destroy($VC_ARMY_SKIN)
+end
+
+wait 5
+
+while not model.Available($VC_ARMY_SKIN2)
+wait 0
+model.Load($VC_ARMY_SKIN2)
+mload
+end
+
+$ARMY[2] = Actor.CreateAsPassenger(27, $VC_ARMY_SKIN2, ARMY_CAR,0)
+
+if
+model.Available($VC_ARMY_SKIN)
+then
+//model.Destroy($VC_ARMY_SKIN)
+end
+
+wait 5
+
+while not model.Available($VC_ARMY_SKIN2)
+wait 0
+model.Load($VC_ARMY_SKIN2)
+mload
+end
+
+$ARMY[3] = Actor.CreateAsDriver(27, $VC_ARMY_SKIN2, ARMY_CAR2)
+
+if
+model.Available($VC_ARMY_SKIN)
+then
+//model.Destroy($VC_ARMY_SKIN)
+end
+
+wait 5
+
+while not model.Available($VC_ARMY_SKIN)
+wait 0
+model.Load($VC_ARMY_SKIN)
+mload
+end
+
+$ARMY[4] = Actor.CreateAsPassenger(27, $VC_ARMY_SKIN, ARMY_CAR2,0)
+
+if
+model.Available($VC_ARMY_SKIN)
+then
+//model.Destroy($VC_ARMY_SKIN)
+end
+
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+  
+else
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+$ARMY1_BIKE_FLAG == 0
+then
+
+while not model.Available($III_ARMY_SKIN)
+wait 0
+model.Load($III_ARMY_SKIN)
+mload
+end
+
+$ARMY[1] = Actor.CreateAsDriver(27, $III_ARMY_SKIN, ARMY_CAR)
+
+if
+model.Available($III_ARMY_SKIN)
+then
+//model.Destroy($III_ARMY_SKIN)
+end
+
+wait 5
+
+while not model.Available($III_ARMY_SKIN)
+wait 0
+model.Load($III_ARMY_SKIN)
+mload
+end
+
+$ARMY[2] = Actor.CreateAsPassenger(27, $III_ARMY_SKIN, ARMY_CAR,0)
+
+if
+model.Available($III_ARMY_SKIN)
+then
+//model.Destroy($III_ARMY_SKIN)
+end
+
+wait 5               
+
+while not model.Available($III_ARMY_SKIN)
+wait 0
+model.Load($III_ARMY_SKIN)
+mload
+end
+
+$ARMY[3] = Actor.CreateAsPassenger(27, $III_ARMY_SKIN, ARMY_CAR,1)
+
+if
+model.Available($III_ARMY_SKIN)
+then
+//model.Destroy($III_ARMY_SKIN)
+end
+
+wait 5                
+
+while not model.Available($III_ARMY_SKIN)
+wait 0
+model.Load($III_ARMY_SKIN)
+mload
+end
+
+$ARMY[4] = Actor.CreateAsPassenger(27, $III_ARMY_SKIN, ARMY_CAR,2)
+
+if
+model.Available($III_ARMY_SKIN)
+then
+//model.Destroy($III_ARMY_SKIN)
+end
+
+else
+
+while not model.Available($III_ARMY_SKIN)
+wait 0
+model.Load($III_ARMY_SKIN)
+mload
+end
+
+$ARMY[1] = Actor.CreateAsDriver(27, $III_ARMY_SKIN, ARMY_CAR)
+
+if
+model.Available($III_ARMY_SKIN)
+then
+//model.Destroy($III_ARMY_SKIN)
+end
+
+wait 5
+
+while not model.Available($III_ARMY_SKIN)
+wait 0
+model.Load($III_ARMY_SKIN)
+mload
+end
+
+$ARMY[2] = Actor.CreateAsPassenger(27, $III_ARMY_SKIN, ARMY_CAR,0)
+
+if
+model.Available($III_ARMY_SKIN)
+then
+//model.Destroy($III_ARMY_SKIN)
+end
+
+wait 5               
+
+while not model.Available($III_ARMY_SKIN)
+wait 0
+model.Load($III_ARMY_SKIN)
+mload
+end
+
+$ARMY[3] = Actor.CreateAsDriver(27, $III_ARMY_SKIN, ARMY_CAR2)
+
+if
+model.Available($III_ARMY_SKIN)
+then
+//model.Destroy($III_ARMY_SKIN)
+end
+
+wait 5                
+
+while not model.Available($III_ARMY_SKIN)
+wait 0
+model.Load($III_ARMY_SKIN)
+mload
+end
+
+$ARMY[4] = Actor.CreateAsPassenger(27, $III_ARMY_SKIN, ARMY_CAR2,0)
+
+if
+model.Available($III_ARMY_SKIN)
+then
+//model.Destroy($III_ARMY_SKIN)
+end
+
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+  
+end
+
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+return
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:ARMY_SPAWN1_COORD_CHECK
+wait 0
+0208: 9@ = random_float_in_ranges 160.0 -120.0 
+0208: 10@ = random_float_in_ranges -120.0 160.0
+04C4: store_coords_to 6@ 7@ 8@ from_actor PLAYER_ACTOR with_offset 9@ 10@ 0.0
+
+///////////////////////////////////
+if and
+CAMP_RAID_FLAG_ARMY == 1
+$QUEST_CAMP_NUMBER == 1
+UNITED_MAP == 0 
+then
+
+random_int 6@ 0 2
+if
+6@ == 0
+then
+  
+6@ = 2875.6301
+7@ = -1405.5005
+8@ = 10.9234
+else  
+6@ = 2676.6252
+7@ = -1471.6122
+8@ = 30.3902
+end
+
+end
+///////////////////////////////////
+
+///////////////////////////////////
+if and
+CAMP_RAID_FLAG_ARMY == 1
+$QUEST_CAMP_NUMBER == 5
+UNITED_MAP == 0 
+then
+
+random_int 6@ 0 2
+if
+6@ == 0
+then
+6@ = -1099.0814
+7@ = -1340.564
+8@ = 128.8841
+else
+6@ = -1437.4906
+7@ = -1221.4221
+8@ = 105.9754
+end
+
+end
+///////////////////////////////////
+
+///////////////////////////////////
+if and
+CAMP_RAID_FLAG_ARMY == 1
+$QUEST_CAMP_NUMBER == 8
+UNITED_MAP == 0 
+then
+
+if
+RAID_CAR_PATH_RANDOM_FLAG == 0
+then
+
+random_int 6@ 0 2
+if
+6@ == 0
+then
+6@ = -2261.0054
+7@ = 1100.95
+8@ = 79.8594
+else
+6@ = -2261.01
+7@ = 952.2061
+8@ = 66.5
+end
+
+else
+
+random_int 6@ 0 2
+if
+6@ == 0
+then
+6@ = -2143.2085
+7@ = 890.0348
+8@ = 79.845
+else
+6@ = -2143.301
+7@ = 1101.6547
+8@ = 79.8467
+end
+
+end
+
+end
+///////////////////////////////////
+
+///////////////////////////////////
+if and
+CAMP_RAID_FLAG_ARMY == 1
+$QUEST_CAMP_NUMBER == 10
+UNITED_MAP == 0 
+then
+
+random_int 6@ 0 2
+if
+6@ == 0
+then
+6@ = 2061.0107
+7@ = 2742.1516
+8@ = 10.6719
+else
+6@ = 2387.4065
+7@ = 2538.5652
+8@ = 10.6719
+end
+
+end
+///////////////////////////////////
+
+///////////////////////////////////
+if and
+CAMP_RAID_FLAG_ARMY == 1
+$QUEST_CAMP_NUMBER == 13
+UNITED_MAP == 0 
+then
+
+random_int 6@ 0 2
+if
+6@ == 0
+then
+6@ = -548.3635
+7@ = 2722.4553
+8@ = 65.3308
+else
+6@ = -98.859
+7@ = 2636.6189
+8@ = 63.8969
+end
+
+end
+///////////////////////////////////
+ 
+02C1: store_to 9@ 10@ 11@ car_path_coords_closest_to 6@ 7@ 8@ 
+Actor.StorePos(PLAYER_ACTOR, 6@, 7@, 8@)
+050A: 17@ = distance_between_XYZ 6@ 7@ 8@ and_XYZ 9@ 10@ 11@
+
+///////////////////////////////////
+if and
+CAMP_RAID_FLAG_ARMY == 1
+$QUEST_CAMP_NUMBER == 1
+UNITED_MAP == 0 
+then
+17@ = 150.0
+end
+///////////////////////////////////
+if and
+CAMP_RAID_FLAG_ARMY == 1
+$QUEST_CAMP_NUMBER == 5
+UNITED_MAP == 0 
+then
+17@ = 150.0
+end
+///////////////////////////////////
+if and
+CAMP_RAID_FLAG_ARMY == 1
+$QUEST_CAMP_NUMBER == 8
+UNITED_MAP == 0 
+then
+17@ = 150.0
+end
+///////////////////////////////////
+if and
+CAMP_RAID_FLAG_ARMY == 1
+$QUEST_CAMP_NUMBER == 10
+UNITED_MAP == 0 
+then
+17@ = 150.0
+end
+///////////////////////////////////
+
+///////////////////////////////////
+if and
+CAMP_RAID_FLAG_ARMY == 1
+$QUEST_CAMP_NUMBER == 13
+UNITED_MAP == 0 
+then
+17@ = 150.0
+end
+///////////////////////////////////
+ 
+0092: 18@ = float 17@ to_integer
+if and
+18@ >= 120 
+not 18@ >= 200 
+jf @ARMY_SPAWN1_COORD_CHECK 
+if and
+8AE2: not 30@ = random_vehicle_near_point 9@ 10@ 11@ in_radius 10.0 find_next 0 pass_wrecked 1 //IF and SET
+8AE1: not 31@ = random_actor_near_point 9@ 10@ 11@ in_radius 5.0 find_next 0 pass_deads 0 //IF and SET
+jf @ARMY_SPAWN1_COORD_CHECK
+
+gosub @ARMY_SPAWN_ZONE_CHECK
+
+if
+6@ == 1
+jf @ARMY_SPAWN1_COORD_CHECK
+
+return
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:ARMY_SPAWN_ZONE_CHECK
+
+6@ = 1
+
+{$INCLUDE zone_check/Fractions Spawn Zone Check.txt}
+
+if and
+CAMP_RAID_FLAG == 1
+CAMP_RAID_FLAG_ARMY == 1
+then
+6@ = 1
+end
+
+return
+
+:ARMY_CAR_REMOVE_REFERENCES
+
+if
+056E:   car ARMY_CAR defined
+    then
+    if
+    0202:   actor PLAYER_ACTOR near_car ARMY_CAR radius 10.0 10.0 sphere 0
+        then    
+        car.RemoveReferences(ARMY_CAR)
+        if
+        056E:   car ARMY_CAR defined
+        then
+        if
+        not actor.InCar(PLAYER_ACTOR,ARMY_CAR)
+            then
+            wait 0
+            if
+            056E:   car ARMY_CAR defined
+                then
+                00A9: set_car ARMY_CAR to_normal_driver
+                end
+            end
+        end
+        
+        ARMY_CAR_DELETED_REFERENCES_FLAG = 1    
+        end
+    end
+
+return
+
+:ARMY_CAR2_REMOVE_REFERENCES
+
+if
+056E:   car ARMY_CAR2 defined
+    then
+    if
+    0202:   actor PLAYER_ACTOR near_car ARMY_CAR2 radius 10.0 10.0 sphere 0
+        then    
+        car.RemoveReferences(ARMY_CAR2)
+        if
+        056E:   car ARMY_CAR2 defined
+        then
+        if
+        not actor.InCar(PLAYER_ACTOR,ARMY_CAR2)
+            then
+            wait 0
+            if
+            056E:   car ARMY_CAR2 defined
+                then
+                00A9: set_car ARMY_CAR2 to_normal_driver
+                end
+            end
+        end
+        
+        ARMY_CAR2_DELETED_REFERENCES_FLAG = 1    
+        end
+    end
+
+return
+
+:ARMY_DEBUG_WRITE
+0AF1: write_int $ARMY_SPAWNED to_ini_file "saves\ZACM.set" section "SCR" key "ARMY_SPAWNED"
+0AF1: write_int $ARMY1_SPAWN_FLAG to_ini_file "saves\ZACM.set" section "SCR" key "ARMY1_SPAWN_FLAG"
+0AF1: write_int $ARMY1_EXIT_FLAG to_ini_file "saves\ZACM.set" section "SCR" key "ARMY1_EXIT_FLAG"
+0AF1: write_int $ARMY1_SPOTTED_FLAG to_ini_file "saves\ZACM.set" section "SCR" key "ARMY1_SPOTTED_FLAG"
+0AF1: write_int $ARMY1_CHASE_FLAG to_ini_file "saves\ZACM.set" section "SCR" key "ARMY1_CHASE_FLAG"
+0AF1: write_int $ARMY1_CHASE2_FLAG to_ini_file "saves\ZACM.set" section "SCR" key "ARMY1_CHASE2_FLAG"
+0AF1: write_int $ARMY1_BIKE_FLAG to_ini_file "saves\ZACM.set" section "SCR" key "ARMY1_BIKE_FLAG"
+0AF1: write_int $ARMY_RANDOM_SPEC_WEAPON_FLAG to_ini_file "saves\ZACM.set" section "SCR" key "ARMY_RANDOM_SPEC_WEAPON_FLAG"
+0AF1: write_int ARMY_CAR_DELETED_REFERENCES_FLAG to_ini_file "saves\ZACM.set" section "SCR" key "ARMY_CAR_DELETED_REFERENCES_FLAG"
+0AF1: write_int $ARMY1_BIKE_FLAG to_ini_file "saves\ZACM.set" section "SCR" key "ARMY1_BIKE_FLAG"
+return    
+
+:ARMY_ORIGIN_SPOTTED_PHRASE
+
+repeat
+wait 0
+until ORIGIN_SPOTTED_SOME_SHIT == 0
+
+ORIGIN_SPOTTED_SOME_SHIT = 1
+
+gosub @RANDOM_DIALOG_DESERTER_SPOTTED_ARMY
+
+09FD: get_gxt_string v$PHRASE3 width_to 29@
+0093: 29@ = integer 29@ to_float
+29@ *= 8.0
+0092: 29@ = float 29@ to_integer
+
+32@ = 0
+008B: 31@ = $PHRASES_OFF_FLAG // (int)                    
+                    
+repeat
+wait 0
+$PHRASES_OFF_FLAG = 1  
+        
+0384: show_text_1string GXT v$PHRASE3 string v$NAME3 time 99 1
+            
+if or
+$SAVESTATUS_TRUE == 1
+$SAVESTATUS == 1
+GAME_OVER_FLAG == 1
+    then 
+    break
+    end
+            
+until 002D:   32@ >= 29@  // (int)
+
+008A: $PHRASES_OFF_FLAG = 31@ // (int)
+
+ORIGIN_SPOTTED_SOME_SHIT = 0
+
+return   
+
+:RANDOM_DIALOG_DESERTER_SPOTTED_ARMY
+    
+for 29@ = 0 to 200
+
+v$PHRASE1 = "DS184_"
+0AD3: v$PHRASE2 = format "%d" 29@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    29@ += 1
+    random_int 30@ 0 29@
+    end
+
+end  
+
+v$PHRASE1 = "DS184_"
+0AD3: v$PHRASE2 = format "%d" 30@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return

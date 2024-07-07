@@ -1,0 +1,6537 @@
+const
+BANDIT_CAR2 = 22@
+DEAD_TALK_RADIUS = 80.0
+DEAD_TALK_RADIUS_Z = 30.0
+end
+
+const
+BANDITS_PAIN_TIMER_MIN = 15
+BANDITS_PAIN_TIMER_MAX = 35
+BANDITS_ATTACK_TIMER_MIN = 20
+BANDITS_ATTACK_TIMER_MAX = 45
+BANDITS_HUNTER_TIMER_MIN = 250  
+BANDITS_HUNTER_TIMER_MAX = 450
+BANDITS_TANK_TIMER_MIN = 400  
+BANDITS_TANK_TIMER_MAX = 700
+BANDITS_HUNTER2_TIMER_MIN = 400  
+BANDITS_HUNTER2_TIMER_MAX = 700
+BANDITS_WITCH_TIMER_MIN = 400  
+BANDITS_WITCH_TIMER_MAX = 700
+BANDITS_CHARGER_TIMER_MIN = 400  
+BANDITS_CHARGER_TIMER_MAX = 700   
+end
+
+:BNDT_SP
+thread 'BNDT_SP' 
+
+if and
+$ALLOW_BANDIT_CONVOY == 0
+not ZAME_HUENEMY_FLAG == 1
+    then
+    end_thread
+    end
+    
+:BANDITS_SPAWN1_START 
+0209: 0@ = random_int_in_ranges $BANDITS_SPAWN_MIN $BANDITS_SPAWN_MAX 
+1@ = 0
+
+while true
+wait 1000
+
+while 001C:   FRACTIONS_SPAWNED_COUNT > FRACTIONS_TO_SPAWN_COUNT // (int)
+wait 0
+
+if or
+CAMP_RAID_FLAG_BANDITS == 1
+$BANDITS1_SPAWN_FLAG == 1
+$GAMEMODE_WAR == 1 
+    then
+    break
+    end
+
+end
+
+//////////////////////////////////////////////////////////////////////////////
+
+if
+GLOBAL_SPAWN_TIMER_RANDOM_RESET_BANDITS == 1
+then
+
+repeat
+wait 0
+0209: 0@ = random_int_in_ranges $BANDITS_SPAWN_MIN $BANDITS_SPAWN_MAX
+0209: 30@ = random_int_in_ranges $BANDITS_SPAWN_MIN $BANDITS_SPAWN_MAX
+
+if
+$FREEMODE == 0
+then
+0209: 1@ = random_int_in_ranges TIMER_RESET_ADD_MIN TIMER_RESET_ADD_MAX
+else
+0209: 1@ = random_int_in_ranges TIMER_RESET_ADD2_MIN TIMER_RESET_ADD2_MAX
+end
+
+0062: 30@ -= 1@  // (int)
+until 801D: not  30@ > 0@  // (int)
+
+0085: 1@ = 30@ // (int)
+0AF1: write_int 30@ to_ini_file "saves\ZACM.set" section "SCR" key "BANDITS_NEW_TIMER_AFTER_SAVE"
+0AF1: write_int 0@ to_ini_file "saves\ZACM.set" section "SCR" key "BANDITS_SPAWN_TIMER"
+ 
+GLOBAL_SPAWN_TIMER_RANDOM_RESET_BANDITS = 0
+end
+
+//////////////////////////////////////////////////////////////////////////////
+
+if
+CAMP_RAID_FLAG_BANDITS == 1 
+    then
+    break
+    end
+
+if and
+$SAVESTATUS == 0
+$SAVING_PLACE_FLAG == 0
+$NOTSPAWN == 0
+$NOTSPAWN_ETC == 0
+$SAVEPLACE_ON == 0   
+$BANDITS_PROCENT > 0.0
+$ACTIVE_INTERIOR == 0 
+    then
+    
+    if
+    $NEAR_SALV_POINT == 0
+    then    
+    1@ += 1
+    
+    if
+    SURVIVAL_CUSTOM_WEAPON_NABOR == 2
+        then
+        0085: 31@ = 0@ // (int)
+        31@ -= 30
+        0085: 30@ = 0@ // (int)
+        30@ -= 27
+//        0AD1: show_formatted_text_highpriority "%d > %d~n~ %d < %d" time 100 1@ 31@ 1@ 30@
+        if and
+        001D:   1@ > 31@  // (int)
+        801D:   1@ < 30@  // (int)
+            then                
+            gosub @BANDITS_ORIGIN_SPOTTED_PHRASE
+            1@ += 2        
+            end
+        end
+    
+    end
+            
+    else
+    
+    while true
+    wait 0
+    
+    if and
+    $SAVESTATUS == 0
+    $SAVING_PLACE_FLAG == 0
+    $NOTSPAWN == 0
+    $NOTSPAWN_ETC == 0
+    $SAVEPLACE_ON == 0
+    $BANDITS_PROCENT > 0.0
+    $ACTIVE_INTERIOR == 0
+        then
+        break
+        end
+        
+    if or
+    CAMP_RAID_FLAG_BANDITS == 1
+    $BANDITS1_SPAWN_FLAG == 1 
+        then
+        break
+        end
+    
+    end
+    
+    end
+    
+if or
+003B:   0@ == 1@  // (int)
+001D:   1@ > 0@  // (int)
+$BANDITS1_SPAWN_FLAG == 1
+CAMP_RAID_FLAG_BANDITS == 1
+    then
+    1@ = 0
+    break
+    end    
+    
+end
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+ZAME_HUENEMY_FLAG == 1
+then
+0089: 9@ = ZAME_HUENEMY_POS_X // (float)
+0089: 10@ = ZAME_HUENEMY_POS_Y // (float)
+0089: 11@ = ZAME_HUENEMY_POS_Z // (float)
+else
+gosub @BANDITS_SPAWN1_COORD_CHECK 
+end
+
+if
+$SAVESTATUS == 1
+then
+jump to @BANDITS_SPAWN1_START
+end
+
+0208: 30@ = random_float_in_ranges -2.0 2.0 
+005B: 9@ += 30@ // (float)
+0208: 30@ = random_float_in_ranges -2.0 2.0 
+005B: 10@ += 30@ // (float)
+
+11@ = -100.0
+
+$BANDITS_SPAWNED = 1
+FRACTIONS_SPAWNED_COUNT += 1 
+$BANDITS1_SPAWN_FLAG = 0
+$BANDITS1_EXIT_FLAG = 0
+$BANDITS1_SPOTTED_FLAG = 0 
+$BANDITS1_CHASE_FLAG = 0
+$BANDITS1_CHASE2_FLAG = 0  
+$BANDITS1_BIKE_FLAG = 0
+$BANDITS1_CAR_TARAN_FLAG = 0
+$BANDITS_RANDOM_SPEC_WEAPON_FLAG = 0
+BANDITS_CAR_DELETED_REFERENCES_FLAG = 0
+BANDITS_CAR2_DELETED_REFERENCES_FLAG = 0
+
+random_int $BANDITS1_BIKE_FLAG 0 to 2
+if or
+CAMP_RAID_FLAG_BANDITS == 1  
+ZAME_HUENEMY_FLAG == 1
+then
+$BANDITS1_BIKE_FLAG = 0
+end
+
+if
+UNITED_MAP == 0
+then
+else
+if
+STORIES_MAP == 0
+    then
+    if
+    $UNITED_VC_FLAG == 0
+        then
+        $BANDITS1_BIKE_FLAG = 0
+        end
+    end
+end
+
+gosub @BANDITS_SPAWN1_TRANSPORT_AND_PEDS_CREATE
+
+for 0@ = 1 to 4
+create_thread @PED_BKP $BANDIT[0@] 371
+if and
+not $PLAYER_BANDIT_SIDE == 1
+not $BANDITS_DONT_ATTACK_PLAYER_FLAG == 1
+    then
+    0770: set_actor $BANDIT[0@] target_priority 1
+    else
+    0568: set_actor $BANDIT[0@] untargetable 1
+    end
+end
+
+gosub @BANDITS_RANDOM_HP
+Actor.Health($BANDIT[1]) = 0@
+gosub @BANDITS_RANDOM_HP
+Actor.Health($BANDIT[2]) = 0@
+gosub @BANDITS_RANDOM_HP
+Actor.Health($BANDIT[3]) = 0@
+gosub @BANDITS_RANDOM_HP
+Actor.Health($BANDIT[4]) = 0@
+
+Actor.WeaponAccuracy($BANDIT[1]) = $BANDITS_ACCURACY
+Actor.WeaponAccuracy($BANDIT[2]) = $BANDITS_ACCURACY
+Actor.WeaponAccuracy($BANDIT[3]) = $BANDITS_ACCURACY 
+Actor.WeaponAccuracy($BANDIT[4]) = $BANDITS_ACCURACY
+
+081A: set_actor $BANDIT[1] weapon_skill_to FRA_WEAP_SKILL
+081A: set_actor $BANDIT[2] weapon_skill_to FRA_WEAP_SKILL
+081A: set_actor $BANDIT[3] weapon_skill_to FRA_WEAP_SKILL
+081A: set_actor $BANDIT[4] weapon_skill_to FRA_WEAP_SKILL
+ 
+0946: set_actor $BANDIT[1] actions_uninterupted_by_weapon_fire ACT_UTIRPD_WEP_FIRE 
+0946: set_actor $BANDIT[2] actions_uninterupted_by_weapon_fire ACT_UTIRPD_WEP_FIRE 
+0946: set_actor $BANDIT[3] actions_uninterupted_by_weapon_fire ACT_UTIRPD_WEP_FIRE 
+0946: set_actor $BANDIT[3] actions_uninterupted_by_weapon_fire ACT_UTIRPD_WEP_FIRE
+ 
+060B: set_actor $BANDIT[1] decision_maker_to $DEC_PEOPLE 
+060B: set_actor $BANDIT[2] decision_maker_to $DEC_PEOPLE 
+060B: set_actor $BANDIT[3] decision_maker_to $DEC_PEOPLE 
+060B: set_actor $BANDIT[4] decision_maker_to $DEC_PEOPLE
+
+0648: unknown_actor $BANDIT[1] task_set 100.0 // float
+0648: unknown_actor $BANDIT[2] task_set 100.0 // float
+0648: unknown_actor $BANDIT[3] task_set 100.0 // float
+0648: unknown_actor $BANDIT[4] task_set 100.0 // float
+
+09B5: set_actor $BANDIT[1] signal_after_kill 0
+09B5: set_actor $BANDIT[2] signal_after_kill 0
+09B5: set_actor $BANDIT[3] signal_after_kill 0
+09B5: set_actor $BANDIT[4] signal_after_kill 0
+ 
+0446: set_actor $BANDIT[1] dismemberment_possible 0 
+0446: set_actor $BANDIT[2] dismemberment_possible 0 
+0446: set_actor $BANDIT[3] dismemberment_possible 0 
+0446: set_actor $BANDIT[4] dismemberment_possible 0
+
+if or
+CAMP_RAID_FLAG_BANDITS == 1
+ZAME_HUENEMY_FLAG == 1 
+then
+08C6: set_actor $BANDIT[1] stay_on_bike 1
+08C6: set_actor $BANDIT[2] stay_on_bike 1
+08C6: set_actor $BANDIT[3] stay_on_bike 1
+08C6: set_actor $BANDIT[4] stay_on_bike 1
+
+for 5@ = 1 to 4
+
+if and
+0E4D: random_percent AMMO_DROP_FROM_RAIDS_CHANCE
+not $GAMEMODE_EDITOR == 1
+then
+//ass
+else
+087E: set_actor $BANDIT[5@] weapon_droppable 0
+end
+
+end
+
+end
+
+if
+UNITED_MAP == 0
+then  
+04D8: set_actor $BANDIT[1] drowns_in_water 0
+04D8: set_actor $BANDIT[2] drowns_in_water 0
+04D8: set_actor $BANDIT[3] drowns_in_water 0
+04D8: set_actor $BANDIT[4] drowns_in_water 0
+0A28: set_actor $BANDIT[1] swimming_speed_to 2.3
+0A28: set_actor $BANDIT[2] swimming_speed_to 2.3
+0A28: set_actor $BANDIT[3] swimming_speed_to 2.3
+0A28: set_actor $BANDIT[4] swimming_speed_to 2.3
+else
+04D8: set_actor $BANDIT[1] drowns_in_water 1
+04D8: set_actor $BANDIT[2] drowns_in_water 1
+04D8: set_actor $BANDIT[3] drowns_in_water 1
+04D8: set_actor $BANDIT[4] drowns_in_water 1
+end
+
+if and
+$GAMEMODE_WAR == 0
+not $DEFENSE_CHALLENGE_FLAG == 1
+then
+random_int 5@ $PEOPLE_MIN_MONEY $PEOPLE_MAX_MONEY  
+03FE: set_actor $BANDIT[1] money 5@ 
+random_int 5@ $PEOPLE_MIN_MONEY $PEOPLE_MAX_MONEY  
+03FE: set_actor $BANDIT[2] money 5@ 
+random_int 5@ $PEOPLE_MIN_MONEY $PEOPLE_MAX_MONEY  
+03FE: set_actor $BANDIT[3] money 5@ 
+random_int 5@ $PEOPLE_MIN_MONEY $PEOPLE_MAX_MONEY  
+03FE: set_actor $BANDIT[4] money 5@ 
+end
+
+Actor.SetWalkStyle($BANDIT[1], "surv5")
+Actor.SetWalkStyle($BANDIT[2], "surv5")
+Actor.SetWalkStyle($BANDIT[3], "surv5")
+Actor.SetWalkStyle($BANDIT[4], "surv5")
+
+29@ = 1 
+gosub @BANDITS_SPAWN1_WEAPON_CHECK 
+29@ = 2 
+gosub @BANDITS_SPAWN1_WEAPON_CHECK 
+29@ = 3 
+gosub @BANDITS_SPAWN1_WEAPON_CHECK 
+29@ = 4 
+gosub @BANDITS_SPAWN1_WEAPON_CHECK
+
+$BANDITS_THROW_MOLOTOV_TIMER = 0 
+$BANDITS_THROW_MOLOTOV_FLAG = 0
+
+gosub @BANDITS_RANDOM_THROW_TIME
+
+$BANDITS1_DEAD_FLAG = 0
+$BANDITS2_DEAD_FLAG = 0
+$BANDITS3_DEAD_FLAG = 0
+$BANDITS4_DEAD_FLAG = 0   
+
+for 0@ = 0 to 5
+$VAGINA3_FLAG[0@] = 0
+$VAGINA3_TIME[0@] = 0    
+$VAGINA3_ACCQ_FLAG[0@] = 0
+end
+
+$BANDITS_PAIN_TIMER = 0
+random_int $BANDITS_PAIN_TIMER2 BANDITS_PAIN_TIMER_MIN BANDITS_PAIN_TIMER_MAX
+$BANDITS_ATTACK_TIMER = 0
+random_int $BANDITS_ATTACK_TIMER2 BANDITS_ATTACK_TIMER_MIN BANDITS_ATTACK_TIMER_MAX
+$BANDITS_HUNTER_TIMER = 0
+random_int $BANDITS_HUNTER_TIMER2 BANDITS_HUNTER_TIMER_MIN BANDITS_HUNTER_TIMER_MAX
+
+$BANDITS_TANK_TIMER = 0
+random_int $BANDITS_TANK_TIMER2 BANDITS_TANK_TIMER_MIN BANDITS_TANK_TIMER_MAX  
+$BANDITS_HUNTER2_TIMER = 0
+random_int $BANDITS_HUNTER2_TIMER2 BANDITS_HUNTER2_TIMER_MIN BANDITS_HUNTER2_TIMER_MAX
+$BANDITS_WITCH_TIMER = 0
+random_int $BANDITS_WITCH_TIMER2 BANDITS_WITCH_TIMER_MIN BANDITS_WITCH_TIMER_MAX
+$BANDITS_CHARGER_TIMER = 0
+random_int $BANDITS_CHARGER_TIMER2 BANDITS_CHARGER_TIMER_MIN BANDITS_CHARGER_TIMER_MAX
+
+random_int 0@ 1 5
+
+33@ = 0
+
+////////////////////////////////////////////////Заставляем транспорт ехать////////////////////////////////////////////////
+
+if and
+CAMP_RAID_FLAG_BANDITS == 0
+not ZAME_HUENEMY_FLAG == 1
+not PODMOGA_BASE_FLAG == 2
+then
+car.SetMaxSpeed(BANDIT_CAR,50.0)  
+00AE: set_car BANDIT_CAR traffic_behaviour_to 2  
+03AB: set_car BANDIT_CAR strong 1 
+car.SetDriverBehaviour(BANDIT_CAR,1)
+car.SetSpeedInstantly(BANDIT_CAR,15.0)
+else
+
+if
+RAID_MISSION_CARREC_DRIVE_FLAG == 0   
+then
+car.SetMaxSpeed(BANDIT_CAR,50.0)  
+00AE: set_car BANDIT_CAR traffic_behaviour_to 2  
+03AB: set_car BANDIT_CAR strong 1                        
+
+if
+not ZAME_HUENEMY_FLAG == 1
+then
+0704: car BANDIT_CAR drive_to CAMP_RAID_DEST_X CAMP_RAID_DEST_Y CAMP_RAID_DEST_Z 
+else
+car.StorePos(BANDIT_CAR,$TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+050A: 30@ = distance_between_XYZ $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3 and_XYZ CAMP_RAID_DEST_X CAMP_RAID_DEST_Y CAMP_RAID_DEST_Z
+if
+8026:   RAID_CAR_PATH_ABADON_RADIUS < 30@  // (float)
+    then                          
+    0704: car BANDIT_CAR drive_to CAMP_RAID_DEST_X CAMP_RAID_DEST_Y CAMP_RAID_DEST_Z 
+    else
+    0704: car BANDIT_CAR drive_to CAMP_RAID_DEST_X CAMP_RAID_DEST_Y CAMP_RAID_DEST_Z
+    00AF: set_car BANDIT_CAR driver_behaviour_to 14
+    end
+end
+ 
+car.SetSpeedInstantly(BANDIT_CAR,15.0)
+
+if
+not PODMOGA_BASE_FLAG == 2
+then
+car.SetImmunities(BANDIT_CAR,1,0,0,0,0)
+end
+
+04E0: car BANDIT_CAR abandon_path_radius RAID_CAR_PATH_ABADON_RADIUS   
+end
+
+end 
+
+32@ = 0
+if
+CAMP_RAID_FLAG_BANDITS == 0
+then
+0209: 30@ = random_int_in_ranges 5000 10000
+else
+0209: 30@ = random_int_in_ranges 9099999 9999999
+end
+
+if
+$BANDITS1_BIKE_FLAG == 1
+then
+create_thread @ANTKUK2 $BANDIT[1] BANDIT_CAR 1
+create_thread @ANTKUK2 $BANDIT[2] BANDIT_CAR
+create_thread @ANTKUK2 $BANDIT[3] BANDIT_CAR2 1
+create_thread @ANTKUK2 $BANDIT[4] BANDIT_CAR2
+car.SetMaxSpeed(BANDIT_CAR2,50.0)  
+00AE: set_car BANDIT_CAR2 traffic_behaviour_to 2  
+03AB: set_car BANDIT_CAR2 strong 1 
+car.SetDriverBehaviour(BANDIT_CAR2,0)
+car.SetSpeedInstantly(BANDIT_CAR2,15.0)
+07F8: car BANDIT_CAR2 follow_car BANDIT_CAR radius 5.0
+
+if or
+CAMP_RAID_FLAG_BANDITS == 1
+ZAME_HUENEMY_FLAG == 1
+then
+car.SetImmunities(BANDIT_CAR2,1,0,0,0,0)
+04E0: car BANDIT_CAR2 abandon_path_radius RAID_CAR_PATH_ABADON_RADIUS
+end
+
+else
+
+0982: set_actor $BANDIT[1] stay_in_car_when_dead 0
+0982: set_actor $BANDIT[2] stay_in_car_when_dead 1
+0982: set_actor $BANDIT[3] stay_in_car_when_dead 1
+0982: set_actor $BANDIT[4] stay_in_car_when_dead 1
+
+end
+
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "BANDITS_SPAWNED"
+
+while true
+wait 0
+
+////////////////////////////////////////////////Прибавляем значение к таймерам////////////////////////////////////////////////
+
+if
+not $GAME_SPEED == 0.0
+then
+$BANDITS_THROW_MOLOTOV_TIMER += 1 
+$BANDITS_PAIN_TIMER += 1
+$BANDITS_ATTACK_TIMER += 1
+$BANDITS_TANK_TIMER += 1
+$BANDITS_HUNTER_TIMER += 1
+$BANDITS_HUNTER2_TIMER += 1
+$BANDITS_WITCH_TIMER += 1
+
+if
+$WTH_AGRED_FLAG[$SPECLS_NUM] == 1
+then
+$BANDITS_WITCH_TIMER += 50
+end
+
+$BANDITS_CHARGER_TIMER += 1
+end    
+
+////////////////////////////////////////////////Страховочка (само по себе такое никогда не произойдет)////////////////////////////////////////////////
+
+if and
+056D:   actor $BANDIT[1] defined
+056D:   actor $BANDIT[2] defined
+056D:   actor $BANDIT[3] defined
+056D:   actor $BANDIT[4] defined
+    then
+    else
+    :BANDITS_NOT_DEFINED
+    
+    0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "BANDITS_SPAWNED"
+    
+    $BANDITS1_CHASE_FLAG = 0
+    $BANDITS_SPAWNED = 0
+    $BANDITS1_SPOTTED_FLAG = 0
+    FRACTIONS_SPAWNED_COUNT -= 1            
+    
+    if
+    056D:   actor $BANDIT[1] defined
+    then
+    actor.DestroyWithFade($BANDIT[1])
+    $BANDIT[1] = -69  
+    end
+    
+    if
+    056D:   actor $BANDIT[2] defined
+    then
+    actor.DestroyWithFade($BANDIT[2])
+    $BANDIT[2] = -69  
+    end
+    
+    if
+    056D:   actor $BANDIT[3] defined
+    then
+    actor.DestroyWithFade($BANDIT[3])
+    $BANDIT[3] = -69  
+    end
+    
+    if
+    056D:   actor $BANDIT[4] defined
+    then
+    actor.DestroyWithFade($BANDIT[4])
+    $BANDIT[4] = -69  
+    end        
+    
+    if
+    056E:   car BANDIT_CAR defined
+    then
+    
+    if
+    not actor.InCar(PLAYER_ACTOR,BANDIT_CAR)
+    then
+    car.Destroy(BANDIT_CAR)
+    end    
+    
+    end    
+    
+    if
+    056E:   car BANDIT_CAR2 defined
+    then
+    
+    if
+    not actor.InCar(PLAYER_ACTOR,BANDIT_CAR2)
+    then
+    car.Destroy(BANDIT_CAR2)
+    end    
+    
+    end
+    
+    if and
+    ZAME_HUENEMY_FLAG == 1
+    ZAME_HUENEMY_TYPE == 1
+    then
+    ZAME_HUENEMY_FLAG = 2
+    end_thread
+    end
+    
+    if
+    PODMOGA_BASE_FLAG == 2
+    then
+    PODMOGA_BASE_FLAG = 0
+    end
+    
+    if
+    $GAMEMODE_EDITOR == 1
+    then
+    end_thread
+    end
+    
+    jump @BANDITS_SPAWN1_START    
+    
+    end
+
+////////////////////////////////////////////////Осуществляем проверку на смерть и выполняем AI код////////////////////////////////////////////////
+
+gosub @BANDITS_DEAD_CHECK
+gosub @BANDITS_AI_CHECK
+
+////////////////////////////////////////////////Проверка на то, что все военные мертвы////////////////////////////////////////////////
+
+if and       
+8184:   actor $BANDIT[1] health < 1
+8184:   actor $BANDIT[2] health < 1
+8184:   actor $BANDIT[3] health < 1
+8184:   actor $BANDIT[4] health < 1
+    then        
+    :BANDITS_SPAWN_DEAD    
+    wait 500
+    
+    0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "BANDITS_SPAWNED"
+    
+    gosub @BANDITS_DEAD_CHECK
+    
+    if
+    056E:   car BANDIT_CAR defined
+    then   
+    
+    if
+    not actor.InCar(PLAYER_ACTOR,BANDIT_CAR)
+    then
+    car.RemoveReferences(BANDIT_CAR)
+    if
+    056E:   car BANDIT_CAR defined
+        then
+        wait 0
+        if
+        056E:   car BANDIT_CAR defined
+            then
+            00A9: set_car BANDIT_CAR to_normal_driver
+            end
+        end
+    
+    end        
+    
+    end
+        
+    if
+    056E:   car BANDIT_CAR2 defined
+    then   
+    
+    if
+    not actor.InCar(PLAYER_ACTOR,BANDIT_CAR2)
+    then
+    car.RemoveReferences(BANDIT_CAR2)
+    if
+    056E:   car BANDIT_CAR2 defined
+        then
+        wait 0
+        if
+        056E:   car BANDIT_CAR2 defined
+            then
+            00A9: set_car BANDIT_CAR2 to_normal_driver
+            end
+        end
+    
+    end        
+    
+    end
+    
+    Actor.RemoveReferences($BANDIT[1])
+    Actor.RemoveReferences($BANDIT[2])
+    Actor.RemoveReferences($BANDIT[3])
+    Actor.RemoveReferences($BANDIT[4])
+    $BANDIT[1] = -69
+    $BANDIT[2] = -69
+    $BANDIT[3] = -69
+    $BANDIT[4] = -69  
+    $BANDITS1_CHASE_FLAG = 0 
+    $BANDITS_SPAWNED = 0
+    $BANDITS1_SPOTTED_FLAG = 0
+    FRACTIONS_SPAWNED_COUNT -= 1
+    
+    if and
+    ZAME_HUENEMY_FLAG == 1
+    ZAME_HUENEMY_TYPE == 1
+    then
+    ZAME_HUENEMY_FLAG = 2
+    end_thread
+    end
+    
+    if
+    PODMOGA_BASE_FLAG == 2
+    then
+    PODMOGA_BASE_FLAG = 0
+    end
+    
+    if
+    $GAMEMODE_EDITOR == 1
+    then
+    end_thread
+    end
+      
+    jump @BANDITS_SPAWN1_START        
+    end
+    
+////////////////////////////////////////////////Проверка на удаление военных////////////////////////////////////////////////
+
+if and
+$RADIO_HELP_FLAG == 0
+$SAVESTATUS == 0
+RAID_DELETE_BANDITS_FLAG == 0 
+then
+else
+jump to @BANDITS_SPAWN1_DELETE1
+end
+
+if or
+00F2:   actor $BANDIT[1] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+00F2:   actor $BANDIT[2] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+00F2:   actor $BANDIT[3] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+00F2:   actor $BANDIT[4] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0
+not $ACTIVE_INTERIOR == 0
+$INT_ENTERING_FLAG == 1
+CAMP_RAID_FLAG_BANDITS == 1
+ZAME_HUENEMY_FLAG == 1 
+    then
+    else    
+    :BANDITS_SPAWN1_DELETE1
+    RAID_DELETE_BANDITS_FLAG = 0
+    
+    0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "BANDITS_SPAWNED"
+    
+    if
+    $BANDITS1_EXIT_FLAG == 1
+    then
+    actor.DestroyWithFade($BANDIT[1])
+    actor.DestroyWithFade($BANDIT[2])
+    actor.DestroyWithFade($BANDIT[3])
+    actor.DestroyWithFade($BANDIT[4]) 
+    else
+    actor.DestroyInstantly($BANDIT[1])
+    actor.DestroyInstantly($BANDIT[2])
+    actor.DestroyInstantly($BANDIT[3])
+    actor.DestroyInstantly($BANDIT[4]) 
+    end
+        
+    if
+    056E:   car BANDIT_CAR defined
+    then   
+    
+    if
+    not actor.InCar(PLAYER_ACTOR,BANDIT_CAR)
+    then
+    car.Destroy(BANDIT_CAR)
+    end    
+    
+    end
+        
+    if
+    056E:   car BANDIT_CAR2 defined
+    then   
+    
+    if
+    not actor.InCar(PLAYER_ACTOR,BANDIT_CAR2)
+    then
+    car.Destroy(BANDIT_CAR2)
+    end    
+    
+    end
+                 
+    0AF0: 2@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_CHASE_COUNT"        
+            
+    if and
+    $CHEATED_FLAG == 0
+    $BANDITS1_CHASE_FLAG == 1
+    $GAMEMODE_WAR == 0 
+    then               
+    2@ += 1
+    end
+    $STATS_CHASE_COUNT += 1                      
+             
+    0AF1: write_int 2@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_CHASE_COUNT"
+    
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT8_GOT"
+        
+        if and
+        1@ == 0
+        2@ >= 30
+        $CHEATED_FLAG == 0
+            then
+            v$ACHIEVEMNT = "ACH8"
+            $ACHIEVEMENT_GOT_FLAG = 1        
+            0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT8_GOT"        
+            end                      
+    
+    Actor.RemoveReferences($BANDIT[1])
+    Actor.RemoveReferences($BANDIT[2])
+    Actor.RemoveReferences($BANDIT[3])
+    Actor.RemoveReferences($BANDIT[4])
+    $BANDIT[1] = -69
+    $BANDIT[2] = -69
+    $BANDIT[3] = -69
+    $BANDIT[4] = -69 
+    $BANDITS1_CHASE_FLAG = 0 
+    $BANDITS_SPAWNED = 0
+    $BANDITS1_SPOTTED_FLAG = 0
+    FRACTIONS_SPAWNED_COUNT -= 1
+    
+    if and
+    ZAME_HUENEMY_FLAG == 1
+    ZAME_HUENEMY_TYPE == 1
+    then
+    ZAME_HUENEMY_FLAG = 2
+    end_thread
+    end 
+    
+    if
+    $GAMEMODE_EDITOR == 1
+    then
+    end_thread
+    end   
+              
+    jump @BANDITS_SPAWN1_START    
+    end
+    
+////////////////////////////////////////////////Заставляем военных перелезать препятствия////////////////////////////////////////////////    
+    
+random_int 0@ 1 5
+if and
+056D:   actor $BANDIT[0@] defined
+CAMP_RAID_FLAG_BANDITS == 0
+    then
+    if and
+    0184:   actor $BANDIT[0@] health > 0
+    874F: not  actor $BANDIT[0@] ped_event == 33  
+    8818: not  actor $BANDIT[0@] in_air 
+    33@ > 2000
+        then    
+        if and
+        not actor.Animation($BANDIT[0@]) == "CLIMB_idle"
+        not actor.Animation($BANDIT[0@]) == "CLIMB_jump"
+        not actor.Animation($BANDIT[0@]) == "CLIMB_jump2fall"
+        not actor.Animation($BANDIT[0@]) == "CLIMB_jump_B"
+        not actor.Animation($BANDIT[0@]) == "CLIMB_Pull" 
+        not actor.Animation($BANDIT[0@]) == "CLIMB_Stand"
+        not actor.Animation($BANDIT[0@]) == "CLIMB_Stand_finish"             
+            then
+            if or
+            actor.Animation($BANDIT[0@]) == "run_civi"  
+            actor.Animation($BANDIT[0@]) == "sprint_civi"   
+            actor.Animation($BANDIT[0@]) == "swat_run"
+            actor.Animation($BANDIT[0@]) == "Swim_Breast"
+            actor.Animation($BANDIT[0@]) == "Swim_Tread"
+            actor.Animation($BANDIT[0@]) == "Swim_Under"     
+                then    
+                actor.StorePos($BANDIT[0@], 3@, 4@, 5@) 
+                04C4: store_coords_to 27@ 28@ 29@ from_actor $BANDIT[0@] with_offset 0.0 3.0 0.3                                 
+                if                         
+                86BD: not no_obstacles_between 27@ 28@ 29@ and 3@ 4@ 5@ solid 1 car 0 actor 0 object 1 particle 0   
+                    then    
+                    33@ = 0  
+                    0687: clear_actor $BANDIT[0@] task
+                    wait 100                                                                                                                                                   
+                    078F: AS_actor $BANDIT[0@] climb 1                                                                           
+                    end
+                end                                            
+            end 
+        end
+    end
+    
+////////////////////////////////////////////////Заставляем военных орать при стрельбе////////////////////////////////////////////////    
+    
+for 3@ = 1 to 5   
+
+if 
+056D:   actor $BANDIT[3@] defined
+    then
+    if
+    02E0:   actor $BANDIT[3@] firing_weapon
+        then
+        05C1: AS_actor $BANDIT[3@] speak_from_audio_table $BANDITS_ATTACK_AUDIO_TABLE
+        end
+    end
+            
+end
+
+////////////////////////////////////////////////Голос получения урона от союзников////////////////////////////////////////////////
+
+if
+001C:   $BANDITS_PAIN_TIMER > $BANDITS_PAIN_TIMER2 // (int)
+then
+random_int 3@ 1 5
+if 
+056D:   actor $BANDIT[3@] defined
+    then
+    if or
+    $PLAYER_BANDITS_SIDE == 1
+    $BANDITS_DONT_ATTACK_PLAYER_FLAG == 1     
+        then
+        if and        
+        not actor.Dead($BANDIT[3@])
+        0104:   actor $BANDIT[3@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+        $SPECTATING_FLAG == 0
+        $SCREWHUD_FLAG == 0
+        $PHRASES_OFF_FLAG == 0
+        051A:   actor $BANDIT[3@] damaged_by_actor PLAYER_ACTOR
+            then           
+        
+            2@ = 0
+            1@ = 0                                     
+
+            if or
+            031D:   actor $BANDIT[3@] hit_by_weapon 0
+            031D:   actor $BANDIT[3@] hit_by_weapon 46
+            then
+            0467: clear_actor $BANDIT[3@] last_weapon_damage
+            054E: clear_actor $BANDIT[3@] damage
+            2@ = 1
+            1@ = 1            
+            else
+            0467: clear_actor $BANDIT[3@] last_weapon_damage
+            054E: clear_actor $BANDIT[3@] damage
+            2@ = 1
+            1@ = 0
+            end
+            
+            if
+            2@ == 1
+            then
+            
+            $BANDITS_PAIN_TIMER = 0
+            random_int $BANDITS_PAIN_TIMER2 BANDITS_PAIN_TIMER_MIN BANDITS_PAIN_TIMER_MAX            
+            
+            if
+            1@ == 0
+            then
+            gosub @RANDOM_DIALOG_DAMAGED_BY_WEAPON_BANDITS_FRIENDLY  
+            else
+            gosub @RANDOM_DIALOG_DAMAGED_BY_ZOMBIES_BANDITS_FRIENDLY  
+            end 
+        
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer
+            text.ClearAll()  
+                
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+            end            
+    
+            end
+        end
+    end
+end  
+
+////////////////////////////////////////////////Голос получения урона от врагов////////////////////////////////////////////////
+
+if
+001C:   $BANDITS_PAIN_TIMER > $BANDITS_PAIN_TIMER2 // (int)
+then
+random_int 3@ 1 5
+if
+056D:   actor $BANDIT[3@] defined
+    then
+    if and    
+    not actor.Dead($BANDIT[3@])
+    0104:   actor $BANDIT[3@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0
+        then
+        
+        if or
+        $PLAYER_BANDITS_SIDE == 1
+        $BANDITS_DONT_ATTACK_PLAYER_FLAG == 1
+        then
+        
+        if
+        051A:   actor $BANDIT[3@] damaged_by_actor PLAYER_ACTOR 
+        then
+        jump to @ASS22
+        end
+        
+        end
+        
+        2@ = 0
+        1@ = 0
+        
+        ///////////////////////
+        
+        for 0@ = 22 to 34
+        
+        if
+        031D:   actor $BANDIT[3@] hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor $BANDIT[3@] last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 70 to MAX_WEAPON_NUM_NORMAL
+        
+        if
+        031D:   actor $BANDIT[3@] hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor $BANDIT[3@] last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 111 to 121
+        
+        if
+        031D:   actor $BANDIT[3@] hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor $BANDIT[3@] last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 136 to 151
+        
+        if
+        031D:   actor $BANDIT[3@] hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor $BANDIT[3@] last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 165 to 183
+        
+        if
+        031D:   actor $BANDIT[3@] hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor $BANDIT[3@] last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 195 to 213
+        
+        if
+        031D:   actor $BANDIT[3@] hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor $BANDIT[3@] last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////        
+        
+        if and
+        031D:   actor $BANDIT[3@] hit_by_weapon 0
+        851A: not  actor $BANDIT[3@] damaged_by_actor PLAYER_ACTOR
+        then
+        
+        2@ = 1
+        1@ = 1
+        0467: clear_actor $BANDIT[3@] last_weapon_damage
+        end
+        
+        if
+        2@ == 1
+        then
+        
+        $BANDITS_PAIN_TIMER = 0
+        random_int $BANDITS_PAIN_TIMER2 BANDITS_PAIN_TIMER_MIN BANDITS_PAIN_TIMER_MAX
+        
+        if
+        1@ == 0
+        then
+        gosub @RANDOM_DIALOG_DAMAGED_BY_WEAPON_BANDITS  
+        else
+        gosub @RANDOM_DIALOG_DAMAGED_BY_ZOMBIES_BANDITS  
+        end 
+    
+        09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+        0093: 3@ = integer 3@ to_float
+        3@ *= 8.0
+        0092: 3@ = float 3@ to_integer
+        text.ClearAll()  
+            
+        00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+        end            
+
+        end
+    end
+end
+    
+//////////////////////////////////////////////////////////////////////////////////////////////////      
+    
+:ASS22     
+
+if
+001C:   $BANDITS_ATTACK_TIMER > $BANDITS_ATTACK_TIMER2 // (int)
+then    
+random_int 3@ 1 5
+if 
+056D:   actor $BANDIT[3@] defined
+    then
+    if and    
+    not actor.Dead($BANDIT[3@])
+    0104:   actor $BANDIT[3@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0
+    02E0:   actor $BANDIT[3@] firing_weapon
+        then
+        
+        $BANDITS_ATTACK_TIMER = 0
+        random_int $BANDITS_ATTACK_TIMER2 BANDITS_ATTACK_TIMER_MIN BANDITS_ATTACK_TIMER_MAX
+                
+        gosub @RANDOM_DIALOG_ATTACK_BANDITS       
+    
+        09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+        0093: 3@ = integer 3@ to_float
+        3@ *= 8.0
+        0092: 3@ = float 3@ to_integer
+        text.ClearAll()  
+            
+        00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+        end            
+    end
+end     
+
+////////////////////////////////////////////////Голос про охотника////////////////////////////////////////////////      
+
+if
+001C:   $BANDITS_HUNTER_TIMER > $BANDITS_HUNTER_TIMER2 // (int)
+then
+random_int 3@ 1 5
+if 
+056D:   actor $BANDIT[3@] defined
+    then
+    04DD: 0@ = actor $BANDIT[3@] armour
+    if and    
+    not actor.Dead($BANDIT[3@])
+    0104:   actor $BANDIT[3@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0
+    0@ == 1
+        then
+        
+        $BANDITS_HUNTER_TIMER = 0
+        random_int $BANDITS_HUNTER_TIMER2 BANDITS_HUNTER_TIMER_MIN BANDITS_HUNTER_TIMER_MAX
+                
+        gosub @RANDOM_DIALOG_HUNTER2_BANDITS               
+                    
+        09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+        0093: 3@ = integer 3@ to_float
+        3@ *= 8.0
+        0092: 3@ = float 3@ to_integer  
+                    
+        00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.  
+        end            
+    end
+end          
+
+////////////////////////////////////////////////Голос про танка////////////////////////////////////////////////      
+
+if
+001C:   $BANDITS_TANK_TIMER > $BANDITS_TANK_TIMER2 // (int)
+then
+random_int 3@ 1 5
+if and
+056D:   actor $BANDIT[3@] defined  
+056D:   actor $TANK[$SPECLS_NUM] defined  
+    then
+    if and    
+    not actor.Dead($BANDIT[3@])
+    not actor.Dead($TANK[$SPECLS_NUM])
+    0104:   actor $BANDIT[3@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0  
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0
+    0104:   actor $TANK[$SPECLS_NUM] near_actor $BANDIT[3@] radius 100.0 100.0 100.0 0      
+        then
+        if or
+        0364:   actor $BANDIT[3@] spotted_actor $TANK[$SPECLS_NUM]   
+        0364:   actor $TANK[$SPECLS_NUM] spotted_actor $BANDIT[3@]
+            then
+        
+            $BANDITS_TANK_TIMER = 0
+            random_int $BANDITS_TANK_TIMER2 BANDITS_TANK_TIMER_MIN BANDITS_TANK_TIMER_MAX 
+                    
+            gosub @RANDOM_DIALOG_TANK_NEAR_BANDITS                       
+                        
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer  
+                        
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+            end        
+         end    
+     end
+end   
+     
+////////////////////////////////////////////////Голос про охотника////////////////////////////////////////////////  
+
+if
+001C:   $BANDITS_HUNTER2_TIMER > $BANDITS_HUNTER2_TIMER2 // (int)
+then
+random_int 3@ 1 5    
+if and
+056D:   actor $BANDIT[3@] defined  
+056D:   actor $HUNTER[$SPECLS_NUM] defined  
+    then
+    if and    
+    not actor.Dead($BANDIT[3@])
+    not actor.Dead($HUNTER[$SPECLS_NUM])
+    0104:   actor $BANDIT[3@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0  
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0
+    0104:   actor $HUNTER[$SPECLS_NUM] near_actor $BANDIT[3@] radius 100.0 100.0 100.0 0      
+        then
+        if or
+        0364:   actor $BANDIT[3@] spotted_actor $HUNTER[$SPECLS_NUM]   
+        0364:   actor $HUNTER[$SPECLS_NUM] spotted_actor $BANDIT[3@]
+            then
+        
+            $BANDITS_HUNTER2_TIMER = 0
+            random_int $BANDITS_HUNTER2_TIMER2 BANDITS_HUNTER2_TIMER_MIN BANDITS_HUNTER2_TIMER_MAX
+                    
+            gosub @RANDOM_DIALOG_HUNTER_NEAR_BANDITS               
+                                
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer  
+                        
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+            end        
+         end    
+     end
+end                
+     
+////////////////////////////////////////////////Голос про ведьму////////////////////////////////////////////////      
+
+if
+001C:   $BANDITS_WITCH_TIMER > $BANDITS_WITCH_TIMER2 // (int)
+then
+random_int 3@ 1 5
+if and
+056D:   actor $BANDIT[3@] defined  
+056D:   actor $WITCH[$SPECLS_NUM] defined  
+    then
+    if and    
+    not actor.Dead($BANDIT[3@])
+    not actor.Dead($WITCH[$SPECLS_NUM])
+    0104:   actor $BANDIT[3@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0  
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0
+    0104:   actor $WITCH[$SPECLS_NUM] near_actor $BANDIT[3@] radius 100.0 100.0 100.0 0      
+        then
+        if or
+        0364:   actor $BANDIT[3@] spotted_actor $WITCH[$SPECLS_NUM]   
+        0364:   actor $WITCH[$SPECLS_NUM] spotted_actor $BANDIT[3@]
+            then
+        
+            $BANDITS_WITCH_TIMER = 0
+            random_int $BANDITS_WITCH_TIMER2 BANDITS_WITCH_TIMER_MIN BANDITS_WITCH_TIMER_MAX
+                    
+            gosub @RANDOM_DIALOG_WITCH_NEAR_BANDITS       
+                                        
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer  
+                        
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+            end        
+         end    
+     end
+end               
+     
+////////////////////////////////////////////////Голос про громилу////////////////////////////////////////////////      
+
+if
+001C:   $BANDITS_CHARGER_TIMER > $BANDITS_CHARGER_TIMER2 // (int)
+then
+random_int 3@ 1 5
+if and
+056D:   actor $BANDIT[3@] defined  
+056D:   actor $CHARGER[$SPECLS_NUM] defined  
+    then
+    if and    
+    not actor.Dead($BANDIT[3@])
+    not actor.Dead($CHARGER[$SPECLS_NUM])
+    0104:   actor $BANDIT[3@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0  
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0
+    0104:   actor $CHARGER[$SPECLS_NUM] near_actor $BANDIT[3@] radius 100.0 100.0 100.0 0      
+        then
+        if or
+        0364:   actor $BANDIT[3@] spotted_actor $CHARGER[$SPECLS_NUM]   
+        0364:   actor $CHARGER[$SPECLS_NUM] spotted_actor $BANDIT[3@]
+            then
+        
+            $BANDITS_CHARGER_TIMER = 0
+            random_int $BANDITS_CHARGER_TIMER2 BANDITS_CHARGER_TIMER_MIN BANDITS_CHARGER_TIMER_MAX
+                    
+            gosub @RANDOM_DIALOG_CHARGER_NEAR_BANDITS                       
+                        
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer  
+                        
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00. 
+            end        
+         end    
+     end
+end
+
+////////////////////////////////////////////////Голос про хазмата////////////////////////////////////////////////      
+
+if
+not HAZMAT_HANDLE == -69
+then
+0209: 0@ = random_int_in_ranges HAZMAT_PHRASE_MIN HAZMAT_PHRASE_MAX
+if
+0@ == HAZMAT_PHRASE_SET
+    then
+    random_int 3@ 1 5
+    if and
+    056D:   actor $BANDIT[3@] defined  
+    056D:   actor HAZMAT_HANDLE defined  
+        then
+        if and
+        not actor.Dead($BANDIT[3@])
+        not actor.Dead(HAZMAT_HANDLE)
+        0104:   actor $BANDIT[3@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0  
+        $SPECTATING_FLAG == 0
+        $SCREWHUD_FLAG == 0
+        $PHRASES_OFF_FLAG == 0
+        0104:   actor HAZMAT_HANDLE near_actor $BANDIT[3@] radius 100.0 100.0 100.0 0      
+            then
+            if or
+            0364:   actor $BANDIT[3@] spotted_actor HAZMAT_HANDLE   
+            0364:   actor HAZMAT_HANDLE spotted_actor $BANDIT[3@]
+                then
+                               
+                gosub @RANDOM_DIALOG_HAZMAT_NEAR_BANDITS       
+                                            
+                09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+                0093: 3@ = integer 3@ to_float
+                3@ *= 8.0
+                0092: 3@ = float 3@ to_integer  
+                            
+                00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+                end        
+             end    
+         end
+    end
+end                                                         
+
+////////////////////////////////////////////////Заставляем военных кидать гранаты////////////////////////////////////////////////                   
+
+if and
+001C:   $BANDITS_THROW_MOLOTOV_TIMER > $BANDITS_THROW_TIME2 // (int)
+$BANDITS_THROW_MOLOTOV_FLAG == 0
+    then
+    random_int $BANDITS_THROW_MOLOTOV_ACTOR 1 5    
+    if and
+    not actor.Dead($BANDIT[$BANDITS_THROW_MOLOTOV_ACTOR])   
+    not actor.Driving($BANDIT[$BANDITS_THROW_MOLOTOV_ACTOR])
+    82D8: not  actor $BANDIT[$BANDITS_THROW_MOLOTOV_ACTOR] current_weapon == 34
+    82D8: not  actor $BANDIT[$BANDITS_THROW_MOLOTOV_ACTOR] current_weapon == 120
+    82D8: not  actor $BANDIT[$BANDITS_THROW_MOLOTOV_ACTOR] current_weapon == 146
+    82D8: not  actor $BANDIT[$BANDITS_THROW_MOLOTOV_ACTOR] current_weapon == 175
+    82D8: not  actor $BANDIT[$BANDITS_THROW_MOLOTOV_ACTOR] current_weapon == 205 
+        then    
+        0470: $BANDITS_THROW_PREV_WEAP = actor $BANDIT[$BANDITS_THROW_MOLOTOV_ACTOR] current_weapon
+        
+        random_int 3@ 0 2        
+        
+        if
+        3@ == 0
+        then
+
+        ///////////////////////////////////////////////////////////////
+
+        if
+        UNITED_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 18 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($BANDIT[$BANDITS_THROW_MOLOTOV_ACTOR],18,1)
+        else
+        
+        if
+        $UNITED_VC_FLAG == 1
+        then
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 134 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($BANDIT[$BANDITS_THROW_MOLOTOV_ACTOR],134,1)
+        else
+        
+        0781: get_weapon_with_ID 209 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($BANDIT[$BANDITS_THROW_MOLOTOV_ACTOR],209,1)
+        end
+        
+        else
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 118 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($BANDIT[$BANDITS_THROW_MOLOTOV_ACTOR],118,1)
+        else
+        
+        0781: get_weapon_with_ID 179 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($BANDIT[$BANDITS_THROW_MOLOTOV_ACTOR],179,1)
+        end
+        
+        end
+        
+        end
+        
+        else
+
+        if
+        UNITED_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 16 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($BANDIT[$BANDITS_THROW_MOLOTOV_ACTOR],16,1)
+        else
+        
+        if
+        $UNITED_VC_FLAG == 1
+        then
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 132 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($BANDIT[$BANDITS_THROW_MOLOTOV_ACTOR],132,1)
+        else
+        
+        0781: get_weapon_with_ID 207 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($BANDIT[$BANDITS_THROW_MOLOTOV_ACTOR],207,1)
+        end
+        
+        else
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 115 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($BANDIT[$BANDITS_THROW_MOLOTOV_ACTOR],115,1)
+        else
+        
+        0781: get_weapon_with_ID 177 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($BANDIT[$BANDITS_THROW_MOLOTOV_ACTOR],177,1)
+        end
+        
+        end
+        
+        end
+        
+        ///////////////////////////////////////////////////////////////
+
+        end   
+        
+        $BANDITS_THROW_MOLOTOV_FLAG = 1
+        end
+    end
+    
+////////////////////////////////////////////////Проверка того, что военный кинул гранату////////////////////////////////////////////////    
+    
+if
+$BANDITS_THROW_MOLOTOV_FLAG == 1
+    then
+    if
+    not actor.Dead($BANDIT[$BANDITS_THROW_MOLOTOV_ACTOR])
+        then
+        if
+        actor.Animation($BANDIT[$BANDITS_THROW_MOLOTOV_ACTOR]) == "WEAPON_throw"   
+            then
+            
+            if and
+            0104:   actor $BANDIT[$BANDITS_THROW_MOLOTOV_ACTOR] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+            $SPECTATING_FLAG == 0
+            $SCREWHUD_FLAG == 0
+            $PHRASES_OFF_FLAG == 0
+            then
+            
+            gosub @RANDOM_DIALOG_GRENADE_BANDITS  
+            
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer
+            text.ClearAll()  
+                
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+            
+            end
+            
+            actor.SetImmunities($BANDIT[1],0,1,1,0,0)           
+            actor.SetImmunities($BANDIT[2],0,1,1,0,0) 
+            actor.SetImmunities($BANDIT[3],0,1,1,0,0) 
+            actor.SetImmunities($BANDIT[4],0,1,1,0,0) 
+            
+            $BANDITS_THROW_MOLOTOV_TIMER = 0   
+            
+            gosub @BANDITS_RANDOM_THROW_TIME
+                     
+            $BANDITS_THROW_MOLOTOV_FLAG = 0
+            
+            while actor.Animation($BANDIT[$BANDITS_THROW_MOLOTOV_ACTOR]) == "WEAPON_throw"    
+            wait 0
+            gosub @BANDITS_DEAD_CHECK
+            gosub @BANDITS_AI_CHECK     
+            
+            random_int 0@ 0 5
+            random_int 8@ 1 5    
+                
+            gosub @BANDITS1_ATTACK_PEOPLE1     
+            
+            if or
+            00F2:   actor $BANDIT[1] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+            00F2:   actor $BANDIT[2] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+            00F2:   actor $BANDIT[3] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+            00F2:   actor $BANDIT[4] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0
+            not $ACTIVE_INTERIOR == 0
+            $INT_ENTERING_FLAG == 1
+            CAMP_RAID_FLAG_BANDITS == 1 
+            ZAME_HUENEMY_FLAG == 1
+            jf @BANDITS_SPAWN1_DELETE1  
+            if and
+            $SAVESTATUS == 0
+            RAID_DELETE_BANDITS_FLAG == 0
+            jf @BANDITS_SPAWN1_DELETE1 
+            if or
+            not Actor.Dead($BANDIT[1])
+            not Actor.Dead($BANDIT[2])
+            not Actor.Dead($BANDIT[3])
+            not Actor.Dead($BANDIT[4])
+            jf @BANDITS_SPAWN_DEAD 
+            end
+            
+            01B9: set_actor $BANDIT[$BANDITS_THROW_MOLOTOV_ACTOR] armed_weapon_to $BANDITS_THROW_PREV_WEAP 
+            
+            32@ = 0
+            :BANDITS_THROW_IDLE
+            wait 0
+            gosub @BANDITS_DEAD_CHECK   
+            gosub @BANDITS_AI_CHECK  
+            
+            random_int 0@ 0 5
+            random_int 8@ 1 5    
+                
+            gosub @BANDITS1_ATTACK_PEOPLE1     
+            
+            if or
+            00F2:   actor $BANDIT[1] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+            00F2:   actor $BANDIT[2] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+            00F2:   actor $BANDIT[3] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0 
+            00F2:   actor $BANDIT[4] near_actor PLAYER_ACTOR radius $RADIUS_DESPAWN_FRACTIONS $RADIUS_DESPAWN_FRACTIONS 0
+            not $ACTIVE_INTERIOR == 0
+            $INT_ENTERING_FLAG == 1
+            CAMP_RAID_FLAG_BANDITS == 1 
+            ZAME_HUENEMY_FLAG == 1
+            jf @BANDITS_SPAWN1_DELETE1  
+            if and
+            $SAVESTATUS == 0
+            RAID_DELETE_BANDITS_FLAG == 0
+            jf @BANDITS_SPAWN1_DELETE1 
+            if or
+            not Actor.Dead($BANDIT[1])
+            not Actor.Dead($BANDIT[2])
+            not Actor.Dead($BANDIT[3])
+            not Actor.Dead($BANDIT[4])
+            jf @BANDITS_SPAWN_DEAD 
+            if
+            32@ > 1999
+            jf @BANDITS_THROW_IDLE 
+            
+            actor.SetImmunities($BANDIT[1],0,0,0,0,0) 
+            actor.SetImmunities($BANDIT[2],0,0,0,0,0) 
+            actor.SetImmunities($BANDIT[3],0,0,0,0,0) 
+            actor.SetImmunities($BANDIT[4],0,0,0,0,0)       
+            
+            end
+        else
+        $BANDITS_THROW_MOLOTOV_TIMER = 0            
+        $BANDITS_THROW_MOLOTOV_FLAG = 0
+        gosub @BANDITS_RANDOM_THROW_TIME
+        end
+    end    
+    
+////////////////////////////////Заставляем союзников стрелять по военным////////////////////////////////    
+    
+random_int 0@ 0 5
+random_int 8@ 1 5        
+gosub @BANDITS1_ATTACK_PEOPLE1
+
+////////////////////////////////Замораживаем транспорт если игрок зашел в интерьер////////////////////////////////
+
+if
+056E:   car BANDIT_CAR defined
+    then    
+    if
+    $ACTIVE_INTERIOR == 0
+        then
+        car.LockInCurrentPosition(BANDIT_CAR,false)
+        else
+        car.LockInCurrentPosition(BANDIT_CAR,true)
+        end    
+    end
+        
+if
+056E:   car BANDIT_CAR2 defined
+    then    
+    if
+    $ACTIVE_INTERIOR == 0
+        then
+        car.LockInCurrentPosition(BANDIT_CAR2,false)
+        else
+        car.LockInCurrentPosition(BANDIT_CAR2,true)
+        end    
+    end
+
+////////////////////////////////Заставляем бандитов гнаться в погоню за игроком////////////////////////////////
+
+if
+$BANDITS1_CHASE_FLAG == 0
+    then
+    gosub @BANDITS_SPAWN1_SAME_CAR_CHECK
+    if and
+    $BANDITS1_EXIT_FLAG == 0
+    $BANDITS1_SPOTTED_FLAG == 0
+    $SIMULATING_FLAG == 0
+    $SPECTATING_FLAG == 0
+    $BANDITS_DONT_ATTACK_PLAYER_FLAG == 0
+    1@ == 0
+    CAMP_RAID_FLAG_BANDITS == 0
+    not ZAME_HUENEMY_FLAG == 1 
+        then
+        random_int 0@ 1 5
+        if
+        056D:   actor $BANDIT[0@] defined
+            then
+            if and
+            0364:   actor $BANDIT[0@] spotted_actor PLAYER_ACTOR
+            0184:   actor $BANDIT[0@] health > 0
+                then            
+                if 
+                not actor.Driving(PLAYER_ACTOR) 
+                    then
+                    
+                    if
+                    056E:   car BANDIT_CAR2 defined
+                    then
+                    
+                    if or
+                    00F2:   actor $BANDIT[1] near_actor PLAYER_ACTOR radius 65.0 65.0 0
+                    00F2:   actor $BANDIT[3] near_actor PLAYER_ACTOR radius 65.0 65.0 0
+                    051C:   car BANDIT_CAR2 damaged_by_actor PLAYER_ACTOR
+                    then
+                    jump to @BANDITS_BIKE_JUMP1
+                    end
+                    
+                    end
+                    
+                    if or
+                    00F2:   actor $BANDIT[1] near_actor PLAYER_ACTOR radius 65.0 65.0 0
+                    00F2:   actor $BANDIT[3] near_actor PLAYER_ACTOR radius 65.0 65.0 0    
+                    051C:   car BANDIT_CAR damaged_by_actor PLAYER_ACTOR 
+                        then
+                        
+                        :BANDITS_BIKE_JUMP1                                                                                
+                        
+                        for 0@ = 1 to 4
+                        
+                        if
+                        0184:   actor $BANDIT[0@] health > 0
+                        then     
+                        0687: clear_actor $BANDIT[0@] task
+                        wait 100   
+                        0633: AS_actor $BANDIT[0@] exit_car
+                        end
+                        
+                        end                                    
+                        
+                        for 0@ = 1 to 4
+                        
+                        if
+                        0184:   actor $BANDIT[0@] health > 0
+                        then   
+                        0687: clear_actor $BANDIT[0@] task
+                        wait 100
+                        end
+                        
+                        if and
+                        0E4D: random_percent 50
+                        0800:   in_two_players_mode
+                        then
+                        008B: $VAGINA3[0@] = PLAYER_ACTOR // (int)
+                        05E2: AS_actor $BANDIT[0@] kill_actor PLAYER_ACTOR
+                        else
+                        008B: $VAGINA3[0@] = COOP_ACTOR // (int)
+                        05E2: AS_actor $BANDIT[0@] kill_actor COOP_ACTOR
+                        end
+                        
+                        $VAGINA3_FLAG[0@] = 1
+                        $VAGINA3_TIME[0@] = 0
+                        0568: set_actor $BANDIT[0@] untargetable 0                             
+                        end  
+                        
+                        gosub @BANDITS_RANDOM_SPEC_WEAPON
+                        $BANDITS1_CHASE_FLAG = 0
+                        $BANDITS1_EXIT_FLAG = 1
+                        08F2: set_car BANDIT_CAR targettable_by_heatseeker 0
+                        if
+                        056E:   car BANDIT_CAR2 defined
+                        then
+                        08F2: set_car BANDIT_CAR2 targettable_by_heatseeker 0
+                        end
+                        
+                        end
+                    else
+                    gosub @BANDITS_SPAWN1_SAME_CAR_CHECK
+                    if and
+                    1@ == 0
+                    $BANDITS1_CHASE_FLAG == 0
+                    $BANDITS1_EXIT_FLAG == 0
+                        then
+                        
+                        //////////////////////////////////////////////////////////////////////////////////////////////////
+                        
+                        0468: clear_car BANDIT_CAR last_weapon_damage
+                        if
+                        056E:   car BANDIT_CAR2 defined
+                        then
+                        0468: clear_car BANDIT_CAR2 last_weapon_damage
+                        end
+                        
+                        if and
+                        84C8: not  actor PLAYER_ACTOR driving_flying_vehicle
+                        84A9: not  actor PLAYER_ACTOR driving_heli
+                        $GAMEMODE_WAR == 0
+                        $PHRASES_OFF_FLAG == 0
+                        then  
+                        gosub @RANDOM_DIALOG_2ATTACK_BANDITS  
+                        09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+                        0093: 3@ = integer 3@ to_float
+                        3@ *= 8.0
+                        0092: 3@ = float 3@ to_integer  
+                        00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+                        end
+                        
+                        ////////////////////////////////////////////////////////////////////////////////////////////////// 
+    
+                        03C0: 24@ = actor PLAYER_ACTOR car
+                        00AD: set_car BANDIT_CAR max_speed_to 100.0
+                        03AB: set_car BANDIT_CAR strong 1 
+                        00AE: unknown_set_car BANDIT_CAR to_ignore_traffic_lights 2  
+                        
+                        Car.SetToPsychoDriver(BANDIT_CAR)
+                           
+                        05F2: set_car BANDIT_CAR follow_car 24@ keep_3o_clock
+                        
+                        //////////////////////////////////////////////////////////////////////////////////////////////////
+                        
+                        if
+                        056E:   car BANDIT_CAR2 defined
+                        then
+                        03C0: 24@ = actor PLAYER_ACTOR car
+                        00AD: set_car BANDIT_CAR2 max_speed_to 100.0
+                        03AB: set_car BANDIT_CAR2 strong 1 
+                        00AE: unknown_set_car BANDIT_CAR2 to_ignore_traffic_lights 2  
+                        Car.SetToPsychoDriver(BANDIT_CAR2)   
+                        05F2: set_car BANDIT_CAR2 follow_car 24@ keep_3o_clock
+                        end
+                        
+                        //////////////////////////////////////////////////////////////////////////////////////////////////
+                        
+                        random_int 0@ 2 5
+                        
+                        if and
+                        not CUSTOM_MODE_ONLY_MELEE == 1
+                        not $MUTATION_ACTIVE == 4
+                        then
+                        
+                        if
+                        $BANDITS1_BIKE_FLAG == 0
+                        then
+                        0713: actor $BANDIT[0@] driveby_actor -1 car 24@ point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+                        else
+                        0713: actor $BANDIT[2] driveby_actor -1 car 24@ point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+                        0713: actor $BANDIT[4] driveby_actor -1 car 24@ point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+                        end
+                        
+                        end   
+                        
+                        $BANDITS1_SPOTTED_FLAG = 1
+                        $BANDITS1_CHASE_FLAG = 1
+                        
+                        //////////////////////////////////////////////////////////////////////////////////////////////////
+                        
+                        end
+                    end            
+                end
+            end
+        end
+    else
+    
+    //////////////////////////////////////////////////////////////////////////////////////////////////        
+        
+    if
+    actor.Driving(PLAYER_ACTOR)
+        then
+        
+        if
+        $BANDITS1_BIKE_FLAG == 0
+            then
+            
+            if
+            ORIGIN_ABILITY_ACTIVE == 6
+            then
+            jump to @BANDITS_STOP_CHASING_PLAYER
+            end
+                        
+            if or
+            not actor.InCar($BANDIT[1],BANDIT_CAR)
+            actor.Dead($BANDIT[1])
+            not actor.InCar($BANDIT[2],BANDIT_CAR)
+            not actor.InCar($BANDIT[3],BANDIT_CAR)
+            not actor.InCar($BANDIT[4],BANDIT_CAR)
+            02BF:   car BANDIT_CAR sunk
+            01F4:   car BANDIT_CAR flipped
+            not $ACTIVE_INTERIOR == 0
+                then
+                :BANDITS_STOP_CHASING_PLAYER                                
+                
+                for 0@ = 1 to 4
+                
+                if
+                0184:   actor $BANDIT[0@] health > 0
+                then     
+                0687: clear_actor $BANDIT[0@] task
+                wait 100   
+                0633: AS_actor $BANDIT[0@] exit_car
+                end
+                
+                end 
+                
+                for 0@ = 1 to 4 
+                
+                if
+                0184:   actor $BANDIT[0@] health > 0
+                then    
+                0687: clear_actor $BANDIT[0@] task
+                wait 100
+                end                
+                
+                if and
+                0E4D: random_percent 50
+                0800:   in_two_players_mode
+                then
+                008B: $VAGINA3[0@] = COOP_ACTOR // (int)
+                05E2: AS_actor $BANDIT[0@] kill_actor COOP_ACTOR
+                else
+                008B: $VAGINA3[0@] = PLAYER_ACTOR // (int)
+                05E2: AS_actor $BANDIT[0@] kill_actor PLAYER_ACTOR
+                end
+                
+                $VAGINA3_FLAG[0@] = 1
+                $VAGINA3_TIME[0@] = 0
+                0568: set_actor $BANDIT[0@] untargetable 0   
+                end 
+                
+                gosub @BANDITS_RANDOM_SPEC_WEAPON 
+                $BANDITS1_CHASE_FLAG = 0
+                $BANDITS1_EXIT_FLAG = 1
+                08F2: set_car BANDIT_CAR targettable_by_heatseeker 0
+                if
+                056E:   car BANDIT_CAR2 defined
+                then
+                08F2: set_car BANDIT_CAR2 targettable_by_heatseeker 0
+                end
+                                
+                end                        
+            else            
+            if or
+            not actor.InCar($BANDIT[1],BANDIT_CAR)
+            not actor.InCar($BANDIT[2],BANDIT_CAR)
+            not actor.InCar($BANDIT[3],BANDIT_CAR2)
+            not actor.InCar($BANDIT[4],BANDIT_CAR2)
+            02BF:   car BANDIT_CAR sunk
+            02BF:   car BANDIT_CAR2 sunk
+            not $ACTIVE_INTERIOR == 0
+            ORIGIN_ABILITY_ACTIVE == 6
+                then                                
+                
+                for 0@ = 1 to 4
+                
+                if
+                0184:   actor $BANDIT[0@] health > 0
+                then     
+                0687: clear_actor $BANDIT[0@] task
+                wait 100   
+                0633: AS_actor $BANDIT[0@] exit_car
+                end
+                
+                end 
+                
+                for 0@ = 1 to 4
+                
+                if
+                0184:   actor $BANDIT[0@] health > 0
+                then     
+                0687: clear_actor $BANDIT[0@] task
+                wait 100
+                end
+                
+                if and
+                0E4D: random_percent 50
+                0800:   in_two_players_mode
+                then
+                008B: $VAGINA3[0@] = COOP_ACTOR // (int)
+                05E2: AS_actor $BANDIT[0@] kill_actor COOP_ACTOR
+                else
+                008B: $VAGINA3[0@] = PLAYER_ACTOR // (int)
+                05E2: AS_actor $BANDIT[0@] kill_actor PLAYER_ACTOR
+                end
+                
+                $VAGINA3_FLAG[0@] = 1
+                $VAGINA3_TIME[0@] = 0
+                0568: set_actor $BANDIT[0@] untargetable 0   
+                end 
+                
+                gosub @BANDITS_RANDOM_SPEC_WEAPON 
+                $BANDITS1_CHASE_FLAG = 0
+                $BANDITS1_EXIT_FLAG = 1
+                08F2: set_car BANDIT_CAR targettable_by_heatseeker 0
+                if
+                056E:   car BANDIT_CAR2 defined
+                then
+                08F2: set_car BANDIT_CAR2 targettable_by_heatseeker 0
+                end
+                                
+                end            
+            end        
+        else
+        if
+        $BANDITS1_CHASE2_FLAG == 0
+            then
+            
+            car.SetDriverBehaviour(BANDIT_CAR,KillThePlayer)
+            if
+            056E:   car BANDIT_CAR2 defined
+            then
+            car.SetDriverBehaviour(BANDIT_CAR2,KillThePlayer)
+            end
+             
+            $BANDITS1_CHASE2_FLAG = 1            
+            
+            if and
+            not 0@ == 2
+            not 0@ == 3
+            not 0@ == 4
+            then
+            random_int 0@ 2 5
+            end
+            
+            if and
+            not CUSTOM_MODE_ONLY_MELEE == 1
+            not $MUTATION_ACTIVE == 4
+            then
+            
+            if
+            $BANDITS1_BIKE_FLAG == 0
+            then
+            0713: actor $BANDIT[0@] driveby_actor PLAYER_ACTOR car -1 point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+            else
+            0713: actor $BANDIT[2] driveby_actor PLAYER_ACTOR car -1 point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+            0713: actor $BANDIT[4] driveby_actor PLAYER_ACTOR car -1 point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+            end
+            
+            end
+            
+            else
+            
+            if
+            $BANDITS1_BIKE_FLAG == 0
+                then                
+                if or
+                not actor.InCar($BANDIT[1],BANDIT_CAR)
+                actor.Dead($BANDIT[1])
+                not actor.InCar($BANDIT[2],BANDIT_CAR)
+                not actor.InCar($BANDIT[3],BANDIT_CAR)
+                not actor.InCar($BANDIT[4],BANDIT_CAR)
+                02BF:   car BANDIT_CAR sunk
+                ORIGIN_ABILITY_ACTIVE == 6
+                    then                                        
+                    
+                    for 0@ = 1 to 4
+                    
+                    if
+                    0184:   actor $BANDIT[0@] health > 0
+                    then   
+                    0687: clear_actor $BANDIT[0@] task
+                    wait 100               
+                    0633: AS_actor $BANDIT[0@] exit_car
+                    end
+                    
+                    end
+                    
+                    for 0@ = 1 to 4
+                    
+                    if
+                    0184:   actor $BANDIT[0@] health > 0
+                    then   
+                    0687: clear_actor $BANDIT[0@] task
+                    wait 100
+                    end
+                    
+                    if and
+                    0E4D: random_percent 50
+                    0800:   in_two_players_mode
+                    then
+                    008B: $VAGINA3[0@] = COOP_ACTOR // (int)
+                    05E2: AS_actor $BANDIT[0@] kill_actor COOP_ACTOR
+                    else
+                    008B: $VAGINA3[0@] = PLAYER_ACTOR // (int)
+                    05E2: AS_actor $BANDIT[0@] kill_actor PLAYER_ACTOR
+                    end
+                    
+                    $VAGINA3_FLAG[0@] = 1
+                    $VAGINA3_TIME[0@] = 0
+                    0568: set_actor $BANDIT[0@] untargetable 0     
+                    end 
+                    
+                    gosub @BANDITS_RANDOM_SPEC_WEAPON 
+                    $BANDITS1_CHASE_FLAG = 0
+                    $BANDITS1_CHASE2_FLAG = 0
+                    $BANDITS1_EXIT_FLAG = 1
+                    08F2: set_car BANDIT_CAR targettable_by_heatseeker 0
+                    if
+                    056E:   car BANDIT_CAR2 defined
+                    then
+                    08F2: set_car BANDIT_CAR2 targettable_by_heatseeker 0
+                    end
+                                        
+                    end                
+                else                
+                if or
+                not actor.InCar($BANDIT[1],BANDIT_CAR)
+                not actor.InCar($BANDIT[2],BANDIT_CAR)
+                not actor.InCar($BANDIT[3],BANDIT_CAR2)
+                not actor.InCar($BANDIT[4],BANDIT_CAR2)
+                02BF:   car BANDIT_CAR sunk
+                02BF:   car BANDIT_CAR2 sunk
+                ORIGIN_ABILITY_ACTIVE == 6
+                    then
+                                                                                
+                    for 0@ = 1 to 4
+                    
+                    if
+                    0184:   actor $BANDIT[0@] health > 0
+                    then   
+                    0687: clear_actor $BANDIT[0@] task
+                    wait 100               
+                    0633: AS_actor $BANDIT[0@] exit_car
+                    end
+                    
+                    end
+                    
+                    for 0@ = 1 to 4
+                    
+                    if
+                    0184:   actor $BANDIT[0@] health > 0
+                    then   
+                    0687: clear_actor $BANDIT[0@] task
+                    wait 100
+                    end
+                    
+                    if and
+                    0E4D: random_percent 50
+                    0800:   in_two_players_mode
+                    then
+                    008B: $VAGINA3[0@] = COOP_ACTOR // (int)
+                    05E2: AS_actor $BANDIT[0@] kill_actor COOP_ACTOR
+                    else
+                    008B: $VAGINA3[0@] = PLAYER_ACTOR // (int)
+                    05E2: AS_actor $BANDIT[0@] kill_actor PLAYER_ACTOR
+                    end
+                    
+                    $VAGINA3_FLAG[0@] = 1
+                    $VAGINA3_TIME[0@] = 0
+                    0568: set_actor $BANDIT[0@] untargetable 0     
+                    end 
+                    
+                    gosub @BANDITS_RANDOM_SPEC_WEAPON 
+                    $BANDITS1_CHASE_FLAG = 0
+                    $BANDITS1_CHASE2_FLAG = 0
+                    $BANDITS1_EXIT_FLAG = 1
+                    08F2: set_car BANDIT_CAR targettable_by_heatseeker 0
+                    if
+                    056E:   car BANDIT_CAR2 defined
+                    then
+                    08F2: set_car BANDIT_CAR2 targettable_by_heatseeker 0
+                    end
+                    
+                    end                
+                end            
+            end        
+        end
+    
+    //////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+////////////////////////////////Заставляем бандитов выходить из транспорта////////////////////////////////    
+    
+if and
+$BANDITS1_EXIT_FLAG == 0
+$BANDITS1_CHASE_FLAG == 0
+056E:   car BANDIT_CAR defined
+CAMP_RAID_FLAG_BANDITS == 0
+not ZAME_HUENEMY_FLAG == 1
+not PODMOGA_BASE_FLAG == 2  
+    then
+    
+    if
+    856E: not  car BANDIT_CAR defined
+    then
+    jump @BANDITS_NOT_DEFINED
+    end
+    
+    02E3: 2@ = car BANDIT_CAR speed
+    if or
+    001D:   32@ > 30@  // (int)
+    2@ == 0.0
+    01C1:   car BANDIT_CAR stopped
+    01F4:   car BANDIT_CAR flipped
+    8202: not  actor PLAYER_ACTOR near_car BANDIT_CAR radius 160.0 160.0 sphere 0
+        then        
+        $BANDITS1_EXIT_FLAG = 1
+        08F2: set_car BANDIT_CAR targettable_by_heatseeker 0
+        if
+        056E:   car BANDIT_CAR2 defined
+        then
+        08F2: set_car BANDIT_CAR2 targettable_by_heatseeker 0
+        end                  
+
+        for 0@ = 1 to 4
+        
+        if
+        0184:   actor $BANDIT[0@] health > 0
+        then    
+        0687: clear_actor $BANDIT[0@] task
+        wait 100    
+        0633: AS_actor $BANDIT[0@] exit_car
+        end
+        
+        end
+        
+        gosub @BANDITS_RANDOM_SPEC_WEAPON
+        
+        if and
+        0104:   actor $BANDIT[1] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+        $SPECTATING_FLAG == 0
+        $SCREWHUD_FLAG == 0
+        $PHRASES_OFF_FLAG == 0
+        $GAMEMODE_WAR == 0
+            then
+            gosub @RANDOM_DIALOG_EXIT_FROM_CAR_BANDITS
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer
+            text.ClearAll()              
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+            end        
+        end
+    end
+    
+////////////////////////////////Заставляем бандитов выходить из транспорта (рейд)////////////////////////////////    
+
+//abandon с путя не работает пошла эта игра нахуй сам сделаю
+if and
+$BANDITS1_EXIT_FLAG == 0
+$BANDITS1_CHASE_FLAG == 0
+056E:   car BANDIT_CAR defined
+ZAME_HUENEMY_FLAG == 1
+not RAID_MISSION_CARREC_DRIVE_FLAG == 3
+then
+car.StorePos(BANDIT_CAR,$TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+050A: 30@ = distance_between_XYZ $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3 and_XYZ CAMP_RAID_DEST_X CAMP_RAID_DEST_Y CAMP_RAID_DEST_Z
+if
+0026:   RAID_CAR_PATH_ABADON_RADIUS > 30@  // (float)
+    then
+    00A9: set_car BANDIT_CAR to_normal_driver
+    0704: car BANDIT_CAR drive_to CAMP_RAID_DEST_X CAMP_RAID_DEST_Y CAMP_RAID_DEST_Z
+    00AF: set_car BANDIT_CAR driver_behaviour_to 14
+    RAID_MISSION_CARREC_DRIVE_FLAG = 3
+    end
+end
+
+if and
+$BANDITS1_EXIT_FLAG == 0
+$BANDITS1_CHASE_FLAG == 0
+056E:   car BANDIT_CAR defined
+ZAME_HUENEMY_FLAG == 1
+not RAID_MISSION_CARREC_DRIVE_FLAG == 1
+not RAID_MISSION_CARREC_DRIVE_FLAG == 2  
+then
+jump to @ZAME_HUENEMY_EXIT_BANDIT_JUMP
+end
+
+if and
+$BANDITS1_EXIT_FLAG == 0
+$BANDITS1_CHASE_FLAG == 0
+056E:   car BANDIT_CAR defined
+PODMOGA_BASE_FLAG == 2
+not RAID_MISSION_CARREC_DRIVE_FLAG == 1
+not RAID_MISSION_CARREC_DRIVE_FLAG == 2  
+then
+jump to @ZAME_HUENEMY_EXIT_BANDIT_JUMP
+end
+    
+if and
+$BANDITS1_EXIT_FLAG == 0
+$BANDITS1_CHASE_FLAG == 0
+056E:   car BANDIT_CAR defined
+CAMP_RAID_FLAG_BANDITS == 1
+not RAID_MISSION_CARREC_DRIVE_FLAG == 1
+not RAID_MISSION_CARREC_DRIVE_FLAG == 2  
+    then
+    
+    :ZAME_HUENEMY_EXIT_BANDIT_JUMP
+    
+    if
+    856E: not  car BANDIT_CAR defined
+    then
+    jump @BANDITS_NOT_DEFINED
+    end
+    
+    if
+    86FC: not  car BANDIT_CAR stuck_check_enabled
+    then
+    03CC: enable_car BANDIT_CAR stuck_check_distance_to 2.0 time_to 2000
+    end
+    
+    if and
+    UNITED_MAP == 0
+    not $QUEST_CAMP_NUMBER == 14
+    then
+    1@ = 25.0
+    else
+    1@ = 15.0
+    end
+    
+    if and
+    01AD:   car BANDIT_CAR sphere 0 near_point CAMP_RAID_DEST_X CAMP_RAID_DEST_Y radius 1@ 1@
+    03CE:   car BANDIT_CAR stuck
+        then
+        jump to @BANDITS_RAID_EXIT_URGENTLY
+        end
+        
+    if and
+    UNITED_MAP == 0
+    not $QUEST_CAMP_NUMBER == 14
+    then
+    1@ = 65.0
+    else
+    1@ = 30.0
+    end    
+        
+    if and
+    01AD:   car BANDIT_CAR sphere 0 near_point CAMP_RAID_DEST_X CAMP_RAID_DEST_Y radius 1@ 1@
+    $BANDITS1_CAR_TARAN_FLAG == 0
+        then
+        $BANDITS1_CAR_TARAN_FLAG = 1
+        00AE: set_car BANDIT_CAR traffic_behaviour_to 3
+        end
+        
+    if and
+    UNITED_MAP == 0
+    not $QUEST_CAMP_NUMBER == 14
+    then
+    1@ = 65.0
+    else
+    1@ = 30.0
+    end        
+        
+    0E65: get_car_collision_intensity BANDIT_CAR store_to 0@    
+    if and
+    01AD:   car BANDIT_CAR sphere 0 near_point CAMP_RAID_DEST_X CAMP_RAID_DEST_Y radius 1@ 1@
+    0@ > 20.0
+        then
+        jump to @BANDITS_RAID_EXIT_URGENTLY
+        end
+        
+    if
+    actor.Dead($BANDIT[1])
+        then
+        jump to @BANDITS_RAID_EXIT_URGENTLY
+        end        
+    
+    if
+    01AD:   car BANDIT_CAR sphere 0 near_point CAMP_RAID_DEST_X CAMP_RAID_DEST_Y radius 10.0 10.0
+        then
+        :BANDITS_RAID_EXIT_URGENTLY        
+        $BANDITS1_EXIT_FLAG = 1
+        08F2: set_car BANDIT_CAR targettable_by_heatseeker 0
+        if
+        056E:   car BANDIT_CAR2 defined
+        then
+        08F2: set_car BANDIT_CAR2 targettable_by_heatseeker 0
+        end
+        
+        if
+        060E:   car BANDIT_CAR assigned_to_path
+        then
+        05EC: release_car BANDIT_CAR from_path
+        end
+        
+        00A9: set_car BANDIT_CAR to_normal_driver                          
+
+        for 0@ = 1 to 4
+        
+        if
+        0184:   actor $BANDIT[0@] health > 0
+        then    
+        0687: clear_actor $BANDIT[0@] task
+        wait 100    
+        0633: AS_actor $BANDIT[0@] exit_car
+        end
+        
+        end
+        
+        gosub @BANDITS_RANDOM_SPEC_WEAPON
+        
+        if and
+        0104:   actor $BANDIT[1] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+        $SPECTATING_FLAG == 0
+        $SCREWHUD_FLAG == 0
+        $PHRASES_OFF_FLAG == 0
+        $GAMEMODE_WAR == 0
+        not PODMOGA_BASE_FLAG == 2
+            then 
+            gosub @RANDOM_DIALOG_EXIT_FROM_CAR_BANDITS_RAID 
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer
+            text.ClearAll()              
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+            end        
+        end
+    end    
+    
+////////////////////////////////Заставляем бандитов замечать игрока и атаковать////////////////////////////////    
+    
+if
+$BANDITS1_SPOTTED_FLAG == 0
+    then
+    gosub @BANDITS_SPAWN1_SAME_CAR_CHECK
+    
+    if
+    $BANDITS_DONT_ATTACK_PLAYER_FLAG == 1
+        then
+        if or
+        051A:   actor $BANDIT[1] damaged_by_actor PLAYER_ACTOR
+        051A:   actor $BANDIT[2] damaged_by_actor PLAYER_ACTOR
+        051A:   actor $BANDIT[3] damaged_by_actor PLAYER_ACTOR
+        051A:   actor $BANDIT[4] damaged_by_actor PLAYER_ACTOR
+            then
+            jump to @BANDITS_SPOTTED_PLAYER
+            end
+        end
+    
+    if and    
+    $SIMULATING_FLAG == 0
+    $SPECTATING_FLAG == 0
+    $BANDITS_DONT_ATTACK_PLAYER_FLAG == 0
+    CAMP_RAID_FLAG_BANDITS == 0
+    not ZAME_HUENEMY_FLAG == 1
+    1@ == 0
+    $ACTIVE_INTERIOR == 0
+    $INT_ENTERING_FLAG == 0
+        then  
+        if or
+        0364:   actor $BANDIT[1] spotted_actor PLAYER_ACTOR
+        0364:   actor $BANDIT[2] spotted_actor PLAYER_ACTOR
+        0364:   actor $BANDIT[3] spotted_actor PLAYER_ACTOR
+        0364:   actor $BANDIT[4] spotted_actor PLAYER_ACTOR
+        051A:   actor $BANDIT[1] damaged_by_actor PLAYER_ACTOR
+        051A:   actor $BANDIT[2] damaged_by_actor PLAYER_ACTOR
+        051A:   actor $BANDIT[3] damaged_by_actor PLAYER_ACTOR
+        051A:   actor $BANDIT[4] damaged_by_actor PLAYER_ACTOR
+            then
+            :BANDITS_SPOTTED_PLAYER
+            0467: clear_actor $BANDIT[1] last_weapon_damage
+            0467: clear_actor $BANDIT[2] last_weapon_damage
+            0467: clear_actor $BANDIT[3] last_weapon_damage
+            0467: clear_actor $BANDIT[4] last_weapon_damage
+            $BANDITS1_SPOTTED_FLAG = 1                         
+            
+            for 0@ = 1 to 4
+            
+            if and
+            actor.Driving($BANDIT[0@])
+            0184:   actor $BANDIT[0@] health > 0
+            then  
+            0687: clear_actor $BANDIT[0@] task
+            wait 100      
+            0633: AS_actor $BANDIT[0@] exit_car
+            end
+            
+            end
+            
+            for 0@ = 1 to 4
+            
+            if
+            0184:   actor $BANDIT[0@] health > 0
+            then   
+            0687: clear_actor $BANDIT[0@] task
+            wait 100
+            end
+            
+            if and
+            0E4D: random_percent 50
+            0800:   in_two_players_mode
+            then
+            008B: $VAGINA3[0@] = COOP_ACTOR // (int)
+            05E2: AS_actor $BANDIT[0@] kill_actor COOP_ACTOR
+            else
+            008B: $VAGINA3[0@] = PLAYER_ACTOR // (int)
+            05E2: AS_actor $BANDIT[0@] kill_actor PLAYER_ACTOR
+            end
+            
+            $VAGINA3_FLAG[0@] = 1
+            $VAGINA3_TIME[0@] = 0
+            0568: set_actor $BANDIT[0@] untargetable 0     
+            end 
+            
+            gosub @BANDITS_RANDOM_SPEC_WEAPON
+            gosub @RANDOM_DIALOG_ATTACK_BANDITS_SPOTTED
+            
+            if and
+            not $GAMEMODE_WAR == 1
+            $PHRASES_OFF_FLAG == 0
+            not PODMOGA_BASE_FLAG == 2
+            not $FIST_HUD_ALWAYS == 1
+            then
+            05C1: AS_actor PLAYER_ACTOR speak_from_audio_table $PLAYER_FIND_ENEMY_DIALOG_STRING    
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer  
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+            end
+            
+            end                 
+        end
+    end                        
+
+end
+
+end_thread
+
+:BANDITS_SPAWN1_SAME_CAR_CHECK
+
+1@ = 0
+
+if
+056E:   car BANDIT_CAR defined
+then
+
+if
+UNITED_MAP == 0
+then
+2@ = 15422
+else
+
+if
+$UNITED_VC_FLAG == 0
+then
+008B: 2@ = $III_BANDITS_CAR // (int)
+else
+008B: 2@ = $VC_BANDITS_CAR // (int)
+end
+
+end
+
+if and
+actor.DrivingVehicleType(PLAYER_ACTOR,2@)
+8205: not  actor PLAYER_ACTOR near_car BANDIT_CAR radius 45.0 45.0 45.0 flag 0
+847A: not  actor PLAYER_ACTOR driving_bike
+not actor.DrivingVehicleType(PLAYER_ACTOR,#QUAD)
+then
+1@ = 1
+end
+
+end
+
+return
+
+////////////////////////////////Союзники атакуют бандитов////////////////////////////////
+
+:BANDITS1_ATTACK_PEOPLE1
+
+if 
+$SIMULATING_FLAG == 1
+then
+return
+end
+
+if
+$BANDITS1_SPOTTED_FLAG == 0
+then
+
+if or
+$PLAYER_BANDITS_SIDE == 1
+$BANDITS_DONT_ATTACK_PLAYER_FLAG == 1
+then
+return
+end
+
+end
+
+if
+056D:   actor $BANDIT[8@] defined
+jf @BANDITS1_ATTACK_PEOPLE_BEGIN
+092B: 3@ = group PLAYER_GROUP member 0@
+
+if
+07D6:   3@ == COOP_ACTOR // @ == $ (int)
+then
+return
+end
+
+if
+not 3@ == -1
+jf @BANDITS1_ATTACK_PEOPLE_BEGIN   
+if
+056D:   actor 3@ defined
+jf @BANDITS1_ATTACK_PEOPLE_BEGIN
+
+if
+$MISSION14_ACTIVE == 1
+    then
+    if
+    not 0@ == 1
+    jf @BANDITS1_ATTACK_PEOPLE_BEGIN
+    end
+    
+if
+$QUEST_TYPE == 9
+    then
+    if
+    87D6: not  3@ == $VERSUS_PEOPLE[1] // @ == $ (int)
+    jf @BANDITS1_ATTACK_PEOPLE_BEGIN
+    end
+
+if or
+00DF:   actor 3@ driving
+0449:   actor 3@ in_a_car
+    then
+    if
+    $HUNTER_ON_PLAYER == 0
+    //$PEOPLE_DONT_ATTACK == 0
+    //$COMMAND_STAY_IN_CAR == 0
+        then                     
+        gosub @BANDITS1_ATTACK_PEOPLE_IN_CAR
+        end
+    end
+
+if and 
+not actor.Driving(PLAYER_ACTOR)
+$RANDOM_CAR_FLAG == 0  
+89DE: not  actor 3@ entering_car  
+jf @BANDITS1_ATTACK_PEOPLE_BEGIN
+if or
+0364:   actor 3@ spotted_actor $BANDIT[8@]
+0364:   actor $BANDIT[8@] spotted_actor 3@
+jf @BANDITS1_ATTACK_PEOPLE_BEGIN
+if
+00F2:   actor 3@ near_actor $BANDIT[8@] radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+jf @BANDITS1_ATTACK_PEOPLE_BEGIN
+if and
+$HUNTER_ON_PLAYER == 0
+$PEOPLE_DONT_ATTACK == 0
+jf @BANDITS1_ATTACK_PEOPLE_BEGIN
+if
+not actor.Animation(3@) == "FLOOR_hit"
+jf @BANDITS1_ATTACK_PEOPLE_BEGIN
+if
+$HUNTER_ON_GROUP == 0
+jf @BANDITS1_ATTACK_PEOPLE_BEGIN  
+if
+044B:   actor 3@ on_foot
+jf @BANDITS1_ATTACK_PEOPLE_BEGIN  
+if
+82E0: not actor 3@ firing_weapon
+jf @BANDITS1_ATTACK_PEOPLE_BEGIN
+062E: get_actor 3@ task 1506 status_store_to 1@ // ret 7 if not found
+if 
+1@ == 7
+jf @BANDITS1_ATTACK_PEOPLE_BEGIN  
+if and
+not actor.Animation(3@) == "colt45_fire_2hands"
+not actor.Animation(3@) == "python_fire" 
+not actor.Animation(3@) == "shotgun_fire" 
+not actor.Animation(3@) == "buddy_fire" 
+not actor.Animation(3@) == "UZI_fire"
+not actor.Animation(3@) == "RIFLE_fire" 
+jf @BANDITS1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "FLAME_fire" 
+not actor.Animation(3@) == "RocketFire" 
+not actor.Animation(3@) == "WEAPON_sniper"
+not actor.Animation(3@) == "WEAPON_throw"
+not actor.Animation(3@) == "BOM_PLANT" 
+jf @BANDITS1_ATTACK_PEOPLE_BEGIN 
+if and
+not actor.Animation(3@) == "colt45_crouchfire"
+not actor.Animation(3@) == "python_crouchfire" 
+not actor.Animation(3@) == "shotgun_crouchfire" 
+not actor.Animation(3@) == "buddy_crouchfire" 
+not actor.Animation(3@) == "UZI_crouchfire"
+not actor.Animation(3@) == "RIFLE_crouchfire" 
+jf @BANDITS1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "colt45_reload"
+not actor.Animation(3@) == "python_reload" 
+not actor.Animation(3@) == "shotgun_reload" 
+not actor.Animation(3@) == "buddy_reload" 
+not actor.Animation(3@) == "UZI_reload"
+not actor.Animation(3@) == "RIFLE_load" 
+jf @BANDITS1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "colt45_crouchreload"
+not actor.Animation(3@) == "python_crouchreload" 
+not actor.Animation(3@) == "shotgun_crouchreload" 
+not actor.Animation(3@) == "buddy_crouchreload" 
+not actor.Animation(3@) == "UZI_crouchreload"
+not actor.Animation(3@) == "RIFLE_crouchload" 
+jf @BANDITS1_ATTACK_PEOPLE_BEGIN 
+if and
+not actor.Animation(3@) == "GunMove_BWD"
+not actor.Animation(3@) == "GunMove_FWD"
+not actor.Animation(3@) == "GunMove_L"
+not actor.Animation(3@) == "GunMove_R"
+not actor.Animation(3@) == "Gun_2_IDLE"
+not actor.Animation(3@) == "GUN_BUTT"
+not actor.Animation(3@) == "GUN_BUTT_crouch"
+not actor.Animation(3@) == "Gun_stand" 
+jf @BANDITS1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "CLIMB_idle"
+not actor.Animation(3@) == "CLIMB_jump"
+not actor.Animation(3@) == "CLIMB_jump2fall"
+not actor.Animation(3@) == "CLIMB_jump_B"
+not actor.Animation(3@) == "CLIMB_Pull"
+not actor.Animation(3@) == "CLIMB_Stand"
+not actor.Animation(3@) == "CLIMB_Stand_finish" 
+jf @BANDITS1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "Crouch_Roll_L"
+not actor.Animation(3@) == "Crouch_Roll_R"
+not actor.Animation(3@) == "gas_cwr"
+not actor.Animation(3@) == "getup"
+not actor.Animation(3@) == "getup_front"
+not actor.Animation(3@) == "GunCrouchBwd"
+not actor.Animation(3@) == "GunCrouchFwd"
+8E47: not is_char_fighting 3@
+jf @BANDITS1_ATTACK_PEOPLE_BEGIN 
+05C1: AS_actor 3@ speak_from_audio_table $PEOPLE_ZOMBIE_ATTACK_AUDIO_TABLE
+if
+056D:   actor 3@ defined
+jf @BANDITS1_ATTACK_PEOPLE_BEGIN 
+if and
+not actor.Driving(PLAYER_ACTOR)
+89DE:   actor PLAYER_ACTOR entering_car
+80DF:   actor PLAYER_ACTOR in_a_car
+80DF:   actor 3@ in_a_car
+not actor.Dead(3@)
+not actor.Dead($BANDIT[8@])
+jf @BANDITS1_ATTACK_PEOPLE_BEGIN 
+//0647: AS_actor 3@ clear_look_task
+//05B9: AS_actor 3@ stay_idle 50 ms 
+wait 50
+if
+056D:   actor 3@ defined  
+then
+05E2: AS_actor 3@ kill_actor $BANDIT[8@]
+end
+
+jump @BANDITS1_ATTACK_PEOPLE_BEGIN
+
+//////////////////////////////////////////////////////////////////////////////////////////////////  
+
+:BANDITS1_ATTACK_PEOPLE_IN_CAR  
+if and
+not actor.Animation(3@) == "Gang_DrivebyLHS"
+not actor.Animation(3@) == "Gang_DrivebyLHS_Bwd"
+not actor.Animation(3@) == "Gang_DrivebyLHS_Fwd"
+not actor.Animation(3@) == "Gang_DrivebyRHS"
+not actor.Animation(3@) == "Gang_DrivebyRHS_Bwd"
+not actor.Animation(3@) == "Gang_DrivebyRHS_Fwd" 
+jf @BANDITS1_ATTACK_PEOPLE_IN_CAR_RETURN 
+if and
+not actor.Animation(3@) == "Gang_DrivebyTop_LHS"
+not actor.Animation(3@) == "Gang_DrivebyTop_RHS" 
+jf @BANDITS1_ATTACK_PEOPLE_IN_CAR_RETURN 
+if 
+00F2:   actor 3@ near_actor $BANDIT[8@] radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+jf @BANDITS1_ATTACK_PEOPLE_IN_CAR_RETURN
+if or
+0364:   actor 3@ spotted_actor $BANDIT[8@]
+0364:   actor $BANDIT[8@] spotted_actor 3@
+0364:   actor PLAYER_ACTOR spotted_actor $BANDIT[8@]
+0364:   actor $BANDIT[8@] spotted_actor PLAYER_ACTOR
+jf @BANDITS1_ATTACK_PEOPLE_IN_CAR_RETURN
+
+///////////////////////////////////////////////////////////////////////////
+if and
+0@ == 0
+TEAMMATE1_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @BANDITS1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 1
+TEAMMATE2_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @BANDITS1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 2
+TEAMMATE3_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @BANDITS1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 3
+TEAMMATE4_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @BANDITS1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 4
+TEAMMATE5_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @BANDITS1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+///////////////////////////////////////////////////////////////////////////
+
+if and
+8E42: not is_char_doing_task_id 3@ 243
+not $COMMAND_STAY_IN_CAR == 1
+then
+06C9: remove_actor 3@ from_group
+0631: put_actor 3@ in_group PLAYER_GROUP
+end
+0713: actor 3@ driveby_actor $BANDIT[8@] car -1 point 0.0 0.0 0.0 radius 180.0 8 1 firing_rate 360
+
+///////////////////////////////////////////////////////////////////////////
+if
+0@ == 0
+    then
+    TEAMMATE1_ATTACK_TIMER = 0
+    end
+if
+0@ == 1
+    then
+    TEAMMATE2_ATTACK_TIMER = 0
+    end
+if
+0@ == 2
+    then
+    TEAMMATE3_ATTACK_TIMER = 0
+    end
+if
+0@ == 3
+    then
+    TEAMMATE4_ATTACK_TIMER = 0
+    end
+if
+0@ == 4
+    then
+    TEAMMATE5_ATTACK_TIMER = 0
+    end
+///////////////////////////////////////////////////////////////////////////
+   
+return
+
+:BANDITS1_ATTACK_PEOPLE_IN_CAR_RETURN
+return
+
+:BANDITS1_ATTACK_PEOPLE_BEGIN 
+return
+
+:BANDITS_JIMMY_CHECK
+
+if or
+$GAMEMODE_WAR == 1
+$DEFENSE_CHALLENGE_FLAG == 1
+$GAMEMODE_EDITOR == 1
+    then
+    return
+    end
+    
+actor.StorePos($BANDIT[27@],1@,2@,3@)
+06C3: get_number_of_fires_within_sphere_at 1@ 2@ 3@ radius 3.0 store_to 0@
+if
+0@ > 0
+then
+return
+end
+
+actor.StorePos($BANDIT[27@],1@,2@,3@) 
+000F: 1@ -= 5.0
+000F: 2@ -= 5.0
+000F: 3@ -= 5.0
+actor.StorePos($BANDIT[27@],4@,5@,6@) 
+000F: 4@ -= -5.0
+000F: 5@ -= -5.0
+000F: 6@ -= -5.0
+
+if
+0356:   explosion_type -1 in_cube_cornerA 1@ 2@ 3@ cornerB 4@ 5@ 6@
+then
+return
+end    
+
+random_int 0@ 0 7
+if
+not 0@ == 3
+then
+return
+end
+
+//////////////////////////////Создание пикапа отмычки//////////////////////////////
+                
+random_float 4@ -1.0 1.0
+random_float 5@ 1.0 -1.0
+                        
+04C4: store_coords_to 1@ 2@ 3@ from_actor $BANDIT[27@] with_offset 4@ 5@ 0.0
+
+02CE: 3@ = ground_z_at 1@ 2@ 3@
+
+3@ += 1.0
+                    
+$JIMMY_PICKUP_NUM += 1
+                    
+if
+$JIMMY_PICKUP_NUM > 28
+then 
+$JIMMY_PICKUP_NUM = 0              
+end
+
+if
+09D1:   pickup $JIMMY_PICKUP[$JIMMY_PICKUP_NUM] created
+    then    
+    pickup.Destroy($JIMMY_PICKUP[$JIMMY_PICKUP_NUM])
+    end    
+                    
+$JIMMY_PICKUP[$JIMMY_PICKUP_NUM] = pickup.Create(#drug_red,3,1@,2@,3@)  
+
+return
+
+:RANDOM_DIALOG_DEAD_BANDITS
+
+for 1@ = 0 to 200
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH26_" // v$ // Sunday
+else
+v$PHRASE1 = "UH26_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH26_" // v$ // Sunday
+else
+v$PHRASE1 = "UH26_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+
+return
+
+:RANDOM_DIALOG_DAMAGED_BY_WEAPON_BANDITS_FRIENDLY
+    
+for 1@ = 0 to 200
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH93_" // v$ // Sunday
+else
+v$PHRASE1 = "UH93_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH93_" // v$ // Sunday
+else
+v$PHRASE1 = "UH93_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+
+return
+
+:RANDOM_DIALOG_DAMAGED_BY_ZOMBIES_BANDITS_FRIENDLY
+    
+for 1@ = 0 to 200
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH94_" // v$ // Sunday
+else
+v$PHRASE1 = "UH94_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH94_" // v$ // Sunday
+else
+v$PHRASE1 = "UH94_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+
+return
+
+:RANDOM_DIALOG_DAMAGED_BY_WEAPON_BANDITS
+    
+for 1@ = 0 to 200
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH27_" // v$ // Sunday
+else
+v$PHRASE1 = "UH27_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH27_" // v$ // Sunday
+else
+v$PHRASE1 = "UH27_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+
+return
+
+:RANDOM_DIALOG_DAMAGED_BY_ZOMBIES_BANDITS
+    
+for 1@ = 0 to 200
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH28_" // v$ // Sunday
+else
+v$PHRASE1 = "UH28_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH28_" // v$ // Sunday
+else
+v$PHRASE1 = "UH28_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+
+return
+
+:RANDOM_DIALOG_GRENADE_BANDITS
+    
+for 1@ = 0 to 200
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH29_" // v$ // Sunday
+else
+v$PHRASE1 = "UH29_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH29_" // v$ // Sunday
+else
+v$PHRASE1 = "UH29_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+
+return             
+
+:RANDOM_DIALOG_ATTACK_BANDITS
+    
+for 1@ = 0 to 200
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH30_" // v$ // Sunday
+else
+v$PHRASE1 = "UH30_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH30_" // v$ // Sunday
+else
+v$PHRASE1 = "UH30_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+
+return  
+
+:RANDOM_DIALOG_EXIT_FROM_CAR_BANDITS
+    
+for 1@ = 0 to 200
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH31_" // v$ // Sunday
+else
+v$PHRASE1 = "UH31_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then   
+    1@ += 1 
+    random_int 0@ 0 1@
+    end
+
+end  
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH31_" // v$ // Sunday
+else
+v$PHRASE1 = "UH31_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+
+return
+
+:RANDOM_DIALOG_EXIT_FROM_CAR_BANDITS_RAID
+    
+for 1@ = 0 to 200
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH136_" // v$ // Sunday
+else
+v$PHRASE1 = "UH136_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then   
+    1@ += 1 
+    random_int 0@ 0 1@
+    end
+
+end  
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH136_" // v$ // Sunday
+else
+v$PHRASE1 = "UH136_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+
+return       
+
+:RANDOM_DIALOG_TANK_NEAR_BANDITS
+    
+for 1@ = 0 to 200
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH32_" // v$ // Sunday
+else
+v$PHRASE1 = "UH32_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH32_" // v$ // Sunday
+else
+v$PHRASE1 = "UH32_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+
+return
+
+:RANDOM_DIALOG_HUNTER_NEAR_BANDITS
+    
+for 1@ = 0 to 200
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH33_" // v$ // Sunday
+else
+v$PHRASE1 = "UH33_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH33_" // v$ // Sunday
+else
+v$PHRASE1 = "UH33_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+
+return
+
+:RANDOM_DIALOG_WITCH_NEAR_BANDITS
+    
+for 1@ = 0 to 200
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH34_" // v$ // Sunday
+
+if
+$WTH_AGRED_FLAG[$SPECLS_NUM] == 1
+then
+v$PHRASE1 = "PH34B_"
+end
+
+else
+v$PHRASE1 = "UH34_" // v$ // Sunday
+
+if
+$WTH_AGRED_FLAG[$SPECLS_NUM] == 1
+then
+v$PHRASE1 = "UH22B_"
+end
+
+end
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH34_" // v$ // Sunday
+
+if
+$WTH_AGRED_FLAG[$SPECLS_NUM] == 1
+then
+v$PHRASE1 = "PH34B_"
+end
+
+else
+v$PHRASE1 = "UH34_" // v$ // Sunday
+
+if
+$WTH_AGRED_FLAG[$SPECLS_NUM] == 1
+then
+v$PHRASE1 = "UH34B_"
+end
+
+end
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+
+return
+
+:RANDOM_DIALOG_CHARGER_NEAR_BANDITS
+    
+for 1@ = 0 to 200
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH35_" // v$ // Sunday
+else
+v$PHRASE1 = "UH35_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then  
+    1@ += 1  
+    random_int 0@ 0 1@
+    end
+
+end  
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH35_" // v$ // Sunday
+else
+v$PHRASE1 = "UH35_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+
+return
+
+:RANDOM_DIALOG_HUNTER2_BANDITS
+    
+for 1@ = 0 to 200
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH36_" // v$ // Sunday
+else
+v$PHRASE1 = "UH36_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH36_" // v$ // Sunday
+else
+v$PHRASE1 = "UH36_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+
+return
+
+:RANDOM_DIALOG_ATTACK_BANDITS_SPOTTED 
+  
+for 1@ = 0 to 200
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH37_" // v$ // Sunday
+else
+v$PHRASE1 = "UH37_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then   
+    1@ += 1 
+    random_int 0@ 0 1@
+    end
+
+end  
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH37_" // v$ // Sunday
+else
+v$PHRASE1 = "UH37_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+:RANDOM_DIALOG_2ATTACK_BANDITS 
+
+for 1@ = 0 to 200
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH38_" // v$ // Sunday
+else
+v$PHRASE1 = "UH38_" // v$ // Sunday
+end 
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+if
+UNITED_MAP == 0
+then
+v$PHRASE1 = "PH38_" // v$ // Sunday
+else
+v$PHRASE1 = "UH38_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+:RANDOM_DIALOG_HAZMAT_NEAR_BANDITS  
+
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH182_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH182_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return          
+
+//////////////////////////////////////////////////////////////////////////
+
+:BANDITS_ONFOOT_ATTACK_SYSTEM
+
+if
+$VAGINA3_FLAG[0@] == 1
+    then
+    $VAGINA3_TIME[0@] += 1
+    end               
+
+/////////////////Поиск цели бойцом///////////////////// 
+
+if and
+056D:   actor $BANDIT[0@] defined
+$VAGINA3_FLAG[0@] == 0  
+    then
+    gosub @BANDITS_ONFOOT_ATTACK_SYSTEM_PLAYER_CHECK
+    random_int 2@ 0 3
+    if and
+    2@ == 1
+    19@ == 1
+    $BANDITS1_CHASE_FLAG == 0
+    $BANDITS1_CHASE2_FLAG == 0
+        then
+        if or
+        0364:  actor $BANDIT[0@] spotted_actor PLAYER_ACTOR  
+        0364:  actor PLAYER_ACTOR spotted_actor $BANDIT[0@]   
+//        00F2:  actor $BANDIT[0@] near_actor PLAYER_ACTOR radius 55.0 55.0 sphere 0  
+            then
+            if and
+            $ACTOR_DEAD == 0
+            $SPECTATING_FLAG == 0
+            00F2:  actor $BANDIT[0@] near_actor PLAYER_ACTOR radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+                then       
+
+                008B: $VAGINA3[0@] = PLAYER_ACTOR // (int)                
+                $VAGINA3_FLAG[0@] = 1
+                $VAGINA3_TIME[0@] = 0
+                0568: set_actor $BANDIT[0@] untargetable 0  
+                
+                if
+                $VAGINA3_ACCQ_FLAG[0@] == 1
+                then
+                0A96: 1@ = actor $BANDIT[0@] struct
+                0A8E: 1@ = 1@ + 0x71A                    
+                0A8D: 2@ = read_memory 1@ size 1 virtual_protect 1 
+                    
+                2@ -= AI_ACQ_ADD_OTHER_TARGET                                         
+                                                                            
+                0A8C: write_memory 1@ size 4 value 2@ virtual_protect 1    
+                
+                actor.WeaponAccuracy($BANDIT[0@]) = 2@
+                                
+                $VAGINA3_ACCQ_FLAG[0@] = 0
+                end    
+                    
+                gosub @BANDITS_ONFOOT_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST                                                       
+      
+                end
+            end   
+        else 
+        gosub @BANDITS_ONFOOT_ATTACK_SYSTEM_TARGET_FIND 
+        if and
+        25@ == 1
+        056D:   actor $VAGINA3[0@] defined
+            then    
+            gosub @BANDITS_ONFOOT_ATTACK_SYSTEM_TARGET_CHECK
+            if
+            056D:   actor $VAGINA3[0@] defined
+                then
+                
+                if
+                DEBUG_OPPCODE_FLAG == 1
+                then
+                
+                DEBUG_STRING_NUMBER += 1
+                0AD3: v$DEBUG_FILE5 = format "BS%d" DEBUG_STRING_NUMBER
+                if
+                DEBUG_STRING_NUMBER > DEBUG_STRING_NUMBER_MAX
+                then
+                0B00: delete_file "debug\debug.ini"  // IF and SET
+                DEBUG_STRING_NUMBER = 0
+                end
+                0AF1: write_int $VAGINA3[0@] to_ini_file "debug\debug.ini" section "OPPCODE" key v$DEBUG_FILE5
+                
+                end
+                        
+                if and
+                not actor.Dead($VAGINA3[0@])   
+                0184:   actor $VAGINA3[0@] health > 0         
+                803A: not  $VAGINA3[0@] == $BANDIT[0@] // (int) 
+                19@ == 1                 
+                    then
+                    if or
+                    0364:  actor $BANDIT[0@] spotted_actor $VAGINA3[0@]
+                    0364:  actor $VAGINA3[0@] spotted_actor $BANDIT[0@]
+                    051A:   actor $BANDIT[0@] damaged_by_actor $VAGINA3[0@]
+                        then 
+                            
+                        $VAGINA3_FLAG[0@] = 1
+                        $VAGINA3_TIME[0@] = 0
+                        
+                        if
+                        $VAGINA3_ACCQ_FLAG[0@] == 0
+                        then
+                        0A96: 1@ = actor $BANDIT[0@] struct
+                        0A8E: 1@ = 1@ + 0x71A                    
+                        0A8D: 2@ = read_memory 1@ size 1 virtual_protect 1 
+                            
+                        2@ += AI_ACQ_ADD_OTHER_TARGET                   
+                             
+                        if
+                        2@ > 95
+                        then
+                        2@ = 95
+                        end                                            
+                              
+                        0A8C: write_memory 1@ size 4 value 2@ virtual_protect 1
+                        
+                        actor.WeaponAccuracy($BANDIT[0@]) = 2@                    
+                        
+                        $VAGINA3_ACCQ_FLAG[0@] = 1
+                        end    
+                            
+                        gosub @BANDITS_ONFOOT_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST                                                 
+                                   
+                        end                                                                                  
+                    end 
+                end
+            end
+        end               
+    end
+
+/////////////////Проверка на бездействие бойца если цель НЕ найдена/////////////////////     
+
+if and
+$VAGINA3_FLAG[0@] == 0
+0E45: frame_mod 15
+    then
+    if
+    056D:   actor $BANDIT[0@] defined
+        then     
+        if
+        0184:   actor $BANDIT[0@] health > 0 
+            then
+            06AC: 25@ = actor $BANDIT[0@] movement_speed
+            gosub @BANDITS_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK
+            if and
+            19@ == 0
+            $ACTIVE_INTERIOR == 0        
+            25@ < 0.001
+            82E0: not  actor $BANDIT[0@] firing_weapon 
+                then
+                if or
+                actor.Animation($BANDIT[0@]) == "idle_stance"
+                actor.Animation($BANDIT[0@]) == "Swim_Tread"
+                    then
+                    gosub @BANDITS_ONFOOT_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST  
+                    end
+                end
+            end
+        end
+    end
+    
+/////////////////Проверка на бездействие бойца если цель найдена/////////////////////     
+
+if and
+$VAGINA3_FLAG[0@] == 1
+0E45: frame_mod 15
+    then
+    if
+    056D:   actor $BANDIT[0@] defined
+        then     
+        if
+        0184:   actor $BANDIT[0@] health > 0 
+            then
+            062E: get_actor $BANDIT[0@] task 1506 status_store_to 25@ // ret 7 if not found
+            gosub @BANDITS_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK 
+            if and
+            25@ == 7
+            19@ == 0
+                then
+                gosub @BANDITS_ONFOOT_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST  
+                end
+            end
+        end
+    end    
+     
+/////////////////Проверка на наличие цели атаки///////////////////// 
+
+if and
+056D:   actor $BANDIT[0@] defined
+$VAGINA3_FLAG[0@] == 1 
+    then
+    if
+    056D:   actor $VAGINA3[0@] defined
+        then        
+        
+        if
+        DEBUG_OPPCODE_FLAG == 1
+        then
+        
+        DEBUG_STRING_NUMBER += 1
+        0AD3: v$DEBUG_FILE5 = format "BS%d" DEBUG_STRING_NUMBER
+        if
+        DEBUG_STRING_NUMBER > DEBUG_STRING_NUMBER_MAX
+        then
+        0B00: delete_file "debug\debug.ini"  // IF and SET
+        DEBUG_STRING_NUMBER = 0
+        end
+        0AF1: write_int $VAGINA3[0@] to_ini_file "debug\debug.ini" section "OPPCODE" key v$DEBUG_FILE5
+        
+        end
+        
+        if and
+        8364: not  actor $BANDIT[0@] spotted_actor $VAGINA3[0@]
+        CAMP_RAID_FLAG_BANDITS == 1
+        then
+        jump to @BANDITS_ONFOOT_SKIP_TARGET
+        end
+         
+        if or
+        8184:   actor $VAGINA3[0@] health < 1  
+        actor.Dead($VAGINA3[0@])
+        80F2: not  actor $BANDIT[0@] near_actor $VAGINA3[0@] radius $AI_FIND_RADIUS2 $AI_FIND_RADIUS2 sphere 0
+        001C:   $VAGINA3_TIME[0@] > AI_TARGET_BLOST_TIMER // (int)        
+            then
+            :BANDITS_ONFOOT_SKIP_TARGET 
+            $VAGINA3_FLAG[0@] = 0
+            $VAGINA3_TIME[0@] = 0   
+            Actor.SetWalkStyle($BANDIT[0@], "surv3")
+            end
+        else
+        $VAGINA3_FLAG[0@] = 0
+        $VAGINA3_TIME[0@] = 0
+        Actor.SetWalkStyle($BANDIT[0@], "surv3")
+        end
+    end             
+
+return
+
+:BANDITS_ONFOOT_ATTACK_SYSTEM_TARGET_FIND
+
+25@ = 0
+
+008B: 1@ = $CREATURE_RANDOM // (int)
+
+if
+CAMP_RAID_FLAG_BANDITS == 1
+then
+
+random_int 1@ 0 2
+if
+1@ == 0
+then
+random_int 1@ 47 58
+else
+random_int 1@ 41 46
+end
+
+if
+FERMERS_RAID_HELP_FLAG == 1
+    then
+    if
+    0E4D: random_percent 50
+        then
+        random_int 1@ 29 33
+        end
+    end
+    
+if
+PUNISHERS_RAID_HELP_FLAG == 1
+    then
+    if
+    0E4D: random_percent 50
+        then
+        random_int 1@ 37 41
+        end
+    end
+
+end
+
+0084: $VAGINA3[0@] = $CREATURE[1@] // (int)
+
+if and
+CAMP_RAID_FLAG_BANDITS == 1
+CAMP_RAID_GATE_OPENED == 0
+03CA:   object CAMP_RAID_GATE_OBJECT exists
+then
+0084: $VAGINA3[0@] = CAMP_RAID_GATE_ACTOR // (int)
+end
+
+if and
+056D:   actor $VAGINA3[0@] defined
+not 1@ == PLAYER_CREATURE_NUMBER
+    then      
+    if
+    00F2:   actor $BANDIT[0@] near_actor $VAGINA3[0@] radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+        then 
+        25@ = 1
+        end
+    end
+
+return
+
+:BANDITS_ONFOOT_ATTACK_SYSTEM_PLAYER_CHECK
+
+19@ = 0
+
+089F: get_actor $BANDIT[0@] pedtype_to 11@      
+    
+if
+11@ == 25
+    then
+    19@ = 0
+    
+    gosub @BANDITS_SPAWN1_SAME_CAR_CHECK
+    
+    if
+    $BANDITS1_SPOTTED_FLAG == 1
+    then
+    jump to @BANDITS_ONFOOT_ATTACK_SYSTEM_PLAYER_CHECK_SKIP
+    end
+    
+    if or
+    $PLAYER_BANDIT_SIDE == 1
+    $BANDITS_DONT_ATTACK_PLAYER_FLAG == 1
+    $SPECTATING_FLAG == 1
+    1@ == 1
+    then
+    19@ = 0
+    else
+    :BANDITS_ONFOOT_ATTACK_SYSTEM_PLAYER_CHECK_SKIP
+    19@ = 1
+    end
+    
+    return
+    end
+
+
+return   
+
+:BANDITS_ONFOOT_ATTACK_SYSTEM_TARGET_CHECK
+
+089F: get_actor $BANDIT[0@] pedtype_to 11@     
+    
+if
+11@ == 25
+    then
+    19@ = 0
+    
+    089F: get_actor $VAGINA3[0@] pedtype_to 12@ 
+    
+    if or
+    12@ == 23 
+    12@ == 27
+    12@ == 26 
+    12@ == 28
+    then
+    19@ = 1
+    else
+    19@ = 0
+    end
+    
+    return
+    end
+
+return 
+
+:BANDITS_ONFOOT_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST 
+
+if 
+02E0:   actor $BANDIT[0@] firing_weapon 
+    then
+    return
+    end    
+
+if 
+$VAGINA3_FLAG[0@] == 1
+    then 
+    if and
+    056D:   actor $VAGINA3[0@] defined
+    056D:   actor $BANDIT[0@] defined
+        then            
+        0687: clear_actor $BANDIT[0@] task
+        wait 100
+        if and
+        056D:   actor $VAGINA3[0@] defined 
+        056D:   actor $BANDIT[0@] defined
+            then  
+                
+            if
+            not actor.Driving($BANDIT[0@])   
+            then                  
+            05E2: AS_actor $BANDIT[0@] kill_actor $VAGINA3[0@]     
+            else
+            25@ = actor.CurrentCar($BANDIT[0@])
+            046C: 27@ = car 25@ driver
+            
+            if and
+            87D6: not  27@ == $BANDIT[0@] // @ == $ (int)
+            not CUSTOM_MODE_ONLY_MELEE == 1
+            not $MUTATION_ACTIVE == 4
+            then
+            
+            if and
+            82D8: not  actor $BANDIT[0@] current_weapon == 34
+            82D8: not  actor $BANDIT[0@] current_weapon == 120
+            82D8: not  actor $BANDIT[0@] current_weapon == 146
+            82D8: not  actor $BANDIT[0@] current_weapon == 175
+            82D8: not  actor $BANDIT[0@] current_weapon == 205
+            then                        
+            0713: actor $BANDIT[0@] driveby_actor $VAGINA3[0@] car -1 point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+            end
+            
+            end
+            
+            end
+            
+            Actor.SetWalkStyle($BANDIT[0@], "surv5")
+            
+            actor.StorePos($BANDIT[0@],1@,2@,3@)
+            actor.StorePos($VAGINA3[0@],27@,28@,29@)
+            
+            050A: 25@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 27@ 28@ 29@
+            0092: 25@ = float 25@ to_integer
+            
+            5@ = 150
+            
+            if
+            25@ > 100
+            then
+            25@ = 100
+            end
+            
+            0062: 5@ -= 25@  // (int)
+            
+            if
+            5@ < 10
+            then
+            5@ = 10
+            end            
+            
+            07DD: set_actor $BANDIT[0@] attack_rate 5@ // previously known as temper_to            
+                                
+            return           
+            end
+        end
+    else       
+    if
+    056D:   actor $BANDIT[0@] defined
+        then 
+        0687: clear_actor $BANDIT[0@] task
+        wait 100         
+        if
+        056D:   actor $BANDIT[0@] defined
+            then              
+            Actor.SetWalkStyle($BANDIT[0@], "surv3")
+            
+            actor.StorePos($BANDIT[0@],1@,2@,3@)
+            02C0: store_to 26@ 27@ 28@ ped_path_coords_closest_to 1@ 2@ 3@
+            0509: 30@ = distance_between_XY 1@ 2@ and_XY 26@ 27@
+            
+            if
+            CAMP_RAID_FLAG_BANDITS == 0
+            then
+            
+            if
+            30@ < AI_CAR_PATH_WALK_RADIUS
+            then                                        
+            05DE: AS_actor $BANDIT[0@] walk_around_ped_path
+            else
+            random_float 30@ 30.0 100.0                                                                       
+            04C4: store_coords_to 1@ 2@ 3@ from_actor $BANDIT[0@] with_offset 0.0 30@ 0.0
+            02C1: store_to 26@ 27@ 28@ car_path_coords_closest_to 1@ 2@ 3@
+            
+            0509: 3@ = distance_between_XY 0@ 1@ and_XY 26@ 27@
+            if
+            3@ < 5.0
+            then
+            random_float 3@ 0.0 360.0
+            05D4: AS_actor $BANDIT[0@] rotate_angle 3@
+            end
+            
+            if
+            84AD: not  actor $BANDIT[0@] in_water
+            then
+            05D3: AS_actor $BANDIT[0@] goto_point 26@ 27@ 28@ mode 7 time ROAD_WALK_TIME ms // versionA
+            else
+            07E1: AS_actor $BANDIT[0@] swim_to 26@ 27@ 28@
+            end
+            
+            end
+            
+            else
+            
+            05D6: clear_scmpath
+            
+            if
+            RAID_CAR_PATH_RANDOM_FLAG == 0
+            then
+            0AD3: v$RAID_FILE = format "CM%d" $ENTERED_CAMP_NUMBER
+            else
+            0AD3: v$RAID_FILE = format "CM%dB" $ENTERED_CAMP_NUMBER
+            end
+            
+            0AF0: 27@ = get_int_from_ini_file "data/raid.ini" section v$RAID_FILE key "POINTS"
+            
+            for 26@ = 0 to 27@
+            0AD3: v$RAID_FILE2 = format "PTH%d_X" 26@
+            0AF2: 1@ = get_float_from_ini_file "data/raid.ini" section v$RAID_FILE key v$RAID_FILE2
+            0AD3: v$RAID_FILE2 = format "PTH%d_Y" 26@ 
+            0AF2: 2@ = get_float_from_ini_file "data/raid.ini" section v$RAID_FILE key v$RAID_FILE2
+            0AD3: v$RAID_FILE2 = format "PTH%d_Z" 26@ 
+            0AF2: 3@ = get_float_from_ini_file "data/raid.ini" section v$RAID_FILE key v$RAID_FILE2
+            05D7: add_point_to_scmpath 1@ 2@ 3@
+            end
+                        
+            05D8: AS_assign_scmpath to_actor $BANDIT[0@] flags 6 0
+            
+            end
+                                  
+            return           
+            end 
+        end
+    end  
+    
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////              
+
+:BANDITS_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK
+19@ = 0
+
+if and
+not actor.Animation($BANDIT[0@]) == "colt45_fire_2hands"
+not actor.Animation($BANDIT[0@]) == "python_fire" 
+not actor.Animation($BANDIT[0@]) == "shotgun_fire" 
+not actor.Animation($BANDIT[0@]) == "buddy_fire" 
+not actor.Animation($BANDIT[0@]) == "UZI_fire"
+not actor.Animation($BANDIT[0@]) == "RIFLE_fire" 
+jf @BANDITS_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2  
+if and
+not actor.Animation($BANDIT[0@]) == "FLAME_fire" 
+not actor.Animation($BANDIT[0@]) == "RocketFire" 
+not actor.Animation($BANDIT[0@]) == "WEAPON_sniper" 
+not actor.Animation($BANDIT[0@]) == "WEAPON_throw"
+jf @BANDITS_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2       
+if and
+not actor.Animation($BANDIT[0@]) == "colt45_crouchfire"
+not actor.Animation($BANDIT[0@]) == "python_crouchfire" 
+not actor.Animation($BANDIT[0@]) == "shotgun_crouchfire" 
+not actor.Animation($BANDIT[0@]) == "buddy_crouchfire" 
+not actor.Animation($BANDIT[0@]) == "UZI_crouchfire"
+not actor.Animation($BANDIT[0@]) == "RIFLE_crouchfire" 
+jf @BANDITS_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2
+if and
+not actor.Animation($BANDIT[0@]) == "colt45_reload"
+not actor.Animation($BANDIT[0@]) == "python_reload" 
+not actor.Animation($BANDIT[0@]) == "shotgun_reload" 
+not actor.Animation($BANDIT[0@]) == "buddy_reload" 
+not actor.Animation($BANDIT[0@]) == "UZI_reload"
+not actor.Animation($BANDIT[0@]) == "RIFLE_load" 
+not actor.Animation($BANDIT[0@]) == "gas_cwr"
+jf @BANDITS_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2
+if and
+not actor.Animation($BANDIT[0@]) == "colt45_crouchreload"
+not actor.Animation($BANDIT[0@]) == "python_crouchreload" 
+not actor.Animation($BANDIT[0@]) == "shotgun_crouchreload" 
+not actor.Animation($BANDIT[0@]) == "buddy_crouchreload" 
+not actor.Animation($BANDIT[0@]) == "UZI_crouchreload"
+not actor.Animation($BANDIT[0@]) == "RIFLE_crouchload" 
+jf @BANDITS_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2 
+if and
+not actor.Animation($BANDIT[0@]) == "GunMove_BWD"
+not actor.Animation($BANDIT[0@]) == "GunMove_FWD"
+not actor.Animation($BANDIT[0@]) == "GunMove_L"
+not actor.Animation($BANDIT[0@]) == "GunMove_R"
+not actor.Animation($BANDIT[0@]) == "Gun_2_IDLE"
+not actor.Animation($BANDIT[0@]) == "GUN_BUTT"
+not actor.Animation($BANDIT[0@]) == "GUN_BUTT_crouch"
+not actor.Animation($BANDIT[0@]) == "Gun_stand" 
+jf @BANDITS_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2   
+if and
+not actor.Animation($BANDIT[0@]) == "WEAPON_throw"
+not actor.Animation($BANDIT[0@]) == "WEAPON_throwu"
+not actor.Animation($BANDIT[0@]) == "WEAPON_start_throw"
+jf @BANDITS_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2
+  
+return
+
+:BANDITS_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2
+19@ = 1
+return
+
+:BANDITS_AI_CHECK    
+
+for 0@ = 1 to 4
+
+if
+056D:   actor $BANDIT[0@] defined
+then
+gosub @BANDITS_ONFOOT_ATTACK_SYSTEM
+if
+0EA4: is_char_on_fire $BANDIT[0@]
+    then    
+    0A96: 5@ = actor $BANDIT[0@] struct
+    0A8E: 5@ = 5@ + 0x730 //CFire       
+    0A8D: 1@ = read_memory 5@ size 4 virtual_protect 0
+    0A8E: 2@ = 1@ + 0x14 //m_pEntityCreator
+    0A8D: 2@ = read_memory 2@ size 4 virtual_protect 0 
+    
+    for 25@ = 1 to 4    
+    0A96: 3@ = actor $BANDIT[25@] struct       
+    if
+    07D6:   2@ == 3@ // @ == $ (int)
+        then
+        0A8E: 4@ = 1@ + 0x18 //m_nTimeToBurn
+        0A8C: write_memory 4@ size 4 value 0 virtual_protect 0
+        0A8E: 4@ = 1@ + 0x20 //m_nNumGenerationsAllowed
+        0A8C: write_memory 4@ size 1 value 0 virtual_protect 0
+        end 
+    end
+                  
+    end
+end
+
+end 
+
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+:BANDITS_DEAD_CHECK
+
+if and
+$BANDITS1_EXIT_FLAG == 1
+BANDITS_CAR_DELETED_REFERENCES_FLAG == 0
+    then
+    if and
+    056D:   actor $BANDIT[1] defined
+    056D:   actor $BANDIT[2] defined
+    056D:   actor $BANDIT[3] defined
+    056D:   actor $BANDIT[4] defined
+        then
+        if and
+        8449: not  actor $BANDIT[1] in_a_car
+        8449: not  actor $BANDIT[2] in_a_car
+        8449: not  actor $BANDIT[3] in_a_car
+        8449: not  actor $BANDIT[4] in_a_car
+            then
+            gosub @BANDITS_CAR_REMOVE_REFERENCES
+            end
+        end
+    end
+    
+if and
+$BANDITS1_EXIT_FLAG == 1
+BANDITS_CAR2_DELETED_REFERENCES_FLAG == 0
+    then
+    if and
+    056D:   actor $BANDIT[1] defined
+    056D:   actor $BANDIT[2] defined
+    056D:   actor $BANDIT[3] defined
+    056D:   actor $BANDIT[4] defined
+        then
+        if and
+        8449: not  actor $BANDIT[1] in_a_car
+        8449: not  actor $BANDIT[2] in_a_car
+        8449: not  actor $BANDIT[3] in_a_car
+        8449: not  actor $BANDIT[4] in_a_car
+            then
+            gosub @BANDITS_CAR2_REMOVE_REFERENCES
+            end
+        end
+    end
+    
+//////////////////////////////////////////////////////////////////////////////////////////////////         
+
+for 0@ = 1 to 4
+
+if
+056D:   actor $BANDIT[0@] defined
+    then
+    if and
+    not actor.Dead($BANDIT[0@])
+    $ACTIVE_INTERIOR == 0
+    $INT_ENTERING_FLAG == 0
+        then
+        actor.StorePos($BANDIT[0@],25@,26@,27@)
+        if
+        27@ < Z_COORD_DELETE_PED      
+            then
+            
+            if
+            $BANDITS1_BIKE_FLAG == 1
+            then
+            04C4: store_coords_to 25@ 26@ 27@ from_actor $BANDIT[0@] with_offset 0.0 0.0 1.5
+            0362: remove_actor $BANDIT[0@] from_car_and_place_at 25@ 26@ 27@
+            end
+            
+            05BE: AS_actor $BANDIT[0@] die
+            if
+            056E:   car BANDIT_CAR defined
+                then
+                00A9: set_car BANDIT_CAR to_normal_driver
+                if
+                056E:   car BANDIT_CAR2 defined
+                    then
+                    00A9: set_car BANDIT_CAR2 to_normal_driver
+                    end
+                end
+            end
+        end
+    end                   
+    
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+056D:   actor $BANDIT[1] defined
+    then
+    if and
+    $BANDITS1_DEAD_FLAG == 0
+    actor.Dead($BANDIT[1])    
+        then
+        
+        create_thread @ANTKUKL $BANDIT[1] 0 0 0 0 1
+        
+        if or
+        $FREEMODE == 1
+        $GAMEMODE_WAR == 1
+        then
+        
+        if
+        $GAMEMODE_WAR == 0
+        then
+        $BANDITS_PROCENT -= BANDITS_PROCENT_CONVOYS_MINUS        
+        else
+        
+        if
+        UNITED_MAP == 0
+        then
+        $BANDITS_PROCENT -= BANDITS_PROCENT_CONVOYS_MINUS_WAR
+        else
+        $BANDITS_PROCENT -= BANDITS_PROCENT_CONVOYS_MINUS_WAR_UNITED
+        end
+        
+        end
+        
+        end
+        
+        $BANDITS1_DEAD_FLAG = 1
+        
+        0A96: 0@ = actor $BANDIT[1] struct
+        0A8E: 0@ = 0@ + 0x764
+        0A8D: 1@ = read_memory 0@ size 2 virtual_protect 1
+        0A8D: 2@ = read_memory 0xB6F5F0 size 2 virtual_protect 1
+        
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////            
+        
+        if
+        0800:   in_two_players_mode
+        then
+        0A8D: 0@ = read_memory 0xB7CF28 size 2 virtual_protect 1
+        end
+        
+        if or
+        003B:   1@ == 2@  // (int)
+        003B:   1@ == 0@  // (int)
+        then            
+        
+        0AF0: 27@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_BANDITS_KILLED"        
+        
+        if
+        $CHEATED_FLAG == 0 
+        then               
+        27@ += 1
+        end
+        
+        $BANDITS_KILLED += 1
+        $TEMP_XP = BANDITS_XP_PLUS
+        008D: $TEMP_XP = integer $TEMP_XP to_float
+        0069: $TEMP_XP *= $XP_COEFF // (float)
+        008C: $TEMP_XP = float $TEMP_XP to_integer
+        0058: $PLAYER_XP += $TEMP_XP // (int)
+        
+        if
+        KARMA_SYS_ON_FLAG == 1
+        then
+        CARMA_BAD_POINTS -= 1
+        end                    
+         
+        0AF1: write_int 27@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_BANDITS_KILLED"
+        
+        end
+        
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////        
+        
+        27@ = 1
+        gosub @BANDITS_JIMMY_CHECK
+        
+        0A96: 0@ = actor $BANDIT[1] struct
+        0@ += 0x754
+        0A8D: 1@ = read_memory 0@ size 4 virtual_protect 0
+        2@ = 0    
+        0ECE: get_time_char_is_dead $BANDIT[1] store_to 2@
+        
+        if and
+        0104:   actor $BANDIT[1] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+        $SPECTATING_FLAG == 0
+        $SCREWHUD_FLAG == 0
+        $PHRASES_OFF_FLAG == 0
+        89A8: not  actor $BANDIT[1] headshoted
+        not 1@ == 0x02
+        2@ > 500
+            then
+            gosub @RANDOM_DIALOG_DEAD_BANDITS   
+    
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer
+            text.ClearAll()  
+            
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+            end
+        end
+    end
+    
+//////////////////////////////////////////////////////////////////////////////////////////////////    
+        
+if
+056D:   actor $BANDIT[2] defined
+    then
+    if and
+    $BANDITS2_DEAD_FLAG == 0
+    actor.Dead($BANDIT[2])
+        then
+        
+        if
+        $BANDITS1_BIKE_FLAG == 1
+        then
+        create_thread @ANTKUKL $BANDIT[2]
+        else
+        create_thread @ANTKUKL $BANDIT[2] 0 0 0 0 0 1 0
+        end
+        
+        if or
+        $FREEMODE == 1
+        $GAMEMODE_WAR == 1
+        then
+        
+        if
+        $GAMEMODE_WAR == 0
+        then
+        $BANDITS_PROCENT -= BANDITS_PROCENT_CONVOYS_MINUS
+        else
+        
+        if
+        UNITED_MAP == 0
+        then
+        $BANDITS_PROCENT -= BANDITS_PROCENT_CONVOYS_MINUS_WAR
+        else
+        $BANDITS_PROCENT -= BANDITS_PROCENT_CONVOYS_MINUS_WAR_UNITED
+        end
+        
+        end
+        
+        end
+        
+        $BANDITS2_DEAD_FLAG = 1
+        
+        0A96: 0@ = actor $BANDIT[2] struct
+        0A8E: 0@ = 0@ + 0x764
+        0A8D: 1@ = read_memory 0@ size 2 virtual_protect 1
+        0A8D: 2@ = read_memory 0xB6F5F0 size 2 virtual_protect 1
+        
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////            
+        
+        if
+        0800:   in_two_players_mode
+        then
+        0A8D: 0@ = read_memory 0xB7CF28 size 2 virtual_protect 1
+        end
+        
+        if or
+        003B:   1@ == 2@  // (int)
+        003B:   1@ == 0@  // (int)
+        then        
+        
+        0AF0: 27@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_BANDITS_KILLED"        
+        
+        if
+        $CHEATED_FLAG == 0 
+        then               
+        27@ += 1
+        end
+        
+        $BANDITS_KILLED += 1
+        $TEMP_XP = BANDITS_XP_PLUS
+        008D: $TEMP_XP = integer $TEMP_XP to_float
+        0069: $TEMP_XP *= $XP_COEFF // (float)
+        008C: $TEMP_XP = float $TEMP_XP to_integer
+        0058: $PLAYER_XP += $TEMP_XP // (int)
+        
+        if
+        KARMA_SYS_ON_FLAG == 1
+        then
+        CARMA_BAD_POINTS -= 1
+        end                    
+         
+        0AF1: write_int 27@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_BANDITS_KILLED"
+        
+        end
+        
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////           
+        
+        27@ = 2
+        gosub @BANDITS_JIMMY_CHECK     
+    
+        0A96: 0@ = actor $BANDIT[2] struct
+        0@ += 0x754
+        0A8D: 1@ = read_memory 0@ size 4 virtual_protect 0
+        2@ = 0    
+        0ECE: get_time_char_is_dead $BANDIT[2] store_to 2@
+    
+        if and
+        0104:   actor $BANDIT[2] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+        $SPECTATING_FLAG == 0
+        $SCREWHUD_FLAG == 0
+        $PHRASES_OFF_FLAG == 0
+        89A8: not  actor $BANDIT[2] headshoted
+        not 1@ == 0x02
+        2@ > 500
+            then
+            gosub @RANDOM_DIALOG_DEAD_BANDITS   
+    
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer
+            text.ClearAll()  
+            
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+            end
+        end
+    end
+    
+//////////////////////////////////////////////////////////////////////////////////////////////////    
+        
+if
+056D:   actor $BANDIT[3] defined
+    then
+    if and
+    $BANDITS3_DEAD_FLAG == 0
+    actor.Dead($BANDIT[3])
+        then
+        
+        if
+        $BANDITS1_BIKE_FLAG == 1
+        then
+        create_thread @ANTKUKL $BANDIT[3]
+        else
+        create_thread @ANTKUKL $BANDIT[3] 0 0 0 0 0 1 1
+        end
+        
+        if or
+        $FREEMODE == 1
+        $GAMEMODE_WAR == 1
+        then
+        
+        if
+        $GAMEMODE_WAR == 0
+        then
+        $BANDITS_PROCENT -= BANDITS_PROCENT_CONVOYS_MINUS
+        else
+        
+        if
+        UNITED_MAP == 0
+        then
+        $BANDITS_PROCENT -= BANDITS_PROCENT_CONVOYS_MINUS_WAR
+        else
+        $BANDITS_PROCENT -= BANDITS_PROCENT_CONVOYS_MINUS_WAR_UNITED
+        end
+        
+        end
+        
+        end
+        
+        $BANDITS3_DEAD_FLAG = 1
+        
+        0A96: 0@ = actor $BANDIT[3] struct
+        0A8E: 0@ = 0@ + 0x764
+        0A8D: 1@ = read_memory 0@ size 2 virtual_protect 1
+        0A8D: 2@ = read_memory 0xB6F5F0 size 2 virtual_protect 1
+        
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////            
+        
+        if
+        0800:   in_two_players_mode
+        then
+        0A8D: 0@ = read_memory 0xB7CF28 size 2 virtual_protect 1
+        end
+        
+        if or
+        003B:   1@ == 2@  // (int)
+        003B:   1@ == 0@  // (int)
+        then
+                
+        0AF0: 27@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_BANDITS_KILLED"        
+        
+        if
+        $CHEATED_FLAG == 0 
+        then               
+        27@ += 1
+        end
+        
+        $BANDITS_KILLED += 1
+        $TEMP_XP = BANDITS_XP_PLUS
+        008D: $TEMP_XP = integer $TEMP_XP to_float
+        0069: $TEMP_XP *= $XP_COEFF // (float)
+        008C: $TEMP_XP = float $TEMP_XP to_integer
+        0058: $PLAYER_XP += $TEMP_XP // (int)
+        
+        if
+        KARMA_SYS_ON_FLAG == 1
+        then
+        CARMA_BAD_POINTS -= 1
+        end                    
+         
+        0AF1: write_int 27@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_BANDITS_KILLED"
+        
+        end
+        
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////            
+        
+        27@ = 3
+        gosub @BANDITS_JIMMY_CHECK    
+        
+        0A96: 0@ = actor $BANDIT[3] struct
+        0@ += 0x754
+        0A8D: 1@ = read_memory 0@ size 4 virtual_protect 0
+        2@ = 0    
+        0ECE: get_time_char_is_dead $BANDIT[3] store_to 2@
+        
+        if and
+        0104:   actor $BANDIT[3] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+        $SPECTATING_FLAG == 0
+        $SCREWHUD_FLAG == 0
+        $PHRASES_OFF_FLAG == 0
+        89A8: not  actor $BANDIT[3] headshoted
+        not 1@ == 0x02
+        2@ > 500
+            then
+            gosub @RANDOM_DIALOG_DEAD_BANDITS   
+    
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer
+            text.ClearAll()  
+            
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+            end
+        end
+    end
+    
+//////////////////////////////////////////////////////////////////////////////////////////////////    
+        
+if
+056D:   actor $BANDIT[4] defined
+    then
+    if and
+    $BANDITS4_DEAD_FLAG == 0
+    actor.Dead($BANDIT[4])
+        then
+        
+        if
+        $BANDITS1_BIKE_FLAG == 1
+        then
+        create_thread @ANTKUKL $BANDIT[4]
+        else
+        create_thread @ANTKUKL $BANDIT[4] 0 0 0 0 0 1 2
+        end
+        
+        if or
+        $FREEMODE == 1
+        $GAMEMODE_WAR == 1
+        then
+        
+        if
+        $GAMEMODE_WAR == 0
+        then
+        $BANDITS_PROCENT -= BANDITS_PROCENT_CONVOYS_MINUS
+        else
+        
+        if
+        UNITED_MAP == 0
+        then
+        $BANDITS_PROCENT -= BANDITS_PROCENT_CONVOYS_MINUS_WAR
+        else
+        $BANDITS_PROCENT -= BANDITS_PROCENT_CONVOYS_MINUS_WAR_UNITED
+        end
+        
+        end
+        
+        end
+        
+        $BANDITS4_DEAD_FLAG = 1
+        
+        0A96: 0@ = actor $BANDIT[4] struct
+        0A8E: 0@ = 0@ + 0x764
+        0A8D: 1@ = read_memory 0@ size 2 virtual_protect 1
+        0A8D: 2@ = read_memory 0xB6F5F0 size 2 virtual_protect 1
+        
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////            
+        
+        if
+        0800:   in_two_players_mode
+        then
+        0A8D: 0@ = read_memory 0xB7CF28 size 2 virtual_protect 1
+        else
+        0@ = -69
+        end
+        
+        if or
+        003B:   1@ == 2@  // (int)
+        003B:   1@ == 0@  // (int)
+        then        
+        
+        0AF0: 27@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_BANDITS_KILLED"        
+        
+        if
+        $CHEATED_FLAG == 0 
+        then               
+        27@ += 1
+        end
+        
+        $BANDITS_KILLED += 1      
+        $TEMP_XP = BANDITS_XP_PLUS
+        008D: $TEMP_XP = integer $TEMP_XP to_float
+        0069: $TEMP_XP *= $XP_COEFF // (float)
+        008C: $TEMP_XP = float $TEMP_XP to_integer
+        0058: $PLAYER_XP += $TEMP_XP // (int)
+        
+        if
+        KARMA_SYS_ON_FLAG == 1
+        then
+        CARMA_BAD_POINTS -= 1
+        end                      
+         
+        0AF1: write_int 27@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_BANDITS_KILLED"
+        
+        end
+        
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////            
+        
+        27@ = 4
+        gosub @BANDITS_JIMMY_CHECK    
+        
+        0A96: 0@ = actor $BANDIT[4] struct
+        0@ += 0x754
+        0A8D: 1@ = read_memory 0@ size 4 virtual_protect 0
+        2@ = 0    
+        0ECE: get_time_char_is_dead $BANDIT[4] store_to 2@
+        
+        if and
+        0104:   actor $BANDIT[4] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+        $SPECTATING_FLAG == 0
+        $SCREWHUD_FLAG == 0
+        $PHRASES_OFF_FLAG == 0
+        89A8: not  actor $BANDIT[4] headshoted
+        not 1@ == 0x02
+        2@ > 500
+            then
+            gosub @RANDOM_DIALOG_DEAD_BANDITS   
+    
+            09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer
+            text.ClearAll()  
+            
+            00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
+            end
+        end 
+    end            
+
+return
+
+:BANDITS_RANDOM_THROW_TIME
+0084: $BANDITS_THROW_TIME2 = $BANDITS_THROW_TIME // (int) 
+008D: $BANDITS_THROW_TIME2 = integer $BANDITS_THROW_TIME2 to_float
+random_int 14@ $BANDITS_THROW_TIME_MIN $BANDITS_THROW_TIME_MAX
+006D: $BANDITS_THROW_TIME2 *= 14@ // (float)     
+008C: $BANDITS_THROW_TIME2 = float $BANDITS_THROW_TIME2 to_integer
+return
+
+:BANDITS_RANDOM_SPEC_WEAPON
+wait 5
+
+if
+$BANDITS_RANDOM_SPEC_WEAPON_FLAG == 1
+then
+return
+else
+$BANDITS_RANDOM_SPEC_WEAPON_FLAG = 1
+end
+
+if
+$GAMEMODE_WAR == 1
+    then
+    random_int 0@ 0 3
+    if or
+    0@ == 1
+    CAMP_RAID_FLAG_BANDITS == 1
+        then
+        random_int 0@ 1 5        
+        
+        if
+        UNITED_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 35 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($BANDIT[0@],35,3)
+        else
+        
+        if
+        $UNITED_VC_FLAG == 0
+        then
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 119 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($BANDIT[0@],119,3)
+        else
+        
+        0781: get_weapon_with_ID 183 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($BANDIT[0@],183,3)
+        end
+        
+        else
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 135 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($BANDIT[0@],135,3)
+        else
+        
+        0781: get_weapon_with_ID 213 model_to 25@
+
+        while not model.Available(25@)
+        wait 0
+        model.Load(25@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo($BANDIT[0@],213,3)
+        end
+        
+        end
+        
+        end
+        
+        end  
+    end    
+    
+////////////////////////////////////////////////////////////////////////////////////    
+    
+random_int 0@ 0 4
+if or
+0@ == 2
+CAMP_RAID_FLAG_BANDITS == 1
+    then
+    if and
+    $GAMEMODE_WAR == 0
+    $EASY_MODE == 0
+    not $GAMEMODE_EDITOR == 1
+        then
+        random_int 0@ 1 5        
+    
+        if
+        UNITED_MAP == 0
+        then
+        25@ = 34
+        else
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        if
+        $UNITED_VC_FLAG == 1
+        then
+        25@ = 146
+        else
+        25@ = 120
+        end
+        
+        else
+        
+        if
+        $UNITED_VC_FLAG == 1
+        then
+        25@ = 205
+        else
+        25@ = 175
+        end
+        
+        end
+        
+        end
+    
+        0781: get_weapon_with_ID 25@ model_to 1@
+    
+        while not model.Available(1@)
+        wait 0
+        model.Load(1@)
+        mload
+        end
+        
+    //    048F: actor $BANDIT[0@] remove_weapons    
+        actor.GiveWeaponAndAmmo($BANDIT[0@],25@,99999)
+        actor.WeaponAccuracy($BANDIT[0@]) = SNIPERS_ACCURACY
+            
+        end
+    end
+
+return
+
+:BANDITS_SPAWN1_WEAPON_CHECK
+wait 0  
+
+if
+UNITED_MAP == 0
+then
+
+///////////////////////////////////
+
+random_int 1@ = 0 to 4
+
+if 
+1@ == 0
+then
+10@ = 22
+end
+
+if 
+1@ == 1
+then
+10@ = 25
+end
+
+if 
+1@ == 2
+then
+10@ = 28
+end
+
+if 
+1@ == 3
+then
+10@ = 30
+end
+
+if
+CAMP_RAID_FLAG_BANDITS == 1
+then
+10@ = 30
+end
+
+///////////////////////////////////
+
+else
+
+if
+$UNITED_VC_FLAG == 0
+then
+
+///////////////////////////////////
+
+if
+STORIES_MAP == 0
+then
+random_int 1@ = 0 to 4
+
+if 
+1@ == 0
+then
+10@ = 111
+end
+
+if 
+1@ == 1
+then
+10@ = 112
+end
+
+if 
+1@ == 2
+then
+10@ = 113
+end
+
+if 
+1@ == 3
+then
+10@ = 117
+end
+
+else
+
+random_int 1@ = 0 to 4
+
+if 
+1@ == 0
+then
+10@ = 165
+end
+
+if 
+1@ == 1
+then
+10@ = 168
+end
+
+if 
+1@ == 2
+then
+10@ = 171
+end
+
+if 
+1@ == 3
+then
+10@ = 172
+end
+
+end     
+
+/////////////////////////////////// 
+
+else
+
+///////////////////////////////////
+
+if
+STORIES_MAP == 0
+then
+random_int 1@ = 0 to 4
+
+if 
+1@ == 0
+then
+10@ = 136
+end
+
+if 
+1@ == 1
+then
+10@ = 138
+end
+
+if 
+1@ == 2
+then
+10@ = 142
+end
+
+if 
+1@ == 3
+then
+10@ = 145
+end
+
+else
+
+random_int 1@ = 0 to 4
+
+if 
+1@ == 0
+then
+10@ = 201
+end
+
+if 
+1@ == 1
+then
+10@ = 195
+end
+
+if 
+1@ == 2
+then
+10@ = 198
+end
+
+if 
+1@ == 3
+then
+10@ = 202
+end
+
+end
+
+///////////////////////////////////
+
+end
+
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+0781: get_weapon_with_ID 10@ model_to 11@
+ 
+if 
+07DE:   model 11@ exists // versionB 
+jf @BANDITS_SPAWN1_WEAPON_CHECK 
+
+while not model.Available(11@)
+wait 0
+model.Load(11@)
+mload
+end
+
+Actor.GiveWeaponAndAmmo($BANDIT[29@], 10@, 99999)
+return
+
+:BANDITS_RANDOM_HP
+008B: 0@ = $BANDITS_HEALTH // (int)
+0093: 0@ = integer 0@ to_float
+random_float 1@ 0.85 1.35 
+006B: 0@ *= 1@  // (float)  
+0092: 0@ = float 0@ to_integer 
+return
+
+:BANDITS_SPAWN1_TRANSPORT_AND_PEDS_CREATE
+
+if
+UNITED_MAP == 0
+then
+
+if
+$BANDITS1_BIKE_FLAG == 0
+then
+
+:CAR_CREATE_BANDIT_ON_CAR
+if
+model.Available(15422)
+then
+BANDIT_CAR = Car.Create(15422, 9@, 10@, 11@)
+
+if
+model.Available(15422)
+then
+//model.Destroy(15422)
+end
+
+else
+model.Load(15422)
+mload
+wait 0
+jump to @CAR_CREATE_BANDIT_ON_CAR
+end
+
+else
+
+:CAR_CREATE_BANDIT_ON_CAR2
+if
+model.Available(#PCJ600)
+then
+BANDIT_CAR = Car.Create(#PCJ600, 9@, 10@, 11@)
+else
+model.Load(#PCJ600)
+mload
+wait 0
+jump to @CAR_CREATE_BANDIT_ON_CAR2
+end
+
+0407: store_coords_to 9@ 10@ 11@ from_car BANDIT_CAR with_offset 0.0 -8.0 0.0
+
+:CAR_CREATE_BANDIT_ON_CAR3
+if
+model.Available(#PCJ600)
+then
+BANDIT_CAR2 = Car.Create(#PCJ600, 9@, 10@, 11@)
+
+if
+model.Available(#PCJ600)
+then
+//model.Destroy(#PCJ600)
+end
+
+else
+model.Load(#PCJ600)
+mload
+wait 0
+jump to @CAR_CREATE_BANDIT_ON_CAR3
+end
+
+end
+
+else
+
+/////////////////////////////////////////////////////////////////////////
+
+if
+$UNITED_VC_FLAG == 1
+then
+
+/////////////////////////////////////////////////////////////////////////
+
+if
+$BANDITS1_BIKE_FLAG == 0
+then
+
+:CAR_CREATE_BANDIT_ON_CAR4
+if
+model.Available($VC_BANDITS_CAR)
+then
+BANDIT_CAR = Car.Create($VC_BANDITS_CAR, 9@, 10@, 11@)
+
+if
+model.Available($VC_BANDITS_CAR)
+then
+//model.Destroy($VC_BANDITS_CAR)
+end
+
+else
+model.Load($VC_BANDITS_CAR)
+mload
+wait 0
+jump to @CAR_CREATE_BANDIT_ON_CAR4
+end
+
+else
+
+:CAR_CREATE_BANDIT_ON_CAR5
+if
+model.Available($VC_BANDITS_BIKE)
+then
+BANDIT_CAR = Car.Create($VC_BANDITS_BIKE, 9@, 10@, 11@)
+else
+model.Load($VC_BANDITS_BIKE)
+mload
+wait 0
+jump to @CAR_CREATE_BANDIT_ON_CAR5
+end
+
+if
+$UNITED_VC_FLAG == 0
+then
+0229: set_car BANDIT_CAR primary_color_to 54 secondary_color_to 76
+else
+0229: set_car BANDIT_CAR primary_color_to 106 secondary_color_to 106
+end
+
+0407: store_coords_to 9@ 10@ 11@ from_car BANDIT_CAR with_offset 0.0 -8.0 0.0
+
+:CAR_CREATE_BANDIT_ON_CAR6
+if
+model.Available($VC_BANDITS_BIKE)
+then
+BANDIT_CAR2 = Car.Create($VC_BANDITS_BIKE, 9@, 10@, 11@)
+
+if
+model.Available($VC_BANDITS_BIKE)
+then
+//model.Destroy($VC_BANDITS_BIKE)
+end
+
+else
+model.Load($VC_BANDITS_BIKE)
+mload
+wait 0
+jump to @CAR_CREATE_BANDIT_ON_CAR6
+end
+
+if
+$UNITED_VC_FLAG == 0
+then
+0229: set_car BANDIT_CAR2 primary_color_to 54 secondary_color_to 76
+else
+0229: set_car BANDIT_CAR2 primary_color_to 106 secondary_color_to 106
+end
+
+end
+
+/////////////////////////////////////////////////////////////////////////
+
+else
+
+/////////////////////////////////////////////////////////////////////////
+
+if
+$BANDITS1_BIKE_FLAG == 0
+then
+
+:CAR_CREATE_BANDIT_ON_CAR7
+if
+model.Available($III_BANDITS_CAR)
+then
+BANDIT_CAR = Car.Create($III_BANDITS_CAR, 9@, 10@, 11@)
+
+if
+model.Available($III_BANDITS_CAR)
+then
+//model.Destroy($III_BANDITS_CAR)
+end
+
+else
+model.Load($III_BANDITS_CAR)
+mload
+wait 0
+jump to @CAR_CREATE_BANDIT_ON_CAR7
+end
+
+else
+
+:CAR_CREATE_BANDIT_ON_CAR8
+if
+model.Available($III_BANDITS_BIKE)
+then
+BANDIT_CAR = Car.Create($III_BANDITS_BIKE, 9@, 10@, 11@)
+else
+model.Load($III_BANDITS_BIKE)
+mload
+wait 0
+jump to @CAR_CREATE_BANDIT_ON_CAR8
+end
+
+if
+$UNITED_VC_FLAG == 0
+then
+0229: set_car BANDIT_CAR primary_color_to 54 secondary_color_to 76
+else
+0229: set_car BANDIT_CAR primary_color_to 106 secondary_color_to 106
+end
+
+0407: store_coords_to 9@ 10@ 11@ from_car BANDIT_CAR with_offset 0.0 -8.0 0.0
+
+:CAR_CREATE_BANDIT_ON_CAR9
+if
+model.Available($III_BANDITS_BIKE)
+then 
+BANDIT_CAR2 = Car.Create($III_BANDITS_BIKE, 9@, 10@, 11@)
+
+if
+model.Available($III_BANDITS_BIKE)
+then
+//model.Destroy($III_BANDITS_BIKE)
+end
+
+else
+model.Load($III_BANDITS_BIKE)
+mload
+wait 0
+jump to @CAR_CREATE_BANDIT_ON_CAR9
+end
+
+if
+$UNITED_VC_FLAG == 0
+then
+0229: set_car BANDIT_CAR2 primary_color_to 54 secondary_color_to 76
+else
+0229: set_car BANDIT_CAR2 primary_color_to 106 secondary_color_to 106
+end
+
+end
+
+/////////////////////////////////////////////////////////////////////////
+
+end
+
+end
+
+if
+$GAMEMODE_WAR == 0
+then
+random_int 2@ 500 CAR_HEALTH_MAX
+else
+random_int 2@ 500 CAR_HEALTH_MAX
+end
+
+//0A97: 11@ = car BANDIT_CAR struct 
+//11@ += 19
+//0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+//08BD: set 12@ bit 2
+//0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+//08C3: clear 12@ bit 2
+
+car.Health(BANDIT_CAR) = 2@
+
+0878: set_car BANDIT_CAR dirt_level 20.0
+
+car.StorePos(BANDIT_CAR, 6@, 7@, 8@)
+if
+ZAME_HUENEMY_FLAG == 0
+then
+02C1: store_to 9@ 10@ 11@ car_path_coords_closest_to 6@ 7@ 8@
+end
+car.PutAt(BANDIT_CAR,9@,10@,11@)
+random_int 24@ 0 2
+
+if and
+CAMP_RAID_FLAG_BANDITS == 0
+ZAME_HUENEMY_FLAG == 0
+then
+06F8: get_nearest_route_for 9@ 10@ 11@ in_direction 24@ store_to 25@ 26@ 27@ Z_angle_to 13@   
+car.Angle(BANDIT_CAR) = 13@
+else              
+if
+not ZAME_HUENEMY_FLAG == 1
+    then
+    0E27: get_angle_from_two_coords 9@ 10@ and $CAMP_X[$ENTERED_CAMP_NUMBER] $CAMP_Y[$ENTERED_CAMP_NUMBER] to 13@
+    car.Angle(BANDIT_CAR) = 13@ 
+    else
+    car.Angle(BANDIT_CAR) = ZAME_HUENEMY_POS_A 
+    end 
+end
+
+if
+$BANDITS1_BIKE_FLAG == 1
+then
+
+if
+$GAMEMODE_WAR == 0
+then
+random_int 2@ 500 CAR_HEALTH_MAX
+else
+random_int 2@ 500 CAR_HEALTH_MAX
+end
+
+//0A97: 11@ = car BANDIT_CAR struct 
+//11@ += 19
+//0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+//08BD: set 12@ bit 2
+//0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+//08C3: clear 12@ bit 2
+
+car.Health(BANDIT_CAR2) = 2@
+
+0878: set_car BANDIT_CAR2 dirt_level 20.0
+
+car.StorePos(BANDIT_CAR2, 6@, 7@, 8@)
+if
+ZAME_HUENEMY_FLAG == 0
+then
+02C1: store_to 9@ 10@ 11@ car_path_coords_closest_to 6@ 7@ 8@
+end
+car.PutAt(BANDIT_CAR2,9@,10@,11@)
+
+if and
+CAMP_RAID_FLAG_BANDITS == 0
+ZAME_HUENEMY_FLAG == 0
+then
+06F8: get_nearest_route_for 9@ 10@ 11@ in_direction 24@ store_to 25@ 26@ 27@ Z_angle_to 13@   
+car.Angle(BANDIT_CAR2) = 13@
+else
+if
+not ZAME_HUENEMY_FLAG == 1
+    then
+    0E27: get_angle_from_two_coords 9@ 10@ and $CAMP_X[$ENTERED_CAMP_NUMBER] $CAMP_Y[$ENTERED_CAMP_NUMBER] to 13@
+    car.Angle(BANDIT_CAR2) = 13@
+    else
+    car.Angle(BANDIT_CAR2) = ZAME_HUENEMY_POS_A 
+    end
+end
+
+end
+
+if
+UNITED_MAP == 0
+then
+  
+0229: set_car BANDIT_CAR primary_color_to $BANDITS_CAR_COLOR1 secondary_color_to $BANDITS_CAR_COLOR2
+
+if
+056E:   car BANDIT_CAR2 defined
+then
+0229: set_car BANDIT_CAR2 primary_color_to $BANDITS_CAR_COLOR1 secondary_color_to $BANDITS_CAR_COLOR2
+end
+
+else
+
+if
+$UNITED_VC_FLAG == 0
+then
+0229: set_car BANDIT_CAR primary_color_to 54 secondary_color_to 76
+else
+0229: set_car BANDIT_CAR primary_color_to 106 secondary_color_to 106
+end
+
+end
+
+if
+$BANDITS1_BIKE_FLAG == 0
+then
+0A97: 11@ = car BANDIT_CAR struct 
+11@ += 9
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+08BD: set 12@ bit 2
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 2
+end
+/////////////////////
+0A97: 11@ = car BANDIT_CAR struct 
+11@ += 4 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+08BD: set 12@ bit 1 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 1
+random_float $BENZIN_BANDITS $GASOLINE_MIN $GASOLINE_MAX
+$BENZIN_BANDITS *= 2.0
+0A97: 0@ = car BANDIT_CAR struct 
+0A8E: 23@ = 0@ + 5 // int 
+0A8C: write_memory 23@ size 4 value $BENZIN_BANDITS virtual_protect 0
+
+if
+$BANDITS1_BIKE_FLAG == 1
+then
+
+if
+$BANDITS1_BIKE_FLAG == 0
+then
+0A97: 11@ = car BANDIT_CAR2 struct 
+11@ += 9
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+08BD: set 12@ bit 2
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 2
+end
+/////////////////////
+0A97: 11@ = car BANDIT_CAR2 struct 
+11@ += 4 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+08BD: set 12@ bit 1 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 1
+random_float $BENZIN_BANDITS $GASOLINE_MIN $GASOLINE_MAX
+$BENZIN_BANDITS *= 2.0
+0A97: 0@ = car BANDIT_CAR2 struct 
+0A8E: 23@ = 0@ + 5 // int 
+0A8C: write_memory 23@ size 4 value $BENZIN_BANDITS virtual_protect 0
+end 
+
+if
+$BANDITS1_BIKE_FLAG == 0
+then
+
+random_int 6@ 0 3
+if or
+6@ == 0
+6@ == 2
+    then
+    073C: car BANDIT_CAR damage_componentB 0
+    end
+
+random_int 6@ 0 3
+if or
+6@ == 0
+6@ == 2
+    then
+    073C: car BANDIT_CAR damage_componentB 1
+    end
+
+random_int 6@ 0 3
+if or
+6@ == 0
+6@ == 2
+    then
+    073C: car BANDIT_CAR damage_componentB 2
+    end
+
+random_int 6@ 0 3
+if or
+6@ == 0
+6@ == 2
+    then
+    073C: car BANDIT_CAR damage_componentB 3
+    end
+
+random_int 6@ 0 3
+if or
+6@ == 0
+6@ == 2
+    then
+    073C: car BANDIT_CAR damage_componentB 4
+    end
+
+random_int 6@ 0 3
+if or
+6@ == 0
+6@ == 2
+    then
+    073C: car BANDIT_CAR damage_componentB 5
+    end
+
+random_int 6@ 0 3
+if or
+6@ == 0
+6@ == 2
+    then
+    073C: car BANDIT_CAR damage_componentB 6
+    end
+    
+end    
+
+if
+$GAMEMODE_WAR == 0
+then
+Car.DoorStatus(BANDIT_CAR) = 2
+end
+///////////////////
+
+if
+UNITED_MAP == 0
+then
+
+random_int 0@ 0 2
+
+if
+CAMP_RAID_BANDITS_C == 1
+then
+0@ = 0
+end
+
+if
+CAMP_RAID_BANDITS_C == 2
+then
+0@ = 1
+end
+
+if
+0@ == 0
+then
+
+while not model.Available(#BANDIT1)
+wait 0
+model.Load(#BANDIT1)
+mload
+end
+
+$BANDIT[1] = Actor.CreateAsDriver(25, #BANDIT1, BANDIT_CAR)
+
+if
+model.Available(#BANDIT1)
+then
+//model.Destroy(#BANDIT1)
+end
+
+wait 5
+
+while not model.Available(#BANDIT2)
+wait 0
+model.Load(#BANDIT2)
+mload
+end
+
+$BANDIT[2] = Actor.CreateAsPassenger(25, #BANDIT2, BANDIT_CAR,0)
+
+if
+model.Available(#BANDIT2)
+then
+//model.Destroy(#BANDIT2)
+end
+
+wait 5
+
+///////////////////////////////////////////////////////////////////////////////
+
+if
+$BANDITS1_BIKE_FLAG == 0
+then
+
+while not model.Available(#BANDIT3)
+wait 0
+model.Load(#BANDIT3)
+mload
+end
+
+$BANDIT[3] = Actor.CreateAsPassenger(25, #BANDIT3, BANDIT_CAR,1)
+
+if
+model.Available(#BANDIT3)
+then
+//model.Destroy(#BANDIT3)
+end
+
+wait 5
+
+while not model.Available(#BANDIT4)
+wait 0
+model.Load(#BANDIT4)
+mload
+end
+
+$BANDIT[4] = Actor.CreateAsPassenger(25, #BANDIT4, BANDIT_CAR,2)
+
+if
+model.Available(#BANDIT4)
+then
+//model.Destroy(#BANDIT4)
+end
+
+else
+
+while not model.Available(#BANDIT3)
+wait 0
+model.Load(#BANDIT3)
+mload
+end
+
+$BANDIT[3] = Actor.CreateAsDriver(25, #BANDIT3, BANDIT_CAR2)
+
+if
+model.Available(#BANDIT3)
+then
+//model.Destroy(#BANDIT3)
+end
+
+wait 5
+
+while not model.Available(#BANDIT4)
+wait 0
+model.Load(#BANDIT4)
+mload
+end
+
+$BANDIT[4] = Actor.CreateAsPassenger(25, #BANDIT4, BANDIT_CAR2,0)
+
+if
+model.Available(#BANDIT4)
+then
+//model.Destroy(#BANDIT4)
+end
+
+end
+
+///////////////////////////////////////////////////////////////////////////////
+
+else
+
+while not model.Available(#BANDIT5)
+wait 0
+model.Load(#BANDIT5)
+mload
+end
+
+$BANDIT[1] = Actor.CreateAsDriver(25, #BANDIT5, BANDIT_CAR)
+
+if
+model.Available(#BANDIT5)
+then
+//model.Destroy(#BANDIT5)
+end
+
+wait 5
+
+while not model.Available(#BANDIT6)
+wait 0
+model.Load(#BANDIT6)
+mload
+end
+
+$BANDIT[2] = Actor.CreateAsPassenger(25, #BANDIT6, BANDIT_CAR,0)
+
+if
+model.Available(#BANDIT6)
+then
+//model.Destroy(#BANDIT6)
+end
+
+wait 5
+
+///////////////////////////////////////////////////////////////////////////////
+
+if
+$BANDITS1_BIKE_FLAG == 0
+then
+
+while not model.Available(#BANDIT7)
+wait 0
+model.Load(#BANDIT7)
+mload
+end
+
+$BANDIT[3] = Actor.CreateAsPassenger(25, #BANDIT7, BANDIT_CAR,1)
+
+if
+model.Available(#BANDIT7)
+then
+//model.Destroy(#BANDIT7)
+end
+
+wait 5
+
+while not model.Available(#BANDIT8)
+wait 0
+model.Load(#BANDIT8)
+mload
+end
+
+$BANDIT[4] = Actor.CreateAsPassenger(25, #BANDIT8, BANDIT_CAR,2)
+
+if
+model.Available(#BANDIT8)
+then
+//model.Destroy(#BANDIT8)
+end
+
+else
+
+while not model.Available(#BANDIT7)
+wait 0
+model.Load(#BANDIT7)
+mload
+end
+
+$BANDIT[3] = Actor.CreateAsDriver(25, #BANDIT7, BANDIT_CAR2)
+
+if
+model.Available(#BANDIT7)
+then
+//model.Destroy(#BANDIT7)
+end
+
+wait 5
+
+while not model.Available(#BANDIT8)
+wait 0
+model.Load(#BANDIT8)
+mload
+end
+
+$BANDIT[4] = Actor.CreateAsPassenger(25, #BANDIT8, BANDIT_CAR2,0)
+
+if
+model.Available(#BANDIT8)
+then
+//model.Destroy(#BANDIT8)
+end
+
+end
+
+end
+
+else
+
+if    
+$UNITED_VC_FLAG == 0
+then
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+$BANDITS1_BIKE_FLAG == 0
+then
+
+while not model.Available($III_BANDITS_SKIN1)
+wait 0
+model.Load($III_BANDITS_SKIN1)
+mload
+end
+
+$BANDIT[1] = Actor.CreateAsDriver(25, $III_BANDITS_SKIN1, BANDIT_CAR)
+
+if
+model.Available($III_BANDITS_SKIN1)
+then
+//model.Destroy($III_BANDITS_SKIN1)
+end
+
+wait 5
+
+while not model.Available($III_BANDITS_SKIN2)
+wait 0
+model.Load($III_BANDITS_SKIN2)
+mload
+end
+
+$BANDIT[2] = Actor.CreateAsPassenger(25, $III_BANDITS_SKIN2, BANDIT_CAR,0)
+
+if
+model.Available($III_BANDITS_SKIN2)
+then
+//model.Destroy($III_BANDITS_SKIN2)
+end
+
+wait 5
+
+while not model.Available($III_BANDITS_SKIN2)
+wait 0
+model.Load($III_BANDITS_SKIN2)
+mload
+end
+
+$BANDIT[3] = Actor.CreateAsPassenger(25, $III_BANDITS_SKIN2, BANDIT_CAR,1)
+
+if
+model.Available($III_BANDITS_SKIN2)
+then
+//model.Destroy($III_BANDITS_SKIN2)
+end
+
+wait 5
+
+while not model.Available($III_BANDITS_SKIN1)
+wait 0
+model.Load($III_BANDITS_SKIN1)
+mload
+end
+
+$BANDIT[4] = Actor.CreateAsPassenger(25, $III_BANDITS_SKIN1, BANDIT_CAR,2)
+
+if
+model.Available($III_BANDITS_SKIN1)
+then
+//model.Destroy($III_BANDITS_SKIN1)
+end
+
+else
+
+while not model.Available($III_BANDITS_SKIN1)
+wait 0
+model.Load($III_BANDITS_SKIN1)
+mload
+end
+
+$BANDIT[1] = Actor.CreateAsDriver(25, $III_BANDITS_SKIN1, BANDIT_CAR)
+
+if
+model.Available($III_BANDITS_SKIN1)
+then
+//model.Destroy($III_BANDITS_SKIN1)
+end
+
+wait 5
+
+while not model.Available($III_BANDITS_SKIN2)
+wait 0
+model.Load($III_BANDITS_SKIN2)
+mload
+end
+
+$BANDIT[2] = Actor.CreateAsPassenger(25, $III_BANDITS_SKIN2, BANDIT_CAR,0)
+
+if
+model.Available($III_BANDITS_SKIN2)
+then
+//model.Destroy($III_BANDITS_SKIN2)
+end
+
+wait 5
+
+while not model.Available($III_BANDITS_SKIN2)
+wait 0
+model.Load($III_BANDITS_SKIN2)
+mload
+end
+
+$BANDIT[3] = Actor.CreateAsDriver(25, $III_BANDITS_SKIN2, BANDIT_CAR2)
+
+if
+model.Available($III_BANDITS_SKIN2)
+then
+//model.Destroy($III_BANDITS_SKIN2)
+end
+
+wait 5
+
+while not model.Available($III_BANDITS_SKIN1)
+wait 0
+model.Load($III_BANDITS_SKIN1)
+mload
+end
+
+$BANDIT[4] = Actor.CreateAsPassenger(25, $III_BANDITS_SKIN1, BANDIT_CAR2,0)
+
+if
+model.Available($III_BANDITS_SKIN1)
+then
+//model.Destroy($III_BANDITS_SKIN1)
+end
+
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+else
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+$BANDITS1_BIKE_FLAG == 0
+then
+
+while not model.Available($VC_BANDITS_SKIN1)
+wait 0
+model.Load($VC_BANDITS_SKIN1)
+mload
+end
+
+$BANDIT[1] = Actor.CreateAsDriver(25, $VC_BANDITS_SKIN1, BANDIT_CAR)
+
+if
+model.Available($VC_BANDITS_SKIN1)
+then
+//model.Destroy($VC_BANDITS_SKIN1)
+end
+
+wait 5
+
+while not model.Available($VC_BANDITS_SKIN2)
+wait 0
+model.Load($VC_BANDITS_SKIN2)
+mload
+end
+
+$BANDIT[2] = Actor.CreateAsPassenger(25, $VC_BANDITS_SKIN2, BANDIT_CAR,0)
+
+if
+model.Available($VC_BANDITS_SKIN2)
+then
+//model.Destroy($VC_BANDITS_SKIN2)
+end
+
+wait 5
+
+while not model.Available($VC_BANDITS_SKIN2)
+wait 0
+model.Load($VC_BANDITS_SKIN2)
+mload
+end
+
+$BANDIT[3] = Actor.CreateAsPassenger(25, $VC_BANDITS_SKIN2, BANDIT_CAR,1)
+
+if
+model.Available($VC_BANDITS_SKIN2)
+then
+//model.Destroy($VC_BANDITS_SKIN2)
+end
+
+wait 5
+
+while not model.Available($VC_BANDITS_SKIN1)
+wait 0
+model.Load($VC_BANDITS_SKIN1)
+mload
+end
+
+$BANDIT[4] = Actor.CreateAsPassenger(25, $VC_BANDITS_SKIN1, BANDIT_CAR,2)
+
+if
+model.Available($VC_BANDITS_SKIN1)
+then
+//model.Destroy($VC_BANDITS_SKIN1)
+end
+
+wait 5
+
+else
+
+while not model.Available($VC_BANDITS_SKIN1)
+wait 0
+model.Load($VC_BANDITS_SKIN1)
+mload
+end
+
+$BANDIT[1] = Actor.CreateAsDriver(25, $VC_BANDITS_SKIN1, BANDIT_CAR)
+
+if
+model.Available($VC_BANDITS_SKIN1)
+then
+//model.Destroy($VC_BANDITS_SKIN1)
+end
+
+wait 5
+
+while not model.Available($VC_BANDITS_SKIN2)
+wait 0
+model.Load($VC_BANDITS_SKIN2)
+mload
+end
+
+$BANDIT[2] = Actor.CreateAsPassenger(25, $VC_BANDITS_SKIN2, BANDIT_CAR,0)
+
+if
+model.Available($VC_BANDITS_SKIN2)
+then
+//model.Destroy($VC_BANDITS_SKIN2)
+end
+
+wait 5
+
+while not model.Available($VC_BANDITS_SKIN2)
+wait 0
+model.Load($VC_BANDITS_SKIN2)
+mload
+end
+
+$BANDIT[3] = Actor.CreateAsDriver(25, $VC_BANDITS_SKIN2, BANDIT_CAR2)
+
+if
+model.Available($VC_BANDITS_SKIN2)
+then
+//model.Destroy($VC_BANDITS_SKIN2)
+end
+
+wait 5
+
+while not model.Available($VC_BANDITS_SKIN1)
+wait 0
+model.Load($VC_BANDITS_SKIN1)
+mload
+end
+
+$BANDIT[4] = Actor.CreateAsPassenger(25, $VC_BANDITS_SKIN1, BANDIT_CAR2,0)
+
+if
+model.Available($VC_BANDITS_SKIN1)
+then
+//model.Destroy($VC_BANDITS_SKIN1)
+end
+
+wait 5
+
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+end
+
+end
+
+return
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:BANDITS_SPAWN1_COORD_CHECK
+wait 0
+0208: 9@ = random_float_in_ranges 160.0 -120.0 
+0208: 10@ = random_float_in_ranges -120.0 160.0
+04C4: store_coords_to 6@ 7@ 8@ from_actor PLAYER_ACTOR with_offset 9@ 10@ 0.0
+
+///////////////////////////////////
+if and
+CAMP_RAID_FLAG_BANDITS == 1
+$QUEST_CAMP_NUMBER == 1
+UNITED_MAP == 0 
+then
+
+random_int 6@ 0 2
+if
+6@ == 0
+then
+  
+6@ = 2875.6301
+7@ = -1405.5005
+8@ = 10.9234
+else  
+6@ = 2676.6252
+7@ = -1471.6122
+8@ = 30.3902
+end
+
+end
+///////////////////////////////////
+
+///////////////////////////////////
+if and
+CAMP_RAID_FLAG_BANDITS == 1
+$QUEST_CAMP_NUMBER == 5
+UNITED_MAP == 0 
+then
+
+random_int 6@ 0 2
+if
+6@ == 0
+then
+6@ = -1099.0814
+7@ = -1340.564
+8@ = 128.8841
+else
+6@ = -1437.4906
+7@ = -1221.4221
+8@ = 105.9754
+end
+
+end
+///////////////////////////////////
+
+///////////////////////////////////
+if and
+CAMP_RAID_FLAG_BANDITS == 1
+$QUEST_CAMP_NUMBER == 8
+UNITED_MAP == 0 
+then
+
+if
+RAID_CAR_PATH_RANDOM_FLAG == 0
+then
+
+random_int 6@ 0 2
+if
+6@ == 0
+then
+6@ = -2261.0054
+7@ = 1100.95
+8@ = 79.8594
+else
+6@ = -2261.01
+7@ = 952.2061
+8@ = 66.5
+end
+
+else
+
+random_int 6@ 0 2
+if
+6@ == 0
+then
+6@ = -2143.2085
+7@ = 890.0348
+8@ = 79.845
+else
+6@ = -2143.301
+7@ = 1101.6547
+8@ = 79.8467
+end
+
+end
+
+end
+///////////////////////////////////
+
+///////////////////////////////////
+if and
+CAMP_RAID_FLAG_BANDITS == 1
+$QUEST_CAMP_NUMBER == 10
+UNITED_MAP == 0 
+then
+
+random_int 6@ 0 2
+if
+6@ == 0
+then
+6@ = 2061.0107
+7@ = 2742.1516
+8@ = 10.6719
+else
+6@ = 2387.4065
+7@ = 2538.5652
+8@ = 10.6719
+end
+
+end
+///////////////////////////////////
+
+///////////////////////////////////
+if and
+CAMP_RAID_FLAG_BANDITS == 1
+$QUEST_CAMP_NUMBER == 13
+UNITED_MAP == 0 
+then
+
+random_int 6@ 0 2
+if
+6@ == 0
+then
+6@ = -548.3635
+7@ = 2722.4553
+8@ = 65.3308
+else
+6@ = -98.859
+7@ = 2636.6189
+8@ = 63.8969
+end
+
+end
+///////////////////////////////////
+ 
+02C1: store_to 9@ 10@ 11@ car_path_coords_closest_to 6@ 7@ 8@ 
+Actor.StorePos(PLAYER_ACTOR, 6@, 7@, 8@)
+050A: 17@ = distance_between_XYZ 6@ 7@ 8@ and_XYZ 9@ 10@ 11@
+
+///////////////////////////////////
+if and
+CAMP_RAID_FLAG_BANDITS == 1
+$QUEST_CAMP_NUMBER == 5
+UNITED_MAP == 0 
+then
+17@ = 150.0
+end
+///////////////////////////////////
+
+///////////////////////////////////
+if and
+CAMP_RAID_FLAG_BANDITS == 1
+$QUEST_CAMP_NUMBER == 8
+UNITED_MAP == 0 
+then
+17@ = 150.0
+end
+///////////////////////////////////
+
+///////////////////////////////////
+if and
+CAMP_RAID_FLAG_BANDITS == 1
+$QUEST_CAMP_NUMBER == 10
+UNITED_MAP == 0 
+then
+17@ = 150.0
+end
+///////////////////////////////////
+ 
+0092: 18@ = float 17@ to_integer
+if and
+18@ >= 120 
+not 18@ >= 200 
+jf @BANDITS_SPAWN1_COORD_CHECK 
+if and
+8AE2: not 30@ = random_vehicle_near_point 9@ 10@ 11@ in_radius 10.0 find_next 0 pass_wrecked 1 //IF and SET
+8AE1: not 31@ = random_actor_near_point 9@ 10@ 11@ in_radius 5.0 find_next 0 pass_deads 0 //IF and SET
+jf @BANDITS_SPAWN1_COORD_CHECK
+
+gosub @BANDITS_SPAWN_ZONE_CHECK
+
+if
+6@ == 1
+jf @BANDITS_SPAWN1_COORD_CHECK
+
+return
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:BANDITS_SPAWN_ZONE_CHECK
+
+6@ = 1
+
+{$INCLUDE zone_check/Fractions Spawn Zone Check.txt}          
+
+if and
+CAMP_RAID_FLAG == 1
+CAMP_RAID_FLAG_BANDITS == 1
+then
+6@ = 1
+end
+
+return
+
+:BANDITS_CAR_REMOVE_REFERENCES
+
+if
+056E:   car BANDIT_CAR defined
+    then
+    if
+    0202:   actor PLAYER_ACTOR near_car BANDIT_CAR radius 10.0 10.0 sphere 0
+        then    
+        car.RemoveReferences(BANDIT_CAR)
+        if
+        056E:   car BANDIT_CAR defined
+        then
+        if
+        not actor.InCar(PLAYER_ACTOR,BANDIT_CAR)
+            then
+            wait 0
+            if
+            056E:   car BANDIT_CAR defined
+                then
+                00A9: set_car BANDIT_CAR to_normal_driver
+                end
+            end
+        end
+        
+        BANDITS_CAR_DELETED_REFERENCES_FLAG = 1    
+        end
+    end
+
+return
+
+:BANDITS_CAR2_REMOVE_REFERENCES
+
+if
+056E:   car BANDIT_CAR2 defined
+    then
+    if
+    0202:   actor PLAYER_ACTOR near_car BANDIT_CAR2 radius 10.0 10.0 sphere 0
+        then    
+        car.RemoveReferences(BANDIT_CAR2)
+        if
+        056E:   car BANDIT_CAR2 defined
+        then
+        if
+        not actor.InCar(PLAYER_ACTOR,BANDIT_CAR2)
+            then
+            wait 0
+            if
+            056E:   car BANDIT_CAR2 defined
+                then
+                00A9: set_car BANDIT_CAR2 to_normal_driver
+                end
+            end
+        end
+        
+        BANDITS_CAR2_DELETED_REFERENCES_FLAG = 1    
+        end
+    end
+
+return    
+
+:BANDITS_ORIGIN_SPOTTED_PHRASE
+
+repeat
+wait 0
+until ORIGIN_SPOTTED_SOME_SHIT == 0
+
+ORIGIN_SPOTTED_SOME_SHIT = 1
+
+gosub @RANDOM_DIALOG_POLICEMAN_SPOTTED_BANDITS
+
+09FD: get_gxt_string v$PHRASE3 width_to 29@
+0093: 29@ = integer 29@ to_float
+29@ *= 8.0
+0092: 29@ = float 29@ to_integer
+
+32@ = 0
+008B: 31@ = $PHRASES_OFF_FLAG // (int)                    
+                    
+repeat
+wait 0
+$PHRASES_OFF_FLAG = 1  
+        
+0384: show_text_1string GXT v$PHRASE3 string v$NAME3 time 99 1
+            
+if or
+$SAVESTATUS_TRUE == 1
+$SAVESTATUS == 1
+GAME_OVER_FLAG == 1
+    then 
+    break
+    end
+            
+until 002D:   32@ >= 29@  // (int)
+
+008A: $PHRASES_OFF_FLAG = 31@ // (int)
+
+ORIGIN_SPOTTED_SOME_SHIT = 0
+
+return   
+
+:RANDOM_DIALOG_POLICEMAN_SPOTTED_BANDITS
+    
+for 29@ = 0 to 200
+
+v$PHRASE1 = "PS184_"
+0AD3: v$PHRASE2 = format "%d" 29@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    29@ += 1
+    random_int 30@ 0 29@
+    end
+
+end  
+
+v$PHRASE1 = "PS184_"
+0AD3: v$PHRASE2 = format "%d" 30@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return
