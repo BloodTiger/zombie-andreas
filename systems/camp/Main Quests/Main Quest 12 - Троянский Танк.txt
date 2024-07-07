@@ -1,0 +1,3075 @@
+//CAMP_NUMBER = 11
+
+const
+MQ12_CAPO = $RNDM_HOUSE_WEAPON[43]
+MQ12_MARK1 = 201@
+MQ12_MARK2 = 202@
+MQ12_MARK3 = 203@
+MQ12_TEMP_CAR_X = 402@
+MQ12_TEMP_CAR_Y = 403@
+MQ12_TEMP_CAR_Z = 404@
+MQ12_TEMP_CAR_ANGLE = 405@
+MQ12_TEMP_CAR_SAVE_FLAG = 406@
+M12_CONTAINER1_TANK_SOUND = 407@
+M12_CONTAINER2_TANK_SOUND = 408@
+M12_CONTAINER3_TANK_SOUND = 409@
+M12_CONTAINER4_TANK_SOUND = 410@
+M12_SCREAMBASED_SOUND = 411@
+end
+
+:MQ12
+thread 'MQ12'
+gosub @ASSKOD_MISSII2829_12 
+if 
+wasted_or_busted 
+jf @ASSPROPUSK_KODA2829_12 
+gosub @ASSKOD_PROVALA2829_12 
+
+:ASSPROPUSK_KODA2829_12        
+gosub @ASSUDALENIE_KODA2829_12
+
+HARDCORE_DANGER_FLAG_SCRIPTED = 0
+if
+GAME_OVER_FLAG == 1
+then
+HARDCORE_DANGER_ANTIFLAG_SCRIPTED = 1
+end
+create_thread @MQ_CHKP
+
+end_thread
+
+:ASSKOD_MISSII2829_12
+increment_mission_attempts
+0629: change_integer_stat 258 to 92
+
+$ALLOW_ZOMBIES = 0
+$ZOMBIE_REMOVE_FLAG = 1
+ENEX_OFF = 1
+
+if
+056E:   car $USED_CAR[LATEST_CAR_SLOT_USED] defined
+then
+Car.StorePos($USED_CAR[LATEST_CAR_SLOT_USED], MQ12_TEMP_CAR_X, MQ12_TEMP_CAR_Y, MQ12_TEMP_CAR_Z)
+MQ12_TEMP_CAR_ANGLE = car.Angle($USED_CAR[LATEST_CAR_SLOT_USED])
+MQ12_TEMP_CAR_SAVE_FLAG = 1
+else
+MQ12_TEMP_CAR_SAVE_FLAG = 0
+end
+
+///////////////////////////////////////////////////////////
+
+MAIN_QUEST_MUSIC_FLAG = 1
+$MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\QUESTS\Q12\Q12A.wav")
+Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
+Audiostream.Loop($MUSIC_ASSHOLE, 1)
+Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1 
+
+/////////////////////////////////////////////////////////////////////
+
+actor.StorePos(PLAYER_ACTOR,100@,101@,102@)
+0084: $QUEST_CAMP_NUMBER = $ENTERED_CAMP_NUMBER // (int)
+
+marker.Disable($CAMP_MARKER[$QUEST_CAMP_NUMBER])
+$CAMP_MARKER[$QUEST_CAMP_NUMBER] = Marker.CreateIconWithoutSphere(31, $CAMP_X[$QUEST_CAMP_NUMBER], $CAMP_Y[$QUEST_CAMP_NUMBER], $CAMP_Z[$QUEST_CAMP_NUMBER])
+
+MAIN_QUEST_TEAMMATES_REMOVE_FLAG = 1 
+
+repeat
+wait 0
+until $PHRASES_OFF_FLAG == 0
+
+//MAIN_QUEST12_COMPLETED_FLAG = 1
+
+00BA: show_text_styled GXT "GAME915" time 5000 style 2
+
+$ONMISSION = 1
+$QUEST_TYPE = 22
+CAMP_DONT_SAY_HELLO_FLAG = 1
+PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 1
+$NOTSPAWN_ETC = 1
+$SPECIAL_INFECTED_NOT_SPAWN_FLAG = 1
+$SURVIVORS_DONT_SPAWN_FLAG = 1
+
+if and
+$CHEATS_ON == 1
+0AB0:   key_pressed 49
+then
+0AF1: write_int 1 to_ini_file "data\survival.set" section "SCR" key "MQ12_CHECKPOINT"
+end
+
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MQ12_CHECKPOINT"
+
+if
+MQ_CHECKPOINT_FUCKNO == 1
+then
+0@ = 0
+end
+
+if
+not 0@ == 1
+then
+018A: MISSION_CHECKPOINT = create_checkpoint_at 1030.3597 1876.3171 11.4687
+v$OBJECTIVE = "GAME917"
+if
+REALISM_MODE == 1
+then
+v$OBJECTIVE = "GRME917"
+end
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+end
+
+:MQ12_THUGVAN_CREATE
+if
+model.Available(15422)
+then
+
+SUPPLY_QUEST_TRUCK = car.Create(15422,1021.7801, 1867.9952, 11.114)
+car.Angle(SUPPLY_QUEST_TRUCK) = 89.5453
+car.DoorStatus(SUPPLY_QUEST_TRUCK,2)
+
+0A97: 11@ = car SUPPLY_QUEST_TRUCK struct 
+11@ += 9 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+08BD: set 12@ bit 2 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+0A97: 11@ = car SUPPLY_QUEST_TRUCK struct 
+11@ += 4 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+08BD: set 12@ bit 1 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+24@ = 25.0 
+0A97: 22@ = car SUPPLY_QUEST_TRUCK struct 
+0A8E: 23@ = 22@ + 5 // int 
+0A8C: write_memory 23@ size 4 value 24@ virtual_protect 0 
+08C3: clear 12@ bit 1 
+08C3: clear 12@ bit 2 
+0A97: 11@ = car SUPPLY_QUEST_TRUCK struct 
+11@ += 18 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+08BD: set 12@ bit 2 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 2
+
+if
+model.Available(15422)
+then
+//model.Destroy(15422)
+end
+
+else
+model.Load(15422)
+mload
+wait 0
+jump to @MQ12_THUGVAN_CREATE
+end
+
+while not model.Available(14697)
+wait 0
+model.Load(14697)
+mload
+end
+
+MQ12_CAPO = actor.Create(26,14697,1030.3597, 1876.3171, 11.4687)
+actor.Angle(MQ12_CAPO) = 90.1106
+
+actor.SetWalkStyle(MQ12_CAPO,"bored")
+0446: set_actor MQ12_CAPO dismemberment_possible 0
+060B: set_actor MQ12_CAPO decision_maker_to $DEC_PEOPLE
+actor.Health(MQ12_CAPO) = 1000
+actor.WeaponAccuracy(MQ12_CAPO) = $MISSION15_BANDITS_ACCURACY
+
+while not animation.Available("CRACK")
+wait 0
+animation.Load("CRACK")
+end
+
+0605: actor MQ12_CAPO perform_animation "crckidle1" IFP "CRACK" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time 999999
+
+while not model.Available(#BANDIT5)
+wait 0
+model.Load(#BANDIT5)
+mload
+end
+
+$RNDM_HOUSE_WEAPON[23] = actor.Create(25,#BANDIT5,1028.6233, 1877.3981, 11.4687)
+actor.Angle($RNDM_HOUSE_WEAPON[23]) = 256.3343
+actor.SetWalkStyle($RNDM_HOUSE_WEAPON[23],"GANG1")
+0446: set_actor $RNDM_HOUSE_WEAPON[23] dismemberment_possible 0
+060B: set_actor $RNDM_HOUSE_WEAPON[23] decision_maker_to $DEC_PEOPLE
+create_thread @ANT_PRE $RNDM_HOUSE_WEAPON[23]
+
+008B: 2@ = $MISSION15_BANDITS_HP // (int)
+if
+AUTOLEVELING_ON_FLAG == 1
+then
+for 0@ = 1 to $PLAYER_LEVEL
+2@ += 25
+end
+end
+
+actor.Health($RNDM_HOUSE_WEAPON[23]) = 2@ 
+actor.WeaponAccuracy($RNDM_HOUSE_WEAPON[23]) = $MISSION15_BANDITS_ACCURACY
+077A: set_actor $RNDM_HOUSE_WEAPON[23] acquaintance 0 to_actors_pedtype 26 // see ped.dat
+077A: set_actor $RNDM_HOUSE_WEAPON[23] acquaintance 0 to_actors_pedtype 0 // see ped.dat
+
+0781: get_weapon_with_ID 5 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+
+actor.GiveWeaponAndAmmo($RNDM_HOUSE_WEAPON[23],5,1)
+
+while not model.Available(#BANDIT6)
+wait 0
+model.Load(#BANDIT6)
+mload
+end
+
+$RNDM_HOUSE_WEAPON[24] = actor.Create(25,#BANDIT6,1028.5953, 1876.363, 11.4687)
+actor.Angle($RNDM_HOUSE_WEAPON[24]) = 272.2785
+actor.SetWalkStyle($RNDM_HOUSE_WEAPON[24],"GANG1")
+0446: set_actor $RNDM_HOUSE_WEAPON[24] dismemberment_possible 0
+060B: set_actor $RNDM_HOUSE_WEAPON[24] decision_maker_to $DEC_PEOPLE   
+actor.Health($RNDM_HOUSE_WEAPON[24]) = 2@
+actor.WeaponAccuracy($RNDM_HOUSE_WEAPON[24]) = $MISSION15_BANDITS_ACCURACY
+077A: set_actor $RNDM_HOUSE_WEAPON[24] acquaintance 0 to_actors_pedtype 26 // see ped.dat
+077A: set_actor $RNDM_HOUSE_WEAPON[24] acquaintance 0 to_actors_pedtype 0 // see ped.dat
+create_thread @ANT_PRE $RNDM_HOUSE_WEAPON[24]
+
+0781: get_weapon_with_ID 22 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+
+actor.GiveWeaponAndAmmo($RNDM_HOUSE_WEAPON[24],22,99999)
+
+while not model.Available(#BANDIT7)
+wait 0
+model.Load(#BANDIT7)
+mload
+end
+
+$RNDM_HOUSE_WEAPON[25] = actor.Create(25,#BANDIT7,1028.899, 1875.1534, 11.4687)
+actor.Angle($RNDM_HOUSE_WEAPON[25]) = 304.8365
+actor.SetWalkStyle($RNDM_HOUSE_WEAPON[25],"GANG1")
+0446: set_actor $RNDM_HOUSE_WEAPON[25] dismemberment_possible 0
+060B: set_actor $RNDM_HOUSE_WEAPON[25] decision_maker_to $DEC_PEOPLE
+actor.Health($RNDM_HOUSE_WEAPON[25]) = 2@
+actor.WeaponAccuracy($RNDM_HOUSE_WEAPON[25]) = $MISSION15_BANDITS_ACCURACY
+077A: set_actor $RNDM_HOUSE_WEAPON[25] acquaintance 0 to_actors_pedtype 26 // see ped.dat
+077A: set_actor $RNDM_HOUSE_WEAPON[25] acquaintance 0 to_actors_pedtype 0 // see ped.dat
+create_thread @ANT_PRE $RNDM_HOUSE_WEAPON[25]
+
+0781: get_weapon_with_ID 5 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+
+actor.GiveWeaponAndAmmo($RNDM_HOUSE_WEAPON[25],5,1)
+
+SOME_BOT_IS_USING_MELEE_FLAG = 1
+
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MQ12_CHECKPOINT"
+if
+MQ_CHECKPOINT_FUCKNO == 1
+then
+0@ = 0
+end
+
+if
+0@ == 1
+then
+$HUD_REMOVE = 1
+fade 0 500
+wait 500
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+    
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+    
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+    
+wait 1
+    
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+    
+///////////////////////////////////////////////////////////
+    
+$MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\QUESTS\Q12\Q12C.wav")
+Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
+Audiostream.Loop($MUSIC_ASSHOLE, 1)
+Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+    
+/////////////////////Плавное нарастание/////////////////////
+    
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+    
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+    
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+    
+wait 1
+ 
+0792: disembark_instantly_actor MQ12_CAPO
+072A: put_actor MQ12_CAPO into_car SUPPLY_QUEST_TRUCK driverseat
+05BE: AS_actor $RNDM_HOUSE_WEAPON[23] die
+05BE: AS_actor $RNDM_HOUSE_WEAPON[24] die
+05BE: AS_actor $RNDM_HOUSE_WEAPON[25] die
+$BANDITS_DONT_ATTACK_PLAYER_FLAG = 1
+0746: set_acquaintance 0 of_actors_pedtype 25 to_actors_pedtype 0
+jump to @MQ12_CHECKPOINT_JUMP
+end
+
+repeat
+wait 0
+
+//mqskip
+if and
+$CHEATS_ON == 1
+$DEBUG_MENU_ON == 1
+$CHEAT_TYPE_FLAG == 1
+    then
+    if
+    0ADC:   test_cheat "SKIP"
+        then
+        $TALK_SIMULATE = 1
+        $QUEST_READY_FLAG = 1
+        
+        /////////////////////Плавное затухание/////////////////////
+
+        $MUSIC_FADE_NUMBER += 1
+        if
+        $MUSIC_FADE_NUMBER > 4
+            then
+            $MUSIC_FADE_NUMBER = 0 
+            end    
+                
+        0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+        $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+                
+        $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 100
+        $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+        $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+        create_thread @MUS_FAD
+                
+        wait 1
+                
+        while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+        wait 0
+        end
+            
+        MAIN_QUEST_MUSIC_FLAG = 0
+        
+        $ALLOW_ZOMBIES = 1
+        $ZOMBIE_REMOVE_FLAG = 0
+    
+        CAMP_DONT_SAY_HELLO_FLAG = 0
+        PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 0
+        $QUEST_READY_FLAG = 1
+    
+        $BANDITS_DONT_ATTACK_PLAYER_FLAG = 0
+        0746: set_acquaintance 4 of_actors_pedtype 25 to_actors_pedtype 0
+        
+        jump to @MQ12_END_JUMP
+        end
+    end
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST12_FAILED_PLAYER_DIED
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @MAIN_QUEST12_FAILED_AGRO
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @MAIN_QUEST12_FAILED_LDEAD
+
+if and
+50@ == 1
+51@ == 0
+$DIALOG_END == 1
+32@ > 25000
+    then
+    05E2: AS_actor $RNDM_HOUSE_WEAPON[24] kill_actor MQ12_CAPO
+    actor.Health(MQ12_CAPO) = 5
+    marker.Disable(MISSION_MARKER)
+    marker.Disable(MQ12_MARK1)
+    marker.Disable(MQ12_MARK2)
+    marker.Disable(MQ12_MARK3)
+    wait 2000
+    jump to @MAIN_QUEST12_CAPO_DEAD
+    end
+    
+if and
+actor.Dead($RNDM_HOUSE_WEAPON[23])
+075C:   marker MQ12_MARK1 enabled
+    then
+    marker.Disable(MQ12_MARK1)
+    end
+    
+if and
+actor.Dead($RNDM_HOUSE_WEAPON[24])
+075C:   marker MQ12_MARK2 enabled
+    then
+    marker.Disable(MQ12_MARK2)
+    end
+    
+if and
+actor.Dead($RNDM_HOUSE_WEAPON[25])
+075C:   marker MQ12_MARK3 enabled
+    then
+    marker.Disable(MQ12_MARK3)
+    end            
+    
+if
+51@ == 1
+    then
+    if and
+    875C: not  marker MQ12_MARK1 enabled
+    875C: not  marker MQ12_MARK2 enabled
+    875C: not  marker MQ12_MARK3 enabled
+        then
+        
+        HARDCORE_DANGER_FLAG_SCRIPTED = 0
+        v$OBJECTIVE = "GAME920"
+        0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+        $SOUNDS_VOLUME3 *= 0.5
+        Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+        Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+        Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+        
+        /////////////////////Плавное затухание/////////////////////
+
+        $MUSIC_FADE_NUMBER += 1
+        if
+        $MUSIC_FADE_NUMBER > 4
+            then
+            $MUSIC_FADE_NUMBER = 0 
+            end    
+            
+        0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+        $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+            
+        $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+        $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+        $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+        create_thread @MUS_FAD
+            
+        wait 1
+            
+        while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+        wait 0
+        end
+            
+        ///////////////////////////////////////////////////////////
+            
+        $MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\QUESTS\Q12\Q12C.wav")
+        Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
+        Audiostream.Loop($MUSIC_ASSHOLE, 1)
+        Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+            
+        /////////////////////Плавное нарастание/////////////////////
+            
+        $MUSIC_FADE_NUMBER += 1
+        if
+        $MUSIC_FADE_NUMBER > 4
+            then
+            $MUSIC_FADE_NUMBER = 0 
+            end    
+            
+        0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
+        0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+            
+        $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+        $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+        $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+        create_thread @MUS_FAD
+            
+        wait 1        
+        
+        repeat
+        wait 0
+        
+        if
+        not actor.Dead(PLAYER_ACTOR)
+        jf @MAIN_QUEST12_FAILED_PLAYER_DIED 
+        if
+        $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+        jf @MAIN_QUEST12_FAILED_AGRO
+        if
+        803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+        jf @MAIN_QUEST12_FAILED_LDEAD        
+        if
+        0184:   actor MQ12_CAPO health > 0
+        jf @MAIN_QUEST12_CAPO_DEAD
+        
+        until 00F2:   actor MQ12_CAPO near_actor PLAYER_ACTOR radius 5.0 5.0 sphere 0
+        
+        v$OBJECTIVE = "DUMMY"
+        marker.Disable(MISSION_MARKER)
+        05BF: AS_actor PLAYER_ACTOR look_at_actor MQ12_CAPO 10000 ms
+        05BF: AS_actor MQ12_CAPO look_at_actor PLAYER_ACTOR 10000 ms
+        
+        v$ST_DIALOG[0] = "MQ_633"
+        v$ST_DIALOG[1] = "MQ_634"
+        v$ST_DIALOG[2] = "MQ_635"
+        $DIALOG_COUNT = 2
+        $DIALOG_NOT_SKIP = 1
+        create_thread @DG_SYS2
+        
+        repeat
+        wait 0
+        
+        if
+        not actor.Dead(PLAYER_ACTOR)
+        jf @MAIN_QUEST12_FAILED_PLAYER_DIED
+        if
+        $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+        jf @MAIN_QUEST12_FAILED_AGRO
+        if
+        803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+        jf @MAIN_QUEST12_FAILED_LDEAD        
+        if
+        0184:   actor MQ12_CAPO health > 0
+        jf @MAIN_QUEST12_CAPO_DEAD
+        
+        until $DIALOG_END == 1
+        
+        0792: disembark_instantly_actor MQ12_CAPO        
+        
+        0084: $DIALOG_ACTOR[0] = MQ12_CAPO // (int)
+        v$ST_DIALOG[0] = "MQ_636"
+        $DIALOG_COUNT = 0
+        $DIALOG_NOT_SKIP = 1
+        create_thread @DG_SYS
+        
+        repeat
+        wait 0
+        
+        if
+        not actor.Dead(PLAYER_ACTOR)
+        jf @MAIN_QUEST12_FAILED_PLAYER_DIED
+        if
+        $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+        jf @MAIN_QUEST12_FAILED_AGRO
+        if
+        803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+        jf @MAIN_QUEST12_FAILED_LDEAD        
+        if
+        0184:   actor MQ12_CAPO health > 0
+        jf @MAIN_QUEST12_CAPO_DEAD
+        
+        until $DIALOG_END == 1
+        
+        v$ST_DIALOG[0] = "MQ_637"
+        $DIALOG_COUNT = 0
+        $DIALOG_NOT_SKIP = 1
+        create_thread @DG_SYS2
+        
+        MISSION_CHECKPOINT = marker.CreateAboveCar(SUPPLY_QUEST_TRUCK)
+        07E0: set_marker MISSION_CHECKPOINT type_to 1
+        marker.SetIconSize(MISSION_CHECKPOINT,2)
+        car.DoorStatus(SUPPLY_QUEST_TRUCK,0)
+        
+        05CB: AS_actor MQ12_CAPO enter_car SUPPLY_QUEST_TRUCK as_driver 990000 ms                
+        
+        v$OBJECTIVE = "GAME912"
+        0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+        $SOUNDS_VOLUME3 *= 0.5
+        Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+        Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+        Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+        
+        repeat
+        wait 0
+        
+        if
+        not actor.Dead(PLAYER_ACTOR)
+        jf @MAIN_QUEST12_FAILED_PLAYER_DIED
+        if
+        $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+        jf @MAIN_QUEST12_FAILED_AGRO
+        if
+        803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+        jf @MAIN_QUEST12_FAILED_LDEAD        
+        if
+        0184:   actor MQ12_CAPO health > 0
+        jf @MAIN_QUEST12_CAPO_DEAD
+        if
+        not car.Wrecked(SUPPLY_QUEST_TRUCK)
+        jf @MAIN_QUEST12_FAILED_TRUCK_WRECKED
+        
+        if
+        00E1:   player 0 pressed_key 15
+        then
+        0E96: clear_char_primary_tasks PLAYER_ACTOR
+        0E97: clear_char_secondary_tasks PLAYER_ACTOR
+        05CA: AS_actor PLAYER_ACTOR enter_car SUPPLY_QUEST_TRUCK passenger_seat 0 time 990000
+        end
+        
+        if
+        actor.InCar(PLAYER_ACTOR,SUPPLY_QUEST_TRUCK)
+        then
+        046C: 0@ = car SUPPLY_QUEST_TRUCK driver
+        if
+        07D6:   0@ == PLAYER_ACTOR // @ == $ (int)
+            then
+            fade 0 0
+            $HUD_REMOVE = 1
+            $HUD_OFF_INST = 1
+            $END_DIALOG_INST = 1
+            wait 0            
+            0362: remove_actor PLAYER_ACTOR from_car_and_place_at 1022.1871 1850.0381 11.1401
+            wait 0
+            marker.Disable(MISSION_CHECKPOINT)
+            v$OBJECTIVE = "DUMMY"
+            0430: put_actor PLAYER_ACTOR into_car SUPPLY_QUEST_TRUCK passenger_seat 0
+            jump to @MQ12_AFTERENTER_JUMP
+            end
+        end
+        
+        if and
+        actor.InCar(PLAYER_ACTOR,SUPPLY_QUEST_TRUCK)
+        actor.InCar(MQ12_CAPO,SUPPLY_QUEST_TRUCK)
+            then
+            marker.Disable(MISSION_CHECKPOINT)
+            v$OBJECTIVE = "DUMMY"
+            
+            fade 0 500
+            $HUD_REMOVE = 1
+            wait 500
+            
+            :MQ12_AFTERENTER_JUMP
+            
+            actor.DestroyInstantly(MQ12_CAPO)
+            $BANDITS_DONT_ATTACK_PLAYER_FLAG = 1
+            0746: set_acquaintance 0 of_actors_pedtype 25 to_actors_pedtype 0
+            
+            while not model.Available(14697)
+            wait 0
+            model.Load(14697)
+            mload
+            end
+            
+            MQ12_CAPO = actor.CreateAsDriver(25,14697,SUPPLY_QUEST_TRUCK)
+            
+            actor.SetWalkStyle(MQ12_CAPO,"bored")
+            0446: set_actor MQ12_CAPO dismemberment_possible 0
+            060B: set_actor MQ12_CAPO decision_maker_to $DEC_PEOPLE
+            actor.Health(MQ12_CAPO) = 1000
+            actor.WeaponAccuracy(MQ12_CAPO) = $MISSION15_BANDITS_ACCURACY
+            
+            fade 1 500
+            $HUD_REMOVE = 0
+            wait 500
+            
+            break
+            end
+        
+        until false
+        
+        break        
+        end
+    end    
+
+if
+51@ == 0
+    then
+    
+    if and
+    00F2:   actor $RNDM_HOUSE_WEAPON[23] near_actor PLAYER_ACTOR radius 20.0 20.0 sphere 0
+    0364:   actor $RNDM_HOUSE_WEAPON[23] spotted_actor PLAYER_ACTOR
+        then
+        jump to @MQ12_OTOMORZKI_SPOTTED_PLAYER
+        end
+    
+    if and
+    00F2:   actor $RNDM_HOUSE_WEAPON[24] near_actor PLAYER_ACTOR radius 20.0 20.0 sphere 0
+    0364:   actor $RNDM_HOUSE_WEAPON[24] spotted_actor PLAYER_ACTOR
+        then
+        jump to @MQ12_OTOMORZKI_SPOTTED_PLAYER
+        end
+    
+    if and
+    00F2:   actor $RNDM_HOUSE_WEAPON[25] near_actor PLAYER_ACTOR radius 20.0 20.0 sphere 0
+    0364:   actor $RNDM_HOUSE_WEAPON[25] spotted_actor PLAYER_ACTOR
+        then
+        jump to @MQ12_OTOMORZKI_SPOTTED_PLAYER
+        end
+        
+    if or    
+    051A:   actor $RNDM_HOUSE_WEAPON[23] damaged_by_actor PLAYER_ACTOR
+    051A:   actor $RNDM_HOUSE_WEAPON[24] damaged_by_actor PLAYER_ACTOR
+    051A:   actor $RNDM_HOUSE_WEAPON[25] damaged_by_actor PLAYER_ACTOR
+        then
+        
+        :MQ12_OTOMORZKI_SPOTTED_PLAYER
+          
+        marker.Disable(MISSION_CHECKPOINT)
+        HARDCORE_DANGER_FLAG_SCRIPTED = 1 
+        $END_DIALOG_INST = 1
+        wait 100
+        
+        05E2: AS_actor $RNDM_HOUSE_WEAPON[23] kill_actor PLAYER_ACTOR
+        05E2: AS_actor $RNDM_HOUSE_WEAPON[24] kill_actor PLAYER_ACTOR
+        05E2: AS_actor $RNDM_HOUSE_WEAPON[25] kill_actor PLAYER_ACTOR
+        077A: set_actor $RNDM_HOUSE_WEAPON[23] acquaintance 4 to_actors_pedtype 0 // see ped.dat
+        077A: set_actor $RNDM_HOUSE_WEAPON[24] acquaintance 4 to_actors_pedtype 0 // see ped.dat
+        077A: set_actor $RNDM_HOUSE_WEAPON[25] acquaintance 4 to_actors_pedtype 0 // see ped.dat
+        
+        v$ST_DIALOG[0] = "MQ_631"
+        v$ST_DIALOG[1] = "MQ_632"
+        $DIALOG_COUNT = 1
+        $DIALOG_NOT_SKIP = 1
+        create_thread @DG_SYS
+        
+        v$OBJECTIVE = "GAME919"
+        0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+        $SOUNDS_VOLUME3 *= 0.5
+        Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+        Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+        Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+        
+        51@ = 1
+        
+        /////////////////////Плавное затухание/////////////////////
+
+        $MUSIC_FADE_NUMBER += 1
+        if
+        $MUSIC_FADE_NUMBER > 4
+            then
+            $MUSIC_FADE_NUMBER = 0 
+            end    
+            
+        0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+        $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+            
+        $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+        $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+        $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+        create_thread @MUS_FAD
+            
+        wait 1
+            
+        while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+        wait 0
+        end
+            
+        ///////////////////////////////////////////////////////////
+            
+        $MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\QUESTS\Q12\Q12B.wav")
+        Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
+        Audiostream.Loop($MUSIC_ASSHOLE, 1)
+        Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+            
+        /////////////////////Плавное нарастание/////////////////////
+            
+        $MUSIC_FADE_NUMBER += 1
+        if
+        $MUSIC_FADE_NUMBER > 4
+            then
+            $MUSIC_FADE_NUMBER = 0 
+            end    
+            
+        0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
+        0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+            
+        $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+        $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+        $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+        create_thread @MUS_FAD
+            
+        wait 1
+        
+        end
+    end       
+
+if and
+00FE:   actor PLAYER_ACTOR sphere 0 in_sphere 1030.3597 1876.3171 11.4687 radius 100.0 100.0 50.0
+50@ == 0
+51@ == 0
+    then
+    
+    50@ = 1
+    32@ = 0
+    
+    0084: $DIALOG_ACTOR[0] = $RNDM_HOUSE_WEAPON[23] // (int)
+    $DIALOG_ACTOR[1] = -69
+    0084: $DIALOG_ACTOR[2] = $RNDM_HOUSE_WEAPON[24] // (int)
+    0084: $DIALOG_ACTOR[3] = $RNDM_HOUSE_WEAPON[25] // (int)
+    $DIALOG_ACTOR[4] = -69
+    0084: $DIALOG_ACTOR[5] = $RNDM_HOUSE_WEAPON[24] // (int)
+    0084: $DIALOG_ACTOR[6] = $RNDM_HOUSE_WEAPON[24] // (int)
+    $DIALOG_ACTOR[7] = -69
+    v$ST_DIALOG[0] = "MQ_623"
+    v$ST_DIALOG[1] = "MQ_624"
+    v$ST_DIALOG[2] = "MQ_625"
+    v$ST_DIALOG[3] = "MQ_626"
+    v$ST_DIALOG[4] = "MQ_627"
+    v$ST_DIALOG[5] = "MQ_628"
+    v$ST_DIALOG[6] = "MQ_629"
+    v$ST_DIALOG[7] = "MQ_630"
+    $DIALOG_COUNT = 7
+    $DIALOG_NOT_SKIP = 1
+    create_thread @DG_SYS
+    
+    marker.Disable(MISSION_CHECKPOINT)
+    MISSION_MARKER = marker.CreateAboveActor(MQ12_CAPO)
+    07E0: set_marker MISSION_MARKER type_to 1
+    marker.SetIconSize(MISSION_MARKER,2)
+    
+    MQ12_MARK1 = marker.CreateAboveActor($RNDM_HOUSE_WEAPON[23])
+    marker.SetIconSize(MQ12_MARK1,2)
+    MQ12_MARK2 = marker.CreateAboveActor($RNDM_HOUSE_WEAPON[24])
+    marker.SetIconSize(MQ12_MARK2,2)
+    MQ12_MARK3 = marker.CreateAboveActor($RNDM_HOUSE_WEAPON[25])
+    marker.SetIconSize(MQ12_MARK3,2) 
+    
+    v$OBJECTIVE = "GAME918"
+    0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+    $SOUNDS_VOLUME3 *= 0.5
+    Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+    Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+    Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)        
+    
+    end
+
+until false
+
+repeat
+wait 0
+07C0: load_path 57
+until 07C1:   path 57 available
+    
+05EB: assign_car SUPPLY_QUEST_TRUCK to_path 57
+06FD: set_car SUPPLY_QUEST_TRUCK speed_on_path_to 1.0
+
+:MQ12_CHECKPOINT_JUMP    
+
+/////////////////////////////////////////////////////////////
+
+while not model.Available(#BANDIT1)
+wait 0
+model.Load(#BANDIT1)
+mload
+end
+
+$RNDM_HOUSE_WEAPON[26] = actor.Create(25,#BANDIT1,1716.8218, 2304.5242, 18.9616)
+actor.Angle($RNDM_HOUSE_WEAPON[26]) = 180.3872
+08C6: set_actor $RNDM_HOUSE_WEAPON[26] stay_on_bike 1    
+actor.SetWalkStyle($RNDM_HOUSE_WEAPON[26],"GANG2")
+0446: set_actor $RNDM_HOUSE_WEAPON[26] dismemberment_possible 0
+060B: set_actor $RNDM_HOUSE_WEAPON[26] decision_maker_to $DEC_PEOPLE
+actor.Health($RNDM_HOUSE_WEAPON[26]) = 1000
+actor.WeaponAccuracy($RNDM_HOUSE_WEAPON[26]) = 85
+create_thread @PED_BKP $RNDM_HOUSE_WEAPON[26] 371
+create_thread @ANT_PRE $RNDM_HOUSE_WEAPON[26]
+
+0781: get_weapon_with_ID 30 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+    
+Actor.GiveWeaponAndAmmo($RNDM_HOUSE_WEAPON[26], 30, 9999)
+087E: set_actor $RNDM_HOUSE_WEAPON[26] weapon_droppable 0
+
+while not model.Available(#BANDIT2)
+wait 0
+model.Load(#BANDIT2)
+mload
+end
+
+$RNDM_HOUSE_WEAPON[26] = actor.Create(25,#BANDIT2,1729.2698, 2304.543, 18.9616)
+actor.Angle($RNDM_HOUSE_WEAPON[26]) = 181.1168
+08C6: set_actor $RNDM_HOUSE_WEAPON[26] stay_on_bike 1    
+actor.SetWalkStyle($RNDM_HOUSE_WEAPON[26],"GANG2")
+0446: set_actor $RNDM_HOUSE_WEAPON[26] dismemberment_possible 0
+060B: set_actor $RNDM_HOUSE_WEAPON[26] decision_maker_to $DEC_PEOPLE
+actor.Health($RNDM_HOUSE_WEAPON[26]) = 1000
+actor.WeaponAccuracy($RNDM_HOUSE_WEAPON[26]) = 85
+create_thread @PED_BKP $RNDM_HOUSE_WEAPON[26] 371
+create_thread @ANT_PRE $RNDM_HOUSE_WEAPON[26]
+
+0781: get_weapon_with_ID 30 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+    
+Actor.GiveWeaponAndAmmo($RNDM_HOUSE_WEAPON[26], 30, 9999)
+087E: set_actor $RNDM_HOUSE_WEAPON[26] weapon_droppable 0
+
+while not model.Available(#BANDIT3)
+wait 0
+model.Load(#BANDIT3)
+mload
+end
+
+$RNDM_HOUSE_WEAPON[27] = actor.Create(25,#BANDIT3,1720.3813, 2313.6021, 10.8203)
+actor.Angle($RNDM_HOUSE_WEAPON[27]) = 181.1794
+08C6: set_actor $RNDM_HOUSE_WEAPON[27] stay_on_bike 1    
+actor.SetWalkStyle($RNDM_HOUSE_WEAPON[27],"GANG2")
+0446: set_actor $RNDM_HOUSE_WEAPON[27] dismemberment_possible 0
+060B: set_actor $RNDM_HOUSE_WEAPON[27] decision_maker_to $DEC_PEOPLE
+actor.Health($RNDM_HOUSE_WEAPON[27]) = 1000
+actor.WeaponAccuracy($RNDM_HOUSE_WEAPON[27]) = 85
+create_thread @PED_BKP $RNDM_HOUSE_WEAPON[27] 371
+create_thread @ANT_PRE $RNDM_HOUSE_WEAPON[27]
+
+0781: get_weapon_with_ID 30 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+    
+Actor.GiveWeaponAndAmmo($RNDM_HOUSE_WEAPON[27], 30, 9999)
+087E: set_actor $RNDM_HOUSE_WEAPON[27] weapon_droppable 0
+
+while not model.Available(#BANDIT4)
+wait 0
+model.Load(#BANDIT4)
+mload
+end
+
+$RNDM_HOUSE_WEAPON[28] = actor.Create(25,#BANDIT4,1733.7202, 2313.5562, 10.8203)
+actor.Angle($RNDM_HOUSE_WEAPON[28]) = 180.8806
+08C6: set_actor $RNDM_HOUSE_WEAPON[28] stay_on_bike 1    
+actor.SetWalkStyle($RNDM_HOUSE_WEAPON[28],"GANG2")
+0446: set_actor $RNDM_HOUSE_WEAPON[28] dismemberment_possible 0
+060B: set_actor $RNDM_HOUSE_WEAPON[28] decision_maker_to $DEC_PEOPLE
+actor.Health($RNDM_HOUSE_WEAPON[28]) = 1000
+actor.WeaponAccuracy($RNDM_HOUSE_WEAPON[28]) = 85
+create_thread @PED_BKP $RNDM_HOUSE_WEAPON[28] 371
+
+0781: get_weapon_with_ID 30 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+    
+Actor.GiveWeaponAndAmmo($RNDM_HOUSE_WEAPON[28], 30, 9999)
+087E: set_actor $RNDM_HOUSE_WEAPON[28] weapon_droppable 0
+
+while not model.Available(#BANDIT1)
+wait 0
+model.Load(#BANDIT1)
+mload
+end
+
+$RNDM_HOUSE_WEAPON[29] = actor.Create(25,#BANDIT1,1716.9821, 2346.572, 10.8203)
+actor.Angle($RNDM_HOUSE_WEAPON[29]) = 219.9856
+08C6: set_actor $RNDM_HOUSE_WEAPON[29] stay_on_bike 1    
+actor.SetWalkStyle($RNDM_HOUSE_WEAPON[29],"GANG2")
+0446: set_actor $RNDM_HOUSE_WEAPON[29] dismemberment_possible 0
+060B: set_actor $RNDM_HOUSE_WEAPON[29] decision_maker_to $DEC_PEOPLE
+actor.Health($RNDM_HOUSE_WEAPON[29]) = 1000
+actor.WeaponAccuracy($RNDM_HOUSE_WEAPON[29]) = 85
+create_thread @PED_BKP $RNDM_HOUSE_WEAPON[29] 371
+create_thread @ANT_PRE $RNDM_HOUSE_WEAPON[29]
+
+0781: get_weapon_with_ID 30 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+    
+Actor.GiveWeaponAndAmmo($RNDM_HOUSE_WEAPON[29], 30, 9999)
+087E: set_actor $RNDM_HOUSE_WEAPON[29] weapon_droppable 0
+
+while not model.Available(#BANDIT2)
+wait 0
+model.Load(#BANDIT2)
+mload
+end
+
+$RNDM_HOUSE_WEAPON[30] = actor.Create(25,#BANDIT2,1676.438, 2335.8904, 10.8203)
+actor.Angle($RNDM_HOUSE_WEAPON[30]) = 271.6295
+08C6: set_actor $RNDM_HOUSE_WEAPON[30] stay_on_bike 1    
+actor.SetWalkStyle($RNDM_HOUSE_WEAPON[30],"GANG2")
+0446: set_actor $RNDM_HOUSE_WEAPON[30] dismemberment_possible 0
+060B: set_actor $RNDM_HOUSE_WEAPON[30] decision_maker_to $DEC_PEOPLE
+actor.Health($RNDM_HOUSE_WEAPON[30]) = 1000
+actor.WeaponAccuracy($RNDM_HOUSE_WEAPON[30]) = 85
+create_thread @PED_BKP $RNDM_HOUSE_WEAPON[30] 371
+create_thread @ANT_PRE $RNDM_HOUSE_WEAPON[30]
+
+0781: get_weapon_with_ID 30 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+    
+Actor.GiveWeaponAndAmmo($RNDM_HOUSE_WEAPON[30], 30, 9999)
+087E: set_actor $RNDM_HOUSE_WEAPON[30] weapon_droppable 0
+
+while not model.Available(#BANDIT3)
+wait 0
+model.Load(#BANDIT3)
+mload
+end
+
+$RNDM_HOUSE_WEAPON[31] = actor.Create(25,#BANDIT3,1676.7236, 2327.3965, 10.8203)
+actor.Angle($RNDM_HOUSE_WEAPON[31]) = 306.5338
+08C6: set_actor $RNDM_HOUSE_WEAPON[31] stay_on_bike 1    
+actor.SetWalkStyle($RNDM_HOUSE_WEAPON[31],"GANG2")
+0446: set_actor $RNDM_HOUSE_WEAPON[31] dismemberment_possible 0
+060B: set_actor $RNDM_HOUSE_WEAPON[31] decision_maker_to $DEC_PEOPLE
+actor.Health($RNDM_HOUSE_WEAPON[31]) = 1000
+actor.WeaponAccuracy($RNDM_HOUSE_WEAPON[31]) = 85
+create_thread @PED_BKP $RNDM_HOUSE_WEAPON[31] 371
+create_thread @ANT_PRE $RNDM_HOUSE_WEAPON[31]
+
+0781: get_weapon_with_ID 30 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+    
+Actor.GiveWeaponAndAmmo($RNDM_HOUSE_WEAPON[31], 30, 9999)
+087E: set_actor $RNDM_HOUSE_WEAPON[31] weapon_droppable 0
+
+while not model.Available(#BANDIT4)
+wait 0
+model.Load(#BANDIT4)
+mload
+end
+
+$RNDM_HOUSE_WEAPON[32] = actor.Create(25,#BANDIT4,1701.0697, 2329.9902, 10.8203)
+actor.Angle($RNDM_HOUSE_WEAPON[32]) = 88.7009
+08C6: set_actor $RNDM_HOUSE_WEAPON[32] stay_on_bike 1    
+actor.SetWalkStyle($RNDM_HOUSE_WEAPON[32],"GANG2")
+0446: set_actor $RNDM_HOUSE_WEAPON[32] dismemberment_possible 0
+060B: set_actor $RNDM_HOUSE_WEAPON[32] decision_maker_to $DEC_PEOPLE
+actor.Health($RNDM_HOUSE_WEAPON[32]) = 1000
+actor.WeaponAccuracy($RNDM_HOUSE_WEAPON[32]) = 85
+create_thread @PED_BKP $RNDM_HOUSE_WEAPON[32] 371
+create_thread @ANT_PRE $RNDM_HOUSE_WEAPON[32]
+
+0781: get_weapon_with_ID 30 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+    
+Actor.GiveWeaponAndAmmo($RNDM_HOUSE_WEAPON[32], 30, 9999)
+087E: set_actor $RNDM_HOUSE_WEAPON[32] weapon_droppable 0
+
+while not model.Available(#BANDIT1)
+wait 0
+model.Load(#BANDIT1)
+mload
+end
+
+$RNDM_HOUSE_WEAPON[33] = actor.Create(25,#BANDIT1,1733.6001, 2338.0969, 10.8203)
+actor.Angle($RNDM_HOUSE_WEAPON[33]) = 90.0835
+08C6: set_actor $RNDM_HOUSE_WEAPON[33] stay_on_bike 1    
+actor.SetWalkStyle($RNDM_HOUSE_WEAPON[33],"GANG2")
+0446: set_actor $RNDM_HOUSE_WEAPON[33] dismemberment_possible 0
+060B: set_actor $RNDM_HOUSE_WEAPON[33] decision_maker_to $DEC_PEOPLE
+actor.Health($RNDM_HOUSE_WEAPON[33]) = 1000
+actor.WeaponAccuracy($RNDM_HOUSE_WEAPON[33]) = 85
+create_thread @PED_BKP $RNDM_HOUSE_WEAPON[33] 371
+create_thread @ANT_PRE $RNDM_HOUSE_WEAPON[33]
+
+0781: get_weapon_with_ID 30 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+    
+Actor.GiveWeaponAndAmmo($RNDM_HOUSE_WEAPON[33], 30, 9999)
+087E: set_actor $RNDM_HOUSE_WEAPON[33] weapon_droppable 0
+
+while not model.Available(#BANDIT2)
+wait 0
+model.Load(#BANDIT2)
+mload
+end
+
+$RNDM_HOUSE_WEAPON[34] = actor.Create(25,#BANDIT2,1706.9563, 2332.5137, 10.8203)
+actor.Angle($RNDM_HOUSE_WEAPON[34]) = 358.8028
+08C6: set_actor $RNDM_HOUSE_WEAPON[34] stay_on_bike 1    
+actor.SetWalkStyle($RNDM_HOUSE_WEAPON[34],"GANG2")
+0446: set_actor $RNDM_HOUSE_WEAPON[34] dismemberment_possible 0
+060B: set_actor $RNDM_HOUSE_WEAPON[34] decision_maker_to $DEC_PEOPLE
+actor.Health($RNDM_HOUSE_WEAPON[34]) = 1000
+actor.WeaponAccuracy($RNDM_HOUSE_WEAPON[34]) = 85
+create_thread @PED_BKP $RNDM_HOUSE_WEAPON[34] 371
+create_thread @ANT_PRE $RNDM_HOUSE_WEAPON[34]
+
+0781: get_weapon_with_ID 30 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+    
+Actor.GiveWeaponAndAmmo($RNDM_HOUSE_WEAPON[34], 30, 9999)
+087E: set_actor $RNDM_HOUSE_WEAPON[34] weapon_droppable 0
+
+while not model.Available(#BANDIT3)
+wait 0
+model.Load(#BANDIT3)
+mload
+end
+
+$RNDM_HOUSE_WEAPON[35] = actor.Create(25,#BANDIT3,1676.4235, 2354.4377, 10.8203)
+actor.Angle($RNDM_HOUSE_WEAPON[35]) = 270.1203
+08C6: set_actor $RNDM_HOUSE_WEAPON[35] stay_on_bike 1    
+actor.SetWalkStyle($RNDM_HOUSE_WEAPON[35],"GANG2")
+0446: set_actor $RNDM_HOUSE_WEAPON[35] dismemberment_possible 0
+060B: set_actor $RNDM_HOUSE_WEAPON[35] decision_maker_to $DEC_PEOPLE
+actor.Health($RNDM_HOUSE_WEAPON[35]) = 1000
+actor.WeaponAccuracy($RNDM_HOUSE_WEAPON[35]) = 85
+create_thread @PED_BKP $RNDM_HOUSE_WEAPON[35] 371
+create_thread @ANT_PRE $RNDM_HOUSE_WEAPON[35]
+
+0781: get_weapon_with_ID 40 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+    
+Actor.GiveWeaponAndAmmo($RNDM_HOUSE_WEAPON[35], 30, 9999)
+087E: set_actor $RNDM_HOUSE_WEAPON[35] weapon_droppable 0
+
+while not model.Available(#BANDIT4)
+wait 0
+model.Load(#BANDIT4)
+mload
+end
+
+$RNDM_HOUSE_WEAPON[36] = actor.Create(25,#BANDIT4,1700.3558, 2380.4307, 10.8306)
+actor.Angle($RNDM_HOUSE_WEAPON[36]) = 268.6696
+08C6: set_actor $RNDM_HOUSE_WEAPON[36] stay_on_bike 1    
+actor.SetWalkStyle($RNDM_HOUSE_WEAPON[36],"GANG2")
+0446: set_actor $RNDM_HOUSE_WEAPON[36] dismemberment_possible 0
+060B: set_actor $RNDM_HOUSE_WEAPON[36] decision_maker_to $DEC_PEOPLE
+actor.Health($RNDM_HOUSE_WEAPON[36]) = 1000
+actor.WeaponAccuracy($RNDM_HOUSE_WEAPON[36]) = 85
+create_thread @PED_BKP $RNDM_HOUSE_WEAPON[36] 371
+create_thread @ANT_PRE $RNDM_HOUSE_WEAPON[36] 
+
+0781: get_weapon_with_ID 30 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+   
+Actor.GiveWeaponAndAmmo($RNDM_HOUSE_WEAPON[36], 30, 9999)
+087E: set_actor $RNDM_HOUSE_WEAPON[36] weapon_droppable 0
+
+while not model.Available(14698)
+wait 0
+model.Load(14698)
+mload
+end
+
+$RNDM_HOUSE_WEAPON[37] = actor.Create(25,14698,1634.4431, 2401.6858, 10.9153)
+actor.Angle($RNDM_HOUSE_WEAPON[37]) = 272.7104
+08C6: set_actor $RNDM_HOUSE_WEAPON[37] stay_on_bike 1    
+actor.SetWalkStyle($RNDM_HOUSE_WEAPON[37],"GANG2")
+0446: set_actor $RNDM_HOUSE_WEAPON[37] dismemberment_possible 0
+060B: set_actor $RNDM_HOUSE_WEAPON[37] decision_maker_to $DEC_PEOPLE
+actor.Health($RNDM_HOUSE_WEAPON[37]) = 1000
+actor.WeaponAccuracy($RNDM_HOUSE_WEAPON[37]) = 85
+create_thread @PED_BKP $RNDM_HOUSE_WEAPON[37] 371
+create_thread @ANT_PRE $RNDM_HOUSE_WEAPON[37] 
+
+0781: get_weapon_with_ID 30 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+   
+Actor.GiveWeaponAndAmmo($RNDM_HOUSE_WEAPON[37], 30, 9999)
+087E: set_actor $RNDM_HOUSE_WEAPON[37] weapon_droppable 0
+
+while not model.Available(#BANDIT1)
+wait 0
+model.Load(#BANDIT1)
+mload
+end
+
+$RNDM_HOUSE_WEAPON[38] = actor.Create(25,#BANDIT1,1643.3689, 2354.4907, 10.813)
+actor.Angle($RNDM_HOUSE_WEAPON[38]) = 88.2176
+08C6: set_actor $RNDM_HOUSE_WEAPON[38] stay_on_bike 1    
+actor.SetWalkStyle($RNDM_HOUSE_WEAPON[38],"GANG2")
+0446: set_actor $RNDM_HOUSE_WEAPON[38] dismemberment_possible 0
+060B: set_actor $RNDM_HOUSE_WEAPON[38] decision_maker_to $DEC_PEOPLE
+actor.Health($RNDM_HOUSE_WEAPON[38]) = 1000
+actor.WeaponAccuracy($RNDM_HOUSE_WEAPON[38]) = 85
+create_thread @PED_BKP $RNDM_HOUSE_WEAPON[38] 371
+create_thread @ANT_PRE $RNDM_HOUSE_WEAPON[38]
+
+0781: get_weapon_with_ID 30 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+    
+Actor.GiveWeaponAndAmmo($RNDM_HOUSE_WEAPON[38], 30, 9999)
+087E: set_actor $RNDM_HOUSE_WEAPON[38] weapon_droppable 0
+
+while not model.Available(#BANDIT2)
+wait 0
+model.Load(#BANDIT2)
+mload
+end
+
+$RNDM_HOUSE_WEAPON[39] = actor.Create(25,#BANDIT2,1581.5571, 2350.0593, 10.8203)
+actor.Angle($RNDM_HOUSE_WEAPON[39]) = 270.2568
+08C6: set_actor $RNDM_HOUSE_WEAPON[39] stay_on_bike 1    
+actor.SetWalkStyle($RNDM_HOUSE_WEAPON[39],"GANG2")
+0446: set_actor $RNDM_HOUSE_WEAPON[39] dismemberment_possible 0
+060B: set_actor $RNDM_HOUSE_WEAPON[39] decision_maker_to $DEC_PEOPLE
+actor.Health($RNDM_HOUSE_WEAPON[39]) = 1000
+actor.WeaponAccuracy($RNDM_HOUSE_WEAPON[39]) = 85
+create_thread @PED_BKP $RNDM_HOUSE_WEAPON[39] 371
+create_thread @ANT_PRE $RNDM_HOUSE_WEAPON[39] 
+
+0781: get_weapon_with_ID 30 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+   
+Actor.GiveWeaponAndAmmo($RNDM_HOUSE_WEAPON[39], 30, 9999)
+087E: set_actor $RNDM_HOUSE_WEAPON[39] weapon_droppable 0
+
+while not model.Available(#BANDIT3)
+wait 0
+model.Load(#BANDIT3)
+mload
+end
+
+$RNDM_HOUSE_WEAPON[40] = actor.Create(25,#BANDIT3,1592.9408, 2319.5117, 10.8203)
+actor.Angle($RNDM_HOUSE_WEAPON[40]) = 347.5848
+08C6: set_actor $RNDM_HOUSE_WEAPON[40] stay_on_bike 1    
+actor.SetWalkStyle($RNDM_HOUSE_WEAPON[40],"GANG2")
+0446: set_actor $RNDM_HOUSE_WEAPON[40] dismemberment_possible 0
+060B: set_actor $RNDM_HOUSE_WEAPON[40] decision_maker_to $DEC_PEOPLE
+actor.Health($RNDM_HOUSE_WEAPON[40]) = 1000
+actor.WeaponAccuracy($RNDM_HOUSE_WEAPON[40]) = 85
+create_thread @PED_BKP $RNDM_HOUSE_WEAPON[40] 371
+create_thread @ANT_PRE $RNDM_HOUSE_WEAPON[40] 
+
+0781: get_weapon_with_ID 30 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+   
+Actor.GiveWeaponAndAmmo($RNDM_HOUSE_WEAPON[40], 30, 9999)
+087E: set_actor $RNDM_HOUSE_WEAPON[40] weapon_droppable 0
+
+while not model.Available(#BANDIT4)
+wait 0
+model.Load(#BANDIT4)
+mload
+end
+
+$RNDM_HOUSE_WEAPON[41] = actor.Create(25,#BANDIT4,1602.9966, 2345.8743, 10.8203)
+actor.Angle($RNDM_HOUSE_WEAPON[41]) = 58.0683
+08C6: set_actor $RNDM_HOUSE_WEAPON[41] stay_on_bike 1    
+actor.SetWalkStyle($RNDM_HOUSE_WEAPON[41],"GANG2")
+0446: set_actor $RNDM_HOUSE_WEAPON[41] dismemberment_possible 0
+060B: set_actor $RNDM_HOUSE_WEAPON[41] decision_maker_to $DEC_PEOPLE
+actor.Health($RNDM_HOUSE_WEAPON[41]) = 1000
+actor.WeaponAccuracy($RNDM_HOUSE_WEAPON[41]) = 85
+create_thread @PED_BKP $RNDM_HOUSE_WEAPON[41] 371
+create_thread @ANT_PRE $RNDM_HOUSE_WEAPON[41]
+
+0781: get_weapon_with_ID 30 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+    
+Actor.GiveWeaponAndAmmo($RNDM_HOUSE_WEAPON[41], 30, 9999)
+087E: set_actor $RNDM_HOUSE_WEAPON[41] weapon_droppable 0
+
+while not model.Available(#BANDIT5)
+wait 0
+model.Load(#BANDIT5)
+mload
+end
+
+$RNDM_HOUSE_WEAPON[42] = actor.Create(25,#BANDIT5,1643.3616, 2322.5913, 10.8203)
+actor.Angle($RNDM_HOUSE_WEAPON[42]) = 90.6141
+08C6: set_actor $RNDM_HOUSE_WEAPON[42] stay_on_bike 1    
+actor.SetWalkStyle($RNDM_HOUSE_WEAPON[42],"GANG2")
+0446: set_actor $RNDM_HOUSE_WEAPON[42] dismemberment_possible 0
+060B: set_actor $RNDM_HOUSE_WEAPON[42] decision_maker_to $DEC_PEOPLE
+actor.Health($RNDM_HOUSE_WEAPON[42]) = 1000
+actor.WeaponAccuracy($RNDM_HOUSE_WEAPON[42]) = 85
+create_thread @PED_BKP $RNDM_HOUSE_WEAPON[42] 371
+create_thread @ANT_PRE $RNDM_HOUSE_WEAPON[42] 
+
+0781: get_weapon_with_ID 30 model_to 1@
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+   
+Actor.GiveWeaponAndAmmo($RNDM_HOUSE_WEAPON[42], 30, 9999)
+087E: set_actor $RNDM_HOUSE_WEAPON[42] weapon_droppable 0
+
+0754: define_new_animation_path                                                   
+0755: add_animation_path_3D_coord 1645.637 2403.2246 10.9227 animation "none" IFP_file "none"
+0755: add_animation_path_3D_coord 1698.1398 2396.949 10.8815 animation "none" IFP_file "none"
+0817: assign_actor $RNDM_HOUSE_WEAPON[37] to_animation_path_with_walk_mode 4 route_mode 3
+
+/////////////////////////////////////////////////////////////
+
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MQ12_CHECKPOINT"
+if
+MQ_CHECKPOINT_FUCKNO == 1
+then
+0@ = 0
+end
+
+if
+not 0@ == 1
+then
+v$OBJECTIVE = "GAME921"
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+else
+car.PutAt(SUPPLY_QUEST_TRUCK,1682.0597, 2332.7192, 10.7535)
+car.Angle(SUPPLY_QUEST_TRUCK) = 90.4547
+wait 1000
+jump to @MQ12_CHECKPOINT_JUMP2
+end
+
+repeat
+wait 0
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST12_FAILED_PLAYER_DIED
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @MAIN_QUEST12_FAILED_AGRO
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @MAIN_QUEST12_FAILED_LDEAD        
+if
+0184:   actor MQ12_CAPO health > 0
+jf @MAIN_QUEST12_CAPO_DEAD
+if
+not car.Wrecked(SUPPLY_QUEST_TRUCK)
+jf @MAIN_QUEST12_FAILED_TRUCK_WRECKED
+if
+actor.InCar(PLAYER_ACTOR,SUPPLY_QUEST_TRUCK)
+jf @MAIN_QUEST12_FAILED_WALK
+
+until 01AD:   car SUPPLY_QUEST_TRUCK sphere 0 near_point 1607.3376 2273.3328 10.8806 radius 10.0 10.0
+
+v$ST_DIALOG[0] = "MQ_638"
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+repeat
+wait 0
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST12_FAILED_PLAYER_DIED
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @MAIN_QUEST12_FAILED_AGRO
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @MAIN_QUEST12_FAILED_LDEAD        
+if
+0184:   actor MQ12_CAPO health > 0
+jf @MAIN_QUEST12_CAPO_DEAD
+if
+not car.Wrecked(SUPPLY_QUEST_TRUCK)
+jf @MAIN_QUEST12_FAILED_TRUCK_WRECKED
+if
+actor.InCar(PLAYER_ACTOR,SUPPLY_QUEST_TRUCK)
+jf @MAIN_QUEST12_FAILED_WALK
+
+until 01AE:   car SUPPLY_QUEST_TRUCK sphere 0 near_point 1727.8748 2296.3013 radius 5.0 5.0 stopped
+
+0084: $GATE_MOVE_OBJ = $MQ12_GATE2 // (int) 
+$GATE_MOVE_X = 1717.32
+$GATE_MOVE_Y = 2303.32
+$GATE_MOVE_Z = 13.7422
+0084: $GATE_MOVE2_OBJ = $MQ12_GATE1 // (int) 
+$GATE_MOVE2_X = 1737.45
+$GATE_MOVE2_Y = 2303.32
+$GATE_MOVE2_Z = 13.7422 
+create_thread @GT_MOV2
+
+repeat
+wait 0
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST12_FAILED_PLAYER_DIED
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @MAIN_QUEST12_FAILED_AGRO
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @MAIN_QUEST12_FAILED_LDEAD        
+if
+0184:   actor MQ12_CAPO health > 0
+jf @MAIN_QUEST12_CAPO_DEAD
+if
+not car.Wrecked(SUPPLY_QUEST_TRUCK)
+jf @MAIN_QUEST12_FAILED_TRUCK_WRECKED
+if
+actor.InCar(PLAYER_ACTOR,SUPPLY_QUEST_TRUCK)
+jf @MAIN_QUEST12_FAILED_WALK
+
+until 01AD:   car SUPPLY_QUEST_TRUCK sphere 0 near_point 1719.4797 2335.1177 10.7882 radius 6.0 6.0
+
+0084: $GATE_MOVE_OBJ = $MQ12_GATE2 // (int) 
+$GATE_MOVE_X = 1722.32
+$GATE_MOVE_Y = 2303.32
+$GATE_MOVE_Z = 13.7422
+0084: $GATE_MOVE2_OBJ = $MQ12_GATE1 // (int) 
+$GATE_MOVE2_X = 1732.45
+$GATE_MOVE2_Y = 2303.32
+$GATE_MOVE2_Z = 13.7422 
+create_thread @GT_MOV2
+
+repeat
+wait 0
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST12_FAILED_PLAYER_DIED
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @MAIN_QUEST12_FAILED_AGRO
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @MAIN_QUEST12_FAILED_LDEAD        
+if
+0184:   actor MQ12_CAPO health > 0
+jf @MAIN_QUEST12_CAPO_DEAD
+if
+not car.Wrecked(SUPPLY_QUEST_TRUCK)
+jf @MAIN_QUEST12_FAILED_TRUCK_WRECKED
+if
+actor.InCar(PLAYER_ACTOR,SUPPLY_QUEST_TRUCK)
+jf @MAIN_QUEST12_FAILED_WALK
+
+until 01AE:   car SUPPLY_QUEST_TRUCK sphere 0 near_point 1682.0719 2331.7773 radius 5.0 5.0 stopped
+
+05EC: release_car SUPPLY_QUEST_TRUCK from_path
+
+:MQ12_CHECKPOINT_JUMP2
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MQ12_CHECKPOINT"
+if
+MQ_CHECKPOINT_FUCKNO == 1
+then
+0@ = 0
+end
+
+if
+0@ == 1
+then
+camera.Restore_WithJumpCut()
+create_thread @REFR_3D
+0430: put_actor PLAYER_ACTOR into_car SUPPLY_QUEST_TRUCK passenger_seat 0
+fade 1 500
+$HUD_REMOVE = 0
+wait 500
+end
+
+0AF1: write_int 1 to_ini_file "data\survival.set" section "SCR" key "MQ12_CHECKPOINT"
+
+v$OBJECTIVE = "DUMMY"
+
+0E68: set_player_control_pad 0 1 
+0E69: set_player_control_pad_movement 0 0
+
+v$ST_DIALOG[0] = "MQ_639"
+v$ST_DIALOG[1] = "MQ_640"
+$DIALOG_COUNT = 1
+create_thread @DG_SYS2
+
+repeat
+wait 0
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST12_FAILED_PLAYER_DIED
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @MAIN_QUEST12_FAILED_AGRO
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @MAIN_QUEST12_FAILED_LDEAD        
+if
+0184:   actor MQ12_CAPO health > 0
+jf @MAIN_QUEST12_CAPO_DEAD
+if
+not car.Wrecked(SUPPLY_QUEST_TRUCK)
+jf @MAIN_QUEST12_FAILED_TRUCK_WRECKED
+
+until $DIALOG_END == 1
+
+068B: set_car SUPPLY_QUEST_TRUCK all_disembark
+
+0E68: set_player_control_pad 1 1 
+0E69: set_player_control_pad_movement 0 1
+
+$TIME = 180000
+
+repeat
+wait 0
+until not actor.InCar(PLAYER_ACTOR,SUPPLY_QUEST_TRUCK)
+wait 0
+car.DoorStatus(SUPPLY_QUEST_TRUCK,2)
+
+repeat
+wait 0
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST12_FAILED_PLAYER_DIED
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @MAIN_QUEST12_FAILED_AGRO
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @MAIN_QUEST12_FAILED_LDEAD        
+if
+0184:   actor MQ12_CAPO health > 0
+jf @MAIN_QUEST12_CAPO_DEAD
+if
+not car.Wrecked(SUPPLY_QUEST_TRUCK)
+jf @MAIN_QUEST12_FAILED_TRUCK_WRECKED
+
+until not actor.InCar(MQ12_CAPO,SUPPLY_QUEST_TRUCK)
+wait 0
+05D3: AS_actor MQ12_CAPO goto_point 1676.3401 2322.5618 10.8203 mode 7 time 20000 ms // versionA
+
+05BF: AS_actor $RNDM_HOUSE_WEAPON[30] look_at_actor PLAYER_ACTOR 20000 ms
+05BF: AS_actor $RNDM_HOUSE_WEAPON[31] look_at_actor PLAYER_ACTOR 20000 ms
+05BF: AS_actor $RNDM_HOUSE_WEAPON[32] look_at_actor PLAYER_ACTOR 60000 ms
+
+v$ST_DIALOG[0] = "MQ_641"
+v$ST_DIALOG[1] = "MQ_642"
+v$ST_DIALOG[2] = "MQ_642"
+v$ST_DIALOG[3] = "MQ_643"
+v$ST_DIALOG[4] = "MQ_644"
+v$ST_DIALOG[5] = "MQ_645"
+v$ST_DIALOG[6] = "MQ_646"
+$DIALOG_COUNT = 6
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+v$OBJECTIVE = "GAME922"
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+
+if
+BOMBS_TIMER > 0
+    then
+    014F: stop_timer BOMBS_TIMER
+    create_thread @BMB_HLD
+    end
+
+03C3: set_timer_to $TIME type 1 GXT 'BB_19' // global_variable  // Time
+
+50@ = 0
+51@ = 0
+52@ = 0
+53@ = 0
+54@ = 0
+
+repeat
+wait 0
+
+if and
+02A0:   actor MQ12_CAPO stopped
+8EEA: not locate_char_distance_to_coordinates MQ12_CAPO pos 1665.201 2316.3042 13.8857 radius 1.0
+0E45: frame_mod 15
+    then
+    05D3: AS_actor MQ12_CAPO goto_point 1676.3401 2322.5618 10.8203 mode 7 time 20000 ms // versionA
+    end
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST12_FAILED_PLAYER_DIED
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @MAIN_QUEST12_FAILED_AGRO
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @MAIN_QUEST12_FAILED_LDEAD        
+if
+0184:   actor MQ12_CAPO health > 0
+jf @MAIN_QUEST12_CAPO_DEAD
+if
+not car.Wrecked(SUPPLY_QUEST_TRUCK)
+jf @MAIN_QUEST12_FAILED_TRUCK_WRECKED
+
+for 0@ = 26 to 42
+if
+851A: not  actor $RNDM_HOUSE_WEAPON[0@] damaged_by_actor PLAYER_ACTOR
+jf @MAIN_QUEST12_FAILED_BANDITS_AGRED
+end
+
+if
+00EC:   actor MQ12_CAPO sphere 0 near_point 1676.3401 2322.5618 radius 2.0 2.0
+    then
+    actor.PutAtNoOffset(MQ12_CAPO,1665.201, 2316.3042, 13.8857)
+    actor.LockInCurrentPosition(MQ12_CAPO,true)
+    end
+
+if
+$TIME > 1
+jf @MAIN_QUEST12_FAILED_TIMER
+
+if and
+0364:   actor $RNDM_HOUSE_WEAPON[37] spotted_actor PLAYER_ACTOR
+00F2:   actor $RNDM_HOUSE_WEAPON[37] near_actor PLAYER_ACTOR radius 20.0 20.0 sphere 0
+50@ == 0
+52@ == 0
+    then
+    
+    50@ = 1
+    
+    $END_DIALOG_INST = 1
+    wait 0    
+    
+    v$OBJECTIVE = "DUMMY"
+    
+    0792: disembark_instantly_actor $RNDM_HOUSE_WEAPON[37]
+    0687: clear_actor $RNDM_HOUSE_WEAPON[37] task
+    
+    0639: AS_actor $RNDM_HOUSE_WEAPON[37] rotate_to_actor PLAYER_ACTOR
+    0639: AS_actor PLAYER_ACTOR rotate_to_actor $RNDM_HOUSE_WEAPON[37]
+    
+    0084: $DIALOG_ACTOR[0] = $RNDM_HOUSE_WEAPON[37] // (int)
+    0084: $DIALOG_ACTOR[1] = $RNDM_HOUSE_WEAPON[37] // (int)
+    0084: $DIALOG_ACTOR[2] = $RNDM_HOUSE_WEAPON[37] // (int)
+    0084: $DIALOG_ACTOR[3] = $RNDM_HOUSE_WEAPON[37] // (int)
+    0084: $DIALOG_ACTOR[4] = $RNDM_HOUSE_WEAPON[37] // (int)
+    v$ST_DIALOG[0] = "MQ_647"
+    v$ST_DIALOG[1] = "MQ_648"
+    v$ST_DIALOG[2] = "MQ_649"
+    v$ST_DIALOG[3] = "MQ_650"
+    v$ST_DIALOG[4] = "MQ_651"
+    $DIALOG_COUNT = 4
+    create_thread @DG_SYS
+    
+    0E68: set_player_control_pad 0 1 
+    0E69: set_player_control_pad_movement 0 0        
+    
+    wait 2000    
+    
+    camera.Restore_WithJumpCut()        
+    
+    repeat
+    wait 0
+    
+    if
+    not actor.Dead(PLAYER_ACTOR)
+    jf @MAIN_QUEST12_FAILED_PLAYER_DIED
+    if
+    $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+    jf @MAIN_QUEST12_FAILED_AGRO
+    if
+    803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+    jf @MAIN_QUEST12_FAILED_LDEAD        
+    if
+    0184:   actor MQ12_CAPO health > 0
+    jf @MAIN_QUEST12_CAPO_DEAD
+    if
+    not car.Wrecked(SUPPLY_QUEST_TRUCK)
+    jf @MAIN_QUEST12_FAILED_TRUCK_WRECKED
+    
+    for 0@ = 26 to 42
+    if
+    851A: not  actor $RNDM_HOUSE_WEAPON[0@] damaged_by_actor PLAYER_ACTOR
+    jf @MAIN_QUEST12_FAILED_BANDITS_AGRED
+    end
+    
+    until $DIALOG_END == 1
+    
+    fade 0 500
+    $HUD_REMOVE = 1
+    wait 500                            
+    
+    actor.PutAtNoOffset(PLAYER_ACTOR,1702.8473, 2393.5273, 10.8704)
+    actor.Angle(PLAYER_ACTOR) = 198.0792
+    camera.Restore_WithJumpCut()
+    
+    actor.PutAtNoOffset($RNDM_HOUSE_WEAPON[37],1645.3138, 2398.176, 10.8956)
+    wait 100
+    0754: define_new_animation_path                                                   
+    0755: add_animation_path_3D_coord 1698.1398 2396.949 10.8815 animation "none" IFP_file "none"
+    0755: add_animation_path_3D_coord 1645.3138 2398.176 10.8956 animation "none" IFP_file "none"
+    0817: assign_actor $RNDM_HOUSE_WEAPON[37] to_animation_path_with_walk_mode 4 route_mode 3
+    
+    wait 500
+    
+    fade 1 500
+    $HUD_REMOVE = 0
+    wait 500
+    
+    0E68: set_player_control_pad 1 1 
+    0E69: set_player_control_pad_movement 0 1
+    
+    018A: MISSION_CHECKPOINT = create_checkpoint_at 1684.9059 2188.5596 10.8203
+    $QUEST_READY_FLAG = 1269
+    v$OBJECTIVE = "GAME923"
+    if
+    REALISM_MODE == 1
+    then
+    v$OBJECTIVE = "GRME923"
+    end
+    0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+    $SOUNDS_VOLUME3 *= 0.5
+    Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+    Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+    Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)                
+    
+    end
+    
+if and
+0364:   actor $RNDM_HOUSE_WEAPON[37] spotted_actor PLAYER_ACTOR
+00F2:   actor $RNDM_HOUSE_WEAPON[37] near_actor PLAYER_ACTOR radius 20.0 20.0 sphere 0
+52@ == 1
+53@ == 0
+    then
+    
+    marker.Disable(MISSION_MARKER)
+    
+    53@ = 1
+    
+    $END_DIALOG_INST = 1
+    
+    repeat
+    wait 0
+    
+    if
+    not actor.Dead(PLAYER_ACTOR)
+    jf @MAIN_QUEST12_FAILED_PLAYER_DIED
+    if
+    $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+    jf @MAIN_QUEST12_FAILED_AGRO
+    if
+    803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+    jf @MAIN_QUEST12_FAILED_LDEAD        
+    if
+    0184:   actor MQ12_CAPO health > 0
+    jf @MAIN_QUEST12_CAPO_DEAD
+    if
+    not car.Wrecked(SUPPLY_QUEST_TRUCK)
+    jf @MAIN_QUEST12_FAILED_TRUCK_WRECKED
+    
+    for 0@ = 26 to 42
+    if
+    851A: not  actor $RNDM_HOUSE_WEAPON[0@] damaged_by_actor PLAYER_ACTOR
+    jf @MAIN_QUEST12_FAILED_BANDITS_AGRED
+    end
+    
+    until $DIALOG_END == 1
+    
+    v$OBJECTIVE = "DUMMY"
+    
+    0792: disembark_instantly_actor $RNDM_HOUSE_WEAPON[37]
+    0687: clear_actor $RNDM_HOUSE_WEAPON[37] task
+    
+    0639: AS_actor $RNDM_HOUSE_WEAPON[37] rotate_to_actor PLAYER_ACTOR
+    0639: AS_actor PLAYER_ACTOR rotate_to_actor $RNDM_HOUSE_WEAPON[37]
+    
+    0E68: set_player_control_pad 0 1 
+    0E69: set_player_control_pad_movement 0 0
+    
+    0084: $DIALOG_ACTOR[0] = $RNDM_HOUSE_WEAPON[37] // (int)
+    v$ST_DIALOG[0] = "MQ_652"
+    $DIALOG_COUNT = 0
+    $DIALOG_NOT_SKIP = 1
+    create_thread @DG_SYS
+    
+    wait 2000
+    
+    camera.Restore_WithJumpCut()
+    
+    repeat
+    wait 0
+    
+    if
+    not actor.Dead(PLAYER_ACTOR)
+    jf @MAIN_QUEST12_FAILED_PLAYER_DIED
+    if
+    $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+    jf @MAIN_QUEST12_FAILED_AGRO
+    if
+    803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+    jf @MAIN_QUEST12_FAILED_LDEAD        
+    if
+    0184:   actor MQ12_CAPO health > 0
+    jf @MAIN_QUEST12_CAPO_DEAD
+    if
+    not car.Wrecked(SUPPLY_QUEST_TRUCK)
+    jf @MAIN_QUEST12_FAILED_TRUCK_WRECKED
+    
+    for 0@ = 26 to 42
+    if
+    851A: not  actor $RNDM_HOUSE_WEAPON[0@] damaged_by_actor PLAYER_ACTOR
+    jf @MAIN_QUEST12_FAILED_BANDITS_AGRED
+    end
+    
+    until $DIALOG_END == 1
+    
+    fade 0 500
+    $HUD_REMOVE = 1
+    wait 500                            
+    
+    actor.PutAtNoOffset(PLAYER_ACTOR,1639.6512, 2379.4514, 10.8203)
+    actor.Angle(PLAYER_ACTOR) = 152.5594
+    camera.Restore_WithJumpCut()
+    
+//    actor.PutAtNoOffset($RNDM_HOUSE_WEAPON[37],1645.3138, 2398.176, 10.8956)
+//    wait 100
+//    0754: define_new_animation_path                                                   
+//    0755: add_animation_path_3D_coord 1698.1398 2396.949 10.8815 animation "none" IFP_file "none"
+//    0755: add_animation_path_3D_coord 1645.3138 2398.176 10.8956 animation "none" IFP_file "none"
+//    0817: assign_actor $RNDM_HOUSE_WEAPON[37] to_animation_path_with_walk_mode 4 route_mode 3
+    
+    actor.PutAtNoOffset($RNDM_HOUSE_WEAPON[37],1665.1223 2317.9656, 13.8857)
+    actor.LockInCurrentPosition($RNDM_HOUSE_WEAPON[37],true)
+    
+    :MQ12_BMX_CREATE
+    if
+    model.Available(#BMX)
+    then
+    
+    SUPPLY_QUEST_TRUCK = car.Create(#BMX,1554.7894, 2300.1902, 11.1676)
+    car.Angle(SUPPLY_QUEST_TRUCK) = 54.4687
+    
+    if
+    model.Available(#BMX)
+    then
+    //model.Destroy(#BMX)
+    end
+    
+    else
+    model.Load(#BMX)
+    mload
+    wait 0
+    jump to @MQ12_BMX_CREATE
+    end
+    
+    wait 500
+    
+    fade 1 500
+    $HUD_REMOVE = 0
+    wait 500
+    
+    M12_CONTAINER1_TANK_SOUND = Audiostream.Load3D("AUDIO\SOUNDS\QUESTS\Q12\tank_breathe1.ogg")
+    Audiostream.SetPosition(M12_CONTAINER1_TANK_SOUND,11.2015, 1617.4011, 2374.2444) //ZXY
+    Audiostream.PerformAction(M12_CONTAINER1_TANK_SOUND, PLAY)    
+    Audiostream.Volume(M12_CONTAINER1_TANK_SOUND) = $SOUNDS_VOLUME
+    Audiostream.Loop(M12_CONTAINER1_TANK_SOUND, 1)
+    
+    M12_CONTAINER2_TANK_SOUND = Audiostream.Load3D("AUDIO\SOUNDS\QUESTS\Q12\tank_breathe2.ogg")    
+    Audiostream.SetPosition(M12_CONTAINER2_TANK_SOUND,11.2015, 1602.4142, 2372.4995) //ZXY
+    Audiostream.PerformAction(M12_CONTAINER2_TANK_SOUND, PLAY)
+    Audiostream.Volume(M12_CONTAINER2_TANK_SOUND) = $SOUNDS_VOLUME
+    Audiostream.Loop(M12_CONTAINER2_TANK_SOUND, 1)
+    
+    M12_CONTAINER3_TANK_SOUND = Audiostream.Load3D("AUDIO\SOUNDS\QUESTS\Q12\tank_breathe3.ogg")       
+    Audiostream.SetPosition(M12_CONTAINER3_TANK_SOUND,11.2015, 1608.7085, 2313.2332) //ZXY
+    Audiostream.PerformAction(M12_CONTAINER3_TANK_SOUND, PLAY)
+    Audiostream.Volume(M12_CONTAINER3_TANK_SOUND) = $SOUNDS_VOLUME
+    Audiostream.Loop(M12_CONTAINER3_TANK_SOUND, 1)
+    
+    M12_CONTAINER4_TANK_SOUND = Audiostream.Load3D("AUDIO\SOUNDS\QUESTS\Q12\tank_breathe4.ogg")             
+    Audiostream.SetPosition(M12_CONTAINER4_TANK_SOUND,11.2015, 1625.1927, 2332.7896) //ZXY    
+    Audiostream.PerformAction(M12_CONTAINER4_TANK_SOUND, PLAY)
+    Audiostream.Volume(M12_CONTAINER4_TANK_SOUND) = $SOUNDS_VOLUME
+    Audiostream.Loop(M12_CONTAINER4_TANK_SOUND, 1)
+    
+    M12_SCREAMBASED_SOUND = Audiostream.Load3D("AUDIO\SOUNDS\screambased.mp3")                         
+    Audiostream.SetPosition(M12_SCREAMBASED_SOUND,9.8033, 1643.5531, 2340.0464) //ZXY  
+    0089: 0@ = $SOUNDS_VOLUME // (float)
+    0@ *= 30.0      
+    Audiostream.Volume(M12_SCREAMBASED_SOUND) = 0@
+    Audiostream.Loop(M12_SCREAMBASED_SOUND, 1)
+    
+    0E68: set_player_control_pad 1 1 
+    0E69: set_player_control_pad_movement 0 1
+    
+    018A: 300@ = create_checkpoint_at 1617.5061 2373.4846 11.2093
+    018A: 301@ = create_checkpoint_at 1602.4861 2375.4451 11.2093
+    018A: 302@ = create_checkpoint_at 1627.8835 2331.2043 11.2093
+    018A: 303@ = create_checkpoint_at 1608.9246 2310.2263 11.2093
+    marker.SetIconSize(300@,2)
+    marker.SetIconSize(301@,2)
+    marker.SetIconSize(302@,2)
+    marker.SetIconSize(303@,2)
+    $QUEST_READY_FLAG = 1270
+    
+    v$OBJECTIVE = "GAME926"
+    0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+    $SOUNDS_VOLUME3 *= 0.5
+    Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+    Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+    Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+    
+    v$ST_DIALOG[0] = "MQ_653"
+    $DIALOG_COUNT = 0
+    $DIALOG_NOT_SKIP = 1
+    create_thread @DG_SYS                
+    
+    end
+    
+if and
+00EC:   actor PLAYER_ACTOR sphere 0 near_point 1606.1102 2312.5071 radius 1.0 1.0
+53@ == 1
+    then
+    
+    v$OBJECTIVE = "DUMMY"
+    014F: stop_timer $TIME
+    
+    54@ = 1
+    
+    0E68: set_player_control_pad 0 1 
+    0E69: set_player_control_pad_movement 0 0            
+    
+    marker.Disable(300@)
+    marker.Disable(301@)
+    marker.Disable(302@)
+    marker.Disable(303@)
+    
+    v$ST_DIALOG[0] = "MQ_654"
+    $DIALOG_COUNT = 0
+    $DIALOG_NOT_SKIP = 1
+    create_thread @DG_SYS
+    
+    /////////////////////Плавное затухание/////////////////////
+
+    $MUSIC_FADE_NUMBER += 1
+    if
+    $MUSIC_FADE_NUMBER > 4
+        then
+        $MUSIC_FADE_NUMBER = 0 
+        end    
+            
+    0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+    $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+            
+    $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+    $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+    $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+    create_thread @MUS_FAD
+            
+    wait 1
+            
+    while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+    wait 0
+    end
+            
+    ///////////////////////////////////////////////////////////
+            
+    $MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\QUESTS\Q12\Q12D.wav")
+    Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
+    Audiostream.Loop($MUSIC_ASSHOLE, 1)
+    Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+            
+    /////////////////////Плавное нарастание/////////////////////
+            
+    $MUSIC_FADE_NUMBER += 1
+    if
+    $MUSIC_FADE_NUMBER > 4
+        then
+        $MUSIC_FADE_NUMBER = 0 
+        end    
+            
+    0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
+    0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+            
+    $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+    $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+    $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+    create_thread @MUS_FAD                
+    
+    repeat
+    wait 0
+    
+    if
+    not actor.Dead(PLAYER_ACTOR)
+    jf @MAIN_QUEST12_FAILED_PLAYER_DIED
+    if
+    $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+    jf @MAIN_QUEST12_FAILED_AGRO
+    if
+    803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+    jf @MAIN_QUEST12_FAILED_LDEAD        
+    if
+    0184:   actor MQ12_CAPO health > 0
+    jf @MAIN_QUEST12_CAPO_DEAD
+    if
+    not car.Wrecked(SUPPLY_QUEST_TRUCK)
+    jf @MAIN_QUEST12_FAILED_TRUCK_WRECKED
+    
+    for 0@ = 26 to 42
+    if
+    851A: not  actor $RNDM_HOUSE_WEAPON[0@] damaged_by_actor PLAYER_ACTOR
+    jf @MAIN_QUEST12_FAILED_BANDITS_AGRED
+    end
+    
+    until $DIALOG_END == 1
+    
+    0812: AS_actor PLAYER_ACTOR perform_animation "bomber" IFP "PED" framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF 0 time 600  // versionB
+    
+    wait 250        
+    
+    repeat
+    wait 0    
+    0613: 2@ = actor PLAYER_ACTOR animation "bomber" time
+    
+    if
+    not actor.Animation(PLAYER_ACTOR) == "bomber"
+        then
+        break
+        end
+        
+    until 2@ >= 0.963
+    
+    0E68: set_player_control_pad 1 1 
+    0E69: set_player_control_pad_movement 0 1      
+    
+    0777: delete_objects_in_object_group "q12_G1A"
+    0776: create_objects_in_object_group "q12_G1B"
+    0777: delete_objects_in_object_group "q12_G2A"
+    0776: create_objects_in_object_group "q12_G2B"
+    0777: delete_objects_in_object_group "q12_G3A"
+    0776: create_objects_in_object_group "q12_G3B"
+    0777: delete_objects_in_object_group "q12_G4A"
+    0776: create_objects_in_object_group "q12_G4B"
+    
+    Audiostream.PerformAction(M12_CONTAINER1_TANK_SOUND, STOP)
+    Audiostream.Release(M12_CONTAINER1_TANK_SOUND)
+    
+    Audiostream.PerformAction(M12_CONTAINER2_TANK_SOUND, STOP)
+    Audiostream.Release(M12_CONTAINER2_TANK_SOUND)
+    
+    Audiostream.PerformAction(M12_CONTAINER3_TANK_SOUND, STOP)
+    Audiostream.Release(M12_CONTAINER3_TANK_SOUND)
+    
+    Audiostream.PerformAction(M12_CONTAINER4_TANK_SOUND, STOP)
+    Audiostream.Release(M12_CONTAINER4_TANK_SOUND)
+    
+    008B: 500@ = $ALLOW_TANK // (int)
+    $ALLOW_TANK = 1
+    
+    $TANK_AGRO_MAX = 120
+    $TANK_AGRO_SET = 30
+    
+    $TANK_INTERIOR_SPAWN = 1
+    $SPECIAL_INFECTED_NOT_SPAWN_FLAG = 0
+    SPEC_INF_ONLY_ONE_INSTANSE_SPAWN_FLAG = 2
+    
+    $ZOMBIE_SPAWN_ON_COORD = 1
+    $SPECIAL_INFECTED_SPAWN_OZC_FLAG = 1  
+    $ZOMBIE_COORD_MAX = 4      
+      
+    $ZOMBIE_X[0] = 1608.7485
+    $ZOMBIE_Y[0] = 2311.1985
+    $ZOMBIE_Z[0] = 11.2093
+          
+    $ZOMBIE_X[1] = 1626.24
+    $ZOMBIE_Y[1] = 2331.8518
+    $ZOMBIE_Z[1] = 11.2093    
+      
+    $ZOMBIE_X[2] = 1617.7417
+    $ZOMBIE_Y[2] = 2372.9395
+    $ZOMBIE_Z[2] = 11.2093    
+      
+    $ZOMBIE_X[3] = 1602.6737
+    $ZOMBIE_Y[3] = 2374.9236
+    $ZOMBIE_Z[3] = 11.2093
+    
+    $SPAWN_TANK_FLAG = 1
+    
+    repeat
+    wait 0
+    
+    if
+    not actor.Dead(PLAYER_ACTOR)
+    jf @MAIN_QUEST12_FAILED_PLAYER_DIED
+    if
+    $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+    jf @MAIN_QUEST12_FAILED_AGRO
+    if
+    803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+    jf @MAIN_QUEST12_FAILED_LDEAD        
+    
+    if and
+    056D:   actor $TANK[0] defined
+    056D:   actor $TANK[1] defined
+        then
+        actor.Health($TANK[0]) = 10000
+        actor.Health($TANK[1]) = 10000
+        break
+        end
+    
+    until false
+    
+    v$ST_DIALOG[0] = "MQ_655"
+    $DIALOG_COUNT = 0
+    $DIALOG_NOT_SKIP = 1
+    create_thread @DG_SYS
+    
+    $TIME = 20000
+    03C3: set_timer_to $TIME type 1 GXT 'BB_19' // global_variable  // Time
+    HARDCORE_DANGER_FLAG_SCRIPTED = 1
+    
+    ///////////////////////////////////////////////////////////////////
+    
+    for 0@ = 26 to 38 //Лезвия идут пиздить ТАНКОВ
+
+    099F: AS_actor $RNDM_HOUSE_WEAPON[0@] ignore_weapon_range 1
+    actor.SetWalkStyle($RNDM_HOUSE_WEAPON[0@],"GANG2")
+    
+    if
+    0E4D: random_percent 50
+    then
+    0615: define_AS_pack_begin 51@
+    0A1D: AS_actor -1 rotate_to_and_look_at_actor $TANK[0]
+    05E2: AS_actor -1 kill_actor $TANK[0]
+    0616: define_AS_pack_end 51@
+    0618: assign_actor $RNDM_HOUSE_WEAPON[0@] to_AS_pack 51@
+    061B: remove_references_to_AS_pack 51@
+    else
+    0615: define_AS_pack_begin 51@
+    0A1D: AS_actor -1 rotate_to_and_look_at_actor $TANK[1]
+    05E2: AS_actor -1 kill_actor $TANK[1]
+    0616: define_AS_pack_end 51@
+    0618: assign_actor $RNDM_HOUSE_WEAPON[0@] to_AS_pack 51@
+    061B: remove_references_to_AS_pack 51@
+    end
+    
+    end
+    
+    ///////////////////////////////////////////////////////////////////
+    
+    v$OBJECTIVE = "GAME928"
+    0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+    $SOUNDS_VOLUME3 *= 0.5
+    Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+    Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+    Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+    
+    wait 2000
+    
+    SPEC_INF_ONLY_ONE_INSTANSE_SPAWN_FLAG = 0
+    $SPECIAL_INFECTED_NOT_SPAWN_FLAG = 1
+    
+    repeat
+    wait 0
+    
+    if
+    not actor.Dead(PLAYER_ACTOR)
+    jf @MAIN_QUEST12_FAILED_PLAYER_DIED
+    if
+    $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+    jf @MAIN_QUEST12_FAILED_AGRO
+    if
+    803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+    jf @MAIN_QUEST12_FAILED_LDEAD
+    
+    if
+    $TIME > 1
+    jf @MAIN_QUEST12_FAILED_TIMER2
+    
+    until 80A4: not  actor PLAYER_ACTOR sphere 0 in_cube_cornerA 1576.4679 2424.5676 0.0 cornerB 1758.042 2282.0835 200.0 //MQ12
+    
+    014F: stop_timer $TIME
+    HARDCORE_DANGER_FLAG_SCRIPTED = 0
+    $TANK_INTERIOR_SPAWN = 0
+    $ZOMBIE_SPAWN_ON_COORD = 0
+    $SPECIAL_INFECTED_SPAWN_OZC_FLAG = 0
+    Audiostream.PerformAction(M12_SCREAMBASED_SOUND, PLAY)
+    
+    if
+    MQ12_TEMP_CAR_SAVE_FLAG == 1
+    then
+    0088: $SAVE_CAR_X[LATEST_CAR_SLOT_USED] = MQ12_TEMP_CAR_X // (float)
+    0088: $SAVE_CAR_Y[LATEST_CAR_SLOT_USED] = MQ12_TEMP_CAR_Y // (float)
+    0088: $SAVE_CAR_Z[LATEST_CAR_SLOT_USED] = MQ12_TEMP_CAR_Z // (float)
+    0088: $SAVE_CAR_ANGLE[LATEST_CAR_SLOT_USED] = MQ12_TEMP_CAR_ANGLE // (float)
+    end
+    
+    SAVED_CARS_MARK_REDO = 1
+    wait 200    
+    SAVED_CARS_MARK_REDO = 0
+    
+    break     
+    
+    end        
+    
+if and
+0364:   actor $RNDM_HOUSE_WEAPON[37] spotted_actor PLAYER_ACTOR
+00F2:   actor $RNDM_HOUSE_WEAPON[37] near_actor PLAYER_ACTOR radius 20.0 20.0 sphere 0
+50@ == 1
+52@ == 0
+    then
+    
+    $END_DIALOG_INST = 1        
+    
+    0792: disembark_instantly_actor $RNDM_HOUSE_WEAPON[37]
+    0687: clear_actor $RNDM_HOUSE_WEAPON[37] task
+    
+    0639: AS_actor $RNDM_HOUSE_WEAPON[37] rotate_to_actor PLAYER_ACTOR
+    0639: AS_actor PLAYER_ACTOR rotate_to_actor $RNDM_HOUSE_WEAPON[37]
+    
+    0E68: set_player_control_pad 0 1 
+    0E69: set_player_control_pad_movement 0 0
+    
+    0084: $DIALOG_ACTOR[0] = $RNDM_HOUSE_WEAPON[37] // (int)
+    v$ST_DIALOG[0] = "M_651"
+    $DIALOG_COUNT = 0
+    $DIALOG_NOT_SKIP = 1
+    create_thread @DG_SYS
+    
+    wait 2000
+    
+    camera.Restore_WithJumpCut()
+    
+    repeat
+    wait 0
+    
+    if
+    not actor.Dead(PLAYER_ACTOR)
+    jf @MAIN_QUEST12_FAILED_PLAYER_DIED
+    if
+    $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+    jf @MAIN_QUEST12_FAILED_AGRO
+    if
+    803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+    jf @MAIN_QUEST12_FAILED_LDEAD        
+    if
+    0184:   actor MQ12_CAPO health > 0
+    jf @MAIN_QUEST12_CAPO_DEAD
+    if
+    not car.Wrecked(SUPPLY_QUEST_TRUCK)
+    jf @MAIN_QUEST12_FAILED_TRUCK_WRECKED
+    
+    for 0@ = 26 to 42
+    if
+    851A: not  actor $RNDM_HOUSE_WEAPON[0@] damaged_by_actor PLAYER_ACTOR
+    jf @MAIN_QUEST12_FAILED_BANDITS_AGRED
+    end
+    
+    until $DIALOG_END == 1
+    
+    fade 0 500
+    $HUD_REMOVE = 1
+    wait 500                            
+    
+    actor.PutAtNoOffset(PLAYER_ACTOR,1702.8473, 2393.5273, 10.8704)
+    actor.Angle(PLAYER_ACTOR) = 198.0792
+    camera.Restore_WithJumpCut()
+    
+    actor.PutAtNoOffset($RNDM_HOUSE_WEAPON[37],1645.3138, 2398.176, 10.8956)
+    wait 100
+    0754: define_new_animation_path                                                   
+    0755: add_animation_path_3D_coord 1698.1398 2396.949 10.8815 animation "none" IFP_file "none"
+    0755: add_animation_path_3D_coord 1645.3138 2398.176 10.8956 animation "none" IFP_file "none"
+    0817: assign_actor $RNDM_HOUSE_WEAPON[37] to_animation_path_with_walk_mode 4 route_mode 3
+    
+    wait 500
+    
+    fade 1 500
+    $HUD_REMOVE = 0
+    wait 500
+    
+    0E68: set_player_control_pad 1 1 
+    0E69: set_player_control_pad_movement 0 1                         
+    
+    end
+    
+if and
+00EC:   actor PLAYER_ACTOR sphere 0 near_point 1684.9059 2188.5596 radius 80.0 80.0
+50@ == 1
+51@ == 0
+    then
+    
+    51@ = 1
+    
+    $ZOMBIE_SPAWN_ON_COORD = 1 
+    $ZOMBIE_COORD_MAX = 0
+    
+    $ALLOW_ZOMBIES = 1
+    $ZOMBIE_REMOVE_FLAG = 0     
+    
+    $ZOMBIE_X[0] = 1688.4983
+    $ZOMBIE_Y[0] = 2190.9351
+    $ZOMBIE_Z[0] = 10.8203
+    $ZOMBIES_COUNT = 20 
+    
+    v$OBJECTIVE = "GAME924"
+    0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+    $SOUNDS_VOLUME3 *= 0.5
+    Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+    Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+    Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+    
+    repeat
+    wait 0
+    
+    1@ = 1684.9059
+    2@ = 2188.5596
+    3@ = 10.8203
+    
+    0087: 8@ = 1@ // (float)
+    0087: 9@ = 2@ // (float)
+    0087: 10@ = 3@ // (float)
+    000F: 8@ -= 8.0
+    000F: 9@ -= 8.0
+    000F: 10@ -= 4.0
+    0087: 5@ = 1@ // (float)
+    0087: 6@ = 2@ // (float)
+    0087: 7@ = 3@ // (float)
+    000F: 5@ -= -8.0
+    000F: 6@ -= -8.0
+    000F: 7@ -= -4.0
+    
+    if
+    8356: not  explosion_type -1 in_cube_cornerA 8@ 9@ 10@ cornerB 5@ 6@ 7@
+    jf @MAIN_QUEST12_FAILED_SORTIR_DESTROYED
+    if
+    not actor.Dead(PLAYER_ACTOR)
+    jf @MAIN_QUEST12_FAILED_PLAYER_DIED
+    if
+    $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+    jf @MAIN_QUEST12_FAILED_AGRO
+    if
+    803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+    jf @MAIN_QUEST12_FAILED_LDEAD        
+    if
+    0184:   actor MQ12_CAPO health > 0
+    jf @MAIN_QUEST12_CAPO_DEAD
+    if
+    not car.Wrecked(SUPPLY_QUEST_TRUCK)
+    jf @MAIN_QUEST12_FAILED_TRUCK_WRECKED
+    
+    for 0@ = 26 to 42
+    if
+    851A: not  actor $RNDM_HOUSE_WEAPON[0@] damaged_by_actor PLAYER_ACTOR
+    jf @MAIN_QUEST12_FAILED_BANDITS_AGRED
+    end
+     
+    until $ZOMBIE_SPAWNED_COUNT == 20
+    
+    $ALLOW_ZOMBIES = 0     
+    $ZOMBIE_SPAWN_ON_COORD = 0
+    $SPECIAL_INFECTED_SPAWN_OZC_FLAG = 0  
+    
+    end
+    
+if
+50@ == 1
+    then
+         
+    1@ = 1684.9059
+    2@ = 2188.5596
+    3@ = 10.8203
+    
+    0087: 8@ = 1@ // (float)
+    0087: 9@ = 2@ // (float)
+    0087: 10@ = 3@ // (float)
+    000F: 8@ -= 8.0
+    000F: 9@ -= 8.0
+    000F: 10@ -= 4.0
+    0087: 5@ = 1@ // (float)
+    0087: 6@ = 2@ // (float)
+    0087: 7@ = 3@ // (float)
+    000F: 5@ -= -8.0
+    000F: 6@ -= -8.0
+    000F: 7@ -= -4.0
+    
+    if
+    8356: not  explosion_type -1 in_cube_cornerA 8@ 9@ 10@ cornerB 5@ 6@ 7@
+    jf @MAIN_QUEST12_FAILED_SORTIR_DESTROYED
+    
+    end        
+    
+if and
+51@ == 1
+52@ == 0
+$ZOMBIE_SPAWNED_COUNT == 0
+    then
+    
+    v$OBJECTIVE = "DUMMY"
+    
+    52@ = 1
+    
+    v$ST_DIALOG[0] = "M2_651"
+    $DIALOG_COUNT = 0
+    $DIALOG_NOT_SKIP = 1
+    create_thread @DG_SYS2
+    
+    repeat
+    wait 0
+    
+    if
+    not actor.Dead(PLAYER_ACTOR)
+    jf @MAIN_QUEST12_FAILED_PLAYER_DIED
+    if
+    $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+    jf @MAIN_QUEST12_FAILED_AGRO
+    if
+    803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+    jf @MAIN_QUEST12_FAILED_LDEAD        
+    if
+    0184:   actor MQ12_CAPO health > 0
+    jf @MAIN_QUEST12_CAPO_DEAD
+    if
+    not car.Wrecked(SUPPLY_QUEST_TRUCK)
+    jf @MAIN_QUEST12_FAILED_TRUCK_WRECKED
+    
+    for 0@ = 26 to 42
+    if
+    851A: not  actor $RNDM_HOUSE_WEAPON[0@] damaged_by_actor PLAYER_ACTOR
+    jf @MAIN_QUEST12_FAILED_BANDITS_AGRED
+    end
+    
+    until $DIALOG_END == 1
+    
+    marker.Disable(MISSION_CHECKPOINT)
+    MISSION_MARKER = marker.CreateAboveActor($RNDM_HOUSE_WEAPON[37])
+    07E0: set_marker MISSION_MARKER type_to 1
+    marker.SetIconSize(MISSION_MARKER,2)
+    
+    v$OBJECTIVE = "GAME925"
+    if
+    REALISM_MODE == 1
+    then
+    v$OBJECTIVE = "GRME925"
+    end
+    0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+    $SOUNDS_VOLUME3 *= 0.5
+    Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+    Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+    Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)    
+    
+    end            
+
+until false   
+
+v$OBJECTIVE = "GAME929"
+if
+REALISM_MODE == 1
+then
+v$OBJECTIVE = "GRME929"
+end
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+
+$ALLOW_ZOMBIES = 1
+$ZOMBIE_REMOVE_FLAG = 0
+
+CAMP_DONT_SAY_HELLO_FLAG = 0
+PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 0
+$QUEST_READY_FLAG = 1
+
+$BANDITS_DONT_ATTACK_PLAYER_FLAG = 0
+0746: set_acquaintance 4 of_actors_pedtype 25 to_actors_pedtype 0
+
+32@ = 0
+28@ = 0
+
+repeat
+wait 0
+
+if and
+32@ > 30000
+28@ == 0
+then
+28@ = 1
+Audiostream.Loop(M12_SCREAMBASED_SOUND, 0)
+end
+
+if
+875C: not  marker MISSION_CHECKPOINT enabled
+then
+018A: MISSION_CHECKPOINT = create_checkpoint_at 100@ 101@ 102@
+end
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST12_FAILED_PLAYER_DIED
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @MAIN_QUEST12_FAILED_AGRO
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @MAIN_QUEST12_FAILED_LDEAD
+
+until 00FE:   actor PLAYER_ACTOR sphere 0 in_sphere 100@ 101@ 102@ radius 5.0 5.0 10.0
+
+v$OBJECTIVE = "GAME930"
+if
+REALISM_MODE == 1
+then
+v$OBJECTIVE = "GRME930"
+end
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 2000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+        
+wait 1
+        
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+    
+MAIN_QUEST_MUSIC_FLAG = 0
+
+:MQ12_END_JUMP
+
+$QUEST_READY_FLAG = 1
+create_thread @MNQ_RSP $QUEST_CAMP_NUMBER
+
+Audiostream.PerformAction(M12_SCREAMBASED_SOUND, STOP)
+Audiostream.Release(M12_SCREAMBASED_SOUND)
+
+repeat
+wait 0
+until $QUEST_TYPE == -1
+
+marker.Disable(MISSION_CHECKPOINT)
+
+v$OBJECTIVE = "DUMMY"
+$ONMISSION = 0
+$NOTSPAWN_ETC = 0
+$SPECIAL_INFECTED_NOT_SPAWN_FLAG = 0
+$SURVIVORS_DONT_SPAWN_FLAG = 0
+ENEX_OFF = 0
+MAIN_QUEST_TEAMMATES_REMOVE_FLAG = 2
+SOME_BOT_IS_USING_MELEE_FLAG = 0
+create_thread @MQTMBK
+0AF1: write_int 0 to_ini_file "data\survival.set" section "SCR" key "MQ12_CHECKPOINT"
+008A: $ALLOW_TANK = 500@ // (int)
+
+$TANK_AGRO_MAX = 10
+$TANK_AGRO_SET = 4
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+    
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+    
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+    
+wait 1
+
+:CAR_CREATE_QUEST12_PRIZE
+if
+model.Available(#DUNERIDE)
+then
+200@ = Car.Create(#DUNERIDE, 1045.0929, 2088.4629, 11.7432)
+car.Angle(200@) = 270.6685
+car.DoorStatus(200@,0)
+    
+if
+model.Available(#DUNERIDE)
+then
+//model.Destroy(#DUNERIDE)
+end
+    
+else
+model.Load(#DUNERIDE)
+mload
+wait 0
+jump to @CAR_CREATE_QUEST12_PRIZE
+end
+
+0A97: 11@ = car 200@ struct 
+11@ += 9 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+08BD: set 12@ bit 2 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+0A97: 11@ = car 200@ struct 
+11@ += 4 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+08BD: set 12@ bit 1 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+24@ = 20.0 
+0A97: 22@ = car 200@ struct 
+0A8E: 23@ = 22@ + 5 // int 
+0A8C: write_memory 23@ size 4 value 24@ virtual_protect 0 
+08C3: clear 12@ bit 1 
+08C3: clear 12@ bit 2 
+0A97: 11@ = car 200@ struct 
+11@ += 18 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+08BD: set 12@ bit 2 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 2
+    
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+MAIN_QUEST_MUSIC_FLAG = 0
+
+jump to @ASSUDALENIE_KODA2829_12
+
+:ASSKOD_PROVALA2829_12 
+mission_cleanup     
+return 
+
+:ASSUDALENIE_KODA2829_12    
+mission_cleanup    
+return
+
+:MAIN_QUEST12_FAILED_AGRO
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+///////////////////////////////////////////////////////////
+
+text.ClearAll()
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+v$FAILED_TEXT = "MS_FL5"
+create_thread @GMV_OVR
+mission_cleanup    
+return
+
+:MAIN_QUEST12_FAILED_WALK
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+///////////////////////////////////////////////////////////
+
+text.ClearAll()
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+v$FAILED_TEXT = "MS_FL7"
+create_thread @GMV_OVR
+mission_cleanup    
+return
+
+:MAIN_QUEST12_FAILED_LDEAD
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+///////////////////////////////////////////////////////////
+
+text.ClearAll()
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+v$FAILED_TEXT = "MS_FL43"
+create_thread @GMV_OVR
+mission_cleanup    
+return
+
+:MAIN_QUEST12_FAILED_DISTANCE
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+///////////////////////////////////////////////////////////
+
+text.ClearAll()
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+v$FAILED_TEXT = "MS_FL7"
+create_thread @GMV_OVR
+mission_cleanup    
+return
+
+:MAIN_QUEST12_CAPO_DEAD
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+///////////////////////////////////////////////////////////
+
+text.ClearAll()
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+v$FAILED_TEXT = "MS_FL68"
+create_thread @GMV_OVR
+mission_cleanup    
+return
+
+:MAIN_QUEST12_FAILED_TIMER
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+///////////////////////////////////////////////////////////
+
+text.ClearAll()
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+v$FAILED_TEXT = "MS_FL69"
+create_thread @GMV_OVR
+mission_cleanup    
+return
+
+:MAIN_QUEST12_FAILED_TIMER2
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+///////////////////////////////////////////////////////////
+
+text.ClearAll()
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+v$FAILED_TEXT = "MS_FL70"
+create_thread @GMV_OVR
+mission_cleanup    
+return
+
+:MAIN_QUEST12_FAILED_TRUCK_WRECKED
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+///////////////////////////////////////////////////////////
+
+text.ClearAll()
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+v$FAILED_TEXT = "MS_FL77"
+create_thread @GMV_OVR
+mission_cleanup    
+return
+
+:MAIN_QUEST12_FAILED_BANDITS_AGRED
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+///////////////////////////////////////////////////////////
+
+text.ClearAll()
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+v$FAILED_TEXT = "MS_FL78"
+create_thread @GMV_OVR
+mission_cleanup    
+return
+
+:MAIN_QUEST12_FAILED_PLAYER_DIED
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+///////////////////////////////////////////////////////////
+
+text.ClearAll()
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+v$FAILED_TEXT = "MS_FL80"
+create_thread @GMV_OVR
+
+return
+
+:MAIN_QUEST12_FAILED_SORTIR_DESTROYED
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+///////////////////////////////////////////////////////////
+
+text.ClearAll()
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+v$FAILED_TEXT = "MSFL116"
+create_thread @GMV_OVR
+
+return

@@ -1,0 +1,2887 @@
+const
+RAID_MISSION_TOTAL_WAVES_NUMBER = 201@
+RAID_MISSION_CARREC_DRIVE_FLAG = 202@
+RAID_MISSION_SQUAD_DRIVE_TIME = 203@
+RAID_MISSION_ANTISPAWN_FLAG = 204@
+RAID_CURRENT_SHOWING_BAR_THING = 205@
+end
+
+:RAID_M
+thread 'RAID_M'
+gosub @ASSKOD_MISSII282946 
+if 
+wasted_or_busted 
+jf @ASSPROPUSK_KODA282946 
+gosub @ASSKOD_PROVALA282946 
+
+:ASSPROPUSK_KODA282946        
+gosub @ASSUDALENIE_KODA282946
+end_thread
+
+:ASSKOD_MISSII282946
+increment_mission_attempts
+0629: change_integer_stat 258 to 37
+$ONMISSION = 1
+
+repeat
+wait 0
+
+if
+$SAVESTATUS_TRUE == 1
+    then
+    jump to @ASSKOD_TYPAYA_HUETA
+    end
+    
+if and
+not $ENTERED_CAMP_NUMBER == -1 
+056D:   actor CAMP_LEADER_ACTOR_VAR defined
+    then
+    break
+    end   
+
+until false
+
+actor.StorePos(CAMP_LEADER_ACTOR_VAR,100@,101@,102@)
+0084: $QUEST_CAMP_NUMBER = $ENTERED_CAMP_NUMBER // (int)
+
+repeat
+wait 0
+
+if
+$SAVESTATUS_TRUE == 1
+    then
+    jump to @ASSKOD_TYPAYA_HUETA
+    end
+
+until $PHRASES_OFF_FLAG == 0
+
+RANDOM_QUEST_CANCEL_FLAG = 0
+OTKAZ_FROM_NAGRADA_FLAG = 0
+
+CAMP_RAID_GATE_OPENED = 0
+CAMP_RAID_GATE_OBJECT = -1
+
+$QUEST_TYPE = 6
+CAMP_RAID_FLAG = 1
+CAMP_RAID_FLAG_ARMY = 0
+CAMP_RAID_FLAG_BANDITS = 0
+
+008B: 500@ = $ALLOW_BANDIT_CONVOY // (int)
+008B: 501@ = $ALLOW_ARMY_CONVOY // (int)
+
+if
+$ALLOW_BANDIT_CONVOY == 0
+then
+$ALLOW_BANDIT_CONVOY = 1
+create_thread @BNDT_SP
+end
+
+if
+$ALLOW_ARMY_CONVOY == 0
+then
+$ALLOW_ARMY_CONVOY = 1
+create_thread @ARMY_SP
+end 
+                       
+if
+$DEFENSE_CHALLENGE_FLAG == 0
+then
+v$OBJECTIVE = "GAME673"
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+text.ClearAll()
+text.ShowTextBox('GAME674')
+end
+
+RAID_CAR_PATH_RANDOM_FLAG = 0
+RAID_CAR_PATH_ABADON_RADIUS = 30
+gosub @RAID_QUEST_COORD_GET
+
+if
+03CA:   object CAMP_RAID_GATE_OBJECT exists
+then
+
+if
+RAID_CAR_PATH_RANDOM_FLAG == 0
+then
+0AD3: v$RAID_FILE = format "CM%d" $ENTERED_CAMP_NUMBER
+else
+0AD3: v$RAID_FILE = format "CM%dB" $ENTERED_CAMP_NUMBER
+end
+
+0AF0: 4@ = get_int_from_ini_file "data/raid.ini" section v$RAID_FILE key "GATE_POINT"
+0AD3: v$RAID_FILE2 = format "PTH%d_X" 4@
+0AF2: 1@ = get_float_from_ini_file "data/raid.ini" section v$RAID_FILE key v$RAID_FILE2
+0AD3: v$RAID_FILE2 = format "PTH%d_Y" 4@ 
+0AF2: 2@ = get_float_from_ini_file "data/raid.ini" section v$RAID_FILE key v$RAID_FILE2
+0AD3: v$RAID_FILE2 = format "PTH%d_Z" 4@ 
+0AF2: 3@ = get_float_from_ini_file "data/raid.ini" section v$RAID_FILE key v$RAID_FILE2
+
+while not model.Available(#MALE01)
+wait 0
+model.Load(#MALE01)
+mload
+end
+
+CAMP_RAID_GATE_ACTOR = actor.Create(26,#MALE01,1@,2@,3@)
+actor.LockInCurrentPosition(CAMP_RAID_GATE_ACTOR,true)
+actor.Health(CAMP_RAID_GATE_ACTOR) = 3500
+actor.SetImmunities(CAMP_RAID_GATE_ACTOR,1,1,1,1,1)
+0337: set_actor CAMP_RAID_GATE_ACTOR visibility 0
+0619: enable_actor CAMP_RAID_GATE_ACTOR collision_detection 0
+0489: set_actor CAMP_RAID_GATE_ACTOR muted 1
+113@ = marker.CreateAboveActor(CAMP_RAID_GATE_ACTOR)
+07E0: set_marker 113@ type_to 1
+018B: set_marker 113@ radar_mode 0
+//018A: 114@ = create_checkpoint_at CAMP_RAID_DEST_X CAMP_RAID_DEST_Y CAMP_RAID_DEST_Z
+//018B: set_marker 114@ radar_mode 0
+
+end
+
+$ARMY_THROW_TIME = 10
+$BANDITS_THROW_TIME = 10
+
+RAID_MISSION_WAVE_NUMBER = 0
+if
+$DEFENSE_CHALLENGE_FLAG == 0
+then
+random_int RAID_MISSION_TOTAL_WAVES_NUMBER 3 6
+//RAID_MISSION_TOTAL_WAVES_NUMBER = 2
+else
+RAID_MISSION_TOTAL_WAVES_NUMBER = 3
+005C: RAID_MISSION_TOTAL_WAVES_NUMBER += $HOLD_WAVE // (int)
+
+if
+$HOLD_WAVE > 2
+then
+RAID_MISSION_TOTAL_WAVES_NUMBER += 1
+end
+
+end
+
+RAID_CAMP_PPL_TOTAL = 0
+RAID_CAMP_DIED_PPL = 0
+
+for 0@ = 0 to 9
+if
+075C:   marker $ARMY69_2_MARKER[0@] enabled
+    then                    
+    if
+    056D:   actor $CAMP_ACTOR[0@] defined
+        then
+        0568: set_actor $CAMP_ACTOR[0@] untargetable 1
+        actor.StorePos($CAMP_ACTOR[0@],28@,29@,30@)
+        if and
+        not $ARMY69_2_MARKER_FLAG[0@] == 1
+        30@ < 900.0
+            then    
+            RAID_CAMP_PPL_TOTAL += 1
+            018B: set_marker $ARMY69_2_MARKER[0@] radar_mode 2
+            end
+        end
+    end
+end
+
+gosub @RAID_QUEST_TOTAL_COUNT_COUNT
+if
+$DEFENSE_CHALLENGE_FLAG == 0
+then
+04F7: vagina_text $STATUS_TEXT type 1 line 1 GXT 'GME1156' // global_variable  // Score
+SUPPLY_TEXT_FLAG = 1
+else
+04F7: vagina_text $STATUS_TEXT type 1 line 3 GXT 'GME1156' // global_variable  // Score
+end
+
+//////////////////////////////////////////////////////////////////////
+
+if and
+not RAID_FRACTION_FLAG == 1
+not RAID_FRACTION_FLAG == 2
+then
+
+random_int 0@ 0 2
+
+if
+$CHEATS_ON == 1
+then
+0@ = 0
+end
+
+if
+0@ == 0
+then
+if or
+$ALLOW_ARMY_CONVOY == 0
+NO_MORE_ARMY_CAMPS == 1
+    then
+    0@ = 1
+    jump to @RAID_FIX_MY_PENIS
+    end
+end
+
+if
+0@ == 1
+then
+if or
+$ALLOW_BANDIT_CONVOY == 0
+NO_MORE_BANDITS_CAMPS == 1
+    then
+    0@ = 0
+    jump to @RAID_FIX_MY_PENIS
+    end
+end
+
+:RAID_FIX_MY_PENIS
+
+if
+0@ == 0
+then
+RAID_FRACTION_FLAG = 1
+else
+RAID_FRACTION_FLAG = 2
+end
+
+end
+
+//////////////////////////////////////////////////////////////////////
+
+if
+RAID_FRACTION_FLAG == 1
+then
+RAID_FRACTION_FLAG = 0
+
+/////////////////////////////////////////////////////////////////////////////////
+
+if
+$ARMY_SPAWNED == 1
+then
+RAID_DELETE_ARMY_FLAG = 1
+
+repeat
+wait 0
+gosub @RAID_QUEST_TOTAL_COUNT_COUNT
+
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_AGRED
+if
+$CAMP_DEAD_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_CAMP_DEAD
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @RAID_QUEST_FAILED_LDEAD
+if
+0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos $CAMP_X[$QUEST_CAMP_NUMBER] $CAMP_Y[$QUEST_CAMP_NUMBER] $CAMP_Z[$QUEST_CAMP_NUMBER] radius 350.0
+jf @RAID_QUEST_FAILED_DISTANCE
+
+until $ARMY_SPAWNED == 0
+
+end
+
+CAMP_RAID_FLAG_ARMY = 1
+AI_TARGET_ALOST_TIMER = 90
+end
+
+/////////////////////////////////////////////////////////////////////////////////
+
+if
+RAID_FRACTION_FLAG == 2
+then
+RAID_FRACTION_FLAG = 0
+
+if
+CAMP_RAID_BANDITS_C == 0
+then
+random_int CAMP_RAID_BANDITS_C 0 2
+end
+
+/////////////////////////////////////////////////////////////////////////////////
+
+if
+$BANDITS_SPAWNED == 1
+then
+RAID_DELETE_BANDITS_FLAG = 1
+
+repeat
+wait 0
+gosub @RAID_QUEST_TOTAL_COUNT_COUNT
+
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_AGRED
+if
+$CAMP_DEAD_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_CAMP_DEAD
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @RAID_QUEST_FAILED_LDEAD
+if
+0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos $CAMP_X[$QUEST_CAMP_NUMBER] $CAMP_Y[$QUEST_CAMP_NUMBER] $CAMP_Z[$QUEST_CAMP_NUMBER] radius 350.0
+jf @RAID_QUEST_FAILED_DISTANCE
+
+until $BANDITS_SPAWNED == 0
+
+end
+
+CAMP_RAID_FLAG_BANDITS = 1
+AI_TARGET_BLOST_TIMER = 90
+end
+
+/////////////////////////////////////////////////////////////////////////////////
+
+:RAID_WAVE_START
+
+if
+CAMP_RAID_FLAG_ARMY == 1
+then
+
+if and
+UNITED_MAP == 1
+$ENTERED_CAMP_NUMBER == 7
+then
+//ass
+else
+
+random_int 0@ 0 6
+
+if
+UNITED_MAP == 0
+then
+if or
+$ENTERED_CAMP_NUMBER == 1
+$ENTERED_CAMP_NUMBER == 2
+    then
+    0@ = 0
+    end
+end     
+
+if
+0@ == 3
+then
+ARMY_HUNTER_SPAWN_FLAG = 1
+else
+if
+$DEFENSE_CHALLENGE_FLAG == 1
+    then
+    008B: 0@ = $HOLD_WAVE // (int)
+    0@ /= 2
+    
+    if
+    UNITED_MAP == 0
+    then
+    if or
+    $ENTERED_CAMP_NUMBER == 1
+    $ENTERED_CAMP_NUMBER == 2
+        then
+        0@ = 0
+        end
+    end 
+    
+    if
+    0E4D: random_percent 0@
+        then
+        ARMY_HUNTER_SPAWN_FLAG = 1
+        end
+    end
+end
+
+end
+
+gosub @FERMERS_RAID_HELP_CHECK
+
+//if
+//03CA:   object CAMP_RAID_GATE_OBJECT exists
+//then
+//01BB: store_object CAMP_RAID_GATE_OBJECT position_to 1@ 2@ 3@
+//0395: clear_area 1 at 1@ 2@ 3@ radius 180.0
+//end
+
+32@ = 0
+33@ = 0
+RAID_MISSION_ANTISPAWN_FLAG = 0
+
+repeat
+wait 0
+gosub @RAID_QUEST_TOTAL_COUNT_COUNT
+
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_AGRED
+if
+$CAMP_DEAD_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_CAMP_DEAD
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @RAID_QUEST_FAILED_LDEAD
+if
+0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos $CAMP_X[$QUEST_CAMP_NUMBER] $CAMP_Y[$QUEST_CAMP_NUMBER] $CAMP_Z[$QUEST_CAMP_NUMBER] radius 350.0
+jf @RAID_QUEST_FAILED_DISTANCE
+
+if and
+32@ > 30000
+RAID_MISSION_ANTISPAWN_FLAG == 0
+    then
+    RAID_MISSION_ANTISPAWN_FLAG = 1
+    0459: end_thread_named 'ARMY_SP'
+    if
+    $ARMY_SPAWNED == 1
+    then
+    FRACTIONS_SPAWNED_COUNT -= 1
+    end
+    $ARMY1_CHASE_FLAG = 0 
+    $ARMY_SPAWNED = 0
+    $ARMY1_SPOTTED_FLAG = 0    
+    create_thread @ARMY_SP
+    
+    32@ = 0
+    
+    repeat
+    wait 0
+    
+    if
+    $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+    jf @RAID_QUEST_FAILED_AGRED
+    if
+    $CAMP_DEAD_FLAG[$QUEST_CAMP_NUMBER] == 0
+    jf @RAID_QUEST_FAILED_CAMP_DEAD
+    if
+    803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+    jf @RAID_QUEST_FAILED_LDEAD
+    if
+    0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos $CAMP_X[$QUEST_CAMP_NUMBER] $CAMP_Y[$QUEST_CAMP_NUMBER] $CAMP_Z[$QUEST_CAMP_NUMBER] radius 350.0
+    jf @RAID_QUEST_FAILED_DISTANCE
+    
+    if and
+    32@ > 5000
+    $ARMY_SPAWNED == 0
+        then
+        32@ = 0
+        0459: end_thread_named 'ARMY_SP'
+        if
+        $ARMY_SPAWNED == 1
+        then
+        FRACTIONS_SPAWNED_COUNT -= 1
+        end
+        $ARMY1_CHASE_FLAG = 0 
+        $ARMY_SPAWNED = 0
+        $ARMY1_SPOTTED_FLAG = 0    
+        create_thread @ARMY_SP
+        end
+    
+    until $ARMY_SPAWNED == 1
+    
+    end
+
+until $ARMY_SPAWNED == 1
+
+repeat
+wait 0
+gosub @RAID_QUEST_TOTAL_COUNT_COUNT
+
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_AGRED
+if
+$CAMP_DEAD_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_CAMP_DEAD
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @RAID_QUEST_FAILED_LDEAD
+if
+0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos $CAMP_X[$QUEST_CAMP_NUMBER] $CAMP_Y[$QUEST_CAMP_NUMBER] $CAMP_Z[$QUEST_CAMP_NUMBER] radius 350.0
+jf @RAID_QUEST_FAILED_DISTANCE
+
+if and
+$ARMY1_DEAD_FLAG == 0
+$ARMY2_DEAD_FLAG == 0
+$ARMY3_DEAD_FLAG == 0
+$ARMY4_DEAD_FLAG == 0
+    then
+    break
+    end
+
+until false
+
+repeat
+wait 0
+gosub @RAID_QUEST_TOTAL_COUNT_COUNT
+
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_AGRED
+if
+$CAMP_DEAD_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_CAMP_DEAD
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @RAID_QUEST_FAILED_LDEAD
+if
+0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos $CAMP_X[$QUEST_CAMP_NUMBER] $CAMP_Y[$QUEST_CAMP_NUMBER] $CAMP_Z[$QUEST_CAMP_NUMBER] radius 350.0
+jf @RAID_QUEST_FAILED_DISTANCE
+                           
+if and
+056D:   actor $ARMY[1] defined
+056D:   actor $ARMY[2] defined
+056D:   actor $ARMY[3] defined
+056D:   actor $ARMY[4] defined
+    then
+    
+    for 0@ = 1 to 4
+    $HOLD_WPN_MRK[0@] = marker.CreateAboveActor($ARMY[0@])
+    marker.SetIconSize($HOLD_WPN_MRK[0@],2)
+    end
+    
+    break
+    
+    end
+
+until false
+
+/////////////////////////
+
+32@ = 0
+RAID_MISSION_SQUAD_DRIVE_TIME = 0
+
+repeat
+wait 0
+gosub @RAID_QUEST_TOTAL_COUNT_COUNT
+
+if
+$ARMY1_EXIT_FLAG == 0
+then
+RAID_MISSION_SQUAD_DRIVE_TIME += 1
+if and
+056E:   car ARMY_CAR defined
+RAID_MISSION_SQUAD_DRIVE_TIME > 1680
+    then
+    if or
+    81AD: not  car ARMY_CAR sphere 0 near_point CAMP_RAID_DEST_X CAMP_RAID_DEST_Y radius 180.0 180.0
+    02BF:   car ARMY_CAR sunk
+        then
+        RAID_DELETE_ARMY_FLAG = 1
+        marker.Disable($HOLD_WPN_MRK[1])
+        marker.Disable($HOLD_WPN_MRK[2])
+        marker.Disable($HOLD_WPN_MRK[3])
+        marker.Disable($HOLD_WPN_MRK[4])
+        $HOLD_WPN_MRK[1] = 0
+        $HOLD_WPN_MRK[2] = 0
+        $HOLD_WPN_MRK[3] = 0
+        $HOLD_WPN_MRK[4] = 0
+        jump to @RAID_WAVE_START
+        end
+    end
+end
+
+if
+32@ > 2000
+then
+32@ = 0
+gosub @RAID_GATE_CHECKS
+end
+
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_AGRED
+if
+$CAMP_DEAD_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_CAMP_DEAD
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @RAID_QUEST_FAILED_LDEAD
+if
+0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos $CAMP_X[$QUEST_CAMP_NUMBER] $CAMP_Y[$QUEST_CAMP_NUMBER] $CAMP_Z[$QUEST_CAMP_NUMBER] radius 350.0
+jf @RAID_QUEST_FAILED_DISTANCE    
+
+if
+056D:   actor $ARMY[1] defined
+then
+if and
+8184:   actor $ARMY[1] health < 1
+075C:   marker $HOLD_WPN_MRK[1] enabled
+    then
+    marker.Disable($HOLD_WPN_MRK[1])
+    $HOLD_WPN_MRK[1] = 0
+    end
+end
+
+if
+056D:   actor $ARMY[2] defined
+then    
+if and
+8184:   actor $ARMY[2] health < 1
+075C:   marker $HOLD_WPN_MRK[2] enabled
+    then
+    marker.Disable($HOLD_WPN_MRK[2])
+    $HOLD_WPN_MRK[2] = 0
+    end
+end
+
+if
+056D:   actor $ARMY[3] defined
+then    
+if and
+8184:   actor $ARMY[3] health < 1
+075C:   marker $HOLD_WPN_MRK[3] enabled
+    then
+    marker.Disable($HOLD_WPN_MRK[3])
+    $HOLD_WPN_MRK[3] = 0
+    end
+end
+
+if
+056D:   actor $ARMY[4] defined
+then    
+if and
+8184:   actor $ARMY[4] health < 1
+075C:   marker $HOLD_WPN_MRK[4] enabled
+    then
+    marker.Disable($HOLD_WPN_MRK[4])
+    $HOLD_WPN_MRK[4] = 0
+    end
+end
+    
+if and
+875C: not  marker $HOLD_WPN_MRK[1] enabled
+875C: not  marker $HOLD_WPN_MRK[2] enabled
+875C: not  marker $HOLD_WPN_MRK[3] enabled
+875C: not  marker $HOLD_WPN_MRK[4] enabled
+    then
+    break
+    end    
+    
+until false
+
+for 1@ = 1 to 4
+if
+075C:   marker $HOLD_WPN_MRK[1@] enabled
+    then
+    marker.Disable($HOLD_WPN_MRK[1@])
+    $HOLD_WPN_MRK[1@] = 0
+    end
+end
+
+repeat
+wait 0
+gosub @RAID_QUEST_TOTAL_COUNT_COUNT
+
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_AGRED
+if
+$CAMP_DEAD_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_CAMP_DEAD
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @RAID_QUEST_FAILED_LDEAD
+if
+0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos $CAMP_X[$QUEST_CAMP_NUMBER] $CAMP_Y[$QUEST_CAMP_NUMBER] $CAMP_Z[$QUEST_CAMP_NUMBER] radius 350.0
+jf @RAID_QUEST_FAILED_DISTANCE
+
+until $ARMY_SPAWNED == 0
+
+if
+001E:   RAID_MISSION_WAVE_NUMBER > RAID_MISSION_TOTAL_WAVES_NUMBER // (int)
+then
+
+CAMP_RAID_FLAG_ARMY = 0
+CAMP_RAID_FLAG_BANDITS = 0
+
+if
+RAID_HELI_SPAWNED_FLAG == 1
+then
+
+if
+$DEFENSE_CHALLENGE_FLAG == 0
+then
+v$OBJECTIVE = "GME1114"
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+end
+
+repeat
+wait 0
+gosub @RAID_QUEST_TOTAL_COUNT_COUNT
+
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_AGRED
+if
+$CAMP_DEAD_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_CAMP_DEAD
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @RAID_QUEST_FAILED_LDEAD
+if
+0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos $CAMP_X[$QUEST_CAMP_NUMBER] $CAMP_Y[$QUEST_CAMP_NUMBER] $CAMP_Z[$QUEST_CAMP_NUMBER] radius 350.0
+jf @RAID_QUEST_FAILED_DISTANCE
+
+if
+856D: not  actor $ARMY[5] defined
+    then
+    RAID_HELI_SPAWNED_FLAG = 0
+    end
+
+until RAID_HELI_SPAWNED_FLAG == 0
+
+end
+
+CAMP_RAID_FLAG_ARMY = 0
+CAMP_RAID_FLAG_BANDITS = 0
+CAMP_RAID_FLAG = 0
+CAMP_RAID_BANDITS_C = 0
+BANDIT_HELI_SPAWN_FLAG = 0
+ARMY_HUNTER_SPAWN_FLAG = 0
+jump to @RAID_QUEST_COMPLETED
+else
+RAID_MISSION_WAVE_NUMBER += 1
+jump to @RAID_WAVE_START
+end                
+
+/////////////////////////
+
+else
+
+if and
+UNITED_MAP == 1
+$ENTERED_CAMP_NUMBER == 7
+then
+//ass
+else
+
+random_int 0@ 0 6
+if
+UNITED_MAP == 0
+then
+if or
+$ENTERED_CAMP_NUMBER == 1
+$ENTERED_CAMP_NUMBER == 2
+    then
+    0@ = 0
+    end
+end    
+
+if
+0@ == 3
+then
+BANDIT_HELI_SPAWN_FLAG = 1
+else
+if
+$DEFENSE_CHALLENGE_FLAG == 1
+    then
+    008B: 0@ = $HOLD_WAVE // (int)
+    0@ *= 9
+    
+    if
+    UNITED_MAP == 0
+    then
+    if or
+    $ENTERED_CAMP_NUMBER == 1
+    $ENTERED_CAMP_NUMBER == 2
+        then
+        0@ = 0
+        end
+    end 
+    
+    if
+    0E4D: random_percent 0@
+        then
+        BANDIT_HELI_SPAWN_FLAG = 1
+        end
+    end
+end
+
+end
+
+gosub @FERMERS_RAID_HELP_CHECK
+
+//if
+//03CA:   object CAMP_RAID_GATE_OBJECT exists
+//then
+//01BB: store_object CAMP_RAID_GATE_OBJECT position_to 1@ 2@ 3@
+//0395: clear_area 1 at 1@ 2@ 3@ radius 180.0
+//end
+
+32@ = 0
+RAID_MISSION_ANTISPAWN_FLAG = 0
+
+repeat
+wait 0
+gosub @RAID_QUEST_TOTAL_COUNT_COUNT
+
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_AGRED
+if
+$CAMP_DEAD_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_CAMP_DEAD
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @RAID_QUEST_FAILED_LDEAD
+if
+0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos $CAMP_X[$QUEST_CAMP_NUMBER] $CAMP_Y[$QUEST_CAMP_NUMBER] $CAMP_Z[$QUEST_CAMP_NUMBER] radius 350.0
+jf @RAID_QUEST_FAILED_DISTANCE
+
+if and
+32@ > 30000
+RAID_MISSION_ANTISPAWN_FLAG == 0
+    then
+    RAID_MISSION_ANTISPAWN_FLAG = 1
+    0459: end_thread_named 'BNDT_SP'
+    if
+    $BANDITS_SPAWNED == 1
+    then
+    FRACTIONS_SPAWNED_COUNT -= 1
+    end
+    $BANDITS1_CHASE_FLAG = 0 
+    $BANDITS_SPAWNED = 0
+    $BANDITS1_SPOTTED_FLAG = 0    
+    create_thread @BNDT_SP
+    
+    repeat
+    wait 0
+    
+    if
+    $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+    jf @RAID_QUEST_FAILED_AGRED
+    if
+    $CAMP_DEAD_FLAG[$QUEST_CAMP_NUMBER] == 0
+    jf @RAID_QUEST_FAILED_CAMP_DEAD
+    if
+    803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+    jf @RAID_QUEST_FAILED_LDEAD
+    if
+    0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos $CAMP_X[$QUEST_CAMP_NUMBER] $CAMP_Y[$QUEST_CAMP_NUMBER] $CAMP_Z[$QUEST_CAMP_NUMBER] radius 350.0
+    jf @RAID_QUEST_FAILED_DISTANCE
+    
+    if and
+    32@ > 5000
+    $BANDITS_SPAWNED == 0
+        then
+        32@ = 0
+        0459: end_thread_named 'BNDT_SP'
+        if
+        $BANDITS_SPAWNED == 1
+        then
+        FRACTIONS_SPAWNED_COUNT -= 1
+        end
+        $BANDITS1_CHASE_FLAG = 0 
+        $BANDITS_SPAWNED = 0
+        $BANDITS1_SPOTTED_FLAG = 0    
+        create_thread @BNDT_SP
+        end
+    
+    until $BANDITS_SPAWNED == 1
+    
+    end
+
+until $BANDITS_SPAWNED == 1
+
+repeat
+wait 0
+gosub @RAID_QUEST_TOTAL_COUNT_COUNT
+
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_AGRED
+if
+$CAMP_DEAD_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_CAMP_DEAD
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @RAID_QUEST_FAILED_LDEAD
+if
+0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos $CAMP_X[$QUEST_CAMP_NUMBER] $CAMP_Y[$QUEST_CAMP_NUMBER] $CAMP_Z[$QUEST_CAMP_NUMBER] radius 350.0
+jf @RAID_QUEST_FAILED_DISTANCE
+
+if and
+$BANDITS1_DEAD_FLAG == 0
+$BANDITS2_DEAD_FLAG == 0
+$BANDITS3_DEAD_FLAG == 0
+$BANDITS4_DEAD_FLAG == 0
+    then
+    break
+    end
+
+until false
+
+repeat
+wait 0
+gosub @RAID_QUEST_TOTAL_COUNT_COUNT
+
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_AGRED
+if
+$CAMP_DEAD_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_CAMP_DEAD
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @RAID_QUEST_FAILED_LDEAD
+if
+0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos $CAMP_X[$QUEST_CAMP_NUMBER] $CAMP_Y[$QUEST_CAMP_NUMBER] $CAMP_Z[$QUEST_CAMP_NUMBER] radius 350.0
+jf @RAID_QUEST_FAILED_DISTANCE
+
+if and
+056D:   actor $BANDIT[1] defined
+056D:   actor $BANDIT[2] defined
+056D:   actor $BANDIT[3] defined
+056D:   actor $BANDIT[4] defined
+    then
+    
+    for 0@ = 1 to 4
+    $HOLD_WPN_MRK[0@] = marker.CreateAboveActor($BANDIT[0@])
+    marker.SetIconSize($HOLD_WPN_MRK[0@],2)
+    end
+    
+    break
+    
+    end
+
+until false
+
+/////////////////////////
+
+32@ = 0
+RAID_MISSION_SQUAD_DRIVE_TIME = 0
+
+repeat
+wait 0
+gosub @RAID_QUEST_TOTAL_COUNT_COUNT
+
+if
+$BANDITS1_EXIT_FLAG == 0
+then
+RAID_MISSION_SQUAD_DRIVE_TIME += 1
+if and
+056E:   car BANDIT_CAR defined
+RAID_MISSION_SQUAD_DRIVE_TIME > 1680
+    then
+    if or
+    81AD: not  car BANDIT_CAR sphere 0 near_point CAMP_RAID_DEST_X CAMP_RAID_DEST_Y radius 180.0 180.0
+    02BF:   car BANDIT_CAR sunk
+        then
+        RAID_DELETE_BANDITS_FLAG = 1
+        marker.Disable($HOLD_WPN_MRK[1])
+        marker.Disable($HOLD_WPN_MRK[2])
+        marker.Disable($HOLD_WPN_MRK[3])
+        marker.Disable($HOLD_WPN_MRK[4])
+        $HOLD_WPN_MRK[1] = 0
+        $HOLD_WPN_MRK[2] = 0
+        $HOLD_WPN_MRK[3] = 0
+        $HOLD_WPN_MRK[4] = 0
+        jump to @RAID_WAVE_START
+        end
+    end
+end
+
+if
+32@ > 2000
+then
+32@ = 0
+gosub @RAID_GATE_CHECKS
+end
+
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_AGRED
+if
+$CAMP_DEAD_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_CAMP_DEAD
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @RAID_QUEST_FAILED_LDEAD
+if
+0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos $CAMP_X[$QUEST_CAMP_NUMBER] $CAMP_Y[$QUEST_CAMP_NUMBER] $CAMP_Z[$QUEST_CAMP_NUMBER] radius 350.0
+jf @RAID_QUEST_FAILED_DISTANCE
+
+if
+056D:   actor $BANDIT[1] defined
+then
+if and
+8184:   actor $BANDIT[1] health < 1
+075C:   marker $HOLD_WPN_MRK[1] enabled
+    then
+    marker.Disable($HOLD_WPN_MRK[1])
+    $HOLD_WPN_MRK[1] = 0
+    end
+end
+
+if
+056D:   actor $BANDIT[2] defined
+then    
+if and
+8184:   actor $BANDIT[2] health < 1
+075C:   marker $HOLD_WPN_MRK[2] enabled
+    then
+    marker.Disable($HOLD_WPN_MRK[2])
+    $HOLD_WPN_MRK[2] = 0
+    end
+end
+
+if
+056D:   actor $BANDIT[3] defined
+then    
+if and
+8184:   actor $BANDIT[3] health < 1
+075C:   marker $HOLD_WPN_MRK[3] enabled
+    then
+    marker.Disable($HOLD_WPN_MRK[3])
+    $HOLD_WPN_MRK[3] = 0
+    end
+end
+
+if
+056D:   actor $BANDIT[4] defined
+then    
+if and
+8184:   actor $BANDIT[4] health < 1
+075C:   marker $HOLD_WPN_MRK[4] enabled
+    then
+    marker.Disable($HOLD_WPN_MRK[4])
+    $HOLD_WPN_MRK[4] = 0
+    end
+end
+    
+if and
+875C: not  marker $HOLD_WPN_MRK[1] enabled
+875C: not  marker $HOLD_WPN_MRK[2] enabled
+875C: not  marker $HOLD_WPN_MRK[3] enabled
+875C: not  marker $HOLD_WPN_MRK[4] enabled
+    then
+    break
+    end    
+    
+until false
+
+for 1@ = 1 to 4
+if
+075C:   marker $HOLD_WPN_MRK[1@] enabled
+    then
+    marker.Disable($HOLD_WPN_MRK[1@])
+    $HOLD_WPN_MRK[1@] = 0
+    end
+end
+
+repeat
+wait 0
+gosub @RAID_QUEST_TOTAL_COUNT_COUNT
+
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_AGRED
+if
+$CAMP_DEAD_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_CAMP_DEAD
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @RAID_QUEST_FAILED_LDEAD
+if
+0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos $CAMP_X[$QUEST_CAMP_NUMBER] $CAMP_Y[$QUEST_CAMP_NUMBER] $CAMP_Z[$QUEST_CAMP_NUMBER] radius 350.0
+jf @RAID_QUEST_FAILED_DISTANCE
+
+until $BANDITS_SPAWNED == 0
+
+if
+001E:   RAID_MISSION_WAVE_NUMBER > RAID_MISSION_TOTAL_WAVES_NUMBER // (int)
+then
+
+CAMP_RAID_FLAG_ARMY = 0
+CAMP_RAID_FLAG_BANDITS = 0
+
+if
+RAID_HELI_SPAWNED_FLAG == 1
+then
+
+if
+$DEFENSE_CHALLENGE_FLAG == 0
+then
+v$OBJECTIVE = "GME1114"
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+end
+
+repeat
+wait 0
+gosub @RAID_QUEST_TOTAL_COUNT_COUNT
+
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_AGRED
+if
+$CAMP_DEAD_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_CAMP_DEAD
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @RAID_QUEST_FAILED_LDEAD
+if
+0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos $CAMP_X[$QUEST_CAMP_NUMBER] $CAMP_Y[$QUEST_CAMP_NUMBER] $CAMP_Z[$QUEST_CAMP_NUMBER] radius 350.0
+jf @RAID_QUEST_FAILED_DISTANCE
+
+if
+856D: not  actor $BANDIT[5] defined
+    then
+    RAID_HELI_SPAWNED_FLAG = 0
+    end
+
+until RAID_HELI_SPAWNED_FLAG == 0
+
+end
+
+CAMP_RAID_FLAG_ARMY = 0
+CAMP_RAID_FLAG_BANDITS = 0
+CAMP_RAID_FLAG = 0
+CAMP_RAID_BANDITS_C = 0
+BANDIT_HELI_SPAWN_FLAG = 0
+ARMY_HUNTER_SPAWN_FLAG = 0
+jump to @RAID_QUEST_COMPLETED
+else
+RAID_MISSION_WAVE_NUMBER += 1
+jump to @RAID_WAVE_START
+end
+
+end 
+
+///////
+
+//////////////////////////////////////////////////////////////////////
+
+:RAID_QUEST_COMPLETED
+
+$QUEST_READY_FLAG = 1
+RAID_REWARD_FLAG = 1
+CAMP_RAID_FLAG_ARMY = 0
+CAMP_RAID_FLAG_BANDITS = 0
+CAMP_RAID_FLAG = 0
+CAMP_RAID_BANDITS_C = 0
+BANDIT_HELI_SPAWN_FLAG = 0
+ARMY_HUNTER_SPAWN_FLAG = 0
+RAID_FRACTION_FLAG = 0
+RAID_CAR_PATH_RANDOM_FLAG = 0
+AI_TARGET_BLOST_TIMER = 600
+AI_TARGET_ALOST_TIMER = 600
+
+for 0@ = 1 to 4
+if
+056D:   actor $FERMER[0@] defined
+    then
+    054E: clear_actor $FERMER[0@] damage 
+    end
+end
+
+for 0@ = 1 to 4
+if
+056D:   actor $SWAT[0@] defined
+    then
+    054E: clear_actor $SWAT[0@] damage
+    end
+end
+
+if
+$DEFENSE_CHALLENGE_FLAG == 1
+then
+v$OBJECTIVE = "DUMMY"
+$ONMISSION = 0
+jump to @ASSUDALENIE_KODA282946
+end
+
+if
+075C:   marker MISSION_CHECKPOINT enabled
+then
+marker.Disable(MISSION_CHECKPOINT)
+end
+
+018A: MISSION_CHECKPOINT = create_checkpoint_at 100@ 101@ 102@
+v$OBJECTIVE = "GAME675"
+if
+REALISM_MODE == 1
+then
+v$OBJECTIVE = "GME1323"
+end
+
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+
+for 0@ = 0 to 9
+if
+075C:   marker $ARMY69_2_MARKER[0@] enabled
+    then
+    018B: set_marker $ARMY69_2_MARKER[0@] radar_mode 0
+    if
+    056D:   actor $CAMP_ACTOR[0@] defined
+        then
+        0568: set_actor $CAMP_ACTOR[0@] untargetable 0
+        end
+    end
+end
+
+0151: remove_vagina_text $STATUS_TEXT
+SUPPLY_TEXT_FLAG = 0 
+
+repeat
+wait 0
+
+if
+875C: not  marker MISSION_CHECKPOINT enabled
+then
+018A: MISSION_CHECKPOINT = create_checkpoint_at 100@ 101@ 102@
+end
+
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_AGRED
+if
+$CAMP_DEAD_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_CAMP_DEAD
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @RAID_QUEST_FAILED_LDEAD
+
+until 00FE:   actor PLAYER_ACTOR sphere 0 in_sphere 100@ 101@ 102@ radius 5.0 5.0 10.0
+
+v$OBJECTIVE = "GAME556"
+if
+REALISM_MODE == 1
+then
+v$OBJECTIVE = "GME1295"
+end
+
+repeat
+wait 0
+
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_AGRED
+if
+$CAMP_DEAD_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @RAID_QUEST_FAILED_CAMP_DEAD
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @RAID_QUEST_FAILED_LDEAD
+                             
+until $QUEST_TYPE == -1
+
+marker.Disable(MISSION_CHECKPOINT)
+
+v$OBJECTIVE = "DUMMY"
+$ONMISSION = 0
+
+if
+500@ == 0
+then
+RAID_DELETE_BANDITS_FLAG = 1
+
+repeat
+wait 0
+until $BANDITS_SPAWNED == 0
+
+0459: end_thread_named 'BNDT_SP'
+end
+
+if
+501@ == 0
+then
+
+RAID_DELETE_ARMY_FLAG = 1
+
+repeat
+wait 0
+until $ARMY_SPAWNED == 0
+
+0459: end_thread_named 'ARMY_SP'
+end
+
+jump to @ASSUDALENIE_KODA282946
+
+//////////////////////////////////////////////////////////////////////
+
+:RAID_GATE_CHECKS
+
+if
+83CA: not  object CAMP_RAID_GATE_OBJECT exists
+then
+gosub @RAID_QUEST_COORD_GET2
+return
+end
+
+if and
+CAMP_RAID_GATE_OPENED == 1
+not actor.Dead(CAMP_RAID_GATE_ACTOR)
+    then
+    05BE: AS_actor CAMP_RAID_GATE_ACTOR die
+    $ARMY_THROW_TIME = 100
+    $BANDITS_THROW_TIME = 100
+    marker.Disable(113@)
+    gosub @RAID_QUEST_COORD_GET2
+    end
+    
+if and
+8184:   actor CAMP_RAID_GATE_ACTOR health < 1
+CAMP_RAID_GATE_OPENED == 0 
+    then
+    05BE: AS_actor CAMP_RAID_GATE_ACTOR die
+    $ARMY_THROW_TIME = 100
+    $BANDITS_THROW_TIME = 100
+    071F: set_object CAMP_RAID_GATE_OBJECT health_to 1000
+    marker.Disable(113@)
+    gosub @RAID_QUEST_COORD_GET2
+    end
+    
+actor.StorePos(CAMP_RAID_GATE_ACTOR,8@,9@,10@) 
+000F: 8@ -= 10.0
+000F: 9@ -= 10.0
+000F: 10@ -= 10.0
+actor.StorePos(CAMP_RAID_GATE_ACTOR,5@,6@,7@) 
+000F: 5@ -= -10.0
+000F: 6@ -= -10.0
+000F: 7@ -= -10.0
+        
+if and           
+0356:   explosion_type -1 in_cube_cornerA 8@ 9@ 10@ cornerB 5@ 6@ 7@
+CAMP_RAID_GATE_OPENED == 0
+    then        
+    05BE: AS_actor CAMP_RAID_GATE_ACTOR die
+    $ARMY_THROW_TIME = 100
+    $BANDITS_THROW_TIME = 100
+    071F: set_object CAMP_RAID_GATE_OBJECT health_to 1000
+    marker.Disable(113@)
+    gosub @RAID_QUEST_COORD_GET2        
+    end    
+
+return  
+
+:ASSKOD_TYPAYA_HUETA
+$ONMISSION = 0
+mission_cleanup     
+return
+
+:ASSKOD_PROVALA282946
+$ONMISSION = 0
+
+if
+075C:   marker MISSION_CHECKPOINT enabled
+then
+marker.Disable(MISSION_CHECKPOINT)
+end
+
+0151: remove_vagina_text $STATUS_TEXT
+SUPPLY_TEXT_FLAG = 0
+
+if
+075C:   marker 113@ enabled
+then
+marker.Disable(113@)
+end
+
+if
+FERMERS_RAID_HELP_FLAG == 1
+then
+FERMERS_RAID_HELP_FLAG = 0
+
+if
+075C:   marker FERMERS_RAID_HELP_MARK enabled
+then
+marker.Disable(FERMERS_RAID_HELP_MARK)
+end
+
+end
+
+if
+PUNISHERS_RAID_HELP_FLAG == 1
+then
+PUNISHERS_RAID_HELP_FLAG = 0
+
+if
+075C:   marker PUNISHERS_RAID_HELP_MARK enabled
+then
+marker.Disable(PUNISHERS_RAID_HELP_MARK)
+end
+
+end
+
+//if
+//075C:   marker 114@ enabled
+//then
+//marker.Disable(114@)
+//end
+ 
+mission_cleanup     
+return 
+
+:ASSUDALENIE_KODA282946
+$ONMISSION = 0
+
+CAMP_RAID_FLAG_ARMY = 0
+CAMP_RAID_FLAG_BANDITS = 0
+CAMP_RAID_FLAG = 0
+CAMP_RAID_BANDITS_C = 0
+BANDIT_HELI_SPAWN_FLAG = 0
+ARMY_HUNTER_SPAWN_FLAG = 0
+RAID_FRACTION_FLAG = 0
+RAID_CAR_PATH_RANDOM_FLAG = 0
+AI_TARGET_BLOST_TIMER = 600
+AI_TARGET_ALOST_TIMER = 600
+v$OBJECTIVE = "DUMMY"
+
+if
+FERMERS_RAID_HELP_FLAG == 1
+then
+FERMERS_RAID_HELP_FLAG = 0
+
+if
+075C:   marker FERMERS_RAID_HELP_MARK enabled
+then
+marker.Disable(FERMERS_RAID_HELP_MARK)
+end
+
+end
+
+if
+PUNISHERS_RAID_HELP_FLAG == 1
+then
+PUNISHERS_RAID_HELP_FLAG = 0
+
+if
+075C:   marker PUNISHERS_RAID_HELP_MARK enabled
+then
+marker.Disable(PUNISHERS_RAID_HELP_MARK)
+end
+
+end
+
+for 1@ = 1 to 4
+if
+075C:   marker $HOLD_WPN_MRK[1@] enabled
+    then
+    marker.Disable($HOLD_WPN_MRK[1@])
+    $HOLD_WPN_MRK[1@] = 0
+    end
+end
+
+for 0@ = 0 to 9
+if
+075C:   marker $ARMY69_2_MARKER[0@] enabled
+    then
+    018B: set_marker $ARMY69_2_MARKER[0@] radar_mode 0
+    end
+end
+
+if
+056E:   car 300@ defined
+then
+car.Destroy(300@) 
+end
+
+if
+056E:   car 301@ defined
+then
+car.Destroy(301@) 
+end
+
+if
+056E:   car 302@ defined
+then
+car.Destroy(302@) 
+end
+
+if
+056E:   car 303@ defined
+then
+car.Destroy(303@) 
+end
+
+if
+075C:   marker MISSION_CHECKPOINT enabled
+then
+marker.Disable(MISSION_CHECKPOINT)
+end
+
+if
+075C:   marker 113@ enabled
+then
+marker.Disable(113@)
+end
+
+//if
+//075C:   marker 114@ enabled
+//then
+//marker.Disable(114@)
+//end
+    
+mission_cleanup    
+return
+
+////////////////////////////////////////////////////////////////////
+
+:RAID_QUEST_COORD_GET
+
+if
+UNITED_MAP == 0
+then
+
+if
+$ENTERED_CAMP_NUMBER == 0
+then
+RAID_CAR_PATH_ABADON_RADIUS = 30
+CAMP_RAID_DEST_X = 2018.1111
+CAMP_RAID_DEST_Y = -1754.4542
+CAMP_RAID_DEST_Z = 13.3828
+end
+
+if
+$ENTERED_CAMP_NUMBER == 1
+then 
+CAMP_RAID_DEST_X = 2788.69
+CAMP_RAID_DEST_Y = -1468.1
+CAMP_RAID_DEST_Z = 31.3
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE2 // (int)
+RAID_MISSION_CARREC_DRIVE_FLAG = 1
+
+if
+CAMP_RAID_FLAG_ARMY == 1
+then                                                                               
+create_thread @RD_CARR 802 2810.7075 -1470.5178 16.4877 2792.6272 -1461.6409 32.206 1 0 0 0 0 0 804
+else                                                                           
+create_thread @RD_CARR 804 2810.7075 -1470.5178 16.4877 2792.6272 -1461.6409 32.206 1 0 0 0 0 0 806
+end
+
+end
+
+if
+$ENTERED_CAMP_NUMBER == 2
+then
+
+RAID_CAR_PATH_ABADON_RADIUS = 15 
+random_int RAID_CAR_PATH_RANDOM_FLAG 0 2
+if
+RAID_CAR_PATH_RANDOM_FLAG == 0
+then
+CAMP_RAID_DEST_X = 283.2
+CAMP_RAID_DEST_Y = -1542.92
+CAMP_RAID_DEST_Z = 26.175
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE3B // (int)
+
+RAID_MISSION_CARREC_DRIVE_FLAG = 1
+
+if
+CAMP_RAID_FLAG_ARMY == 1
+then                                                                               
+create_thread @RD_CARR 806 2810.7075 -1470.5178 16.4877 2792.6272 -1461.6409 32.206 1 0 0 0 0 0 806
+else                                                                           
+create_thread @RD_CARR 808 2810.7075 -1470.5178 16.4877 2792.6272 -1461.6409 32.206 1 0 0 0 0 0 808
+end
+
+else
+CAMP_RAID_DEST_X = 321.271
+CAMP_RAID_DEST_Y = -1488.32
+CAMP_RAID_DEST_Z = 26.175
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE3 // (int)
+
+if
+CAMP_RAID_FLAG_ARMY == 1
+then                                                                               
+create_thread @RD_CARR 807 2810.7075 -1470.5178 16.4877 2792.6272 -1461.6409 32.206 1 0 0 0 0 0 807
+else                                                                           
+create_thread @RD_CARR 809 2810.7075 -1470.5178 16.4877 2792.6272 -1461.6409 32.206 1 0 0 0 0 0 809
+end
+
+end
+
+end
+
+if
+$ENTERED_CAMP_NUMBER == 3
+then
+CAMP_RAID_DEST_X = 1023.9163
+CAMP_RAID_DEST_Y = -381.6235
+CAMP_RAID_DEST_Z = 72.3652
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE0 // (int)
+
+:CAR_CREATE_RAID3_1
+if
+model.Available(15595)
+then
+
+300@ = Car.Create(15595, 1015.0987, -368.3958, 74.1876)
+Car.Angle(300@) = 87.4881
+
+if
+model.Available(15595)
+then
+////model.Destroy(15595)
+end
+
+else
+model.Load(15595)
+mload
+wait 0
+jump to @CAR_CREATE_RAID3_1
+end
+
+car.LockInCurrentPosition(300@,true)
+car.SetImmunities(300@,1,1,1,1,1)
+0338: set_car 300@ visibility 0
+car.DoorStatus(300@,2)
+
+:CAR_CREATE_RAID3_2
+if
+model.Available(15595)
+then
+
+301@ = Car.Create(15595, 1033.0143, -368.9283, 73.9946)
+Car.Angle(301@) = 90.7193
+
+if
+model.Available(15595)
+then
+////model.Destroy(15595)
+end
+
+else
+model.Load(15595)
+mload
+wait 0
+jump to @CAR_CREATE_RAID3_2
+end
+
+car.LockInCurrentPosition(301@,true)
+car.SetImmunities(301@,1,1,1,1,1)
+0338: set_car 301@ visibility 0
+car.DoorStatus(301@,2)
+
+end
+
+if
+$ENTERED_CAMP_NUMBER == 4
+then
+RAID_CAR_PATH_ABADON_RADIUS = 30
+CAMP_RAID_DEST_X = 132.0112
+CAMP_RAID_DEST_Y = -169.3403
+CAMP_RAID_DEST_Z = 1.4297
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE7 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 5
+then
+RAID_CAR_PATH_ABADON_RADIUS = 30
+CAMP_RAID_DEST_X = -1389.7814
+CAMP_RAID_DEST_Y = -1473.4258
+CAMP_RAID_DEST_Z = 101.7331
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE8 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 6
+then
+RAID_CAR_PATH_ABADON_RADIUS = 30
+CAMP_RAID_DEST_X = -2665.1997
+CAMP_RAID_DEST_Y = 217.4252
+CAMP_RAID_DEST_Z = 4.1797
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 7
+then
+RAID_CAR_PATH_ABADON_RADIUS = 150
+CAMP_RAID_DEST_X = -2470.4351
+CAMP_RAID_DEST_Y = -618.5153
+CAMP_RAID_DEST_Z = 132.5667
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE4 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 8
+then
+
+RAID_CAR_PATH_ABADON_RADIUS = 30 
+random_int RAID_CAR_PATH_RANDOM_FLAG 0 2
+if
+RAID_CAR_PATH_RANDOM_FLAG == 0
+then
+CAMP_RAID_DEST_X = -2253.113
+CAMP_RAID_DEST_Y = 1019.7598
+CAMP_RAID_DEST_Z = 83.6094
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE5B // (int)
+else
+CAMP_RAID_DEST_X = -2153.3638
+CAMP_RAID_DEST_Y = 1019.8714
+CAMP_RAID_DEST_Z = 79.845
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE5 // (int)
+end
+
+:CAR_CREATE_RAID5_1
+if
+model.Available(15595)
+then
+
+300@ = Car.Create(15595, -2238.7502, 1028.9556, 84.322)
+Car.Angle(300@) = 180.0
+
+if
+model.Available(15595)
+then
+////model.Destroy(15595)
+end
+
+else
+model.Load(15595)
+mload
+wait 0
+jump to @CAR_CREATE_RAID5_1
+end
+
+car.LockInCurrentPosition(300@,true)
+car.SetImmunities(300@,1,1,1,1,1)
+0338: set_car 300@ visibility 0
+car.DoorStatus(300@,2)
+
+:CAR_CREATE_RAID5_2
+if
+model.Available(15595)
+then
+
+301@ = Car.Create(15595, -2238.0061, 1010.5980, 82.2349)
+Car.Angle(301@) = 180.0
+
+if
+model.Available(15595)
+then
+////model.Destroy(15595)
+end
+
+else
+model.Load(15595)
+mload
+wait 0
+jump to @CAR_CREATE_RAID5_2
+end
+
+car.LockInCurrentPosition(301@,true)
+car.SetImmunities(301@,1,1,1,1,1)
+0338: set_car 301@ visibility 0
+car.DoorStatus(301@,2)
+
+:CAR_CREATE_RAID5_3
+if
+model.Available(15595)
+then
+
+302@ = Car.Create(15595, -2167.2219, 1029.1465, 78.8312)
+Car.Angle(302@) = 180.0
+
+if
+model.Available(15595)
+then
+////model.Destroy(15595)
+end
+
+else
+model.Load(15595)
+mload
+wait 0
+jump to @CAR_CREATE_RAID5_3
+end
+
+car.LockInCurrentPosition(302@,true)
+car.SetImmunities(302@,1,1,1,1,1)
+0338: set_car 302@ visibility 0
+car.DoorStatus(302@,2)
+
+:CAR_CREATE_RAID5_4
+if
+model.Available(15595)
+then
+
+303@ = Car.Create(15595, -2166.8237, 1010.9129, 78.4256)
+Car.Angle(303@) = 180.0
+
+if
+model.Available(15595)
+then
+////model.Destroy(15595)
+end
+
+else
+model.Load(15595)
+mload
+wait 0
+jump to @CAR_CREATE_RAID5_4
+end
+
+car.LockInCurrentPosition(303@,true)
+car.SetImmunities(303@,1,1,1,1,1)
+0338: set_car 303@ visibility 0
+car.DoorStatus(303@,2)
+
+end
+
+if
+$ENTERED_CAMP_NUMBER == 9
+then 
+CAMP_RAID_DEST_X = 2524.3337
+CAMP_RAID_DEST_Y = 1111.465
+CAMP_RAID_DEST_Z = 10.6719
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE11 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 10
+then 
+CAMP_RAID_DEST_X = 2220.5688
+CAMP_RAID_DEST_Y = 2773.25
+CAMP_RAID_DEST_Z = 10.7385
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE9 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 11
+then 
+CAMP_RAID_DEST_X = 1007.4139
+CAMP_RAID_DEST_Y = 2157.7695
+CAMP_RAID_DEST_Z = 10.6719
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE10 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 12
+then 
+CAMP_RAID_DEST_X = -748.4637
+CAMP_RAID_DEST_Y = 1568.6532
+CAMP_RAID_DEST_Z = 26.9609
+end
+
+if
+$ENTERED_CAMP_NUMBER == 13
+then
+RAID_CAR_PATH_ABADON_RADIUS = 30 
+CAMP_RAID_DEST_X = -298.1362
+CAMP_RAID_DEST_Y = 2701.229
+CAMP_RAID_DEST_Z = 62.5391
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE6 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 14
+then
+RAID_CAR_PATH_ABADON_RADIUS = 20  
+CAMP_RAID_DEST_X = -2118.7629
+CAMP_RAID_DEST_Y = -2432.7732
+CAMP_RAID_DEST_Z = 30.4687
+0084: CAMP_RAID_GATE_OBJECT = $PINE_GATES // (int)
+end
+
+else
+
+if
+$ENTERED_CAMP_NUMBER == 0
+then
+CAMP_RAID_DEST_X = -514.3577
+CAMP_RAID_DEST_Y = 1500.7546
+CAMP_RAID_DEST_Z = 5.3271
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 1
+then
+CAMP_RAID_DEST_X = -1248.3546
+CAMP_RAID_DEST_Y = 1463.7311
+CAMP_RAID_DEST_Z = 15.9781
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE2 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 2
+then
+CAMP_RAID_DEST_X = 1252.1199
+CAMP_RAID_DEST_Y = 239.0265
+CAMP_RAID_DEST_Z = 5.3588
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE3 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 3
+then
+CAMP_RAID_DEST_X = 1006.3026
+CAMP_RAID_DEST_Y = -1466.917
+CAMP_RAID_DEST_Z = 5.2372
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE4 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 4
+then
+CAMP_RAID_DEST_X = -2485.3318
+CAMP_RAID_DEST_Y = 1972.5585
+CAMP_RAID_DEST_Z = 58.5781
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE5 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 5
+then
+CAMP_RAID_DEST_X = 2416.7417
+CAMP_RAID_DEST_Y = -71.4833
+CAMP_RAID_DEST_Z = 5.6912
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE6 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 6
+then
+CAMP_RAID_DEST_X = 2171.1274
+CAMP_RAID_DEST_Y = -2223.4553
+CAMP_RAID_DEST_Z = 4.7389
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE7 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 7
+then
+CAMP_RAID_DEST_X = -2239.9893
+CAMP_RAID_DEST_Y = 2368.8167
+CAMP_RAID_DEST_Z = 75.3887
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE8B // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 8
+then
+CAMP_RAID_DEST_X = -1107.262
+CAMP_RAID_DEST_Y = 528.5001
+CAMP_RAID_DEST_Z = 25.9782
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE9 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 9
+then
+CAMP_RAID_DEST_X = -302.9482
+CAMP_RAID_DEST_Y = 736.8105
+CAMP_RAID_DEST_Z = 14.6234
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE10 // (int)
+end
+
+end
+
+return
+
+////////////////////////////////////////////////////////////////////
+
+:RAID_QUEST_COORD_GET2
+
+if
+83CA: not  object CAMP_RAID_GATE_OBJECT exists
+then
+return
+end
+
+if
+UNITED_MAP == 0
+then
+
+if
+$ENTERED_CAMP_NUMBER == 0
+then
+CAMP_RAID_DEST_X = 2018.1111
+CAMP_RAID_DEST_Y = -1754.4542
+CAMP_RAID_DEST_Z = 13.3828
+end
+
+if
+$ENTERED_CAMP_NUMBER == 3
+then
+CAMP_RAID_DEST_X = 1025.4609
+CAMP_RAID_DEST_Y = -345.6139
+CAMP_RAID_DEST_Z = 73.9922
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE0 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 4
+then
+RAID_CAR_PATH_ABADON_RADIUS = 30
+CAMP_RAID_DEST_X = 132.0112
+CAMP_RAID_DEST_Y = -169.3403
+CAMP_RAID_DEST_Z = 1.4297
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE7 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 5
+then
+RAID_CAR_PATH_ABADON_RADIUS = 70
+CAMP_RAID_DEST_X = -1415.7441
+CAMP_RAID_DEST_Y = -1474.1527
+CAMP_RAID_DEST_Z = 1101.5908
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE8 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 6
+then
+CAMP_RAID_DEST_X = -2665.1997
+CAMP_RAID_DEST_Y = 217.4252
+CAMP_RAID_DEST_Z = 4.1797
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 7
+then
+CAMP_RAID_DEST_X = -2503.1035
+CAMP_RAID_DEST_Y = -615.5848
+CAMP_RAID_DEST_Z = 132.5625
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE4 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 8
+then
+RAID_CAR_PATH_ABADON_RADIUS = 30
+
+if
+RAID_CAR_PATH_RANDOM_FLAG == 0
+then 
+CAMP_RAID_DEST_X = -2182.2305
+CAMP_RAID_DEST_Y = 1019.8243
+CAMP_RAID_DEST_Z = 79.8594
+else
+CAMP_RAID_DEST_X = -2213.3684
+CAMP_RAID_DEST_Y = 1019.7408
+CAMP_RAID_DEST_Z = 79.8594
+end
+
+end
+
+if
+$ENTERED_CAMP_NUMBER == 9
+then 
+CAMP_RAID_DEST_X = 2524.3337
+CAMP_RAID_DEST_Y = 1111.465
+CAMP_RAID_DEST_Z = 10.6719
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE11 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 10
+then 
+CAMP_RAID_DEST_X = 2254.6672
+CAMP_RAID_DEST_Y = 2773.1812
+CAMP_RAID_DEST_Z = 10.8203
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE9 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 11
+then 
+CAMP_RAID_DEST_X = 1007.4139
+CAMP_RAID_DEST_Y = 2157.7695
+CAMP_RAID_DEST_Z = 10.6719
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE10 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 12
+then 
+CAMP_RAID_DEST_X = -748.4637
+CAMP_RAID_DEST_Y = 1568.6532
+CAMP_RAID_DEST_Z = 26.9609
+end
+
+if
+$ENTERED_CAMP_NUMBER == 13
+then
+RAID_CAR_PATH_ABADON_RADIUS = 40 
+CAMP_RAID_DEST_X = -313.4559
+CAMP_RAID_DEST_Y = 2677.2725
+CAMP_RAID_DEST_Z = 62.6033
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE6 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 14
+then  
+CAMP_RAID_DEST_X = -2118.7629
+CAMP_RAID_DEST_Y = -2432.7732
+CAMP_RAID_DEST_Z = 30.4687
+0084: CAMP_RAID_GATE_OBJECT = $PINE_GATES // (int)
+end
+
+else
+
+if
+$ENTERED_CAMP_NUMBER == 0
+then
+CAMP_RAID_DEST_X = -514.3577
+CAMP_RAID_DEST_Y = 1500.7546
+CAMP_RAID_DEST_Z = 5.3271
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 1
+then
+CAMP_RAID_DEST_X = -1248.3546
+CAMP_RAID_DEST_Y = 1463.7311
+CAMP_RAID_DEST_Z = 15.9781
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE2 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 2
+then
+CAMP_RAID_DEST_X = 1252.1199
+CAMP_RAID_DEST_Y = 239.0265
+CAMP_RAID_DEST_Z = 5.3588
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE3 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 3
+then
+CAMP_RAID_DEST_X = 1006.3026
+CAMP_RAID_DEST_Y = -1466.917
+CAMP_RAID_DEST_Z = 5.2372
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE4 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 4
+then
+CAMP_RAID_DEST_X = -2485.3318
+CAMP_RAID_DEST_Y = 1972.5585
+CAMP_RAID_DEST_Z = 58.5781
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE5 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 5
+then
+CAMP_RAID_DEST_X = 2416.7417
+CAMP_RAID_DEST_Y = -71.4833
+CAMP_RAID_DEST_Z = 5.6912
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE6 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 6
+then
+CAMP_RAID_DEST_X = 2171.1274
+CAMP_RAID_DEST_Y = -2223.4553
+CAMP_RAID_DEST_Z = 4.7389
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE7 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 7
+then
+CAMP_RAID_DEST_X = -2239.9893
+CAMP_RAID_DEST_Y = 2368.8167
+CAMP_RAID_DEST_Z = 75.3887
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE8B // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 8
+then
+CAMP_RAID_DEST_X = -1107.262
+CAMP_RAID_DEST_Y = 528.5001
+CAMP_RAID_DEST_Z = 25.9782
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE9 // (int)
+end
+
+if
+$ENTERED_CAMP_NUMBER == 9
+then
+CAMP_RAID_DEST_X = -302.9482
+CAMP_RAID_DEST_Y = 736.8105
+CAMP_RAID_DEST_Z = 14.6234
+0084: CAMP_RAID_GATE_OBJECT = $CAMP_COCK_GATE10 // (int)
+end
+
+end
+
+if and
+CAMP_RAID_FLAG_ARMY == 1
+$ARMY1_EXIT_FLAG == 0
+056E:   car ARMY_CAR defined
+    then
+    00A9: set_car ARMY_CAR to_normal_driver
+    car.SetMaxSpeed(ARMY_CAR,50.0)  
+    00AE: set_car ARMY_CAR traffic_behaviour_to 2  
+    03AB: set_car ARMY_CAR strong 1 
+    0704: car ARMY_CAR drive_to CAMP_RAID_DEST_X CAMP_RAID_DEST_Y CAMP_RAID_DEST_Z
+    car.SetSpeedInstantly(ARMY_CAR,15.0)
+    car.SetImmunities(ARMY_CAR,1,0,0,0,0)
+    04E0: car ARMY_CAR abandon_path_radius RAID_CAR_PATH_ABADON_RADIUS
+    end
+    
+if and
+CAMP_RAID_FLAG_BANDITS == 1
+$BANDITS1_EXIT_FLAG == 0
+056E:   car BANDIT_CAR defined
+    then
+    00A9: set_car BANDIT_CAR to_normal_driver
+    car.SetMaxSpeed(BANDIT_CAR,50.0)  
+    00AE: set_car BANDIT_CAR traffic_behaviour_to 2  
+    03AB: set_car BANDIT_CAR strong 1 
+    0704: car BANDIT_CAR drive_to CAMP_RAID_DEST_X CAMP_RAID_DEST_Y CAMP_RAID_DEST_Z
+    car.SetSpeedInstantly(BANDIT_CAR,15.0)
+    car.SetImmunities(BANDIT_CAR,1,0,0,0,0)
+    04E0: car BANDIT_CAR abandon_path_radius RAID_CAR_PATH_ABADON_RADIUS
+    end        
+
+//marker.Disable(114@)    
+//018A: 114@ = create_checkpoint_at CAMP_RAID_DEST_X CAMP_RAID_DEST_Y CAMP_RAID_DEST_Z        
+
+return
+
+:RAID_QUEST_FAILED_LDEAD
+CARMA_BAD_POINTS += 10
+Audiostream.Loop($KARMA_BAD,0)
+Audiostream.PerformAction($KARMA_BAD, PLAY)
+Audiostream.Volume($KARMA_BAD) = $SOUNDS_VOLUME
+CARMA_GOOD_POINTS -= 10
+gosub @RAID_QUEST_FAILED_STAT_PLUS
+text.ClearAll()
+v$FAILED_TEXT = "MS_FL43"
+RAID_FAILED_FLAG = 1
+0151: remove_vagina_text $STATUS_TEXT
+SUPPLY_TEXT_FLAG = 0
+
+if
+FERMERS_RAID_HELP_FLAG == 1
+then
+FERMERS_RAID_HELP_FLAG = 0
+
+if
+075C:   marker FERMERS_RAID_HELP_MARK enabled
+then
+marker.Disable(FERMERS_RAID_HELP_MARK)
+end
+
+end
+
+if
+PUNISHERS_RAID_HELP_FLAG == 1
+then
+PUNISHERS_RAID_HELP_FLAG = 0
+
+if
+075C:   marker PUNISHERS_RAID_HELP_MARK enabled
+then
+marker.Disable(PUNISHERS_RAID_HELP_MARK)
+end
+
+end
+ 
+create_thread @GM_2OVR
+mission_cleanup    
+return
+
+:RAID_QUEST_FAILED_DISTANCE
+
+if
+0E4D: random_percent 30
+then
+
+gosub @RAID_QUEST_FAILED_STAT_PLUS
+text.ClearAll()
+v$FAILED_TEXT = "MS_FL87"
+RAID_FAILED_FLAG = 1
+
+008B: 0@ = $QUEST_CAMP_NUMBER // (int)
+0@ += 156
+$RNDM_HOUSE_BANKA[0@] = 0
+0151: remove_vagina_text $STATUS_TEXT
+SUPPLY_TEXT_FLAG = 0
+
+else
+
+$CAMP_DEAD_FLAG[$QUEST_CAMP_NUMBER] = 1
+
+if
+075C:   marker $CAMP_MARKER[$QUEST_CAMP_NUMBER] enabled
+then
+marker.Disable($CAMP_MARKER[$QUEST_CAMP_NUMBER])
+$CAMP_MARKER[$QUEST_CAMP_NUMBER] = 0
+$CAMP_MARKER[$QUEST_CAMP_NUMBER] = marker.CreateIconWithoutSphere(104,$CAMP_X[$QUEST_CAMP_NUMBER], $CAMP_Y[$QUEST_CAMP_NUMBER], $CAMP_Z[$QUEST_CAMP_NUMBER])
+end
+
+gosub @RAID_QUEST_CAMP_ZONE_CHECK_DESTROY
+0879: enable_gang_wars 0
+076C: set_zone v$SFUCK gang 5 density_to 0
+0879: enable_gang_wars 1
+if
+CAMP_RAID_FLAG_BANDITS == 0
+then
+gosub @RAID_QUEST_KILL_TRADER_PRE
+end
+
+CARMA_BAD_POINTS += 30
+CARMA_GOOD_POINTS -= 15
+gosub @RAID_QUEST_FAILED_STAT_PLUS
+text.ClearAll()
+v$FAILED_TEXT = "MS_FL73"
+RAID_FAILED_FLAG = 1
+0151: remove_vagina_text $STATUS_TEXT
+SUPPLY_TEXT_FLAG = 0
+
+end
+
+if
+FERMERS_RAID_HELP_FLAG == 1
+then
+FERMERS_RAID_HELP_FLAG = 0
+
+if
+075C:   marker FERMERS_RAID_HELP_MARK enabled
+then
+marker.Disable(FERMERS_RAID_HELP_MARK)
+end
+
+end
+
+if
+PUNISHERS_RAID_HELP_FLAG == 1
+then
+PUNISHERS_RAID_HELP_FLAG = 0
+
+if
+075C:   marker PUNISHERS_RAID_HELP_MARK enabled
+then
+marker.Disable(PUNISHERS_RAID_HELP_MARK)
+end
+
+end
+ 
+create_thread @GM_2OVR
+mission_cleanup    
+return
+
+:RAID_QUEST_FAILED_CAMP_DEAD
+CARMA_BAD_POINTS += 10
+CARMA_GOOD_POINTS -= 10
+gosub @RAID_QUEST_FAILED_STAT_PLUS
+text.ClearAll()
+$ONMISSION = 0
+v$FAILED_TEXT = "MS_FL52"
+RAID_FAILED_FLAG = 1
+0151: remove_vagina_text $STATUS_TEXT
+SUPPLY_TEXT_FLAG = 0
+
+if
+FERMERS_RAID_HELP_FLAG == 1
+then
+FERMERS_RAID_HELP_FLAG = 0
+
+if
+075C:   marker FERMERS_RAID_HELP_MARK enabled
+then
+marker.Disable(FERMERS_RAID_HELP_MARK)
+end
+
+end
+
+if
+PUNISHERS_RAID_HELP_FLAG == 1
+then
+PUNISHERS_RAID_HELP_FLAG = 0
+
+if
+075C:   marker PUNISHERS_RAID_HELP_MARK enabled
+then
+marker.Disable(PUNISHERS_RAID_HELP_MARK)
+end
+
+end
+
+create_thread @GM_2OVR
+mission_cleanup    
+return
+
+:RAID_QUEST_FAILED_AGRED
+gosub @RAID_QUEST_FAILED_STAT_PLUS
+text.ClearAll()
+v$FAILED_TEXT = "MS_FL5"
+RAID_FAILED_FLAG = 1
+0151: remove_vagina_text $STATUS_TEXT
+SUPPLY_TEXT_FLAG = 0
+
+if
+FERMERS_RAID_HELP_FLAG == 1
+then
+FERMERS_RAID_HELP_FLAG = 0
+
+if
+075C:   marker FERMERS_RAID_HELP_MARK enabled
+then
+marker.Disable(FERMERS_RAID_HELP_MARK)
+end
+
+end
+
+if
+PUNISHERS_RAID_HELP_FLAG == 1
+then
+PUNISHERS_RAID_HELP_FLAG = 0
+
+if
+075C:   marker PUNISHERS_RAID_HELP_MARK enabled
+then
+marker.Disable(PUNISHERS_RAID_HELP_MARK)
+end
+
+end
+ 
+create_thread @GM_2OVR
+mission_cleanup    
+return
+
+:RAID_QUEST_KILL_TRADER_PRE
+
+if
+UNITED_MAP == 0
+then
+                        
+if
+$QUEST_CAMP_NUMBER == 3
+then
+//$TRADER_ANGRY_FLAG[11] = 1
+1@ = 11
+gosub @RAID_QUEST_KILL_TRADER
+end
+                        
+if
+$QUEST_CAMP_NUMBER == 9
+then
+//$TRADER_ANGRY_FLAG[13] = 1
+1@ = 13
+gosub @RAID_QUEST_KILL_TRADER
+end
+                    
+else
+                    
+if
+$QUEST_CAMP_NUMBER == 0
+then
+//$TRADER_ANGRY_FLAG[0] = 1
+1@ = 0
+gosub @RAID_QUEST_KILL_TRADER
+end
+                    
+if
+$QUEST_CAMP_NUMBER == 3
+then
+//$TRADER_ANGRY_FLAG[1] = 1
+1@ = 1
+gosub @RAID_QUEST_KILL_TRADER
+end
+                    
+if
+$QUEST_CAMP_NUMBER == 6
+then
+//$TRADER_ANGRY_FLAG[4] = 1
+1@ = 4
+gosub @RAID_QUEST_KILL_TRADER
+end
+                    
+if
+$QUEST_CAMP_NUMBER == 2
+then
+//$TRADER_ANGRY_FLAG[5] = 1
+1@ = 5
+gosub @RAID_QUEST_KILL_TRADER
+end
+                    
+if
+$QUEST_CAMP_NUMBER == 1
+then
+//$TRADER_ANGRY_FLAG[8] = 1
+1@ = 8
+gosub @RAID_QUEST_KILL_TRADER
+end
+                    
+if
+$QUEST_CAMP_NUMBER == 8
+then
+//$TRADER_ANGRY_FLAG[9] = 1
+1@ = 9
+gosub @RAID_QUEST_KILL_TRADER
+end
+
+if
+$QUEST_CAMP_NUMBER == 4
+then
+//$TRADER_ANGRY_FLAG[10] = 1
+1@ = 10
+gosub @RAID_QUEST_KILL_TRADER
+end
+                    
+end
+
+return
+
+:RAID_QUEST_KILL_TRADER
+
+$TRADER_DEAD_FLAG[1@] = 1
+marker.Disable($TRADER_ICON[1@])
+//$TRADER_ICON[1@] = 0
+$TRADER_ICON[1@] = marker.CreateIconWithoutSphere(105,$TRADER_X[1@],$TRADER_Y[1@],$TRADER_Z[1@])
+gosub @TRADER_ZONE_CHECK_DY
+0879: enable_gang_wars 0
+076C: set_zone v$TFUCK gang 3 density_to 0
+0879: enable_gang_wars 1
+0AD3: v$DYING_TEST = format "TRADER%d" 1@
+0AF1: write_int 1 to_ini_file "debug\DYING_SIMULATE.ini" section v$DYING_TEST key "TRADER_DED_BECAUSE_CAMP_IS"
+
+return
+
+:RAID_QUEST_FAILED_STAT_PLUS
+
+$RAIDS_FAILED += 1
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_RAIDS_FAILED"
+
+if
+$CHEATED_FLAG == 0 
+then        
+0@ += 1
+end        
+ 
+0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_RAIDS_FAILED"
+
+if
+500@ == 0
+then
+RAID_DELETE_BANDITS_FLAG = 1
+
+repeat
+wait 0
+until $BANDITS_SPAWNED == 0
+
+0459: end_thread_named 'BNDT_SP'
+end
+
+if
+501@ == 0
+then
+
+RAID_DELETE_ARMY_FLAG = 1
+
+repeat
+wait 0
+until $ARMY_SPAWNED == 0
+
+0459: end_thread_named 'ARMY_SP'
+end
+
+return
+
+:FERMERS_RAID_HELP_CHECK
+
+if
+UNITED_MAP == 0
+    then
+    
+    if and
+    $QUEST_CAMP_NUMBER == 5
+    MAIN_QUEST6_COMPLETED_FLAG == 1
+    then
+    return
+    end
+    
+    if or
+    $QUEST_CAMP_NUMBER == 3
+    $QUEST_CAMP_NUMBER == 4
+    $QUEST_CAMP_NUMBER == 5
+    $QUEST_CAMP_NUMBER == 14
+        then 
+        if
+        0E4D: random_percent 60
+            then
+            FERMERS_RAID_HELP_FLAG = 1
+            end
+        else
+        if or
+        $DEFENSE_CHALLENGE_FLAG == 1
+        $ALLOW_SWAT_CONVOY == 1
+            then
+            :PUNISHERS_RAID_HELP_CHECK
+            if
+            0E4D: random_percent 45
+                then
+                PUNISHERS_RAID_HELP_FLAG = 1
+                end
+            end
+        end
+    else
+    if or
+    $DEFENSE_CHALLENGE_FLAG == 1
+    $ALLOW_SWAT_CONVOY == 1
+        then
+        jump to @PUNISHERS_RAID_HELP_CHECK
+        end
+    end
+    
+return
+
+:RAID_QUEST_CAMP_ZONE_CHECK_DESTROY
+
+if
+UNITED_MAP == 0
+then
+
+if 
+$QUEST_CAMP_NUMBER == 0  
+then  
+06D1: v$SFUCK = "SVVZN4" // v$ = string
+end
+
+if 
+$QUEST_CAMP_NUMBER == 1  
+then
+06D1: v$SFUCK = "SVVZN4B" // v$ = string
+end
+
+if 
+$QUEST_CAMP_NUMBER == 2  
+then  
+06D1: v$SFUCK = "SVVZN4C" // v$ = string
+end
+
+if 
+$QUEST_CAMP_NUMBER == 3
+then
+06D1: v$SFUCK = "SVVZN1" // v$ = string
+end
+
+if 
+$QUEST_CAMP_NUMBER == 4
+then
+06D1: v$SFUCK = "SVVZN1B" // v$ = string
+end
+
+if 
+$QUEST_CAMP_NUMBER == 5
+then
+06D1: v$SFUCK = "SVVZN1C" // v$ = string
+end
+
+if 
+$QUEST_CAMP_NUMBER == 6
+then
+06D1: v$SFUCK = "SVVZN2" // v$ = string
+end
+
+if 
+$QUEST_CAMP_NUMBER == 7
+then
+06D1: v$SFUCK = "SVVZN2B" // v$ = string
+end
+
+if 
+$QUEST_CAMP_NUMBER == 8
+then
+06D1: v$SFUCK = "SVVZN2C" // v$ = string
+end
+
+if 
+$QUEST_CAMP_NUMBER == 9
+then
+06D1: v$SFUCK = "SVVZN5" // v$ = string
+end
+
+if 
+$QUEST_CAMP_NUMBER == 10
+then
+06D1: v$SFUCK = "SVVZN5B" // v$ = string
+end
+
+if 
+$QUEST_CAMP_NUMBER == 11
+then
+06D1: v$SFUCK = "SVVZN5C" // v$ = string
+end
+
+if 
+$QUEST_CAMP_NUMBER == 12
+then
+06D1: v$SFUCK = "SVVZN3" // v$ = string
+end
+
+if 
+$QUEST_CAMP_NUMBER == 13
+then
+06D1: v$SFUCK = "SVVZN3B" // v$ = string
+end
+
+if 
+$QUEST_CAMP_NUMBER == 14
+then
+06D1: v$SFUCK = "SVVZN6" // v$ = string
+end
+
+else
+
+if 
+$QUEST_CAMP_NUMBER == 0  
+then  
+06D1: v$SFUCK = "SVVZN1" // v$ = string
+end    
+
+if 
+$QUEST_CAMP_NUMBER == 1  
+then  
+06D1: v$SFUCK = "SVVZN2" // v$ = string
+end    
+
+if 
+$QUEST_CAMP_NUMBER == 2  
+then  
+06D1: v$SFUCK = "SVVZN4" // v$ = string
+end    
+
+/////////////////////////////////////////////
+
+if 
+$QUEST_CAMP_NUMBER == 3  
+then  
+06D1: v$SFUCK = "SVVZN5" // v$ = string
+end    
+
+if 
+$QUEST_CAMP_NUMBER == 4  
+then  
+06D1: v$SFUCK = "SVVZN3" // v$ = string
+end    
+
+if 
+$QUEST_CAMP_NUMBER == 5  
+then  
+06D1: v$SFUCK = "SVVZN6" // v$ = string
+end    
+
+if 
+$QUEST_CAMP_NUMBER == 6  
+then  
+06D1: v$SFUCK = "SVVZN7" // v$ = string
+end
+
+if 
+$QUEST_CAMP_NUMBER == 7  
+then  
+06D1: v$SFUCK = "SVVZN8" // v$ = string
+end
+
+if 
+$QUEST_CAMP_NUMBER == 8  
+then  
+06D1: v$SFUCK = "SVVZN9" // v$ = string
+end
+
+if 
+$QUEST_CAMP_NUMBER == 9  
+then  
+06D1: v$SFUCK = "SVVZN10" // v$ = string
+end    
+
+end
+
+return
+
+:RAID_QUEST_TOTAL_COUNT_COUNT
+
+if
+33@ > 5000
+then
+33@ = 0
+if
+RAID_CURRENT_SHOWING_BAR_THING == 1
+    then
+    RAID_CURRENT_SHOWING_BAR_THING = 0
+    0151: remove_status_text $STATUS_TEXT
+    
+    if
+    $DEFENSE_CHALLENGE_FLAG == 0
+    then
+    04F7: vagina_text $STATUS_TEXT type 1 line 1 GXT 'GME1156' // global_variable  // Score
+    059C: enable_status_text $STATUS_TEXT flashing 0 // global_variable
+    else
+    04F7: vagina_text $STATUS_TEXT type 1 line 3 GXT 'GME1156' // global_variable  // Score
+    059C: enable_status_text $STATUS_TEXT flashing 0 // global_variable
+    end
+    
+    else
+    RAID_CURRENT_SHOWING_BAR_THING = 1
+    0151: remove_status_text $STATUS_TEXT
+    
+    if
+    $DEFENSE_CHALLENGE_FLAG == 0
+    then
+    04F7: vagina_text $STATUS_TEXT type 1 line 1 GXT 'GME1368' // global_variable  // Score
+    059C: enable_status_text $STATUS_TEXT flashing 0 // global_variable
+    else
+    04F7: vagina_text $STATUS_TEXT type 1 line 3 GXT 'GME1368' // global_variable  // Score
+    059C: enable_status_text $STATUS_TEXT flashing 0 // global_variable
+    end
+    
+    end
+end
+
+if
+RAID_CURRENT_SHOWING_BAR_THING == 0
+then
+008B: 2@ = RAID_CAMP_PPL_TOTAL // (int)
+008B: 1@ = RAID_CAMP_DIED_PPL // (int)
+0093: 2@ = integer 2@ to_float
+0093: 1@ = integer 1@ to_float
+0073: 1@ /= 2@ // (float)
+1@ *= 100.0
+2@ = 100.0
+0063: 2@ -= 1@  // (float)
+0092: 2@ = float 2@ to_integer
+008A: $STATUS_TEXT = 2@ // (int)
+else
+
+/////////////////////////////////////
+    
+5@ = 2000
+
+if
+856D: not  actor CAMP_LEADER_ACTOR_VAR defined
+then
+return
+end
+
+1@ = actor.Health(CAMP_LEADER_ACTOR_VAR)
+                        
+0085: 2@ = 1@ // (int)
+0093: 2@ = integer 2@ to_float
+0085: 4@ = 5@ // (int)
+0093: 4@ = integer 4@ to_float                                                
+4@ /= 100.0                     
+0073: 2@ /= 4@ // (float)
+0092: 2@ = float 2@ to_integer
+            
+008A: $STATUS_TEXT = 2@ // (int)
+
+/////////////////////////////////////
+
+end
+
+return    

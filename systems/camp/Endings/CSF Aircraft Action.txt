@@ -1,0 +1,2482 @@
+const
+CSF_KEVIN_HANDLE = $ARMY69_2[0]
+CSF_LYONELL_HANDLE = $ARMY69_2[1]
+CSF_SUBMARINE_HANDLE = 100@
+CSF_SUBMARINE_ROCKET_HANDLE = 101@
+CSF_ENEMIES_DESTROYED = 102@
+CSF_AIRCRAFT_ENGINE_SOUND = 103@
+CSF_AIRCRAFT_DRIVER_HANDLE = 104@
+CSF_SUBMARINE_ROCKET = 105@
+CSF_BARGE1_HANDLE = 106@
+CSF_BARGE2_HANDLE = 107@
+end
+
+:CSF_MSN
+thread 'CSF_MSN'
+gosub @ASSKOD_MISSII282PIZDALODKA 
+if 
+wasted_or_busted 
+jf @ASSPROPUSK_KODA282PIZDALODKA 
+gosub @ASSKOD_PROVALA282PIZDALODKA 
+
+:ASSPROPUSK_KODA282PIZDALODKA        
+gosub @ASSUDALENIE_KODA282PIZDALODKA
+
+HARDCORE_DANGER_FLAG_SCRIPTED = 0
+if
+GAME_OVER_FLAG == 1
+then
+HARDCORE_DANGER_ANTIFLAG_SCRIPTED = 1
+end
+
+end_thread
+
+:ASSKOD_MISSII282PIZDALODKA
+increment_mission_attempts
+0629: change_integer_stat 258 to 100
+
+0459: end_thread_named 'A_HUNT'
+0459: end_thread_named 'RND_HYD'
+0459: end_thread_named 'SIEGE'
+
+if
+BOMBS_TIMER > 0
+    then
+    014F: stop_timer BOMBS_TIMER
+    0459: end_thread_named 'BMBS_ON'
+    end
+
+MAIN_QUEST_MUSIC_FLAG = 1
+$MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\QUESTS\CSF\csfsummit.wav")
+Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
+Audiostream.Loop($MUSIC_ASSHOLE, 1)
+Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+    
+/////////////////////Плавное нарастание/////////////////////
+    
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+    
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+    
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+    
+wait 1 
+    
+////////////////////////////////////////////////////////
+
+$ZONE4_CAPTURED = 1
+0879: enable_gang_wars 0
+076C: set_zone 'ARMY4' gang 4 density_to 0
+076C: set_zone 'SARMY4' gang 5 density_to 0
+0879: enable_gang_wars 1
+
+if
+075C:   marker $ARMY4 enabled
+then
+marker.Disable($ARMY4)
+$ARMY4 = 0
+end
+
+for 1@ = 6 to 8
+
+$CAMP_DEAD_FLAG[1@] = 1
+marker.Disable($CAMP_MARKER[1@])
+$CAMP_MARKER[1@] = 0
+0AD3: v$DYING_TEST = format "CAMP%d" 1@
+0AF1: write_int 1 to_ini_file "debug\DYING_SIMULATE.ini" section v$DYING_TEST key "CAMP_DED_BECAUSE_NO_MEMBERS_LEFT"
+0AF1: write_int $CAMP_ACTOR_TOTAL[1@] to_ini_file "debug\DYING_SIMULATE.ini" section v$DYING_TEST key "CAMP_TOTAL_MEMBERS_HAD"
+0AF1: write_int 4@ to_ini_file "debug\DYING_SIMULATE.ini" section v$DYING_TEST key "CAMP_DED_MEMBERS"
+gosub @CAMP_ZONE_CHECK2_DY
+0879: enable_gang_wars 0
+076C: set_zone v$SFUCK gang 4 density_to 0
+076C: set_zone v$SFUCK gang 5 density_to 0
+0879: enable_gang_wars 1
+gosub @TRADER_DY_IN_CAMP_CHECK
+    
+end    
+
+$ONMISSION = 1
+MAIN_QUEST_TEAMMATES_REMOVE_FLAG = 1
+CAMP_DONT_SAY_HELLO_FLAG = 1
+PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 1
+$NOTSPAWN_ETC = 1
+$SPECIAL_INFECTED_NOT_SPAWN_FLAG = 1
+$SURVIVORS_DONT_SPAWN_FLAG = 1
+$QUEST_TYPE = 27
+$ALLOW_PLAYER_SLOWMOTION = 0
+
+0776: create_objects_in_object_group "islandcsf"
+
+////////////////////////LYONELL////////////////////////
+
+while not model.Available(12793)
+wait 0
+model.Load(12793)
+mload
+end
+    
+CSF_LYONELL_HANDLE = actor.Create(26,12793,-1288.3478, 490.5445, 11.1953)
+actor.RemoveFromMissionCleanupList(CSF_LYONELL_HANDLE)
+actor.Angle(CSF_LYONELL_HANDLE) = 91.092
+0E24: fix_char CSF_LYONELL_HANDLE ground 0 brightness DO_ACTORS_BRIGHT_CORR and_fade_in 1
+08C6: set_actor CSF_LYONELL_HANDLE stay_on_bike 1    
+actor.SetWalkStyle(CSF_LYONELL_HANDLE,"GANG2")
+0446: set_actor CSF_LYONELL_HANDLE dismemberment_possible 0
+060B: set_actor CSF_LYONELL_HANDLE decision_maker_to $DEC_PEOPLE
+actor.Health(CSF_LYONELL_HANDLE) = 1000
+actor.WeaponAccuracy(CSF_LYONELL_HANDLE) = 85
+create_thread @PED_BKP CSF_LYONELL_HANDLE 371
+
+if
+075C:   marker $ARMY4 enabled
+then
+marker.Disable($ARMY4)
+$ARMY4 = 0
+$ARMY4 = Marker.CreateIconWithoutSphere(44, -1377.8162, 502.5081, 18.2344)
+end
+
+actor.StorePos(PLAYER_ACTOR,100@,101@,102@)
+0084: $QUEST_CAMP_NUMBER = $ENTERED_CAMP_NUMBER // (int)
+
+PLAYER_NO_ITEMS_FLAG = 0
+
+actor.PutAtNoOffset(PLAYER_ACTOR,-1297.1835, 490.5328, 11.1953)
+actor.Angle(PLAYER_ACTOR) = 270.638
+
+$SAVESTATUS = 1
+wait 100
+cinema.Widescreen(1)
+BLACK_POLOSKI_ON = 1
+
+if
+MYERS_ALIVE == 1
+then
+jump to @CSF_AIRCRAFT_MYERS_IS_ALIVE_JUMP
+end
+
+//0936: set_camera -1300.788086 490.583496 12.313193 position_to -1291.525391 491.471741 11.513896 time 40000 smooth_transition 1
+//0920: point_camera -1299.798462 490.602936 12.171079 transverse_to -1290.559448 491.217163 11.467320 time 40000 smooth_transition 1
+camera.SetPosition(-1300.788086 490.583496 12.313193,0.0,0.0,0.0)
+camera.PointAt(-1299.798462 490.602936 12.171079,2)
+wait 500
+camera.SetPosition(-1291.525391 491.471741 11.513896,0.0,0.0,0.0)
+camera.PointAt(-1290.559448 491.217163 11.467320,1)
+0460: set_camera_transverse_delay 1.0 time 15000
+05D3: AS_actor PLAYER_ACTOR goto_point -1290.0188 490.4866 11.1953 mode 4 time 9999999 ms // versionA
+
+create_thread @REFR_3D
+fade 1 3000
+
+repeat
+wait 0
+
+if and
+$CHEATS_ON == 1
+0E8D: is_any_fire_button_pressed 0
+then
+actor.PutAtNoOffset(PLAYER_ACTOR,-1290.0188, 490.4866, 11.1953)
+break
+end  
+
+until 02A0:   actor PLAYER_ACTOR stopped
+
+0084: $DIALOG_ACTOR[0] = $ARMY69_2[1] // (int)
+0084: $DIALOG_ACTOR[1] = $ARMY69_2[1] // (int)
+0084: $DIALOG_ACTOR[2] = $ARMY69_2[1] // (int)
+v$ST_DIALOG[0] = "ENND101"
+v$ST_DIALOG[1] = "END102"
+v$ST_DIALOG[2] = "END103"
+$DIALOG_COUNT = 2
+create_thread @DG_SYS
+
+repeat
+wait 0
+
+if and
+$CHEATS_ON == 1
+0E8D: is_any_fire_button_pressed 0
+then  
+$END_DIALOG_INST = 1
+wait 0
+break
+end
+
+until $DIALOG_END == 1
+
+05D3: AS_actor PLAYER_ACTOR goto_point -1297.1835 490.5328 11.1953 mode 4 time 9999999 ms // versionA
+
+if
+not $CHEATS_ON == 1
+then
+fade 0 5000
+wait 5000
+else
+fade 0 500
+wait 500
+end
+
+gosub @DISEMB_JETP_CHECK
+0792: disembark_instantly_actor PLAYER_ACTOR
+
+:CSF_AIRCRAFT_ACTION_START
+
+wait 100
+cinema.Widescreen(0)
+BLACK_POLOSKI_ON = 0
+actor.DestroyInstantly(CSF_LYONELL_HANDLE)
+
+////////////////////////////ПЛЫВЕМ ПЛЫВЕМ ПЛЫВЕМ////////////////////////////
+
+create_thread @CSF_ARC
+
+repeat
+wait 0
+until 056E:   car $PARK_CAR[55] defined
+
+/////////////////////////////////////////////////////
+
+0EB4: set_car_coordinates_simple CSF_AIRCRAFT_HANDLE position -2807.0513 1804.1587 19.0121
+car.Angle(CSF_AIRCRAFT_HANDLE) = 37.5
+
+0560: create_random_actor_in_car CSF_AIRCRAFT_HANDLE handle_as CSF_AIRCRAFT_DRIVER_HANDLE
+036A: put_actor CSF_AIRCRAFT_DRIVER_HANDLE in_car CSF_AIRCRAFT_HANDLE
+0E0B: mark_char_as_needed CSF_AIRCRAFT_DRIVER_HANDLE
+actor.Health(CSF_AIRCRAFT_DRIVER_HANDLE) = 5000
+actor.SetImmunities(CSF_AIRCRAFT_DRIVER_HANDLE,1,1,1,1,1)
+
+CSF_AIRCRAFT_ENGINE_SOUND = audiostream.Load3d("AUDIO\SOUNDS\QUESTS\CSF\asshipsound.ogg")
+audiostream.LinkToActor(CSF_AIRCRAFT_ENGINE_SOUND,PLAYER_ACTOR)
+audiostream.Loop(CSF_AIRCRAFT_ENGINE_SOUND,1)
+audiostream.Volume(CSF_AIRCRAFT_ENGINE_SOUND) = $SOUNDS_VOLUME
+audiostream.PerformAction(CSF_AIRCRAFT_ENGINE_SOUND,PLAY)
+
+02DB: set_boat CSF_AIRCRAFT_HANDLE speed_to 80.0
+02D3: boat CSF_AIRCRAFT_HANDLE sail_to -6000.0 6000.0 0.0
+
+0781: get_weapon_with_ID 36 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+$FEATHERBPCK_FLAG = 1
+
+0ED9: set_char_ignore_damage_anims PLAYER_ACTOR 1    
+0464: put_actor PLAYER_ACTOR into_turret_on_car CSF_AIRCRAFT_HANDLE at_car_offset 0.0 80.0 16.68 position 1 shooting_angle_limit 360.0 with_weapon 36
+camera.Restore_WithJumpCut()
+DRAW_NOTURRET_CROSSHAIR_FLAG = 1
+
+0@ = car.Angle(CSF_AIRCRAFT_HANDLE)
+0@ -= 90.0 
+0858: set_player PLAYER_CHAR scan_horizon_to_angle 0@ rotation_speed 0@
+
+////////////////////////KEVIN////////////////////////
+
+while not model.Available(15012)
+wait 0
+model.Load(15012)
+mload
+end
+    
+CSF_KEVIN_HANDLE = actor.Create(26,15012,0.0,0.0,0.0)
+actor.RemoveFromMissionCleanupList(CSF_KEVIN_HANDLE)
+0@ = car.Angle(CSF_AIRCRAFT_HANDLE)
+0@ -= 180.0
+actor.Angle(CSF_KEVIN_HANDLE) = 0@
+08C6: set_actor CSF_KEVIN_HANDLE stay_on_bike 1    
+actor.SetWalkStyle(CSF_KEVIN_HANDLE,"GANG2")
+0446: set_actor CSF_KEVIN_HANDLE dismemberment_possible 0
+060B: set_actor CSF_KEVIN_HANDLE decision_maker_to $DEC_PEOPLE
+actor.Health(CSF_KEVIN_HANDLE) = 50000
+actor.WeaponAccuracy(CSF_KEVIN_HANDLE) = 85
+create_thread @PED_BKP CSF_KEVIN_HANDLE 371
+02AB: set_actor CSF_KEVIN_HANDLE immunities BP 0 FP 0 EP 1 CP 0 MP 0
+087E: set_actor CSF_KEVIN_HANDLE weapon_droppable 0
+
+0781: get_weapon_with_ID 70 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+    
+Actor.GiveWeaponAndAmmo(CSF_KEVIN_HANDLE, 70, 99999)
+
+0464: put_actor CSF_KEVIN_HANDLE into_turret_on_car CSF_AIRCRAFT_HANDLE at_car_offset 0.0 -80.0 16.68 position 1 shooting_angle_limit 360.0 with_weapon 70
+
+0936: set_camera -1300.788086 490.583496 12.313193 position_to -1291.525391 491.471741 11.513896 time 1 smooth_transition 1
+0920: point_camera -1299.798462 490.602936 12.171079 transverse_to -1290.559448 491.217163 11.467320 time 1 smooth_transition 1
+
+0407: store_coords_to 1@ 2@ 3@ from_car CSF_AIRCRAFT_HANDLE with_offset 15.0 3700.0 -60.0
+CSF_SUBMARINE_HANDLE = object.Create(9958, 1@,2@,3@)
+4@ = car.Angle(CSF_AIRCRAFT_HANDLE)
+object.Angle(CSF_SUBMARINE_HANDLE) = 4@
+
+wait 1000
+
+fade 1 3000
+$HUD_REMOVE = 0
+player.CanMove(PLAYER_CHAR,true)
+
+$SAVESTATUS = 0
+
+v$OBJECTIVE = "GME1030"
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+
+/////////////////////////////////////////////////////////////////////////////////
+
+repeat
+wait 0
+car.StorePos(CSF_AIRCRAFT_HANDLE,5@,3@,4@)
+0509: 0@ = distance_between_XY -6000.0 6000.0 and_XY 5@ 3@
+//0AD1: show_formatted_text_highpriority "DISTANCE: %f" time 2000 0@
+
+gosub @CSF_TURRETS_CHECKS
+
+if
+0184:   actor CSF_KEVIN_HANDLE health > 0
+jf @CSF_MSN_ACTION_QUEST_KEVIN_DEAD
+if
+0185:   car CSF_AIRCRAFT_HANDLE health > 250
+jf @CSF_MSN_ACTION_QUEST_AIRCRAFT_GO_BOOM_BOOM
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @CSF_MSN_ACTION_QUEST_PLAYER_DIED
+
+if
+0471:   actor PLAYER_ACTOR near_object_in_rectangle CSF_SUBMARINE_HANDLE radius 400.0 400.0 sphere 0
+    then
+    jump to @CSF_AIRCRAFT_SUBMARINE_JUMP
+    end
+
+until 0@ < 4750.0
+
+v$OBJECTIVE = "DUMMY"
+
+///////////////////////////////////////////////////////////////////
+
+$RADIO_SOUND = Audiostream.Load("AUDIO\SOUNDS\Radio.mp3") 
+Audiostream.Loop($RADIO_SOUND, 1)  
+Audiostream.Volume($RADIO_SOUND) = 0.0
+Audiostream.PerformAction($RADIO_SOUND, PLAY)
+        
+/////////////////////Плавное нарастание/////////////////////
+        
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $SOUNDS_VOLUME // (float) 
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+        
+wait 1 
+        
+////////////////////////////////////////////////////////
+
+v$ST_DIALOG[0] = "END104"
+v$ST_DIALOG[1] = "END105"
+v$ST_DIALOG[2] = "END106"
+v$ST_DIALOG[3] = "END107"
+v$ST_DIALOG[4] = "END108"
+v$ST_DIALOG[5] = "END109"
+$DIALOG_COUNT = 5
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+                
+repeat
+wait 0
+
+gosub @CSF_TURRETS_CHECKS
+
+if
+0184:   actor CSF_KEVIN_HANDLE health > 0
+jf @CSF_MSN_ACTION_QUEST_KEVIN_DEAD
+if
+0185:   car CSF_AIRCRAFT_HANDLE health > 250
+jf @CSF_MSN_ACTION_QUEST_AIRCRAFT_GO_BOOM_BOOM
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @CSF_MSN_ACTION_QUEST_PLAYER_DIED
+
+if
+0471:   actor PLAYER_ACTOR near_object_in_rectangle CSF_SUBMARINE_HANDLE radius 400.0 400.0 sphere 0
+    then
+    jump to @CSF_AIRCRAFT_SUBMARINE_JUMP
+    end
+
+until $DIALOG_END == 1
+
+v$OBJECTIVE = "GME1031"
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+
+/////////////////////Плавное затухание/////////////////////
+        
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 150
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+        
+wait 1
+
+repeat
+wait 0
+car.StorePos(CSF_AIRCRAFT_HANDLE,5@,3@,4@)
+0509: 0@ = distance_between_XY -6000.0 6000.0 and_XY 5@ 3@
+//0AD1: show_formatted_text_highpriority "DISTANCE: %f" time 2000 0@
+
+gosub @CSF_TURRETS_CHECKS
+
+if
+0184:   actor CSF_KEVIN_HANDLE health > 0
+jf @CSF_MSN_ACTION_QUEST_KEVIN_DEAD
+if
+0185:   car CSF_AIRCRAFT_HANDLE health > 250
+jf @CSF_MSN_ACTION_QUEST_AIRCRAFT_GO_BOOM_BOOM
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @CSF_MSN_ACTION_QUEST_PLAYER_DIED
+
+if
+0471:   actor PLAYER_ACTOR near_object_in_rectangle CSF_SUBMARINE_HANDLE radius 400.0 400.0 sphere 0
+    then
+    jump to @CSF_AIRCRAFT_SUBMARINE_JUMP
+    end
+
+until 0@ < 4500.0
+
+v$OBJECTIVE = "DUMMY"
+
+/////////////////////Плавное затухание/////////////////////
+        
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+        
+wait 1
+
+$MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\QUESTS\CSF\aircraft_fight.wav")
+Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
+Audiostream.Loop($MUSIC_ASSHOLE, 1)
+Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+    
+/////////////////////Плавное нарастание/////////////////////
+    
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+    
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+    
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+    
+wait 1 
+    
+////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////
+
+$RADIO_SOUND = Audiostream.Load("AUDIO\SOUNDS\Radio.mp3") 
+Audiostream.Loop($RADIO_SOUND, 1)  
+Audiostream.Volume($RADIO_SOUND) = 0.0
+Audiostream.PerformAction($RADIO_SOUND, PLAY)
+        
+/////////////////////Плавное нарастание/////////////////////
+        
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $SOUNDS_VOLUME // (float) 
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+        
+wait 1 
+        
+////////////////////////////////////////////////////////
+
+v$ST_DIALOG[0] = "END104"
+v$ST_DIALOG[1] = "ENM109"
+v$ST_DIALOG[2] = "ENM110"
+v$ST_DIALOG[3] = "ENM111"
+v$ST_DIALOG[4] = "ENM112"
+v$ST_DIALOG[5] = "END110"
+v$ST_DIALOG[6] = "END111"
+$DIALOG_COUNT = 6
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+                
+repeat
+wait 0
+
+gosub @CSF_TURRETS_CHECKS
+
+if
+0184:   actor CSF_KEVIN_HANDLE health > 0
+jf @CSF_MSN_ACTION_QUEST_KEVIN_DEAD
+if
+0185:   car CSF_AIRCRAFT_HANDLE health > 250
+jf @CSF_MSN_ACTION_QUEST_AIRCRAFT_GO_BOOM_BOOM
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @CSF_MSN_ACTION_QUEST_PLAYER_DIED
+
+if
+0471:   actor PLAYER_ACTOR near_object_in_rectangle CSF_SUBMARINE_HANDLE radius 400.0 400.0 sphere 0
+    then
+    jump to @CSF_AIRCRAFT_SUBMARINE_JUMP
+    end
+
+until $DIALOG_END == 1
+
+v$OBJECTIVE = "GME1032"
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+
+32@ = 0
+
+repeat
+wait 0
+
+gosub @CSF_TURRETS_CHECKS
+
+if
+0184:   actor CSF_KEVIN_HANDLE health > 0
+jf @CSF_MSN_ACTION_QUEST_KEVIN_DEAD
+if
+0185:   car CSF_AIRCRAFT_HANDLE health > 250
+jf @CSF_MSN_ACTION_QUEST_AIRCRAFT_GO_BOOM_BOOM
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @CSF_MSN_ACTION_QUEST_PLAYER_DIED
+
+if
+0471:   actor PLAYER_ACTOR near_object_in_rectangle CSF_SUBMARINE_HANDLE radius 400.0 400.0 sphere 0
+    then
+    jump to @CSF_AIRCRAFT_SUBMARINE_JUMP
+    end
+
+until 32@ > 3000
+
+v$OBJECTIVE = "GME1033"
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+
+/////////////////////Плавное затухание/////////////////////
+        
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 150
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+        
+wait 1
+
+CSF_PIZDEC_ON_FLAG = 1
+CSF_ENEMIES_DOWN = 0
+create_thread @RND_HYD
+create_thread @RND_HYD
+create_thread @RND_HYD
+
+HARDCORE_DANGER_FLAG_SCRIPTED = 1
+
+03C4: set_vagina_text $TIM_HEALTH type 1 GXT 'GME1029' // global_variable  // Score ~1~
+
+v$ST_DIALOG[0] = "END112"
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+repeat
+wait 0
+
+gosub @CSF_TURRETS_CHECKS
+
+if
+0184:   actor CSF_KEVIN_HANDLE health > 0
+jf @CSF_MSN_ACTION_QUEST_KEVIN_DEAD
+if
+0185:   car CSF_AIRCRAFT_HANDLE health > 250
+jf @CSF_MSN_ACTION_QUEST_AIRCRAFT_GO_BOOM_BOOM
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @CSF_MSN_ACTION_QUEST_PLAYER_DIED
+
+if
+0471:   actor PLAYER_ACTOR near_object_in_rectangle CSF_SUBMARINE_HANDLE radius 400.0 400.0 sphere 0
+    then
+    jump to @CSF_AIRCRAFT_SUBMARINE_JUMP
+    end
+    
+gosub @CSF_AIRCRAFT_HP_GET        
+until CSF_ENEMIES_DOWN >= 3
+
+v$OBJECTIVE = "DUMMY"
+
+32@ = 0
+
+repeat
+wait 0
+
+gosub @CSF_TURRETS_CHECKS
+
+if
+0184:   actor CSF_KEVIN_HANDLE health > 0
+jf @CSF_MSN_ACTION_QUEST_KEVIN_DEAD
+if
+0185:   car CSF_AIRCRAFT_HANDLE health > 250
+jf @CSF_MSN_ACTION_QUEST_AIRCRAFT_GO_BOOM_BOOM
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @CSF_MSN_ACTION_QUEST_PLAYER_DIED
+
+if
+0471:   actor PLAYER_ACTOR near_object_in_rectangle CSF_SUBMARINE_HANDLE radius 400.0 400.0 sphere 0
+    then
+    jump to @CSF_AIRCRAFT_SUBMARINE_JUMP
+    end
+
+gosub @CSF_AIRCRAFT_HP_GET
+until 32@ > 3000
+
+v$ST_DIALOG[0] = "END113"
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+create_thread @A_HUNT 0 1
+create_thread @A_HUNT 1 1
+
+CSF_ENEMIES_DOWN = 0
+
+v$OBJECTIVE = "GME1033"
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+
+repeat
+wait 0
+
+gosub @CSF_TURRETS_CHECKS
+
+if
+0184:   actor CSF_KEVIN_HANDLE health > 0
+jf @CSF_MSN_ACTION_QUEST_KEVIN_DEAD
+if
+0185:   car CSF_AIRCRAFT_HANDLE health > 250
+jf @CSF_MSN_ACTION_QUEST_AIRCRAFT_GO_BOOM_BOOM
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @CSF_MSN_ACTION_QUEST_PLAYER_DIED
+
+if
+0471:   actor PLAYER_ACTOR near_object_in_rectangle CSF_SUBMARINE_HANDLE radius 400.0 400.0 sphere 0
+    then
+    jump to @CSF_AIRCRAFT_SUBMARINE_JUMP
+    end
+    
+gosub @CSF_AIRCRAFT_HP_GET
+until CSF_ENEMIES_DOWN >= 2
+
+v$OBJECTIVE = "DUMMY"
+
+32@ = 0
+
+repeat
+wait 0
+
+gosub @CSF_TURRETS_CHECKS
+
+if
+0184:   actor CSF_KEVIN_HANDLE health > 0
+jf @CSF_MSN_ACTION_QUEST_KEVIN_DEAD
+if
+0185:   car CSF_AIRCRAFT_HANDLE health > 250
+jf @CSF_MSN_ACTION_QUEST_AIRCRAFT_GO_BOOM_BOOM
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @CSF_MSN_ACTION_QUEST_PLAYER_DIED
+
+if
+0471:   actor PLAYER_ACTOR near_object_in_rectangle CSF_SUBMARINE_HANDLE radius 400.0 400.0 sphere 0
+    then
+    jump to @CSF_AIRCRAFT_SUBMARINE_JUMP
+    end
+
+gosub @CSF_AIRCRAFT_HP_GET
+until 32@ > 1000
+
+v$OBJECTIVE = "GME1033"
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+
+CSF_ENEMIES_DOWN = 0
+
+v$ST_DIALOG[0] = "END114"
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+create_thread @RND_HYD
+create_thread @RND_HYD
+create_thread @RND_HYD
+
+create_thread @A_HUNT 0 1
+create_thread @A_HUNT 1 1
+
+50@ = 0
+
+repeat
+wait 0
+
+gosub @CSF_TURRETS_CHECKS
+
+if
+0184:   actor CSF_KEVIN_HANDLE health > 0
+jf @CSF_MSN_ACTION_QUEST_KEVIN_DEAD
+if
+0185:   car CSF_AIRCRAFT_HANDLE health > 250
+jf @CSF_MSN_ACTION_QUEST_AIRCRAFT_GO_BOOM_BOOM
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @CSF_MSN_ACTION_QUEST_PLAYER_DIED
+
+if
+0471:   actor PLAYER_ACTOR near_object_in_rectangle CSF_SUBMARINE_HANDLE radius 400.0 400.0 sphere 0
+    then
+    jump to @CSF_AIRCRAFT_SUBMARINE_JUMP
+    end
+
+if and
+50@ == 0
+CSF_ENEMIES_DOWN > 2
+    then
+    50@ = 1
+    v$ST_DIALOG[0] = "END115"
+    $DIALOG_COUNT = 0
+    $DIALOG_NOT_SKIP = 1
+    create_thread @DG_SYS2
+    end
+    
+gosub @CSF_AIRCRAFT_HP_GET
+until CSF_ENEMIES_DOWN >= 5
+
+v$OBJECTIVE = "DUMMY"
+
+v$ST_DIALOG[0] = "END116"
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+repeat
+wait 0
+
+gosub @CSF_TURRETS_CHECKS
+
+if
+0184:   actor CSF_KEVIN_HANDLE health > 0
+jf @CSF_MSN_ACTION_QUEST_KEVIN_DEAD
+if
+0185:   car CSF_AIRCRAFT_HANDLE health > 250
+jf @CSF_MSN_ACTION_QUEST_AIRCRAFT_GO_BOOM_BOOM
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @CSF_MSN_ACTION_QUEST_PLAYER_DIED
+
+gosub @CSF_AIRCRAFT_HP_GET
+until 0471:   actor PLAYER_ACTOR near_object_in_rectangle CSF_SUBMARINE_HANDLE radius 400.0 400.0 sphere 0
+
+:CSF_AIRCRAFT_SUBMARINE_JUMP
+
+v$ST_DIALOG[0] = "END117"
+v$ST_DIALOG[1] = "END118"
+$DIALOG_COUNT = 1
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+02DB: set_boat CSF_AIRCRAFT_HANDLE speed_to 5.0
+
+MISSION_MARKER = marker.CreateAboveObject(CSF_SUBMARINE_HANDLE)
+0165: set_marker MISSION_MARKER color_to 0
+
+object.StorePos(CSF_SUBMARINE_HANDLE,51@,52@,53@)
+
+repeat
+wait 0
+
+gosub @CSF_TURRETS_CHECKS
+
+if
+0184:   actor CSF_KEVIN_HANDLE health > 0
+jf @CSF_MSN_ACTION_QUEST_KEVIN_DEAD
+if
+0185:   car CSF_AIRCRAFT_HANDLE health > 250
+jf @CSF_MSN_ACTION_QUEST_AIRCRAFT_GO_BOOM_BOOM
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @CSF_MSN_ACTION_QUEST_PLAYER_DIED
+
+gosub @CSF_AIRCRAFT_HP_GET
+034E: move_object CSF_SUBMARINE_HANDLE to 51@ 52@ 0.0 speed 0.0 0.0 0.18 collision_check 1
+
+if and
+0E3D: is_key_just_pressed 69
+$CHEATS_ON == 1
+    then
+    object.PutAt(CSF_SUBMARINE_HANDLE,51@,52@,0.0)
+    break
+    end
+
+until 04E6:   object CSF_SUBMARINE_HANDLE near_point 51@ 52@ 0.0 radius 10.0 10.0 0.001 flag 0
+
+v$ST_DIALOG[0] = "END119"
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+//////////////////////////////////////
+
+0400: store_coords_to 1@ 2@ 3@ from_object CSF_SUBMARINE_HANDLE with_offset 0.0 -60.0 0.0
+CSF_SUBMARINE_ROCKET = object.Create(3790,1@,2@,3@)
+1@ = object.Angle(CSF_SUBMARINE_HANDLE)
+1@ -= 180.0    
+object.Angle(CSF_SUBMARINE_ROCKET) = 1@
+08D2: object CSF_SUBMARINE_ROCKET scale_model 2.0
+//2@ = marker.CreateAboveObject(CSF_SUBMARINE_ROCKET)
+//marker.SetIconSize(2@,2)
+//marker.SetColor(2@,0)
+
+//////////////////////////////////////
+
+repeat
+wait 0
+
+gosub @CSF_TURRETS_CHECKS
+
+if
+0184:   actor CSF_KEVIN_HANDLE health > 0
+jf @CSF_MSN_ACTION_QUEST_KEVIN_DEAD
+if
+0185:   car CSF_AIRCRAFT_HANDLE health > 250
+jf @CSF_MSN_ACTION_QUEST_AIRCRAFT_GO_BOOM_BOOM
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @CSF_MSN_ACTION_QUEST_PLAYER_DIED
+
+0400: store_coords_to 1@ 2@ 3@ from_object CSF_SUBMARINE_ROCKET with_offset 0.0 4.0 0.0
+object.PutAt(CSF_SUBMARINE_ROCKET,1@,2@,3@)
+until 0471:   actor PLAYER_ACTOR near_object_in_rectangle CSF_SUBMARINE_ROCKET radius 25.0 25.0 sphere 0
+
+object.StorePos(CSF_SUBMARINE_ROCKET,1@,2@,3@)
+0948: create_explosion_at 1@ 2@ 3@ type 6 camera_shake 5.0
+0750: set_object CSF_SUBMARINE_ROCKET visibility 0
+
+marker.Disable(MISSION_MARKER)
+
+0A30: repair_car CSF_AIRCRAFT_HANDLE
+car.SetImmunities(CSF_AIRCRAFT_HANDLE,1,1,1,1,1)
+
+v$ST_DIALOG[0] = "END120"
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+0465: remove_actor PLAYER_ACTOR from_turret_mode
+camera.Restore_WithJumpCut()
+0ED9: set_char_ignore_damage_anims PLAYER_ACTOR 0
+0151: remove_status_text $TIM_HEALTH
+0E68: set_player_control_pad 0 1 
+0E69: set_player_control_pad_movement 0 0
+05BB: AS_actor PLAYER_ACTOR fall_down 0 time_on_ground 500
+
+0169: set_fade_color_RGB 255 255 255
+fade 0 500
+$HUD_REMOVE = 1
+wait 500
+
+:CSF_AIRCRAFT_GO_DOWN
+
+05BE: AS_actor CSF_KEVIN_HANDLE die
+
+0731: set_car CSF_AIRCRAFT_HANDLE y_angle_to 5.0
+car.StorePos(CSF_AIRCRAFT_HANDLE,1@,2@,3@)
+3@ -= 10.0
+0EB4: set_car_coordinates_simple CSF_AIRCRAFT_HANDLE position 1@ 2@ 3@
+
+04C4: store_coords_to 4@ 5@ 6@ from_actor PLAYER_ACTOR with_offset 0.0 0.0 50.0
+actor.PutAtNoOffset(PLAYER_ACTOR,4@,5@,6@)
+actor.SetImmunities(PLAYER_ACTOR,1,1,1,1,1)
+0E68: set_player_control_pad 0 1 
+0E69: set_player_control_pad_movement 0 1
+
+repeat
+wait 0
+3@ -= 0.01
+car.StorePos(CSF_AIRCRAFT_HANDLE,1@,2@,4@)
+0EB4: set_car_coordinates_simple CSF_AIRCRAFT_HANDLE position 1@ 2@ 3@ 
+until 8E92: not is_char_really_in_air PLAYER_ACTOR
+
+audiostream.PerformAction(CSF_AIRCRAFT_ENGINE_SOUND,STOP)
+audiostream.Release(CSF_AIRCRAFT_ENGINE_SOUND)
+
+//0684: detach_car $PARK_CAR[53] 0.0 0.0 0.0 collision_detection 1
+//0684: detach_car $PARK_CAR[54] 0.0 0.0 0.0 collision_detection 1
+//0684: detach_car $PARK_CAR[55] 0.0 0.0 0.0 collision_detection 1
+
+actor.SetImmunities(PLAYER_ACTOR,0,0,0,0,0)
+
+fade 1 500
+$HUD_REMOVE = 0
+
+///////////////////////////////////////////////////////////////////
+
+$RADIO_SOUND = Audiostream.Load("AUDIO\SOUNDS\Radio.mp3") 
+Audiostream.Loop($RADIO_SOUND, 1)  
+Audiostream.Volume($RADIO_SOUND) = 0.0
+Audiostream.PerformAction($RADIO_SOUND, PLAY)
+        
+/////////////////////Плавное нарастание/////////////////////
+        
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $SOUNDS_VOLUME // (float) 
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+        
+wait 1 
+
+v$ST_DIALOG[0] = "END121"
+v$ST_DIALOG[1] = "END122"
+v$ST_DIALOG[2] = "END123"
+$DIALOG_COUNT = 2
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+repeat
+wait 0
+3@ -= 0.01
+car.StorePos(CSF_AIRCRAFT_HANDLE,1@,2@,4@)
+0EB4: set_car_coordinates_simple CSF_AIRCRAFT_HANDLE position 1@ 2@ 3@
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @CSF_MSN_ACTION_QUEST_PLAYER_DIED
+
+until $DIALOG_END == 1
+
+0169: set_fade_color_RGB 0 0 0
+
+v$ST_DIALOG[0] = "END124"
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+/////////////////////Плавное затухание/////////////////////
+        
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+            
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+            
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+            
+wait 1
+
+MISSION_MARKER = marker.CreateAboveCar($PARK_CAR[52])
+07E0: set_marker MISSION_MARKER type_to 1
+marker.SetIconSize(MISSION_MARKER,2)
+
+v$OBJECTIVE = "GME1034"
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+
+car.SetImmunities($PARK_CAR[52],0,0,0,0,0)
+
+repeat
+wait 0
+07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 0
+3@ -= 0.01
+car.StorePos(CSF_AIRCRAFT_HANDLE,1@,2@,4@)
+0EB4: set_car_coordinates_simple CSF_AIRCRAFT_HANDLE position 1@ 2@ 3@
+
+0D0C: get_car $PARK_CAR[52] component "door_lf_dummy" matrix_pointer_to 8@ // IF and SET
+0D06: get_matrix 8@ position_to 5@ 6@ 7@
+0D54: draw_corona_with_extra_params_texture 0 color 255 0 0 155 on_entity 0 at 5@ 6@ 7@ size 0.5 far_clip 25.0 near_clip 0.01 flare 0 enable_reflection 1 check_obstacles 0 flash_while_fading 0 fade_speed 15.0 only_from_below 0
+
+if
+82BF: not  car $PARK_CAR[52] sunk
+jf @CSF_MSN_ACTION_QUEST_HYDRA_DROWNED
+if
+not car.Wrecked($PARK_CAR[52])
+jf @CSF_MSN_ACTION_QUEST_HYDRA_WRECKED
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @CSF_MSN_ACTION_QUEST_PLAYER_DIED
+
+until 0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos 5@ 6@ 7@ radius 2.0
+
+07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 1
+
+marker.Disable(MISSION_MARKER)
+
+fade 0 250
+$HUD_REMOVE = 1
+wait 250
+
+0A97: 11@ = car $PARK_CAR[52] struct 
+11@ += 9 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+08BD: set 12@ bit 2 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+0A97: 11@ = car $PARK_CAR[52] struct 
+11@ += 4 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+08BD: set 12@ bit 1 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+24@ = 100.0 
+0A97: 22@ = car $PARK_CAR[52] struct 
+0A8E: 23@ = 22@ + 5 // int 
+0A8C: write_memory 23@ size 4 value 24@ virtual_protect 0 
+08C3: clear 12@ bit 1 
+08C3: clear 12@ bit 2 
+0A97: 11@ = car $PARK_CAR[52] struct 
+11@ += 18 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+08BD: set 12@ bit 2 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 2
+wait 0
+
+036A: put_actor PLAYER_ACTOR in_car $PARK_CAR[52]
+0684: detach_car $PARK_CAR[52] 0.0 0.0 0.0 collision_detection 1
+car.RemoveReferences($PARK_CAR_ID[52])
+
+wait 500
+
+fade 1 250
+$HUD_REMOVE = 0
+wait 250
+
+v$OBJECTIVE = "GME1035"
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+
+50@ = 0
+51@ = 0
+32@ = 0
+
+create_thread @SIEGE2
+
+repeat
+wait 0
+
+if and
+88FE: not  text_box_displayed
+not 51@ == 4
+then
+if 
+51@ == 0
+    then
+    51@ += 1
+    text.ShowTextBox('HINT55')
+    jump to @FUCKEEEEEFFOKDOG
+    end
+if
+51@ == 1
+    then
+    51@ += 1
+    text.ShowTextBox('HINT56')
+    jump to @FUCKEEEEEFFOKDOG
+    end        
+if
+51@ == 2
+    then
+    51@ += 1
+    text.ShowTextBox('HINT58')    
+    end    
+end
+:FUCKEEEEEFFOKDOG
+
+3@ -= 0.01
+if
+3@ > -95
+then
+car.StorePos(CSF_AIRCRAFT_HANDLE,1@,2@,4@)
+0EB4: set_car_coordinates_simple CSF_AIRCRAFT_HANDLE position 1@ 2@ 3@
+end
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @CSF_MSN_ACTION_QUEST_PLAYER_DIED
+
+if and
+50@ == 0
+32@ > 5000
+    then
+    50@ = 1
+    CSF_ENEMIES_DOWN = 666
+    $SAVESTATUS = 0    
+    create_thread @RND_HYD
+    create_thread @RND_HYD
+    create_thread @RND_HYD
+    create_thread @RND_HYD
+    create_thread @RND_HYD
+    wait 2000
+    v$ST_DIALOG[0] = "END125"
+    $DIALOG_COUNT = 0
+    $DIALOG_NOT_SKIP = 1
+    create_thread @DG_SYS2        
+    end
+    
+if 
+056E:   car $PARK_CAR[52] defined
+    then
+    if and
+    02BF:   car $PARK_CAR[52] sunk
+    not car.Wrecked($PARK_CAR[52])
+        then
+        020B: explode_car $PARK_CAR[52]
+        end
+    end 
+    
+car.StorePos($PARK_CAR[52],8@,9@,10@)
+000F: 8@ -= 10.0
+000F: 9@ -= 10.0
+000F: 10@ -= 10.0
+car.StorePos($PARK_CAR[52],5@,6@,7@)
+000F: 5@ -= -10.0
+000F: 6@ -= -10.0
+000F: 7@ -= -10.0
+
+if and           
+0356:   explosion_type -1 in_cube_cornerA 8@ 9@ 10@ cornerB 5@ 6@ 7@
+33@ > 3000
+    then
+    33@ = 0
+    0227: 0@ = car $PARK_CAR[52] health
+    0@ -= 2500
+    car.Health($PARK_CAR[52]) = 0@
+    if
+    0@ < 250
+        then
+        020B: explode_car $PARK_CAR[52]
+        end
+    end       
+
+until 00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA 3000.0 3000.0 0.0 cornerB -3000.0 -3000.0 3000.0
+
+500@ = 0
+
+if
+056E:   car $PARK_CAR[52] defined
+then
+if
+actor.InCar(PLAYER_ACTOR,$PARK_CAR[52])
+    then
+    0E09: mark_car_as_needed $PARK_CAR[52]
+    500@ = 1
+    end
+end
+
+CSF_PIZDEC_ON_FLAG = 0
+HARDCORE_DANGER_FLAG_SCRIPTED = 0
+$FEATHERBPCK_FLAG = 0
+CSF_CURRENT_PROGRESS_FLAG = 4
+$ALLOW_PLAYER_SLOWMOTION = 1
+0459: end_thread_named 'SIEGE2'
+
+v$ST_DIALOG[0] = "END126"
+$DIALOG_COUNT = 0
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+//CARMA_BAD_POINTS += 30
+//Audiostream.Loop($KARMA_BAD,0)
+//Audiostream.PerformAction($KARMA_BAD, PLAY)
+//Audiostream.Volume($KARMA_BAD) = $SOUNDS_VOLUME
+//CARMA_GOOD_POINTS -= 15
+
+create_thread @SIEGE
+
+v$OBJECTIVE = "DUMMY"
+$ONMISSION = 0
+MAIN_QUEST_TEAMMATES_REMOVE_FLAG = 0
+MAIN_QUEST_MUSIC_FLAG = 0
+CAMP_DONT_SAY_HELLO_FLAG = 0
+PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 0
+$NOTSPAWN_ETC = 0
+$SPECIAL_INFECTED_NOT_SPAWN_FLAG = 0
+$SURVIVORS_DONT_SPAWN_FLAG = 0
+DRAW_NOTURRET_CROSSHAIR_FLAG = 0
+$QUEST_TYPE = -1
+0629: change_integer_stat 258 to 0
+
+$TEMP_XP = 150000
+008D: $TEMP_XP = integer $TEMP_XP to_float
+0069: $TEMP_XP *= $XP_COEFF // (float)
+if
+PERK_CHARISMA == 2
+then
+$TEMP_XP *= CHARISMA_LEVEL2_XP_COEFF
+end
+008C: $TEMP_XP = float $TEMP_XP to_integer
+0058: $PLAYER_XP += $TEMP_XP // (int)
+
+v$ACHIEVEMNT = "SFQ16E"
+$GQUEST_GOT_FLAG = 1
+0AF1: write_int 3 to_ini_file "data\survival.set" section "SRV" key "SFQ16GT"
+$GQST_SLCTD_RGIN = 4
+$GQEST_SLCTD_QST = 16
+
+create_thread @A_HUNT
+create_thread @RND_HYD
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+jump to @ASSUDALENIE_KODA282PIZDALODKA  
+
+////////////////////////////ПЛЫВЕМ ПЛЫВЕМ ПЛЫВЕМ С КСЕНУСОМ, НАС НЕ ЕБУТ////////////////////////////
+
+:CSF_AIRCRAFT_MYERS_IS_ALIVE_JUMP
+
+create_thread @CSF_ARC
+
+0459: end_thread_named 'FPS_AUT'
+
+repeat
+wait 0
+
+0EFE: get_loaded_library "GraphicsTweaker.SA.asi" store_to 0@
+0@ += 0x0041BB8
+0A8C: write_memory 0@ size 4 value 2000.0 virtual_protect 0
+
+until 056E:   car $PARK_CAR[55] defined
+
+repeat
+wait 0
+07C0: load_path 61
+until 07C1:   path 61 available
+    
+05EB: assign_car CSF_AIRCRAFT_HANDLE to_path 61
+
+0936: set_camera -3149.876953 1676.196289 85.079170 position_to -3366.005127 2331.863037 44.612888 time 55000 smooth_transition 1
+0920: point_camera -3148.916260 1676.446777 84.959808 transverse_to -3365.213867 2331.255371 44.544884 time 55000 smooth_transition 1
+
+0777: delete_objects_in_object_group "statesiege"
+
+$SAVESTATUS = 1
+wait 100
+cinema.Widescreen(1)
+BLACK_POLOSKI_ON = 1
+0464: put_actor PLAYER_ACTOR into_turret_on_car CSF_AIRCRAFT_HANDLE at_car_offset 0.0 0.0 0.0 position 1 shooting_angle_limit 360.0 with_weapon 0
+
+0@ = car.Angle(CSF_AIRCRAFT_HANDLE)
+0@ -= 90.0 
+0858: set_player PLAYER_CHAR scan_horizon_to_angle 0@ rotation_speed 0@
+
+fade 1 3000
+create_thread @REFR_3D
+
+32@ = 0
+repeat
+wait 0
+
+0EFE: get_loaded_library "GraphicsTweaker.SA.asi" store_to 0@
+0@ += 0x0041BB8
+0A8C: write_memory 0@ size 4 value 2000.0 virtual_protect 0
+
+if and
+0E3D: is_key_just_pressed 69
+$CHEATS_ON == 1
+    then
+    break
+    end
+
+until 32@ > 50000
+
+//wait 50000
+
+fade 0 300
+wait 300
+
+0936: set_camera -3149.876953 1676.196289 85.079170 position_to -3366.005127 2331.863037 44.612888 time 1 smooth_transition 1
+0920: point_camera -3148.916260 1676.446777 84.959808 transverse_to -3365.213867 2331.255371 44.544884 time 1 smooth_transition 1
+
+05EC: release_car CSF_AIRCRAFT_HANDLE from_path
+0873: release_path 61
+
+repeat
+wait 0
+07C0: load_path 62
+until 07C1:   path 62 available
+    
+05EB: assign_car CSF_AIRCRAFT_HANDLE to_path 62
+
+//wait 1000
+
+0936: set_camera -4485.153809 5635.467285 71.945168 position_to -5406.860352 5960.925781 48.888325 time 75000 smooth_transition 1
+0920: point_camera -4486.095703 5635.800293 71.901299 transverse_to -5407.804688 5961.248047 48.824196 time 75000 smooth_transition 1
+
+fade 1 3000
+
+if and
+LV_BOMB_ACTIVATED_FLAG == 1
+LS_BOMB_ACTIVATED_FLAG == 1
+SF_BOMB_ACTIVATED_FLAG == 1
+then
+v$ST_DIALOG[0] = "DUMMY"
+v$ST_DIALOG[1] = "DUMMY"
+v$ST_DIALOG[2] = "ENB131"
+v$ST_DIALOG[3] = "ENB132"
+v$ST_DIALOG[4] = "ENB133"
+v$ST_DIALOG[5] = "ENB134"
+v$ST_DIALOG[6] = "ENB135"
+v$ST_DIALOG[7] = "ENB136"
+v$ST_DIALOG[8] = "ENB137"
+v$ST_DIALOG[9] = "ENB138"
+v$ST_DIALOG[10] = "ENB139"
+v$ST_DIALOG[11] = "END140"
+v$ST_DIALOG[12] = "END141"
+v$ST_DIALOG[13] = "END142"
+v$ST_DIALOG[14] = "END143"
+$DIALOG_COUNT = 14
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+300@ = 0 
+else
+v$ST_DIALOG[0] = "DUMMY"
+v$ST_DIALOG[1] = "DUMMY"
+v$ST_DIALOG[2] = "DUMMY"
+v$ST_DIALOG[3] = "DUMMY"
+v$ST_DIALOG[4] = "DUMMY"
+v$ST_DIALOG[5] = "DUMMY"
+v$ST_DIALOG[6] = "DUMMY"
+v$ST_DIALOG[7] = "DUMMY"
+v$ST_DIALOG[8] = "DUMMY"
+v$ST_DIALOG[9] = "DUMMY"
+v$ST_DIALOG[10] = "END140"
+v$ST_DIALOG[11] = "END141"
+v$ST_DIALOG[12] = "END142"
+v$ST_DIALOG[13] = "END143"
+$DIALOG_COUNT = 13
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+300@ = 1
+end
+
+32@ = 0
+50@ = 0
+
+repeat
+wait 0
+
+if and
+300@ == 0
+$DIALOG_CURRENT_INT == 4
+    then
+    300@ = 1
+    0169: set_fade_color_RGB 255 255 255
+    28@ = Audiostream.Load("AUDIO\SOUNDS\OTHER\CASINO\nuke4.mp3")
+    Audiostream.PerformAction(28@, PLAY)
+    Audiostream.Loop(28@, 0)
+    Audiostream.Volume(28@) = $SOUNDS_VOLUME
+    fade 0 2500
+    wait 2500
+    $DIALOG_PAUSE = 1
+    wait 5000    
+    fade 1 3000
+    wait 1000
+    $DIALOG_PAUSE = 0
+    wait 2000
+    0169: set_fade_color_RGB 0 0 0
+    end
+
+if and
+0E3D: is_key_just_pressed 69
+$CHEATS_ON == 1
+    then
+    break
+    end
+    
+if and
+0EEB: locate_car_distance_to_coordinates CSF_AIRCRAFT_HANDLE pos -5593.13574 6022.6875 3.235727071 radius 1.0
+50@ == 0
+    then
+    05ED: freeze_car CSF_AIRCRAFT_HANDLE while_on_path
+    50@ = 1
+    end    
+
+until 32@ > 60000
+
+//wait 60000
+
+fade 0 300
+wait 300
+
+0936: set_camera -4485.153809 5635.467285 71.945168 position_to -5406.860352 5960.925781 48.888325 time 1 smooth_transition 1
+0920: point_camera -4486.095703 5635.800293 71.901299 transverse_to -5407.804688 5961.248047 48.824196 time 1 smooth_transition 1
+
+///////////////////////////////////////////////////////////
+
+:CAR_CREATE_BARGE1
+if
+model.Available(15487)
+then
+
+CSF_BARGE1_HANDLE = car.Create(15487,0.0,0.0,0.0)
+
+repeat
+wait 0
+07C0: load_path 63
+until 07C1:   path 63 available
+    
+05EB: assign_car CSF_BARGE1_HANDLE to_path 63
+
+if
+model.Available(15487)
+then
+//model.Destroy(15487)
+end
+
+else
+model.Load(15487)
+mload
+wait 0
+jump to @CAR_CREATE_BARGE1
+end
+
+:CAR_CREATE_BARGE2
+if
+model.Available(15487)
+then
+
+CSF_BARGE2_HANDLE = car.Create(15487,0.0,0.0,0.0)
+
+repeat
+wait 0
+07C0: load_path 64
+until 07C1:   path 64 available
+    
+05EB: assign_car CSF_BARGE2_HANDLE to_path 64
+
+if
+model.Available(15487)
+then
+//model.Destroy(15487)
+end
+
+else
+model.Load(15487)
+mload
+wait 0
+jump to @CAR_CREATE_BARGE2
+end
+
+///////////////////////////////////////////////////////////
+
+0936: set_camera -5760.156738 6078.101074 5.845250 position_to -6087.270508 6184.759277 7.196074 time 35000 smooth_transition 1
+0920: point_camera -5759.206055 6077.791016 5.846709 transverse_to -6086.322754 6184.440918 7.185170 time 35000 smooth_transition 1
+
+///////////////////////////////////////////////////////////
+
+gosub @CSF_PEDIKS_TO_OSTROV_CREATE
+
+fade 1 3000
+
+32@ = 0
+repeat
+wait 0
+
+0@ = car.Angle(CSF_AIRCRAFT_HANDLE)
+//0AD1: show_formatted_text_highpriority "AVIANOSEC ANGLE: %f" time 2000 0@
+
+if and
+0E3D: is_key_just_pressed 69
+$CHEATS_ON == 1
+    then
+    break
+    end
+
+until 32@ > 25000
+
+//wait 25000
+
+fade 0 300
+wait 300
+
+0936: set_camera -5760.156738 6078.101074 5.845250 position_to -6087.270508 6184.759277 7.196074 time 1 smooth_transition 1
+0920: point_camera -5759.206055 6077.791016 5.846709 transverse_to -6086.322754 6184.440918 7.185170 time 1 smooth_transition 1
+
+for 0@ = 3 to 25
+actor.DestroyInstantly($ARMY69_2[0@])
+$ARMY69_2[0@] -= 69
+end
+
+0362: remove_actor $ARMY69_2[0] from_car_and_place_at -6251.2515 5975.7407 8.9806
+actor.PutAtNoOffset($ARMY69_2[0],-6251.2515, 5975.7407, 8.9806)
+actor.Angle($ARMY69_2[0]) = 278.0291
+create_thread @PED_BKP $ARMY69_2[0] 371
+
+0362: remove_actor $ARMY69_2[1] from_car_and_place_at -6252.2939 5976.3804 9.1341
+actor.PutAtNoOffset($ARMY69_2[1],-6252.2939 5976.3804 9.1341)
+actor.Angle($ARMY69_2[1]) = 277.1114
+create_thread @PED_BKP $ARMY69_2[1] 371
+
+0362: remove_actor $ARMY69_2[2] from_car_and_place_at -6252.0947 5974.5728 8.9786
+actor.PutAtNoOffset($ARMY69_2[2],-6252.0947 5974.5728 8.9786)
+actor.Angle($ARMY69_2[2]) = 281.5788
+create_thread @PED_BKP $ARMY69_2[2] 371
+
+while not model.Available($RANDOM_MODE_MODEL)
+wait 0
+model.Load($RANDOM_MODE_MODEL)
+mload
+end
+
+$ARMY69_2[4] = actor.Create(26,$RANDOM_MODE_MODEL,-6248.2563, 5976.9307, 8.7663) //Игрок    
+0D10: set_actor $ARMY69_2[4] alpha 255 // IF and SET
+actor.Angle($ARMY69_2[4]) = 272.8257
+create_thread @PED_BKP $ARMY69_2[4] 371
+
+while not model.Available(14645)
+wait 0
+model.Load(14645)
+mload
+end
+
+$ARMY69_2[3] = actor.Create(26,14645,-6249.8984, 5977.7329, 8.9926) //Люс    
+0D10: set_actor $ARMY69_2[3] alpha 255 // IF and SET
+actor.Angle($ARMY69_2[3]) = 257.623
+create_thread @PED_BKP $ARMY69_2[3] 371
+
+while not model.Available(18121)
+wait 0
+model.Load(18121)
+end
+
+0E2E: create_render_object_to_char_bone $ARMY69_2[3] model 18121 bone 7 offset 0.14 0.12 0.05 rotation 90.0 0.0 10.0 store_to 0@
+
+camera.SetPosition(-6256.700684 5976.650879 9.790471,0.0,0.0,0.0)
+camera.PointAt(-6256.700684 5976.650879 9.790471,2)
+32@ = 0
+
+06A9: AS_actor $ARMY69_2[0] look_at_point -5605.457 6032.417 28.3943 999999 ms
+06A9: AS_actor $ARMY69_2[1] look_at_point -5605.457 6032.417 28.3943 999999 ms
+06A9: AS_actor $ARMY69_2[2] look_at_point -5605.457 6032.417 28.3943 999999 ms
+06A9: AS_actor PLAYER_ACTOR look_at_point -5605.457 6032.417 28.3943 999999 ms
+
+05EC: release_car CSF_BARGE1_HANDLE from_path
+05EC: release_car CSF_BARGE2_HANDLE from_path
+0873: release_path 63
+0873: release_path 64
+
+car.StorePos(CSF_AIRCRAFT_HANDLE,1@,2@,3@)
+//05EC: release_car CSF_AIRCRAFT_HANDLE from_path
+//0873: release_path 62
+0EB4: set_car_coordinates_simple CSF_AIRCRAFT_HANDLE position 1@ 2@ 3@
+//car.Angle(CSF_AIRCRAFT_HANDLE) = 71.5
+
+0338: set_car CSF_AIRCRAFT_HANDLE visibility 0
+if
+056E:   car $PARK_CAR[52] defined
+then
+0338: set_car $PARK_CAR[52] visibility 0
+end
+
+if
+056E:   car $PARK_CAR[53] defined
+then
+0338: set_car $PARK_CAR[53] visibility 0
+end
+
+if
+056E:   car $PARK_CAR[54] defined
+then
+0338: set_car $PARK_CAR[54] visibility 0
+end
+
+if
+056E:   car $PARK_CAR[55] defined
+then
+0338: set_car $PARK_CAR[55] visibility 0
+end
+
+wait 0
+create_thread @CSFARC2
+
+/////////////////////Плавное затухание/////////////////////
+        
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1000
+
+fade 1 3000
+
+////////////////////////////////////////////////////////
+
+$MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\QUESTS\CSF\goodtheme.wav")
+Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
+Audiostream.Loop($MUSIC_ASSHOLE, 1)
+Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+
+/////////////////////Плавное нарастание/////////////////////
+    
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+    
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+    
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+    
+wait 1 
+    
+////////////////////////////////////////////////////////
+
+v$ST_DIALOG[0] = "END144"
+v$ST_DIALOG[1] = "END145"
+v$ST_DIALOG[2] = "END146"
+v$ST_DIALOG[3] = "END147"
+v$ST_DIALOG[4] = "DUMMY"
+v$ST_DIALOG[5] = "END148"
+v$ST_DIALOG[6] = "DUMMY"
+v$ST_DIALOG[7] = "END149"
+$DIALOG_COUNT = 7
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+
+repeat
+wait 0
+until $DIALOG_END == 1
+
+//////////////////////////////////////////////////////////////////
+
+4@ = -90.0
+
+0407: store_coords_to 1@ 2@ 3@ from_car CSF_AIRCRAFT_HANDLE with_offset 0.0 4@ 15.0
+
+car.SetImmunities(CSF_AIRCRAFT_HANDLE,1,1,1,1,1)
+
+0169: set_fade_color_RGB 255 255 255
+fade 0 2000
+
+repeat
+wait 100
+4@ += 13.0
+0407: store_coords_to 1@ 2@ 3@ from_car CSF_AIRCRAFT_HANDLE with_offset 0.0 4@ 15.0
+0948: create_explosion_at 1@ 2@ 3@ type 6 camera_shake 1.0
+until 4@ >= 100.0
+
+//////////////////////////////////////////////////////////////////
+
+car.StorePos(CSF_AIRCRAFT_HANDLE,1@,2@,3@)
+
+repeat
+wait 0
+until 816B: not  fading
+
+//0731: set_car CSF_AIRCRAFT_HANDLE y_angle_to 5.0
+car.StorePos(CSF_AIRCRAFT_HANDLE,1@,2@,3@)
+3@ -= 2.5
+0EB4: set_car_coordinates_simple CSF_AIRCRAFT_HANDLE position 1@ 2@ 3@
+//car.Angle(CSF_AIRCRAFT_HANDLE) = 71.5
+0@ = car.Angle(CSF_AIRCRAFT_HANDLE)
+//0AD1: show_formatted_text_highpriority "AVIANOSEC ANGLE: %f" time 2000 0@
+
+32@ = 0
+
+wait 500
+
+0169: set_fade_color_RGB 255 255 255
+fade 1 1000
+
+repeat
+wait 0
+3@ -= 0.01
+car.StorePos(CSF_AIRCRAFT_HANDLE,1@,2@,4@)
+0EB4: set_car_coordinates_simple CSF_AIRCRAFT_HANDLE position 1@ 2@ 3@
+//car.Angle(CSF_AIRCRAFT_HANDLE) = 71.5
+0@ = car.Angle(CSF_AIRCRAFT_HANDLE)
+//0AD1: show_formatted_text_highpriority "AVIANOSEC ANGLE: %f" time 2000 0@
+until 32@ > 2000
+
+0A48: enable_menu_access_in_widescreen_mode 0 
+$TITLES_ENDED = 0
+create_thread @FIN_TIT
+
+//гыы, птычкы, КУРЛЫК КУРЛЫК КУРЛЫК!!!
+0A8C: write_memory 0x053E170 size 4 value 491166696 virtual_protect 1
+0A8C: write_memory 0x053E174 size 1 value 0 virtual_protect 1
+04C4: store_coords_to 1@ 2@ 3@ from_actor $ARMY69_2[4] with_offset 0.0 -5.0 7.5
+04C4: store_coords_to 4@ 5@ 6@ from_actor $ARMY69_2[4] with_offset 0.0 10.0 8.5
+0092: 1@ = float 1@ to_integer
+0092: 2@ = float 2@ to_integer
+0092: 3@ = float 3@ to_integer
+0092: 4@ = float 4@ to_integer
+0092: 5@ = float 5@ to_integer
+0092: 6@ = float 6@ to_integer
+0876: unknown_cube_cornera 1@ 2@ 3@ cornerB 4@ 5@ 6@ flag 6 flag 2
+
+repeat
+wait 0
+
+3@ -= 0.01
+car.StorePos(CSF_AIRCRAFT_HANDLE,1@,2@,4@)
+0EB4: set_car_coordinates_simple CSF_AIRCRAFT_HANDLE position 1@ 2@ 3@
+//car.Angle(CSF_AIRCRAFT_HANDLE) = 71.5
+0@ = car.Angle(CSF_AIRCRAFT_HANDLE)
+//0AD1: show_formatted_text_highpriority "AVIANOSEC ANGLE: %f" time 2000 0@
+      
+if
+0E3D: is_key_just_pressed 27 
+    then
+    break
+    end
+
+until false
+
+$TITLES_ENDED = 1
+0A48: enable_menu_access_in_widescreen_mode 1
+0169: set_fade_color_RGB 0 0 0
+fade 0 5000
+wait 5000
+
+$ALLOW_HUNGER = 0
+$DELETE_SOUND = 1
+$SAVER_COMING = 0 
+$FPS_COUNTER_ENABLED = 0 
+$FPS_COUNTER_ENABLED2 = 0    
+$SATIETY_LEVEL = 600.0
+$FATIGUE_LEVEL = 0.0
+
+$STATS_SHOW_FLAG = 0
+$STATS_SHOW_GAMEMODE = 1
+create_thread @STS_SHW
+
+$STATS_CAN_BE_SKIPPED = 0
+
+0169: set_fade_color_RGB 0 0 0
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT114_GOT"                        
+if and
+0@ == 0
+$CHEATED_FLAG == 0
+then
+v$ACHIEVEMNT = "ACH114"
+$ACHIEVEMENT_GOT_FLAG = 1                                    
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT114_GOT"
+end
+
+while $ACHIEVEMENT_GOT_FLAG == 1
+wait 0
+end
+
+:CHECKING_STATS_CSF_1
+wait 0
+
+if
+$STATS_CAN_BE_SKIPPED == 1
+then
+if or
+$STATS_SHOW_END == 1
+00E1:   player 0 pressed_key 17
+jf @CHECKING_STATS_CSF_1
+else
+jump to @CHECKING_STATS_CSF_1
+end
+
+$STATS_SHOW_END = 1
+$STATS_TOTAL_SHOW_OFF_FLAG = 1
+
+32@ = 0
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 10000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end 
+
+/////////////////////////////////////////////////////////////////////
+
+0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
+
+end_thread
+
+jump to @ASSUDALENIE_KODA282PIZDALODKA  
+
+:ASSKOD_PROVALA282PIZDALODKA
+
+if
+075C:   marker MISSION_CHECKPOINT enabled
+then
+marker.Disable(MISSION_CHECKPOINT)
+end
+ 
+mission_cleanup     
+return 
+
+:ASSUDALENIE_KODA282PIZDALODKA
+
+$ONMISSION = 0
+
+if
+075C:   marker MISSION_CHECKPOINT enabled
+then
+marker.Disable(MISSION_CHECKPOINT)
+end
+
+if
+500@ == 1
+then
+0E09: mark_car_as_needed $PARK_CAR[52]
+end
+    
+mission_cleanup
+
+if
+500@ == 1
+then
+0E09: mark_car_as_needed $PARK_CAR[52]
+end
+    
+return
+
+:CSF_MSN_ACTION_QUEST_KEVIN_DEAD
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+text.ClearAll()
+v$FAILED_TEXT = "MS_FL74" 
+create_thread @GMV_OVR
+mission_cleanup    
+return
+
+:CSF_MSN_ACTION_QUEST_HYDRA_DROWNED
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+text.ClearAll()
+v$FAILED_TEXT = "MS_FL75" 
+create_thread @GMV_OVR
+mission_cleanup    
+return
+
+:CSF_MSN_ACTION_QUEST_HYDRA_WRECKED
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+text.ClearAll()
+v$FAILED_TEXT = "MS_FL44"
+create_thread @GMV_OVR
+mission_cleanup    
+return
+
+:CSF_TURRETS_CHECKS
+
+if and
+$CHEATS_ON == 1
+0AB0:   key_pressed 81
+then
+if
+8471: not  actor PLAYER_ACTOR near_object_in_rectangle CSF_SUBMARINE_HANDLE radius 400.0 400.0 sphere 0
+    then
+    0407: store_coords_to 1@ 2@ 3@ from_car CSF_AIRCRAFT_HANDLE with_offset 0.0 10.0 0.0
+    car.PutAt(CSF_AIRCRAFT_HANDLE,1@,2@,3.3)
+    end
+end       
+
+0E64: get_camera_mode 1@
+if
+not 1@ == 51
+then
+0159: camera_on_ped PLAYER_ACTOR mode 51 switchstyle 2
+end
+
+if
+00E1:   player 0 pressed_key 6
+then
+0464: put_actor PLAYER_ACTOR into_turret_on_car CSF_AIRCRAFT_HANDLE at_car_offset 0.0 80.0 16.68 position 1 shooting_angle_limit 360.0 with_weapon 36
+end
+
+return
+
+:CSF_MSN_ACTION_QUEST_PLAYER_DIED
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+        
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+///////////////////////////////////////////////////////////
+
+text.ClearAll()
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+v$FAILED_TEXT = "MS_FL80"
+create_thread @GMV_OVR
+    
+return
+
+:CSF_MSN_ACTION_QUEST_AIRCRAFT_GO_BOOM_BOOM
+
+05BE: AS_actor CSF_KEVIN_HANDLE die
+
+4@ = -90.0
+
+0407: store_coords_to 1@ 2@ 3@ from_car CSF_AIRCRAFT_HANDLE with_offset 0.0 4@ 15.0
+
+car.SetImmunities(CSF_AIRCRAFT_HANDLE,1,1,1,1,1)
+
+repeat
+wait 100
+4@ += 13.0
+0407: store_coords_to 1@ 2@ 3@ from_car CSF_AIRCRAFT_HANDLE with_offset 0.0 4@ 15.0
+0948: create_explosion_at 1@ 2@ 3@ type 6 camera_shake 1.0
+until 4@ >= 100.0
+
+05BE: AS_actor PLAYER_ACTOR die
+020B: explode_car CSF_AIRCRAFT_HANDLE
+
+0151: remove_status_text $TIM_HEALTH
+
+/////////////////////Плавное затухание/////////////////////
+        
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+            
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+            
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+            
+wait 1
+
+return
+
+:CSF_AIRCRAFT_HP_GET
+
+//////////////////////////////////////////////////////
+
+5@ = 15000
+1@ = car.Health(CSF_AIRCRAFT_HANDLE)
+                        
+0085: 2@ = 1@ // (int)
+0093: 2@ = integer 2@ to_float
+0085: 4@ = 5@ // (int)
+0093: 4@ = integer 4@ to_float                                                
+4@ /= 100.0                     
+0073: 2@ /= 4@ // (float)
+0092: 2@ = float 2@ to_integer
+            
+008A: $TIM_HEALTH = 2@ // (int)
+
+//////////////////////////////////////////////////////
+
+car.StorePos(CSF_AIRCRAFT_HANDLE,8@,9@,10@) 
+000F: 8@ -= 100.0
+000F: 9@ -= 100.0
+000F: 10@ -= 100.0
+car.StorePos(CSF_AIRCRAFT_HANDLE,5@,6@,7@) 
+000F: 5@ -= -100.0
+000F: 6@ -= -100.0
+000F: 7@ -= -100.0
+    
+if or   
+0356:   explosion_type 2 in_cube_cornerA 8@ 9@ 10@ cornerB 5@ 6@ 7@
+0356:   explosion_type 3 in_cube_cornerA 8@ 9@ 10@ cornerB 5@ 6@ 7@
+then
+5@ = car.Health(CSF_AIRCRAFT_HANDLE)
+5@ -= 10
+car.Health(CSF_AIRCRAFT_HANDLE) = 5@            
+end
+
+//////////////////////////////////////////////////////        
+
+return
+
+:CSF_AIRCRAFT_HP_GET2
+
+//////////////////////////////////////////////////////
+
+5@ = 15000
+1@ = car.Health(CSF_AIRCRAFT_HANDLE)
+                        
+0085: 2@ = 1@ // (int)
+0093: 2@ = integer 2@ to_float
+0085: 4@ = 5@ // (int)
+0093: 4@ = integer 4@ to_float                                                
+4@ /= 100.0                     
+0073: 2@ /= 4@ // (float)
+0092: 2@ = float 2@ to_integer
+            
+008A: $TIM_HEALTH = 2@ // (int)
+
+//////////////////////////////////////////////////////
+
+car.StorePos(CSF_AIRCRAFT_HANDLE,8@,9@,10@) 
+000F: 8@ -= 100.0
+000F: 9@ -= 100.0
+000F: 10@ -= 100.0
+car.StorePos(CSF_AIRCRAFT_HANDLE,5@,6@,7@) 
+000F: 5@ -= -100.0
+000F: 6@ -= -100.0
+000F: 7@ -= -100.0
+    
+if or   
+0356:   explosion_type 2 in_cube_cornerA 8@ 9@ 10@ cornerB 5@ 6@ 7@
+0356:   explosion_type 3 in_cube_cornerA 8@ 9@ 10@ cornerB 5@ 6@ 7@
+then          
+5@ = car.Health(CSF_AIRCRAFT_HANDLE)
+5@ -= 1000
+car.Health(CSF_AIRCRAFT_HANDLE) = 5@
+end
+
+//////////////////////////////////////////////////////        
+
+return
+
+:CSF_PEDIKS_TO_OSTROV_CREATE
+
+while not model.Available($CAMP_MODEL7[8])
+wait 0
+model.Load($CAMP_MODEL7[8])
+mload
+end
+
+$ARMY69_2[0] = actor.CreateAsDriver(26,$CAMP_MODEL7[8],CSF_BARGE1_HANDLE) //Лайонелл    
+
+while not model.Available($CAMP_MODEL5[7])
+wait 0
+model.Load($CAMP_MODEL5[7])
+mload
+end
+
+$ARMY69_2[1] = actor.CreateAsDriver(26,$CAMP_MODEL5[7],CSF_BARGE2_HANDLE) //Лейн    
+
+while not model.Available($CAMP_MODEL3[6])
+wait 0
+model.Load($CAMP_MODEL3[6])
+mload
+end
+
+$ARMY69_2[2] = actor.Create(26,$CAMP_MODEL3[6],0.0,0.0,0.0) //Джервис    
+0D10: set_actor $ARMY69_2[2] alpha 255 // IF and SET
+
+//////////////////////Лагерь в СФ (океанское побережье)//////////////////////
+
+while not model.Available($CAMP_MODEL1[6])
+wait 0
+model.Load($CAMP_MODEL1[6])
+mload
+end
+
+$ARMY69_2[3] = actor.Create(26,$CAMP_MODEL1[6],0.0,0.0,0.0) //X: -2.0, Y: 0.0
+actor.Angle($ARMY69_2[3]) = 218.9303
+0464: put_actor $ARMY69_2[3]) into_turret_on_car CSF_BARGE1_HANDLE at_car_offset 0.6 -2.2 1.2 position 1 shooting_angle_limit 0.0 with_weapon 0
+
+/////////////////
+
+while not model.Available($CAMP_MODEL2[6])
+wait 0
+model.Load($CAMP_MODEL2[6])
+mload
+end
+
+$ARMY69_2[4] = actor.Create(26,$CAMP_MODEL2[6],3@,4@,5@) //X: 2.0, Y: 0.0
+0464: put_actor $ARMY69_2[4]) into_turret_on_car CSF_BARGE1_HANDLE at_car_offset -0.6 -2.2 1.2 position 1 shooting_angle_limit 0.0 with_weapon 0
+/////////////////
+
+while not model.Available($CAMP_MODEL4[6])
+wait 0
+model.Load($CAMP_MODEL4[6])
+mload
+end
+
+$ARMY69_2[5] = actor.Create(26,$CAMP_MODEL4[6],3@,4@,5@) //X: 2.0, Y: -2.0
+0464: put_actor $ARMY69_2[5]) into_turret_on_car CSF_BARGE1_HANDLE at_car_offset 0.6 -1.5 1.2 position 1 shooting_angle_limit 0.0 with_weapon 0
+/////////////////
+
+while not model.Available($CAMP_MODEL5[6])
+wait 0
+model.Load($CAMP_MODEL5[6])
+mload
+end
+
+$ARMY69_2[6] = actor.Create(26,$CAMP_MODEL5[6],3@,4@,5@) //X: -2.0, Y: -2.0
+0464: put_actor $ARMY69_2[6]) into_turret_on_car CSF_BARGE1_HANDLE at_car_offset -0.6 -1.5 1.2 position 1 shooting_angle_limit 0.0 with_weapon 0
+/////////////////
+
+while not model.Available($CAMP_MODEL6[6])
+wait 0
+model.Load($CAMP_MODEL6[6])
+mload
+end
+
+$ARMY69_2[7] = actor.Create(26,$CAMP_MODEL6[6],3@,4@,5@) //X: -2.0, Y: -4.0
+0464: put_actor $ARMY69_2[7]) into_turret_on_car CSF_BARGE1_HANDLE at_car_offset -0.6 -0.8 1.2 position 1 shooting_angle_limit 0.0 with_weapon 0
+/////////////////
+
+////////////////////////////Лагерь в СФ (поклонная гора)////////////////////////////
+while not model.Available($CAMP_MODEL1[7])
+wait 0
+model.Load($CAMP_MODEL1[7])
+mload
+end
+
+$ARMY69_2[8] = actor.Create(26,$CAMP_MODEL1[7],3@,4@,5@) //X: 2.0, Y: -4.0
+0464: put_actor $ARMY69_2[8]) into_turret_on_car CSF_BARGE1_HANDLE at_car_offset 0.6 -0.8 1.2 position 1 shooting_angle_limit 0.0 with_weapon 0
+
+/////////////////
+while not model.Available($CAMP_MODEL2[7])
+wait 0
+model.Load($CAMP_MODEL2[7])
+mload
+end
+
+$ARMY69_2[9] = actor.Create(26,$CAMP_MODEL2[7],3@,4@,5@) //X: -4.0, Y: -4.0
+0464: put_actor $ARMY69_2[9]) into_turret_on_car CSF_BARGE1_HANDLE at_car_offset 0.6 -0.3 1.2 position 1 shooting_angle_limit 0.0 with_weapon 0
+
+/////////////////
+while not model.Available($CAMP_MODEL3[7])
+wait 0
+model.Load($CAMP_MODEL3[7])
+mload
+end
+
+$ARMY69_2[10] = actor.Create(26,$CAMP_MODEL3[7],3@,4@,5@) //X: 4.0, Y: -4.0
+0464: put_actor $ARMY69_2[10]) into_turret_on_car CSF_BARGE1_HANDLE at_car_offset -0.6 -0.3 1.2 position 1 shooting_angle_limit 0.0 with_weapon 0
+
+/////////////////
+while not model.Available($CAMP_MODEL4[7])
+wait 0
+model.Load($CAMP_MODEL4[7])
+mload
+end
+
+$ARMY69_2[11] = actor.Create(26,$CAMP_MODEL4[7],3@,4@,5@) //X: 4.0, Y: -6.0
+0464: put_actor $ARMY69_2[11]) into_turret_on_car CSF_BARGE1_HANDLE at_car_offset 0.6 0.4 1.2 position 1 shooting_angle_limit 0.0 with_weapon 0
+
+/////////////////
+while not model.Available($CAMP_MODEL6[7])
+wait 0
+model.Load($CAMP_MODEL6[7])
+mload
+end
+
+$ARMY69_2[12] = actor.Create(26,$CAMP_MODEL6[7],3@,4@,5@) //X: -4.0, Y: -6.0
+0464: put_actor $ARMY69_2[12]) into_turret_on_car CSF_BARGE1_HANDLE at_car_offset -0.6 0.4 1.2 position 1 shooting_angle_limit 0.0 with_weapon 0
+
+/////////////////
+while not model.Available($CAMP_MODEL7[7])
+wait 0
+model.Load($CAMP_MODEL7[7])
+mload
+end
+
+$ARMY69_2[13] = actor.Create(26,$CAMP_MODEL7[7],3@,4@,5@) //X: -4.0, Y: -8.0
+0464: put_actor $ARMY69_2[13]) into_turret_on_car CSF_BARGE1_HANDLE at_car_offset 0.6 0.9 1.2 position 1 shooting_angle_limit 0.0 with_weapon 0
+
+/////////////////
+while not model.Available($CAMP_MODEL8[7])
+wait 0
+model.Load($CAMP_MODEL8[7])
+mload
+end
+
+$ARMY69_2[14] = actor.Create(26,$CAMP_MODEL8[7],3@,4@,5@) //X: 4.0, Y: -8.0
+0464: put_actor $ARMY69_2[14]) into_turret_on_car CSF_BARGE1_HANDLE at_car_offset -0.6 0.9 1.2 position 1 shooting_angle_limit 0.0 with_weapon 0
+
+/////////////////
+while not model.Available($CAMP_MODEL9[7])
+wait 0
+model.Load($CAMP_MODEL9[7])
+mload
+end
+
+$ARMY69_2[15] = actor.Create(26,$CAMP_MODEL9[7],3@,4@,5@) //X: -6.0, Y: -8.0
+0464: put_actor $ARMY69_2[15]) into_turret_on_car CSF_BARGE1_HANDLE at_car_offset 0.6 1.4 1.2 position 1 shooting_angle_limit 0.0 with_weapon 0
+
+/////////////////
+while not model.Available($CAMP_MODEL10[7])
+wait 0
+model.Load($CAMP_MODEL10[7])
+mload
+end
+
+$ARMY69_2[16] = actor.Create(26,$CAMP_MODEL10[7],3@,4@,5@) //X: 6.0, Y: -8.0
+0464: put_actor $ARMY69_2[16]) into_turret_on_car CSF_BARGE1_HANDLE at_car_offset -0.6 1.4 1.2 position 1 shooting_angle_limit 0.0 with_weapon 0
+
+////////////////////////////Лагерь в СФ (калтон хейтс)////////////////////////////
+while not model.Available($CAMP_MODEL1[8])
+wait 0
+model.Load($CAMP_MODEL1[8])
+mload
+end
+
+$ARMY69_2[17] = actor.Create(26,$CAMP_MODEL1[8],3@,4@,5@) //X: 0.0, Y: -8.0
+0464: put_actor $ARMY69_2[17]) into_turret_on_car CSF_BARGE1_HANDLE at_car_offset 0.6 2.1 1.2 position 1 shooting_angle_limit 0.0 with_weapon 0
+
+/////////////////
+while not model.Available($CAMP_MODEL2[8])
+wait 0
+model.Load($CAMP_MODEL2[8])
+mload
+end
+
+$ARMY69_2[18] = actor.Create(26,$CAMP_MODEL2[8],3@,4@,5@) //X: 2.0, Y: -8.0
+0464: put_actor $ARMY69_2[18]) into_turret_on_car CSF_BARGE1_HANDLE at_car_offset -0.6 2.1 1.2 position 1 shooting_angle_limit 0.0 with_weapon 0
+
+/////////////////
+while not model.Available($CAMP_MODEL3[8])
+wait 0
+model.Load($CAMP_MODEL3[8])
+mload
+end
+
+$ARMY69_2[19] = actor.Create(26,$CAMP_MODEL3[8],3@,4@,5@) //X: 4.0, Y: -10.0
+0464: put_actor $ARMY69_2[19]) into_turret_on_car CSF_BARGE2_HANDLE at_car_offset 0.6 -2.2 1.2 position 1 shooting_angle_limit 0.0 with_weapon 0
+
+/////////////////
+while not model.Available($CAMP_MODEL4[8])
+wait 0
+model.Load($CAMP_MODEL4[8])
+mload
+end
+
+$ARMY69_2[20] = actor.Create(26,$CAMP_MODEL4[8],3@,4@,5@) //X: -2.0, Y: -10.0
+0464: put_actor $ARMY69_2[20]) into_turret_on_car CSF_BARGE2_HANDLE at_car_offset -0.6 -2.2 1.2 position 1 shooting_angle_limit 0.0 with_weapon 0
+
+/////////////////
+while not model.Available($CAMP_MODEL5[8])
+wait 0
+model.Load($CAMP_MODEL5[8])
+mload
+end
+
+$ARMY69_2[21] = actor.Create(26,$CAMP_MODEL5[8],3@,4@,5@) //X: -4.0, Y: -10.0
+0464: put_actor $ARMY69_2[21]) into_turret_on_car CSF_BARGE2_HANDLE at_car_offset 0.6 -1.5 1.2 position 1 shooting_angle_limit 0.0 with_weapon 0
+
+/////////////////
+while not model.Available($CAMP_MODEL6[8])
+wait 0
+model.Load($CAMP_MODEL6[8])
+mload
+end
+
+$ARMY69_2[22] = actor.Create(26,$CAMP_MODEL6[8],3@,4@,5@) //X: 0.0, Y: -12.0
+0464: put_actor $ARMY69_2[22]) into_turret_on_car CSF_BARGE2_HANDLE at_car_offset -0.6 -1.5 1.2 position 1 shooting_angle_limit 0.0 with_weapon 0
+
+/////////////////
+while not model.Available($CAMP_MODEL8[8])
+wait 0
+model.Load($CAMP_MODEL8[8])
+mload
+end
+
+$ARMY69_2[23] = actor.Create(26,$CAMP_MODEL8[8],3@,4@,5@) //X: 2.0, Y: -12.0
+0464: put_actor $ARMY69_2[23]) into_turret_on_car CSF_BARGE2_HANDLE at_car_offset 0.6 -0.8 1.2 position 1 shooting_angle_limit 0.0 with_weapon 0
+
+/////////////////
+while not model.Available($CAMP_MODEL9[8])
+wait 0
+model.Load($CAMP_MODEL9[8])
+mload
+end
+
+$ARMY69_2[24] = actor.Create(26,$CAMP_MODEL9[8],3@,4@,5@) //X: 4.0, Y: -12.0
+0464: put_actor $ARMY69_2[24]) into_turret_on_car CSF_BARGE2_HANDLE at_car_offset -0.6 -0.8 1.2 position 1 shooting_angle_limit 0.0 with_weapon 0
+
+/////////////////
+while not model.Available($CAMP_MODEL10[8])
+wait 0
+model.Load($CAMP_MODEL10[8])
+mload
+end
+
+$ARMY69_2[25] = actor.Create(26,$CAMP_MODEL10[8],3@,4@,5@) //X: 2.0, Y: -14.0
+0464: put_actor $ARMY69_2[25]) into_turret_on_car CSF_BARGE2_HANDLE at_car_offset 0.6 -0.1 1.2 position 1 shooting_angle_limit 0.0 with_weapon 0
+
+for 0@ = 0 to 25
+04D8: set_actor $ARMY69_2[0@] drowns_in_water 0
+end
+
+return      
