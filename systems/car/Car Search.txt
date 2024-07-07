@@ -1,0 +1,5935 @@
+const
+CAR_BACK_DOOR_FLAG = 29@
+CAR_NO_DOOR_FLAG = 30@
+CAR_TRUNK_FRONT_FLAG = 31@
+end
+
+//Даешь в самой старой системе в ZA наследие остатков древнего кода!
+
+:C_SRCH
+thread 'C_SRCH'
+
+create_thread @C_SRCH2
+
+$CAR_CHECKING_FLAG = 0
+
+:CAR_SEARCH_CHECK_IDLE
+wait 0
+
+if and
+$JIMMY_USING == 0
+$KANISTRA_USING == 0 
+$EATING_STATUS == 0
+$GAMEMODE_WAR == 0
+$PANEL_OPEN == 0
+8E46: not is_char_using_gun PLAYER_ACTOR
+    then
+    if and
+    0AB0:   key_pressed 69
+//    80E1: not  player 0 pressed_key 6
+    09E7:   player PLAYER_CHAR not_frozen
+    044B:   actor PLAYER_ACTOR on_foot
+    89DE: not  actor PLAYER_ACTOR entering_car
+    8A32:  not actor PLAYER_ACTOR on_turret_of_car
+    $HUD_REMOVE == 0
+    not actor.Driving(PLAYER_ACTOR)
+        then        
+        gosub @SURV_CHECK        
+        if
+        1@ == 0
+            then        
+            0AB5: store_actor PLAYER_ACTOR closest_vehicle_to $CR_SRCH closest_ped_to 1@
+            if and
+            056E:   car $CR_SRCH defined
+            8597: not  actor PLAYER_ACTOR crouching
+            PLAYER_STANDING_ON_CAR_FLAG == 0   
+                then        
+                if
+                not PLAYER_DONT_HAVE_BACKPACK == 1  
+                    then
+                    if and
+                    056E:   car $CR_SRCH defined                    
+                    803A: not  $USED_CAR[0] == $CR_SRCH // (int)
+                    803A: not  $USED_CAR[1] == $CR_SRCH // (int)
+                    803A: not  $USED_CAR[2] == $CR_SRCH // (int)
+                    803A: not  $USED_CAR[3] == $CR_SRCH // (int)
+                    803A: not  $USED_CAR[4] == $CR_SRCH // (int)
+                        then
+                        gosub @CAR_SEACRH_DAMAGED_CHECK
+                        if
+                        0@ == 1
+                            then
+                            gosub @CAR_SEARCH_MODEL_CHECK
+                            0441: 2@ = car $CR_SRCH model
+                            if and
+                            0A01:   model 2@ car
+                            0@ == 1
+                                then
+                                gosub @CAR_SEARCH_POINT_CHECK                            
+                                if and
+                                00EF:   actor PLAYER_ACTOR sphere 0 near_point 4@ 5@ radius 0.8 0.8 stopped 
+                                not car.Wrecked($CR_SRCH)
+                                01C1:   car $CR_SRCH stopped
+                                    then
+                                    0A97: 11@ = car $CR_SRCH struct 
+                                    11@ += 16
+                                    0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+                                    if
+                                    08B4:   test 12@ bit 1
+                                        then
+                                        08C3: clear 12@ bit 1
+                                        if
+                                        88FE: not  text_box_displayed
+                                            then
+                                            text.ShowTextBox('INV119')
+                                            end
+                                        else
+                                        jump to @CAR_SEARCH_ANIM_CHECK    
+                                        end
+                                    else
+                                    
+                                    if and
+                                    $CHEATS_ON == 1
+                                    0AB0:   key_pressed 122
+                                    then
+                                    0AD1: show_formatted_text_highpriority "SEARCH CAR: NOT NEAR SEARCH POSITION" time 2000
+                                    end
+                                     
+                                    end
+                                else
+                                
+                                if and
+                                $CHEATS_ON == 1
+                                0AB0:   key_pressed 122
+                                then
+                                0AD1: show_formatted_text_highpriority "SEARCH CAR: NOT GOOD MODEL" time 2000
+                                end
+                                 
+                                end
+                            else
+                            
+                            if and
+                            $CHEATS_ON == 1
+                            0AB0:   key_pressed 122
+                            then
+                            0AD1: show_formatted_text_highpriority "SEARCH CAR: NOT DAMAGED" time 2000
+                            end
+                             
+                            end
+                        else
+                        
+                        if and
+                        $CHEATS_ON == 1
+                        0AB0:   key_pressed 122
+                        then
+                        0AD1: show_formatted_text_highpriority "SEARCH CAR: NOT ANY CAR NEAR" time 2000
+                        end
+                         
+                        end
+                    else
+                    text.RemoveTextBox()
+                    text.ShowTextBox('INV87')
+                                                    
+                    if
+                    056D:   actor $VOICE_ACTOR defined
+                    then
+                    
+                    if
+                    not $RANDOM_MODE_MODEL == 0
+                    then
+                    05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 181
+                    else
+                    05C1: AS_actor PLAYER_ACTOR speak_from_audio_table 181
+                    end
+                    
+                    end                     
+                           
+                    wait 1000
+                    end
+                else                   
+                end
+            end
+        end        
+    else 
+    end
+    
+if and
+$JIMMY_USING == 0
+$KANISTRA_USING == 0 
+$EATING_STATUS == 0
+$PANEL_OPEN == 0
+not USHER_STORY_FEATRUES_LOCKED == 1
+8E46: not is_char_using_gun PLAYER_ACTOR
+    then
+    if and
+    0AB0:   key_pressed 69
+//    00E1:   player 0 pressed_key 6
+    09E7:   player PLAYER_CHAR not_frozen
+    044B:   actor PLAYER_ACTOR on_foot
+    89DE: not  actor PLAYER_ACTOR entering_car
+    8A32:  not actor PLAYER_ACTOR on_turret_of_car
+    $HUD_REMOVE == 0
+    not actor.Driving(PLAYER_ACTOR)
+        then        
+        gosub @SURV_CHECK        
+        if
+        1@ == 0
+            then
+            
+            for CARINV_SLOT = 0 to 4
+                                
+            0084: $CR_SRCH = $USED_CAR[CARINV_SLOT] // (int)
+            
+            if 
+            056E:   car $CR_SRCH defined   
+                then        
+                if
+                not PLAYER_DONT_HAVE_BACKPACK == 1                  
+                    then
+                    if
+                    056E:   car $CR_SRCH defined
+                        then
+                        gosub @CAR_SEACRH_DAMAGED_CHECK
+                        if or
+                        0@ == 1
+                        0@ == 0
+                            then
+                            0441: 2@ = car $CR_SRCH model
+                            
+                            if
+                            UNITED_MAP == 0
+                            then
+                            
+                            if or
+                            2@ == 15420                                                        
+                            2@ == #WAYFARER                            
+                            2@ == #COPBIKE
+                            then
+                            jump to @DEVILMAN_TRUNK_JUMP
+                            end
+                            
+                            if                            
+                            2@ == #PIZZABOY
+                            then
+                            jump to @DEVILMAN_TRUNK_JUMP
+                            end
+                            
+                            if or
+                            2@ == 406
+                            2@ == 444
+                            2@ == 556
+                            2@ == 557
+                            2@ == 573
+                            2@ == 15496
+                            2@ == 15497
+                            2@ == 15594
+                            then
+                            jump to @OTHER_CAR_TRUNK_JUMP
+                            end
+                            
+                            else
+                            
+                            if or
+                            2@ == 15299                            
+                            2@ == 15322
+                            2@ == 15430
+                            2@ == 15457
+                            2@ == 15454
+                            2@ == 15552
+                            2@ == 15526                            
+                            2@ == 15566
+                            then
+                            jump to @DEVILMAN_TRUNK_JUMP
+                            end
+                            
+                            if
+                            2@ == 15565                            
+                            then
+                            jump to @DEVILMAN_TRUNK_JUMP
+                            end
+                            
+                            end                            
+                            
+                            if and
+                            $CAR_WHEEL_INSTALLED[CARINV_SLOT] == 1
+                            8A01: not  model 2@ car
+                            8820: not  model 2@ heli
+                            881E: not  model 2@ boat
+                            881F: not  model 2@ plane
+                            then
+                            :DEVILMAN_TRUNK_JUMP                            
+                            CAR_BACK_DOOR_FLAG = 0
+                            CAR_NO_DOOR_FLAG = 1
+                            CAR_TRUNK_FRONT_FLAG = 0
+                            car.StorePos($CR_SRCH,4@,5@,6@)                                                                                     
+                            if and
+                            00EF:   actor PLAYER_ACTOR sphere 0 near_point 4@ 5@ radius 1.0 1.0 stopped 
+                            not car.Wrecked($CR_SRCH)
+                            01C1:   car $CR_SRCH stopped
+                            8597: not  actor PLAYER_ACTOR crouching
+                            PLAYER_STANDING_ON_CAR_FLAG == 0
+                                then
+                                jump to @BIKE_TRUNK_JUMP
+                                end                           
+                            end                            
+                            
+                            if or
+                            0A01:   model 2@ car
+                            0820:   model 2@ heli
+                            081E:   model 2@ boat
+                            081F:   model 2@ plane
+                                then
+                                :OTHER_CAR_TRUNK_JUMP                                
+                                gosub @CAR_SEARCH_POINT_CHECK                                                           
+                                if and
+                                00EF:   actor PLAYER_ACTOR sphere 0 near_point 4@ 5@ radius 0.8 0.8 stopped 
+                                not car.Wrecked($CR_SRCH)
+                                01C1:   car $CR_SRCH stopped
+                                8597: not  actor PLAYER_ACTOR crouching
+                                PLAYER_STANDING_ON_CAR_FLAG == 0
+                                    then
+                                    :BIKE_TRUNK_JUMP                                   
+                                    if or                                    
+                                    $EXPE_FLAG == 1
+                                    $EXPE_FLAG == 0
+                                        then
+                                        
+                                        0A97: 11@ = car $CR_SRCH struct 
+                                        11@ += 16
+                                        0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+                                        
+                                        if
+                                        88B4: not  test 12@ bit 1
+                                        then
+                                        0A97: 11@ = car $CR_SRCH struct 
+                                        11@ += 16
+                                        0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+                                        08BD: set 12@ bit 1 
+                                        0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+                                        08C3: clear 12@ bit 1
+                                        end                                        
+                                        
+                                        /////////////////////////////////////////////////////
+                                        
+                                        if and
+                                        CAR_NO_DOOR_FLAG == 0
+                                        CAR_TRUNK_FRONT_FLAG == 0
+                                        then
+                                        
+                                        if and
+                                        0D0C: get_car $CR_SRCH component "boot_dummy" matrix_pointer_to 1@ // IF and SET
+                                        CAR_BACK_DOOR_FLAG == 0
+                                        then
+                                        04E1: open_and_freeze_car_trunk $CR_SRCH
+                                        else
+                                        
+                                        if
+                                        CAR_BACK_DOOR_FLAG == 0
+                                        then
+                                        
+                                        if
+                                        not 2@ == #BUS
+                                        then
+                                        0657: car $CR_SRCH open_door 3
+                                        else
+                                        0657: car $CR_SRCH open_door 2
+                                        end
+                                        
+                                        else
+                                        0657: car $CR_SRCH open_door 4
+                                        0657: car $CR_SRCH open_door 5
+                                        end
+                                        
+                                        end
+                                        
+                                        end
+                                        
+                                        /////////////////////////////////////////////////////
+                                        
+                                        if
+                                        CAR_TRUNK_FRONT_FLAG == 1
+                                        then
+                                        
+                                        if and
+                                        0D0C: get_car $CR_SRCH component "bonnet_dummy" matrix_pointer_to 1@ // IF and SET
+                                        CAR_BACK_DOOR_FLAG == 0
+                                        then
+                                        0657: car $CR_SRCH open_door 0
+                                        end
+                                        
+                                        end
+                                        
+                                        /////////////////////////////////////////////////////
+                                        
+                                        gosub @CAR_INV_START_MENU
+                                        $PHRASES_OFF_FLAG = 0
+                                        
+                                        /////////////////////////////////////////////////////
+                                        
+                                        if and
+                                        CAR_NO_DOOR_FLAG == 0
+                                        CAR_TRUNK_FRONT_FLAG == 0
+                                        then
+                                        
+                                        if and
+                                        0D0C: get_car $CR_SRCH component "boot_dummy" matrix_pointer_to 1@ // IF and SET
+                                        CAR_BACK_DOOR_FLAG == 0
+                                        then
+                                        08A6: set_car $CR_SRCH door 1 rotation_to 0.0
+                                        else
+                                        
+                                        if
+                                        CAR_BACK_DOOR_FLAG == 0
+                                        then
+                                        
+                                        0441: 2@ = car $CR_SRCH model
+                                        if
+                                        not 2@ == #BUS
+                                        then
+                                        08A6: set_car $CR_SRCH door 3 rotation_to 0.0
+                                        else
+                                        08A6: set_car $CR_SRCH door 2 rotation_to 0.0
+                                        end
+                                        
+                                        else
+                                        08A6: set_car $CR_SRCH door 4 rotation_to 0.0
+                                        08A6: set_car $CR_SRCH door 5 rotation_to 0.0
+                                        end
+                                        
+                                        end
+                                        
+                                        end
+                                        
+                                        /////////////////////////////////////////////////////
+                                        
+                                        if
+                                        CAR_TRUNK_FRONT_FLAG == 1
+                                        then
+                                        
+                                        if and
+                                        0D0C: get_car $CR_SRCH component "bonnet_dummy" matrix_pointer_to 1@ // IF and SET
+                                        CAR_BACK_DOOR_FLAG == 0
+                                        then
+                                        08A6: set_car $CR_SRCH door 0 rotation_to 0.0
+                                        end
+                                        
+                                        end
+                                        
+                                        /////////////////////////////////////////////////////
+                                        
+                                        end
+                                    else                                                                                                             
+                                    end
+                                else 
+                                end
+                            else 
+                            end
+                        else 
+                        end
+                    else
+                    text.RemoveTextBox()
+                    text.ShowTextBox('INV87')
+                                                    
+                    if
+                    056D:   actor $VOICE_ACTOR defined
+                    then
+                    
+                    if
+                    not $RANDOM_MODE_MODEL == 0
+                    then
+                    05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 181
+                    else
+                    05C1: AS_actor PLAYER_ACTOR speak_from_audio_table 181
+                    end
+                    
+                    end                     
+                           
+                    wait 1000
+                    end
+                else                   
+                end
+            end
+            end
+        end        
+    else 
+    end           
+    
+jump to @CAR_SEARCH_CHECK_IDLE
+
+:SURV_CHECK
+
+1@ = 0
+
+for 0@ = 0 to 4
+
+if
+056D:   actor $SURVIVER[0@] defined
+    then
+    if and
+    0104:   actor PLAYER_ACTOR near_actor $SURVIVER[0@] radius 1.2 1.2 1.2 sphere 0
+    847A: not  actor $SURVIVER[0@] driving_bike
+    not actor.DrivingVehicleType($SURVIVER[0@],#QUAD)
+    not actor.DrivingVehicleType($SURVIVER[0@],15426)
+    not actor.DrivingVehicleType($SURVIVER[0@],15558)
+        then
+        1@ = 1
+        end  
+    end
+    
+end
+
+if or
+actor.Animation(PLAYER_ACTOR) == "EAT_Vomit_P"
+PUKE_PROCESS_FLAG == 1
+then
+1@ = 1
+end    
+    
+return
+
+:CAR_SEARCH_MODEL_CHECK
+0@ = 1
+
+if
+//car.Model($CR_SRCH) == #LINERUN
+//car.Model($CR_SRCH) == #DUMPER
+//car.Model($CR_SRCH) == #FIRETRUK
+//car.Model($CR_SRCH) == #TRASH
+//car.Model($CR_SRCH) == #INFERNUS
+//car.Model($CR_SRCH) == #MRWHOOP
+car.Model($CR_SRCH) == #BFINJECT
+    then
+    0@ = 0
+    end
+
+if or
+//car.Model($CR_SRCH) == #BUS
+car.Model($CR_SRCH) == RHINO_MODEL_NUMBER
+//car.Model($CR_SRCH) == #BARRACKS
+//car.Model($CR_SRCH) == #HOTKNIFE
+car.Model($CR_SRCH) == #ARTICT1
+//car.Model($CR_SRCH) == #COACH
+//car.Model($CR_SRCH) == #PACKER
+car.Model($CR_SRCH) == #MONSTER
+    then
+    0@ = 0
+    end
+
+if or
+//car.Model($CR_SRCH) == #FLATBED
+car.Model($CR_SRCH) == #CADDY
+//car.Model($CR_SRCH) == #ZR350
+car.Model($CR_SRCH) == #BAGGAGE
+car.Model($CR_SRCH) == #BLOODRA
+//car.Model($CR_SRCH) == #JOURNEY
+//car.Model($CR_SRCH) == #PETRO
+    then
+    0@ = 0
+    end
+
+if or
+//car.Model($CR_SRCH) == #RDTRAIN
+//car.Model($CR_SRCH) == #CEMENT
+//car.Model($CR_SRCH) == #TOWTRUCK
+car.Model($CR_SRCH) == #FBITRUCK
+car.Model($CR_SRCH) == #FORKLIFT
+car.Model($CR_SRCH) == #TRACTOR
+car.Model($CR_SRCH) == #COMBINE
+car.Model($CR_SRCH) == #VORTEX
+    then
+    0@ = 0
+    end
+
+if or
+//car.Model($CR_SRCH) == #FIRELA
+car.Model($CR_SRCH) == #MONSTERA
+car.Model($CR_SRCH) == #MONSTERB
+car.Model($CR_SRCH) == #BANDITO
+car.Model($CR_SRCH) == #KART
+car.Model($CR_SRCH) == #MOWER
+//car.Model($CR_SRCH) == #DUNERIDE
+    then
+    0@ = 0
+    end
+
+if or
+car.Model($CR_SRCH) == #SWEEPER
+//car.Model($CR_SRCH) == #DFT30
+car.Model($CR_SRCH) == #TUG
+car.Model($CR_SRCH) == #PETROTR
+//car.Model($CR_SRCH) == #HOTDOG
+car.Model($CR_SRCH) == #FREIBOX
+car.Model($CR_SRCH) == #ARTICT3
+car.Model($CR_SRCH) == #SWATVAN
+    then
+    0@ = 0
+    end
+
+if or
+car.Model($CR_SRCH) == #BAGBOXA
+car.Model($CR_SRCH) == #BAGBOXB
+car.Model($CR_SRCH) == #TUGSTAIR
+car.Model($CR_SRCH) == #FARMTR1
+car.Model($CR_SRCH) == #UTILTR1
+//car.Model($CR_SRCH) == #LINERUN
+//car.Model($CR_SRCH) == #FIRETRUK
+    then
+    0@ = 0
+    end
+    
+if
+//car.Model($CR_SRCH) == #TRASH
+car.Model($CR_SRCH) == #BFINJECT
+//car.Model($CR_SRCH) == #BUS
+//car.Model($CR_SRCH) == #PACKER
+//car.Model($CR_SRCH) == #COACH
+//car.Model($CR_SRCH) == #FLATBED
+//car.Model($CR_SRCH) == #FIRETRUK
+    then
+    0@ = 0
+    end
+    
+if
+//car.Model($CR_SRCH) == #PETRO
+//car.Model($CR_SRCH) == #RDTRAIN
+//car.Model($CR_SRCH) == #CEMENT
+//car.Model($CR_SRCH) == #SLAMVAN
+car.Model($CR_SRCH) == #MONSTER
+//car.Model($CR_SRCH) == #DUNERIDE
+//car.Model($CR_SRCH) == #DFT30
+    then
+    0@ = 0
+    end
+    
+if
+UNITED_MAP == 0
+then    
+    
+if or
+//car.Model($CR_SRCH) == 15361
+car.Model($CR_SRCH) == 15284
+car.Model($CR_SRCH) == 15283
+//car.Model($CR_SRCH) == 15414
+//car.Model($CR_SRCH) == 15502
+    then
+    0@ = 0
+    end
+    
+else
+
+if or
+car.Model($CR_SRCH) == 15288
+car.Model($CR_SRCH) == 15573
+    then
+    0@ = 0
+    end    
+    
+end    
+    
+if or
+car.Model($CR_SRCH) == 15352
+car.Model($CR_SRCH) == 15271
+car.Model($CR_SRCH) == 15409
+car.Model($CR_SRCH) == 15495
+    then
+    0@ = 0
+    end                        
+
+return    
+
+:CAR_SEARCH_POINT_CHECK
+
+CAR_BACK_DOOR_FLAG = 0
+CAR_NO_DOOR_FLAG = 0
+CAR_TRUNK_FRONT_FLAG = 0
+
+if or
+car.Model($CR_SRCH) == 15266
+car.Model($CR_SRCH) == 15399
+car.Model($CR_SRCH) == 15291
+car.Model($CR_SRCH) == 15365
+car.Model($CR_SRCH) == 15435
+    then
+    gosub @CAR_SEARCH_POINT_BACK_CHECK 
+    return
+    end
+    
+if or
+car.Model($CR_SRCH) == 15391
+car.Model($CR_SRCH) == 15350
+car.Model($CR_SRCH) == 15370
+car.Model($CR_SRCH) == 15269
+car.Model($CR_SRCH) == 15295
+car.Model($CR_SRCH) == 15410
+    then
+    gosub @CAR_SEARCH_POINT_BACK_CHECK 
+    return
+    end
+
+if
+UNITED_MAP == 1
+then    
+if or
+car.Model($CR_SRCH) == 15304
+car.Model($CR_SRCH) == 15383
+car.Model($CR_SRCH) == 15386
+car.Model($CR_SRCH) == 15331
+car.Model($CR_SRCH) == 15491
+car.Model($CR_SRCH) == 15406
+    then
+    gosub @CAR_SEARCH_POINT_BACK_CHECK 
+    return
+    end
+else
+if
+car.Model($CR_SRCH) == 15490
+    then
+    gosub @CAR_SEARCH_POINT_BACK_CHECK 
+    return
+    end
+end
+    
+if or
+car.Model($CR_SRCH) == 15440
+car.Model($CR_SRCH) == 15537
+car.Model($CR_SRCH) == 15416
+car.Model($CR_SRCH) == 15505
+car.Model($CR_SRCH) == 15444
+car.Model($CR_SRCH) == 15545
+    then
+    gosub @CAR_SEARCH_POINT_BACK_CHECK 
+    return
+    end
+    
+if or
+car.Model($CR_SRCH) == #AMBULAN
+car.Model($CR_SRCH) == #PONY
+car.Model($CR_SRCH) == #RUMPO
+car.Model($CR_SRCH) == #TOPFUN
+car.Model($CR_SRCH) == #BURRITO
+car.Model($CR_SRCH) == #NEWSVAN
+car.Model($CR_SRCH) == #BOXVILLE
+car.Model($CR_SRCH) == #BOXBURG
+    then
+    gosub @CAR_SEARCH_POINT_BACK_CHECK 
+    return
+    end
+    
+if or
+car.Model($CR_SRCH) == #UTILITY
+car.Model($CR_SRCH) == #SECURICA
+car.Model($CR_SRCH) == #YANKEE
+car.Model($CR_SRCH) == #BOXVILLE
+car.Model($CR_SRCH) == #ENFORCER
+car.Model($CR_SRCH) == #CAMPER
+car.Model($CR_SRCH) == 15486
+    then
+    gosub @CAR_SEARCH_POINT_BACK_CHECK 
+    return
+    end
+    
+if and
+car.Model($CR_SRCH) == 15422
+UNITED_MAP == 0
+    then
+    gosub @CAR_SEARCH_POINT_BACK_CHECK 
+    return
+    end        
+    
+if or
+car.Model($CR_SRCH) == 15399
+car.Model($CR_SRCH) == 15358
+car.Model($CR_SRCH) == 15365
+car.Model($CR_SRCH) == 15385
+car.Model($CR_SRCH) == 15353
+car.Model($CR_SRCH) == 15386
+car.Model($CR_SRCH) == 15397
+    then
+    gosub @CAR_SEARCH_POINT_BACK_CHECK 
+    return
+    end
+    
+if or
+car.Model($CR_SRCH) == 15266
+car.Model($CR_SRCH) == 15276
+car.Model($CR_SRCH) == 15279
+car.Model($CR_SRCH) == 15280
+car.Model($CR_SRCH) == 15291
+car.Model($CR_SRCH) == 15328
+car.Model($CR_SRCH) == 15331
+    then
+    gosub @CAR_SEARCH_POINT_BACK_CHECK 
+    return
+    end
+
+if
+UNITED_MAP == 1
+then     
+if or
+car.Model($CR_SRCH) == 15345
+car.Model($CR_SRCH) == 15323
+car.Model($CR_SRCH) == 15406
+car.Model($CR_SRCH) == 15416
+car.Model($CR_SRCH) == 15431
+car.Model($CR_SRCH) == 15451
+car.Model($CR_SRCH) == 15434
+    then
+    gosub @CAR_SEARCH_POINT_BACK_CHECK 
+    return
+    end
+end
+    
+if or
+car.Model($CR_SRCH) == 15449
+car.Model($CR_SRCH) == 15464
+car.Model($CR_SRCH) == 15436
+car.Model($CR_SRCH) == 15452
+car.Model($CR_SRCH) == 15491
+car.Model($CR_SRCH) == 15498
+car.Model($CR_SRCH) == 15549
+    then
+    gosub @CAR_SEARCH_POINT_BACK_CHECK 
+    return
+    end
+    
+if or
+car.Model($CR_SRCH) == 15505
+car.Model($CR_SRCH) == 15527
+car.Model($CR_SRCH) == 15530
+car.Model($CR_SRCH) == 15534
+car.Model($CR_SRCH) == 15379
+car.Model($CR_SRCH) == 15351
+    then
+    gosub @CAR_SEARCH_POINT_BACK_CHECK 
+    return
+    end                    
+    
+if or
+car.Model($CR_SRCH) == #CHEETAH
+car.Model($CR_SRCH) == #BULLET
+car.Model($CR_SRCH) == #TURISMO
+car.Model($CR_SRCH) == 15468
+car.Model($CR_SRCH) == 15307
+car.Model($CR_SRCH) == 15514
+car.Model($CR_SRCH) == 15502
+car.Model($CR_SRCH) == 15503
+    then
+    gosub @CAR_SEARCH_POINT_FRONT_CHECK 
+    return
+    end    
+    
+if or
+car.Model($CR_SRCH) == #BFINJECT
+car.Model($CR_SRCH) == #CADDY
+car.Model($CR_SRCH) == #BAGGAGE
+car.Model($CR_SRCH) == #DOZER
+//car.Model($CR_SRCH) == #BLOODRA
+car.Model($CR_SRCH) == RHINO_MODEL_NUMBER
+car.Model($CR_SRCH) == #FORKLIFT
+car.Model($CR_SRCH) == #TRACTOR
+then
+CAR_NO_DOOR_FLAG = 1
+gosub @CAR_SEARCH_TRUNK_OFFSET_GET
+return
+end
+
+if or
+car.Model($CR_SRCH) == #BANDITO
+car.Model($CR_SRCH) == #KART
+car.Model($CR_SRCH) == #MOWER
+car.Model($CR_SRCH) == #RCCAM
+car.Model($CR_SRCH) == #RCBANDIT
+car.Model($CR_SRCH) == #RCTIGER
+car.Model($CR_SRCH) == #DUNERIDE
+car.Model($CR_SRCH) == 15497
+then
+CAR_NO_DOOR_FLAG = 1
+gosub @CAR_SEARCH_TRUNK_OFFSET_GET
+return
+end
+
+if
+UNITED_MAP == 0
+then
+
+if
+car.Model($CR_SRCH) == 15420
+then
+CAR_NO_DOOR_FLAG = 1
+gosub @CAR_SEARCH_TRUNK_OFFSET_GET
+return
+end
+    
+end
+
+if or
+car.Model($CR_SRCH) == 15352
+car.Model($CR_SRCH) == 15267
+car.Model($CR_SRCH) == 15271
+car.Model($CR_SRCH) == 15288
+car.Model($CR_SRCH) == 15306
+car.Model($CR_SRCH) == 15244
+then
+CAR_NO_DOOR_FLAG = 1
+gosub @CAR_SEARCH_TRUNK_OFFSET_GET
+return
+end
+
+if or
+car.Model($CR_SRCH) == 15409
+car.Model($CR_SRCH) == 15495
+car.Model($CR_SRCH) == 15548
+car.Model($CR_SRCH) == 15558
+car.Model($CR_SRCH) == 15571
+car.Model($CR_SRCH) == 15580
+car.Model($CR_SRCH) == 15581
+then
+CAR_NO_DOOR_FLAG = 1
+gosub @CAR_SEARCH_TRUNK_OFFSET_GET
+return
+end
+
+if
+UNITED_MAP == 0
+    then
+    if or
+    car.Model($CR_SRCH) == 15406
+    car.Model($CR_SRCH) == 15409
+    car.Model($CR_SRCH) == 15411
+    car.Model($CR_SRCH) == 15412
+    car.Model($CR_SRCH) == 15418
+    car.Model($CR_SRCH) == 15488
+    then
+    CAR_NO_DOOR_FLAG = 1
+    gosub @CAR_SEARCH_TRUNK_OFFSET_GET
+    return
+    end
+end
+
+gosub @CAR_SEARCH_TRUNK_OFFSET_GET     
+
+return
+
+:CAR_SEARCH_POINT_BACK_CHECK
+CAR_BACK_DOOR_FLAG = 1
+gosub @CAR_SEARCH_TRUNK_OFFSET_GET
+return
+
+:CAR_SEARCH_POINT_FRONT_CHECK
+CAR_TRUNK_FRONT_FLAG = 1
+gosub @CAR_SEARCH_TRUNK_OFFSET_GET
+return
+
+:CAR_SEARCH_TRUNK_OFFSET_GET
+0441: 15@ = car $CR_SRCH model
+
+0AD3: v$GAS_TANK_X = format "X%d" 15@
+0AD3: v$GAS_TANK_Y = format "Y%d" 15@
+0AD3: v$GAS_TANK_Z = format "Z%d" 15@
+
+0AF2: 4@ = get_float_from_ini_file "data/skins.ini" section "TRUNK" key v$GAS_TANK_X
+0AF2: 5@ = get_float_from_ini_file "data/skins.ini" section "TRUNK" key v$GAS_TANK_Y
+0AF2: 6@ = get_float_from_ini_file "data/skins.ini" section "TRUNK" key v$GAS_TANK_Z
+
+if and
+4@ <= -100.0
+5@ <= -100.0
+6@ <= -100.0
+    then
+    0AF3: write_float 0.0 to_ini_file "data/skins.ini" section "TRUNK" key v$GAS_TANK_X
+    0AF3: write_float -3.0 to_ini_file "data/skins.ini" section "TRUNK" key v$GAS_TANK_Y
+    0AF3: write_float 0.0 to_ini_file "data/skins.ini" section "TRUNK" key v$GAS_TANK_Z        
+    4@ = 0.0
+    5@ = 3.0
+    6@ = 0.0
+    end
+    
+if and
+0AB0:   key_pressed 187
+$CHEATS_ON == 1
+    then
+    car.StorePos($CR_SRCH,4@,5@,6@)
+    actor.StorePos(PLAYER_ACTOR,18@,19@,20@)
+    0063: 4@ -= 18@  // (float)
+    0063: 5@ -= 19@  // (float)
+    0063: 6@ -= 20@  // (float)    
+    0AF3: write_float 4@ to_ini_file "data/skins.ini" section "TRUNK" key v$GAS_TANK_X
+    0AF3: write_float 5@ to_ini_file "data/skins.ini" section "TRUNK" key v$GAS_TANK_Y
+    0AF3: write_float 6@ to_ini_file "data/skins.ini" section "TRUNK" key v$GAS_TANK_Z
+    gosub @CAR_TRUNK_OFFSET_WRITE        
+    end
+    
+0407: store_coords_to 4@ 5@ 6@ from_car $CR_SRCH with_offset 4@ 5@ 6@        
+
+return
+
+:CAR_TRUNK_OFFSET_WRITE
+
+if
+UNITED_MAP == 0
+then
+0B00: delete_file "data/skins_Andreas.ini"  // IF and SET
+0B04: copy_file "data/skins.ini" to "data/skins_Andreas.ini" //IF and SET
+end
+
+if and
+UNITED_MAP == 1
+STORIES_MAP == 0
+then
+0B00: delete_file "data/skins_United.ini"  // IF and SET
+0B04: copy_file "data/skins.ini" to "data/skins_United.ini" //IF and SET
+end
+
+if and
+UNITED_MAP == 1
+STORIES_MAP == 1
+then
+0B00: delete_file "data/skins_Stories.ini"  // IF and SET
+0B04: copy_file "data/skins.ini" to "data/skins_Stories.ini" //IF and SET
+end
+
+return
+
+:CAR_SEACRH_DAMAGED_CHECK
+0@ = 0
+
+if
+UNITED_MAP == 0
+then
+
+///////////////////////////////////////////////////////////////////////////
+
+if or
+car.Model($CR_SRCH) == 413
+car.Model($CR_SRCH) == 428
+car.Model($CR_SRCH) == 498
+car.Model($CR_SRCH) == 582
+car.Model($CR_SRCH) == 482
+car.Model($CR_SRCH) == 427
+car.Model($CR_SRCH) == 416
+car.Model($CR_SRCH) == 440
+    then
+    if or
+    09BB:   car $CR_SRCH has_visible_damage_on_component 4
+    09BB:   car $CR_SRCH has_visible_damage_on_component 5
+        then
+        0@ = 1
+        return
+        end
+    end
+    
+if
+car.Model($CR_SRCH) == #CAMPER
+    then
+    if
+    09BB:   car $CR_SRCH has_visible_damage_on_component 4
+        then
+        0@ = 1
+        return
+        end
+    end    
+    
+if or
+car.Model($CR_SRCH) == #CHEETAH
+car.Model($CR_SRCH) == #BULLET
+car.Model($CR_SRCH) == #TURISMO
+car.Model($CR_SRCH) == 15468
+car.Model($CR_SRCH) == 15503
+    then
+    if
+    09BB:   car $CR_SRCH has_visible_damage_on_component 0
+        then
+        0@ = 1
+        return
+        end
+    end    
+
+if or   
+car.Model($CR_SRCH) == 15422
+car.Model($CR_SRCH) == #BOXVILLE
+car.Model($CR_SRCH) == 15486
+car.Model($CR_SRCH) == 15435
+    then
+    if or
+    09BB:   car $CR_SRCH has_visible_damage_on_component 4
+    09BB:   car $CR_SRCH has_visible_damage_on_component 5
+        then
+        0@ = 1
+        return
+        end
+    end
+    
+///////////////////////////////////////////////////////////////////////////        
+    
+else
+
+///////////////////////////////////////////////////////////////////////////
+
+if or
+car.Model($CR_SRCH) == 15307
+car.Model($CR_SRCH) == 15514
+    then
+    if
+    09BB:   car $CR_SRCH has_visible_damage_on_component 0
+        then
+        0@ = 1
+        return
+        end
+    end
+
+if or
+car.Model($CR_SRCH) == 15266
+car.Model($CR_SRCH) == 15399
+car.Model($CR_SRCH) == 15291
+car.Model($CR_SRCH) == 15365
+car.Model($CR_SRCH) == 15279
+car.Model($CR_SRCH) == 15280
+car.Model($CR_SRCH) == 15328
+car.Model($CR_SRCH) == 15345
+    then
+    if or
+    09BB:   car $CR_SRCH has_visible_damage_on_component 4
+    09BB:   car $CR_SRCH has_visible_damage_on_component 5
+        then
+        0@ = 1
+        return
+        end
+    end
+    
+if or
+car.Model($CR_SRCH) == 15498
+car.Model($CR_SRCH) == 15530
+car.Model($CR_SRCH) == 15534
+car.Model($CR_SRCH) == 15385
+car.Model($CR_SRCH) == 15451
+car.Model($CR_SRCH) == 15452
+    then
+    if or
+    09BB:   car $CR_SRCH has_visible_damage_on_component 4
+    09BB:   car $CR_SRCH has_visible_damage_on_component 5
+        then
+        0@ = 1
+        return
+        end
+    end                 
+    
+if or
+car.Model($CR_SRCH) == 15358
+car.Model($CR_SRCH) == 15379
+car.Model($CR_SRCH) == 15385
+car.Model($CR_SRCH) == 15323
+car.Model($CR_SRCH) == 15351
+    then
+    if or
+    09BB:   car $CR_SRCH has_visible_damage_on_component 4
+    09BB:   car $CR_SRCH has_visible_damage_on_component 5
+        then
+        0@ = 1
+        return
+        end
+    end
+    
+if or
+car.Model($CR_SRCH) == 15386
+car.Model($CR_SRCH) == 15331
+car.Model($CR_SRCH) == 15491
+car.Model($CR_SRCH) == 15406
+car.Model($CR_SRCH) == 15505
+car.Model($CR_SRCH) == 15416
+    then
+    if or
+    09BB:   car $CR_SRCH has_visible_damage_on_component 4
+    09BB:   car $CR_SRCH has_visible_damage_on_component 5
+        then
+        0@ = 1
+        return
+        end
+    end
+    
+if or
+car.Model($CR_SRCH) == 15431
+car.Model($CR_SRCH) == 15527
+car.Model($CR_SRCH) == 15331
+car.Model($CR_SRCH) == 15449
+car.Model($CR_SRCH) == 15276
+car.Model($CR_SRCH) == 15353
+    then
+    if or
+    09BB:   car $CR_SRCH has_visible_damage_on_component 4
+    09BB:   car $CR_SRCH has_visible_damage_on_component 5
+        then
+        0@ = 1
+        return
+        end
+    end
+    
+if or
+car.Model($CR_SRCH) == 15434
+car.Model($CR_SRCH) == 15449
+car.Model($CR_SRCH) == 15464
+car.Model($CR_SRCH) == 15549
+    then
+    if or
+    09BB:   car $CR_SRCH has_visible_damage_on_component 4
+    09BB:   car $CR_SRCH has_visible_damage_on_component 5
+        then
+        0@ = 1
+        return
+        end
+    end
+    
+///////////////////////////////////////////////////////////////////////////        
+
+end                                           
+
+if 
+09BB:   car $CR_SRCH has_visible_damage_on_component 1
+    then 
+    0@ = 1  
+    end
+
+if
+UNITED_MAP == 0
+then    
+if or
+8D0C: not get_car $CR_SRCH component "boot_dummy" matrix_pointer_to 1@ // IF and SET
+car.Model($CR_SRCH) == #HOTDOG
+car.Model($CR_SRCH) == #CAMPER 
+    then
+    if
+    0D0C: get_car $CR_SRCH component "door_rf_dummy" matrix_pointer_to 1@ // IF and SET
+        then
+        if
+        09BB:   car $CR_SRCH has_visible_damage_on_component 3
+            then
+            0@ = 1
+            else
+            0@ = 0
+            end
+        end
+    end
+else
+if or
+8D0C: not get_car $CR_SRCH component "boot_dummy" matrix_pointer_to 1@ // IF and SET
+car.Model($CR_SRCH) == 15420 
+    then
+    if
+    0D0C: get_car $CR_SRCH component "door_rf_dummy" matrix_pointer_to 1@ // IF and SET
+        then
+        if
+        09BB:   car $CR_SRCH has_visible_damage_on_component 3
+            then
+            0@ = 1
+            else
+            0@ = 0
+            end
+        end
+    end
+end       
+
+return
+
+:CAR_SEARCH_ANIM_CHECK
+$CAR_CHECKING_FLAG = 1
+6@ = Car.Angle($CR_SRCH)
+0470: 1@ = actor PLAYER_ACTOR current_weapon
+01B9: set_actor PLAYER_ACTOR armed_weapon_to 0
+0992: set_player PLAYER_CHAR weapons_scrollable 0
+
+while not animation.Available("CAR_CHECKS")
+wait 0 
+animation.Load("CAR_CHECKS")
+end
+
+if or
+car.Id($CR_SRCH) == #BULLET
+car.Id($CR_SRCH) == #CHEETAH
+car.Id($CR_SRCH) == #TURISMO
+car.Id($CR_SRCH) == 15468
+car.Id($CR_SRCH) == 15307
+car.Id($CR_SRCH) == 15514
+car.Id($CR_SRCH) == 15503
+then
+0D0C: get_car $CR_SRCH component "bonnet_dummy" matrix_pointer_to 1@ // IF and SET
+0D06: get_matrix 1@ position_to 2@ 3@ 4@
+actor.StorePos(PLAYER_ACTOR,5@,6@,4@)
+0E27: get_angle_from_two_coords 5@ 6@ and 2@ 3@ to 6@ 
+end
+
+if and
+8D0C: not get_car $CR_SRCH component "boot_dummy" matrix_pointer_to 1@ // IF and SET
+CAR_BACK_DOOR_FLAG == 0
+then
+0D0C: get_car $CR_SRCH component "door_rf_dummy" matrix_pointer_to 1@ // IF and SET
+0D06: get_matrix 1@ position_to 2@ 3@ 4@
+actor.StorePos(PLAYER_ACTOR,5@,6@,4@)
+0E27: get_angle_from_two_coords 5@ 6@ and 2@ 3@ to 6@
+end
+
+05D4: AS_actor PLAYER_ACTOR rotate_angle 6@
+
+0A96: 10@ = actor PLAYER_ACTOR struct
+0A96: 11@ = actor PLAYER_ACTOR struct
+0A8E: 10@ = 10@ + 0x558
+0A8E: 11@ = 11@ + 0x55C
+32@ = 0
+
+for 21@ = 1 to 109
+
+if
+003A:   $CR_SRCH == $PARK_CAR[21@] // (int)
+    then
+    $PARK_CAR_ID[21@] = 0
+    end
+
+end  
+
+:CAR_SEACRH_CHECK_22
+wait 0
+0A8D: 12@ = read_memory 10@ size 4 virtual_protect 0
+0A8D: 13@ = read_memory 11@ size 4 virtual_protect 0
+
+if
+32@ > 1500
+    then
+    $CAR_CHECKING_FLAG = 0
+    32@ = 0
+    06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0
+    0992: set_player PLAYER_CHAR weapons_scrollable 1     
+    jump to @CAR_SEARCH_CHECK_IDLE
+    end
+    
+if or
+0045:   12@ == 13@  // (float)
+$FP_ACTIVATED == 1
+jf @CAR_SEACRH_CHECK_22   
+
+while not animation.Available("CAR_CHECKS")
+wait 0 
+animation.Load("CAR_CHECKS")
+end
+
+0605: actor PLAYER_ACTOR perform_animation "car_check" IFP "CAR_CHECKS" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time 2839 
+
+Audiostream.Volume($CAR_SEARCH_SOUND) = $SOUNDS_VOLUME 
+Audiostream.Loop($CAR_SEARCH_SOUND, 0)
+Audiostream.PerformAction($CAR_SEARCH_SOUND, PLAY)
+
+32@ = 0 
+
+:CAR_SEACRH_CHECK_3
+wait 0
+
+if
+0E3E: is_button_just_pressed 0 button 15
+then
+wait 0
+0687: clear_actor PLAYER_ACTOR task
+end
+
+if and
+not actor.Animation(PLAYER_ACTOR) == "car_check"
+32@ > 50
+    then
+    $CAR_CHECKING_FLAG = 0
+    32@ = 0
+    06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0 
+    01B9: set_actor PLAYER_ACTOR armed_weapon_to 1@  
+    0992: set_player PLAYER_CHAR weapons_scrollable 1
+    Audiostream.PerformAction($CAR_SEARCH_SOUND, STOP)  
+    jump to @CAR_SEARCH_CHECK_IDLE
+    end
+    
+if
+32@ > 2839
+jf @CAR_SEACRH_CHECK_3
+Audiostream.PerformAction($CAR_SEARCH_SOUND, STOP) 
+04EF: release_animation "CAR_CHECKS"
+
+if or
+not $QUEST_TYPE == 5
+$RQUEST_TIMER_STOPPED_FLAG == 1
+then
+CAR_OBISKENO += 1
+end
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_CAR_OBISKENO"
+
+if
+$CHEATED_FLAG == 0 
+then    
+0@ += 1
+end    
+ 
+0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_CAR_OBISKENO"
+0AF0: 2@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT41_GOT"
+    
+if and
+2@ == 0
+0@ >= 300
+    then
+    v$ACHIEVEMNT = "ACH41"
+    $ACHIEVEMENT_GOT_FLAG = 1    
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT41_GOT"    
+    end
+
+$CAR_CHECKING_FLAG = 0  
+06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0
+01B9: set_actor PLAYER_ACTOR armed_weapon_to 1@  
+0992: set_player PLAYER_CHAR weapons_scrollable 1
+wait 100
+32@ = 0
+0A97: 11@ = car $CR_SRCH struct 
+11@ += 16
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0    
+08BD: set 12@ bit 1 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 1
+
+if
+CURRENT_USHER_TUTORIAL_NUM == 1
+then
+03F3: get_car $CR_SRCH primary_color_to 11@ secondary_color_to 12@
+if and
+Car.Id($CR_SRCH) == #MESA
+11@ == 3
+12@ == 1
+    then   
+    CURRENT_USHER_TUTORIAL_NUM = -2
+    jump to @CAR_SEACRH_CHECK_AMBULAN
+    end     
+end
+
+if and
+not $MUTATION_ACTIVE == 4
+not CUSTOM_MODE_ONLY_MELEE == 1
+then
+if and
+not Car.Id($CR_SRCH) == #PATRIOT
+not Car.Id($CR_SRCH) == #BARRACKS
+not Car.Id($CR_SRCH) == 15318
+not Car.Id($CR_SRCH) == 15377
+not Car.Id($CR_SRCH) == 15522
+not Car.Id($CR_SRCH) == 15427
+jf @CAR_SEACRH_SKIP_MONEY_FIND
+if and
+not Car.Id($CR_SRCH) == 15350
+not Car.Id($CR_SRCH) == 15269
+not Car.Id($CR_SRCH) == 15408
+not Car.Id($CR_SRCH) == 15493
+jf @CAR_SEACRH_SKIP_MONEY_FIND
+
+if and
+Car.Id($CR_SRCH) == 15422
+UNITED_MAP == 0
+then
+jump to @CAR_SEACRH_SKIP_MONEY_FIND
+end
+
+if and
+not Car.Id($CR_SRCH) == 15333
+not Car.Id($CR_SRCH) == 15382
+not Car.Id($CR_SRCH) == 15433
+not Car.Id($CR_SRCH) == 15563
+jf @CAR_SEACRH_SKIP_MONEY_FIND
+if or
+not Car.Id($CR_SRCH) == 15423
+UNITED_MAP == 1
+jf @CAR_SEACRH_SKIP_MONEY_FIND
+if and
+not Car.Id($CR_SRCH) == #COPCARLA
+not Car.Id($CR_SRCH) == #COPCARSF
+not Car.Id($CR_SRCH) == #COPCARVG
+not Car.Id($CR_SRCH) == #COPCARRU
+not Car.Id($CR_SRCH) == #ENFORCER
+not Car.Id($CR_SRCH) == 15286
+not Car.Id($CR_SRCH) == 15362
+not Car.Id($CR_SRCH) == 15291
+jf @CAR_SEACRH_SKIP_MONEY_FIND
+if and
+not Car.Id($CR_SRCH) == 15250
+not Car.Id($CR_SRCH) == 15544
+not Car.Id($CR_SRCH) == 15486
+jf @CAR_SEACRH_SKIP_MONEY_FIND
+if
+not Car.Id($CR_SRCH) == #FBIRANCH
+jf @CAR_SEACRH_SKIP_MONEY_FIND
+if and
+not Car.Id($CR_SRCH) == 15365
+not Car.Id($CR_SRCH) == 15415
+not Car.Id($CR_SRCH) == 15416
+not Car.Id($CR_SRCH) == 15504
+not Car.Id($CR_SRCH) == 15505
+jf @CAR_SEACRH_SKIP_MONEY_FIND
+end
+
+if and
+not Car.Id($CR_SRCH) == #AMBULAN
+not car.Model($CR_SRCH) == 15266
+not car.Model($CR_SRCH) == 15399
+not car.Model($CR_SRCH) == 15406
+not car.Model($CR_SRCH) == 15491
+jf @CAR_SEACRH_SKIP_MONEY_FIND
+
+if and
+not car.Id($CR_SRCH) == #UTILITY
+not car.Id($CR_SRCH) == #TOWTRUCK
+jf @CAR_SEACRH_SKIP_MONEY_FIND
+
+if
+$MONTHS_PASSED > 0
+    then
+    008B: 0@ = $MONTHS_PASSED // (int)
+    0@ *= 30
+    
+    if
+    $MONTHS_PASSED > 1
+    then
+    0@ += 15
+    end
+    
+    if and
+    0@ > 85
+    not $QUEST_TYPE == 5
+    then
+    0@ = 85
+    end
+    
+    if and
+    0@ > 65
+    $QUEST_TYPE == 5
+    then
+    0@ = 65
+    end
+    
+    if
+    PERK_FINDGOODS == 1
+    then
+    0@ -= 15
+    end
+    
+    if
+    PERK_FINDGOODS == 2
+    then
+    0@ -= 25
+    end
+    
+    if
+    0@ < 0
+    then
+    0@ = 5
+    end
+        
+    if
+    0E4D: random_percent 0@
+        then
+        03E5: show_text_box 'INV110'
+        jump @CAR_SEARCH_CHECK_IDLE
+        else
+        if and
+        0E4D: random_percent 5
+        not $QUEST_TYPE == 5
+            then
+            
+            if
+            PERK_FINDGOODS == 0
+            then
+            
+            if
+            $FREEMODE == 0
+            then
+            random_int 0@ 15 125
+            else
+            random_int 0@ 25 200
+            end
+            
+            else
+            
+            if
+            $FREEMODE == 0
+            then
+            random_int 0@ 65 175
+            else
+            random_int 0@ 125 300
+            end
+            
+            end
+            
+            0513: show_text_box_1number 'INV310' number 0@  // ~k~~VEHICLE_ENTER_EXIT~ Use Slot Machine $~1~
+            MONEY_FOUND_TEXT_TIME = 85
+            0109: player PLAYER_CHAR money += 0@
+            018C: play_sound 1057 at 0.0 0.0 0.0
+            $TEMP_XP = CASH_FIND_XP
+            008D: $TEMP_XP = integer $TEMP_XP to_float
+            0069: $TEMP_XP *= $XP_COEFF // (float)
+            008C: $TEMP_XP = float $TEMP_XP to_integer
+            0058: $PLAYER_XP += $TEMP_XP // (int)
+            jump @CAR_SEARCH_CHECK_IDLE
+            end
+        end
+    else
+    if and
+    0E4D: random_percent 5
+    not $QUEST_TYPE == 5
+        then
+        
+        if
+        PERK_FINDGOODS == 0
+        then
+            
+        if
+        $FREEMODE == 0
+        then
+        random_int 0@ 15 125
+        else
+        random_int 0@ 25 200
+        end
+            
+        else
+            
+        if
+        $FREEMODE == 0
+        then
+        random_int 0@ 65 175
+        else
+        random_int 0@ 125 300
+        end
+            
+        end
+        
+        0513: show_text_box_1number 'INV310' number 0@  // ~k~~VEHICLE_ENTER_EXIT~ Use Slot Machine $~1~
+        MONEY_FOUND_TEXT_TIME = 85
+        0109: player PLAYER_CHAR money += 0@
+        018C: play_sound 1057 at 0.0 0.0 0.0
+        $TEMP_XP = CASH_FIND_XP
+        008D: $TEMP_XP = integer $TEMP_XP to_float
+        0069: $TEMP_XP *= $XP_COEFF // (float)
+        008C: $TEMP_XP = float $TEMP_XP to_integer
+        0058: $PLAYER_XP += $TEMP_XP // (int)
+        jump @CAR_SEARCH_CHECK_IDLE
+        end    
+    end
+    
+:CAR_SEACRH_SKIP_MONEY_FIND    
+
+if and
+$QUEST_TYPE == 5
+RQUEST_TIMER_STOPPED_FLAG == 0
+then
+
+if
+$MONTHS_PASSED > 0
+then
+random_int 0@ 0 to 10
+else
+0@ = 1
+end
+
+if
+not 0@ == 5
+then
+
+if
+CAR_SEARCH_DO_NOT_GIVE == 1
+then
+03E5: show_text_box 'INV300'
+else
+03E5: show_text_box 'INV300A'
+end
+
+random_float 0@ 0.25 0.95
+CAR_OBISKENO += 1
+005F: EXTRA_WEIGHT += 0@  // (float)
+else
+03E5: show_text_box 'INV110'
+end
+ 
+jump @CAR_SEARCH_CHECK_IDLE
+end  
+
+if and
+not $MUTATION_ACTIVE == 4
+not CUSTOM_MODE_ONLY_MELEE == 1
+then
+if and
+not Car.Id($CR_SRCH) == #PATRIOT
+not Car.Id($CR_SRCH) == #BARRACKS
+not Car.Id($CR_SRCH) == 15318
+not Car.Id($CR_SRCH) == 15377
+not Car.Id($CR_SRCH) == 15522
+not Car.Id($CR_SRCH) == 15427
+jf @CAR_SEACRH_CHECK_PATRIOT
+if and
+not Car.Id($CR_SRCH) == 15350
+not Car.Id($CR_SRCH) == 15269
+not Car.Id($CR_SRCH) == 15408
+not Car.Id($CR_SRCH) == 15493
+jf @CAR_SEACRH_CHECK_PATRIOT
+
+if and
+Car.Id($CR_SRCH) == 15422
+UNITED_MAP == 0
+then
+jump to @CAR_SEACRH_CHECK_BANDITS
+end
+
+if and
+not Car.Id($CR_SRCH) == 15334
+not Car.Id($CR_SRCH) == 15382
+not Car.Id($CR_SRCH) == 15433
+not Car.Id($CR_SRCH) == 15563
+jf @CAR_SEACRH_CHECK_BANDITS
+if or
+not Car.Id($CR_SRCH) == 15423
+UNITED_MAP == 1
+jf @CAR_SEACRH_CHECK_FERMERS
+if and
+not Car.Id($CR_SRCH) == #COPCARLA
+not Car.Id($CR_SRCH) == #COPCARSF
+not Car.Id($CR_SRCH) == #COPCARVG
+not Car.Id($CR_SRCH) == #COPCARRU
+not Car.Id($CR_SRCH) == #ENFORCER
+not Car.Id($CR_SRCH) == 15286
+not Car.Id($CR_SRCH) == 15362
+not Car.Id($CR_SRCH) == 15291
+jf @CAR_SEACRH_CHECK_POLICE
+if and
+not Car.Id($CR_SRCH) == 15250
+not Car.Id($CR_SRCH) == 15544
+not Car.Id($CR_SRCH) == 15486
+jf @CAR_SEACRH_CHECK_POLICE
+if
+not Car.Id($CR_SRCH) == #FBIRANCH
+jf @CAR_SEACRH_CHECK_POLICE
+if and
+not Car.Id($CR_SRCH) == 15365
+not Car.Id($CR_SRCH) == 15415
+not Car.Id($CR_SRCH) == 15416
+not Car.Id($CR_SRCH) == 15504
+not Car.Id($CR_SRCH) == 15505
+jf @CAR_SEACRH_CHECK_POLICE
+end
+
+if and
+not Car.Id($CR_SRCH) == #AMBULAN
+not car.Model($CR_SRCH) == 15266
+not car.Model($CR_SRCH) == 15399
+not car.Model($CR_SRCH) == 15406
+not car.Model($CR_SRCH) == 15491
+jf @CAR_SEACRH_CHECK_AMBULAN
+
+if and
+not car.Id($CR_SRCH) == #UTILITY
+not car.Id($CR_SRCH) == #TOWTRUCK
+jf @CAR_SEARCH_REPAIR_KIT 
+
+:CAR_SEACRH_NORMAL_WEAPON
+0209: 10@ = random_int_in_ranges 0 5 
+if and
+10@ == 2
+$MIKE_STORY == 0
+not $MUTATION_ACTIVE == 4
+not CUSTOM_MODE_ONLY_MELEE == 1 
+jf @CAR_SEACRH_NORMAL_BANKA
+
+$WEAPON_FIND += 1
+$TEMP_XP = WEAPON_FIND_XP
+008D: $TEMP_XP = integer $TEMP_XP to_float
+0069: $TEMP_XP *= $XP_COEFF // (float)
+008C: $TEMP_XP = float $TEMP_XP to_integer
+0058: $PLAYER_XP += $TEMP_XP // (int)
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_WEAPON_FIND"
+
+if
+$CHEATED_FLAG == 0 
+then        
+0@ += 1
+end        
+ 
+0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_WEAPON_FIND"
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT64_GOT"
+0AF0: 2@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_WEAPON_FIND"    
+    
+if and
+0@ == 0
+2@ >= 200
+$CHEATED_FLAG == 0
+    then
+    v$ACHIEVEMNT = "ACH64"
+    $ACHIEVEMENT_GOT_FLAG = 1        
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT64_GOT"        
+    end
+ 
+if
+$WEAPON_FIND == 18
+    then
+    $WEAPON_FIND = 0
+    end
+
+if
+09D1:   pickup $CAR_PICKUP[$WEAPON_FIND] created
+    then
+    pickup.Destroy($CAR_PICKUP[$WEAPON_FIND])
+    end             
+
+:OHFUCK23
+
+if
+UNITED_MAP == 0
+then
+random_int 11@ MIN_WEAP_GEN to MAX_WEAP_GEN
+end
+        
+if
+not 11@ == WEAP_GEN_SET
+then
+0209: 10@ = random_int_in_ranges 22 35 
+else
+0209: 10@ = random_int_in_ranges MIN_WEAPON_NUM MAX_WEAPON_NUM
+end           
+
+if
+UNITED_MAP == 1
+then
+
+if 
+$UNITED_VC_FLAG == 1
+then
+
+if
+STORIES_MAP == 0
+then
+0209: 10@ = random_int_in_ranges MINID_VC_WEAP MAXID_VC_WEAP
+else
+0209: 10@ = random_int_in_ranges MINID_VCS_WEAP MAXID_VCS_WEAP
+end
+
+else
+
+if
+STORIES_MAP == 0
+then
+0209: 10@ = random_int_in_ranges MINID_III_WEAP MAXID_III_WEAP
+else
+0209: 10@ = random_int_in_ranges MINID_LCS_WEAP MAXID_LCS_WEAP
+end
+
+end
+
+end
+
+if and
+not 10@ == 119
+not 10@ == 115
+not 10@ == 114
+not 10@ == 118
+not 10@ == 132
+not 10@ == 133
+not 10@ == 134
+not 10@ == 135
+jf @OHFUCK23
+
+if and
+not 10@ == 148
+not 10@ == 149
+not 10@ == 150
+not 10@ == 92
+not 10@ == 93
+not 10@ == 94
+jf @OHFUCK23
+
+0781: get_weapon_with_ID 10@ model_to 11@  
+
+while not model.Available(11@)
+wait 0
+model.Load(11@)
+mload
+end
+
+gosub @6CHECKING_AMMO
+
+if
+not CAR_SEARCH_DO_NOT_GIVE == 1
+then
+04C4: store_coords_to 4@ 5@ 6@ from_actor PLAYER_ACTOR with_offset 0.0 1.0 0.5 
+032B: $CAR_PICKUP[$WEAPON_FIND] = create_weapon_pickup 11@ type 3 ammo 12@ at 4@ 5@ 6@
+end
+
+wait 200
+03E5: show_text_box 'INV107'
+jump @CAR_SEARCH_CHECK_IDLE
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+:CAR_SEACRH_NORMAL_BANKA
+
+0209: 10@ = random_int_in_ranges 0 7                    
+008B: 12@ = PLAYER_FOOD_ZAPAS // (int)
+if
+0E4D: random_percent 12@
+    then
+    10@ = -1
+    
+    if and
+    PERK_FINDGOODS == 1
+    0E4D:  random_percent 8
+    then
+    0209: 10@ = random_int_in_ranges 0 7
+    end
+    
+    if and
+    PERK_FINDGOODS == 2
+    0E4D:  random_percent 13
+    then
+    0209: 10@ = random_int_in_ranges 0 7
+    end
+    
+    end                  
+ 
+if 
+10@ == 3 
+    then
+    $BANKA_FIND += 1
+    $TEMP_XP = BANKA_FIND_XP
+    008D: $TEMP_XP = integer $TEMP_XP to_float
+    0069: $TEMP_XP *= $XP_COEFF // (float)
+    008C: $TEMP_XP = float $TEMP_XP to_integer
+    0058: $PLAYER_XP += $TEMP_XP // (int)    
+    
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_BANKA_FIND"    
+    
+    if
+    $CHEATED_FLAG == 0 
+    then    
+    0@ += 1
+    end        
+     
+    0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_BANKA_FIND"
+    
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT83_GOT"
+    0AF0: 2@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_BANKA_FIND"        
+        
+    if and
+    0@ == 0
+    2@ >= 100
+    $CHEATED_FLAG == 0
+        then
+        v$ACHIEVEMNT = "ACH83"
+        $ACHIEVEMENT_GOT_FLAG = 1            
+        0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT83_GOT"            
+        end    
+    
+    if
+    not CAR_SEARCH_DO_NOT_GIVE == 1
+    then 
+    $BANKA += 1
+    if and
+    PERK_FINDGOODS == 1
+    0E4D: random_percent 15
+        then
+        $BANKA += 1
+        $BANKA_FIND += 1
+        $TEMP_XP = BANKA_FIND_XP
+        008D: $TEMP_XP = integer $TEMP_XP to_float
+        0069: $TEMP_XP *= $XP_COEFF // (float)
+        008C: $TEMP_XP = float $TEMP_XP to_integer
+        0058: $PLAYER_XP += $TEMP_XP // (int)
+        end
+    if and
+    PERK_FINDGOODS == 2
+    0E4D: random_percent 30
+        then
+        $BANKA += 1 
+        $BANKA_FIND += 1
+        $TEMP_XP = BANKA_FIND_XP
+        008D: $TEMP_XP = integer $TEMP_XP to_float
+        0069: $TEMP_XP *= $XP_COEFF // (float)
+        008C: $TEMP_XP = float $TEMP_XP to_integer
+        0058: $PLAYER_XP += $TEMP_XP // (int)
+        end    
+    end
+     
+    03E5: show_text_box 'INV109' 
+    jump @CAR_SEARCH_CHECK_IDLE
+    end
+    
+///////////////////////////////////////////////////////////////////////////////////////////////    
+
+0209: 10@ = random_int_in_ranges 0 7
+008B: 12@ = PLAYER_HEAL_ZAPAS // (int)
+if
+0E4D: random_percent 12@
+    then
+    10@ = -1
+    end
+ 
+if
+10@ == 4 
+    then
+    $HEAL_FIND += 1
+    $TEMP_XP = HEAL_FIND_XP
+    008D: $TEMP_XP = integer $TEMP_XP to_float
+    0069: $TEMP_XP *= $XP_COEFF // (float)
+    008C: $TEMP_XP = float $TEMP_XP to_integer
+    0058: $PLAYER_XP += $TEMP_XP // (int)    
+    
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_HEAL_FIND"    
+    
+    if
+    $CHEATED_FLAG == 0 
+    then    
+    0@ += 1
+    end        
+     
+    0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_HEAL_FIND"
+    
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT84_GOT"
+    0AF0: 2@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_HEAL_FIND"        
+        
+    if and
+    0@ == 0
+    2@ >= 50
+    $CHEATED_FLAG == 0
+        then
+        v$ACHIEVEMNT = "ACH84"
+        $ACHIEVEMENT_GOT_FLAG = 1            
+        0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT84_GOT"            
+        end    
+    
+    if
+    not CAR_SEARCH_DO_NOT_GIVE == 1
+    then
+    $HEAL += 1
+    if and
+    PERK_FINDGOODS == 1
+    0E4D: random_percent 10
+        then
+        $HEAL += 1
+        $HEAL_FIND += 1
+        $TEMP_XP = HEAL_FIND_XP
+        008D: $TEMP_XP = integer $TEMP_XP to_float
+        0069: $TEMP_XP *= $XP_COEFF // (float)
+        008C: $TEMP_XP = float $TEMP_XP to_integer
+        0058: $PLAYER_XP += $TEMP_XP // (int)
+        end
+    if and
+    PERK_FINDGOODS == 2
+    0E4D: random_percent 25
+        then
+        $HEAL += 1
+        $HEAL_FIND += 1
+        $TEMP_XP = HEAL_FIND_XP
+        008D: $TEMP_XP = integer $TEMP_XP to_float
+        0069: $TEMP_XP *= $XP_COEFF // (float)
+        008C: $TEMP_XP = float $TEMP_XP to_integer
+        0058: $PLAYER_XP += $TEMP_XP // (int)
+        end
+    end
+     
+    03E5: show_text_box 'INV108' 
+    jump @CAR_SEARCH_CHECK_IDLE
+    end
+    
+///////////////////////////////////////////////////////////////////////////////////////////////        
+
+0209: 10@ = random_int_in_ranges 0 5 
+if or
+10@ == 0
+10@ == 2 
+    then
+    $JIMMY_FIND += 1
+    $TEMP_XP = JIMMY_FIND_XP
+    008D: $TEMP_XP = integer $TEMP_XP to_float
+    0069: $TEMP_XP *= $XP_COEFF // (float)
+    008C: $TEMP_XP = float $TEMP_XP to_integer
+    0058: $PLAYER_XP += $TEMP_XP // (int)     
+    
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_JIMMY_FIND"    
+    
+    if
+    $CHEATED_FLAG == 0 
+    then    
+    0@ += 1
+    end        
+     
+    0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_JIMMY_FIND"
+    
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT87_GOT"
+    0AF0: 2@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_JIMMY_FIND"
+                
+    if and
+    0@ == 0
+    2@ >= 100
+    $CHEATED_FLAG == 0
+        then
+        v$ACHIEVEMNT = "ACH87"
+        $ACHIEVEMENT_GOT_FLAG = 1            
+        0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT87_GOT"            
+        end    
+    
+    if
+    not CAR_SEARCH_DO_NOT_GIVE == 1
+    then
+    $JIMMY += 1
+    if and
+    PERK_FINDGOODS == 1
+    0E4D: random_percent 15
+        then
+        $JIMMY += 1 
+        $JIMMY_FIND += 1
+        $TEMP_XP = JIMMY_FIND_XP
+        008D: $TEMP_XP = integer $TEMP_XP to_float
+        0069: $TEMP_XP *= $XP_COEFF // (float)
+        008C: $TEMP_XP = float $TEMP_XP to_integer
+        0058: $PLAYER_XP += $TEMP_XP // (int)
+        end
+    if and
+    PERK_FINDGOODS == 2
+    0E4D: random_percent 30
+        then
+        $JIMMY += 1
+        $JIMMY_FIND += 1
+        $TEMP_XP = JIMMY_FIND_XP
+        008D: $TEMP_XP = integer $TEMP_XP to_float
+        0069: $TEMP_XP *= $XP_COEFF // (float)
+        008C: $TEMP_XP = float $TEMP_XP to_integer
+        0058: $PLAYER_XP += $TEMP_XP // (int)
+        end
+    end
+     
+    03E5: show_text_box 'INV91'
+    jump @CAR_SEARCH_CHECK_IDLE
+    end
+    
+///////////////////////////////////////////////////////////////////////////////////////////////    
+
+0209: 10@ = random_int_in_ranges 0 5 
+if
+10@ == 2  
+    then
+    $BINT_FIND += 1
+    $TEMP_XP = BINT_FIND_XP
+    008D: $TEMP_XP = integer $TEMP_XP to_float
+    0069: $TEMP_XP *= $XP_COEFF // (float)
+    008C: $TEMP_XP = float $TEMP_XP to_integer
+    0058: $PLAYER_XP += $TEMP_XP // (int)    
+    
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_BINT_FIND"    
+    
+    if
+    $CHEATED_FLAG == 0 
+    then    
+    0@ += 1
+    end        
+     
+    0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_BINT_FIND"
+    
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT85_GOT"
+    0AF0: 2@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_BINT_FIND"        
+        
+    if and
+    0@ == 0
+    2@ >= 80
+    $CHEATED_FLAG == 0
+        then
+        v$ACHIEVEMNT = "ACH85"
+        $ACHIEVEMENT_GOT_FLAG = 1            
+        0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT85_GOT"            
+        end    
+    
+    if
+    not CAR_SEARCH_DO_NOT_GIVE == 1
+    then
+    $BINT += 1
+    if and
+    PERK_FINDGOODS == 1
+    0E4D: random_percent 15
+        then
+        $BINT += 1
+        $BINT_FIND += 1
+        $TEMP_XP = BINT_FIND_XP
+        008D: $TEMP_XP = integer $TEMP_XP to_float
+        0069: $TEMP_XP *= $XP_COEFF // (float)
+        008C: $TEMP_XP = float $TEMP_XP to_integer
+        0058: $PLAYER_XP += $TEMP_XP // (int)
+        end
+    if and
+    PERK_FINDGOODS == 2
+    0E4D: random_percent 30
+        then
+        $BINT += 1
+        $BINT_FIND += 1
+        $TEMP_XP = BINT_FIND_XP
+        008D: $TEMP_XP = integer $TEMP_XP to_float
+        0069: $TEMP_XP *= $XP_COEFF // (float)
+        008C: $TEMP_XP = float $TEMP_XP to_integer
+        0058: $PLAYER_XP += $TEMP_XP // (int)
+        end
+    end
+     
+    03E5: show_text_box 'INV16' 
+    jump @CAR_SEARCH_CHECK_IDLE 
+    end
+    
+///////////////////////////////////////////////////////////////////////////////////////////////    
+
+if
+CAR_SEARCH_DO_NOT_GIVE == 0
+then
+
+0209: 10@ = random_int_in_ranges 0 5
+if
+$KANISTRA_FUEL > 23.0
+then
+10@ = 1
+end
+
+if or   
+10@ == 2
+$KANISTRA == 0
+    then
+    $KANISTRA_FIND += 1
+    $TEMP_XP = KANISTRA_FIND_XP
+    008D: $TEMP_XP = integer $TEMP_XP to_float
+    0069: $TEMP_XP *= $XP_COEFF // (float)
+    008C: $TEMP_XP = float $TEMP_XP to_integer
+    0058: $PLAYER_XP += $TEMP_XP // (int)     
+    
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_KANISTRA_FIND"    
+    
+    if
+    $CHEATED_FLAG == 0 
+    then    
+    0@ += 1
+    end        
+     
+    0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_KANISTRA_FIND"
+    
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT86_GOT"
+    0AF0: 2@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_KANISTRA_FIND"        
+        
+    if and
+    0@ == 0
+    2@ >= 20
+    $CHEATED_FLAG == 0
+        then
+        v$ACHIEVEMNT = "ACH86"
+        $ACHIEVEMENT_GOT_FLAG = 1            
+        0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT86_GOT"            
+        end    
+    
+    if
+    not CAR_SEARCH_DO_NOT_GIVE == 1
+    then
+    $KANISTRA = 1 
+    random_float $KANISTRA_FUEL2 $KANISTRA_FUEL_MIN $KANISTRA_FUEL_MAX
+    $KANISTRA_FUEL2 *= 2.0
+    if and
+    PERK_FINDGOODS == 1
+    0E4D: random_percent 15
+        then
+        $KANISTRA_FUEL2 *= 1.5
+        end
+    if and
+    PERK_FINDGOODS == 2
+    0E4D: random_percent 30
+        then
+        $KANISTRA_FUEL2 *= 2.0
+        end     
+    0059: $KANISTRA_FUEL += $KANISTRA_FUEL2 // (float)    
+    end
+    
+    03E5: show_text_box 'INV111' 
+    jump @CAR_SEARCH_CHECK_IDLE
+    end
+    
+else
+
+0209: 10@ = random_int_in_ranges 0 5
+if
+$KANISTRA_FUEL > 23.0
+then
+10@ = 1
+end
+
+if  
+10@ == 2
+    then
+    $KANISTRA_FIND += 1
+    $TEMP_XP = KANISTRA_FIND_XP
+    008D: $TEMP_XP = integer $TEMP_XP to_float
+    0069: $TEMP_XP *= $XP_COEFF // (float)
+    008C: $TEMP_XP = float $TEMP_XP to_integer
+    0058: $PLAYER_XP += $TEMP_XP // (int)     
+    
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_KANISTRA_FIND"    
+    
+    if
+    $CHEATED_FLAG == 0 
+    then    
+    0@ += 1
+    end        
+     
+    0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_KANISTRA_FIND"
+    
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT86_GOT"
+    0AF0: 2@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_KANISTRA_FIND"        
+        
+    if and
+    0@ == 0
+    2@ >= 20
+    $CHEATED_FLAG == 0
+        then
+        v$ACHIEVEMNT = "ACH86"
+        $ACHIEVEMENT_GOT_FLAG = 1            
+        0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT86_GOT"            
+        end    
+    
+    if
+    not CAR_SEARCH_DO_NOT_GIVE == 1
+    then
+    $KANISTRA = 1 
+    random_float $KANISTRA_FUEL2 $KANISTRA_FUEL_MIN $KANISTRA_FUEL_MAX
+    if and
+    PERK_FINDGOODS == 1
+    0E4D: random_percent 15
+        then
+        $KANISTRA_FUEL2 *= 1.5
+        end
+    if and
+    PERK_FINDGOODS == 2
+    0E4D: random_percent 30
+        then
+        $KANISTRA_FUEL2 *= 2.0
+        end     
+    0059: $KANISTRA_FUEL += $KANISTRA_FUEL2 // (float)    
+    end
+    
+    03E5: show_text_box 'INV111' 
+    jump @CAR_SEARCH_CHECK_IDLE
+    end
+    
+end
+    
+///////////////////////////////////////////////////////////////////////////////////////////////    
+
+0209: 10@ = random_int_in_ranges 0 20
+if and   
+10@ == 10
+$REPAIR_KIT == 0
+    then
+    :CAR_SEARCH_REPAIR_KIT
+    
+    if
+    not CAR_SEARCH_DO_NOT_GIVE == 1
+    then        
+    $REPAIR_KIT += 1
+    end
+    
+    $TEMP_XP = REPAIR_KIT_FIND_XP
+    008D: $TEMP_XP = integer $TEMP_XP to_float
+    0069: $TEMP_XP *= $XP_COEFF // (float)
+    008C: $TEMP_XP = float $TEMP_XP to_integer
+    0058: $PLAYER_XP += $TEMP_XP // (int)         
+    03E5: show_text_box 'INV225' 
+    jump @CAR_SEARCH_CHECK_IDLE
+    end
+    
+///////////////////////////////////////////////////////////////////////////////////////////////        
+
+:PUST_BAGA_JUMP
+
+$PUST_BAGA += 1
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_PUST_BAGA"
+
+if
+$CHEATED_FLAG == 0 
+then        
+0@ += 1
+end        
+ 
+0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_PUST_BAGA"
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT88_GOT"
+0AF0: 2@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_PUST_BAGA"        
+        
+if and
+0@ == 0
+2@ >= 90
+$CHEATED_FLAG == 0
+    then
+    v$ACHIEVEMNT = "ACH88"
+    $ACHIEVEMENT_GOT_FLAG = 1            
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT88_GOT"            
+    end
+ 
+if
+$WEAPON_FIND == 18
+    then
+    $WEAPON_FIND = 0
+    end
+
+03E5: show_text_box 'INV110'
+
+if
+056D:   actor $VOICE_ACTOR defined
+then
+
+if
+not $RANDOM_MODE_MODEL == 0
+then
+05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 181
+else
+05C1: AS_actor PLAYER_ACTOR speak_from_audio_table 181
+end
+
+end 
+
+jump @CAR_SEARCH_CHECK_IDLE
+
+/////////////////////////////////////////////////////////////////////////////////////////////// 
+
+:CAR_SEACRH_CHECK_PATRIOT       
+
+random_int 10@ 0 to 2
+
+if
+10@ == 0
+then
+10@ = 77
+else
+10@ = 75
+end
+
+if
+UNITED_MAP == 1
+then
+
+if 
+$UNITED_VC_FLAG == 1
+then
+
+if
+STORIES_MAP == 0
+then
+10@ = 144
+else
+10@ = 200
+end
+
+else
+
+if
+STORIES_MAP == 0
+then
+10@ = 116
+else
+10@ = 170
+end
+
+end
+
+end
+
+if or 
+10@ == 77 
+10@ == 75  
+10@ == 116
+10@ == 144
+10@ == 170
+10@ == 200 
+jf @CAR_SEACRH_CHECK_PATRIOT  
+
+random_int 1@ 0 3
+
+if and
+not 1@ == 2
+0491:   actor PLAYER_ACTOR has_weapon 92
+8491: not  actor PLAYER_ACTOR has_weapon 107
+jf @CAR_SEACRH_CHECK_PATRIOT_GLASSES
+
+if
+0E4D: random_percent 5
+then
+
+if
+10@ == 77
+then
+10@ = 70
+end
+
+if
+10@ == 75
+then
+10@ = 94
+end
+
+if
+10@ == 144
+then
+10@ = 149
+end
+
+if
+10@ == 170
+then
+10@ = 181
+end
+
+if
+10@ == 200
+then
+10@ = 211
+end
+
+end
+
+$WEAPON_FIND += 1
+$TEMP_XP = WEAPON_FIND_XP
+008D: $TEMP_XP = integer $TEMP_XP to_float
+0069: $TEMP_XP *= $XP_COEFF // (float)
+008C: $TEMP_XP = float $TEMP_XP to_integer
+0058: $PLAYER_XP += $TEMP_XP // (int)
+ 
+if
+$WEAPON_FIND == 18
+    then
+    $WEAPON_FIND = 0
+    end
+
+if
+09D1:   pickup $CAR_PICKUP[$WEAPON_FIND] created
+    then
+    pickup.Destroy($CAR_PICKUP[$WEAPON_FIND])
+    end
+
+0781: get_weapon_with_ID 10@ model_to 11@  
+
+while not model.Available(11@)
+wait 0
+model.Load(11@)
+mload
+end
+
+gosub @4CHECKING_AMMO
+if or 
+10@ == 70 
+10@ == 94  
+10@ == 149
+10@ == 181
+10@ == 211
+then
+12@ = 100
+end
+
+if
+not CAR_SEARCH_DO_NOT_GIVE == 1
+then
+04C4: store_coords_to 4@ 5@ 6@ from_actor PLAYER_ACTOR with_offset 0.0 1.0 0.5 
+032B: $CAR_PICKUP[$WEAPON_FIND] = create_weapon_pickup 11@ type 3 ammo 12@ at 4@ 5@ 6@
+end
+
+wait 200 
+03E5: show_text_box 'INV107' 
+jump @CAR_SEARCH_CHECK_IDLE
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+:CAR_SEACRH_CHECK_PATRIOT_GLASSES
+random_int 1@ 0 3
+
+if and
+8491: not  actor PLAYER_ACTOR has_weapon 92
+8491: not  actor PLAYER_ACTOR has_weapon 107
+then
+1@ = 2
+end
+
+if and
+1@ == 0
+UNITED_MAP == 0
+8491: not  actor PLAYER_ACTOR has_weapon 44
+8491: not  actor PLAYER_ACTOR has_weapon 45
+    then
+    
+    $WEAPON_FIND += 1
+    $TEMP_XP = WEAPON_FIND_XP
+    008D: $TEMP_XP = integer $TEMP_XP to_float
+    0069: $TEMP_XP *= $XP_COEFF // (float)
+    008C: $TEMP_XP = float $TEMP_XP to_integer
+    0058: $PLAYER_XP += $TEMP_XP // (int)
+ 
+    if
+    $WEAPON_FIND == 18
+        then
+        $WEAPON_FIND = 0
+        end
+    
+    if
+    09D1:   pickup $CAR_PICKUP[$WEAPON_FIND] created
+        then
+        pickup.Destroy($CAR_PICKUP[$WEAPON_FIND])
+        end     
+
+    while not model.Available(#NVGOGGLES)
+    wait 0
+    model.Load(#NVGOGGLES)
+    mload
+    end
+
+    if
+    not CAR_SEARCH_DO_NOT_GIVE == 1
+    then
+    04C4: store_coords_to 4@ 5@ 6@ from_actor PLAYER_ACTOR with_offset 0.0 1.0 0.5 
+    032B: $CAR_PICKUP[$WEAPON_FIND] = create_weapon_pickup #NVGOGGLES type 3 ammo 1 at 4@ 5@ 6@
+    end
+    
+    wait 200 
+    03E5: show_text_box 'INV114'
+    jump @CAR_SEARCH_CHECK_IDLE
+    end
+
+if and
+1@ == 1
+UNITED_MAP == 0
+8491: not  actor PLAYER_ACTOR has_weapon 44
+8491: not  actor PLAYER_ACTOR has_weapon 45
+    then
+    
+    $WEAPON_FIND += 1
+    $TEMP_XP = WEAPON_FIND_XP
+    008D: $TEMP_XP = integer $TEMP_XP to_float
+    0069: $TEMP_XP *= $XP_COEFF // (float)
+    008C: $TEMP_XP = float $TEMP_XP to_integer
+    0058: $PLAYER_XP += $TEMP_XP // (int)
+ 
+    if
+    $WEAPON_FIND == 18
+        then
+        $WEAPON_FIND = 0
+        end
+    
+    if
+    09D1:   pickup $CAR_PICKUP[$WEAPON_FIND] created
+        then
+        pickup.Destroy($CAR_PICKUP[$WEAPON_FIND])
+        end     
+
+    while not model.Available(#IRGOGGLES)
+    wait 0
+    model.Load(#IRGOGGLES)
+    mload
+    end
+
+    if
+    not CAR_SEARCH_DO_NOT_GIVE == 1
+    then
+    04C4: store_coords_to 4@ 5@ 6@ from_actor PLAYER_ACTOR with_offset 0.0 1.0 0.5 
+    032B: $CAR_PICKUP[$WEAPON_FIND] = create_weapon_pickup #IRGOGGLES type 3 ammo 1 at 4@ 5@ 6@
+    end
+        
+    wait 200 
+    03E5: show_text_box 'INV115'
+    jump @CAR_SEARCH_CHECK_IDLE
+    end        
+    
+if and
+1@ == 2
+8491: not  actor PLAYER_ACTOR has_weapon 92
+8491: not  actor PLAYER_ACTOR has_weapon 107
+    then
+    
+    $WEAPON_FIND += 1
+    $TEMP_XP = WEAPON_FIND_XP
+    008D: $TEMP_XP = integer $TEMP_XP to_float
+    0069: $TEMP_XP *= $XP_COEFF // (float)
+    008C: $TEMP_XP = float $TEMP_XP to_integer
+    0058: $PLAYER_XP += $TEMP_XP // (int)
+ 
+    if
+    $WEAPON_FIND == 18
+        then
+        $WEAPON_FIND = 0
+        end
+    
+    if
+    09D1:   pickup $CAR_PICKUP[$WEAPON_FIND] created
+        then
+        pickup.Destroy($CAR_PICKUP[$WEAPON_FIND])
+        end     
+
+    while not model.Available(#M79)
+    wait 0
+    model.Load(#M79)
+    mload
+    end
+
+    if
+    not CAR_SEARCH_DO_NOT_GIVE == 1
+    then
+    04C4: store_coords_to 4@ 5@ 6@ from_actor PLAYER_ACTOR with_offset 0.0 1.0 0.5 
+    032B: $CAR_PICKUP[$WEAPON_FIND] = create_weapon_pickup #M79 type 3 ammo 1 at 4@ 5@ 6@
+    end
+    
+    wait 200 
+    03E5: show_text_box 'INV224'
+    jump @CAR_SEARCH_CHECK_IDLE
+    end            
+
+if or    
+0491:   actor PLAYER_ACTOR has_weapon 44
+0491:   actor PLAYER_ACTOR has_weapon 45
+UNITED_MAP == 1
+    then
+    
+    $PUST_BAGA += 1
+
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_PUST_BAGA"    
+    
+    if
+    $CHEATED_FLAG == 0 
+    then        
+    0@ += 1
+    end            
+     
+    0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_PUST_BAGA"
+    
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT88_GOT"
+    0AF0: 2@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_PUST_BAGA"            
+            
+    if and
+    0@ == 0
+    2@ >= 90
+    $CHEATED_FLAG == 0
+        then
+        v$ACHIEVEMNT = "ACH88"
+        $ACHIEVEMENT_GOT_FLAG = 1                
+        0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT88_GOT"                
+        end
+    
+    03E5: show_text_box 'INV110'
+    
+    if
+    056D:   actor $VOICE_ACTOR defined
+    then
+    
+    if
+    not $RANDOM_MODE_MODEL == 0
+    then
+    05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 181
+    else
+    05C1: AS_actor PLAYER_ACTOR speak_from_audio_table 181
+    end
+    
+    end
+    
+    end    
+
+jump @CAR_SEARCH_CHECK_IDLE
+
+/////////////////////////////////////////////////////////////////////////////////////////////// 
+
+:CAR_SEACRH_CHECK_BANDITS 
+
+0209: 10@ = random_int_in_ranges 22 35 
+
+if
+UNITED_MAP == 1
+then
+
+if 
+$UNITED_VC_FLAG == 1
+then
+
+if
+STORIES_MAP == 0
+then
+0209: 10@ = random_int_in_ranges MINID_VC_WEAP MAXID_VC_WEAP
+else
+0209: 10@ = random_int_in_ranges MINID_VCS_WEAP MAXID_VCS_WEAP
+end
+
+else
+
+if
+STORIES_MAP == 0
+then
+0209: 10@ = random_int_in_ranges MINID_III_WEAP MAXID_III_WEAP
+else
+0209: 10@ = random_int_in_ranges MINID_LCS_WEAP MAXID_LCS_WEAP
+end
+
+end
+
+end
+
+if or
+10@ == 28 
+10@ == 30 
+10@ == 25
+10@ == 111
+10@ == 112
+10@ == 113
+10@ == 117
+    then
+    else
+    if or
+    10@ == 136 
+    10@ == 138 
+    10@ == 142
+    10@ == 145    
+    10@ == 168 
+    10@ == 171 
+    10@ == 172
+        then
+        else
+        if or
+        10@ == 198 
+        10@ == 202 
+        10@ == 201
+            then
+            else
+            jump to @CAR_SEACRH_CHECK_BANDITS
+            end
+        end
+    end
+    
+if
+0E4D: random_percent 5
+then
+
+if or
+10@ == 28
+10@ == 30
+10@ == 25
+then
+10@ = 34
+end
+
+if or
+10@ == 111
+10@ == 112
+10@ == 113
+10@ == 117
+then
+10@ = 120
+end
+
+if or
+10@ == 136
+10@ == 138
+10@ == 142
+then
+10@ = 146
+end
+
+if or
+10@ == 168
+10@ == 171
+10@ == 172
+then
+10@ = 175
+end
+
+if or
+10@ == 198
+10@ == 202
+10@ == 201
+then
+10@ = 211
+end
+
+end    
+
+$WEAPON_FIND += 1
+$TEMP_XP = WEAPON_FIND_XP
+008D: $TEMP_XP = integer $TEMP_XP to_float
+0069: $TEMP_XP *= $XP_COEFF // (float)
+008C: $TEMP_XP = float $TEMP_XP to_integer
+0058: $PLAYER_XP += $TEMP_XP // (int)
+ 
+if
+$WEAPON_FIND == 18
+    then
+    $WEAPON_FIND = 0
+    end
+
+if
+09D1:   pickup $CAR_PICKUP[$WEAPON_FIND] created
+    then
+    pickup.Destroy($CAR_PICKUP[$WEAPON_FIND])
+    end
+
+0781: get_weapon_with_ID 10@ model_to 11@  
+
+while not model.Available(11@)
+wait 0
+model.Load(11@)
+mload
+end
+
+gosub @4CHECKING_AMMO
+
+if
+not CAR_SEARCH_DO_NOT_GIVE == 1
+then 
+04C4: store_coords_to 4@ 5@ 6@ from_actor PLAYER_ACTOR with_offset 0.0 1.0 0.5 
+032B: $CAR_PICKUP[$WEAPON_FIND] = create_weapon_pickup 11@ type 3 ammo 12@ at 4@ 5@ 6@
+end
+ 
+wait 200 
+03E5: show_text_box 'INV107' 
+jump @CAR_SEARCH_CHECK_IDLE
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+:CAR_SEACRH_CHECK_FERMERS 
+
+random_int 10@ 0 2
+
+if
+10@ == 0
+then
+10@ = 73
+else
+10@ = 33
+end
+ 
+if or
+10@ == 73 
+10@ == 33 
+jf @CAR_SEACRH_CHECK_FERMERS
+
+$WEAPON_FIND += 1
+$TEMP_XP = WEAPON_FIND_XP
+008D: $TEMP_XP = integer $TEMP_XP to_float
+0069: $TEMP_XP *= $XP_COEFF // (float)
+008C: $TEMP_XP = float $TEMP_XP to_integer
+0058: $PLAYER_XP += $TEMP_XP // (int)
+ 
+if
+$WEAPON_FIND == 18
+    then
+    $WEAPON_FIND = 0
+    end
+
+if
+09D1:   pickup $CAR_PICKUP[$WEAPON_FIND] created
+    then
+    pickup.Destroy($CAR_PICKUP[$WEAPON_FIND])
+    end
+
+0781: get_weapon_with_ID 10@ model_to 11@   
+
+while not model.Available(11@)
+wait 0
+model.Load(11@)
+mload
+end
+
+gosub @5CHECKING_AMMO
+
+if
+not CAR_SEARCH_DO_NOT_GIVE == 1
+then
+04C4: store_coords_to 4@ 5@ 6@ from_actor PLAYER_ACTOR with_offset 0.0 1.0 0.5 
+032B: $CAR_PICKUP[$WEAPON_FIND] = create_weapon_pickup 11@ type 3 ammo 12@ at 4@ 5@ 6@
+end
+
+wait 200 
+03E5: show_text_box 'INV107' 
+jump @CAR_SEARCH_CHECK_IDLE
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+:CAR_SEACRH_CHECK_POLICE
+
+10@ = 0
+
+for 21@ = 1 to 109
+
+if
+003A:   $CR_SRCH == $PARK_CAR[21@] // (int)
+    then
+    10@ = 1
+    end
+
+end
+
+if or
+10@ == 1
+0E4D: random_percent 5
+jf @PUST_BAGA_JUMP
+ 
+if
+UNITED_MAP == 0
+then
+0209: 10@ = random_int_in_ranges 22 35 
+else
+
+if
+$UNITED_VC_FLAG == 0
+then
+
+if
+STORIES_MAP == 0
+then
+0209: 10@ = random_int_in_ranges 111 120
+else
+0209: 10@ = random_int_in_ranges MINID_LCS_WEAP MAXID_LCS_WEAP
+end
+      
+else
+
+if
+STORIES_MAP == 0
+then
+0209: 10@ = random_int_in_ranges 136 145
+else
+0209: 10@ = random_int_in_ranges MINID_VCS_WEAP MAXID_VCS_WEAP
+end
+
+end
+
+end
+
+if or
+10@ == 22 
+10@ == 29
+10@ == 25
+10@ == 111
+10@ == 113
+10@ == 136
+10@ == 138
+10@ == 143
+    then    
+    else
+    if or
+    10@ == 165 
+    10@ == 169
+    10@ == 172
+    10@ == 195
+    10@ == 199
+    10@ == 202
+        then    
+        else
+        jump to @CAR_SEACRH_CHECK_POLICE
+        end
+    end
+
+$WEAPON_FIND += 1
+$TEMP_XP = WEAPON_FIND_XP
+008D: $TEMP_XP = integer $TEMP_XP to_float
+0069: $TEMP_XP *= $XP_COEFF // (float)
+008C: $TEMP_XP = float $TEMP_XP to_integer
+0058: $PLAYER_XP += $TEMP_XP // (int)
+ 
+if
+$WEAPON_FIND == 18
+    then
+    $WEAPON_FIND = 0
+    end
+
+if
+09D1:   pickup $CAR_PICKUP[$WEAPON_FIND] created
+    then
+    pickup.Destroy($CAR_PICKUP[$WEAPON_FIND])
+    end
+
+0781: get_weapon_with_ID 10@ model_to 11@  
+
+while not model.Available(11@)
+wait 0
+model.Load(11@)
+mload
+end
+
+gosub @4CHECKING_AMMO
+
+if
+not CAR_SEARCH_DO_NOT_GIVE == 1
+then 
+04C4: store_coords_to 4@ 5@ 6@ from_actor PLAYER_ACTOR with_offset 0.0 1.0 0.5 
+032B: $CAR_PICKUP[$WEAPON_FIND] = create_weapon_pickup 11@ type 3 ammo 12@ at 4@ 5@ 6@
+end
+
+wait 200 
+03E5: show_text_box 'INV107' 
+jump @CAR_SEARCH_CHECK_IDLE
+
+:CAR_SEACRH_CHECK_AMBULAN
+
+10@ = 0
+
+for 21@ = 1 to 109
+
+if
+003A:   $CR_SRCH == $PARK_CAR[21@] // (int)
+    then
+    10@ = 1
+    end
+
+end
+
+if
+CURRENT_USHER_TUTORIAL_NUM == -2
+then
+CURRENT_USHER_TUTORIAL_NUM = -1
+jump to @SKIP_FUCKING_SHIT_USHER1
+end
+
+if or
+10@ == 1
+0E4D: random_percent 5
+jf @PUST_BAGA_JUMP
+
+if
+$ALLOW_MEDS == 1
+jf @CAR_SEACRH_NORMAL_WEAPON
+
+:SKIP_FUCKING_SHIT_USHER1
+
+if
+$FREEMODE == 0
+then
+0209: 0@ = random_int_in_ranges 2 4
+else
+0209: 0@ = random_int_in_ranges 1 3
+end
+ 
+005E: $HEAL_FIND += 0@  // (int)
+
+if
+not CAR_SEARCH_DO_NOT_GIVE == 1
+then
+005E: $HEAL += 0@  // (int)
+end
+
+$TEMP_XP = HEAL_FIND_XP
+008D: $TEMP_XP = integer $TEMP_XP to_float
+0069: $TEMP_XP *= $XP_COEFF // (float)
+008C: $TEMP_XP = float $TEMP_XP to_integer
+0058: $PLAYER_XP += $TEMP_XP // (int)
+$TEMP_XP = HEAL_FIND_XP
+008D: $TEMP_XP = integer $TEMP_XP to_float
+0069: $TEMP_XP *= $XP_COEFF // (float)
+008C: $TEMP_XP = float $TEMP_XP to_integer
+0058: $PLAYER_XP += $TEMP_XP // (int)
+
+if
+0@ == 3
+then
+$TEMP_XP = HEAL_FIND_XP
+008D: $TEMP_XP = integer $TEMP_XP to_float
+0069: $TEMP_XP *= $XP_COEFF // (float)
+008C: $TEMP_XP = float $TEMP_XP to_integer
+0058: $PLAYER_XP += $TEMP_XP // (int)
+end
+
+if
+0@ == 4
+then
+$TEMP_XP = HEAL_FIND_XP
+008D: $TEMP_XP = integer $TEMP_XP to_float
+0069: $TEMP_XP *= $XP_COEFF // (float)
+008C: $TEMP_XP = float $TEMP_XP to_integer
+0058: $PLAYER_XP += $TEMP_XP // (int)
+end
+
+if
+0@ == 5
+then
+$TEMP_XP = HEAL_FIND_XP
+008D: $TEMP_XP = integer $TEMP_XP to_float
+0069: $TEMP_XP *= $XP_COEFF // (float)
+008C: $TEMP_XP = float $TEMP_XP to_integer
+0058: $PLAYER_XP += $TEMP_XP // (int)
+end
+
+$BINT_FIND += 1
+
+if
+not CAR_SEARCH_DO_NOT_GIVE == 1
+then
+$BINT += 1
+end
+
+$TEMP_XP = BINT_FIND_XP
+008D: $TEMP_XP = integer $TEMP_XP to_float
+0069: $TEMP_XP *= $XP_COEFF // (float)
+008C: $TEMP_XP = float $TEMP_XP to_integer
+0058: $PLAYER_XP += $TEMP_XP // (int)
+03E5: show_text_box 'INV12' 
+jump @CAR_SEARCH_CHECK_IDLE
+
+:4CHECKING_AMMO  
+
+////////////////////AMMOGEN_SETTINGS_HERE////////////////////
+
+if and
+not 10@ == 25
+not 10@ == 26
+not 10@ == 27
+not 10@ == 33
+not 10@ == 34
+not 10@ == 24
+not 10@ == 71
+jf @44AMMO_SMALL
+if and
+not 10@ == 73
+not 10@ == 113
+not 10@ == 120
+not 10@ == 137
+not 10@ == 138
+not 10@ == 139
+not 10@ == 140
+not 10@ == 146
+jf @44AMMO_SMALL
+if and
+not 10@ == 147
+not 10@ == 80
+not 10@ == 78
+not 10@ == 89
+jf @44AMMO_SMALL
+if and
+not 10@ == 166
+not 10@ == 172
+not 10@ == 173
+not 10@ == 174
+not 10@ == 175
+not 10@ == 176    
+jf @44AMMO_SMALL
+if and
+not 10@ == 196
+not 10@ == 202
+not 10@ == 203
+not 10@ == 204
+not 10@ == 205
+not 10@ == 206    
+jf @44AMMO_SMALL
+if and
+not 10@ == 96
+not 10@ == 97
+not 10@ == 100
+not 10@ == 102
+not 10@ == 103    
+jf @44AMMO_SMALL
+jump to @44AMMO_NORMAL
+
+    
+:44AMMO_SMALL
+0209: 12@ = random_int_in_ranges $W2_FIND_AMMO_MIN $W2_FIND_AMMO_MAX   
+0093: 12@ = integer 12@ to_float 
+12@ *= 0.4
+12@ *= 1.0
+006F: 12@ *= AMMO_TRUNKS_COEFF_RAND_SPEC // (float)
+0092: 12@ = float 12@ to_integer  
+
+jump to @44AMMO_NORMAL_SKIP
+
+:44AMMO_NORMAL
+0209: 12@ = random_int_in_ranges $W2_FIND_AMMO_MIN $W2_FIND_AMMO_MAX 
+0093: 12@ = integer 12@ to_float 
+12@ *= 1.0
+006F: 12@ *= AMMO_TRUNKS_COEFF_RAND_SPEC // (float)
+0092: 12@ = float 12@ to_integer 
+
+:44AMMO_NORMAL_SKIP    
+return
+
+:5CHECKING_AMMO
+
+////////////////////AMMOGEN_SETTINGS_HERE////////////////////
+
+if and
+not 10@ == 25
+not 10@ == 26
+not 10@ == 27
+not 10@ == 33
+not 10@ == 34
+not 10@ == 24
+not 10@ == 71
+jf @441AMMO_SMALL
+if and
+not 10@ == 73
+not 10@ == 113
+not 10@ == 120
+not 10@ == 137
+not 10@ == 138
+not 10@ == 139
+not 10@ == 140
+not 10@ == 146
+jf @441AMMO_SMALL
+if and
+not 10@ == 147
+not 10@ == 80
+not 10@ == 78
+not 10@ == 89
+jf @441AMMO_SMALL
+if and
+not 10@ == 166
+not 10@ == 172
+not 10@ == 173
+not 10@ == 174
+not 10@ == 175
+not 10@ == 176    
+jf @441AMMO_SMALL
+if and
+not 10@ == 196
+not 10@ == 202
+not 10@ == 203
+not 10@ == 204
+not 10@ == 205
+not 10@ == 206    
+jf @441AMMO_SMALL
+if and
+not 10@ == 96
+not 10@ == 97
+not 10@ == 100
+not 10@ == 102
+not 10@ == 103    
+jf @441AMMO_SMALL
+jump to @441AMMO_NORMAL
+
+    
+:441AMMO_SMALL
+0209: 12@ = random_int_in_ranges $W3_FIND_AMMO_MIN $W3_FIND_AMMO_MAX   
+0093: 12@ = integer 12@ to_float 
+12@ *= 0.4
+12@ *= 1.0
+006F: 12@ *= AMMO_TRUNKS_COEFF_RAND_SPEC // (float)
+0092: 12@ = float 12@ to_integer  
+
+jump to @441AMMO_NORMAL_SKIP
+
+:441AMMO_NORMAL
+0209: 12@ = random_int_in_ranges $W3_FIND_AMMO_MIN $W3_FIND_AMMO_MAX 
+0093: 12@ = integer 12@ to_float 
+12@ *= 1.0
+006F: 12@ *= AMMO_TRUNKS_COEFF_RAND_SPEC // (float)
+0092: 12@ = float 12@ to_integer 
+
+:441AMMO_NORMAL_SKIP  
+return
+
+:6CHECKING_AMMO
+
+////////////////////AMMOGEN_SETTINGS_HERE////////////////////
+
+if and
+not 10@ == 25
+not 10@ == 26
+not 10@ == 27
+not 10@ == 33
+not 10@ == 34
+not 10@ == 24
+not 10@ == 71
+jf @45AMMO_SMALL
+if and
+not 10@ == 73
+not 10@ == 113
+not 10@ == 120
+not 10@ == 137
+not 10@ == 138
+not 10@ == 139
+not 10@ == 140
+not 10@ == 146
+jf @45AMMO_SMALL
+if and
+not 10@ == 147
+not 10@ == 80
+not 10@ == 78
+not 10@ == 89
+jf @45AMMO_SMALL
+if and
+not 10@ == 166
+not 10@ == 172
+not 10@ == 173
+not 10@ == 174
+not 10@ == 175
+not 10@ == 176    
+jf @45AMMO_SMALL
+if and
+not 10@ == 196
+not 10@ == 202
+not 10@ == 203
+not 10@ == 204
+not 10@ == 205
+not 10@ == 206    
+jf @45AMMO_SMALL
+if and
+not 10@ == 96
+not 10@ == 97
+not 10@ == 100
+not 10@ == 102
+not 10@ == 103    
+jf @45AMMO_SMALL
+jump to @45AMMO_NORMAL
+
+    
+:45AMMO_SMALL
+0209: 12@ = random_int_in_ranges $W_FIND_AMMO_MIN $W_FIND_AMMO_MAX   
+0093: 12@ = integer 12@ to_float 
+12@ *= 0.4
+12@ *= 1.8
+006F: 12@ *= AMMO_TRUNKS_COEFF_RAND // (float)
+0092: 12@ = float 12@ to_integer  
+
+jump to @45AMMO_NORMAL_SKIP
+
+:45AMMO_NORMAL
+0209: 12@ = random_int_in_ranges $W_FIND_AMMO_MIN $W_FIND_AMMO_MAX 
+0093: 12@ = integer 12@ to_float 
+12@ *= 1.65
+006F: 12@ *= AMMO_TRUNKS_COEFF_RAND // (float)
+0092: 12@ = float 12@ to_integer 
+
+:45AMMO_NORMAL_SKIP  
+return
+
+////////////////////////////////////////////////////////////////////////////////
+
+:CAR_INV_TRUCK_SHOW_START
+
+gosub @WEIGHT_SET_CAR_INV
+008C: $ITEMS_WEIGHT3 = float $ITEMS_WEIGHT to_integer
+
+///////////////////////////////////////////////////////////////////////////////////
+
+0A97: 22@ = car $CR_SRCH struct 
+0A8E: 23@ = 22@ + CAR_ENGINE_POWER_PLUS_STRUCT // int 
+0A8D: 3@ = read_memory 23@ size 4 virtual_protect 1
+
+if
+UNITED_MAP == 0
+then
+
+if or
+car.Model($CR_SRCH) == 15405
+car.Model($CR_SRCH) == 15406
+car.Model($CR_SRCH) == 15407
+car.Model($CR_SRCH) == 15408
+car.Model($CR_SRCH) == 15409
+car.Model($CR_SRCH) == 15410
+car.Model($CR_SRCH) == 15411
+car.Model($CR_SRCH) == 15412
+then
+3@ = 1.3
+end
+
+if or
+car.Model($CR_SRCH) == 15413
+car.Model($CR_SRCH) == 15414
+car.Model($CR_SRCH) == 15415
+car.Model($CR_SRCH) == 15416
+car.Model($CR_SRCH) == 15417
+car.Model($CR_SRCH) == 15418
+car.Model($CR_SRCH) == 15419
+car.Model($CR_SRCH) == 15427
+then
+3@ = 1.3
+end
+
+if or
+car.Model($CR_SRCH) == 15428
+car.Model($CR_SRCH) == 15429
+car.Model($CR_SRCH) == 15430
+car.Model($CR_SRCH) == 15431
+car.Model($CR_SRCH) == 15432
+car.Model($CR_SRCH) == 15433
+car.Model($CR_SRCH) == 15434
+car.Model($CR_SRCH) == 15426
+then
+3@ = 1.3
+end
+
+if or
+car.Model($CR_SRCH) == 15465
+car.Model($CR_SRCH) == 15466
+car.Model($CR_SRCH) == 15467
+car.Model($CR_SRCH) == 15468
+car.Model($CR_SRCH) == 15484
+car.Model($CR_SRCH) == 15485
+car.Model($CR_SRCH) == 15488
+car.Model($CR_SRCH) == 15490
+then
+3@ = 1.3
+end
+
+if or
+car.Model($CR_SRCH) == 15495
+car.Model($CR_SRCH) == 15496
+car.Model($CR_SRCH) == 15497
+car.Model($CR_SRCH) == 15498
+car.Model($CR_SRCH) == 15499
+car.Model($CR_SRCH) == 15500
+car.Model($CR_SRCH) == 15501
+car.Model($CR_SRCH) == 15592
+then
+3@ = 1.3
+end
+
+if or
+car.Model($CR_SRCH) == 15502
+car.Model($CR_SRCH) == 15503
+car.Model($CR_SRCH) == 15594
+then
+3@ = 1.3
+end
+
+end
+
+3@ /= 0.325
+0092: 3@ = float 3@ to_integer
+    
+$PANEL_OPEN = 1
+gosub @DISEMB_JETP_CHECK
+0792: disembark_instantly_actor PLAYER_ACTOR
+05B9: AS_actor PLAYER_ACTOR stay_idle 999999 ms
+015D: set_gamespeed 0.1  
+$PLAYER_MONEY = player.Money(PLAYER_CHAR)
+0581: enable_radar 0 
+$MAX_WEIGHT2 = 80
+
+v$NAME1 = "N_ME"
+0665: get_actor PLAYER_ACTOR model_to 1@ 
+if
+1@ > 10000
+then
+v$NAME1 = "N_"
+end
+0AD3: v$NAME2 = format "%d" 1@
+098B: v$NAME3 = v$NAME1 + v$NAME2
+
+if
+FREEMODE_CUSTOM_NAME == 1 
+then
+06D1: v$NAME3 = "F_NAME" // v$ = string
+end
+
+008B: 27@ = $MINUTES_PLAYED // (int)
+008B: 28@ = $HOURS_PLAYED // (int)
+28@ *= 60
+005A: 27@ += 28@  // (int)
+
+0441: 1@ = car $CR_SRCH model
+0ADB: 7@v = car_model 1@ name
+
+0227: 5@ = car $CR_SRCH health
+5@ -= 250
+0093: 5@ = integer 5@ to_float
+5@ /= 7.5
+0092: 5@ = float 5@ to_integer
+
+0A97: 22@ = car $CR_SRCH struct 
+0A8E: 23@ = 22@ + 5 // int 
+0A8D: 6@ = read_memory 23@ size 4 virtual_protect 0
+0092: 6@ = float 6@ to_integer
+
+0@ = 0 
+08D4: 0@ = create_panel_with_title 'INV372' position 71.0 150.0 width 300.0 columns 2 interactive 1 background 1 alignment 1
+
+if and
+8820: not  model 1@ heli
+881E: not  model 1@ boat
+881F: not  model 1@ plane
+then 
+08DB: set_panel 0@ column 0 header 7@v data 'INV1' 'INV5' 'INV9' 'INV18' 'INV35' 'INV90' 'INV196' 'INV15' 'INV280' 'INV281' 'INV282' 'INV360'
+else
+08DB: set_panel 0@ column 0 header 7@v data 'INV1' 'INV5' 'INV9' 'INV18' 'INV35' 'INV90' 'INV196' 'INV15' 'INV280' 'INV282' 'INV360' 'DUMMY'
+end
+
+if
+8A4B: not  controls_set_to_joystick
+then
+0512: show_permanent_text_box 'INV341'  
+else
+0512: show_permanent_text_box 'INV341B'
+end
+ 
+08D6: set_panel 0@ column 1 alignment 1 
+08EE: set_panel 0@ column 1 row 0 text_1number GXT 'INV3' number $CAR_SAVE_BANKA_COUNT[CARINV_SLOT] 
+08EE: set_panel 0@ column 1 row 1 text_1number GXT 'INV3' number $CAR_SAVE_HEAL_COUNT[CARINV_SLOT] 
+08EE: set_panel 0@ column 1 row 2 text_1number GXT 'INV3' number $CAR_SAVE_BINT_COUNT[CARINV_SLOT]
+ 
+
+if
+$CAR_SAVE_KANISTRA_COUNT[CARINV_SLOT] > 0
+then
+008C: $KANISTRA_FUEL2 = float $CAR_SAVE_KANISTRA_GASOLINE_COUNT[CARINV_SLOT] to_integer
+else
+$KANISTRA_FUEL2 = 0
+end
+
+if
+$CAR_SAVE_KANISTRA_COUNT[CARINV_SLOT] > 0
+then 
+08EE: set_panel 0@ column 1 row 3 text_1number GXT 'INV3B' number $KANISTRA_FUEL2
+else
+08EE: set_panel 0@ column 1 row 3 text_1number GXT 'INV3C' number $KANISTRA_FUEL2
+end
+ 
+08EE: set_panel 0@ column 1 row 4 text_1number GXT 'INV3' number $CAR_SAVE_RADIO_COUNT[CARINV_SLOT]
+08EE: set_panel 0@ column 1 row 5 text_1number GXT 'INV3' number $CAR_SAVE_JIMMY_COUNT[CARINV_SLOT]
+08EE: set_panel 0@ column 1 row 6 text_1number GXT 'INV3' number $CAR_SAVE_REPAIR_COUNT[CARINV_SLOT]
+08EE: set_panel 0@ column 1 row 8 text_1number GXT 'DISP3' number 5@
+
+if and
+8820: not  model 1@ heli
+881E: not  model 1@ boat
+881F: not  model 1@ plane
+then
+08EE: set_panel 0@ column 1 row 9 text_1number GXT 'INV283' number 3@
+08EE: set_panel 0@ column 1 row 10 text_1number GXT 'INV3' number 6@
+gosub @CAR_TRUNK_SPACE_CHECK
+0093: 22@ = integer 22@ to_float
+0093: 23@ = integer 23@ to_float                                             
+23@ /= 100.0                     
+0073: 22@ /= 23@ // (float)
+0092: 22@ = float 22@ to_integer
+08EE: set_panel 0@ column 1 row 11 text_1number GXT 'DISP3' number 22@
+08D9: set_panel 0@ row 11 enable 0
+else
+08EE: set_panel 0@ column 1 row 9 text_1number GXT 'INV3' number 6@
+gosub @CAR_TRUNK_SPACE_CHECK
+0093: 22@ = integer 22@ to_float
+0093: 23@ = integer 23@ to_float                                             
+23@ /= 100.0                     
+0073: 22@ /= 23@ // (float)
+0092: 22@ = float 22@ to_integer
+08EE: set_panel 0@ column 1 row 10 text_1number GXT 'DISP3' number 22@
+08D9: set_panel 0@ row 10 enable 0
+end
+
+if
+$KANISTRA > 0
+then
+008C: $KANISTRA_FUEL2 = float $KANISTRA_FUEL to_integer
+else
+$KANISTRA_FUEL2 = 0
+end
+
+09DB: set_panel 0@ column 0 width 142 //230
+09DB: set_panel 0@ column 1 width 25
+$INVENTORY_PANEL = 0
+08D4: $INVENTORY_PANEL = create_panel_with_title 'INV2' position 352.0 150.0 width 100.0 columns 2 interactive 0 background 1 alignment 1 
+08DB: set_panel $INVENTORY_PANEL column 0 header 'DUMMY' data 'INV1' 'INV5' 'INV9' 'INV18' 'INV35' 'INV90' 'INV196' 'INV15' 'INV88' s$TIME2_STRING 'INV153' 'DUMMY' 
+08D6: set_panel $INVENTORY_PANEL column 1 alignment 1 
+08EE: set_panel $INVENTORY_PANEL column 1 row 0 text_1number GXT 'INV3' number $BANKA 
+08EE: set_panel $INVENTORY_PANEL column 1 row 1 text_1number GXT 'INV3' number $HEAL 
+08EE: set_panel $INVENTORY_PANEL column 1 row 2 text_1number GXT 'INV3' number $BINT
+
+if
+$KANISTRA > 0
+then 
+08EE: set_panel $INVENTORY_PANEL column 1 row 3 text_1number GXT 'INV3B' number $KANISTRA_FUEL2
+else
+08EE: set_panel $INVENTORY_PANEL column 1 row 3 text_1number GXT 'INV3C' number $KANISTRA_FUEL2
+end
+ 
+08EE: set_panel $INVENTORY_PANEL column 1 row 4 text_1number GXT 'INV3' number $RADIO
+08EE: set_panel $INVENTORY_PANEL column 1 row 5 text_1number GXT 'INV3' number $JIMMY
+08EE: set_panel $INVENTORY_PANEL column 1 row 6 text_1number GXT 'INV3' number $REPAIR_KIT
+08EE: set_panel $INVENTORY_PANEL column 1 row 8 text_1number GXT s$WEIGHT_STRING number $ITEMS_WEIGHT3  
+08EE: set_panel $INVENTORY_PANEL column 1 row 9 text_1number GXT s$TIME_STRING number 27@
+08EE: set_panel $INVENTORY_PANEL column 1 row 10 text_1number GXT 'INV3' number $PLAYER_MONEY
+09DB: set_panel $INVENTORY_PANEL column 0 width 142 //230
+09DB: set_panel $INVENTORY_PANEL column 1 width 25
+08D9: set_panel 0@ row 7 enable 0
+08D9: set_panel 0@ row 8 enable 0
+08D9: set_panel 0@ row 9 enable 0
+08D9: set_panel 0@ row 10 enable 0
+090E: set_panel 0@ active_row $ROW_INV
+090E: set_panel $INVENTORY_PANEL active_row $ROW_INV
+wait 10
+if
+0A4B:   controls_set_to_joystick
+then
+32@ = 0
+else
+32@ = 51
+end
+//cinema.Widescreen(1)
+jump @CAR_INV_TRUCK_CHECK1
+
+//Проверка инвертаря//
+
+:CAR_TRUNK_GIVE_MENU
+
+if
+0A4B:   controls_set_to_joystick
+then
+1@ = 10
+32@ = 51
+else
+1@ = 11
+end
+ 
+if and
+00E1:   player 0 pressed_key 1@
+32@ > 50 
+jf @CAR_INV_TRUCK_TAKE_MENU
+08D7: $ROW_INV = panel 0@ active_row 
+08DA: remove_panel 0@
+08DA: remove_panel $INVENTORY_PANEL 
+03E6: remove_text_box
+0871: init_jump_table $ROW_INV total_jumps 7 default_jump 0 @CAR_INV_TRUCK_CHECK1 jumps 0 @CAR_TRUNK_GIVE_EAT 1 @CAR_TRUNK_GIVE_HEAL 2 @CAR_TRUNK_GIVE_BINT 3 @CAR_TRUNK_GIVE_KANISTRA 4 @CAR_TRUNK_GIVE_RADIO 5 @CAR_TRUNK_GIVE_JIMMY 6 @CAR_TRUNK_GIVE_REPAIR_KIT
+0872: jump_table_jumps 7 @CAR_TRUNK_GIVE_RADIO 8 @CAR_TRUNK_GIVE_RADIO 9 @CAR_TRUNK_GIVE_RADIO 10 @CAR_TRUNK_GIVE_RADIO 11 @CAR_TRUNK_GIVE_RADIO 12 @CAR_TRUNK_GIVE_RADIO 13 @CAR_TRUNK_GIVE_RADIO 14 @CAR_TRUNK_GIVE_RADIO 15 @CAR_TRUNK_GIVE_RADIO
+
+:CAR_INV_TRUCK_TAKE_MENU
+
+if
+0A4B:   controls_set_to_joystick
+then
+1@ = 11
+32@ = 51
+else
+1@ = 10
+end
+ 
+if and
+00E1:   player 0 pressed_key 1@
+32@ > 50 
+jf @CAR_INV_TRUCK_CHECK1
+08D7: $ROW_INV = panel 0@ active_row 
+08DA: remove_panel 0@
+08DA: remove_panel $INVENTORY_PANEL 
+03E6: remove_text_box
+0871: init_jump_table $ROW_INV total_jumps 7 default_jump 0 @CAR_INV_TRUCK_CHECK1 jumps 0 @CAR_INV_TRUCK_TAKE_EAT 1 @CAR_INV_TRUCK_TAKE_HEAL 2 @CAR_INV_TRUCK_TAKE_BINT 3 @CAR_INV_TRUCK_TAKE_KANISTRA 4 @CAR_INV_TRUCK_TAKE_RADIO 5 @CAR_INV_TRUCK_TAKE_JIMMY 6 @CAR_INV_TRUCK_TAKE_REPAIR_KIT
+0872: jump_table_jumps 7 @CAR_INV_TRUCK_TAKE_RADIO 8 @CAR_INV_TRUCK_TAKE_RADIO 9 @CAR_INV_TRUCK_TAKE_RADIO 10 @CAR_INV_TRUCK_TAKE_RADIO 11 @CAR_INV_TRUCK_TAKE_RADIO 12 @CAR_INV_TRUCK_TAKE_RADIO 13 @CAR_INV_TRUCK_TAKE_RADIO 14 @CAR_INV_TRUCK_TAKE_RADIO 15 @CAR_INV_TRUCK_TAKE_RADIO
+
+:CAR_INV_TRUCK_CHECK1
+wait 0
+$PANEL_OPEN = 1
+08D7: $ROW_INV = panel 0@ active_row
+090E: set_panel $INVENTORY_PANEL active_row $ROW_INV
+
+if and
+0A4B:   controls_set_to_joystick
+0E3E: is_button_just_pressed 0 button 14
+    then
+    jump to @CAR_INV_TAKE_ALL_ITEMS_JOY
+    end
+
+//Забрать все вещи из ТС
+if
+0E3D: is_key_just_pressed 79
+    then
+    :CAR_INV_TAKE_ALL_ITEMS_JOY
+    
+    08DA: remove_panel 0@
+    08DA: remove_panel $INVENTORY_PANEL 
+    03E6: remove_text_box
+    
+    0058: $BANKA += $CAR_SAVE_BANKA_COUNT[CARINV_SLOT]  // (int)     
+    0058: $HEAL += $CAR_SAVE_HEAL_COUNT[CARINV_SLOT]  // (int)    
+    0058: $BINT += $CAR_SAVE_BINT_COUNT[CARINV_SLOT]  // (int)        
+    if
+    $KANISTRA == 0
+    then
+    0058: $KANISTRA += $CAR_SAVE_KANISTRA_COUNT[CARINV_SLOT]  // (int)
+    end
+    
+    0059: $KANISTRA_FUEL += $CAR_SAVE_KANISTRA_GASOLINE_COUNT[CARINV_SLOT]                                        
+    0058: $RADIO += $CAR_SAVE_RADIO_COUNT[CARINV_SLOT]  // (int)    
+    0058: $JIMMY += $CAR_SAVE_JIMMY_COUNT[CARINV_SLOT]  // (int)    
+    0058: $REPAIR_KIT += $CAR_SAVE_REPAIR_COUNT[CARINV_SLOT]  // (int)
+    
+    $CAR_SAVE_BANKA_COUNT[CARINV_SLOT] = 0
+    $CAR_SAVE_HEAL_COUNT[CARINV_SLOT] = 0
+    $CAR_SAVE_BINT_COUNT[CARINV_SLOT] = 0
+    $CAR_SAVE_KANISTRA_COUNT[CARINV_SLOT] = 0
+    $CAR_SAVE_KANISTRA_GASOLINE_COUNT[CARINV_SLOT] = 0.0
+    $CAR_SAVE_RADIO_COUNT[CARINV_SLOT] = 0
+    $CAR_SAVE_JIMMY_COUNT[CARINV_SLOT] = 0
+    $CAR_SAVE_REPAIR_COUNT[CARINV_SLOT] = 0
+    
+    00BC: show_text_highpriority GXT 'INV342' time 200 flag 1
+    
+    jump @CAR_INV_TRUCK_SHOW_START
+    
+    end
+    
+if and
+0A4B:   controls_set_to_joystick
+0E3E: is_button_just_pressed 0 button 16
+    then
+    jump to @CAR_INV_GIVE_ALL_ITEMS_JOY
+    end    
+    
+//Положить все вещи в ТС
+if
+0E3D: is_key_just_pressed 80
+    then
+    :CAR_INV_GIVE_ALL_ITEMS_JOY
+    
+    08DA: remove_panel 0@
+    08DA: remove_panel $INVENTORY_PANEL 
+    03E6: remove_text_box
+    
+    while $BANKA > 0
+    
+    gosub @CAR_TRUNK_SPACE_CHECK
+    if
+    801D: not  22@ > 23@  // (int)
+    jf @CAR_TRUNK_GIVE_DONT_HAVE_SPACE
+    
+    $BANKA -= 1
+    $CAR_SAVE_BANKA_COUNT[CARINV_SLOT] += 1
+    end
+    
+    while $HEAL > 0
+    
+    gosub @CAR_TRUNK_SPACE_CHECK
+    if
+    801D: not  22@ > 23@  // (int)
+    jf @CAR_TRUNK_GIVE_DONT_HAVE_SPACE
+    
+    $HEAL -= 1
+    $CAR_SAVE_HEAL_COUNT[CARINV_SLOT] += 1
+    end
+    
+    while $BINT > 0
+    
+    gosub @CAR_TRUNK_SPACE_CHECK
+    if
+    801D: not  22@ > 23@  // (int)
+    jf @CAR_TRUNK_GIVE_DONT_HAVE_SPACE
+    
+    $BINT -= 1
+    $CAR_SAVE_BINT_COUNT[CARINV_SLOT] += 1
+    end
+    
+    if and
+    $KANISTRA == 1
+    $CAR_SAVE_KANISTRA_COUNT[CARINV_SLOT] == 0
+    then
+    
+    $KANISTRA -= 1
+    $CAR_SAVE_KANISTRA_COUNT[CARINV_SLOT] += 1
+    if
+    $CAR_SAVE_KANISTRA_COUNT[CARINV_SLOT] > 1
+    then
+    $CAR_SAVE_KANISTRA_COUNT[CARINV_SLOT] = 1
+    end
+    
+    0059: $CAR_SAVE_KANISTRA_GASOLINE_COUNT[CARINV_SLOT] += $KANISTRA_FUEL
+    $KANISTRA_FUEL = 0.0
+    end
+    
+    if
+    $RADIO > 1
+    then
+    
+    while $RADIO > 1
+    
+    gosub @CAR_TRUNK_SPACE_CHECK
+    if
+    801D: not  22@ > 23@  // (int)
+    jf @CAR_TRUNK_GIVE_DONT_HAVE_SPACE
+    
+    $RADIO -= 1
+    $CAR_SAVE_RADIO_COUNT[CARINV_SLOT] += 1
+    end
+    
+    end
+    
+    while $JIMMY > 0
+    
+    gosub @CAR_TRUNK_SPACE_CHECK
+    if
+    801D: not  22@ > 23@  // (int)
+    jf @CAR_TRUNK_GIVE_DONT_HAVE_SPACE
+    
+    $JIMMY -= 1
+    $CAR_SAVE_JIMMY_COUNT[CARINV_SLOT] += 1
+    end
+    
+    while $REPAIR_KIT > 0
+    
+    gosub @CAR_TRUNK_SPACE_CHECK
+    if
+    801D: not  22@ > 23@  // (int)
+    jf @CAR_TRUNK_GIVE_DONT_HAVE_SPACE
+    
+    $REPAIR_KIT -= 1
+    $CAR_SAVE_REPAIR_COUNT[CARINV_SLOT] += 1
+    end
+    
+    00BC: show_text_highpriority GXT 'INV343' time 200 flag 1
+    
+    jump @CAR_INV_TRUCK_SHOW_START    
+    
+    end    
+
+if or
+00E1:   player 0 pressed_key 15
+actor.Dead(PLAYER_ACTOR) 
+$HUNTER_ON_PLAYER == 1
+0818:  actor PLAYER_ACTOR in_air
+jf @CAR_TRUNK_GIVE_MENU
+0581: enable_radar 1 
+03E6: remove_text_box
+text.ClearAll() 
+08DA: remove_panel 0@
+08DA: remove_panel $INVENTORY_PANEL
+015D: set_gamespeed 1.0
+$PANEL_OPEN = 0
+0792: PLAYER_ACTOR
+0792: PLAYER_ACTOR
+$INV_CLOSED = 1
+//cinema.Widescreen(0)
+07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 0
+wait 100
+07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 1
+$INV_CLOSED = 0   
+return
+
+//Давание вещей//
+
+:CAR_TRUNK_GIVE_EAT
+if
+$BANKA > 0
+jf @CAR_TRUNK_GIVE_DONT_HAVE
+gosub @CAR_TRUNK_SPACE_CHECK
+if
+801D: not  22@ > 23@  // (int)
+jf @CAR_TRUNK_GIVE_DONT_HAVE_SPACE
+$BANKA -= 1
+$CAR_SAVE_BANKA_COUNT[CARINV_SLOT] += 1
+00BC: show_text_highpriority GXT 'INV253' time 200 flag 1
+gosub @TRUNK_PLAY_DROP_SOUND2
+jump @CAR_INV_TRUCK_SHOW_START
+
+:CAR_TRUNK_GIVE_HEAL
+if
+$HEAL > 0
+jf @CAR_TRUNK_GIVE_DONT_HAVE
+gosub @CAR_TRUNK_SPACE_CHECK
+if
+801D: not  22@ > 23@  // (int)
+jf @CAR_TRUNK_GIVE_DONT_HAVE_SPACE
+$HEAL -= 1
+$CAR_SAVE_HEAL_COUNT[CARINV_SLOT] += 1
+00BC: show_text_highpriority GXT 'INV254' time 200 flag 1  
+gosub @TRUNK_PLAY_DROP_SOUND2
+jump @CAR_INV_TRUCK_SHOW_START
+
+:CAR_TRUNK_GIVE_BINT
+if
+$BINT > 0
+jf @CAR_TRUNK_GIVE_DONT_HAVE
+gosub @CAR_TRUNK_SPACE_CHECK
+if
+801D: not  22@ > 23@  // (int)
+jf @CAR_TRUNK_GIVE_DONT_HAVE_SPACE
+$BINT -= 1
+$CAR_SAVE_BINT_COUNT[CARINV_SLOT] += 1
+00BC: show_text_highpriority GXT 'INV255' time 200 flag 1
+gosub @TRUNK_PLAY_DROP_SOUND2
+jump @CAR_INV_TRUCK_SHOW_START
+
+:CAR_TRUNK_GIVE_KANISTRA
+if
+$KANISTRA > 0
+jf @CAR_TRUNK_GIVE_DONT_HAVE
+if
+$CAR_SAVE_KANISTRA_COUNT[CARINV_SLOT] == 0
+jf @CAR_TRUNK_GIVE_KANISTRA_HAVE
+$KANISTRA -= 1
+$CAR_SAVE_KANISTRA_COUNT[CARINV_SLOT] += 1
+0059: $CAR_SAVE_KANISTRA_GASOLINE_COUNT[CARINV_SLOT] += $KANISTRA_FUEL
+$KANISTRA_FUEL = 0.0
+00BC: show_text_highpriority GXT 'INV256' time 200 flag 1
+gosub @TRUNK_PLAY_KANISTRA_SOUND2  
+jump @CAR_INV_TRUCK_SHOW_START
+
+:CAR_TRUNK_GIVE_RADIO
+if
+$RADIO > 0
+jf @CAR_TRUNK_GIVE_DONT_HAVE
+if
+$RADIO > 1
+jf @CAR_TRUNK_GIVE_DONT_HAVE2
+gosub @CAR_TRUNK_SPACE_CHECK
+if
+801D: not  22@ > 23@  // (int)
+jf @CAR_TRUNK_GIVE_DONT_HAVE_SPACE
+$RADIO -= 1
+$CAR_SAVE_RADIO_COUNT[CARINV_SLOT] += 1
+00BC: show_text_highpriority GXT 'INV257' time 200 flag 1
+gosub @TRUNK_PLAY_DROP_SOUND2 
+jump @CAR_INV_TRUCK_SHOW_START
+
+:CAR_TRUNK_GIVE_JIMMY
+if
+$JIMMY > 0
+jf @CAR_TRUNK_GIVE_DONT_HAVE
+gosub @CAR_TRUNK_SPACE_CHECK
+if
+801D: not  22@ > 23@  // (int)
+jf @CAR_TRUNK_GIVE_DONT_HAVE_SPACE
+$JIMMY -= 1
+$CAR_SAVE_JIMMY_COUNT[CARINV_SLOT] += 1
+00BC: show_text_highpriority GXT 'INV258' time 200 flag 1
+gosub @TRUNK_PLAY_DROP_SOUND2
+jump @CAR_INV_TRUCK_SHOW_START
+
+:CAR_TRUNK_GIVE_REPAIR_KIT
+if
+$REPAIR_KIT > 0
+jf @CAR_TRUNK_GIVE_DONT_HAVE
+gosub @CAR_TRUNK_SPACE_CHECK
+if
+801D: not  22@ > 23@  // (int)
+jf @CAR_TRUNK_GIVE_DONT_HAVE_SPACE
+$REPAIR_KIT -= 1
+$CAR_SAVE_REPAIR_COUNT[CARINV_SLOT] += 1
+00BC: show_text_highpriority GXT 'INV259' time 200 flag 1
+gosub @TRUNK_PLAY_DROP_SOUND2
+jump @CAR_INV_TRUCK_SHOW_START
+
+//Взятие вещей//
+
+:CAR_INV_TRUCK_TAKE_EAT
+if
+$CAR_SAVE_BANKA_COUNT[CARINV_SLOT] > 0
+jf @CAR_INV_TRUCK_TAKE_DONT_HAVE
+$BANKA += 1
+$CAR_SAVE_BANKA_COUNT[CARINV_SLOT] -= 1
+00BC: show_text_highpriority GXT 'INV260' time 200 flag 1
+gosub @TRUNK_PLAY_PICKUP_SOUND2
+jump @CAR_INV_TRUCK_SHOW_START
+
+:CAR_INV_TRUCK_TAKE_HEAL
+if
+$CAR_SAVE_HEAL_COUNT[CARINV_SLOT] > 0
+jf @CAR_INV_TRUCK_TAKE_DONT_HAVE
+$HEAL += 1
+$CAR_SAVE_HEAL_COUNT[CARINV_SLOT] -= 1
+00BC: show_text_highpriority GXT 'INV261' time 200 flag 1
+gosub @TRUNK_PLAY_PICKUP_SOUND2
+jump @CAR_INV_TRUCK_SHOW_START
+
+:CAR_INV_TRUCK_TAKE_BINT
+if
+$CAR_SAVE_BINT_COUNT[CARINV_SLOT] > 0
+jf @CAR_INV_TRUCK_TAKE_DONT_HAVE
+$BINT += 1
+$CAR_SAVE_BINT_COUNT[CARINV_SLOT] -= 1
+00BC: show_text_highpriority GXT 'INV262' time 200 flag 1
+gosub @TRUNK_PLAY_PICKUP_SOUND2
+jump @CAR_INV_TRUCK_SHOW_START
+
+:CAR_INV_TRUCK_TAKE_KANISTRA
+if
+$CAR_SAVE_KANISTRA_COUNT[CARINV_SLOT] > 0
+jf @CAR_INV_TRUCK_TAKE_DONT_HAVE
+if
+$KANISTRA == 0
+jf @CAR_INV_TRUCK_TAKE_KANISTRA_HAVE2
+$KANISTRA += 1
+0059: $KANISTRA_FUEL += $CAR_SAVE_KANISTRA_GASOLINE_COUNT[CARINV_SLOT]  // (float) 
+$CAR_SAVE_KANISTRA_COUNT[CARINV_SLOT] -= 1
+$CAR_SAVE_KANISTRA_GASOLINE_COUNT[CARINV_SLOT] = 0.0
+00BC: show_text_highpriority GXT 'INV263' time 200 flag 1
+gosub @TRUNK_PLAY_KANISTRA_SOUND2
+jump @CAR_INV_TRUCK_SHOW_START
+
+:CAR_INV_TRUCK_TAKE_RADIO
+if
+$CAR_SAVE_RADIO_COUNT[CARINV_SLOT] > 0
+jf @CAR_INV_TRUCK_TAKE_DONT_HAVE
+$RADIO += 1
+$CAR_SAVE_RADIO_COUNT[CARINV_SLOT] -= 1
+00BC: show_text_highpriority GXT 'INV264' time 200 flag 1
+gosub @TRUNK_PLAY_PICKUP_SOUND2
+jump @CAR_INV_TRUCK_SHOW_START
+
+:CAR_INV_TRUCK_TAKE_JIMMY
+if
+$CAR_SAVE_JIMMY_COUNT[CARINV_SLOT] > 0
+jf @CAR_INV_TRUCK_TAKE_DONT_HAVE
+$JIMMY += 1
+$CAR_SAVE_JIMMY_COUNT[CARINV_SLOT] -= 1
+00BC: show_text_highpriority GXT 'INV265' time 200 flag 1
+gosub @TRUNK_PLAY_PICKUP_SOUND2
+jump @CAR_INV_TRUCK_SHOW_START
+
+:CAR_INV_TRUCK_TAKE_REPAIR_KIT
+if
+$CAR_SAVE_REPAIR_COUNT[CARINV_SLOT] > 0
+jf @CAR_INV_TRUCK_TAKE_DONT_HAVE
+$REPAIR_KIT += 1
+$CAR_SAVE_REPAIR_COUNT[CARINV_SLOT] -= 1
+00BC: show_text_highpriority GXT 'INV266' time 200 flag 1
+gosub @TRUNK_PLAY_PICKUP_SOUND2
+jump @CAR_INV_TRUCK_SHOW_START
+
+:CAR_TRUNK_SPACE_CHECK
+22@ = 0
+23@ = 120
+
+if
+UNITED_MAP == 0
+then
+
+if or
+car.Model($CR_SRCH) == 15420
+car.Model($CR_SRCH) == #PCJ600
+car.Model($CR_SRCH) == #BF400
+car.Model($CR_SRCH) == #FCR900
+car.Model($CR_SRCH) == #NRG500
+car.Model($CR_SRCH) == #FREEWAY
+car.Model($CR_SRCH) == #SANCHEZ
+car.Model($CR_SRCH) == #FAGGIO
+then
+23@ = 60
+end
+if or
+car.Model($CR_SRCH) == #QUAD
+car.Model($CR_SRCH) == #WAYFARER
+car.Model($CR_SRCH) == #PIZZABOY
+car.Model($CR_SRCH) == #COPBIKE
+car.Model($CR_SRCH) == #BMX
+car.Model($CR_SRCH) == #BIKE
+car.Model($CR_SRCH) == #MTBIKE
+car.Model($CR_SRCH) == 15426
+then
+23@ = 60
+end
+
+else
+
+if or
+car.Model($CR_SRCH) == 15299
+car.Model($CR_SRCH) == 15322
+car.Model($CR_SRCH) == 15430
+car.Model($CR_SRCH) == 15457
+car.Model($CR_SRCH) == 15454
+car.Model($CR_SRCH) == 15552
+car.Model($CR_SRCH) == 15526
+car.Model($CR_SRCH) == 15566
+then
+23@ = 60
+end
+
+if or
+car.Model($CR_SRCH) == 15565
+car.Model($CR_SRCH) == 15403
+car.Model($CR_SRCH) == 15404
+car.Model($CR_SRCH) == 15491
+car.Model($CR_SRCH) == 15492
+car.Model($CR_SRCH) == 15493
+car.Model($CR_SRCH) == 15494
+then
+23@ = 60
+end
+
+if
+car.Model($CR_SRCH) == 15558
+then
+23@ = 60
+end
+
+end
+
+1@ = car.Model($CR_SRCH)
+if
+081F:  model 1@ plane
+then
+23@ = 480
+end
+005C: 22@ += $CAR_SAVE_BANKA_COUNT[CARINV_SLOT]  // (int)
+005C: 22@ += $CAR_SAVE_HEAL_COUNT[CARINV_SLOT]  // (int)
+005C: 22@ += $CAR_SAVE_BINT_COUNT[CARINV_SLOT]  // (int)
+005C: 22@ += $CAR_SAVE_RADIO_COUNT[CARINV_SLOT]  // (int)
+005C: 22@ += $CAR_SAVE_JIMMY_COUNT[CARINV_SLOT]  // (int)
+005C: 22@ += $CAR_SAVE_REPAIR_COUNT[CARINV_SLOT]  // (int)
+return
+
+//Текстовые сообщения//
+
+:CAR_TRUNK_GIVE_DONT_HAVE
+00BC: show_text_highpriority GXT 'INV7' time 200 flag 1
+jump @CAR_INV_TRUCK_SHOW_START
+
+:CAR_TRUNK_GIVE_DONT_HAVE2
+00BC: show_text_highpriority GXT 'INV279' time 200 flag 1
+jump @CAR_INV_TRUCK_SHOW_START
+
+:CAR_TRUNK_GIVE_DONT_HAVE_SPACE
+00BC: show_text_highpriority GXT 'INV297' time 200 flag 1
+jump @CAR_INV_TRUCK_SHOW_START
+
+:CAR_TRUNK_GIVE_KANISTRA_HAVE
+00BC: show_text_highpriority GXT 'INV269' time 200 flag 1
+jump @CAR_INV_TRUCK_SHOW_START
+
+:CAR_INV_TRUCK_TAKE_DONT_HAVE
+00BC: show_text_highpriority GXT 'INV268' time 200 flag 1
+jump @CAR_INV_TRUCK_SHOW_START
+
+:CAR_INV_TRUCK_TAKE_KANISTRA_HAVE2
+00BC: show_text_highpriority GXT 'INV267' time 200 flag 1
+0059: $KANISTRA_FUEL += $CAR_SAVE_KANISTRA_GASOLINE_COUNT[CARINV_SLOT]  // (float) 
+$CAR_SAVE_KANISTRA_COUNT[CARINV_SLOT] -= 1
+$CAR_SAVE_KANISTRA_GASOLINE_COUNT[CARINV_SLOT] = 0.0
+jump @CAR_INV_TRUCK_SHOW_START
+
+:TRUNK_PLAY_DROP_SOUND2
+Audiostream.Volume($DROP_ITEM_SOUND) = $SOUNDS_VOLUME 
+Audiostream.Loop($DROP_ITEM_SOUND, 0)
+Audiostream.PerformAction($DROP_ITEM_SOUND, PLAY) 
+return
+
+:TRUNK_PLAY_PICKUP_SOUND2
+Audiostream.Volume($PICKUP_ITEM_SOUND) = $SOUNDS_VOLUME 
+Audiostream.Loop($PICKUP_ITEM_SOUND, 0)
+Audiostream.PerformAction($PICKUP_ITEM_SOUND, PLAY) 
+return
+
+:TRUNK_PLAY_KANISTRA_SOUND2
+Audiostream.Volume($GASCAN_PICKUP_SOUND) = $SOUNDS_VOLUME 
+Audiostream.Loop($GASCAN_PICKUP_SOUND, 0)
+Audiostream.PerformAction($GASCAN_PICKUP_SOUND, PLAY) 
+return
+
+:WEIGHT_SET_CAR_INV
+
+$TEMP_WEIGHT = 0.0
+
+0089: BANKA_WEIGHT2 = $BANKA_WEIGHT // (float)
+0089: HEAL_WEIGHT2 = $HEAL_WEIGHT // (float)
+0089: BINT_WEIGHT2 = $BINT_WEIGHT // (float)
+0089: RADIO_WEIGHT2 = $RADIO_WEIGHT // (float)
+0089: KANISTRA_WEIGHT2 = $KANISTRA_WEIGHT // (float)
+0089: JIMMY_WEIGHT2 = $JIMMY_WEIGHT // (float)
+0089: REPAIR_KIT_WEIGHT2 = $REPAIR_KIT_WEIGHT // (float)
+
+008B: BANKA2 = $BANKA // (int)
+008B: HEAL2 = $HEAL // (int)
+008B: BINT2 = $BINT // (int)
+008B: RADIO2 = $RADIO // (int)
+008B: JIMMY2 = $JIMMY // (int)
+008B: REPAIR_KIT2 = $REPAIR_KIT // (int)
+
+0093: BANKA2 = integer BANKA2 to_float
+0093: HEAL2 = integer HEAL2 to_float
+0093: BINT2 = integer BINT2 to_float
+0093: RADIO2 = integer RADIO2 to_float
+0093: JIMMY2 = integer JIMMY2 to_float
+0093: REPAIR_KIT2 = integer REPAIR_KIT2 to_float
+         
+006B: BANKA_WEIGHT2 *= BANKA2 // (float)
+006B: HEAL_WEIGHT2 *= HEAL2 // (float)
+006B: BINT_WEIGHT2 *= BINT2 // (float)
+006B: RADIO_WEIGHT2 *= RADIO2 // (float)
+006F: KANISTRA_WEIGHT2 *= $KANISTRA_FUEL // (float)
+006B: JIMMY_WEIGHT2 *= JIMMY2 // (float)
+006B: REPAIR_KIT_WEIGHT2 *= REPAIR_KIT2 // (float)
+
+005F: $TEMP_WEIGHT += BANKA_WEIGHT2 // (float)
+005F: $TEMP_WEIGHT += HEAL_WEIGHT2 // (float)
+005F: $TEMP_WEIGHT += BINT_WEIGHT2 // (float)
+005F: $TEMP_WEIGHT += RADIO_WEIGHT2 // (float)
+005F: $TEMP_WEIGHT += JIMMY_WEIGHT2 // (float)
+005F: $TEMP_WEIGHT += REPAIR_KIT_WEIGHT2 // (float)
+005F: $TEMP_WEIGHT += KANISTRA_WEIGHT2 // (float)
+
+0059: $TEMP_WEIGHT += EXTRA_WEIGHT // (float)
+
+010B: 0@ = player PLAYER_CHAR money
+0093: 0@ = integer 0@ to_float
+0@ /= 10000.0
+if
+0@ < 0.0
+then
+0@ = 0.0
+end
+005F: $TEMP_WEIGHT += 0@  // (float)
+
+04DD: 0@ = actor PLAYER_ACTOR armour
+if
+0@ > 0
+    then
+    $TEMP_WEIGHT += 1.5
+    end
+    
+if
+not $ALLOW_BACKPACK_WEIGHT == 0    
+then
+0086: $ITEMS_WEIGHT = $TEMP_WEIGHT // (float)
+else
+$ITEMS_WEIGHT = 0.0
+return
+end
+
+gosub @WEAPON_WEIGHT_SET_CAR_INV
+
+return
+
+:WEAPON_WEIGHT_SET_CAR_INV
+
+if or
+0491:   actor PLAYER_ACTOR has_weapon 22
+0491:   actor PLAYER_ACTOR has_weapon 111
+0491:   actor PLAYER_ACTOR has_weapon 136
+0491:   actor PLAYER_ACTOR has_weapon 165
+0491:   actor PLAYER_ACTOR has_weapon 195 
+    then   
+    041A: 0@ = actor PLAYER_ACTOR weapon 22 ammo
+    041A: 1@ = actor PLAYER_ACTOR weapon 111 ammo
+    041A: 2@ = actor PLAYER_ACTOR weapon 136 ammo
+    041A: 3@ = actor PLAYER_ACTOR weapon 165 ammo
+    041A: 4@ = actor PLAYER_ACTOR weapon 195 ammo
+    if or
+    not 0@ == 0
+    not 1@ == 0
+    not 2@ == 0
+    not 3@ == 0
+    not 4@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $PISTOL_AMMO_WEIGHT // (float)
+    0093: 1@ = integer 1@ to_float
+    006F: 1@ *= $PISTOL_AMMO_WEIGHT // (float)
+    0093: 2@ = integer 2@ to_float
+    006F: 2@ *= $PISTOL_AMMO_WEIGHT // (float)
+    0093: 3@ = integer 3@ to_float
+    006F: 3@ *= $PISTOL_AMMO_WEIGHT // (float)
+    0093: 4@ = integer 4@ to_float
+    006F: 4@ *= $PISTOL_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $COLT_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    005F: $ITEMS_WEIGHT += 1@  // (float)
+    005F: $ITEMS_WEIGHT += 2@  // (float)
+    005F: $ITEMS_WEIGHT += 3@  // (float)
+    005F: $ITEMS_WEIGHT += 4@  // (float)
+    end
+    
+    end
+
+//////////////////
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 23
+    then
+    
+    041A: 0@ = actor PLAYER_ACTOR weapon 23 ammo
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $PISTOL_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $COLT_SILENCED_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 24
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 24 ammo
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $HPISTOL_AMMO_WEIGHT // (float) 
+    0059: $ITEMS_WEIGHT += $DESERT_EAGLE_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////
+
+if or
+0491:   actor PLAYER_ACTOR has_weapon 25
+0491:   actor PLAYER_ACTOR has_weapon 138
+0491:   actor PLAYER_ACTOR has_weapon 113
+0491:   actor PLAYER_ACTOR has_weapon 172
+0491:   actor PLAYER_ACTOR has_weapon 202
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 25 ammo
+    041A: 1@ = actor PLAYER_ACTOR weapon 138 ammo
+    041A: 2@ = actor PLAYER_ACTOR weapon 113 ammo
+    041A: 3@ = actor PLAYER_ACTOR weapon 172 ammo
+    041A: 4@ = actor PLAYER_ACTOR weapon 202 ammo
+    if or
+    not 0@ == 0
+    not 1@ == 0
+    not 2@ == 0
+    not 3@ == 0
+    not 4@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $SHOTGUN_AMMO_WEIGHT // (float)
+    0093: 1@ = integer 1@ to_float
+    006F: 1@ *= $SHOTGUN_AMMO_WEIGHT // (float)
+    0093: 2@ = integer 2@ to_float
+    006F: 2@ *= $SHOTGUN_AMMO_WEIGHT // (float)
+    0093: 3@ = integer 3@ to_float
+    006F: 3@ *= $SHOTGUN_AMMO_WEIGHT // (float)
+    0093: 4@ = integer 4@ to_float
+    006F: 4@ *= $SHOTGUN_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $SHOTGUN_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    005F: $ITEMS_WEIGHT += 1@  // (float)
+    005F: $ITEMS_WEIGHT += 2@  // (float)
+    005F: $ITEMS_WEIGHT += 3@  // (float)
+    005F: $ITEMS_WEIGHT += 4@  // (float)
+    end
+    
+    end
+
+//////////////////
+
+if or
+0491:   actor PLAYER_ACTOR has_weapon 26
+0491:   actor PLAYER_ACTOR has_weapon 140
+0491:   actor PLAYER_ACTOR has_weapon 174
+0491:   actor PLAYER_ACTOR has_weapon 204
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 26 ammo
+    041A: 1@ = actor PLAYER_ACTOR weapon 140 ammo
+    041A: 2@ = actor PLAYER_ACTOR weapon 174 ammo
+    041A: 3@ = actor PLAYER_ACTOR weapon 204 ammo
+    if or
+    not 0@ == 0
+    not 1@ == 0
+    not 2@ == 0
+    not 3@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $SHOTGUN_AMMO_WEIGHT // (float)
+    0093: 1@ = integer 1@ to_float
+    006F: 1@ *= $SHOTGUN_AMMO_WEIGHT // (float)
+    0093: 2@ = integer 2@ to_float
+    006F: 2@ *= $SHOTGUN_AMMO_WEIGHT // (float)
+    0093: 3@ = integer 3@ to_float
+    006F: 3@ *= $SHOTGUN_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $SAWNOFF_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    005F: $ITEMS_WEIGHT += 1@  // (float)
+    005F: $ITEMS_WEIGHT += 2@  // (float)
+    005F: $ITEMS_WEIGHT += 3@  // (float)
+    end
+    
+    end
+
+//////////////////
+
+if or
+0491:   actor PLAYER_ACTOR has_weapon 27
+0491:   actor PLAYER_ACTOR has_weapon 139
+0491:   actor PLAYER_ACTOR has_weapon 173
+0491:   actor PLAYER_ACTOR has_weapon 203
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 27 ammo
+    041A: 1@ = actor PLAYER_ACTOR weapon 139 ammo
+    041A: 2@ = actor PLAYER_ACTOR weapon 173 ammo
+    041A: 3@ = actor PLAYER_ACTOR weapon 203 ammo
+    if or
+    not 0@ == 0
+    not 1@ == 0
+    not 2@ == 0
+    not 3@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $SHOTGUN_AMMO_WEIGHT // (float)
+    0093: 1@ = integer 1@ to_float
+    006F: 1@ *= $SHOTGUN_AMMO_WEIGHT // (float)
+    0093: 2@ = integer 2@ to_float
+    006F: 2@ *= $SHOTGUN_AMMO_WEIGHT // (float)
+    0093: 3@ = integer 3@ to_float
+    006F: 3@ *= $SHOTGUN_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $SHOTGSPA_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    005F: $ITEMS_WEIGHT += 1@  // (float)
+    005F: $ITEMS_WEIGHT += 2@  // (float)
+    005F: $ITEMS_WEIGHT += 3@  // (float)
+    end
+    
+    end
+
+//////////////////
+
+if or
+0491:   actor PLAYER_ACTOR has_weapon 28
+0491:   actor PLAYER_ACTOR has_weapon 117
+0491:   actor PLAYER_ACTOR has_weapon 142
+0491:   actor PLAYER_ACTOR has_weapon 168
+0491:   actor PLAYER_ACTOR has_weapon 198
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 28 ammo
+    041A: 1@ = actor PLAYER_ACTOR weapon 117 ammo
+    041A: 2@ = actor PLAYER_ACTOR weapon 142 ammo
+    041A: 3@ = actor PLAYER_ACTOR weapon 168 ammo
+    041A: 4@ = actor PLAYER_ACTOR weapon 198 ammo
+    if or
+    not 0@ == 0
+    not 1@ == 0
+    not 2@ == 0
+    not 3@ == 0
+    not 4@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $UZI_AMMO_WEIGHT // (float)
+    0093: 1@ = integer 1@ to_float
+    006F: 1@ *= $UZI_AMMO_WEIGHT // (float)
+    0093: 2@ = integer 2@ to_float
+    006F: 2@ *= $UZI_AMMO_WEIGHT // (float)
+    0093: 3@ = integer 3@ to_float
+    006F: 3@ *= $UZI_AMMO_WEIGHT // (float)
+    0093: 4@ = integer 4@ to_float
+    006F: 4@ *= $UZI_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $MICRO_UZI_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    005F: $ITEMS_WEIGHT += 1@  // (float)
+    005F: $ITEMS_WEIGHT += 2@  // (float)
+    005F: $ITEMS_WEIGHT += 3@  // (float)
+    005F: $ITEMS_WEIGHT += 4@  // (float)
+    end
+    
+    end
+
+//////////////////
+
+if or
+0491:   actor PLAYER_ACTOR has_weapon 29
+0491:   actor PLAYER_ACTOR has_weapon 143
+0491:   actor PLAYER_ACTOR has_weapon 169
+0491:   actor PLAYER_ACTOR has_weapon 199
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 29 ammo
+    041A: 1@ = actor PLAYER_ACTOR weapon 143 ammo
+    041A: 2@ = actor PLAYER_ACTOR weapon 169 ammo
+    041A: 3@ = actor PLAYER_ACTOR weapon 199 ammo 
+    if or
+    not 0@ == 0
+    not 1@ == 0
+    not 2@ == 0
+    not 3@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $UZI_AMMO_WEIGHT // (float)
+    0093: 1@ = integer 1@ to_float
+    006F: 1@ *= $UZI_AMMO_WEIGHT // (float)
+    0093: 2@ = integer 2@ to_float
+    006F: 2@ *= $UZI_AMMO_WEIGHT // (float)
+    0093: 3@ = integer 3@ to_float
+    006F: 3@ *= $UZI_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $MP5_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    005F: $ITEMS_WEIGHT += 1@  // (float)
+    005F: $ITEMS_WEIGHT += 2@  // (float)
+    005F: $ITEMS_WEIGHT += 3@  // (float)
+    end
+    
+    end
+
+//////////////////
+
+if or
+0491:   actor PLAYER_ACTOR has_weapon 32
+0491:   actor PLAYER_ACTOR has_weapon 141
+0491:   actor PLAYER_ACTOR has_weapon 167
+0491:   actor PLAYER_ACTOR has_weapon 197
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 32 ammo
+    041A: 1@ = actor PLAYER_ACTOR weapon 141 ammo
+    041A: 2@ = actor PLAYER_ACTOR weapon 167 ammo
+    041A: 3@ = actor PLAYER_ACTOR weapon 197 ammo
+    if or
+    not 0@ == 0
+    not 1@ == 0
+    not 2@ == 0
+    not 3@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $UZI_AMMO_WEIGHT // (float)
+    0093: 1@ = integer 1@ to_float
+    006F: 1@ *= $UZI_AMMO_WEIGHT // (float)
+    0093: 2@ = integer 2@ to_float
+    006F: 2@ *= $UZI_AMMO_WEIGHT // (float)
+    0093: 3@ = integer 3@ to_float
+    006F: 3@ *= $UZI_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $TEC9_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    005F: $ITEMS_WEIGHT += 1@  // (float)
+    005F: $ITEMS_WEIGHT += 2@  // (float)
+    005F: $ITEMS_WEIGHT += 3@  // (float)
+    end
+    
+    end
+
+//////////////////
+
+if or
+0491:   actor PLAYER_ACTOR has_weapon 30
+0491:   actor PLAYER_ACTOR has_weapon 112
+0491:   actor PLAYER_ACTOR has_weapon 145
+0491:   actor PLAYER_ACTOR has_weapon 171
+0491:   actor PLAYER_ACTOR has_weapon 201
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 30 ammo
+    041A: 1@ = actor PLAYER_ACTOR weapon 112 ammo
+    041A: 2@ = actor PLAYER_ACTOR weapon 145 ammo
+    041A: 3@ = actor PLAYER_ACTOR weapon 171 ammo
+    041A: 4@ = actor PLAYER_ACTOR weapon 201 ammo
+    if or
+    not 0@ == 0
+    not 1@ == 0
+    not 2@ == 0
+    not 3@ == 0
+    not 4@ == 0
+    then    
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $RIFLE_AMMO_WEIGHT // (float)
+    0093: 1@ = integer 1@ to_float
+    006F: 1@ *= $RIFLE_AMMO_WEIGHT // (float)
+    0093: 2@ = integer 2@ to_float
+    006F: 2@ *= $RIFLE_AMMO_WEIGHT // (float)
+    0093: 3@ = integer 3@ to_float
+    006F: 3@ *= $RIFLE_AMMO_WEIGHT // (float)
+    0093: 4@ = integer 4@ to_float
+    006F: 4@ *= $RIFLE_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $AK47_WEIGHT // (float)
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $RIFLE_AMMO_WEIGHT // (float)
+    0093: 1@ = integer 1@ to_float
+    006F: 1@ *= $RIFLE_AMMO_WEIGHT // (float)
+    0093: 2@ = integer 2@ to_float
+    006F: 2@ *= $RIFLE_AMMO_WEIGHT // (float)
+    0093: 3@ = integer 3@ to_float
+    006F: 3@ *= $RIFLE_AMMO_WEIGHT // (float)
+    0093: 4@ = integer 4@ to_float
+    006F: 4@ *= $RIFLE_AMMO_WEIGHT // (float)    
+    end
+    
+    end
+
+//////////////////
+
+if or
+0491:   actor PLAYER_ACTOR has_weapon 31
+0491:   actor PLAYER_ACTOR has_weapon 116
+0491:   actor PLAYER_ACTOR has_weapon 144
+0491:   actor PLAYER_ACTOR has_weapon 170
+0491:   actor PLAYER_ACTOR has_weapon 200
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 31 ammo
+    041A: 1@ = actor PLAYER_ACTOR weapon 116 ammo
+    041A: 2@ = actor PLAYER_ACTOR weapon 144 ammo
+    041A: 3@ = actor PLAYER_ACTOR weapon 170 ammo
+    041A: 4@ = actor PLAYER_ACTOR weapon 200 ammo
+    if or
+    not 0@ == 0
+    not 1@ == 0
+    not 2@ == 0
+    not 3@ == 0
+    not 4@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $RIFLE_AMMO_WEIGHT // (float)
+    0093: 1@ = integer 1@ to_float
+    006F: 1@ *= $RIFLE_AMMO_WEIGHT // (float)
+    0093: 2@ = integer 2@ to_float
+    006F: 2@ *= $RIFLE_AMMO_WEIGHT // (float)
+    0093: 3@ = integer 3@ to_float
+    006F: 3@ *= $RIFLE_AMMO_WEIGHT // (float)
+    0093: 4@ = integer 4@ to_float
+    006F: 4@ *= $RIFLE_AMMO_WEIGHT // (float)    
+    0059: $ITEMS_WEIGHT += $M4_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    005F: $ITEMS_WEIGHT += 1@  // (float)
+    005F: $ITEMS_WEIGHT += 2@  // (float)
+    005F: $ITEMS_WEIGHT += 3@  // (float)
+    005F: $ITEMS_WEIGHT += 4@  // (float)    
+    end
+    
+    end
+
+//////////////////
+
+if or
+0491:   actor PLAYER_ACTOR has_weapon 33
+0491:   actor PLAYER_ACTOR has_weapon 120
+0491:   actor PLAYER_ACTOR has_weapon 146
+0491:   actor PLAYER_ACTOR has_weapon 175
+0491:   actor PLAYER_ACTOR has_weapon 205
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 33 ammo
+    041A: 1@ = actor PLAYER_ACTOR weapon 120 ammo
+    041A: 2@ = actor PLAYER_ACTOR weapon 146 ammo
+    041A: 3@ = actor PLAYER_ACTOR weapon 175 ammo
+    041A: 4@ = actor PLAYER_ACTOR weapon 205 ammo
+    if or
+    not 0@ == 0
+    not 1@ == 0
+    not 2@ == 0
+    not 3@ == 0
+    not 4@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $SNIPER_AMMO_WEIGHT // (float)
+    0093: 1@ = integer 1@ to_float
+    006F: 1@ *= $SNIPER_AMMO_WEIGHT // (float)
+    0093: 2@ = integer 2@ to_float
+    006F: 2@ *= $SNIPER_AMMO_WEIGHT // (float)
+    0093: 3@ = integer 3@ to_float
+    006F: 3@ *= $SNIPER_AMMO_WEIGHT // (float)
+    0093: 4@ = integer 4@ to_float
+    006F: 4@ *= $SNIPER_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $COUNTRY_RIFLE_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    005F: $ITEMS_WEIGHT += 1@  // (float)
+    005F: $ITEMS_WEIGHT += 2@  // (float)
+    005F: $ITEMS_WEIGHT += 3@  // (float)
+    005F: $ITEMS_WEIGHT += 4@  // (float)
+    end
+    
+    end
+
+//////////////////
+
+if or
+0491:   actor PLAYER_ACTOR has_weapon 34
+0491:   actor PLAYER_ACTOR has_weapon 147
+0491:   actor PLAYER_ACTOR has_weapon 176
+0491:   actor PLAYER_ACTOR has_weapon 206
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 34 ammo
+    041A: 1@ = actor PLAYER_ACTOR weapon 147 ammo
+    041A: 2@ = actor PLAYER_ACTOR weapon 176 ammo
+    041A: 3@ = actor PLAYER_ACTOR weapon 206 ammo
+    if or
+    not 0@ == 0
+    not 1@ == 0
+    not 2@ == 0
+    not 3@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $SNIPER_AMMO_WEIGHT // (float)
+    0093: 1@ = integer 1@ to_float
+    006F: 1@ *= $SNIPER_AMMO_WEIGHT // (float)
+    0093: 2@ = integer 2@ to_float
+    006F: 2@ *= $SNIPER_AMMO_WEIGHT // (float)
+    0093: 3@ = integer 3@ to_float
+    006F: 3@ *= $SNIPER_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $SNIPER_RIFLE_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    005F: $ITEMS_WEIGHT += 1@  // (float)
+    005F: $ITEMS_WEIGHT += 2@  // (float)
+    005F: $ITEMS_WEIGHT += 3@  // (float)
+    end
+    
+    end
+
+//////////////////
+
+if or
+0491:   actor PLAYER_ACTOR has_weapon 35
+0491:   actor PLAYER_ACTOR has_weapon 119
+0491:   actor PLAYER_ACTOR has_weapon 135
+0491:   actor PLAYER_ACTOR has_weapon 183
+0491:   actor PLAYER_ACTOR has_weapon 213
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 35 ammo
+    041A: 1@ = actor PLAYER_ACTOR weapon 119 ammo
+    041A: 2@ = actor PLAYER_ACTOR weapon 135 ammo
+    041A: 3@ = actor PLAYER_ACTOR weapon 183 ammo
+    041A: 4@ = actor PLAYER_ACTOR weapon 213 ammo
+    if or
+    not 0@ == 0
+    not 1@ == 0
+    not 2@ == 0
+    not 3@ == 0
+    not 4@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $ROCKET_AMMO_WEIGHT // (float)
+    0093: 1@ = integer 1@ to_float
+    006F: 1@ *= $ROCKET_AMMO_WEIGHT // (float)
+    0093: 2@ = integer 2@ to_float
+    006F: 2@ *= $ROCKET_AMMO_WEIGHT // (float)
+    0093: 3@ = integer 3@ to_float
+    006F: 3@ *= $ROCKET_AMMO_WEIGHT // (float)
+    0093: 4@ = integer 4@ to_float
+    006F: 4@ *= $ROCKET_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $ROCKET_LAUNCHER_RIFLE_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    005F: $ITEMS_WEIGHT += 1@  // (float)
+    005F: $ITEMS_WEIGHT += 2@  // (float)
+    005F: $ITEMS_WEIGHT += 3@  // (float)
+    005F: $ITEMS_WEIGHT += 4@  // (float)
+    end
+    
+    end 
+
+//////////////////
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 36
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 36 ammo
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $ROCKET_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $ROCKET_LAUNCHER2_RIFLE_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////
+
+if or
+0491:   actor PLAYER_ACTOR has_weapon 37
+0491:   actor PLAYER_ACTOR has_weapon 114
+0491:   actor PLAYER_ACTOR has_weapon 148
+0491:   actor PLAYER_ACTOR has_weapon 180
+0491:   actor PLAYER_ACTOR has_weapon 210
+    then   
+    041A: 0@ = actor PLAYER_ACTOR weapon 37 ammo
+    041A: 1@ = actor PLAYER_ACTOR weapon 114 ammo
+    041A: 2@ = actor PLAYER_ACTOR weapon 148 ammo
+    041A: 3@ = actor PLAYER_ACTOR weapon 180 ammo
+    041A: 4@ = actor PLAYER_ACTOR weapon 210 ammo
+    if or
+    not 0@ == 0
+    not 1@ == 0
+    not 2@ == 0
+    not 3@ == 0
+    not 4@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $FLAME_AMMO_WEIGHT // (float)
+    0093: 1@ = integer 1@ to_float
+    006F: 1@ *= $FLAME_AMMO_WEIGHT // (float)
+    0093: 2@ = integer 2@ to_float
+    006F: 2@ *= $FLAME_AMMO_WEIGHT // (float)
+    0093: 3@ = integer 3@ to_float
+    006F: 3@ *= $FLAME_AMMO_WEIGHT // (float)
+    0093: 4@ = integer 4@ to_float
+    006F: 4@ *= $FLAME_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $FLAME_THROWER_RIFLE_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    005F: $ITEMS_WEIGHT += 1@  // (float)
+    005F: $ITEMS_WEIGHT += 2@  // (float)
+    005F: $ITEMS_WEIGHT += 3@  // (float)
+    005F: $ITEMS_WEIGHT += 4@  // (float)
+    end
+    
+    end   
+
+//////////////////
+
+if or
+0491:   actor PLAYER_ACTOR has_weapon 38
+0491:   actor PLAYER_ACTOR has_weapon 150
+0491:   actor PLAYER_ACTOR has_weapon 182
+0491:   actor PLAYER_ACTOR has_weapon 212
+    then   
+    041A: 0@ = actor PLAYER_ACTOR weapon 38 ammo
+    041A: 1@ = actor PLAYER_ACTOR weapon 150 ammo
+    041A: 2@ = actor PLAYER_ACTOR weapon 182 ammo
+    041A: 3@ = actor PLAYER_ACTOR weapon 212 ammo
+    if or
+    not 0@ == 0
+    not 1@ == 0
+    not 2@ == 0
+    not 3@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $MINIGUN_AMMO_WEIGHT // (float)
+    0093: 1@ = integer 1@ to_float
+    006F: 1@ *= $MINIGUN_AMMO_WEIGHT // (float)
+    0093: 2@ = integer 2@ to_float
+    006F: 2@ *= $MINIGUN_AMMO_WEIGHT // (float)
+    0093: 3@ = integer 3@ to_float
+    006F: 3@ *= $MINIGUN_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $MINIGUN_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    005F: $ITEMS_WEIGHT += 1@  // (float)
+    005F: $ITEMS_WEIGHT += 2@  // (float)
+    005F: $ITEMS_WEIGHT += 3@  // (float)  
+    end
+    
+    end
+
+//////////////////
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 70
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 70 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $MINIGUN_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $M60_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////   
+
+if or
+0491:   actor PLAYER_ACTOR has_weapon 71
+0491:   actor PLAYER_ACTOR has_weapon 173
+0491:   actor PLAYER_ACTOR has_weapon 166
+0491:   actor PLAYER_ACTOR has_weapon 196
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 71 ammo
+    041A: 1@ = actor PLAYER_ACTOR weapon 173 ammo
+    041A: 2@ = actor PLAYER_ACTOR weapon 166 ammo
+    041A: 3@ = actor PLAYER_ACTOR weapon 196 ammo
+    
+    if or
+    not 0@ == 0
+    not 1@ == 0
+    not 2@ == 0
+    not 3@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $HPISTOL_AMMO_WEIGHT // (float)
+    0093: 1@ = integer 1@ to_float
+    006F: 1@ *= $HPISTOL_AMMO_WEIGHT // (float)
+    0093: 2@ = integer 2@ to_float
+    006F: 2@ *= $HPISTOL_AMMO_WEIGHT // (float)
+    0093: 3@ = integer 3@ to_float
+    006F: 3@ *= $HPISTOL_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $REVOLVER_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    005F: $ITEMS_WEIGHT += 1@  // (float)
+    005F: $ITEMS_WEIGHT += 2@  // (float)
+    005F: $ITEMS_WEIGHT += 3@  // (float)
+    end
+    
+    end
+
+//////////////////   
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 72
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 72 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $RIFLE_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $FAMAS_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+////////////////// 
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 73
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 73 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $SHOTGUN_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $SSG_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+////////////////// 
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 74
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 74 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $UZI_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $THOMPSON_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////   
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 75
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 75 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $RIFLE_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $IA2_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////   
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 76
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 76 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $PISTOL_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $FIVESEVEN_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////   
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 77
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 77 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $UZI_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $BIZON_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////    
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 78
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 78 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $SHOTGUN_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $AA12_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////    
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 79
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 79 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $UZI_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $UMP45_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////    
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 80
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 80 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $SNIPER_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $HSNIPER_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////    
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 81
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 81 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $RIFLE_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $GROZA_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////    
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 82
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 82 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $RIFLE_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $SCAR_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////    
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 83
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 83 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $RIFLE_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $AUG_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////    
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 84
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 84 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $UZI_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $MP9_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////    
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 85
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 85 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $UZI_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $HKMP5_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////    
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 86
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 86 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $UZI_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $P90_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////    
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 87
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 87 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $RIFLE_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $SCORPION_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////   
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 88
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 88 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $RIFLE_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $CAR15_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////    
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 89
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 89 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $PISTOL_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $BERETTA_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////    
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 90
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 90 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $PISTOL_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $WIDMAG_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////    
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 91
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 91 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $SHOTGUN_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $STUBBY_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 93
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 93 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $ROCKET_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $QUADROCK_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 94
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 94 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $MINIGUN_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $M249_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 95
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 95 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $RIFLE_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $AR15_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 96
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 96 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $SNIPER_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $SVD_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 97
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 97 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $SNIPER_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $BOLT308_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 98
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 98 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $PISTOL_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $CZ75_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 99
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 99 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $RIFLE_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $G36C_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 100
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 100 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $SHOTGUN_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $SAIGA12_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 101
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 101 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $RIFLE_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $SIG550_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 102
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 102 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $SHOTGUN_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $STRIKER_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 103
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 103 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $SHOTGUN_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $XM1014_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 104
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 104 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $RIFLE_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $GALIL_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 105
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 105 ammo
+    
+    if
+    not 0@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $RIFLE_AMMO_WEIGHT // (float)
+    0059: $ITEMS_WEIGHT += $HK416_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    end
+    
+    end
+
+//////////////////    
+
+if or
+0491:   actor PLAYER_ACTOR has_weapon 16
+0491:   actor PLAYER_ACTOR has_weapon 115
+0491:   actor PLAYER_ACTOR has_weapon 132
+0491:   actor PLAYER_ACTOR has_weapon 177
+0491:   actor PLAYER_ACTOR has_weapon 207
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 16 ammo
+    041A: 1@ = actor PLAYER_ACTOR weapon 115 ammo
+    041A: 2@ = actor PLAYER_ACTOR weapon 132 ammo
+    041A: 3@ = actor PLAYER_ACTOR weapon 177 ammo
+    041A: 4@ = actor PLAYER_ACTOR weapon 207 ammo
+    
+    if or
+    not 0@ == 0
+    not 1@ == 0
+    not 2@ == 0
+    not 3@ == 0
+    not 4@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $GRENADE_WEIGHT // (float)
+    0093: 1@ = integer 1@ to_float
+    006F: 1@ *= $GRENADE_WEIGHT // (float)
+    0093: 2@ = integer 2@ to_float
+    006F: 2@ *= $GRENADE_WEIGHT // (float)
+    0093: 3@ = integer 3@ to_float
+    006F: 3@ *= $GRENADE_WEIGHT // (float)
+    0093: 4@ = integer 4@ to_float
+    006F: 4@ *= $GRENADE_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    005F: $ITEMS_WEIGHT += 1@  // (float)
+    005F: $ITEMS_WEIGHT += 2@  // (float)
+    005F: $ITEMS_WEIGHT += 3@  // (float)
+    005F: $ITEMS_WEIGHT += 4@  // (float)
+    end
+    
+    end
+    
+//////////////////    
+
+if or
+0491:   actor PLAYER_ACTOR has_weapon 18
+0491:   actor PLAYER_ACTOR has_weapon 118
+0491:   actor PLAYER_ACTOR has_weapon 134
+0491:   actor PLAYER_ACTOR has_weapon 179
+0491:   actor PLAYER_ACTOR has_weapon 209
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 18 ammo
+    041A: 1@ = actor PLAYER_ACTOR weapon 118 ammo
+    041A: 2@ = actor PLAYER_ACTOR weapon 134 ammo
+    041A: 3@ = actor PLAYER_ACTOR weapon 179 ammo
+    041A: 4@ = actor PLAYER_ACTOR weapon 209 ammo
+    
+    if or
+    not 0@ == 0
+    not 1@ == 0
+    not 2@ == 0
+    not 3@ == 0
+    not 4@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $MOLOTOV_WEIGHT // (float)
+    0093: 1@ = integer 1@ to_float
+    006F: 1@ *= $MOLOTOV_WEIGHT // (float)
+    0093: 2@ = integer 2@ to_float
+    006F: 2@ *= $MOLOTOV_WEIGHT // (float)
+    0093: 3@ = integer 3@ to_float
+    006F: 3@ *= $MOLOTOV_WEIGHT // (float)
+    0093: 4@ = integer 4@ to_float
+    006F: 4@ *= $MOLOTOV_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    005F: $ITEMS_WEIGHT += 1@  // (float)
+    005F: $ITEMS_WEIGHT += 2@  // (float)
+    005F: $ITEMS_WEIGHT += 3@  // (float)
+    005F: $ITEMS_WEIGHT += 4@  // (float)
+    end
+    
+    end
+    
+//////////////////    
+
+if or
+0491:   actor PLAYER_ACTOR has_weapon 17
+0491:   actor PLAYER_ACTOR has_weapon 133
+0491:   actor PLAYER_ACTOR has_weapon 178
+0491:   actor PLAYER_ACTOR has_weapon 208
+    then
+    041A: 0@ = actor PLAYER_ACTOR weapon 17 ammo
+    041A: 1@ = actor PLAYER_ACTOR weapon 133 ammo
+    041A: 2@ = actor PLAYER_ACTOR weapon 178 ammo
+    041A: 3@ = actor PLAYER_ACTOR weapon 208 ammo
+    
+    if or
+    not 0@ == 0
+    not 1@ == 0
+    not 2@ == 0
+    not 3@ == 0
+    then
+    0093: 0@ = integer 0@ to_float
+    006F: 0@ *= $GAS_WEIGHT // (float)
+    0093: 1@ = integer 1@ to_float
+    006F: 1@ *= $GAS_WEIGHT // (float)
+    0093: 2@ = integer 2@ to_float
+    006F: 2@ *= $GAS_WEIGHT // (float)
+    0093: 3@ = integer 3@ to_float
+    006F: 3@ *= $GAS_WEIGHT // (float)
+    005F: $ITEMS_WEIGHT += 0@  // (float)
+    005F: $ITEMS_WEIGHT += 1@  // (float)
+    005F: $ITEMS_WEIGHT += 2@  // (float)
+    005F: $ITEMS_WEIGHT += 3@  // (float)
+    end
+    
+    end
+    
+//////////////////    
+
+if or
+0491:   actor PLAYER_ACTOR has_weapon 3
+0491:   actor PLAYER_ACTOR has_weapon 124
+0491:   actor PLAYER_ACTOR has_weapon 160
+0491:   actor PLAYER_ACTOR has_weapon 190
+    then
+    0059: $ITEMS_WEIGHT += $NITESTICK_WEIGHT // (float)
+    end
+    
+//////////////////    
+
+if or
+0491:   actor PLAYER_ACTOR has_weapon 4
+0491:   actor PLAYER_ACTOR has_weapon 10
+0491:   actor PLAYER_ACTOR has_weapon 11
+0491:   actor PLAYER_ACTOR has_weapon 12
+0491:   actor PLAYER_ACTOR has_weapon 13
+0491:   actor PLAYER_ACTOR has_weapon 125
+0491:   actor PLAYER_ACTOR has_weapon 156
+0491:   actor PLAYER_ACTOR has_weapon 186
+    then
+    0059: $ITEMS_WEIGHT += $KNIFE_WEIGHT // (float)
+    end
+    
+//////////////////    
+    
+if or
+0491:   actor PLAYER_ACTOR has_weapon 122
+0491:   actor PLAYER_ACTOR has_weapon 127
+0491:   actor PLAYER_ACTOR has_weapon 128
+0491:   actor PLAYER_ACTOR has_weapon 129
+0491:   actor PLAYER_ACTOR has_weapon 155
+0491:   actor PLAYER_ACTOR has_weapon 158
+0491:   actor PLAYER_ACTOR has_weapon 162
+    then
+    0059: $ITEMS_WEIGHT += $KNIFE_WEIGHT // (float)
+    end
+    
+//////////////////        
+
+if or
+0491:   actor PLAYER_ACTOR has_weapon 5
+0491:   actor PLAYER_ACTOR has_weapon 7
+0491:   actor PLAYER_ACTOR has_weapon 110
+0491:   actor PLAYER_ACTOR has_weapon 126
+0491:   actor PLAYER_ACTOR has_weapon 161
+0491:   actor PLAYER_ACTOR has_weapon 191
+    then
+    0059: $ITEMS_WEIGHT += $BAT_WEIGHT // (float)
+    end
+    
+//////////////////    
+
+if
+0491:   actor PLAYER_ACTOR has_weapon 6
+    then
+    0059: $ITEMS_WEIGHT += $SHOVEL_WEIGHT // (float)
+    end
+    
+//////////////////    
+    
+if or
+0491:   actor PLAYER_ACTOR has_weapon 2
+0491:   actor PLAYER_ACTOR has_weapon 123
+0491:   actor PLAYER_ACTOR has_weapon 189
+    then
+    0059: $ITEMS_WEIGHT += $GOLF_WEIGHT // (float)
+    end
+    
+//////////////////    
+    
+if or
+0491:   actor PLAYER_ACTOR has_weapon 15
+0491:   actor PLAYER_ACTOR has_weapon 157
+0491:   actor PLAYER_ACTOR has_weapon 187
+    then
+    0059: $ITEMS_WEIGHT += $CANE_WEIGHT // (float)
+    end
+    
+//////////////////            
+
+if or
+0491:   actor PLAYER_ACTOR has_weapon 8
+0491:   actor PLAYER_ACTOR has_weapon 130
+0491:   actor PLAYER_ACTOR has_weapon 163
+0491:   actor PLAYER_ACTOR has_weapon 193
+    then
+    0059: $ITEMS_WEIGHT += $CATANA_WEIGHT // (float)
+    end
+    
+//////////////////    
+
+if or
+0491:   actor PLAYER_ACTOR has_weapon 9
+0491:   actor PLAYER_ACTOR has_weapon 131
+0491:   actor PLAYER_ACTOR has_weapon 164
+0491:   actor PLAYER_ACTOR has_weapon 194
+    then
+    0059: $ITEMS_WEIGHT += $CHAINSAW_WEIGHT // (float)
+    end
+     
+jump @WEAPON_WEIGHT_SET_RETURN_CAR_INV
+
+:WEAPON_WEIGHT_SET_RETURN_CAR_INV
+0086: $ITEMS_WEIGHT2 = $ITEMS_WEIGHT // (float)
+$ITEMS_WEIGHT2 *= 0.25
+$ITEMS_WEIGHT2 *= 0.25
+
+if
+PERK_ATHLET == 0
+then
+$FATIGUE_PLUS_EXTRA = 1.2
+end
+
+if
+PERK_ATHLET == 1
+then
+$FATIGUE_PLUS_EXTRA = 1.02
+end
+
+if
+PERK_ATHLET == 2
+then
+$FATIGUE_PLUS_EXTRA = 0.84
+end
+
+if
+PERK_ATHLET == 3
+then
+$FATIGUE_PLUS_EXTRA = 0.66
+end
+
+if
+$FREEMODE == 0
+then
+$FATIGUE_PLUS_EXTRA *= 0.75
+end
+
+if
+SURVIVAL_CUSTOM_WEAPON_NABOR == 1
+then
+$FATIGUE_PLUS_EXTRA *= 0.55
+end
+
+if or
+0491:   actor PLAYER_ACTOR has_weapon 70
+0491:   actor PLAYER_ACTOR has_weapon 94
+0491:   actor PLAYER_ACTOR has_weapon 149
+0491:   actor PLAYER_ACTOR has_weapon 181
+0491:   actor PLAYER_ACTOR has_weapon 211
+then
+$FATIGUE_PLUS_EXTRA += 0.35
+end
+     
+$HUNGRY_MINUS_EXTRA = 0.1
+
+0089: 2@ = $ITEMS_WEIGHT2 // (float)
+
+if
+PERK_WEIGHT == 1
+then
+2@ *= 0.8 
+end
+
+if
+PERK_WEIGHT == 2
+then
+2@ *= 0.6 
+end
+
+if
+PERK_WEIGHT == 3
+then
+2@ *= 0.4 
+end
+          
+006D: $FATIGUE_PLUS_EXTRA *= 2@ // (float)
+006D: $HUNGRY_MINUS_EXTRA *= 2@ // (float) 
+return
+
+:CAR_INV_START_MENU
+
+if
+not $GAMEMODE_WAR == 1
+then
+06AB: set_actor PLAYER_ACTOR all_weapons_hidden 1
+0992: set_player PLAYER_CHAR weapons_scrollable 0
+end
+
+:CAR_INV_START_MENU2
+
+$PANEL_OPEN = 1
+gosub @DISEMB_JETP_CHECK
+0792: disembark_instantly_actor PLAYER_ACTOR
+05B9: AS_actor PLAYER_ACTOR stay_idle 999999 ms
+$PHRASES_OFF_FLAG = 1
+
+0441: 1@ = car $CR_SRCH model
+0ADB: 7@v = car_model 1@ name
+
+if
+$GAMEMODE_WAR == 1
+then
+jump to @GAMEMODE_WAR_ONLY_WEAP_STORAGE_JUMP1
+end
+
+0512: show_permanent_text_box 'GAME331'
+$PANEL = 0
+08D4: $PANEL = create_panel_with_title 'INV371' position $X_MENU_SELECT_GAMEMODE $Y_MENU_SELECT_GAMEMODE width $WIDTH_MENU_SELECT_GAMEMODE columns 1 interactive 1 background 1 alignment 0  
+08DB: set_panel $PANEL column 0 header 7@v data 'INV364' 'INV365' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY' 'DUMMY'    
+
+090E: set_panel $PANEL active_row $PANEL22_ACTIVE_ROW 
+//wait 100
+
+:CAR_INV_START_MENU_IDLE
+wait 0
+
+if
+8A2A: not  text_box 'GAME331' displayed
+then
+0512: show_permanent_text_box 'GAME331' 
+end      
+
+08D7: $PANEL22_ACTIVE_ROW = panel $PANEL active_row     
+
+if
+$PANEL22_ACTIVE_ROW == 0 
+    then     
+    text.ShowH('GMD_180',10,1)  
+    if
+    0E3E: is_justplayer 0 pressed_key 16
+        then    
+        03E6: remove_text_box 
+        08DA: remove_panel $PANEL  
+        00BE: text_clear_all                
+        gosub @CAR_INV_TRUCK_SHOW_START
+        jump to @CAR_INV_START_MENU2
+        end
+    end     
+    
+if
+$PANEL22_ACTIVE_ROW == 1 
+    then     
+    text.ShowH('GMD_181',10,1)  
+    if
+    0E3E: is_justplayer 0 pressed_key 16
+        then    
+        03E6: remove_text_box 
+        08DA: remove_panel $PANEL  
+        00BE: text_clear_all
+        
+        :GAMEMODE_WAR_ONLY_WEAP_STORAGE_JUMP1               
+                
+        CAR_TRUNK_CLOSED = 0
+        create_thread @CARTRNK CARINV_SLOT 0                                
+        
+        repeat
+        wait 0       
+        until CAR_TRUNK_CLOSED == 1
+        
+        if
+        $GAMEMODE_WAR == 1
+        then
+        jump to @GAMEMODE_WAR_ONLY_WEAP_STORAGE_JUMP2
+        end                              
+        
+        jump to @CAR_INV_START_MENU
+        
+        end
+    end         
+
+if or
+0E3E: is_just player 0 pressed_key 15 
+actor.Dead(PLAYER_ACTOR)
+$HUNTER_ON_PLAYER == 1
+0818:  actor PLAYER_ACTOR in_air
+then
+0581: enable_radar 1 
+03E6: remove_text_box
+text.ClearAll() 
+08DA: remove_panel $PANEL
+:GAMEMODE_WAR_ONLY_WEAP_STORAGE_JUMP2
+$PANEL_OPEN = 0
+0792: PLAYER_ACTOR
+0792: PLAYER_ACTOR
+$INV_CLOSED = 1
+//cinema.Widescreen(0)
+06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0
+0992: set_player PLAYER_CHAR weapons_scrollable 1
+07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 0
+wait 100
+07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 1
+$INV_CLOSED = 0    
+return
+else
+jump @CAR_INV_START_MENU_IDLE
+end        
+
+jump to @CAR_INV_START_MENU_IDLE

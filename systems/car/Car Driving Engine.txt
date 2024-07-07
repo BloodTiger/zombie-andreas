@@ -1,0 +1,163 @@
+:CAR_BST
+thread 'CAR_BST'
+
+32@ = 0
+33@ = 0
+
+while true
+wait 0
+{$INCLUDE Car Driving Engine Plus Power.txt}
+end
+
+end_thread
+
+:CAR_WHEEL_COL_CHECK
+
+0D06: get_matrix 29@ position_to 0@ 1@ 2@
+//0D54: draw_corona_with_extra_params_texture 0 color 128 0 0 255 on_entity 0 at 0@ 1@ 2@ size 0.5 far_clip 2000.0 near_clip 1.5 flare 0 enable_reflection 1 check_obstacles 0 flash_while_fading 0 fade_speed 15.0 only_from_below 0
+0D06: get_matrix 29@ position_to 3@ 4@ 5@
+//0D54: draw_corona_with_extra_params_texture 0 color 128 0 0 255 on_entity 0 at 3@ 4@ 5@ size 0.5 far_clip 2000.0 near_clip 1.5 flare 0 enable_reflection 1 check_obstacles 0 flash_while_fading 0 fade_speed 15.0 only_from_below 0
+5@ -= 5.0
+    
+if
+0D3A: get_collision_between_poitns 0@ 1@ 2@ and 3@ 4@ 5@ flags 1 0 0 0 0 0 0 0 ignore_entity 0 store_point_to 0@ 1@ 2@ entity_to 3@ colpoint_data_to 1 // IF and SET
+    then            
+    0D3C: get_colpoint_data 1 depth_to 1@    
+    if
+    1@ > 4
+        then
+        7@ = 1
+        30@ += 1
+        end                
+    end
+
+return
+
+:CAR_ENGINE_GET_BACK_POWER
+
+if
+PL_CAR_ENGINE_FLAG == 1
+then
+PL_CAR_ENGINE_FLAG = 0
+0A97: 22@ = car 6@ struct 
+0A8E: 23@ = 22@ + CAR_ENGINE_POWER_PLUS_STRUCT // int 
+0A8C: write_memory 23@ size 4 value PL_CAR_ENGINE_POWER virtual_protect 1 
+end
+
+return
+
+:CUM_SHAKE_FOR_ROUGH_TRACTION
+
+7@ = 0
+30@ = 0
+
+if
+847A: not  actor PLAYER_ACTOR driving_bike    
+then
+
+if
+0D0C: get_car 6@ component "wheel_rf_dummy" matrix_pointer_to 29@ // IF and SET 
+then        
+gosub @CAR_WHEEL_COL_CHECK       
+end
+    
+if
+0D0C: get_car 6@ component "wheel_rb_dummy" matrix_pointer_to 29@ // IF and SET 
+then
+gosub @CAR_WHEEL_COL_CHECK       
+end
+    
+if
+0D0C: get_car 6@ component "wheel_lf_dummy" matrix_pointer_to 29@ // IF and SET 
+then
+gosub @CAR_WHEEL_COL_CHECK        
+end
+    
+if
+0D0C: get_car 6@ component "wheel_lb_dummy" matrix_pointer_to 29@ // IF and SET 
+then
+gosub @CAR_WHEEL_COL_CHECK        
+end
+
+else
+
+if
+0D0C: get_car 6@ component "wheel_front" matrix_pointer_to 29@ // IF and SET 
+then
+gosub @CAR_WHEEL_COL_CHECK        
+end
+    
+if
+0D0C: get_car 6@ component "wheel_rear" matrix_pointer_to 29@ // IF and SET 
+then
+gosub @CAR_WHEEL_COL_CHECK        
+end
+
+end
+
+if 
+7@ == 1
+then
+02E3: 1@ = car 6@ speed
+1@ *= 0.5
+
+if
+847A: not  actor PLAYER_ACTOR driving_bike    
+then
+
+if
+30@ == 1
+    then
+    1@ *= 0.25
+    end
+if
+30@ == 2
+    then
+    1@ *= 0.50
+    end  
+if
+30@ == 3
+    then
+    1@ *= 0.75
+    end  
+if
+30@ == 4
+    then
+    1@ *= 1.0
+    end
+    
+096D: get_car 6@ component_on_slot 12 model_to 0@
+if or
+0@ == OFFROAD_WHEEL_ID_SA
+0@ == OFFROAD_WHEEL_ID_UNITED
+    then
+    1@ *= 0.7
+    end 
+    
+else    
+
+if
+30@ == 1
+    then
+    1@ *= 0.5
+    end  
+if
+30@ == 2
+    then
+    1@ *= 1.0
+    end
+    
+end               
+
+if
+$FP_ACTIVATED == 1
+then
+1@ *= 0.5
+end
+
+0092: 1@ = float 1@ to_integer
+camera.Shake(1@)
+//0AD1: show_formatted_text_highpriority "%d" time 2000 1@
+end
+
+return

@@ -1,0 +1,352 @@
+:C_SPD
+thread 'C_SPD'
+
+const
+ACTOR_IN_CAR_FLAG = 13@
+end
+
+0662: printstring "----------Rhino Cannon Rotate Speed by Jack----------"
+27@ = 0x6AF509 // NOP 6 ---> constFire
+
+:CAR_SPEED_START
+wait 0
+
+if and
+actor.DrivingVehicleType(PLAYER_ACTOR,RHINO_MODEL_NUMBER)
+$FP_ACTIVATED == 0
+09E7:   player PLAYER_CHAR not_frozen
+80E1: not  player 0 pressed_key 5
+80E1: not  player 0 pressed_key 7
+$PLAYER_IN_CAR_TIMER > 10
+89DE: not  actor PLAYER_ACTOR entering_car
+8E4A: not is_char_exiting_any_car PLAYER_ACTOR
+    then    
+    0A8D: 15@ = read_memory 0x53BF8A size 2 virtual_protect 1
+    gosub @CAR_CHECK_RHINO
+    if and
+    not 15@ == 0x9066
+    0@ == 0
+        then
+        gosub @PLAYER_TANK_CANNON_ROTATE_SPEED_SET
+        end    
+    end
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+10@ = 0
+
+if or
+actor.Animation(PLAYER_ACTOR) == "RIFLE_fire"
+actor.Animation(PLAYER_ACTOR) == "python_fire"
+actor.Animation(PLAYER_ACTOR) == "buddy_fire"
+actor.Animation(PLAYER_ACTOR) == "colt45_fire_2hands"
+actor.Animation(PLAYER_ACTOR) == "shotgun_fire"
+actor.Animation(PLAYER_ACTOR) == "UZI_fire"
+    then
+    10@ = 1
+    end
+    
+if or
+actor.Animation(PLAYER_ACTOR) == "FLAME_fire"
+actor.Animation(PLAYER_ACTOR) == "RocketFire"
+actor.Animation(PLAYER_ACTOR) == "WEAPON_sniper"
+    then
+    10@ = 1
+    end    
+    
+06AC: 7@ = actor PLAYER_ACTOR movement_speed
+//0AD1: show_formatted_text_highpriority "MOVEMENT SPEED: %f, AIMING FLAG: %d, TIMER %d" time 2000 7@ 8@ 11@
+
+if
+$SLOWMODE_ACTIVE == 0
+then
+12@ = 4.75
+else
+12@ = 6.75
+end
+                
+if and
+8@ == 1
+0025:   7@ > 12@  // (float)
+then
+11@ += 1
+end        
+        
+if and
+10@ == 1
+$SLOWMODE_ACTIVE == 0
+8A32: not actor PLAYER_ACTOR on_turret_of_car
+8A0C: not  player PLAYER_CHAR on_jetpack
+    then
+    if
+    8@ == 0
+        then
+        8@ = 1
+        else
+        
+        if
+        $SLOWMODE_ACTIVE == 0
+        then
+        12@ = 4.75
+        else
+        12@ = 6.75
+        end
+        
+        if and
+        0025:   7@ > 12@  // (float)
+        11@ > 20
+            then
+//            0AD1: show_formatted_text_highpriority "SLIDE GAY" time 2000
+            0792: disembark_instantly_actor PLAYER_ACTOR
+            end
+        end
+    else
+    8@ = 0
+    11@ = 0        
+    end
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+//if
+//$ACTIVE_INTERIOR > 0
+//    then
+//    if
+//    03EE:   player PLAYER_CHAR controllable
+//        then
+//        actor.StorePos(PLAYER_ACTOR,3@,4@,5@)
+//        if
+//        0AE3: 6@ = random_object_near_point 3@ 4@ 5@ in_radius 5.0 find_next 1 //IF and SET
+//            then 
+//            if or
+//            actor.Animation(PLAYER_ACTOR) == "liftup"
+//            actor.Animation(PLAYER_ACTOR) == "liftup05" 
+//            actor.Animation(PLAYER_ACTOR) == "liftup105" 
+//            actor.Animation(PLAYER_ACTOR) == "putdwn"
+//            actor.Animation(PLAYER_ACTOR) == "putdwn05" 
+//            actor.Animation(PLAYER_ACTOR) == "putdwn105" 
+//            actor.Animation(PLAYER_ACTOR) == "crry_prtial"    
+//            00E1:   player 0 pressed_key 15 
+//                then   
+//                05B9: AS_actor PLAYER_ACTOR stay_idle 100 ms
+//                wait 10
+//                05B9: AS_actor PLAYER_ACTOR stay_idle 100 ms
+//                end  
+//            end
+//        end
+//    end
+    
+/////////////////////////////////////////////////////////////////////////////////////    
+
+if
+0449:   actor PLAYER_ACTOR in_a_car   
+    then
+    1@ = actor.CurrentCar(PLAYER_ACTOR)
+    ACTOR_IN_CAR_FLAG = 1
+    $GAME_FOV = DEFAULT_FOV        
+    end         
+          
+if and
+ACTOR_IN_CAR_FLAG == 1
+09E7:   player PLAYER_CHAR not_frozen
+    then
+    if and
+    $FP_ACTIVATED == 0
+    SPEC_MOD_FREE_CAM == 0
+        then
+        if
+        056E:   car 1@ defined 
+            then
+            if
+            actor.InCar(PLAYER_ACTOR,1@)    
+                then
+                                        
+                02E3: 6@ = car 1@ speed 
+                if 
+                6@ > 0.0 
+                then                                                            
+                0087: 2@ = 6@ // (float)
+                2@ *= 0.23
+                3@ = 77.0
+                005B: 3@ += 2@  // (float)
+                
+                if
+                3@ > 130.0
+                then
+                3@ = 130.0
+                end
+                
+                0088: $GAME_FOV = 3@ // (float)
+                if
+                6@ > 25.0
+                    then
+                    3@ *= 0.1
+                    0092: 3@ = float 3@ to_integer
+                    camera.Shake(3@)
+                    3@ *= 0.05
+                    099C: jiggle_camera type 1 timelimit 40.0 intensity 3@
+                    end                         
+                end
+                    
+                else
+                ACTOR_IN_CAR_FLAG = 0
+                32@ = 0
+                $GAME_FOV = DEFAULT_FOV            
+                end
+            else
+            ACTOR_IN_CAR_FLAG = 0
+            32@ = 0
+            $GAME_FOV = DEFAULT_FOV       
+            end
+        else
+        $GAME_FOV = DEFAULT_FOV
+        end
+    end            
+
+jump to @CAR_SPEED_START
+
+:PLAYER_TANK_CANNON_ROTATE_SPEED_SET
+03C0: 18@ = actor PLAYER_ACTOR car
+00AA: store_car 18@ position_to 5@ 6@ 7@                           
+068E: get_camera_target_point_to 8@ 9@ 10@
+0063: 5@ -= 8@ 
+0063: 6@ -= 9@ 
+0604: get_Z_angle_for_point 5@ 6@ store_to 6@
+0174: 7@ = car 18@ Z_angle 
+0063: 6@ -= 7@   
+0017: 6@ /= 57.295779513082320876798154814105  // rad
+0A97: 5@ = car 18@ struct
+000A: 5@ += 0x94C // HA
+0A8C: write_memory 5@ size 4 value 6@ virtual_protect 1
+return
+
+:CAR_CHECK_RHINO
+0@ = 0
+
+if or
+Actor.Animation(PLAYER_ACTOR) == "CAR_FALLOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_FALLOUT_RHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_GETOUTL_LHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_GETOUTL_RHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_GETOUT_RHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_JACKEDLHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_JACKEDRHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_PULLOUTL_LHS"
+    then
+    0@ = 1
+    end
+    
+if or
+Actor.Animation(PLAYER_ACTOR) == "CAR_PULLOUTL_RHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_PULLOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_PULLOUT_RHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_QJACKED"
+Actor.Animation(PLAYER_ACTOR) == "CAR_ROLLOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_ROLLOUT_RHS"
+Actor.Animation(PLAYER_ACTOR) == "BIKE_FALL_OFF"
+Actor.Animation(PLAYER_ACTOR) == "BF_GETOUT_LHS"    
+    then
+    0@ = 1
+    end
+    
+if or
+Actor.Animation(PLAYER_ACTOR) == "BIKED_GETOFFBACK"
+Actor.Animation(PLAYER_ACTOR) == "BIKED_GETOFFLHS"
+Actor.Animation(PLAYER_ACTOR) == "BIKED_GETOFFRHS"
+Actor.Animation(PLAYER_ACTOR) == "BIKEH_GETOFFRHS"
+Actor.Animation(PLAYER_ACTOR) == "BIKEH_GETOFFLHS"
+Actor.Animation(PLAYER_ACTOR) == "BIKEH_GETOFFBACK"
+Actor.Animation(PLAYER_ACTOR) == "BIKES_GETOFFBACK"
+Actor.Animation(PLAYER_ACTOR) == "BIKES_GETOFFLHS"
+    then
+    0@ = 1
+    end  
+    
+if or
+Actor.Animation(PLAYER_ACTOR) == "BIKEV_GETOFFBACK"
+Actor.Animation(PLAYER_ACTOR) == "BIKEV_GETOFFLHS"
+Actor.Animation(PLAYER_ACTOR) == "BIKEV_GETOFFRHS"
+Actor.Animation(PLAYER_ACTOR) == "BMX_GETOFFLHS"
+Actor.Animation(PLAYER_ACTOR) == "BMX_GETOFFRHS"
+Actor.Animation(PLAYER_ACTOR) == "BMX_GETOFFBACK"
+Actor.Animation(PLAYER_ACTOR) == "BUS_GETOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "BUS_GETOUT_RHS"
+    then
+    0@ = 1
+    end 
+    
+if or
+Actor.Animation(PLAYER_ACTOR) == "BUS_PULLOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "BIKES_GETOFFRHS"
+Actor.Animation(PLAYER_ACTOR) == "BF_GETOUT_RHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_GETOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "KART_GETOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "KART_GETOUT_RHS"
+Actor.Animation(PLAYER_ACTOR) == "MTB_GETOFFBACK"
+Actor.Animation(PLAYER_ACTOR) == "MTB_GETOFFLHS"
+   then
+   0@ = 1
+   end
+
+if or
+Actor.Animation(PLAYER_ACTOR) == "MTB_GETOFFRHS"
+Actor.Animation(PLAYER_ACTOR) == "COP_GETOUTCAR_LHS"
+Actor.Animation(PLAYER_ACTOR) == "PLANE_GETOUT"
+Actor.Animation(PLAYER_ACTOR) == "SHAMAL_GETOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "TRUCK_GETOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "TRUCK_GETOUT_RHS"
+Actor.Animation(PLAYER_ACTOR) == "TRUCK_PULLOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "TRUCK_PULLOUT_RHS"
+    then
+    0@ = 1
+    end
+
+if or
+Actor.Animation(PLAYER_ACTOR) == "VAN_GETOUT_BACK_LHS"
+Actor.Animation(PLAYER_ACTOR) == "VAN_GETOUT_BACK_RHS"
+Actor.Animation(PLAYER_ACTOR) == "VORTEX_GETOUT_RHS"
+Actor.Animation(PLAYER_ACTOR) == "VORTEX_GETOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "WF_GETOFFBACK"
+Actor.Animation(PLAYER_ACTOR) == "WF_GETOFFRHS"
+Actor.Animation(PLAYER_ACTOR) == "WF_GETOFFLHS"
+Actor.Animation(PLAYER_ACTOR) == "CHOPPA_GETOFFBACK"
+    then
+    0@ = 1
+    end
+
+if or
+Actor.Animation(PLAYER_ACTOR) == "CHOPPA_GETOFFLHS"
+Actor.Animation(PLAYER_ACTOR) == "CHOPPA_GETOFF_RHS"
+Actor.Animation(PLAYER_ACTOR) == "QUAD_GETOFF_B"
+Actor.Animation(PLAYER_ACTOR) == "CAR_GETOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_CRAWLOUTRHS"
+Actor.Animation(PLAYER_ACTOR) == "QUAD_GETOFF_LHS"
+Actor.Animation(PLAYER_ACTOR) == "QUAD_GETOFF_RHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_GETOUT_LHS"
+    then
+    0@ = 1
+    end
+
+if or
+Actor.Animation(PLAYER_ACTOR) == "CAR_LJACKEDLHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_LJACKEDLHS"
+Actor.Animation(PLAYER_ACTOR) == "COACH_OUTL"
+Actor.Animation(PLAYER_ACTOR) == "DOZER_PULLOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "COACH_OUTR"
+Actor.Animation(PLAYER_ACTOR) == "DOZER_GETOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "DOZER_GETOUT_RHS"
+    then
+    0@ = 1
+    end
+
+if or
+Actor.Animation(PLAYER_ACTOR) == "DOZER_PULLOUT_RHS"
+Actor.Animation(PLAYER_ACTOR) == "TRUCK_JACKEDLHS"
+Actor.Animation(PLAYER_ACTOR) == "TRUCK_JACKEDRHS"
+actor.Animation(PLAYER_ACTOR) == "CAR_close_LHS"
+actor.Animation(PLAYER_ACTOR) == "CAR_close_RHS"
+Actor.Animation(PLAYER_ACTOR) == "TANK_getout_LHS"
+    then
+    0@ = 1
+    end    
+
+return

@@ -1,0 +1,1774 @@
+const
+SAVE_CAR_SPAWN_DISTANCE = 180.0
+SAVE_CAR_CURRENT_NUMBER = 28@
+USED_CAR_SHIT = 27@
+SAVE_CAR_BENZIN = 26@
+SAVE_CAR_BIKE_BAGS_OBJ = 29@
+SAVE_CAR_EXTRA_NUM2 = 25@
+end
+
+:C_SAVE
+if
+SAVE_CAR_TEST_NUMBER == 0
+then
+thread 'C_SAVE'
+else
+gosub @C_SAVE_NUM_GET
+end
+
+if
+SAVE_CAR_TEST_NUMBER == 0
+then
+create_thread @C_MENU
+end
+
+008B: SAVE_CAR_CURRENT_NUMBER = SAVE_CAR_TEST_NUMBER // (int)
+32@ = 0
+33@ = 0 
+
+:CAR_SAVE_IDLE
+wait 0
+
+///////////////////////////////Сохраняем данные о сохраненном транспорте///////////////////////////////
+
+if and
+056E:   car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] defined
+$SAVE_CAR_CREATED[SAVE_CAR_CURRENT_NUMBER] == 1
+    then
+    
+    if
+    056E:   car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] defined
+    then
+    
+    if
+    actor.InCar(PLAYER_ACTOR,$USED_CAR[SAVE_CAR_CURRENT_NUMBER])
+    then
+    008A: LATEST_CAR_SLOT_USED = SAVE_CAR_CURRENT_NUMBER // (int) 
+    end
+    
+    if
+    $CAR_WHEEL_INSTALLED[SAVE_CAR_CURRENT_NUMBER] == 2
+    then
+    008B: 1@ = $USED_CAR[SAVE_CAR_CURRENT_NUMBER] // (int)
+    gosub @C_SAVE_BIKE_ITEM_VAULT_CREATE
+    $CAR_WHEEL_INSTALLED[SAVE_CAR_CURRENT_NUMBER] = 1
+    end
+    
+    end
+    
+    if and
+    32@ > 1000
+    $CAR_MARKER_CREATED[SAVE_CAR_CURRENT_NUMBER] == 1
+    $CAR_ENTERED[SAVE_CAR_CURRENT_NUMBER] == 0
+    $ACTIVE_INTERIOR == 0
+        then
+        gosub @SAVED_CAR_SAVE_PARAMETRS
+        32@ = 0
+        end
+    end
+    
+///////////////////////////////Говорим игроку что его сохраненный транспорт сохранен///////////////////////////////    
+
+if and
+$SAVE_CAR_CREATED[SAVE_CAR_CURRENT_NUMBER] == 1
+$CAR_ENTERED[SAVE_CAR_CURRENT_NUMBER] == 1 
+$CAR_MARKER_CREATED[SAVE_CAR_CURRENT_NUMBER] == 0 
+    then
+    if and
+    056E:   car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] defined
+    803A: not  $USED_CAR[SAVE_CAR_CURRENT_NUMBER] == SUPPLY_QUEST_TRUCK // (int)  
+        then
+        if and
+        not actor.InCar(PLAYER_ACTOR,$USED_CAR[SAVE_CAR_CURRENT_NUMBER]) 
+        8A32: not actor PLAYER_ACTOR on_turret_of_car
+        not car.Model($USED_CAR[SAVE_CAR_CURRENT_NUMBER]) == #STREAK
+        not car.Model($USED_CAR[SAVE_CAR_CURRENT_NUMBER]) == #STREAKC
+        not car.Model($USED_CAR[SAVE_CAR_CURRENT_NUMBER]) == #FREIGHT
+        not car.Model($USED_CAR[SAVE_CAR_CURRENT_NUMBER]) == #DINGHY
+        not car.Model($USED_CAR[SAVE_CAR_CURRENT_NUMBER]) == 15489
+            then                 
+            car.SetImmunities($USED_CAR[SAVE_CAR_CURRENT_NUMBER],1,1,1,1,1)
+            03ED: set_car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] disable_flipped_explosion_when_empty 1
+            08F2: set_car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] targettable_by_heatseeker 0 
+            $CAR_MARKER[SAVE_CAR_CURRENT_NUMBER] = marker.CreateAboveCar($USED_CAR[SAVE_CAR_CURRENT_NUMBER])
+            marker.SetColor($CAR_MARKER[SAVE_CAR_CURRENT_NUMBER],2)
+            marker.SetIconSize($CAR_MARKER[SAVE_CAR_CURRENT_NUMBER],2)
+            07E0: set_marker $CAR_MARKER[SAVE_CAR_CURRENT_NUMBER] type_to 1
+            018B: set_marker $CAR_MARKER[SAVE_CAR_CURRENT_NUMBER] radar_mode 0
+            018B: set_marker $CAR_MARKER[SAVE_CAR_CURRENT_NUMBER] radar_mode 2
+            $CAR_MARKER_CREATED[SAVE_CAR_CURRENT_NUMBER] = 1  
+            $CAR_HINT_FLAG[SAVE_CAR_CURRENT_NUMBER] = 0
+            $CAR_ENTERED[SAVE_CAR_CURRENT_NUMBER] = 0            
+            
+            0A97: 21@ = car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] struct 
+            21@ += 11 
+            0A8D: 24@ = read_memory 21@ size 1 virtual_protect 0   
+            if
+            88B7:   not test 24@ bit 4   
+            then                  
+            08BD: set 24@ bit 4
+            0A8C: write_memory 21@ size 1 value 24@ virtual_protect 0 
+            08C3: clear 24@ bit 4 
+            else
+            08C3: clear 24@ bit 4   
+            end                                              
+                
+            wait 500                                  
+            end
+        else
+        $CAR_ENTERED[SAVE_CAR_CURRENT_NUMBER] = 0
+        end
+     end
+     
+///////////////////////////////Функция перереспавна сохраненного транспорта///////////////////////////////                                                                                                    
+
+if and
+$CAR_MARKER_CREATED[SAVE_CAR_CURRENT_NUMBER] == 1
+$SAVE_CAR_CREATED[SAVE_CAR_CURRENT_NUMBER] == 1
+not $SAVE_CAR_MODEL[SAVE_CAR_CURRENT_NUMBER] == -1
+$ACTIVE_INTERIOR == 0
+    then
+    if
+    056E:   car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] defined
+        then 
+                
+        if
+        8E08: not is_car_script_controlled $USED_CAR[SAVE_CAR_CURRENT_NUMBER]
+        then
+        
+        if
+        8205: not  actor PLAYER_ACTOR near_car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] radius 20.0 20.0 SAVE_CAR_SPAWN_DISTANCE flag 0
+        then
+        0E09: mark_car_as_needed $USED_CAR[SAVE_CAR_CURRENT_NUMBER]
+//        0AD1: show_formatted_text_highpriority "mark car as needed" time 2000
+        end
+        
+        else
+        
+        if
+        0205:  actor PLAYER_ACTOR near_car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] radius 20.0 20.0 SAVE_CAR_SPAWN_DISTANCE flag 0
+        then
+        car.RemoveReferences($USED_CAR[SAVE_CAR_CURRENT_NUMBER])
+//        0AD1: show_formatted_text_highpriority "unmark car as needed" time 2000
+        end
+        
+        end
+                      
+        if or
+        $SAVESTATUS_TRUE == 1            
+        8205: not  actor PLAYER_ACTOR near_car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] radius SAVE_CAR_SPAWN_DISTANCE SAVE_CAR_SPAWN_DISTANCE SAVE_CAR_SPAWN_DISTANCE flag 0
+            then
+            1@ = 0
+            gosub @CAR_TEAMMATE_CHECK
+            if and
+            $CAR_MARKER_CREATED[SAVE_CAR_CURRENT_NUMBER] == 1  
+            1@ == 0  
+                then     
+                gosub @CAR_SAVE2
+                end
+            end 
+        else
+        
+        if
+        075C:   marker $CAR_MARKER[SAVE_CAR_CURRENT_NUMBER] enabled
+        then
+        marker.Disable($CAR_MARKER[SAVE_CAR_CURRENT_NUMBER])
+        $CAR_MARKER[SAVE_CAR_CURRENT_NUMBER] = 0
+        end
+        
+        if
+        03CA:   object SAVE_CAR_BIKE_BAGS_OBJ exists
+        then
+        object.Destroy(SAVE_CAR_BIKE_BAGS_OBJ)
+        SAVE_CAR_BIKE_BAGS_OBJ = 0
+        end                
+                
+        while $ACTIVE_INTERIOR > 0
+        wait 0
+        end
+        
+        if
+        32@ > 200
+        then
+        32@ = 0
+        gosub @CAR_SAVE28
+        end
+                
+        end   
+    end
+    
+///////////////////////////////Функция перереспавна сохраненного транспорта если он удалился сам по себе///////////////////////////////    
+    
+if and
+$CAR_MARKER_CREATED[SAVE_CAR_CURRENT_NUMBER] == 1
+$SAVE_CAR_CREATED[SAVE_CAR_CURRENT_NUMBER] == 1
+not $SAVE_CAR_MODEL[SAVE_CAR_CURRENT_NUMBER] == -1 
+    then    
+    if
+    856E: not  car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] defined
+        then          
+        
+        if
+        075C:   marker $CAR_MARKER[SAVE_CAR_CURRENT_NUMBER] enabled
+        then
+        marker.Disable($CAR_MARKER[SAVE_CAR_CURRENT_NUMBER])
+        end
+        
+        if
+        03CA:   object SAVE_CAR_BIKE_BAGS_OBJ exists
+        then
+        object.Destroy(SAVE_CAR_BIKE_BAGS_OBJ)
+        SAVE_CAR_BIKE_BAGS_OBJ = 0
+        end                        
+                
+        while $ACTIVE_INTERIOR > 0
+        wait 0
+        end
+                
+        if
+        32@ > 200
+        then
+        32@ = 0
+        gosub @CAR_SAVE28
+        end
+                        
+        end
+    end
+    
+///////////////////////////////Функция удаления транспорта при его разрушении///////////////////////////////    
+    
+if and
+$CAR_ENTERED[SAVE_CAR_CURRENT_NUMBER] == 0
+$SAVE_CAR_CREATED[SAVE_CAR_CURRENT_NUMBER] == 1
+056E:   car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] defined
+    then
+    if
+    car.Wrecked($USED_CAR[SAVE_CAR_CURRENT_NUMBER])
+        then
+        
+        $SAVE_CAR_MODEL[SAVE_CAR_CURRENT_NUMBER] = 0
+        
+        if
+        car.Model($USED_CAR[SAVE_CAR_CURRENT_NUMBER]) == 15435
+        then
+        jump to @SCAR_BRONEVIK_JUMP1
+        end
+                            
+        if and
+        not car.Model($USED_CAR[SAVE_CAR_CURRENT_NUMBER]) == RHINO_MODEL_NUMBER
+        not car.Model($USED_CAR[SAVE_CAR_CURRENT_NUMBER]) == #SWATVAN
+        not car.Model($USED_CAR[SAVE_CAR_CURRENT_NUMBER]) == #FBITRUCK
+        not car.Model($USED_CAR[SAVE_CAR_CURRENT_NUMBER]) == #SECURICA
+        not car.Model($USED_CAR[SAVE_CAR_CURRENT_NUMBER]) == 15386
+        not car.Model($USED_CAR[SAVE_CAR_CURRENT_NUMBER]) == 15331
+        not car.Model($USED_CAR[SAVE_CAR_CURRENT_NUMBER]) == 15436
+        not car.Model($USED_CAR[SAVE_CAR_CURRENT_NUMBER]) == 15534
+        then                  
+        car.SetImmunities($USED_CAR[SAVE_CAR_CURRENT_NUMBER],0,0,0,0,0)   
+        else
+                        
+        if
+        car.Model($USED_CAR[SAVE_CAR_CURRENT_NUMBER]) == RHINO_MODEL_NUMBER
+        then
+        car.SetImmunities($USED_CAR[SAVE_CAR_CURRENT_NUMBER],1,0,1,0,1)
+        else
+        :SCAR_BRONEVIK_JUMP1
+        car.SetImmunities($USED_CAR[SAVE_CAR_CURRENT_NUMBER],1,0,0,0,1)
+        end
+                        
+        end
+                        
+        if
+        075C:   marker $CAR_MARKER[SAVE_CAR_CURRENT_NUMBER] enabled
+        then
+        marker.Disable($CAR_MARKER[SAVE_CAR_CURRENT_NUMBER])
+        end
+        
+        if
+        03CA:   object SAVE_CAR_BIKE_BAGS_OBJ exists
+        then
+        object.Destroy(SAVE_CAR_BIKE_BAGS_OBJ)
+        SAVE_CAR_BIKE_BAGS_OBJ = 0
+        end
+                        
+        $CAR_MARKER_CREATED[SAVE_CAR_CURRENT_NUMBER] = 0 
+        $CAR_ENTERED[SAVE_CAR_CURRENT_NUMBER] = 0
+        $SAVE_CAR_CREATED[SAVE_CAR_CURRENT_NUMBER] = 0
+        0085: 0@ = SAVE_CAR_CURRENT_NUMBER // (int)
+        0@ += 1
+        
+        if and
+        $FREEMODE == 0
+        $GAMEMODE_WAR == 0 
+        then                                    
+        text.ShowH('AME209',3000,1)
+        else
+        text.Show1Number('GAME209',0@,3000,1)
+        end
+                
+        wait 500 
+        else
+        if  
+        actor.InCar(PLAYER_ACTOR,$USED_CAR[SAVE_CAR_CURRENT_NUMBER])        
+            then
+            
+            if
+            car.Model($USED_CAR[SAVE_CAR_CURRENT_NUMBER]) == 15435
+            then
+            jump to @SCAR_BRONEVIK_JUMP2
+            end
+                            
+            if and
+            not car.Model($USED_CAR[SAVE_CAR_CURRENT_NUMBER]) == RHINO_MODEL_NUMBER
+            not car.Model($USED_CAR[SAVE_CAR_CURRENT_NUMBER]) == #SWATVAN
+            not car.Model($USED_CAR[SAVE_CAR_CURRENT_NUMBER]) == #FBITRUCK
+            not car.Model($USED_CAR[SAVE_CAR_CURRENT_NUMBER]) == #SECURICA
+            not car.Model($USED_CAR[SAVE_CAR_CURRENT_NUMBER]) == 15386
+            not car.Model($USED_CAR[SAVE_CAR_CURRENT_NUMBER]) == 15331
+            not car.Model($USED_CAR[SAVE_CAR_CURRENT_NUMBER]) == 15436
+            not car.Model($USED_CAR[SAVE_CAR_CURRENT_NUMBER]) == 15534
+            then
+            car.SetImmunities($USED_CAR[SAVE_CAR_CURRENT_NUMBER],0,0,0,0,0)   
+            else
+                            
+            if
+            car.Model($USED_CAR[SAVE_CAR_CURRENT_NUMBER]) == RHINO_MODEL_NUMBER
+            then
+            car.SetImmunities($USED_CAR[SAVE_CAR_CURRENT_NUMBER],1,0,1,0,1)
+            else
+            :SCAR_BRONEVIK_JUMP2
+            car.SetImmunities($USED_CAR[SAVE_CAR_CURRENT_NUMBER],1,0,0,0,1)
+            end
+                            
+            end
+                            
+            if
+            075C:   marker $CAR_MARKER[SAVE_CAR_CURRENT_NUMBER] enabled
+            then
+            marker.Disable($CAR_MARKER[SAVE_CAR_CURRENT_NUMBER])
+            end            
+                            
+            $CAR_MARKER_CREATED[SAVE_CAR_CURRENT_NUMBER] = 0 
+            $CAR_ENTERED[SAVE_CAR_CURRENT_NUMBER] = 1                     
+            wait 500 
+            end
+        end
+    end                 
+
+jump to @CAR_SAVE_IDLE 
+
+:CAR_TEAMMATE_CHECK
+
+for 2@ = 0 to 5
+
+092B: 3@ = group PLAYER_GROUP member 2@
+
+if
+056D:   actor 3@ defined
+then 
+    
+if
+actor.InCar(3@,$USED_CAR[SAVE_CAR_CURRENT_NUMBER])
+then
+1@ = 1
+end
+
+end
+
+end
+
+return
+
+:CAR_SAVE2
+
+gosub @SAVED_CAR_SAVE_PARAMETRS  
+
+:CAR_SAVE2B
+
+if
+075C:   marker $CAR_MARKER[SAVE_CAR_CURRENT_NUMBER] enabled
+then
+marker.Disable($CAR_MARKER[SAVE_CAR_CURRENT_NUMBER])
+end
+
+if
+03CA:   object SAVE_CAR_BIKE_BAGS_OBJ exists
+then
+object.Destroy(SAVE_CAR_BIKE_BAGS_OBJ)
+SAVE_CAR_BIKE_BAGS_OBJ = 0
+end
+
+if
+056E:   car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] defined
+then
+car.Destroy($USED_CAR[SAVE_CAR_CURRENT_NUMBER])
+end
+
+$USED_CAR[SAVE_CAR_CURRENT_NUMBER] = 0 
+
+5@ = marker.CreateIconAndSphere2(55,$SAVE_CAR_X[SAVE_CAR_CURRENT_NUMBER],$SAVE_CAR_Y[SAVE_CAR_CURRENT_NUMBER],$SAVE_CAR_Z[SAVE_CAR_CURRENT_NUMBER])
+
+repeat
+wait 0
+
+if
+$SAVE_CAR_Z[SAVE_CAR_CURRENT_NUMBER] < -90.0
+    then
+    $SAVE_CAR_Z[SAVE_CAR_CURRENT_NUMBER] = 200.0
+    break
+    end
+
+if
+SAVED_CARS_MARK_REDO == 1
+    then
+    
+    marker.Disable(5@)
+    
+    repeat
+    wait 0
+    until SAVED_CARS_MARK_REDO == 0
+    
+    5@ = marker.CreateIconAndSphere2(55,$SAVE_CAR_X[SAVE_CAR_CURRENT_NUMBER],$SAVE_CAR_Y[SAVE_CAR_CURRENT_NUMBER],$SAVE_CAR_Z[SAVE_CAR_CURRENT_NUMBER])
+    
+    end
+
+if or
+$SAVESTATUS_TRUE == 0 
+$INTERIOR_FLAG == 0
+    then
+    if and                
+    00FE:   actor PLAYER_ACTOR sphere 0 in_sphere $SAVE_CAR_X[SAVE_CAR_CURRENT_NUMBER] $SAVE_CAR_Y[SAVE_CAR_CURRENT_NUMBER] $SAVE_CAR_Z[SAVE_CAR_CURRENT_NUMBER] radius SAVE_CAR_SPAWN_DISTANCE SAVE_CAR_SPAWN_DISTANCE SAVE_CAR_SPAWN_DISTANCE
+    $SAVING_DELAY == 0
+    $SAVESTATUS_TRUE == 0
+        then   
+        break
+        end 
+    end
+    
+if
+$SAVE_CAR_CREATED[SAVE_CAR_CURRENT_NUMBER] == 0
+    then
+    
+    if
+    075C:   marker 5@ enabled
+    then
+    marker.Disable(5@)
+    end
+    
+    $CAR_MARKER_CREATED[SAVE_CAR_CURRENT_NUMBER] = 0 
+    $CAR_ENTERED[SAVE_CAR_CURRENT_NUMBER] = 0   
+    $CAR_HINT_FLAG[SAVE_CAR_CURRENT_NUMBER] = 0
+    return
+    end       
+    
+until false
+
+if
+075C:   marker 5@ enabled
+then
+marker.Disable(5@)
+end
+
+:CAR_SAVE28
+
+if
+80FE: not  actor PLAYER_ACTOR sphere 0 in_sphere $SAVE_CAR_X[SAVE_CAR_CURRENT_NUMBER] $SAVE_CAR_Y[SAVE_CAR_CURRENT_NUMBER] $SAVE_CAR_Z[SAVE_CAR_CURRENT_NUMBER] radius SAVE_CAR_SPAWN_DISTANCE SAVE_CAR_SPAWN_DISTANCE SAVE_CAR_SPAWN_DISTANCE
+then
+jump to @CAR_SAVE2B
+end
+
+//5@ = 0     
+
+:CAR_CREATE_SAVED
+if
+model.Available($SAVE_CAR_MODEL[SAVE_CAR_CURRENT_NUMBER])
+then
+
+if or
+$SAVE_CAR_MODEL[SAVE_CAR_CURRENT_NUMBER] == 0
+8488: not  model $SAVE_CAR_MODEL[SAVE_CAR_CURRENT_NUMBER] exists  // versionA
+then
+$SAVE_CAR_MODEL[SAVE_CAR_CURRENT_NUMBER] = #LANDSTAL
+end
+
+if or
+ENGLISH_TRANSLATE == 1
+$SAVE_CAR_MODEL[SAVE_CAR_CURRENT_NUMBER] == 15590
+then 
+gosub @CAR_SAVING_CUSTOM_NAMEPLATE
+end
+
+renderer $SAVE_CAR_X[SAVE_CAR_CURRENT_NUMBER] $SAVE_CAR_Y[SAVE_CAR_CURRENT_NUMBER]
+
+if
+not $SAVE_CAR_EXTRA_NUM[SAVE_CAR_CURRENT_NUMBER] == 255
+then
+0506: set_car_model $SAVE_CAR_MODEL[SAVE_CAR_CURRENT_NUMBER] next_variation $SAVE_CAR_EXTRA_NUM[SAVE_CAR_CURRENT_NUMBER] SAVE_CAR_EXTRA_NUM2 // first param is useless
+else
+0506: set_car_model $SAVE_CAR_MODEL[SAVE_CAR_CURRENT_NUMBER] next_variation -1 -1 // first param is useless
+end
+
+USED_CAR_SHIT = car.Create($SAVE_CAR_MODEL[SAVE_CAR_CURRENT_NUMBER],$SAVE_CAR_X[SAVE_CAR_CURRENT_NUMBER],$SAVE_CAR_Y[SAVE_CAR_CURRENT_NUMBER],$SAVE_CAR_Z[SAVE_CAR_CURRENT_NUMBER])
+0594: unknown_car USED_CAR_SHIT flag 0
+
+0A97: 5@ = car USED_CAR_SHIT struct 
+5@ += 0x0438 //BYTE extra[2] 
+0A8D: 11@ = read_memory 5@ size 1 virtual_protect 0
+5@ += 0x1
+0A8D: 12@ = read_memory 5@ size 1 virtual_protect 0
+5@ = 0
+
+if or
+87D6: not  11@ == $SAVE_CAR_EXTRA_NUM[SAVE_CAR_CURRENT_NUMBER] // @ == $ (int)
+803B: not  12@ == SAVE_CAR_EXTRA_NUM2  // (int)
+then
+car.Destroy(USED_CAR_SHIT)
+jump to @CAR_CREATE_SAVED
+end
+
+//00AB: put_car USED_CAR_SHIT at $SAVE_CAR_X[SAVE_CAR_CURRENT_NUMBER] $SAVE_CAR_Y[SAVE_CAR_CURRENT_NUMBER] $SAVE_CAR_Z[SAVE_CAR_CURRENT_NUMBER]
+0EB4: set_car_coordinates_simple USED_CAR_SHIT position $SAVE_CAR_X[SAVE_CAR_CURRENT_NUMBER] $SAVE_CAR_Y[SAVE_CAR_CURRENT_NUMBER] $SAVE_CAR_Z[SAVE_CAR_CURRENT_NUMBER]
+//5@ += 1
+
+if
+$ACTIVE_INTERIOR > 0
+then
+car.LockInCurrentPosition(USED_CAR_SHIT,true)
+end
+
+if
+model.Available($SAVE_CAR_MODEL[SAVE_CAR_CURRENT_NUMBER])
+then
+//model.Destroy($SAVE_CAR_MODEL[SAVE_CAR_CURRENT_NUMBER])
+end
+
+else
+model.Load($SAVE_CAR_MODEL[SAVE_CAR_CURRENT_NUMBER])
+mload
+//wait SAVE_CAR_CURRENT_NUMBER
+jump to @CAR_CREATE_SAVED
+end
+
+//if
+//5@ < 2
+//then
+//car.Destroy(USED_CAR_SHIT)
+//jump to @CAR_CREATE_SAVED
+//end
+  
+car.Angle(USED_CAR_SHIT) = $SAVE_CAR_ANGLE[SAVE_CAR_CURRENT_NUMBER]
+0229: set_car USED_CAR_SHIT primary_color_to $SAVE_CAR_COLOR1[SAVE_CAR_CURRENT_NUMBER] secondary_color_to $SAVE_CAR_COLOR2[SAVE_CAR_CURRENT_NUMBER]
+car.Health(USED_CAR_SHIT) = $SAVE_CAR_HEALTH[SAVE_CAR_CURRENT_NUMBER]
+07C6: set_car USED_CAR_SHIT axis_angle_relation_to 6@ 7@ 8@ 9@
+
+car.SetImmunities(USED_CAR_SHIT,1,1,1,1,1)
+08F3: set_car USED_CAR_SHIT contains_goodies 0
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+0441: 11@ = car USED_CAR_SHIT model
+if and
+8820: not  model 11@ heli
+881E: not  model 11@ boat
+881F: not  model 11@ plane 
+then
+03ED: set_car USED_CAR_SHIT disable_flipped_explosion_when_empty 1
+08F2: set_car USED_CAR_SHIT targettable_by_heatseeker 0
+
+if
+$SAVE_CAR_HEALTH[SAVE_CAR_CURRENT_NUMBER] > 1000
+then
+/////////////
+0A97: 11@ = car USED_CAR_SHIT struct 
+11@ += 0x8C 
+0A8D: 12@ = read_memory 11@ size 4 virtual_protect 1
+12@ *= 1.25
+0A8C: write_memory 11@ size 4 value 12@ virtual_protect 0
+/////////////
+0A97: 11@ = car USED_CAR_SHIT struct 
+11@ += 0x90 
+0A8D: 12@ = read_memory 11@ size 4 virtual_protect 1
+12@ *= 1.45
+0A8C: write_memory 11@ size 4 value 12@ virtual_protect 0
+/////////////
+020A: set_car USED_CAR_SHIT door_status_to 6
+0852: set_car USED_CAR_SHIT damages_visible 0
+03AB: set_car USED_CAR_SHIT strong 1
+end
+
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+0441: 11@ = car USED_CAR_SHIT model
+if and
+8820: not  model 11@ heli
+881E: not  model 11@ boat
+881F: not  model 11@ plane 
+then
+gosub @CAR_DAMAGE_SET
+gosub @CAR_TIRE_DAMAGE_SET
+gosub @CAR_SAVE_ENGINE_UPGRADE_SET 
+
+if
+$CAR_WHEEL_INSTALLED[SAVE_CAR_CURRENT_NUMBER] == 1
+    then
+    
+    if
+    $SAVE_CAR_BIKE_FLAG[SAVE_CAR_CURRENT_NUMBER] == 1
+    then
+    0085: 1@ = USED_CAR_SHIT // (int)
+    gosub @C_SAVE_BIKE_ITEM_VAULT_CREATE
+    else
+    
+    if
+    UNITED_MAP == 1
+    then
+    1@ = OFFROAD_WHEEL_ID_UNITED
+    else
+    1@ = OFFROAD_WHEEL_ID_SA
+    end
+    
+    repeat
+    wait 0
+    06E9: load_car_component 1@
+    until 06EA:   car_component 1@ available
+    
+    if
+    856E: not  car USED_CAR_SHIT defined
+    then
+    jump to @CAR_CREATE_SAVED
+    end
+                                                                
+    06E7: 0@ = add_car_component 1@ to_car USED_CAR_SHIT
+    06EB: release_car_component 1@
+    0@ = 0
+    
+    end
+    
+    end        
+    
+if
+$SAVE_CAR_HYDRO_HAVE[SAVE_CAR_CURRENT_NUMBER] == 1
+    then
+    
+    if
+    856E: not  car USED_CAR_SHIT defined
+    then
+    jump to @CAR_CREATE_SAVED
+    end
+    
+    07FF: set_car USED_CAR_SHIT hydraulics 1
+    end    
+
+if
+$SAVE_CAR_TRUNK_EMPTY[SAVE_CAR_CURRENT_NUMBER] == 1
+    then
+    
+    if
+    856E: not  car USED_CAR_SHIT defined
+    then
+    jump to @CAR_CREATE_SAVED
+    end
+    
+    0A97: 11@ = car USED_CAR_SHIT struct 
+    11@ += 16
+    0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+    08BD: set 12@ bit 1 
+    0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+    08C3: clear 12@ bit 1
+    end
+    
+if
+$SAVE_CAR_RADIO_HAVE[SAVE_CAR_CURRENT_NUMBER] == 1
+    then
+    
+    if
+    856E: not  car USED_CAR_SHIT defined
+    then
+    jump to @CAR_CREATE_SAVED
+    end
+    
+    0A97: 11@ = car USED_CAR_SHIT struct 
+    11@ += 16 
+    0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+    08BD: set 12@ bit 6 
+    0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+    08C3: clear 12@ bit 6
+    end
+    
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////    
+
+if
+856E: not  car USED_CAR_SHIT defined
+    then
+    jump to @CAR_CREATE_SAVED
+    end
+    
+if
+0185:   car USED_CAR_SHIT health > 1001
+    then
+    053F: set_car USED_CAR_SHIT tires_vulnerability 0
+    end    
+        
+///////////////////////////////////////////////////////////////
+
+if
+856E: not  car USED_CAR_SHIT defined
+    then
+    jump to @CAR_CREATE_SAVED
+    end
+    
+0A97: 11@ = car USED_CAR_SHIT struct 
+11@ += 9
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+08BD: set 12@ bit 2
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+///////////////////////////////////////////////////////////////
+
+if
+856E: not  car USED_CAR_SHIT defined
+    then
+    jump to @CAR_CREATE_SAVED
+    end
+
+0A97: 11@ = car USED_CAR_SHIT struct 
+11@ += 4 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+08BD: set 12@ bit 1 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0
+
+if
+856E: not  car USED_CAR_SHIT defined
+    then
+    jump to @CAR_CREATE_SAVED
+    end
+ 
+0A97: 22@ = car USED_CAR_SHIT struct 
+0A8E: 23@ = 22@ + 5 // int 
+0A8C: write_memory 23@ size 4 value SAVE_CAR_BENZIN virtual_protect 0 
+08C3: clear 12@ bit 1
+08C3: clear 12@ bit 2
+
+if
+856E: not  car USED_CAR_SHIT defined
+    then
+    jump to @CAR_CREATE_SAVED
+    end
+
+0A97: 11@ = car USED_CAR_SHIT struct 
+11@ += 18
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+08BD: set 12@ bit 2
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 2 
+///////////////////////////////////////////////////////////////
+
+if
+856E: not  car USED_CAR_SHIT defined
+    then
+    jump to @CAR_CREATE_SAVED
+    end
+
+0A97: 21@ = car USED_CAR_SHIT struct 
+21@ += 11 
+0A8D: 24@ = read_memory 21@ size 1 virtual_protect 0   
+08BD: set 24@ bit 4
+0A8C: write_memory 21@ size 1 value 24@ virtual_protect 0 
+08C3: clear 24@ bit 4
+///////////////////////////////////////////////////////////////
+
+if
+856E: not  car USED_CAR_SHIT defined
+    then
+    jump to @CAR_CREATE_SAVED
+    end
+
+car.DoorStatus(USED_CAR_SHIT,0) 
+
+if
+856E: not  car USED_CAR_SHIT defined
+    then
+    jump to @CAR_CREATE_SAVED
+    end
+
+$CAR_MARKER[SAVE_CAR_CURRENT_NUMBER] = marker.CreateAboveCar(USED_CAR_SHIT)
+marker.SetColor($CAR_MARKER[SAVE_CAR_CURRENT_NUMBER],2)
+marker.SetIconSize($CAR_MARKER[SAVE_CAR_CURRENT_NUMBER],2)
+07E0: set_marker $CAR_MARKER[SAVE_CAR_CURRENT_NUMBER] type_to 1
+018B: set_marker $CAR_MARKER[SAVE_CAR_CURRENT_NUMBER] radar_mode 0
+018B: set_marker $CAR_MARKER[SAVE_CAR_CURRENT_NUMBER] radar_mode 2
+$CAR_MARKER_CREATED[SAVE_CAR_CURRENT_NUMBER] = 1
+
+if
+856E: not  car USED_CAR_SHIT defined
+    then
+    jump to @CAR_CREATE_SAVED
+    end
+
+0A8C: write_memory 0x969084 size 1 value USED_CAR_SHIT virtual_protect 0
+008A: $USED_CAR[SAVE_CAR_CURRENT_NUMBER] = USED_CAR_SHIT // (int)
+car.RemoveReferences(USED_CAR_SHIT)
+create_thread @CAR_ALP USED_CAR_SHIT    
+
+return
+
+:CAR_SAVING_CUSTOM_NAMEPLATE
+
+if
+$SAVE_CAR_MODEL[SAVE_CAR_CURRENT_NUMBER] == 15590
+then
+0674: set_car_model $SAVE_CAR_MODEL[SAVE_CAR_CURRENT_NUMBER] numberplate "MT2WH0L3"
+else
+
+if
+FREEMODE_CUSTOM_NAME == 1 
+then
+06D1: v$NAME3 = "F_NAME" // v$ = string
+end
+    
+0ADE: 11@ = text_by_GXT_entry v$NAME3
+0AF5: write_string 11@ to_ini_file "data\platename.temp" section "PLATE" key "TEXT"
+0AF4: 11@s = read_string_from_ini_file "data\platename.temp" section "PLATE" key "TEXT"
+0674: set_car_model $SAVE_CAR_MODEL[SAVE_CAR_CURRENT_NUMBER] numberplate 11@s
+end
+
+return
+
+:CAR_DAMAGE
+
+if
+856E: not  car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] defined
+then
+return
+end
+
+$SAVE_CAR_COMPONENT1_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] = 0
+$SAVE_CAR_COMPONENT2_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] = 0
+$SAVE_CAR_COMPONENT3_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] = 0
+$SAVE_CAR_COMPONENT4_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] = 0
+$SAVE_CAR_COMPONENT5_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] = 0
+$SAVE_CAR_COMPONENT6_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] = 0
+
+18@ = car.Model($USED_CAR[SAVE_CAR_CURRENT_NUMBER])
+
+if or
+18@ == 581
+18@ == 462
+18@ == 463
+18@ == 521
+18@ == 448
+18@ == 461
+18@ == 468
+18@ == 586
+    then
+    return
+    end
+    
+if or
+18@ == 521
+18@ == 471
+18@ == 523
+18@ == 15293
+18@ == 15296
+18@ == 15319
+18@ == 15322
+18@ == 15332
+    then
+    return
+    end
+    
+if or
+18@ == 481
+18@ == 509
+18@ == 510
+18@ == 522
+    then
+    return
+    end
+    
+if or
+18@ == 15418
+18@ == 15421
+18@ == 15428
+18@ == 15430
+18@ == 15435
+18@ == 15507
+18@ == 15510
+18@ == 15523
+    then
+    return
+    end
+
+if or    
+18@ == 15526
+18@ == 15532
+18@ == 15418
+18@ == 15421
+18@ == 15428
+18@ == 15430
+18@ == 15435
+    then
+    return
+    end
+    
+if or    
+18@ == 15507
+18@ == 15510
+18@ == 15523
+18@ == 15526
+18@ == 15532
+18@ == 15299
+    then
+    return
+    end
+    
+if or
+18@ == 15454
+18@ == 15455
+18@ == 15456
+18@ == 15457
+18@ == 15426
+18@ == 15558 
+    then
+    return
+    end
+    
+if or
+18@ == 15550
+18@ == 15552
+18@ == 15565
+18@ == 15556
+18@ == 15558
+18@ == 15566 
+    then
+    return
+    end
+    
+if or    
+18@ == 15403
+18@ == 15404
+18@ == 15491
+18@ == 15492
+18@ == 15493
+18@ == 15494
+    then
+    return
+    end                    
+    
+if
+09BB:   car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] has_visible_damage_on_component 0
+    then        
+    $SAVE_CAR_COMPONENT1_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] = 1
+    end
+ 
+if
+09BB:   car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] has_visible_damage_on_component 1
+    then
+    $SAVE_CAR_COMPONENT2_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] = 1
+    end
+
+if
+09BB:   car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] has_visible_damage_on_component 2
+    then    
+    095F: get_car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] door 2 angle_to 18@
+    if
+    18@ >= 0.0
+        then
+        $SAVE_CAR_COMPONENT3_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] = 1        
+        end    
+    end
+
+if
+09BB:   car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] has_visible_damage_on_component 3
+    then
+    095F: get_car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] door 3 angle_to 18@
+    if
+    18@ >= 0.0
+        then
+        $SAVE_CAR_COMPONENT4_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] = 1
+        end
+    end
+    
+if
+856E: not  car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] defined
+then
+return
+end    
+    
+if
+8D0D: not 18@ = get_car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] component "door_lr_dummy" // IF and SET 
+    then
+    return
+    end    
+
+if
+09BB:   car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] has_visible_damage_on_component 4
+    then
+    095F: get_car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] door 4 angle_to 18@
+    if
+    18@ >= 0.0
+        then
+        $SAVE_CAR_COMPONENT5_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] = 1
+        end
+    end
+
+if
+09BB:   car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] has_visible_damage_on_component 5
+    then
+    095F: get_car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] door 5 angle_to 18@
+    if
+    18@ >= 0.0
+        then
+        $SAVE_CAR_COMPONENT6_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] = 1
+        end
+    end
+
+return
+
+
+:TIRE_DAMAGE
+
+if
+856E: not  car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] defined
+then
+return
+end
+
+$SAVE_CAR_TIRE1_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] = 0
+$SAVE_CAR_TIRE2_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] = 0
+$SAVE_CAR_TIRE3_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] = 0
+$SAVE_CAR_TIRE4_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] = 0
+$SAVE_CAR_BIKE_FLAG[SAVE_CAR_CURRENT_NUMBER] = 0
+
+if
+0496:   tire 0 on_car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] deflated
+    then
+    $SAVE_CAR_TIRE1_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] = 1
+    end
+
+if
+0496:   tire 1 on_car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] deflated
+    then
+    $SAVE_CAR_TIRE2_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] = 1
+    end
+
+if and
+881E: not model $SAVE_CAR_MODEL[SAVE_CAR_CURRENT_NUMBER] boat
+881F: not model $SAVE_CAR_MODEL[SAVE_CAR_CURRENT_NUMBER] plane
+8820: not model $SAVE_CAR_MODEL[SAVE_CAR_CURRENT_NUMBER] heli
+8A01: not model $SAVE_CAR_MODEL[SAVE_CAR_CURRENT_NUMBER] car
+    then  
+    $SAVE_CAR_BIKE_FLAG[SAVE_CAR_CURRENT_NUMBER] = 1
+    return
+    end
+    
+18@ = car.Model($USED_CAR[SAVE_CAR_CURRENT_NUMBER])
+
+if or
+18@ == 581
+18@ == 462
+18@ == 463
+18@ == 521
+18@ == 448
+18@ == 461
+18@ == 468
+18@ == 586
+    then
+    return
+    end
+    
+if or
+18@ == 521
+18@ == 471
+18@ == 523
+18@ == 15293
+18@ == 15296
+18@ == 15319
+18@ == 15322
+18@ == 15332
+    then
+    return
+    end
+    
+if or
+18@ == 15418
+18@ == 15421
+18@ == 15428
+18@ == 15430
+18@ == 15435
+18@ == 15507
+18@ == 15510
+18@ == 15523
+    then
+    return
+    end
+
+if or    
+18@ == 15526
+18@ == 15532
+18@ == 15299 
+    then
+    return
+    end
+    
+if or
+18@ == 15454
+18@ == 15455
+18@ == 15456
+18@ == 15457
+18@ == 15426
+18@ == 15558 
+    then
+    return
+    end
+    
+if or
+18@ == 15550
+18@ == 15552
+18@ == 15565
+18@ == 15556
+18@ == 15558
+18@ == 15566 
+    then
+    return
+    end                
+
+if
+0496:   tire 2 on_car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] deflated
+    then
+    $SAVE_CAR_TIRE3_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] = 1
+    end
+
+if
+0496:   tire 3 on_car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] deflated
+    then
+    $SAVE_CAR_TIRE4_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] = 1
+    end
+
+return
+
+:CAR_DAMAGE_SET
+
+if and
+881E: not model $SAVE_CAR_MODEL[SAVE_CAR_CURRENT_NUMBER] boat
+881F: not model $SAVE_CAR_MODEL[SAVE_CAR_CURRENT_NUMBER] plane
+8820: not model $SAVE_CAR_MODEL[SAVE_CAR_CURRENT_NUMBER] heli
+8A01: not model $SAVE_CAR_MODEL[SAVE_CAR_CURRENT_NUMBER] car
+    then  
+    return
+    end
+
+18@ = car.Model(USED_CAR_SHIT)
+
+if or
+18@ == 581
+18@ == 462
+18@ == 463
+18@ == 521
+18@ == 448
+18@ == 461
+18@ == 468
+18@ == 586
+    then
+    return
+    end
+    
+if or
+18@ == 521
+18@ == 471
+18@ == 523
+    then
+    return
+    end
+    
+if
+UNITED_MAP == 1
+then
+
+if or    
+18@ == 15293
+18@ == 15296
+18@ == 15319
+18@ == 15322
+18@ == 15332
+    then
+    return
+    end    
+    
+if or
+18@ == 15418
+18@ == 15421
+18@ == 15428
+18@ == 15430
+18@ == 15435
+18@ == 15507
+18@ == 15510
+18@ == 15523
+    then
+    return
+    end
+
+if or    
+18@ == 15526
+18@ == 15532
+18@ == 15299
+    then
+    return
+    end
+    
+if or
+18@ == 15454
+18@ == 15455
+18@ == 15456
+18@ == 15457
+18@ == 15426
+18@ == 15558 
+    then
+    return
+    end
+    
+if or
+18@ == 15550
+18@ == 15552
+18@ == 15565
+18@ == 15556
+18@ == 15558
+18@ == 15566 
+    then
+    return
+    end
+   
+end        
+
+if
+$SAVE_CAR_COMPONENT1_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] == 1
+    then
+    073C: car USED_CAR_SHIT damage_componentB 0
+    end
+
+if
+$SAVE_CAR_COMPONENT2_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] == 1
+    then
+    073C: car USED_CAR_SHIT damage_componentB 1
+    end
+
+if
+$SAVE_CAR_COMPONENT3_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] == 1
+    then
+    073C: car USED_CAR_SHIT damage_componentB 2
+    end
+
+if
+$SAVE_CAR_COMPONENT4_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] == 1
+    then
+    073C: car USED_CAR_SHIT damage_componentB 3
+    end
+    
+if
+8D0D: not 18@ = get_car USED_CAR_SHIT component "door_lr_dummy" // IF and SET 
+    then
+    return
+    end    
+
+if
+$SAVE_CAR_COMPONENT5_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] == 1
+    then
+    073C: car USED_CAR_SHIT damage_componentB 4
+    end
+
+if
+$SAVE_CAR_COMPONENT6_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] == 1
+    then
+    073C: car USED_CAR_SHIT damage_componentB 5 
+    end
+
+return
+
+:CAR_TIRE_DAMAGE_SET
+
+if
+$SAVE_CAR_TIRE1_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] == 1
+    then
+//    04FE: deflate_tire 0 on_car USED_CAR_SHIT 
+    0A97: 21@ = car USED_CAR_SHIT struct 
+    
+    if
+    not $SAVE_CAR_BIKE_FLAG[SAVE_CAR_CURRENT_NUMBER] == 1
+    then
+    21@ += 0x5A5
+    else
+    21@ += 0x65C
+    end
+     
+    0A8C: write_memory 21@ size 1 value 1 virtual_protect 0  
+    end
+
+if
+$SAVE_CAR_TIRE2_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] == 1
+    then
+    0A97: 21@ = car USED_CAR_SHIT struct 
+    
+    if
+    not $SAVE_CAR_BIKE_FLAG[SAVE_CAR_CURRENT_NUMBER] == 1
+    then
+    21@ += 0x5A6 
+    else
+    21@ += 0x65D
+    end
+    
+    0A8C: write_memory 21@ size 1 value 1 virtual_protect 0  
+//    04FE: deflate_tire 1 on_car USED_CAR_SHIT
+    end
+
+if
+$SAVE_CAR_BIKE_FLAG[SAVE_CAR_CURRENT_NUMBER] == 1
+    then
+    return
+    end
+
+if
+$SAVE_CAR_TIRE3_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] == 1
+    then
+    0A97: 21@ = car USED_CAR_SHIT struct 
+    21@ += 0x5A7 
+    0A8C: write_memory 21@ size 1 value 1 virtual_protect 0  
+//    04FE: deflate_tire 2 on_car USED_CAR_SHIT
+    end
+
+if
+$SAVE_CAR_TIRE4_DAMAGE_FLAG[SAVE_CAR_CURRENT_NUMBER] == 1
+    then
+    0A97: 21@ = car USED_CAR_SHIT struct 
+    21@ += 0x5A8 
+    0A8C: write_memory 21@ size 1 value 1 virtual_protect 0  
+//    04FE: deflate_tire 3 on_car USED_CAR_SHIT
+    end
+
+return
+
+:CAR_SAVE_ENGINE_UPGRADE_SET
+
+0A97: 22@ = car USED_CAR_SHIT struct 
+0A8E: 23@ = 22@ + CAR_ENGINE_POWER_PLUS_STRUCT // int 
+0A8C: write_memory 23@ size 4 value $CAR_ENGINE_POWER[SAVE_CAR_CURRENT_NUMBER] virtual_protect 1
+
+return
+
+:SAVED_CAR_SAVE_PARAMETRS
+
+if
+856E: not  car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] defined
+then
+return
+end
+
+$SAVE_CAR_TRUNK_EMPTY[SAVE_CAR_CURRENT_NUMBER] = 0 
+
+08C3: clear 24@ bit 4
+
+if
+856E: not  car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] defined
+then
+return
+end
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+0441: 11@ = car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] model
+if and
+8820: not  model 11@ heli
+881E: not  model 11@ boat
+881F: not  model 11@ plane 
+then
+
+0A97: 11@ = car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] struct 
+11@ += 16
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+
+if
+08B4:   test 12@ bit 1
+    then
+    $SAVE_CAR_TRUNK_EMPTY[SAVE_CAR_CURRENT_NUMBER] = 1
+    08C3: clear 12@ bit 1
+    end
+    
+$SAVE_CAR_RADIO_HAVE[SAVE_CAR_CURRENT_NUMBER] = 0
+
+if
+856E: not  car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] defined
+then
+return
+end
+
+0A97: 11@ = car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] struct 
+11@ += 16 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+
+if 
+08B7:  test 12@ bit 6 
+    then
+    08C3: clear 12@ bit 6
+    $SAVE_CAR_RADIO_HAVE[SAVE_CAR_CURRENT_NUMBER] = 1 
+    end
+    
+end
+
+/////////////////////////////////////////////////////////////////////////////////////////////    
+    
+if
+856E: not  car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] defined
+then
+return
+end       
+    
+0A97: 22@ = car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] struct 
+0A8E: 23@ = 22@ + 5 // int 
+0A8D: SAVE_CAR_BENZIN = read_memory 23@ size 4 virtual_protect 0     
+
+if
+856E: not  car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] defined
+then
+return
+end
+
+0A97: 22@ = car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] struct 
+22@ += 0x0438 //BYTE extra[2] 
+0A8D: $SAVE_CAR_EXTRA_NUM[SAVE_CAR_CURRENT_NUMBER] = read_memory 22@ size 1 virtual_protect 0
+22@ += 0x1
+0A8D: SAVE_CAR_EXTRA_NUM2 = read_memory 22@ size 1 virtual_protect 0
+
+if
+856E: not  car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] defined
+then
+return
+end
+    
+Car.StorePos($USED_CAR[SAVE_CAR_CURRENT_NUMBER], $SAVE_CAR_X[SAVE_CAR_CURRENT_NUMBER], $SAVE_CAR_Y[SAVE_CAR_CURRENT_NUMBER], $SAVE_CAR_Z[SAVE_CAR_CURRENT_NUMBER])
+
+if
+856E: not  car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] defined
+then
+return
+end
+
+07C5: get_car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] axis_angle_relation_to 6@ 7@ 8@ 9@
+
+if
+856E: not  car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] defined
+then
+return
+end
+
+$SAVE_CAR_ANGLE[SAVE_CAR_CURRENT_NUMBER] = Car.Angle($USED_CAR[SAVE_CAR_CURRENT_NUMBER])
+
+if
+856E: not  car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] defined
+then
+return
+end
+
+:SAVED_CAR_GET_MODEL
+wait 0
+
+if
+056E:   car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] defined
+then
+$SAVE_CAR_MODEL[SAVE_CAR_CURRENT_NUMBER] = Car.Model($USED_CAR[SAVE_CAR_CURRENT_NUMBER])
+end
+
+if and
+not $SAVE_CAR_MODEL[SAVE_CAR_CURRENT_NUMBER] == 0
+0488:   model $SAVE_CAR_MODEL[SAVE_CAR_CURRENT_NUMBER] exists  // versionA
+jf @SAVED_CAR_GET_MODEL
+
+if
+856E: not  car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] defined
+then
+return
+end
+
+03F3: get_car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] primary_color_to $SAVE_CAR_COLOR1[SAVE_CAR_CURRENT_NUMBER] secondary_color_to $SAVE_CAR_COLOR2[SAVE_CAR_CURRENT_NUMBER]
+
+if
+856E: not  car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] defined
+then
+return
+end
+ 
+0227: $SAVE_CAR_HEALTH[SAVE_CAR_CURRENT_NUMBER] = car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] health
+
+if
+856E: not  car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] defined
+then
+return
+end
+
+///////////////////////////////////////////////////////////////////////////////////////
+
+0441: 11@ = car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] model
+
+if and
+8820: not  model 11@ heli
+881E: not  model 11@ boat
+881F: not  model 11@ plane 
+then     
+gosub @CAR_DAMAGE
+gosub @TIRE_DAMAGE
+
+if
+$SAVE_CAR_BIKE_FLAG[SAVE_CAR_CURRENT_NUMBER] == 1 
+then
+
+//////////////////////////////////////////////////////////////
+
+if
+UNITED_MAP == 0
+then
+
+if or
+11@ == 15420
+11@ == #WAYFARER
+11@ == #COPBIKE
+then
+$CAR_WHEEL_INSTALLED[SAVE_CAR_CURRENT_NUMBER] = 2
+end
+
+if
+11@ == #PIZZABOY
+then
+$CAR_WHEEL_INSTALLED[SAVE_CAR_CURRENT_NUMBER] = 2
+end
+
+if or
+11@ == 406
+11@ == 444
+11@ == 556
+11@ == 557
+11@ == 573
+then
+$CAR_WHEEL_INSTALLED[SAVE_CAR_CURRENT_NUMBER] = 2
+end
+
+else
+
+if or
+11@ == 15299
+11@ == 15322
+11@ == 15430
+11@ == 15457
+11@ == 15454
+11@ == 15552
+11@ == 15526
+11@ == 15566
+then
+$CAR_WHEEL_INSTALLED[SAVE_CAR_CURRENT_NUMBER] = 2
+end
+
+if
+11@ == 15565
+then
+$CAR_WHEEL_INSTALLED[SAVE_CAR_CURRENT_NUMBER] = 2
+end
+
+end
+
+//////////////////////////////////////////////////////////////
+
+return
+end
+
+if
+856E: not  car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] defined
+then
+return
+end
+
+if
+0803:   car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] have_hydraulics
+    then
+    $SAVE_CAR_HYDRO_HAVE[SAVE_CAR_CURRENT_NUMBER] = 1
+    else
+    $SAVE_CAR_HYDRO_HAVE[SAVE_CAR_CURRENT_NUMBER] = 0
+    end
+    
+if
+856E: not  car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] defined
+then
+return
+end    
+
+096D: get_car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] component_on_slot 12 model_to 0@    
+if or
+0@ == OFFROAD_WHEEL_ID_SA
+0@ == OFFROAD_WHEEL_ID_UNITED 
+    then
+    $CAR_WHEEL_INSTALLED[SAVE_CAR_CURRENT_NUMBER] = 1
+    else
+    $CAR_WHEEL_INSTALLED[SAVE_CAR_CURRENT_NUMBER] = 0 
+    end
+    
+if
+856E: not  car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] defined
+then
+return
+end
+
+end
+
+///////////////////////////////////////////////////////////////////////////////////////                     
+
+return
+
+:C_SAVE_BIKE_ITEM_VAULT_CREATE
+
+if or
+car.Model(1@) == #BMX
+car.Model(1@) == #BIKE
+car.Model(1@) == #MTBIKE
+then
+
+if
+UNITED_MAP == 0
+then
+0107: SAVE_CAR_BIKE_BAGS_OBJ = create_object 12248 at 0.0 0.0 0.0
+else
+0107: SAVE_CAR_BIKE_BAGS_OBJ = create_object 12483 at 0.0 0.0 0.0
+end
+
+else
+
+if
+UNITED_MAP == 0
+then
+0107: SAVE_CAR_BIKE_BAGS_OBJ = create_object 12247 at 0.0 0.0 0.0
+else
+0107: SAVE_CAR_BIKE_BAGS_OBJ = create_object 12483 at 0.0 0.0 0.0
+end
+
+end
+
+0550: keep_object SAVE_CAR_BIKE_BAGS_OBJ in_memory 1
+    
+if or
+car.Model(1@) == #PCJ600
+car.Model(1@) == 15319
+car.Model(1@) == 15428
+car.Model(1@) == 15523
+then
+0681: attach_object SAVE_CAR_BIKE_BAGS_OBJ to_car 1@ with_offset 0.0 -0.05 0.25 rotation 0.0 0.0 0.0
+end
+
+if or
+car.Model(1@) == #BF400
+car.Model(1@) == 15550
+car.Model(1@) == 15491
+then
+0681: attach_object SAVE_CAR_BIKE_BAGS_OBJ to_car 1@ with_offset 0.0 -0.05 0.3 rotation 0.0 0.0 0.0
+end
+
+if or
+car.Model(1@) == #FCR900
+car.Model(1@) == 15403
+then
+0681: attach_object SAVE_CAR_BIKE_BAGS_OBJ to_car 1@ with_offset 0.0 0.25 0.3 rotation 0.0 0.0 0.0
+end
+
+if or
+car.Model(1@) == #NRG500
+car.Model(1@) == 15404
+car.Model(1@) == 15493
+then
+0681: attach_object SAVE_CAR_BIKE_BAGS_OBJ to_car 1@ with_offset 0.0 -0.05 0.37 rotation 0.0 0.0 0.0
+end
+
+if or
+car.Model(1@) == #FREEWAY
+car.Model(1@) == 15296
+car.Model(1@) == 15421
+car.Model(1@) == 15455
+car.Model(1@) == 15510
+car.Model(1@) == 15556
+car.Model(1@) == 15494
+then
+0681: attach_object SAVE_CAR_BIKE_BAGS_OBJ to_car 1@ with_offset 0.0 1.15 0.25 rotation 0.0 0.0 0.0
+end
+
+if or
+car.Model(1@) == #QUAD
+car.Model(1@) == 15426
+car.Model(1@) == 15558
+then
+0681: attach_object SAVE_CAR_BIKE_BAGS_OBJ to_car 1@ with_offset 0.0 0.85 0.35 rotation 0.0 0.0 0.0
+08D2: object SAVE_CAR_BIKE_BAGS_OBJ scale_model 0.75
+end
+
+if or
+car.Model(1@) == #BMX
+car.Model(1@) == #BIKE
+then
+0681: attach_object SAVE_CAR_BIKE_BAGS_OBJ to_car 1@ with_offset 0.0 0.85 0.15 rotation 0.0 0.0 0.0
+08D2: object SAVE_CAR_BIKE_BAGS_OBJ scale_model 0.75
+end
+
+if
+car.Model(1@) == #MTBIKE
+then
+0681: attach_object SAVE_CAR_BIKE_BAGS_OBJ to_car 1@ with_offset 0.0 0.82 0.15 rotation 0.0 0.0 0.0
+08D2: object SAVE_CAR_BIKE_BAGS_OBJ scale_model 0.75
+end
+
+if or
+car.Model(1@) == #SANCHEZ
+car.Model(1@) == 15332
+car.Model(1@) == 15435
+car.Model(1@) == 15456
+car.Model(1@) == 15532
+then
+0681: attach_object SAVE_CAR_BIKE_BAGS_OBJ to_car 1@ with_offset 0.0 0.125 0.15 rotation 0.0 0.0 0.0
+end
+
+if or
+car.Model(1@) == #FAGGIO
+car.Model(1@) == 15293
+car.Model(1@) == 15418
+car.Model(1@) == 15507
+car.Model(1@) == 15492
+then
+0681: attach_object SAVE_CAR_BIKE_BAGS_OBJ to_car 1@ with_offset 0.0 0.05 0.25 rotation 0.0 0.0 0.0
+end
+
+0382: set_object SAVE_CAR_BIKE_BAGS_OBJ collision_detection 0
+050E: set_object SAVE_CAR_BIKE_BAGS_OBJ no_collision_with_car 1@
+
+return
+
+:C_SAVE_NUM_GET
+
+if
+SAVE_CAR_TEST_NUMBER == 1
+then
+thread 'C_SAVE1'
+end
+
+if
+SAVE_CAR_TEST_NUMBER == 2
+then
+thread 'C_SAVE2'
+end
+
+if
+SAVE_CAR_TEST_NUMBER == 3
+then
+thread 'C_SAVE3'
+end
+
+if
+SAVE_CAR_TEST_NUMBER == 4
+then
+thread 'C_SAVE4'
+end
+
+return    

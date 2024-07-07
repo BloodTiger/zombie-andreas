@@ -1,0 +1,166 @@
+:C_GEAR
+thread 'C_GEAR'
+
+if
+STORIES_MAP == 1
+then
+create_thread @AMPHIBI
+end
+
+0662: printstring "----------Car Gear Change Anim by Junior_Djjr, Fabio----------"
+
+var        
+24@ : int  
+23@ : int  
+22@ : int
+21@ : int
+20@ : int
+13@ : float
+12@ : float 
+11@ : float
+end
+
+
+while true
+    wait 250
+    actor.Driving(PLAYER_ACTOR)
+    jf continue
+    0@ = actor.CurrentCar(PLAYER_ACTOR)
+    15@ = Car.Model(0@)
+    0A01:   model 15@ car
+    jf continue
+    if 31@ == true
+    then
+        if 15@ == #STRATUM
+        then
+            while actor.Driving(PLAYER_ACTOR)
+                wait 0
+            end
+            continue
+        end
+    end
+    
+    04ED: load_animation "changegear"
+    repeat
+        wait 0            
+    until 04EE:   animation "changegear" loaded
+    
+
+    0A97: 28@ = car 0@ struct
+    0085: 27@ = 28@  
+    0085: 26@ = 28@
+    27@ += 0x280 //RPM
+    28@ += 0x284 //change
+    26@ += 0x966 //pedal
+    
+    
+    17@ = true
+    
+    32@ = 0
+    33@ = 1000
+    while actor.Driving(PLAYER_ACTOR)
+        056E:   car 0@ defined
+        jf break
+        0ABE:   vehicle 0@ engine_on
+        jf break
+        
+        gosub @Get
+        
+        
+        //don't do anim before the first gear change (optional)
+        if and
+        88B7:   not test 30@ bit 0
+        22@ == 65535
+        25@ < 5.0
+        then
+            08BD: set 30@ bit 0 
+            32@ = 0
+        end
+        
+        if 20@ > 0
+        then
+            08C3: clear 30@ bit 0
+        end 
+        
+        
+        
+        //gear changing
+        if //and
+        20@ == 0 //back to the gear start
+        //23@ > 0.0
+        then        
+            gosub @Anim
+        end  
+        
+        if 22@ == 65535
+        then
+            33@ = 0
+        end
+            
+        if 25@ == 0.0
+        then
+            while actor.Driving(PLAYER_ACTOR)
+                056E:   not car 0@ defined  
+                jf break    
+                0ABE:   vehicle 0@ engine_on
+                jf break    
+                gosub @Get
+                02E3: 25@ = car 0@ speed
+                if and
+                25@ > 0.0
+                23@ > 0.0
+                then  
+                    17@ = false
+                    gosub @DoAnim
+                    break
+                end  
+                wait 0
+            end
+        end   
+        wait 0  
+    end
+    04EF: release_animation "changegear"
+end
+
+
+:Get
+0A8D: 20@ = read_memory 28@ size 1 virtual_protect 0 
+0A8D: 22@ = read_memory 27@ size 2 virtual_protect 0  
+0A8D: 23@ = read_memory 26@ size 1 virtual_protect 0 
+02E3: 25@ = car 0@ speed
+//0AD1: show_formatted_text_highpriority "%i %i" time 1 20@ 22@
+return
+
+:Anim 
+if 17@ == false
+then
+    if and
+    88B7:   not test 30@ bit 0 
+    88B7:   not test 30@ bit 1
+    then      
+        if 33@ < 1000
+        then   
+        else                                     
+            gosub @DoAnim
+            33@ = 0
+        end
+    end
+else
+    17@ = false
+end   
+32@ = 0
+return
+
+:DoAnim
+//0ACD: show_text_highpriority "ANIM" time 500
+
+046C: 10@ = car 0@ driver
+
+if and
+03EE:   player 0 controllable
+$FP_ACTIVATED == 1
+07D6:   10@ == PLAYER_ACTOR // @ == $ (int)
+then
+0812: AS_actor PLAYER_ACTOR perform_animation "cambio" IFP "changegear" framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF 0 time -1
+end
+return

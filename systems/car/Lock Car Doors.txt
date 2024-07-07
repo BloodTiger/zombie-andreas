@@ -1,0 +1,418 @@
+:LCK_DR
+thread 'LCK_DR'        
+        
+:DOORS_CHECK
+wait 0
+
+if
+047A:  actor PLAYER_ACTOR driving_bike
+then
+0@ = actor.CurrentCar(PLAYER_ACTOR)
+00E2: get_player 0 key 1 state_to 1@
+
+if
+$FP_ACTIVATED == 1
+then
+1@ = -1
+end
+
+if or
+0E93: is_car_really_in_air 0@
+07F1:   player 0 performing_wheelie
+1@ > 0
+    then
+    if
+    $FP_ACTIVATED == 0
+        then
+        //Включаем анимации перемещения веса на байке
+        0A8C: write_memory 0x6B796D size 2 value 34063 virtual_protect 1
+        0A8C: write_memory 0x6B796F size 2 value 753 virtual_protect 1
+        else
+        //Выключаем анимации перемещения веса на байке
+        0A8C: write_memory 0x6B796D size 2 value 62185 virtual_protect 1
+        0A8C: write_memory 0x6B796F size 2 value 2 virtual_protect 1
+        end
+    else
+    if
+    1@ < 0
+        then
+        //Выключаем анимации перемещения веса на байке
+        0A8C: write_memory 0x6B796D size 2 value 62185 virtual_protect 1
+        0A8C: write_memory 0x6B796F size 2 value 2 virtual_protect 1
+        end
+    end 
+end
+
+if
+0800:   in_two_players_mode
+    then
+    if
+    056D:   actor COOP_ACTOR defined
+        then
+        if  
+        047A:  actor COOP_ACTOR driving_bike
+            then
+            0@ = actor.CurrentCar(COOP_ACTOR)
+            00E2: get_player 1 key 1 state_to 1@
+            if or
+            0E93: is_car_really_in_air 0@
+            07F1:   player 1 performing_wheelie
+            1@ > 0
+                then
+                //Включаем анимации перемещения веса на байке
+                0A8C: write_memory 0x6B796D size 2 value 34063 virtual_protect 1
+                0A8C: write_memory 0x6B796F size 2 value 753 virtual_protect 1
+                else
+                if
+                1@ < 0
+                    then
+                    //Выключаем анимации перемещения веса на байке
+                    0A8C: write_memory 0x6B796D size 2 value 62185 virtual_protect 1
+                    0A8C: write_memory 0x6B796F size 2 value 2 virtual_protect 1
+                    end
+                end 
+            end
+        end
+    end
+
+if and
+actor.Driving(PLAYER_ACTOR)
+847A: not  actor PLAYER_ACTOR driving_bike
+not Actor.Dead(PLAYER_ACTOR) 
+09E7:   player PLAYER_CHAR not_frozen
+jf @DOORS_CHECK
+if
+player.Controllable(PLAYER_CHAR)
+jf @DOORS_CHECK
+if and
+not actor.DrivingVehicleType(PLAYER_ACTOR,#QUAD)
+not actor.DrivingVehicleType(PLAYER_ACTOR,15558)
+not actor.DrivingVehicleType(PLAYER_ACTOR,485)
+not actor.DrivingVehicleType(PLAYER_ACTOR,530)	
+not actor.DrivingVehicleType(PLAYER_ACTOR,572)
+not actor.DrivingVehicleType(PLAYER_ACTOR,568)
+not actor.DrivingVehicleType(PLAYER_ACTOR,424)
+not actor.DrivingVehicleType(PLAYER_ACTOR,457)
+jf @DOORS_CHECK
+if and
+not actor.DrivingVehicleType(PLAYER_ACTOR,571)
+not actor.DrivingVehicleType(PLAYER_ACTOR,539)
+not actor.DrivingVehicleType(PLAYER_ACTOR,531)
+not actor.DrivingVehicleType(PLAYER_ACTOR,486)
+not actor.DrivingVehicleType(PLAYER_ACTOR,#VORTEX)
+jf @DOORS_CHECK
+if and
+UNITED_MAP == 0
+actor.DrivingVehicleType(PLAYER_ACTOR,15426)
+then
+jump to @DOORS_CHECK
+end
+03C0: 0@ = actor PLAYER_ACTOR car
+
+if and
+$FP_ACTIVATED == 1
+00E1:   player 0 pressed_key 5
+00E1:   player 0 pressed_key 7
+09E7:   player PLAYER_CHAR not_frozen
+then
+player.CanMove(PLAYER_CHAR,0)
+wait 0
+player.CanMove(PLAYER_CHAR,1)
+end
+
+:DOORS_CLOSE_CHECK
+wait 0
+gosub @DOORS_EXIT_CHECK
+if
+056E:   car 0@ defined
+jf @DOORS_CHECK
+if or
+actor.InCar(PLAYER_ACTOR,0@)
+0A32:  actor PLAYER_ACTOR on_turret_of_car
+jf @DOORS_DELETE
+
+if and
+056D:   actor COOP_ACTOR defined
+not COOP_ACTOR == -69
+then
+if and
+actor.InCar(COOP_ACTOR,0@)
+0E3E: is_button_just_pressed 1 button 11
+    then
+    jump to @DOOR_CLOSE_CHECK2
+    end
+end
+
+if
+0AB0:   key_pressed $KEY_CLOSE_DOOR
+jf @DOORS_CLOSE_CHECK
+:DOOR_CLOSE_CHECK2
+Car.DoorStatus(0@) = 2
+if
+0D0C: get_car 0@ component "door_lf_dummy" matrix_pointer_to 1@ // IF and SET 
+then
+08A6: set_car 0@ door 2 rotation_to 0.0
+end
+
+if
+0D0C: get_car 0@ component "door_rf_dummy" matrix_pointer_to 1@ // IF and SET 
+then
+if
+8431: not  car 0@ passenger_seat_free 1
+    then
+    08A6: set_car 0@ door 3 rotation_to 0.0
+    end
+end
+
+if
+0D0C: get_car 0@ component "door_lr_dummy" matrix_pointer_to 1@ // IF and SET 
+then
+if
+8431: not  car 0@ passenger_seat_free 2
+    then
+    08A6: set_car 0@ door 4 rotation_to 0.0
+    end
+end
+
+if
+0D0C: get_car 0@ component "door_rr_dummy" matrix_pointer_to 1@ // IF and SET 
+then
+if
+8431: not  car 0@ passenger_seat_free 3
+    then
+    08A6: set_car 0@ door 5 rotation_to 0.0
+    end
+end
+
+if
+$PHRASES_OFF_FLAG == 0
+then
+00BC: show_text_highpriority GXT 'GAME10' time 1000 flag 1
+end
+
+Audiostream.Loop($DOOR_LOCK_SOUND,0)
+Audiostream.PerformAction($DOOR_LOCK_SOUND, PLAY)
+Audiostream.Volume($DOOR_LOCK_SOUND) = $SOUNDS_VOLUME
+wait 1000
+jump @DOORS_OPEN_CHECK
+
+:DOORS_OPEN_CHECK
+wait 0
+gosub @DOORS_EXIT_CHECK
+if
+056E:   car 0@ defined
+jf @DOORS_CHECK
+if or
+actor.InCar(PLAYER_ACTOR,0@)
+0A32:  actor PLAYER_ACTOR on_turret_of_car
+jf @DOORS_DELETE
+
+if and
+056D:   actor COOP_ACTOR defined
+not COOP_ACTOR == -69
+then
+if and
+actor.InCar(COOP_ACTOR,0@)
+0E3E: is_button_just_pressed 1 button 11
+    then
+    jump to @DOOR_CLOSE_CHECK2B
+    end
+end
+
+if
+0AB0:   key_pressed $KEY_CLOSE_DOOR
+jf @DOORS_OPEN_CHECK
+:DOOR_CLOSE_CHECK2B
+gosub @CAR_DOOR_UNLOCK
+
+if
+$PHRASES_OFF_FLAG == 0
+then
+00BC: show_text_highpriority GXT 'GAME9' time 1000 flag 1
+end
+
+Audiostream.Loop($DOOR_UNLOCK_SOUND,0)
+Audiostream.PerformAction($DOOR_UNLOCK_SOUND, PLAY)
+Audiostream.Volume($DOOR_UNLOCK_SOUND) = $SOUNDS_VOLUME
+wait 1000
+jump @DOORS_CLOSE_CHECK
+
+:DOORS_DELETE
+gosub @CAR_DOOR_UNLOCK
+jump @DOORS_CHECK
+
+:DOORS_EXIT_CHECK
+
+if and
+00E1:   player 0 pressed_key 15
+056E:   car 0@ defined
+    then    
+    gosub @CAR_DOOR_EXIT_CHECK    
+    if
+    2@ == 0
+        then
+        gosub @CAR_DOOR_UNLOCK
+        end    
+    end
+
+return
+
+:CAR_DOOR_UNLOCK
+
+if
+0185:   car 0@ health >= 1001
+then
+
+while 0E4A: is_char_exiting_any_car PLAYER_ACTOR
+wait 0
+
+if
+056E:   car 0@ defined
+then
+Car.DoorStatus(0@) = 0
+end
+
+end
+
+if
+056E:   car 0@ defined
+then
+Car.DoorStatus(0@) = 6
+end
+
+else
+Car.DoorStatus(0@) = 0
+end
+
+return
+
+:CAR_DOOR_EXIT_CHECK
+2@ = 0
+
+if or
+Actor.Animation(PLAYER_ACTOR) == "CAR_FALLOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_FALLOUT_RHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_GETOUTL_LHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_GETOUTL_RHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_GETOUT_RHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_JACKEDLHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_JACKEDRHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_PULLOUTL_LHS"
+    then
+    2@ = 1
+    end
+    
+if or
+Actor.Animation(PLAYER_ACTOR) == "CAR_PULLOUTL_RHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_PULLOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_PULLOUT_RHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_QJACKED"
+Actor.Animation(PLAYER_ACTOR) == "CAR_ROLLOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_ROLLOUT_RHS"
+Actor.Animation(PLAYER_ACTOR) == "BIKE_FALL_OFF"
+Actor.Animation(PLAYER_ACTOR) == "BF_GETOUT_LHS"    
+    then
+    2@ = 1
+    end
+    
+if or
+Actor.Animation(PLAYER_ACTOR) == "BIKED_GETOFFBACK"
+Actor.Animation(PLAYER_ACTOR) == "BIKED_GETOFFLHS"
+Actor.Animation(PLAYER_ACTOR) == "BIKED_GETOFFRHS"
+Actor.Animation(PLAYER_ACTOR) == "BIKEH_GETOFFRHS"
+Actor.Animation(PLAYER_ACTOR) == "BIKEH_GETOFFLHS"
+Actor.Animation(PLAYER_ACTOR) == "BIKEH_GETOFFBACK"
+Actor.Animation(PLAYER_ACTOR) == "BIKES_GETOFFBACK"
+Actor.Animation(PLAYER_ACTOR) == "BIKES_GETOFFLHS"
+    then
+    2@ = 1
+    end  
+    
+if or
+Actor.Animation(PLAYER_ACTOR) == "BIKEV_GETOFFBACK"
+Actor.Animation(PLAYER_ACTOR) == "BIKEV_GETOFFLHS"
+Actor.Animation(PLAYER_ACTOR) == "BIKEV_GETOFFRHS"
+Actor.Animation(PLAYER_ACTOR) == "BMX_GETOFFLHS"
+Actor.Animation(PLAYER_ACTOR) == "BMX_GETOFFRHS"
+Actor.Animation(PLAYER_ACTOR) == "BMX_GETOFFBACK"
+Actor.Animation(PLAYER_ACTOR) == "BUS_GETOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "BUS_GETOUT_RHS"
+    then
+    2@ = 1
+    end 
+    
+if or
+Actor.Animation(PLAYER_ACTOR) == "BUS_PULLOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "BIKES_GETOFFRHS"
+Actor.Animation(PLAYER_ACTOR) == "BF_GETOUT_RHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_GETOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "KART_GETOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "KART_GETOUT_RHS"
+Actor.Animation(PLAYER_ACTOR) == "MTB_GETOFFBACK"
+Actor.Animation(PLAYER_ACTOR) == "MTB_GETOFFLHS"
+   then
+   2@ = 1
+   end
+
+if or
+Actor.Animation(PLAYER_ACTOR) == "MTB_GETOFFRHS"
+Actor.Animation(PLAYER_ACTOR) == "COP_GETOUTCAR_LHS"
+Actor.Animation(PLAYER_ACTOR) == "PLANE_GETOUT"
+Actor.Animation(PLAYER_ACTOR) == "SHAMAL_GETOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "TRUCK_GETOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "TRUCK_GETOUT_RHS"
+Actor.Animation(PLAYER_ACTOR) == "TRUCK_PULLOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "TRUCK_PULLOUT_RHS"
+    then
+    2@ = 1
+    end
+
+if or
+Actor.Animation(PLAYER_ACTOR) == "VAN_GETOUT_BACK_LHS"
+Actor.Animation(PLAYER_ACTOR) == "VAN_GETOUT_BACK_RHS"
+Actor.Animation(PLAYER_ACTOR) == "VORTEX_GETOUT_RHS"
+Actor.Animation(PLAYER_ACTOR) == "VORTEX_GETOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "WF_GETOFFBACK"
+Actor.Animation(PLAYER_ACTOR) == "WF_GETOFFRHS"
+Actor.Animation(PLAYER_ACTOR) == "WF_GETOFFLHS"
+Actor.Animation(PLAYER_ACTOR) == "CHOPPA_GETOFFBACK"
+    then
+    2@ = 1
+    end
+
+if or
+Actor.Animation(PLAYER_ACTOR) == "CHOPPA_GETOFFLHS"
+Actor.Animation(PLAYER_ACTOR) == "CHOPPA_GETOFF_RHS"
+Actor.Animation(PLAYER_ACTOR) == "QUAD_GETOFF_B"
+Actor.Animation(PLAYER_ACTOR) == "CAR_GETOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_CRAWLOUTRHS"
+Actor.Animation(PLAYER_ACTOR) == "QUAD_GETOFF_LHS"
+Actor.Animation(PLAYER_ACTOR) == "QUAD_GETOFF_RHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_GETOUT_LHS"
+    then
+    2@ = 1
+    end
+
+if or
+Actor.Animation(PLAYER_ACTOR) == "CAR_LJACKEDLHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_LJACKEDLHS"
+Actor.Animation(PLAYER_ACTOR) == "COACH_OUTL"
+Actor.Animation(PLAYER_ACTOR) == "DOZER_PULLOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "COACH_OUTR"
+Actor.Animation(PLAYER_ACTOR) == "DOZER_GETOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "DOZER_GETOUT_RHS"
+    then
+    2@ = 1
+    end
+
+if or
+Actor.Animation(PLAYER_ACTOR) == "DOZER_PULLOUT_RHS"
+Actor.Animation(PLAYER_ACTOR) == "TRUCK_JACKEDLHS"
+Actor.Animation(PLAYER_ACTOR) == "TRUCK_JACKEDRHS"
+actor.Animation(PLAYER_ACTOR) == "CAR_close_LHS"
+actor.Animation(PLAYER_ACTOR) == "CAR_close_RHS"
+    then
+    2@ = 1
+    end    
+
+return

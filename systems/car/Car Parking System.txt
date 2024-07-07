@@ -1,0 +1,3096 @@
+const
+PARK_CAR = 28@
+end
+
+:PARK_C
+thread 'PARK_C'
+
+for 0@ = 0 to 109
+$PARK_CAR_C1[0@] = -1
+end
+
+for 0@ = 0 to 109
+$PARK_CAR_DAMAGED[0@] = 1
+end
+
+gosub @PARK_CARS_SETTINGS
+
+if
+$GAMEMODE_WAR == 1
+    then    
+    
+    for 0@ = 0 to 109
+    $PARK_CAR_ENGINE[0@] = 1
+    $PARK_CAR_DOORS[0@] = 1
+    end 
+    
+    for 0@ = 0 to 109
+    $PARK_CAR_DAMAGED[0@] = 0
+    end
+    
+    for 0@ = 0 to 29
+    $PARK_CAR_ID[0@] = 0
+    end                  
+          
+    end
+
+while true
+wait 100
+
+for 0@ = 1 to 109
+
+if and
+$PARK_CAR_CREATED[0@] == 0
+not $PARK_CAR_ID[0@] == 0
+$SAVESTATUS_TRUE == 0
+00FE:   actor PLAYER_ACTOR sphere 0 in_sphere $PARK_CAR_X[0@] $PARK_CAR_Y[0@] $PARK_CAR_Z[0@] radius 220.0 220.0 220.0
+    then    
+    
+    :CAR_CREATE_PARK
+    if
+    model.Available($PARK_CAR_ID[0@])
+    then
+    PARK_CAR = car.Create($PARK_CAR_ID[0@],$PARK_CAR_X[0@],$PARK_CAR_Y[0@],$PARK_CAR_Z[0@])
+    0594: unknown_car PARK_CAR flag 0        
+    
+    if
+    model.Available($PARK_CAR_ID[0@])
+    then
+    //model.Destroy($PARK_CAR_ID[0@])
+    end
+    
+    else
+    model.Load($PARK_CAR_ID[0@])
+    mload
+    wait 0
+    jump to @CAR_CREATE_PARK
+    end        
+    
+    car.Angle(PARK_CAR) = $PARK_CAR_A[0@]  
+    
+    088C: put_car PARK_CAR at $PARK_CAR_X[0@] $PARK_CAR_Y[0@] $PARK_CAR_Z[0@] // versionB
+    
+    if and
+    UNITED_MAP == 1
+    STORIES_MAP == 0
+    0@ == 55
+    then
+    0EB4: set_car_coordinates_simple PARK_CAR position $PARK_CAR_X[0@] $PARK_CAR_Y[0@] $PARK_CAR_Z[0@]
+    end
+    
+    if and
+    UNITED_MAP == 0
+    STORIES_MAP == 0
+    0@ == 78
+    then
+    if or
+    $PARK_CAR_ID[0@] == 15403
+    $PARK_CAR_ID[0@] == 15404
+        then
+        0EB4: set_car_coordinates_simple PARK_CAR position $PARK_CAR_X[0@] $PARK_CAR_Y[0@] $PARK_CAR_Z[0@]
+        end
+    end 
+    
+    random_int 2@ $PARK_CAR_H_MIN[0@] $PARK_CAR_H_MAX[0@]    
+
+    car.Health(PARK_CAR) = 2@
+    
+    0878: set_car PARK_CAR dirt_level 20.0
+    08F2: set_car PARK_CAR targettable_by_heatseeker 0
+    
+    if or
+    $MUTATION_ACTIVE == 4
+    CUSTOM_MODE_ONLY_MELEE == 1
+    then
+    08F3: set_car PARK_CAR contains_goodies 0
+    end
+    
+    if
+    not $PARK_CAR_C1[0@] == -1
+    then
+    0229: set_car PARK_CAR primary_color_to $PARK_CAR_C1[0@] secondary_color_to $PARK_CAR_C2[0@]
+    end    
+    
+    gosub @PARK_RANDOM_DAMAGE
+    
+    if
+    $PARK_CAR_ENGINE[0@] == 0
+    then
+    gosub @PARK_ENGINE_OFF
+    end
+    
+    if
+    $PARK_CAR_ENGINE[0@] == 1
+    then
+    gosub @PARK_ENGINE_ON
+    end
+    
+    if
+    $PARK_CAR_DOORS[0@] == 0
+    then
+    gosub @PARK_DOORS_LOCK
+    end
+    
+    if
+    $PARK_CAR_DOORS[0@] == 1
+    then
+    gosub @PARK_DOORS_UNLOCK
+    end
+    
+    $PARK_CAR_CREATED[0@] = 1               
+    
+    008A: $PARK_CAR[0@] = PARK_CAR // (int)
+    car.RemoveReferences(PARK_CAR)
+    create_thread @CAR_ALP PARK_CAR   
+    
+    end            
+
+if 
+$PARK_CAR_CREATED[0@] == 1 
+    then
+    if
+    056E:   car $PARK_CAR[0@] defined 
+        then
+        if
+        actor.InCar(PLAYER_ACTOR,$PARK_CAR[0@])
+            then        
+            $PARK_CAR_CREATED[0@] = 0
+            $PARK_CAR_ID[0@] = 0
+            end
+        end 
+    end
+    
+if 
+$PARK_CAR_CREATED[0@] == 1 
+    then
+    if
+    056E:   car $PARK_CAR[0@] defined 
+        then
+        if and
+        actor.InCar(PLAYER_ACTOR,$PARK_CAR[0@])
+        04C8:   actor PLAYER_ACTOR driving_flying_vehicle
+            then        
+            $PARK_CAR_CREATED[0@] = 0
+            $PARK_CAR_ID[0@] = 0
+            end
+        end 
+    end              
+    
+if
+$PARK_CAR_CREATED[0@] == 1
+    then
+    if
+    856E: not  car $PARK_CAR[0@] defined
+        then
+        $PARK_CAR_CREATED[0@] = 0
+        end  
+    end
+    
+if 
+$PARK_CAR_CREATED[0@] == 1
+    then
+    if
+    056E:   car $PARK_CAR[0@] defined
+        then
+        if
+        car.Wrecked($PARK_CAR[0@])
+            then
+                        
+            if
+            056E:   car $PARK_CAR[0@] defined
+            then
+            car.RemoveReferences($PARK_CAR[0@])
+            end
+                
+            $PARK_CAR_CREATED[0@] = 0
+            $PARK_CAR_ID[0@] = 0
+            
+            end
+        end 
+    end      
+    
+if 
+$PARK_CAR_CREATED[0@] == 1
+    then
+    if
+    056E:   car $PARK_CAR[0@] defined
+        then
+        if or
+        $SAVESTATUS_TRUE == 1
+        8205: not  actor PLAYER_ACTOR near_car $PARK_CAR[0@] radius 230.0 230.0 230.0 flag 0
+            then
+            car.Destroy($PARK_CAR[0@])
+            car.RemoveReferences($PARK_CAR[0@])
+            $PARK_CAR_CREATED[0@] = 0
+            end
+        end 
+    end                 
+
+end
+
+end
+
+end_thread      
+
+:PARK_RANDOM_DAMAGE
+
+if
+$PARK_CAR_DAMAGED[0@] == 0
+    then
+    return
+    end
+
+random_int 2@ 0 3
+if or
+2@ == 0
+2@ == 2
+    then
+    073C: car PARK_CAR damage_componentB 0
+    end
+
+random_int 2@ 0 3
+if or
+2@ == 0
+2@ == 2
+    then
+    073C: car PARK_CAR damage_componentB 1
+    end
+
+random_int 2@ 0 3
+if or
+2@ == 0
+2@ == 2
+    then
+    073C: car PARK_CAR damage_componentB 2
+    end
+
+random_int 2@ 0 3
+if or
+2@ == 0
+2@ == 2
+    then
+    073C: car PARK_CAR damage_componentB 3
+    end
+
+random_int 2@ 0 3
+if or
+2@ == 0
+2@ == 2
+    then
+    073C: car PARK_CAR damage_componentB 4
+    end
+
+random_int 2@ 0 3
+if or
+2@ == 0
+2@ == 2
+    then
+    073C: car PARK_CAR damage_componentB 5
+    end
+
+random_int 2@ 0 3
+if or
+2@ == 0
+2@ == 2
+    then
+    073C: car PARK_CAR damage_componentB 6
+    end
+    
+if
+not $PARK_CAR_DOORS[0@] == 0
+    then        
+    random_int 2@ 0 5
+    if or
+    2@ == 0
+    2@ == 1
+    2@ == 2
+        then
+        random_int 2@ 2 6
+        0657: car PARK_CAR open_door 2@
+        end    
+    end        
+
+return
+
+:PARK_ENGINE_OFF
+
+0A97: 11@ = car PARK_CAR struct 
+11@ += 9
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+08BD: set 12@ bit 2
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 2
+
+02D4: car PARK_CAR turn_off_engine
+
+0A97: 21@ = car PARK_CAR struct 
+21@ += 17
+08BD: set 24@ bit 4 
+0A8C: write_memory 21@ size 1 value 24@ virtual_protect 0
+08C3: clear 24@ bit 4
+
+return
+
+:PARK_ENGINE_ON
+
+0A97: 11@ = car PARK_CAR struct 
+11@ += 9
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+08BD: set 12@ bit 2
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 2
+
+return
+
+:PARK_DOORS_LOCK
+
+0A97: 11@ = car PARK_CAR struct 
+11@ += 18
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+08BD: set 12@ bit 2
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 2
+
+020A: set_car PARK_CAR door_status_to 4
+
+return
+
+:PARK_DOORS_UNLOCK
+
+0A97: 11@ = car PARK_CAR struct 
+11@ += 18
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+08BD: set 12@ bit 2
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 2   
+
+car.DoorStatus(PARK_CAR,0)
+
+return
+
+:PARK_CARS_SETTINGS
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+UNITED_MAP == 0
+then
+
+///////////////////Машины скорой помощи///////////////////
+
+$PARK_CAR_X[32] = 2033.888
+$PARK_CAR_Y[32] = -1432.67
+$PARK_CAR_Z[32] = 16.6453
+$PARK_CAR_A[32] = 180.0
+$PARK_CAR_ID[32] = #AMBULAN
+$PARK_CAR_ENGINE[32] = 2
+$PARK_CAR_DOORS[32] = 0
+$PARK_CAR_H_MIN[32] = 400
+$PARK_CAR_H_MAX[32] = CAR_HEALTH_MAX 
+
+$PARK_CAR_X[1] = 1178.048
+$PARK_CAR_Y[1] = -1338.175
+$PARK_CAR_Z[1] = 13.405
+$PARK_CAR_A[1] = 270.0
+$PARK_CAR_ID[1] = #AMBULAN
+$PARK_CAR_ENGINE[1] = 2
+$PARK_CAR_DOORS[1] = 0
+$PARK_CAR_H_MIN[1] = 400
+$PARK_CAR_H_MAX[1] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[2] = -303.7814
+$PARK_CAR_Y[2] = 1032.326
+$PARK_CAR_Z[2] = 19.086
+$PARK_CAR_A[2] = 270.0
+$PARK_CAR_ID[2] = #AMBULAN
+$PARK_CAR_ENGINE[2] = 2
+$PARK_CAR_DOORS[2] = 0 
+$PARK_CAR_H_MIN[2] = 400
+$PARK_CAR_H_MAX[2] = CAR_HEALTH_MAX 
+
+$PARK_CAR_X[3] = -1507.164
+$PARK_CAR_Y[3] = 2525.455
+$PARK_CAR_Z[3] = 55.1875
+$PARK_CAR_A[3] = 360.0
+$PARK_CAR_ID[3] = #AMBULAN
+$PARK_CAR_ENGINE[3] = 2
+$PARK_CAR_DOORS[3] = 0
+$PARK_CAR_H_MIN[3] = 400
+$PARK_CAR_H_MAX[3] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[4] = 1227.3462
+$PARK_CAR_Y[4] = 298.6735
+$PARK_CAR_Z[4] = 19.7099
+$PARK_CAR_A[4] = 70.0 
+$PARK_CAR_ID[4] = #AMBULAN
+$PARK_CAR_ENGINE[4] = 2
+$PARK_CAR_DOORS[4] = 0
+$PARK_CAR_H_MIN[4] = 400
+$PARK_CAR_H_MAX[4] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[5] = -2220.3809
+$PARK_CAR_Y[5] = -2304.6821
+$PARK_CAR_Z[5] = 30.7801
+$PARK_CAR_A[5] = 230.0 
+$PARK_CAR_ID[5] = #AMBULAN
+$PARK_CAR_ENGINE[5] = 2
+$PARK_CAR_DOORS[5] = 0
+$PARK_CAR_H_MIN[5] = 400
+$PARK_CAR_H_MAX[5] = CAR_HEALTH_MAX
+                        
+$PARK_CAR_X[6] = -2648.4658
+$PARK_CAR_Y[6] = 591.0663
+$PARK_CAR_Z[6] = 14.6598
+$PARK_CAR_A[6] = 90.0
+$PARK_CAR_ID[6] = #AMBULAN
+$PARK_CAR_ENGINE[6] = 2
+$PARK_CAR_DOORS[6] = 0
+$PARK_CAR_H_MIN[6] = 400
+$PARK_CAR_H_MAX[6] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[7] = 1632.3135
+$PARK_CAR_Y[7] = 1808.2081
+$PARK_CAR_Z[7] = 10.9767
+$PARK_CAR_A[7] = 0.0
+$PARK_CAR_ID[7] = #AMBULAN
+$PARK_CAR_ENGINE[7] = 2
+$PARK_CAR_DOORS[7] = 0
+$PARK_CAR_H_MIN[7] = 400
+$PARK_CAR_H_MAX[7] = CAR_HEALTH_MAX
+
+///////////////////Машины полиции///////////////////
+
+$PARK_CAR_X[8] = 2289.8784
+$PARK_CAR_Y[8] = 2430.3579
+$PARK_CAR_Z[8] = 2.9586
+$PARK_CAR_A[8] = 0.0
+$PARK_CAR_ID[8] = #COPCARVG
+$PARK_CAR_ENGINE[8] = 2
+$PARK_CAR_DOORS[8] = 0
+$PARK_CAR_H_MIN[8] = 400
+$PARK_CAR_H_MAX[8] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[9] = 2315.6567
+$PARK_CAR_Y[9] = 2465.3437
+$PARK_CAR_Z[9] = 3.2734
+$PARK_CAR_A[9] = 90.0
+$PARK_CAR_ID[9] = #COPCARVG
+$PARK_CAR_ENGINE[9] = 2
+$PARK_CAR_DOORS[9] = 0
+$PARK_CAR_H_MIN[9] = 400
+$PARK_CAR_H_MAX[9] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[10] = 2281.3096
+$PARK_CAR_Y[10] = 2472.906
+$PARK_CAR_Z[10] = 3.2734
+$PARK_CAR_A[10] = 360.0
+$PARK_CAR_ID[10] = #COPCARVG
+$PARK_CAR_ENGINE[10] = 2
+$PARK_CAR_DOORS[10] = 0
+$PARK_CAR_H_MIN[10] = 400
+$PARK_CAR_H_MAX[10] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[11] = 2239.1816
+$PARK_CAR_Y[11] = 2447.157
+$PARK_CAR_Z[11] = 3.2734
+$PARK_CAR_A[11] = 270.0
+$PARK_CAR_ID[11] = #COPCARVG
+$PARK_CAR_ENGINE[11] = 2
+$PARK_CAR_DOORS[11] = 0
+$PARK_CAR_H_MIN[11] = 400
+$PARK_CAR_H_MAX[11] = CAR_HEALTH_MAX
+
+///////////////////Машины полиции///////////////////
+
+$PARK_CAR_X[12] = -1399.7401
+$PARK_CAR_Y[12] = 2656.5703
+$PARK_CAR_Z[12] = 55.6875
+$PARK_CAR_A[12] = 90.0
+$PARK_CAR_ID[12] = #COPCARRU
+$PARK_CAR_ENGINE[12] = 2
+$PARK_CAR_DOORS[12] = 0
+$PARK_CAR_H_MIN[12] = 400
+$PARK_CAR_H_MAX[12] = CAR_HEALTH_MAX
+
+///////////////////Машины полиции///////////////////
+
+$PARK_CAR_X[13] = 1602.5323
+$PARK_CAR_Y[13] = -1696.1632
+$PARK_CAR_Z[13] = 5.8906
+$PARK_CAR_A[13] = 90.0
+$PARK_CAR_ID[13] = #COPCARLA
+$PARK_CAR_ENGINE[13] = 2
+$PARK_CAR_DOORS[13] = 0
+$PARK_CAR_H_MIN[13] = 400
+$PARK_CAR_H_MAX[13] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[14] = 1578.8124
+$PARK_CAR_Y[14] = -1712.0444
+$PARK_CAR_Z[14] = 5.8906
+$PARK_CAR_A[14] = 0.0
+$PARK_CAR_ID[14] = #COPCARLA
+$PARK_CAR_ENGINE[14] = 2
+$PARK_CAR_DOORS[14] = 0
+$PARK_CAR_H_MIN[14] = 400
+$PARK_CAR_H_MAX[14] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[15] = 1546.2946
+$PARK_CAR_Y[15] = -1680.1802
+$PARK_CAR_Z[15] = 5.8906
+$PARK_CAR_A[15] = 90.0
+$PARK_CAR_ID[15] = #COPCARLA
+$PARK_CAR_ENGINE[15] = 2
+$PARK_CAR_DOORS[15] = 0
+$PARK_CAR_H_MIN[15] = 400
+$PARK_CAR_H_MAX[15] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[16] = 1534.635
+$PARK_CAR_Y[16] = -1643.98
+$PARK_CAR_Z[16] = 5.8906
+$PARK_CAR_A[16] = 180.0
+$PARK_CAR_ID[16] = #COPCARLA
+$PARK_CAR_ENGINE[16] = 2
+$PARK_CAR_DOORS[16] = 0
+$PARK_CAR_H_MIN[16] = 400
+$PARK_CAR_H_MAX[16] = CAR_HEALTH_MAX
+
+///////////////////Машины полиции///////////////////
+
+$PARK_CAR_X[18] = 612.2986
+$PARK_CAR_Y[18] = -597.3412
+$PARK_CAR_Z[18] = 17.233
+$PARK_CAR_A[18] = 270.0
+$PARK_CAR_ID[18] = #COPCARRU
+$PARK_CAR_ENGINE[18] = 2
+$PARK_CAR_DOORS[18] = 0
+$PARK_CAR_H_MIN[18] = 400
+$PARK_CAR_H_MAX[18] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[19] = 612.8259
+$PARK_CAR_Y[19] = -606.0718
+$PARK_CAR_Z[19] = 17.2266
+$PARK_CAR_A[19] = 270.0
+$PARK_CAR_ID[19] = #COPCARRU
+$PARK_CAR_ENGINE[19] = 2
+$PARK_CAR_DOORS[19] = 0
+$PARK_CAR_H_MIN[19] = 400
+$PARK_CAR_H_MAX[19] = CAR_HEALTH_MAX
+
+///////////////////Машины полиции///////////////////
+
+$PARK_CAR_X[20] = -1612.4062
+$PARK_CAR_Y[20] = 731.8777
+$PARK_CAR_Z[20] = -5.2422
+$PARK_CAR_A[20] = 0.0
+$PARK_CAR_ID[20] = #COPCARSF
+$PARK_CAR_ENGINE[20] = 2
+$PARK_CAR_DOORS[20] = 0
+$PARK_CAR_H_MIN[20] = 400
+$PARK_CAR_H_MAX[20] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[21] = -1583.848
+$PARK_CAR_Y[21] = 750.4586
+$PARK_CAR_Z[21] = -5.2422
+$PARK_CAR_A[21] = 180.0
+$PARK_CAR_ID[21] = #COPCARSF
+$PARK_CAR_ENGINE[21] = 2
+$PARK_CAR_DOORS[21] = 0
+$PARK_CAR_H_MIN[21] = 400
+$PARK_CAR_H_MAX[21] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[22] = -1572.6602
+$PARK_CAR_Y[22] = 714.1503
+$PARK_CAR_Z[22] = -5.2422
+$PARK_CAR_A[22] = 90.0
+$PARK_CAR_ID[22] = #COPCARSF
+$PARK_CAR_ENGINE[22] = 2
+$PARK_CAR_DOORS[22] = 0
+$PARK_CAR_H_MIN[22] = 400
+$PARK_CAR_H_MAX[22] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[23] = -1639.9092
+$PARK_CAR_Y[23] = 686.37
+$PARK_CAR_Z[23] = -5.2422
+$PARK_CAR_A[23] = 270.0
+$PARK_CAR_ID[23] = #COPCARSF
+$PARK_CAR_ENGINE[23] = 2
+$PARK_CAR_DOORS[23] = 0
+$PARK_CAR_H_MIN[23] = 400
+$PARK_CAR_H_MAX[23] = CAR_HEALTH_MAX
+
+///////////////////Машины полиции///////////////////
+
+$PARK_CAR_X[24] = -227.6357
+$PARK_CAR_Y[24] = 991.9704
+$PARK_CAR_Z[24] = 19.5254
+$PARK_CAR_A[24] = 270.0
+$PARK_CAR_ID[24] = #COPCARRU
+$PARK_CAR_ENGINE[24] = 2
+$PARK_CAR_DOORS[24] = 0
+$PARK_CAR_H_MIN[24] = 400
+$PARK_CAR_H_MAX[24] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[29] = -228.0055
+$PARK_CAR_Y[29] = 1000.2748
+$PARK_CAR_Z[29] = 19.846
+$PARK_CAR_A[29] = 270.0
+$PARK_CAR_ID[29] = #COPCARRU
+$PARK_CAR_ENGINE[29] = 2
+$PARK_CAR_DOORS[29] = 0
+$PARK_CAR_H_MIN[29] = 400
+$PARK_CAR_H_MAX[29] = CAR_HEALTH_MAX
+
+///////////////////Машины полиции///////////////////
+
+$PARK_CAR_X[26] = -1399.8336
+$PARK_CAR_Y[26] = 2631.2075
+$PARK_CAR_Z[26] = 56.0084
+$PARK_CAR_A[26] = 90.0
+$PARK_CAR_ID[26] = #COPCARRU
+$PARK_CAR_ENGINE[26] = 2
+$PARK_CAR_DOORS[26] = 0
+$PARK_CAR_H_MIN[26] = 400
+$PARK_CAR_H_MAX[26] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[27] = -1399.8317
+$PARK_CAR_Y[27] = 2643.2322
+$PARK_CAR_Z[27] = 55.9322
+$PARK_CAR_A[27] = 90.0
+$PARK_CAR_ID[27] = #COPCARRU
+$PARK_CAR_ENGINE[27] = 2
+$PARK_CAR_DOORS[27] = 0
+$PARK_CAR_H_MIN[27] = 400
+$PARK_CAR_H_MAX[27] = CAR_HEALTH_MAX
+
+///////////////////Машины полиции///////////////////
+
+$PARK_CAR_X[28] = -2169.4719
+$PARK_CAR_Y[28] = -2359.1455
+$PARK_CAR_Z[28] = 30.9014
+$PARK_CAR_A[28] = 50.0
+$PARK_CAR_ID[28] = #COPCARRU
+$PARK_CAR_ENGINE[28] = 2
+$PARK_CAR_DOORS[28] = 0
+$PARK_CAR_H_MIN[28] = 400
+$PARK_CAR_H_MAX[28] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[25] = -2175.6453
+$PARK_CAR_Y[25] = -2370.4685
+$PARK_CAR_Z[25] = 30.8695
+$PARK_CAR_A[25] = 140.0
+$PARK_CAR_ID[25] = #COPCARRU
+$PARK_CAR_ENGINE[25] = 2
+$PARK_CAR_DOORS[25] = 0
+$PARK_CAR_H_MIN[25] = 400
+$PARK_CAR_H_MAX[25] = CAR_HEALTH_MAX
+
+for 0@ = 30 to 101
+$PARK_CAR_DAMAGED[0@] = 0
+end
+
+var
+$FERMERS_CAR_COLOR1: int
+$FERMERS_CAR_COLOR2: int
+$BANDITS_CAR_COLOR1: int
+$BANDITS_CAR_COLOR2: int
+end
+
+if or
+$GAMEMODE_WAR == 1
+$FREEMODE == 1
+then
+$PARK_CAR_X[30] = -2521.5505
+$PARK_CAR_Y[30] = -658.1194
+$PARK_CAR_Z[30] = 147.8542
+$PARK_CAR_A[30] = 180.0
+$PARK_CAR_ID[30] = #SEASPAR
+$PARK_CAR_ENGINE[30] = 1
+$PARK_CAR_DOORS[30] = 0
+$PARK_CAR_H_MIN[30] = 1000
+$PARK_CAR_H_MAX[30] = 1000   
+$PARK_CAR_C1[30] = -1
+$PARK_CAR_C2[30] = -1
+end      
+
+if or
+$GAMEMODE_WAR == 1
+$FREEMODE == 1
+then
+$PARK_CAR_X[31] = 1017.5344
+$PARK_CAR_Y[31] = -338.0479
+$PARK_CAR_Z[31] = 73.9359
+$PARK_CAR_A[31] = 270.0
+$PARK_CAR_ID[31] = #SEASPAR
+$PARK_CAR_ENGINE[31] = 1
+$PARK_CAR_DOORS[31] = 0
+$PARK_CAR_H_MIN[31] = 1000
+$PARK_CAR_H_MAX[31] = 1000
+$PARK_CAR_C1[31] = -1
+$PARK_CAR_C2[31] = -1
+end
+
+if or
+$GAMEMODE_WAR == 1
+$FREEMODE == 1
+then
+$PARK_CAR_X[33] = 1074.364
+$PARK_CAR_Y[33] = 2112.061
+$PARK_CAR_Z[33] = 19.9559
+$PARK_CAR_A[33] = 360.0
+$PARK_CAR_ID[33] = #SEASPAR
+$PARK_CAR_ENGINE[33] = 1
+$PARK_CAR_DOORS[33] = 0
+$PARK_CAR_H_MIN[33] = 1000
+$PARK_CAR_H_MAX[33] = 1000
+$PARK_CAR_C1[33] = -1
+$PARK_CAR_C2[33] = -1
+end
+
+if or
+$GAMEMODE_WAR == 1
+$FREEMODE == 1
+then
+$PARK_CAR_X[34] = -752.8012
+$PARK_CAR_Y[34] = 1586.952
+$PARK_CAR_Z[34] = 26.9055
+$PARK_CAR_A[34] = 220.0
+$PARK_CAR_ID[34] = #SEASPAR
+$PARK_CAR_ENGINE[34] = 1
+$PARK_CAR_DOORS[34] = 0
+$PARK_CAR_H_MIN[34] = 1000
+$PARK_CAR_H_MAX[34] = 1000
+$PARK_CAR_C1[34] = -1
+$PARK_CAR_C2[34] = -1
+end
+
+if or
+$GAMEMODE_WAR == 1
+$FREEMODE == 1
+then
+$PARK_CAR_X[35] = -289.0876
+$PARK_CAR_Y[35] = 2684.2834
+$PARK_CAR_Z[35] = 65.798
+$PARK_CAR_A[35] = 360.0
+$PARK_CAR_ID[35] = #SEASPAR
+$PARK_CAR_ENGINE[35] = 1
+$PARK_CAR_DOORS[35] = 0
+$PARK_CAR_H_MIN[35] = 1000
+$PARK_CAR_H_MAX[35] = 1000
+$PARK_CAR_C1[35] = -1
+$PARK_CAR_C2[35] = -1
+end
+
+if or
+$GAMEMODE_WAR == 1
+$FREEMODE == 1
+then
+$PARK_CAR_X[36] = 2804.9841
+$PARK_CAR_Y[36] = -1440.2683
+$PARK_CAR_Z[36] = 39.9656
+$PARK_CAR_A[36] = 180.0
+$PARK_CAR_ID[36] = #SEASPAR
+$PARK_CAR_ENGINE[36] = 1
+$PARK_CAR_DOORS[36] = 0
+$PARK_CAR_H_MIN[36] = 1000
+$PARK_CAR_H_MAX[36] = 1000
+$PARK_CAR_C1[36] = -1
+$PARK_CAR_C2[36] = -1
+end
+
+///////////////////Лагерь военных на лесопилке/////////////////// 
+
+$PARK_CAR_X[38] = -519.9527
+$PARK_CAR_Y[38] = -541.8595
+$PARK_CAR_Z[38] = 25.566
+$PARK_CAR_A[38] = 180.0
+$PARK_CAR_ID[38] = #PATRIOT
+$PARK_CAR_ENGINE[38] = 1
+$PARK_CAR_DOORS[38] = 0
+$PARK_CAR_H_MIN[38] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[38] = CAR_HEALTH_MAX
+$PARK_CAR_C1[38] = ARMY_COUNTRY_COLOR
+$PARK_CAR_C2[38] = ARMY_COUNTRY_COLOR
+
+$PARK_CAR_X[39] = -529.2413
+$PARK_CAR_Y[39] = -541.7943
+$PARK_CAR_Z[39] = 25.5661
+$PARK_CAR_A[39] = 180.0
+$PARK_CAR_ID[39] = #PATRIOT
+$PARK_CAR_ENGINE[39] = 1
+$PARK_CAR_DOORS[39] = 0
+$PARK_CAR_H_MIN[39] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[39] = CAR_HEALTH_MAX
+$PARK_CAR_C1[39] = ARMY_COUNTRY_COLOR
+$PARK_CAR_C2[39] = ARMY_COUNTRY_COLOR
+
+if or
+$GAMEMODE_WAR == 1
+$FREEMODE == 1
+then
+$PARK_CAR_X[40] = -547.1974
+$PARK_CAR_Y[40] = -522.0647
+$PARK_CAR_Z[40] = 37.3187
+$PARK_CAR_A[40] = 90.0
+$PARK_CAR_ID[40] = #HUNTER
+$PARK_CAR_ENGINE[40] = 1
+$PARK_CAR_DOORS[40] = 0
+$PARK_CAR_H_MIN[40] = 10000
+$PARK_CAR_H_MAX[40] = 10000
+$PARK_CAR_C1[40] = ARMY_COUNTRY_COLOR
+$PARK_CAR_C2[40] = ARMY_COUNTRY_COLOR
+end
+
+$PARK_CAR_X[41] = -557.1274
+$PARK_CAR_Y[41] = -542.1533
+$PARK_CAR_Z[41] = 25.5646
+$PARK_CAR_A[41] = 180.0
+$PARK_CAR_ID[41] = #PATRIOT
+$PARK_CAR_ENGINE[41] = 1
+$PARK_CAR_DOORS[41] = 0
+$PARK_CAR_H_MIN[41] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[41] = CAR_HEALTH_MAX
+$PARK_CAR_C1[41] = ARMY_COUNTRY_COLOR
+$PARK_CAR_C2[41] = ARMY_COUNTRY_COLOR
+
+$PARK_CAR_X[42] = -558.1824
+$PARK_CAR_Y[42] = -503.7289
+$PARK_CAR_Z[42] = 24.7883
+$PARK_CAR_A[42] = 0.0
+$PARK_CAR_ID[42] = #PATRIOT
+$PARK_CAR_ENGINE[42] = 1
+$PARK_CAR_DOORS[42] = 0
+$PARK_CAR_H_MIN[42] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[42] = CAR_HEALTH_MAX
+$PARK_CAR_C1[42] = ARMY_COUNTRY_COLOR
+$PARK_CAR_C2[42] = ARMY_COUNTRY_COLOR
+
+$PARK_CAR_X[43] = -520.8507
+$PARK_CAR_Y[43] = -503.5725
+$PARK_CAR_Z[43] = 24.7949
+$PARK_CAR_A[43] = 360.0
+$PARK_CAR_ID[43] = #PATRIOT
+$PARK_CAR_ENGINE[43] = 1
+$PARK_CAR_DOORS[43] = 0
+$PARK_CAR_H_MIN[43] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[43] = CAR_HEALTH_MAX
+$PARK_CAR_C1[43] = ARMY_COUNTRY_COLOR
+$PARK_CAR_C2[43] = ARMY_COUNTRY_COLOR
+
+$PARK_CAR_X[44] = -530.2246
+$PARK_CAR_Y[44] = -503.6483
+$PARK_CAR_Z[44] = 24.7949
+$PARK_CAR_A[44] = 0.0
+$PARK_CAR_ID[44] = #PATRIOT
+$PARK_CAR_ENGINE[44] = 1
+$PARK_CAR_DOORS[44] = 0
+$PARK_CAR_H_MIN[44] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[44] = CAR_HEALTH_MAX
+$PARK_CAR_C1[44] = ARMY_COUNTRY_COLOR
+$PARK_CAR_C2[44] = ARMY_COUNTRY_COLOR
+
+///////////////////Лагерь военных на авиансоце///////////////////
+
+if or
+$GAMEMODE_WAR == 1
+$FREEMODE == 1
+then
+$PARK_CAR_X[52] = -1306.9244
+$PARK_CAR_Y[52] = 508.8621
+$PARK_CAR_Z[52] = 19.1011
+$PARK_CAR_A[52] = 45.0
+$PARK_CAR_ID[52] = #HYDRA
+$PARK_CAR_ENGINE[52] = 1
+$PARK_CAR_DOORS[52] = 1
+$PARK_CAR_H_MIN[52] = 10000
+$PARK_CAR_H_MAX[52] = 10000
+$PARK_CAR_C1[52] = ARMY_CITY_COLOR
+$PARK_CAR_C2[52] = ARMY_CITY_COLOR
+
+$PARK_CAR_X[53] = -1370.63
+$PARK_CAR_Y[53] = 509.5562
+$PARK_CAR_Z[53] = 19.1014
+$PARK_CAR_A[53] = 45.0
+$PARK_CAR_ID[53] = #HYDRA
+$PARK_CAR_ENGINE[53] = 1
+$PARK_CAR_DOORS[53] = 1
+$PARK_CAR_H_MIN[53] = 10000
+$PARK_CAR_H_MAX[53] = 10000
+$PARK_CAR_C1[53] = ARMY_CITY_COLOR
+$PARK_CAR_C2[53] = ARMY_CITY_COLOR
+
+$PARK_CAR_X[54] = -1400.6187
+$PARK_CAR_Y[54] = 507.748
+$PARK_CAR_Z[54] = 19.1497
+$PARK_CAR_A[54] = 45.0
+$PARK_CAR_ID[54] = #HYDRA
+$PARK_CAR_ENGINE[54] = 1
+$PARK_CAR_DOORS[54] = 1
+$PARK_CAR_H_MIN[54] = 10000
+$PARK_CAR_H_MAX[54] = 10000
+$PARK_CAR_C1[54] = ARMY_CITY_COLOR
+$PARK_CAR_C2[54] = ARMY_CITY_COLOR
+
+$PARK_CAR_X[55] = -1339.161
+$PARK_CAR_Y[55] = 509.2485
+$PARK_CAR_Z[55] = 19.0997
+$PARK_CAR_A[55] = 45.0
+$PARK_CAR_ID[55] = #HYDRA
+$PARK_CAR_ENGINE[55] = 1
+$PARK_CAR_DOORS[55] = 1
+$PARK_CAR_H_MIN[55] = 10000
+$PARK_CAR_H_MAX[55] = 10000
+$PARK_CAR_C1[55] = ARMY_CITY_COLOR
+$PARK_CAR_C2[55] = ARMY_CITY_COLOR
+end  
+
+///////////////////Лагерь военных в порту ЛС/////////////////// 
+
+$PARK_CAR_X[56] = 2778.0378
+$PARK_CAR_Y[56] = -2447.5811
+$PARK_CAR_Z[56] = 13.7195
+$PARK_CAR_A[56] = 180.0
+$PARK_CAR_ID[56] = #PATRIOT
+$PARK_CAR_ENGINE[56] = 1
+$PARK_CAR_DOORS[56] = 0
+$PARK_CAR_H_MIN[56] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[56] = CAR_HEALTH_MAX
+$PARK_CAR_C1[56] = ARMY_CITY_COLOR
+$PARK_CAR_C2[56] = ARMY_CITY_COLOR
+
+$PARK_CAR_X[57] = 2787.5237
+$PARK_CAR_Y[57] = -2402.8403
+$PARK_CAR_Z[57] = 14.5924
+$PARK_CAR_A[57] = 90.0
+$PARK_CAR_ID[57] = #PATRIOT
+$PARK_CAR_ENGINE[57] = 1
+$PARK_CAR_DOORS[57] = 0
+$PARK_CAR_H_MIN[57] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[57] = CAR_HEALTH_MAX
+$PARK_CAR_C1[57] = ARMY_CITY_COLOR
+$PARK_CAR_C2[57] = ARMY_CITY_COLOR
+
+$PARK_CAR_X[58] = 2789.0095
+$PARK_CAR_Y[58] = -2441.2251
+$PARK_CAR_Z[58] = 14.594
+$PARK_CAR_A[58] = 90.0
+$PARK_CAR_ID[58] = #PATRIOT
+$PARK_CAR_ENGINE[58] = 1
+$PARK_CAR_DOORS[58] = 0
+$PARK_CAR_H_MIN[58] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[58] = CAR_HEALTH_MAX
+$PARK_CAR_C1[58] = ARMY_CITY_COLOR
+$PARK_CAR_C2[58] = ARMY_CITY_COLOR
+
+$PARK_CAR_X[59] = 2790.2605
+$PARK_CAR_Y[59] = -2479.313
+$PARK_CAR_Z[59] = 14.6097
+$PARK_CAR_A[59] = 90.0
+$PARK_CAR_ID[59] = #PATRIOT
+$PARK_CAR_ENGINE[59] = 1
+$PARK_CAR_DOORS[59] = 0
+$PARK_CAR_H_MIN[59] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[59] = CAR_HEALTH_MAX
+$PARK_CAR_C1[59] = ARMY_CITY_COLOR
+$PARK_CAR_C2[59] = ARMY_CITY_COLOR
+
+$PARK_CAR_X[60] = 2776.7656
+$PARK_CAR_Y[60] = -2501.304
+$PARK_CAR_Z[60] = 13.7375
+$PARK_CAR_A[60] = 360.0
+$PARK_CAR_ID[60] = #PATRIOT
+$PARK_CAR_ENGINE[60] = 1
+$PARK_CAR_DOORS[60] = 0
+$PARK_CAR_H_MIN[60] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[60] = CAR_HEALTH_MAX
+$PARK_CAR_C1[60] = ARMY_CITY_COLOR
+$PARK_CAR_C2[60] = ARMY_CITY_COLOR
+
+$PARK_CAR_X[61] = 2777.9304
+$PARK_CAR_Y[61] = -2486.3835
+$PARK_CAR_Z[61] = 13.7353
+$PARK_CAR_A[61] = 180.0
+$PARK_CAR_ID[61] = #PATRIOT
+$PARK_CAR_ENGINE[61] = 1
+$PARK_CAR_DOORS[61] = 0
+$PARK_CAR_H_MIN[61] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[61] = CAR_HEALTH_MAX
+$PARK_CAR_C1[61] = ARMY_CITY_COLOR
+$PARK_CAR_C2[61] = ARMY_CITY_COLOR
+
+$PARK_CAR_X[62] = 2776.98
+$PARK_CAR_Y[62] = -2425.3289
+$PARK_CAR_Z[62] = 13.7171
+$PARK_CAR_A[62] = 360.0
+$PARK_CAR_ID[62] = #PATRIOT
+$PARK_CAR_ENGINE[62] = 1
+$PARK_CAR_DOORS[62] = 0
+$PARK_CAR_H_MIN[62] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[62] = CAR_HEALTH_MAX
+$PARK_CAR_C1[62] = ARMY_CITY_COLOR
+$PARK_CAR_C2[62] = ARMY_CITY_COLOR
+
+$PARK_CAR_X[64] = 2777.9854
+$PARK_CAR_Y[64] = -2410.0627
+$PARK_CAR_Z[64] = 13.6803
+$PARK_CAR_A[64] = 180.0
+$PARK_CAR_ID[64] = #PATRIOT
+$PARK_CAR_ENGINE[64] = 1
+$PARK_CAR_DOORS[64] = 0
+$PARK_CAR_H_MIN[64] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[64] = CAR_HEALTH_MAX
+$PARK_CAR_C1[64] = ARMY_CITY_COLOR
+$PARK_CAR_C2[64] = ARMY_CITY_COLOR
+
+if or
+$GAMEMODE_WAR == 1
+$FREEMODE == 1
+then
+$PARK_CAR_X[65] = 2716.5315
+$PARK_CAR_Y[65] = -2454.4729
+$PARK_CAR_Z[65] = 29.8891
+$PARK_CAR_A[65] = 180.0
+$PARK_CAR_ID[65] = #HUNTER
+$PARK_CAR_ENGINE[65] = 1
+$PARK_CAR_DOORS[65] = 0
+$PARK_CAR_H_MIN[65] = 10000
+$PARK_CAR_H_MAX[65] = 10000
+$PARK_CAR_C1[65] = ARMY_CITY_COLOR
+$PARK_CAR_C2[65] = ARMY_CITY_COLOR
+end
+
+///////////////////Лагерь военных на зоне 69/////////////////// 
+
+$PARK_CAR_X[66] = 271.9
+$PARK_CAR_Y[66] = 1948.0
+$PARK_CAR_Z[66] = 18.6009
+$PARK_CAR_A[66] = 270.0
+$PARK_CAR_ID[66] = #PATRIOT
+$PARK_CAR_ENGINE[66] = 1
+$PARK_CAR_DOORS[66] = 0
+$PARK_CAR_H_MIN[66] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[66] = CAR_HEALTH_MAX
+$PARK_CAR_C1[66] = ARMY_DESERT_COLOR
+$PARK_CAR_C2[66] = ARMY_DESERT_COLOR
+
+$PARK_CAR_X[67] = 271.9
+$PARK_CAR_Y[67] = 1954.0
+$PARK_CAR_Z[67] = 18.5999
+$PARK_CAR_A[67] = 270.0
+$PARK_CAR_ID[67] = #PATRIOT
+$PARK_CAR_ENGINE[67] = 1
+$PARK_CAR_DOORS[67] = 0
+$PARK_CAR_H_MIN[67] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[67] = CAR_HEALTH_MAX
+$PARK_CAR_C1[67] = ARMY_DESERT_COLOR
+$PARK_CAR_C2[67] = ARMY_DESERT_COLOR
+
+$PARK_CAR_X[68] = 271.9
+$PARK_CAR_Y[68] = 1960.0
+$PARK_CAR_Z[68] = 18.6009
+$PARK_CAR_A[68] = 270.0
+$PARK_CAR_ID[68] = #PATRIOT
+$PARK_CAR_ENGINE[68] = 1
+$PARK_CAR_DOORS[68] = 0
+$PARK_CAR_H_MIN[68] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[68] = CAR_HEALTH_MAX
+$PARK_CAR_C1[68] = ARMY_DESERT_COLOR
+$PARK_CAR_C2[68] = ARMY_DESERT_COLOR
+
+$PARK_CAR_X[69] = 271.9
+$PARK_CAR_Y[69] = 1966.0
+$PARK_CAR_Z[69] = 18.6009
+$PARK_CAR_A[69] = 270.0
+$PARK_CAR_ID[69] = #PATRIOT
+$PARK_CAR_ENGINE[69] = 1
+$PARK_CAR_DOORS[69] = 0
+$PARK_CAR_H_MIN[69] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[69] = CAR_HEALTH_MAX
+$PARK_CAR_C1[69] = ARMY_DESERT_COLOR
+$PARK_CAR_C2[69] = ARMY_DESERT_COLOR
+
+$PARK_CAR_X[70] = 272.0
+$PARK_CAR_Y[70] = 1977.3
+$PARK_CAR_Z[70] = 17.7262
+$PARK_CAR_A[70] = 270.0
+$PARK_CAR_ID[70] = #PATRIOT
+$PARK_CAR_ENGINE[70] = 1
+$PARK_CAR_DOORS[70] = 0
+$PARK_CAR_H_MIN[70] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[70] = CAR_HEALTH_MAX
+$PARK_CAR_C1[70] = ARMY_DESERT_COLOR
+$PARK_CAR_C2[70] = ARMY_DESERT_COLOR
+
+$PARK_CAR_X[71] = 272.0
+$PARK_CAR_Y[71] = 1983.3
+$PARK_CAR_Z[71] = 17.7182
+$PARK_CAR_A[71] = 270.0
+$PARK_CAR_ID[71] = #PATRIOT
+$PARK_CAR_ENGINE[71] = 1
+$PARK_CAR_DOORS[71] = 0
+$PARK_CAR_H_MIN[71] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[71] = CAR_HEALTH_MAX
+$PARK_CAR_C1[71] = ARMY_DESERT_COLOR
+$PARK_CAR_C2[71] = ARMY_DESERT_COLOR
+
+$PARK_CAR_X[72] = 272.0
+$PARK_CAR_Y[72] = 1989.3
+$PARK_CAR_Z[72] = 17.7223
+$PARK_CAR_A[72] = 270.0
+$PARK_CAR_ID[72] = #PATRIOT
+$PARK_CAR_ENGINE[72] = 1
+$PARK_CAR_DOORS[72] = 0
+$PARK_CAR_H_MIN[72] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[72] = CAR_HEALTH_MAX
+$PARK_CAR_C1[72] = ARMY_DESERT_COLOR
+$PARK_CAR_C2[72] = ARMY_DESERT_COLOR
+
+$PARK_CAR_X[73] = 272.0
+$PARK_CAR_Y[73] = 1995.3
+$PARK_CAR_Z[73] = 17.7203
+$PARK_CAR_A[73] = 270.0
+$PARK_CAR_ID[73] = #PATRIOT
+$PARK_CAR_ENGINE[73] = 1
+$PARK_CAR_DOORS[73] = 0
+$PARK_CAR_H_MIN[73] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[73] = CAR_HEALTH_MAX
+$PARK_CAR_C1[73] = ARMY_DESERT_COLOR
+$PARK_CAR_C2[73] = ARMY_DESERT_COLOR
+
+$PARK_CAR_X[74] = 272.0
+$PARK_CAR_Y[74] = 2001.3
+$PARK_CAR_Z[74] = 17.725
+$PARK_CAR_A[74] = 270.0
+$PARK_CAR_ID[74] = #PATRIOT
+$PARK_CAR_ENGINE[74] = 1
+$PARK_CAR_DOORS[74] = 0
+$PARK_CAR_H_MIN[74] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[74] = CAR_HEALTH_MAX
+$PARK_CAR_C1[74] = ARMY_DESERT_COLOR
+$PARK_CAR_C2[74] = ARMY_DESERT_COLOR
+
+$PARK_CAR_X[75] = 279.3575
+$PARK_CAR_Y[75] = 2023.9286
+$PARK_CAR_Z[75] = 17.4627
+$PARK_CAR_A[75] = 270.0
+$PARK_CAR_ID[75] = #RHINO
+$PARK_CAR_ENGINE[75] = 1
+$PARK_CAR_DOORS[75] = 0
+$PARK_CAR_H_MIN[75] = 5000
+$PARK_CAR_H_MAX[75] = 5000
+$PARK_CAR_C1[75] = ARMY_DESERT_COLOR
+$PARK_CAR_C2[75] = ARMY_DESERT_COLOR
+
+if or
+$GAMEMODE_WAR == 1
+$FREEMODE == 1 
+then
+$PARK_CAR_X[76] = 308.3956
+$PARK_CAR_Y[76] = 2047.0686
+$PARK_CAR_Z[76] = 18.6559
+$PARK_CAR_A[76] = 180.0
+$PARK_CAR_ID[76] = #HUNTER  
+$PARK_CAR_ENGINE[76] = 1
+$PARK_CAR_DOORS[76] = 0
+$PARK_CAR_H_MIN[76] = 10000
+$PARK_CAR_H_MAX[76] = 10000
+$PARK_CAR_C1[76] = ARMY_DESERT_COLOR
+$PARK_CAR_C2[76] = ARMY_DESERT_COLOR
+end
+
+///////////////////Twatter Pizza (пасхальный транспорт)///////////////////
+
+if
+$FREEMODE == 1
+then
+
+random_int 1@ 0 to 9
+if
+1@ == 0
+then
+$PARK_CAR_X[77] = 2124.5149
+$PARK_CAR_Y[77] = -1809.6185
+$PARK_CAR_Z[77] = 13.1114
+$PARK_CAR_A[77] = 359.7338
+end
+
+if
+1@ == 1
+then
+$PARK_CAR_X[77] = 2324.4824
+$PARK_CAR_Y[77] = 61.5784
+$PARK_CAR_Z[77] = 26.0432
+$PARK_CAR_A[77] = 81.6671
+end
+
+if
+1@ == 2
+then
+$PARK_CAR_X[77] = 1389.3363
+$PARK_CAR_Y[77] = 257.7353
+$PARK_CAR_Z[77] = 19.1237
+$PARK_CAR_A[77] = 335.4418
+end
+
+if
+1@ == 3
+then
+$PARK_CAR_X[77] = -1852.1084
+$PARK_CAR_Y[77] = 947.2542
+$PARK_CAR_Z[77] = 34.5721
+$PARK_CAR_A[77] = 179.7438
+end
+
+if
+1@ == 4
+then
+$PARK_CAR_X[77] = -1702.3831
+$PARK_CAR_Y[77] = 1366.6337
+$PARK_CAR_Z[77] = 6.7286
+$PARK_CAR_A[77] = 43.6484
+end
+
+if
+1@ == 5
+then
+$PARK_CAR_X[77] = 209.4019
+$PARK_CAR_Y[77] = -182.9692
+$PARK_CAR_Z[77] = 1.1348
+$PARK_CAR_A[77] = 90.0186
+end
+
+if
+1@ == 6
+then
+$PARK_CAR_X[77] = 2637.1162
+$PARK_CAR_Y[77] = 1835.8022
+$PARK_CAR_Z[77] = 10.5803
+$PARK_CAR_A[77] = 358.5917
+end
+
+if
+1@ == 7
+then
+$PARK_CAR_X[77] = 2076.0835
+$PARK_CAR_Y[77] = 2229.0667
+$PARK_CAR_Z[77] = 10.417
+$PARK_CAR_A[77] = 90.6428
+end
+
+if
+1@ == 8
+then
+$PARK_CAR_X[77] = 2368.2158
+$PARK_CAR_Y[77] = 2537.6931
+$PARK_CAR_Z[77] = 10.3771
+$PARK_CAR_A[77] = 178.9281
+end
+
+$PARK_CAR_ID[77] = 15472
+$PARK_CAR_ENGINE[77] = 1
+$PARK_CAR_DOORS[77] = 0
+$PARK_CAR_H_MIN[77] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[77] = CAR_HEALTH_MAX
+$PARK_CAR_C1[77] = 6
+$PARK_CAR_C2[77] = 6
+
+end
+
+///////////////////2% Chance Dumper///////////////////
+
+if and
+0E4D: random_percent 2
+$FREEMODE == 1
+not $MIKE_STORY == 1
+not $CARL_STORY == 1
+then  
+$PARK_CAR_X[78] = 653.5661
+$PARK_CAR_Y[78] = 806.506
+$PARK_CAR_Z[78] = -40.692
+$PARK_CAR_A[78] = 94.5894
+$PARK_CAR_ID[78] = #DUMPER
+$PARK_CAR_ENGINE[78] = 1
+$PARK_CAR_DOORS[78] = 1
+$PARK_CAR_H_MIN[78] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[78] = CAR_HEALTH_MAX
+$PARK_CAR_C1[78] = -1
+$PARK_CAR_C2[78] = -1
+else
+///////////////////0% Chance Felon\Euros 86///////////////////
+if
+//0E4D: random_percent 0
+$FREEMODE == 69
+    then      
+    $PARK_CAR_X[78] = 1450.5403
+    $PARK_CAR_Y[78] = -920.5374
+    $PARK_CAR_Z[78] = 37.2285
+    $PARK_CAR_A[78] = 172.128
+    
+    if
+    0E4D: random_percent 50
+    then
+    $PARK_CAR_ID[78] = 15470
+    else
+    $PARK_CAR_ID[78] = 15471
+    end
+    
+    $PARK_CAR_ENGINE[78] = 1
+    $PARK_CAR_DOORS[78] = 0
+    $PARK_CAR_H_MIN[78] = CAR_HEALTH_MAX
+    $PARK_CAR_H_MAX[78] = CAR_HEALTH_MAX
+    $PARK_CAR_C1[78] = -1
+    $PARK_CAR_C2[78] = -1
+    else
+    ///////////////////1% Chance Shiza NRG500///////////////////
+    if and
+    0E4D: random_percent 1
+    $FREEMODE == 1
+    not $MIKE_STORY == 1
+    not $CARL_STORY == 1
+        then          
+        $PARK_CAR_X[78] = 397.566
+        $PARK_CAR_Y[78] = -2057.3496
+        $PARK_CAR_Z[78] = 7.8704
+        $PARK_CAR_A[78] = 98.2968    
+        $PARK_CAR_ID[78] = 15403        
+        $PARK_CAR_ENGINE[78] = 1
+        $PARK_CAR_DOORS[78] = 1
+        $PARK_CAR_H_MIN[78] = CAR_HEALTH_MAX
+        $PARK_CAR_H_MAX[78] = CAR_HEALTH_MAX
+        $PARK_CAR_C1[78] = -1
+        $PARK_CAR_C2[78] = -1
+        else
+        ///////////////////1% Chance Shiza FCR900///////////////////
+        if and
+        0E4D: random_percent 1
+        $FREEMODE == 1
+        not $MIKE_STORY == 1
+        not $CARL_STORY == 1
+            then
+            $PARK_CAR_X[78] = 397.566
+            $PARK_CAR_Y[78] = -2057.3496
+            $PARK_CAR_Z[78] = 7.8704
+            $PARK_CAR_A[78] = 98.2968    
+            $PARK_CAR_ID[78] = 15404        
+            $PARK_CAR_ENGINE[78] = 1
+            $PARK_CAR_DOORS[78] = 1
+            $PARK_CAR_H_MIN[78] = CAR_HEALTH_MAX
+            $PARK_CAR_H_MAX[78] = CAR_HEALTH_MAX
+            $PARK_CAR_C1[78] = -1
+            $PARK_CAR_C2[78] = -1
+            else
+            ///////////////////1% Chance Shiza Tim's Bobcat///////////////////
+            if and
+            0E4D: random_percent 1
+            $FREEMODE == 1
+            not $MIKE_STORY == 1
+            not $CARL_STORY == 1
+                then                  
+                $PARK_CAR_X[78] = -1634.2407
+                $PARK_CAR_Y[78] = -2228.7419
+                $PARK_CAR_Z[78] = 30.0228
+                $PARK_CAR_A[78] = 94.1638    
+                $PARK_CAR_ID[78] = 15401        
+                $PARK_CAR_ENGINE[78] = 1
+                $PARK_CAR_DOORS[78] = 0
+                $PARK_CAR_H_MIN[78] = CAR_HEALTH_MAX
+                $PARK_CAR_H_MAX[78] = CAR_HEALTH_MAX
+                $PARK_CAR_C1[78] = -1
+                $PARK_CAR_C2[78] = -1
+                else
+                ///////////////////1% Chance Shiza James' Sentinel///////////////////
+                if and
+                0E4D: random_percent 1
+                $FREEMODE == 1
+                not $MIKE_STORY == 1
+                not $CARL_STORY == 1
+                    then                                    
+                    $PARK_CAR_X[78] = 1011.5847
+                    $PARK_CAR_Y[78] = -661.2052
+                    $PARK_CAR_Z[78] = 120.8218
+                    $PARK_CAR_A[78] = 33.3639
+                    $PARK_CAR_ID[78] = 15402        
+                    $PARK_CAR_ENGINE[78] = 1
+                    $PARK_CAR_DOORS[78] = 0
+                    $PARK_CAR_H_MIN[78] = CAR_HEALTH_MAX
+                    $PARK_CAR_H_MAX[78] = CAR_HEALTH_MAX
+                    $PARK_CAR_C1[78] = -1
+                    $PARK_CAR_C2[78] = -1
+                    end
+                end
+            end
+        end
+    end
+end
+
+///////////////////4% Chance Vortex///////////////////
+
+if and
+0E4D: random_percent 4
+$FREEMODE == 1
+then  
+$PARK_CAR_X[79] = 313.3125
+$PARK_CAR_Y[79] = 2936.6624
+$PARK_CAR_Z[79] = 42.8283
+$PARK_CAR_A[79] = 46.7358
+$PARK_CAR_ID[79] = #VORTEX
+$PARK_CAR_ENGINE[79] = 1
+$PARK_CAR_DOORS[79] = 1
+$PARK_CAR_H_MIN[79] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[79] = CAR_HEALTH_MAX
+$PARK_CAR_C1[79] = -1
+$PARK_CAR_C2[79] = -1
+end
+
+///////////////////6% Chance Monstera\Monsterb///////////////////
+
+if and
+0E4D: random_percent 6
+$FREEMODE == 1
+then  
+$PARK_CAR_X[100] = -358.8829
+$PARK_CAR_Y[100] = 1595.7777
+$PARK_CAR_Z[100] = 77.7097
+$PARK_CAR_A[100] = 179.68
+
+if
+0E4D: random_percent 50
+then
+$PARK_CAR_ID[100] = #MONSTERA
+else
+$PARK_CAR_ID[100] = #MONSTERB
+end
+
+$PARK_CAR_ENGINE[100] = 1
+$PARK_CAR_DOORS[100] = 0
+$PARK_CAR_H_MIN[100] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[100] = CAR_HEALTH_MAX
+$PARK_CAR_C1[100] = -1
+$PARK_CAR_C2[100] = -1
+end
+
+///////////////////Лагерь бандитов в ЛВ/////////////////// 
+
+$PARK_CAR_X[80] = 1093.7742
+$PARK_CAR_Y[80] = 1293.0148
+$PARK_CAR_Z[80] = 10.8053
+$PARK_CAR_A[80] = 90.0
+$PARK_CAR_ID[80] = 15422
+$PARK_CAR_ENGINE[80] = 1
+$PARK_CAR_DOORS[80] = 0
+$PARK_CAR_H_MIN[80] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[80] = CAR_HEALTH_MAX
+$PARK_CAR_C1[80] = $BANDITS_CAR_COLOR1
+$PARK_CAR_C2[80] = $BANDITS_CAR_COLOR2
+
+if or
+$GAMEMODE_WAR == 1
+$FREEMODE == 1
+then
+$PARK_CAR_X[81] = 1039.0889
+$PARK_CAR_Y[81] = 1264.1255
+$PARK_CAR_Z[81] = 20.4514
+$PARK_CAR_A[81] = 360.0
+$PARK_CAR_ID[81] = #MAVERICK
+$PARK_CAR_ENGINE[81] = 1
+$PARK_CAR_DOORS[81] = 1
+$PARK_CAR_H_MIN[81] = 1000
+$PARK_CAR_H_MAX[81] = 1000
+$PARK_CAR_C1[81] = $BANDITS_CAR_COLOR1
+$PARK_CAR_C2[81] = $BANDITS_CAR_COLOR2
+end
+
+$PARK_CAR_X[82] = 1051.7876
+$PARK_CAR_Y[82] = 1336.6196
+$PARK_CAR_Z[82] = 10.7991
+$PARK_CAR_A[82] = 270.0
+$PARK_CAR_ID[82] = 15422
+$PARK_CAR_ENGINE[82] = 1
+$PARK_CAR_DOORS[82] = 0
+$PARK_CAR_H_MIN[82] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[82] = CAR_HEALTH_MAX
+$PARK_CAR_C1[82] = $BANDITS_CAR_COLOR1
+$PARK_CAR_C2[82] = $BANDITS_CAR_COLOR2
+
+$PARK_CAR_X[83] = 1052.4781
+$PARK_CAR_Y[83] = 1326.5514
+$PARK_CAR_Z[83] = 10.8056
+$PARK_CAR_A[83] = 270.0
+$PARK_CAR_ID[83] = 15422
+$PARK_CAR_ENGINE[83] = 1
+$PARK_CAR_DOORS[83] = 0
+$PARK_CAR_H_MIN[83] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[83] = CAR_HEALTH_MAX
+$PARK_CAR_C1[83] = $BANDITS_CAR_COLOR1
+$PARK_CAR_C2[83] = $BANDITS_CAR_COLOR2
+
+$PARK_CAR_X[84] = 1053.3602
+$PARK_CAR_Y[84] = 1347.4957
+$PARK_CAR_Z[84] = 10.8022
+$PARK_CAR_A[84] = 270.0
+$PARK_CAR_ID[84] = 15422
+$PARK_CAR_ENGINE[84] = 1
+$PARK_CAR_DOORS[84] = 0
+$PARK_CAR_H_MIN[84] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[84] = CAR_HEALTH_MAX
+$PARK_CAR_C1[84] = $BANDITS_CAR_COLOR1
+$PARK_CAR_C2[84] = $BANDITS_CAR_COLOR2
+
+$PARK_CAR_X[85] = 1069.2607
+$PARK_CAR_Y[85] = 1242.1449
+$PARK_CAR_Z[85] = 10.8118
+$PARK_CAR_A[85] = 0.0
+$PARK_CAR_ID[85] = 15422
+$PARK_CAR_ENGINE[85] = 1
+$PARK_CAR_DOORS[85] = 0
+$PARK_CAR_H_MIN[85] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[85] = CAR_HEALTH_MAX
+$PARK_CAR_C1[85] = $BANDITS_CAR_COLOR1
+$PARK_CAR_C2[85] = $BANDITS_CAR_COLOR2
+
+///////////////////Лагерь бандитов в ЛС/////////////////// 
+
+$PARK_CAR_X[86] = 781.8983
+$PARK_CAR_Y[86] = -1356.8037
+$PARK_CAR_Z[86] = 13.4763
+$PARK_CAR_A[86] = 90.0
+$PARK_CAR_ID[86] = 15422
+$PARK_CAR_ENGINE[86] = 1
+$PARK_CAR_DOORS[86] = 0
+$PARK_CAR_H_MIN[86] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[86] = CAR_HEALTH_MAX
+$PARK_CAR_C1[86] = $BANDITS_CAR_COLOR1
+$PARK_CAR_C2[86] = $BANDITS_CAR_COLOR2
+
+$PARK_CAR_X[87] = 782.0606
+$PARK_CAR_Y[87] = -1348.7799
+$PARK_CAR_Z[87] = 13.5244
+$PARK_CAR_A[87] = 90.0
+$PARK_CAR_ID[87] = 15422
+$PARK_CAR_ENGINE[87] = 1
+$PARK_CAR_DOORS[87] = 0
+$PARK_CAR_H_MIN[87] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[87] = CAR_HEALTH_MAX
+$PARK_CAR_C1[87] = $BANDITS_CAR_COLOR1
+$PARK_CAR_C2[87] = $BANDITS_CAR_COLOR2
+
+$PARK_CAR_X[88] = 777.0146
+$PARK_CAR_Y[88] = -1364.2965
+$PARK_CAR_Z[88] = 13.5158
+$PARK_CAR_A[88] = 90.0
+$PARK_CAR_ID[88] = 15422
+$PARK_CAR_ENGINE[88] = 1
+$PARK_CAR_DOORS[88] = 0
+$PARK_CAR_H_MIN[88] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[88] = CAR_HEALTH_MAX
+$PARK_CAR_C1[88] = $BANDITS_CAR_COLOR1
+$PARK_CAR_C2[88] = $BANDITS_CAR_COLOR2
+
+if or
+$GAMEMODE_WAR == 1
+$FREEMODE == 1
+then
+$PARK_CAR_X[89] = 744.5803
+$PARK_CAR_Y[89] = -1370.228
+$PARK_CAR_Z[89] = 25.7647
+$PARK_CAR_A[89] = 270.0
+$PARK_CAR_ID[89] = #MAVERICK
+$PARK_CAR_ENGINE[89] = 1
+$PARK_CAR_DOORS[89] = 1
+$PARK_CAR_H_MIN[89] = 1000
+$PARK_CAR_H_MAX[89] = 1000
+$PARK_CAR_C1[89] = $BANDITS_CAR_COLOR1
+$PARK_CAR_C2[89] = $BANDITS_CAR_COLOR2
+end
+
+$PARK_CAR_X[90] = 776.433
+$PARK_CAR_Y[90] = -1341.3801
+$PARK_CAR_Z[90] = 13.5117
+$PARK_CAR_A[90] = 90.0
+$PARK_CAR_ID[90] = 15422
+$PARK_CAR_ENGINE[90] = 1
+$PARK_CAR_DOORS[90] = 0
+$PARK_CAR_H_MIN[90] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[90] = CAR_HEALTH_MAX
+$PARK_CAR_C1[90] = $BANDITS_CAR_COLOR1
+$PARK_CAR_C2[90] = $BANDITS_CAR_COLOR2
+
+///////////////////Лагерь бандитов в Монтгомери/////////////////// 
+
+$PARK_CAR_X[91] = 1299.5292
+$PARK_CAR_Y[91] = 135.9135
+$PARK_CAR_Z[91] = 20.3837
+$PARK_CAR_A[91] = 270.0
+$PARK_CAR_ID[91] = 15422
+$PARK_CAR_ENGINE[91] = 1
+$PARK_CAR_DOORS[91] = 0
+$PARK_CAR_H_MIN[91] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[91] = CAR_HEALTH_MAX
+$PARK_CAR_C1[91] = $BANDITS_CAR_COLOR1
+$PARK_CAR_C2[91] = $BANDITS_CAR_COLOR2
+
+$PARK_CAR_X[92] = 1305.4578
+$PARK_CAR_Y[92] = 168.5212
+$PARK_CAR_Z[92] = 20.3981
+$PARK_CAR_A[92] = 170.0
+$PARK_CAR_ID[92] = 15422
+$PARK_CAR_ENGINE[92] = 1
+$PARK_CAR_DOORS[92] = 0
+$PARK_CAR_H_MIN[92] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[92] = CAR_HEALTH_MAX
+$PARK_CAR_C1[92] = $BANDITS_CAR_COLOR1
+$PARK_CAR_C2[92] = $BANDITS_CAR_COLOR2
+
+$PARK_CAR_X[93] = 1311.058
+$PARK_CAR_Y[93] = 182.1073
+$PARK_CAR_Z[93] = 20.4431
+$PARK_CAR_A[93] = 350.0
+$PARK_CAR_ID[93] = 15422
+$PARK_CAR_ENGINE[93] = 1
+$PARK_CAR_DOORS[93] = 0
+$PARK_CAR_H_MIN[93] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[93] = CAR_HEALTH_MAX
+$PARK_CAR_C1[93] = $BANDITS_CAR_COLOR1
+$PARK_CAR_C2[93] = $BANDITS_CAR_COLOR2
+
+$PARK_CAR_X[94] = 1297.9956
+$PARK_CAR_Y[94] = 160.699
+$PARK_CAR_Z[94] = 20.4013
+$PARK_CAR_A[94] = 20.0
+$PARK_CAR_ID[94] = 15422
+$PARK_CAR_ENGINE[94] = 1
+$PARK_CAR_DOORS[94] = 0
+$PARK_CAR_H_MIN[94] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[94] = CAR_HEALTH_MAX
+$PARK_CAR_C1[94] = $BANDITS_CAR_COLOR1
+$PARK_CAR_C2[94] = $BANDITS_CAR_COLOR2
+
+$PARK_CAR_X[95] = 1290.5836
+$PARK_CAR_Y[95] = 207.6904
+$PARK_CAR_Z[95] = 19.8734
+$PARK_CAR_A[95] = 250.0
+$PARK_CAR_ID[95] = 15422
+$PARK_CAR_ENGINE[95] = 1
+$PARK_CAR_DOORS[95] = 0
+$PARK_CAR_H_MIN[95] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[95] = CAR_HEALTH_MAX
+$PARK_CAR_C1[95] = $BANDITS_CAR_COLOR1
+$PARK_CAR_C2[95] = $BANDITS_CAR_COLOR2
+
+///////////////////Лагерь бандитов в СФ/////////////////// 
+
+$PARK_CAR_X[96] = -2122.8384
+$PARK_CAR_Y[96] = -138.2021
+$PARK_CAR_Z[96] = 35.3067
+$PARK_CAR_A[96] = 90.0
+$PARK_CAR_ID[96] = 15422
+$PARK_CAR_ENGINE[96] = 1
+$PARK_CAR_DOORS[96] = 0
+$PARK_CAR_H_MIN[96] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[96] = CAR_HEALTH_MAX
+$PARK_CAR_C1[96] = $BANDITS_CAR_COLOR1
+$PARK_CAR_C2[96] = $BANDITS_CAR_COLOR2
+
+$PARK_CAR_X[97] = -2122.9297
+$PARK_CAR_Y[97] = -127.8249
+$PARK_CAR_Z[97] = 35.2539
+$PARK_CAR_A[97] = 90.0
+$PARK_CAR_ID[97] = 15422
+$PARK_CAR_ENGINE[97] = 1
+$PARK_CAR_DOORS[97] = 0
+$PARK_CAR_H_MIN[97] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[97] = CAR_HEALTH_MAX
+$PARK_CAR_C1[97] = $BANDITS_CAR_COLOR1
+$PARK_CAR_C2[97] = $BANDITS_CAR_COLOR2
+
+$PARK_CAR_X[98] = -2123.3472
+$PARK_CAR_Y[98] = -117.9397
+$PARK_CAR_Z[98] = 35.2568
+$PARK_CAR_A[98] = 90.0
+$PARK_CAR_ID[98] = 15422
+$PARK_CAR_ENGINE[98] = 1
+$PARK_CAR_DOORS[98] = 0
+$PARK_CAR_H_MIN[98] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[98] = CAR_HEALTH_MAX
+$PARK_CAR_C1[98] = $BANDITS_CAR_COLOR1
+$PARK_CAR_C2[98] = $BANDITS_CAR_COLOR2
+
+if or
+$GAMEMODE_WAR == 1
+$FREEMODE == 1
+then
+$PARK_CAR_X[99] = -2103.1101
+$PARK_CAR_Y[99] = -217.1705
+$PARK_CAR_Z[99] = 43.3649
+$PARK_CAR_A[99] = 90.0
+$PARK_CAR_ID[99] = #MAVERICK
+$PARK_CAR_ENGINE[99] = 1
+$PARK_CAR_DOORS[99] = 1
+$PARK_CAR_H_MIN[99] = 1000
+$PARK_CAR_H_MAX[99] = 1000
+$PARK_CAR_C1[99] = $BANDITS_CAR_COLOR1
+$PARK_CAR_C2[99] = $BANDITS_CAR_COLOR2
+end 
+
+//////////////////////////////////////////////////
+
+$PARK_CAR_X[102] = -2670.6179
+$PARK_CAR_Y[102] = 590.9342
+$PARK_CAR_Z[102] = 14.608
+$PARK_CAR_A[102] = 90.0
+$PARK_CAR_ID[102] = #AMBULAN
+$PARK_CAR_ENGINE[102] = 2
+$PARK_CAR_DOORS[102] = 0
+$PARK_CAR_H_MIN[102] = 400
+$PARK_CAR_H_MAX[102] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[103] = -336.3618
+$PARK_CAR_Y[103] = 1054.9276
+$PARK_CAR_Z[103] = 19.894
+$PARK_CAR_A[103] = 90.0
+$PARK_CAR_ID[103] = #AMBULAN
+$PARK_CAR_ENGINE[103] = 2
+$PARK_CAR_DOORS[103] = 0
+$PARK_CAR_H_MIN[103] = 400
+$PARK_CAR_H_MAX[103] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[104] = -1522.9387
+$PARK_CAR_Y[104] = 2525.5093
+$PARK_CAR_Z[104] = 55.8819
+$PARK_CAR_A[104] = 0.0
+$PARK_CAR_ID[104] = #AMBULAN
+$PARK_CAR_ENGINE[104] = 2
+$PARK_CAR_DOORS[104] = 0
+$PARK_CAR_H_MIN[104] = 400
+$PARK_CAR_H_MAX[104] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[105] = 1582.1389
+$PARK_CAR_Y[105] = 1806.6421
+$PARK_CAR_Z[105] = 10.9754
+$PARK_CAR_A[105] = 360.0
+$PARK_CAR_ID[105] = #AMBULAN
+$PARK_CAR_ENGINE[105] = 2
+$PARK_CAR_DOORS[105] = 0
+$PARK_CAR_H_MIN[105] = 400
+$PARK_CAR_H_MAX[105] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[106] = 1218.1819
+$PARK_CAR_Y[106] = 302.664
+$PARK_CAR_Z[106] = 19.7095
+$PARK_CAR_A[106] = 70.0
+$PARK_CAR_ID[106] = #AMBULAN
+$PARK_CAR_ENGINE[106] = 2
+$PARK_CAR_DOORS[106] = 0
+$PARK_CAR_H_MIN[106] = 400
+$PARK_CAR_H_MAX[106] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[107] = 1179.048
+$PARK_CAR_Y[107] = -1307.9254
+$PARK_CAR_Z[107] = 13.9547
+$PARK_CAR_A[107] = 270.0
+$PARK_CAR_ID[107] = #AMBULAN
+$PARK_CAR_ENGINE[107] = 2
+$PARK_CAR_DOORS[107] = 0
+$PARK_CAR_H_MIN[107] = 400
+$PARK_CAR_H_MAX[107] = CAR_HEALTH_MAX     
+
+$PARK_CAR_X[108] = -2208.9778
+$PARK_CAR_Y[108] = -2314.2251
+$PARK_CAR_Z[108] = 30.7729
+$PARK_CAR_A[108] = 230.0
+$PARK_CAR_ID[108] = #AMBULAN
+$PARK_CAR_ENGINE[108] = 2
+$PARK_CAR_DOORS[108] = 0
+$PARK_CAR_H_MIN[108] = 400
+$PARK_CAR_H_MAX[108] = CAR_HEALTH_MAX    
+
+$PARK_CAR_X[109] = 2010.6738
+$PARK_CAR_Y[109] = -1414.9948
+$PARK_CAR_Z[109] = 17.1982
+$PARK_CAR_A[109] = 90.0
+$PARK_CAR_ID[109] = #AMBULAN
+$PARK_CAR_ENGINE[109] = 2
+$PARK_CAR_DOORS[109] = 0
+$PARK_CAR_H_MIN[109] = 400
+$PARK_CAR_H_MAX[109] = CAR_HEALTH_MAX      
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+else
+
+if
+$UNITED_III_SPAWN == 0
+then
+
+///////////////////Машины скорой помощи/////////////////// 
+
+$PARK_CAR_X[54] = 2481.0325
+$PARK_CAR_Y[54] = -240.8522
+$PARK_CAR_Z[54] = 6.0233
+$PARK_CAR_A[54] = 180.0
+0084: $PARK_CAR_ID[54] = $VC_AMBULAN_ID // (int)
+$PARK_CAR_ENGINE[54] = 2
+$PARK_CAR_DOORS[54] = 0
+$PARK_CAR_H_MIN[54] = 400
+$PARK_CAR_H_MAX[54] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[1] = 1866.6442
+$PARK_CAR_Y[1] = -1905.4758
+$PARK_CAR_Z[1] = 5.079
+$PARK_CAR_A[1] = 170.0
+0084: $PARK_CAR_ID[1] = $VC_AMBULAN_ID // (int)
+$PARK_CAR_ENGINE[1] = 2
+$PARK_CAR_DOORS[1] = 0
+$PARK_CAR_H_MIN[1] = 400
+$PARK_CAR_H_MAX[1] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[2] = 1880.0244
+$PARK_CAR_Y[2] = -1951.6553
+$PARK_CAR_Z[2] = 5.1206
+$PARK_CAR_A[2] = 70.0
+0084: $PARK_CAR_ID[2] = $VC_AMBULAN_ID
+$PARK_CAR_ENGINE[2] = 2
+$PARK_CAR_DOORS[2] = 0 
+$PARK_CAR_H_MIN[2] = 400
+$PARK_CAR_H_MAX[2] = CAR_HEALTH_MAX 
+
+$PARK_CAR_X[3] = 1127.7628
+$PARK_CAR_Y[3] = -1428.7148
+$PARK_CAR_Z[3] = 5.7172
+$PARK_CAR_A[3] = 10.0
+0084: $PARK_CAR_ID[3] = $VC_AMBULAN_ID
+$PARK_CAR_ENGINE[3] = 2
+$PARK_CAR_DOORS[3] = 0
+$PARK_CAR_H_MIN[3] = 400
+$PARK_CAR_H_MAX[3] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[4] = 1228.5156
+$PARK_CAR_Y[4] = 204.2505
+$PARK_CAR_Z[4] = 7.0241
+$PARK_CAR_A[4] = 180.0
+0084: $PARK_CAR_ID[4] = $VC_AMBULAN_ID
+$PARK_CAR_ENGINE[4] = 2
+$PARK_CAR_DOORS[4] = 0
+$PARK_CAR_H_MIN[4] = 400
+$PARK_CAR_H_MAX[4] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[5] = 1227.0389
+$PARK_CAR_Y[5] = 181.3669
+$PARK_CAR_Z[5] = 7.0239
+$PARK_CAR_A[5] = 360.0
+0084: $PARK_CAR_ID[5] = $VC_AMBULAN_ID
+$PARK_CAR_ENGINE[5] = 2
+$PARK_CAR_DOORS[5] = 0
+$PARK_CAR_H_MIN[5] = 400
+$PARK_CAR_H_MAX[5] = CAR_HEALTH_MAX                     
+
+///////////////////Машины около полицейских участков в ВС///////////////////
+
+$PARK_CAR_X[6] = 2492.8188
+$PARK_CAR_Y[6] = -446.4578
+$PARK_CAR_Z[6] = 5.6049
+$PARK_CAR_A[6] = 360.0
+0084: $PARK_CAR_ID[6] = $VC_POLICE_ID
+$PARK_CAR_ENGINE[6] = 2
+$PARK_CAR_DOORS[6] = 0
+$PARK_CAR_H_MIN[6] = 400
+$PARK_CAR_H_MAX[6] = CAR_HEALTH_MAX 
+
+$PARK_CAR_X[7] = 2497.4399
+$PARK_CAR_Y[7] = -446.4578
+$PARK_CAR_Z[7] = 5.6049
+$PARK_CAR_A[7] = 360.0
+0084: $PARK_CAR_ID[7] = $VC_POLICE_ID
+$PARK_CAR_ENGINE[7] = 2
+$PARK_CAR_DOORS[7] = 0
+$PARK_CAR_H_MIN[7] = 400
+$PARK_CAR_H_MAX[7] = CAR_HEALTH_MAX  
+
+$PARK_CAR_X[8] = 2501.5901
+$PARK_CAR_Y[8] = -446.4578
+$PARK_CAR_Z[8] = 5.6049
+$PARK_CAR_A[8] = 360.0
+0084: $PARK_CAR_ID[8] = $VC_POLICE_ID
+$PARK_CAR_ENGINE[8] = 2
+$PARK_CAR_DOORS[8] = 0
+$PARK_CAR_H_MIN[8] = 400
+$PARK_CAR_H_MAX[8] = CAR_HEALTH_MAX 
+
+$PARK_CAR_X[9] = 2520.02
+$PARK_CAR_Y[9] = -446.4578
+$PARK_CAR_Z[9] = 5.6049
+$PARK_CAR_A[9] = 360.0
+0084: $PARK_CAR_ID[9] = $VC_POLICE_ID
+$PARK_CAR_ENGINE[9] = 2
+$PARK_CAR_DOORS[9] = 0
+$PARK_CAR_H_MIN[9] = 400
+$PARK_CAR_H_MAX[9] = CAR_HEALTH_MAX 
+
+$PARK_CAR_X[10] = 2515.7639
+$PARK_CAR_Y[10] = -446.4578
+$PARK_CAR_Z[10] = 5.6049
+$PARK_CAR_A[10] = 360.0
+0084: $PARK_CAR_ID[10] = $VC_POLICE_ID
+$PARK_CAR_ENGINE[10] = 2
+$PARK_CAR_DOORS[10] = 0
+$PARK_CAR_H_MIN[10] = 400
+$PARK_CAR_H_MAX[10] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[11] = 2371.8823
+$PARK_CAR_Y[11] = -1475.6693
+$PARK_CAR_Z[11] = 6.4275
+$PARK_CAR_A[11] = 320.0
+0084: $PARK_CAR_ID[11] = $VC_POLICE_ID
+$PARK_CAR_ENGINE[11] = 2
+$PARK_CAR_DOORS[11] = 0
+$PARK_CAR_H_MIN[11] = 400
+$PARK_CAR_H_MAX[11] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[12] = 2366.4412
+$PARK_CAR_Y[12] = -1470.9418
+$PARK_CAR_Z[12] = 6.4286
+$PARK_CAR_A[12] = 320.0
+0084: $PARK_CAR_ID[12] = $VC_POLICE_ID
+$PARK_CAR_ENGINE[12] = 2
+$PARK_CAR_DOORS[12] = 0
+$PARK_CAR_H_MIN[12] = 400
+$PARK_CAR_H_MAX[12] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[13] = 2360.8528
+$PARK_CAR_Y[13] = -1466.2645
+$PARK_CAR_Z[13] = 6.4271
+$PARK_CAR_A[13] = 320.0
+0084: $PARK_CAR_ID[13] = $VC_POLICE_ID
+$PARK_CAR_ENGINE[13] = 2
+$PARK_CAR_DOORS[13] = 0
+$PARK_CAR_H_MIN[13] = 400
+$PARK_CAR_H_MAX[13] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[14] = 2355.3755
+$PARK_CAR_Y[14] = -1461.7041
+$PARK_CAR_Z[14] = 6.4291
+$PARK_CAR_A[14] = 320.0
+0084: $PARK_CAR_ID[14] = $VC_POLICE_ID
+$PARK_CAR_ENGINE[14] = 2
+$PARK_CAR_DOORS[14] = 0
+$PARK_CAR_H_MIN[14] = 400
+$PARK_CAR_H_MAX[14] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[15] = 2349.8396
+$PARK_CAR_Y[15] = -1456.8279
+$PARK_CAR_Z[15] = 6.428
+$PARK_CAR_A[15] = 320.0
+0084: $PARK_CAR_ID[15] = $VC_POLICE_ID
+$PARK_CAR_ENGINE[15] = 2
+$PARK_CAR_DOORS[15] = 0
+$PARK_CAR_H_MIN[15] = 400
+$PARK_CAR_H_MAX[15] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[16] = 1137.6127
+$PARK_CAR_Y[16] = -1616.6384
+$PARK_CAR_Z[16] = 5.3559
+$PARK_CAR_A[16] = 180.0
+0084: $PARK_CAR_ID[16] = $VC_POLICE_ID
+$PARK_CAR_ENGINE[16] = 2
+$PARK_CAR_DOORS[16] = 0
+$PARK_CAR_H_MIN[16] = 400
+$PARK_CAR_H_MAX[16] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[17] = 1136.05
+$PARK_CAR_Y[17] = -1615.9463
+$PARK_CAR_Z[17] = 5.3222
+$PARK_CAR_A[17] = 180.0
+0084: $PARK_CAR_ID[17] = $VC_POLICE_ID
+$PARK_CAR_ENGINE[17] = 2
+$PARK_CAR_DOORS[17] = 0
+$PARK_CAR_H_MIN[17] = 400
+$PARK_CAR_H_MAX[17] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[17] = 1145.05
+$PARK_CAR_Y[17] = -1615.9463
+$PARK_CAR_Z[17] = 5.3222
+$PARK_CAR_A[17] = 180.0
+0084: $PARK_CAR_ID[17] = $VC_POLICE_ID
+$PARK_CAR_ENGINE[17] = 2
+$PARK_CAR_DOORS[17] = 0
+$PARK_CAR_H_MIN[17] = 400
+$PARK_CAR_H_MAX[17] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[18] = 1152.5806
+$PARK_CAR_Y[18] = -1615.7827
+$PARK_CAR_Z[18] = 5.2868
+$PARK_CAR_A[18] = 180.0
+0084: $PARK_CAR_ID[18] = $VC_POLICE_ID
+$PARK_CAR_ENGINE[18] = 2
+$PARK_CAR_DOORS[18] = 0
+$PARK_CAR_H_MIN[18] = 400
+$PARK_CAR_H_MAX[18] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[19] = 1154.7877
+$PARK_CAR_Y[19] = -1622.2229
+$PARK_CAR_Z[19] = 5.2776
+$PARK_CAR_A[19] = 100.0
+0084: $PARK_CAR_ID[19] = $VC_POLICE_ID
+$PARK_CAR_ENGINE[19] = 2
+$PARK_CAR_DOORS[19] = 0
+$PARK_CAR_H_MIN[19] = 400
+$PARK_CAR_H_MAX[19] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[20] = 1155.7146
+$PARK_CAR_Y[20] = -1630.2979
+$PARK_CAR_Z[20] = 5.27
+$PARK_CAR_A[20] = 100.0
+0084: $PARK_CAR_ID[20] = $VC_POLICE_ID
+$PARK_CAR_ENGINE[20] = 2
+$PARK_CAR_DOORS[20] = 0
+$PARK_CAR_H_MIN[20] = 400
+$PARK_CAR_H_MAX[20] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[21] = 1334.4446
+$PARK_CAR_Y[21] = -183.3494
+$PARK_CAR_Z[21] = 5.186
+$PARK_CAR_A[21] = 0.0
+0084: $PARK_CAR_ID[21] = $VC_POLICE_ID
+$PARK_CAR_ENGINE[21] = 2
+$PARK_CAR_DOORS[21] = 0
+$PARK_CAR_H_MIN[21] = 400
+$PARK_CAR_H_MAX[21] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[22] = 1334.2255
+$PARK_CAR_Y[22] = -172.5114
+$PARK_CAR_Z[22] = 5.3548
+$PARK_CAR_A[22] = 0.0
+0084: $PARK_CAR_ID[22] = $VC_POLICE_ID
+$PARK_CAR_ENGINE[22] = 2
+$PARK_CAR_DOORS[22] = 0
+$PARK_CAR_H_MIN[22] = 400
+$PARK_CAR_H_MAX[22] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[23] = 1334.2402
+$PARK_CAR_Y[23] = -161.469
+$PARK_CAR_Z[23] = 5.3669
+$PARK_CAR_A[23] = 0.0
+0084: $PARK_CAR_ID[23] = $VC_POLICE_ID
+$PARK_CAR_ENGINE[23] = 2
+$PARK_CAR_DOORS[23] = 0
+$PARK_CAR_H_MIN[23] = 400
+$PARK_CAR_H_MAX[23] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[24] = 1334.3708
+$PARK_CAR_Y[24] = -150.5477
+$PARK_CAR_Z[24] = 5.3654
+$PARK_CAR_A[24] = 0.0
+0084: $PARK_CAR_ID[24] = $VC_POLICE_ID
+$PARK_CAR_ENGINE[24] = 2
+$PARK_CAR_DOORS[24] = 0
+$PARK_CAR_H_MIN[24] = 400
+$PARK_CAR_H_MAX[24] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[25] = 1349.5077
+$PARK_CAR_Y[25] = -195.3942
+$PARK_CAR_Z[25] = 5.5342
+$PARK_CAR_A[25] = 270.0
+0084: $PARK_CAR_ID[25] = $VC_POLICE_ID
+$PARK_CAR_ENGINE[25] = 2
+$PARK_CAR_DOORS[25] = 0
+$PARK_CAR_H_MIN[25] = 400
+$PARK_CAR_H_MAX[25] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[26] = 1360.791
+$PARK_CAR_Y[26] = -196.1372
+$PARK_CAR_Z[26] = 5.5342
+$PARK_CAR_A[26] = 270.0
+0084: $PARK_CAR_ID[26] = $VC_POLICE_ID
+$PARK_CAR_ENGINE[26] = 2
+$PARK_CAR_DOORS[26] = 0
+$PARK_CAR_H_MIN[26] = 400
+$PARK_CAR_H_MAX[26] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[27] = 1372.2964
+$PARK_CAR_Y[27] = -196.8295
+$PARK_CAR_Z[27] = 5.5347
+$PARK_CAR_A[27] = 270.0
+0084: $PARK_CAR_ID[27] = $VC_POLICE_ID
+$PARK_CAR_ENGINE[27] = 2
+$PARK_CAR_DOORS[27] = 0
+$PARK_CAR_H_MIN[27] = 400
+$PARK_CAR_H_MAX[27] = CAR_HEALTH_MAX
+
+////////////////////////////////Военная база в VC////////////////////////////////
+
+$PARK_CAR_X[28] = 252.1694
+$PARK_CAR_Y[28] = -1218.9482
+$PARK_CAR_Z[28] = 9.3928
+$PARK_CAR_A[28] = 270.0
+0084: $PARK_CAR_ID[28] = $VC_ARMY_CAR
+$PARK_CAR_ENGINE[28] = 1
+$PARK_CAR_DOORS[28] = 0
+$PARK_CAR_H_MIN[28] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[28] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[29] = 252.8508
+$PARK_CAR_Y[29] = -1189.6794
+$PARK_CAR_Z[29] = 9.3931
+$PARK_CAR_A[29] = 270.0
+0084: $PARK_CAR_ID[29] = $VC_ARMY_CAR
+$PARK_CAR_ENGINE[29] = 1
+$PARK_CAR_DOORS[29] = 0
+$PARK_CAR_H_MIN[29] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[29] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[30] = 252.022
+$PARK_CAR_Y[30] = -1175.2845
+$PARK_CAR_Z[30] = 9.3938
+$PARK_CAR_A[30] = 270.0
+0084: $PARK_CAR_ID[30] = $VC_ARMY_CAR
+$PARK_CAR_ENGINE[30] = 1
+$PARK_CAR_DOORS[30] = 0
+$PARK_CAR_H_MIN[30] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[30] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[31] = 252.4415
+$PARK_CAR_Y[31] = -1160.7186
+$PARK_CAR_Z[31] = 9.3931
+$PARK_CAR_A[31] = 270.0
+0084: $PARK_CAR_ID[31] = $VC_ARMY_CAR
+$PARK_CAR_ENGINE[31] = 1
+$PARK_CAR_DOORS[31] = 0
+$PARK_CAR_H_MIN[31] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[31] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[32] = 280.0635
+$PARK_CAR_Y[32] = -1144.4536
+$PARK_CAR_Z[32] = 10.2257  
+$PARK_CAR_A[32] = 270.0
+0084: $PARK_CAR_ID[32] = $VC_BARRACKS_ID
+$PARK_CAR_ENGINE[32] = 1
+$PARK_CAR_DOORS[32] = 0
+$PARK_CAR_H_MIN[32] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[32] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[33] = 279.9389
+$PARK_CAR_Y[33] = -1128.5198
+$PARK_CAR_Z[33] = 10.2257  
+$PARK_CAR_A[33] = 270.0
+0084: $PARK_CAR_ID[33] = $VC_BARRACKS_ID
+$PARK_CAR_ENGINE[33] = 1
+$PARK_CAR_DOORS[33] = 0
+$PARK_CAR_H_MIN[33] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[33] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[34] = 279.3269
+$PARK_CAR_Y[34] = -1083.3063
+$PARK_CAR_Z[34] = 10.2223  
+$PARK_CAR_A[34] = 270.0
+0084: $PARK_CAR_ID[34] = $VC_BARRACKS_ID
+$PARK_CAR_ENGINE[34] = 1
+$PARK_CAR_DOORS[34] = 0
+$PARK_CAR_H_MIN[34] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[34] = CAR_HEALTH_MAX
+
+if or
+$GAMEMODE_WAR == 1
+$FREEMODE == 1
+then
+
+if
+STORIES_MAP == 0
+then
+$PARK_CAR_X[35] = 334.4084
+$PARK_CAR_Y[35] = -1175.2131
+$PARK_CAR_Z[35] = 10.3425  
+$PARK_CAR_A[35] = 90.0
+$PARK_CAR_ID[35] = ARMY_HUNTER_MODEL_NUMBER
+$PARK_CAR_ENGINE[35] = 1
+$PARK_CAR_DOORS[35] = 0
+$PARK_CAR_H_MIN[35] = 10000
+$PARK_CAR_H_MAX[35] = 10000
+else
+$PARK_CAR_X[35] = 352.0215
+$PARK_CAR_Y[35] = -1173.6573
+$PARK_CAR_Z[35] = 9.9028  
+$PARK_CAR_A[35] = 90.0
+$PARK_CAR_ID[35] = ARMY_HUNTER_MODEL_NUMBER
+$PARK_CAR_ENGINE[35] = 1
+$PARK_CAR_DOORS[35] = 0
+$PARK_CAR_H_MIN[35] = 10000
+$PARK_CAR_H_MAX[35] = 10000
+end
+
+end
+
+////////////////////////////////Бандитская база в VC////////////////////////////////
+
+$PARK_CAR_X[36] = 1644.8622
+$PARK_CAR_Y[36] = -1486.0083
+$PARK_CAR_Z[36] = 6.8372  
+$PARK_CAR_A[36] = 360.0
+0084: $PARK_CAR_ID[36] = $VC_BANDITS_CAR
+$PARK_CAR_ENGINE[36] = 1
+$PARK_CAR_DOORS[36] = 0
+$PARK_CAR_H_MIN[36] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[36] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[37] = 1639.3213
+$PARK_CAR_Y[37] = -1486.0083
+$PARK_CAR_Z[37] = 6.831  
+$PARK_CAR_A[37] = 0.0
+0084: $PARK_CAR_ID[37] = $VC_BANDITS_CAR
+$PARK_CAR_ENGINE[37] = 1
+$PARK_CAR_DOORS[37] = 0
+$PARK_CAR_H_MIN[37] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[37] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[38] = 1603.8529
+$PARK_CAR_Y[38] = -1485.9867
+$PARK_CAR_Z[38] = 6.8482  
+$PARK_CAR_A[38] = 0.0
+0084: $PARK_CAR_ID[38] = $VC_BANDITS_CAR
+$PARK_CAR_ENGINE[38] = 1
+$PARK_CAR_DOORS[38] = 0
+$PARK_CAR_H_MIN[38] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[38] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[39] = 1598.6292
+$PARK_CAR_Y[39] = -1485.9867
+$PARK_CAR_Z[39] = 6.8639  
+$PARK_CAR_A[39] = 0.0
+0084: $PARK_CAR_ID[39] = $VC_BANDITS_CAR
+$PARK_CAR_ENGINE[39] = 1
+$PARK_CAR_DOORS[39] = 0
+$PARK_CAR_H_MIN[39] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[39] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[40] = 1652.1869
+$PARK_CAR_Y[40] = -1475.5956
+$PARK_CAR_Z[40] = 6.8266  
+$PARK_CAR_A[40] = 90.0
+0084: $PARK_CAR_ID[40] = $VC_BANDITS_CAR
+$PARK_CAR_ENGINE[40] = 1
+$PARK_CAR_DOORS[40] = 0
+$PARK_CAR_H_MIN[40] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[40] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[41] = 1589.4043
+$PARK_CAR_Y[41] = -1476.4991
+$PARK_CAR_Z[41] = 6.8266 
+$PARK_CAR_A[41] = 270.0
+0084: $PARK_CAR_ID[41] = $VC_BANDITS_CAR
+$PARK_CAR_ENGINE[41] = 1
+$PARK_CAR_DOORS[41] = 0
+$PARK_CAR_H_MIN[41] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[41] = CAR_HEALTH_MAX
+
+if
+STORIES_MAP == 0
+then  
+$PARK_CAR_X[56] = 1609.9242
+$PARK_CAR_Y[56] = -1523.3348
+$PARK_CAR_Z[56] = 34.542 
+$PARK_CAR_A[56] = 270.2151
+0084: $PARK_CAR_ID[56] = $VC_MAVERICK_ID
+$PARK_CAR_ENGINE[56] = 1
+$PARK_CAR_DOORS[56] = 0
+$PARK_CAR_H_MIN[56] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[56] = CAR_HEALTH_MAX
+$PARK_CAR_C1[56] = 6
+$PARK_CAR_C2[56] = 6
+else  
+$PARK_CAR_X[56] = 1641.5
+$PARK_CAR_Y[56] = -1525.0
+$PARK_CAR_Z[56] = 33.5422 
+$PARK_CAR_A[56] = 271.8939
+0084: $PARK_CAR_ID[56] = $VC_MAVERICK_ID
+$PARK_CAR_ENGINE[56] = 1
+$PARK_CAR_DOORS[56] = 0
+$PARK_CAR_H_MIN[56] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[56] = CAR_HEALTH_MAX
+$PARK_CAR_C1[56] = 6
+$PARK_CAR_C2[56] = 6
+end
+
+////////////////////////////////Военная база в VC 3////////////////////////////////
+
+$PARK_CAR_X[42] = 1391.4755
+$PARK_CAR_Y[42] = 554.0589
+$PARK_CAR_Z[42] = 6.6545  
+$PARK_CAR_A[42] = 90.0
+0084: $PARK_CAR_ID[42] = $VC_ARMY_CAR
+$PARK_CAR_ENGINE[42] = 1
+$PARK_CAR_DOORS[42] = 0
+$PARK_CAR_H_MIN[42] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[42] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[43] = 1391.5928
+$PARK_CAR_Y[43] = 546.5417
+$PARK_CAR_Z[43] = 6.6563 
+$PARK_CAR_A[43] = 90.0
+0084: $PARK_CAR_ID[43] = $VC_ARMY_CAR
+$PARK_CAR_ENGINE[43] = 1
+$PARK_CAR_DOORS[43] = 0
+$PARK_CAR_H_MIN[43] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[43] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[44] = 1391.7679
+$PARK_CAR_Y[44] = 537.4962
+$PARK_CAR_Z[44] = 6.6554 
+$PARK_CAR_A[44] = 90.0
+0084: $PARK_CAR_ID[44] = $VC_ARMY_CAR
+$PARK_CAR_ENGINE[44] = 1
+$PARK_CAR_DOORS[44] = 0
+$PARK_CAR_H_MIN[44] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[44] = CAR_HEALTH_MAX
+
+////////////////////////////////Бандитская база в VC 2////////////////////////////////
+
+if
+STORIES_MAP == 0
+then
+$PARK_CAR_X[45] = 939.8314
+$PARK_CAR_Y[45] = -609.1495
+$PARK_CAR_Z[45] = 5.358  
+$PARK_CAR_A[45] = 132.6939
+0084: $PARK_CAR_ID[45] = $VC_BANDITS_CAR
+$PARK_CAR_ENGINE[45] = 1
+$PARK_CAR_DOORS[45] = 0
+$PARK_CAR_H_MIN[45] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[45] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[46] = 917.325
+$PARK_CAR_Y[46] = -665.4885
+$PARK_CAR_Z[46] = 5.3581  
+$PARK_CAR_A[46] = 359.2563
+0084: $PARK_CAR_ID[46] = $VC_BANDITS_CAR
+$PARK_CAR_ENGINE[46] = 1
+$PARK_CAR_DOORS[46] = 0
+$PARK_CAR_H_MIN[46] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[46] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[47] = 915.3295
+$PARK_CAR_Y[47] = -598.7353
+$PARK_CAR_Z[47] = 5.358  
+$PARK_CAR_A[47] = 0.0
+0084: $PARK_CAR_ID[47] = $VC_BANDITS_CAR
+$PARK_CAR_ENGINE[47] = 1
+$PARK_CAR_DOORS[47] = 0
+$PARK_CAR_H_MIN[47] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[47] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[48] = 897.9765
+$PARK_CAR_Y[48] = -629.3876
+$PARK_CAR_Z[48] = 5.358  
+$PARK_CAR_A[48] = 359.4524
+0084: $PARK_CAR_ID[48] = $VC_BANDITS_CAR
+$PARK_CAR_ENGINE[48] = 1
+$PARK_CAR_DOORS[48] = 0
+$PARK_CAR_H_MIN[48] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[48] = CAR_HEALTH_MAX
+else
+$PARK_CAR_X[45] = 942.1611
+$PARK_CAR_Y[45] = -592.9109
+$PARK_CAR_Z[45] = 5.3708  
+$PARK_CAR_A[45] = 179.7751
+0084: $PARK_CAR_ID[45] = $VC_BANDITS_CAR
+$PARK_CAR_ENGINE[45] = 1
+$PARK_CAR_DOORS[45] = 0
+$PARK_CAR_H_MIN[45] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[45] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[46] = 917.325
+$PARK_CAR_Y[46] = -665.4885
+$PARK_CAR_Z[46] = 5.3581  
+$PARK_CAR_A[46] = 359.2563
+0084: $PARK_CAR_ID[46] = $VC_BANDITS_CAR
+$PARK_CAR_ENGINE[46] = 1
+$PARK_CAR_DOORS[46] = 0
+$PARK_CAR_H_MIN[46] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[46] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[47] = 911.9086
+$PARK_CAR_Y[47] = -588.6846
+$PARK_CAR_Z[47] = 5.3679  
+$PARK_CAR_A[47] = 180.0
+0084: $PARK_CAR_ID[47] = $VC_BANDITS_CAR
+$PARK_CAR_ENGINE[47] = 1
+$PARK_CAR_DOORS[47] = 0
+$PARK_CAR_H_MIN[47] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[47] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[48] = 895.3792
+$PARK_CAR_Y[48] = -632.455
+$PARK_CAR_Z[48] = 5.3788  
+$PARK_CAR_A[48] = 354.4565
+0084: $PARK_CAR_ID[48] = $VC_BANDITS_CAR
+$PARK_CAR_ENGINE[48] = 1
+$PARK_CAR_DOORS[48] = 0
+$PARK_CAR_H_MIN[48] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[48] = CAR_HEALTH_MAX
+end
+
+////////////////////////////////Танк на военной базе в VC////////////////////////////////
+if
+STORIES_MAP == 0
+then
+$PARK_CAR_X[49] = 301.8682
+$PARK_CAR_Y[49] = -1158.5782
+$PARK_CAR_Z[49] = 9.4157
+$PARK_CAR_A[49] = 180.0
+$PARK_CAR_ID[49] = 15251
+else
+$PARK_CAR_X[49] = 383.0349
+$PARK_CAR_Y[49] = -1125.6311
+$PARK_CAR_Z[49] = 9.119
+$PARK_CAR_A[49] = 90.0
+$PARK_CAR_ID[49] = 15598
+end
+$PARK_CAR_ENGINE[49] = 1
+$PARK_CAR_DOORS[49] = 0
+$PARK_CAR_H_MIN[49] = 5000
+$PARK_CAR_H_MAX[49] = 5000
+
+////////////////////////////////Вертуханы в лагерях выживших в VC////////////////////////////////
+
+$PARK_CAR_X[50] = 1127.5975
+$PARK_CAR_Y[50] = -1464.92
+$PARK_CAR_Z[50] = 23.6196  
+$PARK_CAR_A[50] = 0.0
+0084: $PARK_CAR_ID[50] = SEASPAR_MODEL_NUMBER
+$PARK_CAR_ENGINE[50] = 1
+$PARK_CAR_DOORS[50] = 0
+$PARK_CAR_H_MIN[50] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[50] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[51] = 2127.4307
+$PARK_CAR_Y[51] = -2113.592
+$PARK_CAR_Z[51] = 25.7218  
+$PARK_CAR_A[51] = 90.0
+0084: $PARK_CAR_ID[51] = SEASPAR_MODEL_NUMBER
+$PARK_CAR_ENGINE[51] = 1
+$PARK_CAR_DOORS[51] = 0
+$PARK_CAR_H_MIN[51] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[51] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[52] = 2394.8667
+$PARK_CAR_Y[52] = -67.5576
+$PARK_CAR_Z[52] = 24.4279  
+$PARK_CAR_A[52] = 180.0
+0084: $PARK_CAR_ID[52] = SEASPAR_MODEL_NUMBER
+$PARK_CAR_ENGINE[52] = 1
+$PARK_CAR_DOORS[52] = 0
+$PARK_CAR_H_MIN[52] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[52] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[53] = 1260.3153
+$PARK_CAR_Y[53] = 331.433
+$PARK_CAR_Z[53] = 15.5416  
+$PARK_CAR_A[53] = 180.0
+0084: $PARK_CAR_ID[53] = SEASPAR_MODEL_NUMBER
+$PARK_CAR_ENGINE[53] = 1
+$PARK_CAR_DOORS[53] = 0
+$PARK_CAR_H_MIN[53] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[53] = CAR_HEALTH_MAX
+
+////////////////////////////////Трофейный PCJ600 в том самом стекле////////////////////////////////
+
+if
+STORIES_MAP == 0
+then  
+$PARK_CAR_X[55] = 1403.7283
+$PARK_CAR_Y[55] = -273.2711
+$PARK_CAR_Z[55] = 5.7702  
+$PARK_CAR_A[55] = 163.4628
+$PARK_CAR_ID[55] = 15319
+$PARK_CAR_ENGINE[55] = 1
+$PARK_CAR_DOORS[55] = 1
+$PARK_CAR_H_MIN[55] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[55] = CAR_HEALTH_MAX
+end
+                                         
+for 0@ = 28 to 55
+$PARK_CAR_DAMAGED[0@] = 0
+end
+
+else
+
+////////////////////////////////////////////
+
+$PARK_CAR_X[53] = -208.8519
+$PARK_CAR_Y[53] = 1179.6537
+$PARK_CAR_Z[53] = 14.8733
+$PARK_CAR_A[53] = 0.0
+0084: $PARK_CAR_ID[53] = $III_AMBULAN_ID
+$PARK_CAR_ENGINE[53] = 2
+$PARK_CAR_DOORS[53] = 0
+$PARK_CAR_H_MIN[53] = 400
+$PARK_CAR_H_MAX[53] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[1] = -208.8329
+$PARK_CAR_Y[1] = 1190.949
+$PARK_CAR_Z[1] = 14.8877
+$PARK_CAR_A[1] = 0.0
+0084: $PARK_CAR_ID[1] = $III_AMBULAN_ID
+$PARK_CAR_ENGINE[1] = 2
+$PARK_CAR_DOORS[1] = 0
+$PARK_CAR_H_MIN[1] = 400
+$PARK_CAR_H_MAX[1] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[2] = -1176.4879
+$PARK_CAR_Y[2] = 1778.3673
+$PARK_CAR_Z[2] = 16.3292
+$PARK_CAR_A[2] = 0.0
+0084: $PARK_CAR_ID[2] = $III_AMBULAN_ID
+$PARK_CAR_ENGINE[2] = 2
+$PARK_CAR_DOORS[2] = 0
+$PARK_CAR_H_MIN[2] = 400
+$PARK_CAR_H_MAX[2] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[3] = -1155.8622
+$PARK_CAR_Y[3] = 1791.9696
+$PARK_CAR_Z[3] = 16.3326
+$PARK_CAR_A[3] = 0.0
+0084: $PARK_CAR_ID[3] = $III_AMBULAN_ID
+$PARK_CAR_ENGINE[3] = 2
+$PARK_CAR_DOORS[3] = 0
+$PARK_CAR_H_MIN[3] = 400
+$PARK_CAR_H_MAX[3] = CAR_HEALTH_MAX  
+
+$PARK_CAR_X[4] = -2605.156
+$PARK_CAR_Y[4] = 1632.4005
+$PARK_CAR_Z[4] = 58.8515
+$PARK_CAR_A[4] = 360.0
+0084: $PARK_CAR_ID[4] = $III_AMBULAN_ID
+$PARK_CAR_ENGINE[4] = 2
+$PARK_CAR_DOORS[4] = 0
+$PARK_CAR_H_MIN[4] = 400
+$PARK_CAR_H_MAX[4] = CAR_HEALTH_MAX   
+
+$PARK_CAR_X[5] = -2604.1611
+$PARK_CAR_Y[5] = 1677.4493
+$PARK_CAR_Z[5] = 58.8523
+$PARK_CAR_A[5] = 180.0
+0084: $PARK_CAR_ID[5] = $III_AMBULAN_ID
+$PARK_CAR_ENGINE[5] = 2
+$PARK_CAR_DOORS[5] = 0
+$PARK_CAR_H_MIN[5] = 400
+$PARK_CAR_H_MAX[5] = CAR_HEALTH_MAX
+
+/////////////////////////////////////////////////////
+
+$PARK_CAR_X[6] = -210.6165
+$PARK_CAR_Y[6] = 1112.196
+$PARK_CAR_Z[6] = 14.4584
+$PARK_CAR_A[6] = 90.0
+0084: $PARK_CAR_ID[6] = $III_POLICE_ID
+$PARK_CAR_ENGINE[6] = 2
+$PARK_CAR_DOORS[6] = 0
+$PARK_CAR_H_MIN[6] = 400
+$PARK_CAR_H_MAX[6] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[7] = -210.6869
+$PARK_CAR_Y[7] = 1116.8954
+$PARK_CAR_Z[7] = 14.4602
+$PARK_CAR_A[7] = 90.0
+0084: $PARK_CAR_ID[7] = $III_POLICE_ID
+$PARK_CAR_ENGINE[7] = 2
+$PARK_CAR_DOORS[7] = 0
+$PARK_CAR_H_MIN[7] = 400
+$PARK_CAR_H_MAX[7] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[8] = -210.8137
+$PARK_CAR_Y[8] = 1121.8217
+$PARK_CAR_Z[8] = 14.4429
+$PARK_CAR_A[8] = 90.0
+0084: $PARK_CAR_ID[8] = $III_POLICE_ID
+$PARK_CAR_ENGINE[8] = 2
+$PARK_CAR_DOORS[8] = 0
+$PARK_CAR_H_MIN[8] = 400
+$PARK_CAR_H_MAX[8] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[9] = -200.2894
+$PARK_CAR_Y[9] = 1152.3419
+$PARK_CAR_Z[9] = 14.4475
+$PARK_CAR_A[9] = 90.0
+0084: $PARK_CAR_ID[9] = $III_POLICE_ID
+$PARK_CAR_ENGINE[9] = 2
+$PARK_CAR_DOORS[9] = 0
+$PARK_CAR_H_MIN[9] = 400
+$PARK_CAR_H_MAX[9] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[10] = -200.2975
+$PARK_CAR_Y[10] = 1156.6636
+$PARK_CAR_Z[10] = 14.4402
+$PARK_CAR_A[10] = 90.0
+0084: $PARK_CAR_ID[10] = $III_POLICE_ID
+$PARK_CAR_ENGINE[10] = 2
+$PARK_CAR_DOORS[10] = 0
+$PARK_CAR_H_MIN[10] = 400
+$PARK_CAR_H_MAX[10] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[11] = -200.3507
+$PARK_CAR_Y[11] = 1160.8813
+$PARK_CAR_Z[11] = 14.4272
+$PARK_CAR_A[11] = 90.0
+0084: $PARK_CAR_ID[11] = $III_POLICE_ID
+$PARK_CAR_ENGINE[11] = 2
+$PARK_CAR_DOORS[11] = 0
+$PARK_CAR_H_MIN[11] = 400
+$PARK_CAR_H_MAX[11] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[12] = -1019.8881
+$PARK_CAR_Y[12] = 662.3118
+$PARK_CAR_Z[12] = 22.4671
+$PARK_CAR_A[12] = 0.0
+0084: $PARK_CAR_ID[12] = $III_POLICE_ID
+$PARK_CAR_ENGINE[12] = 2
+$PARK_CAR_DOORS[12] = 0
+$PARK_CAR_H_MIN[12] = 400
+$PARK_CAR_H_MAX[12] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[13] = -1009.9503
+$PARK_CAR_Y[13] = 662.2858
+$PARK_CAR_Z[13] = 22.4682
+$PARK_CAR_A[13] = 0.0
+0084: $PARK_CAR_ID[13] = $III_POLICE_ID
+$PARK_CAR_ENGINE[13] = 2
+$PARK_CAR_DOORS[13] = 0
+$PARK_CAR_H_MIN[13] = 400
+$PARK_CAR_H_MAX[13] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[14] = -998.2988
+$PARK_CAR_Y[14] = 662.6832
+$PARK_CAR_Z[14] = 22.4674
+$PARK_CAR_A[14] = 0.0
+0084: $PARK_CAR_ID[14] = $III_POLICE_ID
+$PARK_CAR_ENGINE[14] = 2
+$PARK_CAR_DOORS[14] = 0
+$PARK_CAR_H_MIN[14] = 400
+$PARK_CAR_H_MAX[14] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[15] = -1004.5756
+$PARK_CAR_Y[15] = 627.0068
+$PARK_CAR_Z[15] = 22.4681
+$PARK_CAR_A[15] = 180.0
+0084: $PARK_CAR_ID[15] = $III_POLICE_ID
+$PARK_CAR_ENGINE[15] = 2
+$PARK_CAR_DOORS[15] = 0
+$PARK_CAR_H_MIN[15] = 400
+$PARK_CAR_H_MAX[15] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[16] = -985.6088
+$PARK_CAR_Y[16] = 640.6727
+$PARK_CAR_Z[16] = 23.2858
+$PARK_CAR_A[16] = 180.0
+0084: $PARK_CAR_ID[16] = $III_POLICE_ID
+$PARK_CAR_ENGINE[16] = 2
+$PARK_CAR_DOORS[16] = 0
+$PARK_CAR_H_MIN[16] = 400
+$PARK_CAR_H_MAX[16] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[17] = -2584.6086
+$PARK_CAR_Y[17] = 1757.0725
+$PARK_CAR_Z[17] = 58.5029
+$PARK_CAR_A[17] = 90.0
+0084: $PARK_CAR_ID[17] = $III_POLICE_ID
+$PARK_CAR_ENGINE[17] = 2
+$PARK_CAR_DOORS[17] = 0
+$PARK_CAR_H_MIN[17] = 400
+$PARK_CAR_H_MAX[17] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[18] = -2584.8967
+$PARK_CAR_Y[18] = 1763.3396
+$PARK_CAR_Z[18] = 58.4963
+$PARK_CAR_A[18] = 90.0
+0084: $PARK_CAR_ID[18] = $III_POLICE_ID
+$PARK_CAR_ENGINE[18] = 2
+$PARK_CAR_DOORS[18] = 0
+$PARK_CAR_H_MIN[18] = 400
+$PARK_CAR_H_MAX[18] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[19] = -2584.7952
+$PARK_CAR_Y[19] = 1769.8508
+$PARK_CAR_Z[19] = 58.4929
+$PARK_CAR_A[19] = 90.0
+0084: $PARK_CAR_ID[19] = $III_POLICE_ID
+$PARK_CAR_ENGINE[19] = 2
+$PARK_CAR_DOORS[19] = 0
+$PARK_CAR_H_MIN[19] = 400
+$PARK_CAR_H_MAX[19] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[20] = -2598.7986
+$PARK_CAR_Y[20] = 1782.7434
+$PARK_CAR_Z[20] = 58.5632
+$PARK_CAR_A[20] = 180.0
+0084: $PARK_CAR_ID[20] = $III_POLICE_ID
+$PARK_CAR_ENGINE[20] = 2
+$PARK_CAR_DOORS[20] = 0
+$PARK_CAR_H_MIN[20] = 400
+$PARK_CAR_H_MAX[20] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[21] = -2592.562
+$PARK_CAR_Y[21] = 1782.6989
+$PARK_CAR_Z[21] = 58.4695
+$PARK_CAR_A[21] = 180.0
+0084: $PARK_CAR_ID[21] = $III_POLICE_ID
+$PARK_CAR_ENGINE[21] = 2
+$PARK_CAR_DOORS[21] = 0
+$PARK_CAR_H_MIN[21] = 400
+$PARK_CAR_H_MAX[21] = CAR_HEALTH_MAX
+
+////////////////////////////////Военная база в LC////////////////////////////////
+
+$PARK_CAR_X[22] = -1215.7872
+$PARK_CAR_Y[22] = 2010.1801
+$PARK_CAR_Z[22] = 11.5284  
+$PARK_CAR_A[22] = 180.0
+0084: $PARK_CAR_ID[22] = $III_ARMY_CAR
+$PARK_CAR_ENGINE[22] = 1
+$PARK_CAR_DOORS[22] = 0
+$PARK_CAR_H_MIN[22] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[22] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[23] = -1220.7872
+$PARK_CAR_Y[23] = 2010.1801
+$PARK_CAR_Z[23] = 11.5284  
+$PARK_CAR_A[23] = 180.0
+0084: $PARK_CAR_ID[23] = $III_ARMY_CAR
+$PARK_CAR_ENGINE[23] = 1
+$PARK_CAR_DOORS[23] = 0
+$PARK_CAR_H_MIN[23] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[23] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[24] = -1193.8258
+$PARK_CAR_Y[24] = 2001.9957
+$PARK_CAR_Z[24] = 11.5283  
+$PARK_CAR_A[24] = 0.0
+0084: $PARK_CAR_ID[24] = $III_ARMY_CAR
+$PARK_CAR_ENGINE[24] = 1
+$PARK_CAR_DOORS[24] = 0
+$PARK_CAR_H_MIN[24] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[24] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[25] = -1188.7302
+$PARK_CAR_Y[25] = 2002.0569
+$PARK_CAR_Z[25] = 11.5283  
+$PARK_CAR_A[25] = 0.0
+0084: $PARK_CAR_ID[25] = $III_ARMY_CAR
+$PARK_CAR_ENGINE[25] = 1
+$PARK_CAR_DOORS[25] = 0
+$PARK_CAR_H_MIN[25] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[25] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[26] = -1169.6497
+$PARK_CAR_Y[26] = 2018.2191
+$PARK_CAR_Z[26] = 12.3898  
+$PARK_CAR_A[26] = 90.0
+0084: $PARK_CAR_ID[26] = $III_BARRACKS_ID
+$PARK_CAR_ENGINE[26] = 1
+$PARK_CAR_DOORS[26] = 0
+$PARK_CAR_H_MIN[26] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[26] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[27] = -1199.5282
+$PARK_CAR_Y[27] = 2019.3708
+$PARK_CAR_Z[27] = 12.3898  
+$PARK_CAR_A[27] = 270.0
+0084: $PARK_CAR_ID[27] = $III_BARRACKS_ID
+$PARK_CAR_ENGINE[27] = 1
+$PARK_CAR_DOORS[27] = 0
+$PARK_CAR_H_MIN[27] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[27] = CAR_HEALTH_MAX
+
+////////////////////////////////Бандитская база в LC////////////////////////////////
+
+$PARK_CAR_X[28] = -1431.8302
+$PARK_CAR_Y[28] = 368.1505
+$PARK_CAR_Z[28] = 25.9425  
+$PARK_CAR_A[28] = 180.0
+0084: $PARK_CAR_ID[28] = $III_BANDITS_CAR
+$PARK_CAR_ENGINE[28] = 1
+$PARK_CAR_DOORS[28] = 0
+$PARK_CAR_H_MIN[28] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[28] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[29] = -1437.8033
+$PARK_CAR_Y[29] = 368.0381
+$PARK_CAR_Z[29] = 25.9445  
+$PARK_CAR_A[29] = 180.0
+0084: $PARK_CAR_ID[29] = $III_BANDITS_CAR
+$PARK_CAR_ENGINE[29] = 1
+$PARK_CAR_DOORS[29] = 0
+$PARK_CAR_H_MIN[29] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[29] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[30] = -1427.3533
+$PARK_CAR_Y[30] = 368.1505
+$PARK_CAR_Z[30] = 25.9434  
+$PARK_CAR_A[30] = 180.0
+0084: $PARK_CAR_ID[30] = $III_BANDITS_CAR
+$PARK_CAR_ENGINE[30] = 1
+$PARK_CAR_DOORS[30] = 0
+$PARK_CAR_H_MIN[30] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[30] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[31] = -1450.1572
+$PARK_CAR_Y[31] = 328.7486
+$PARK_CAR_Z[31] = 25.9443  
+$PARK_CAR_A[31] = 350.0
+0084: $PARK_CAR_ID[31] = $III_BANDITS_CAR
+$PARK_CAR_ENGINE[31] = 1
+$PARK_CAR_DOORS[31] = 0
+$PARK_CAR_H_MIN[31] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[31] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[32] = -1403.1603
+$PARK_CAR_Y[32] = 336.6028
+$PARK_CAR_Z[32] = 25.9436  
+$PARK_CAR_A[32] = 90.0
+0084: $PARK_CAR_ID[32] = $III_BANDITS_CAR
+$PARK_CAR_ENGINE[32] = 1
+$PARK_CAR_DOORS[32] = 0
+$PARK_CAR_H_MIN[32] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[32] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[33] = -1462.5171
+$PARK_CAR_Y[33] = 340.7722
+$PARK_CAR_Z[33] = 25.944  
+$PARK_CAR_A[33] = 350.0
+0084: $PARK_CAR_ID[33] = $III_BANDITS_CAR
+$PARK_CAR_ENGINE[33] = 1
+$PARK_CAR_DOORS[33] = 0
+$PARK_CAR_H_MIN[33] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[33] = CAR_HEALTH_MAX
+  
+$PARK_CAR_X[54] = -1387.6305
+$PARK_CAR_Y[54] = 368.665
+$PARK_CAR_Z[54] = 32.2746 
+$PARK_CAR_A[54] = 270.2328
+0084: $PARK_CAR_ID[54] = $III_MAVERICK_ID
+$PARK_CAR_ENGINE[54] = 1
+$PARK_CAR_DOORS[54] = 0
+$PARK_CAR_H_MIN[54] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[54] = CAR_HEALTH_MAX
+
+////////////////////////////////Бандитская база в LC 2////////////////////////////////
+
+$PARK_CAR_X[34] = -2632.6399
+$PARK_CAR_Y[34] = 1254.7144
+$PARK_CAR_Z[34] = 10.965  
+$PARK_CAR_A[34] = 270.70
+0084: $PARK_CAR_ID[34] = $III_BANDITS_CAR
+$PARK_CAR_ENGINE[34] = 1
+$PARK_CAR_DOORS[34] = 0
+$PARK_CAR_H_MIN[34] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[34] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[35] = -2601.7664
+$PARK_CAR_Y[35] = 1253.7561
+$PARK_CAR_Z[35] = 10.9641 
+$PARK_CAR_A[35] = 90.0
+0084: $PARK_CAR_ID[35] = $III_BANDITS_CAR
+$PARK_CAR_ENGINE[35] = 1
+$PARK_CAR_DOORS[35] = 0
+$PARK_CAR_H_MIN[35] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[35] = CAR_HEALTH_MAX
+
+////////////////////////////////Военная база в LC 2////////////////////////////////
+
+$PARK_CAR_X[36] = -2387.3545
+$PARK_CAR_Y[36] = 2275.1006
+$PARK_CAR_Z[36] = 23.6487 
+$PARK_CAR_A[36] = 178.7267
+0084: $PARK_CAR_ID[36] = $III_ARMY_CAR
+$PARK_CAR_ENGINE[36] = 1
+$PARK_CAR_DOORS[36] = 0
+$PARK_CAR_H_MIN[36] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[36] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[37] = -2423.2358
+$PARK_CAR_Y[37] = 2251.2148
+$PARK_CAR_Z[37] = 23.6386 
+$PARK_CAR_A[37] = 8.6038
+0084: $PARK_CAR_ID[37] = $III_ARMY_CAR
+$PARK_CAR_ENGINE[37] = 1
+$PARK_CAR_DOORS[37] = 0
+$PARK_CAR_H_MIN[37] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[37] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[38] = -2473.8647
+$PARK_CAR_Y[38] = 2227.0698
+$PARK_CAR_Z[38] = 23.5951 
+$PARK_CAR_A[38] = 38.1327
+0084: $PARK_CAR_ID[38] = $III_ARMY_CAR
+$PARK_CAR_ENGINE[38] = 1
+$PARK_CAR_DOORS[38] = 0
+$PARK_CAR_H_MIN[38] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[38] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[39] = -2540.804
+$PARK_CAR_Y[39] = 2190.1975
+$PARK_CAR_Z[39] = 23.6089 
+$PARK_CAR_A[39] = 236.5864
+0084: $PARK_CAR_ID[39] = $III_ARMY_CAR
+$PARK_CAR_ENGINE[39] = 1
+$PARK_CAR_DOORS[39] = 0
+$PARK_CAR_H_MIN[39] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[39] = CAR_HEALTH_MAX
+    
+$PARK_CAR_X[53] = -2509.71
+$PARK_CAR_Y[53] = 2146.9858
+$PARK_CAR_Z[53] = 31.7659 
+$PARK_CAR_A[53] = 1.7344
+0084: $PARK_CAR_ID[53] = ARMY_HUNTER_MODEL_NUMBER
+$PARK_CAR_ENGINE[53] = 1
+$PARK_CAR_DOORS[53] = 0
+$PARK_CAR_H_MIN[53] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[53] = CAR_HEALTH_MAX
+
+////////////////////////////////Военная база в LC 3////////////////////////////////
+
+$PARK_CAR_X[40] = 162.4455
+$PARK_CAR_Y[40] = 939.2748
+$PARK_CAR_Z[40] = 11.8572  
+$PARK_CAR_A[40] = 269.6479
+0084: $PARK_CAR_ID[40] = $III_ARMY_CAR
+$PARK_CAR_ENGINE[40] = 1
+$PARK_CAR_DOORS[40] = 0
+$PARK_CAR_H_MIN[40] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[40] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[41] = 96.2294
+$PARK_CAR_Y[41] = 1005.1199
+$PARK_CAR_Z[41] = 11.8862 
+$PARK_CAR_A[41] = 179.5766
+0084: $PARK_CAR_ID[41] = $III_ARMY_CAR
+$PARK_CAR_ENGINE[41] = 1
+$PARK_CAR_DOORS[41] = 0
+$PARK_CAR_H_MIN[41] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[41] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[42] = 75.708
+$PARK_CAR_Y[42] = 1012.4834
+$PARK_CAR_Z[42] = 11.8645 
+$PARK_CAR_A[42] = 89.6049
+0084: $PARK_CAR_ID[42] = $III_ARMY_CAR
+$PARK_CAR_ENGINE[42] = 1
+$PARK_CAR_DOORS[42] = 0
+$PARK_CAR_H_MIN[42] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[42] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[43] = 75.7431
+$PARK_CAR_Y[43] = 1003.8317
+$PARK_CAR_Z[43] = 11.86 
+$PARK_CAR_A[43] = 91.0006
+0084: $PARK_CAR_ID[43] = $III_ARMY_CAR
+$PARK_CAR_ENGINE[43] = 1
+$PARK_CAR_DOORS[43] = 0
+$PARK_CAR_H_MIN[43] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[43] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[44] = 75.9876
+$PARK_CAR_Y[44] = 996.0627
+$PARK_CAR_Z[44] = 11.859 
+$PARK_CAR_A[44] = 90.2611
+0084: $PARK_CAR_ID[44] = $III_ARMY_CAR
+$PARK_CAR_ENGINE[44] = 1
+$PARK_CAR_DOORS[44] = 0
+$PARK_CAR_H_MIN[44] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[44] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[45] = 13.3314
+$PARK_CAR_Y[45] = 912.8942
+$PARK_CAR_Z[45] = 11.8637 
+$PARK_CAR_A[45] = 270.7791
+0084: $PARK_CAR_ID[45] = $III_ARMY_CAR
+$PARK_CAR_ENGINE[45] = 1
+$PARK_CAR_DOORS[45] = 0
+$PARK_CAR_H_MIN[45] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[45] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[46] = 192.481
+$PARK_CAR_Y[46] = 1066.2778
+$PARK_CAR_Z[46] = 11.8615 
+$PARK_CAR_A[46] = 0.5342
+0084: $PARK_CAR_ID[46] = $III_ARMY_CAR
+$PARK_CAR_ENGINE[46] = 1
+$PARK_CAR_DOORS[46] = 0
+$PARK_CAR_H_MIN[46] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[46] = CAR_HEALTH_MAX
+
+////////////////////////////////Бандитская база в LC 3////////////////////////////////
+
+$PARK_CAR_X[47] = 74.495
+$PARK_CAR_Y[47] = 1628.8531
+$PARK_CAR_Z[47] = 50.6356  
+$PARK_CAR_A[47] = 90.0
+0084: $PARK_CAR_ID[47] = $III_BANDITS_CAR
+$PARK_CAR_ENGINE[47] = 1
+$PARK_CAR_DOORS[47] = 0
+$PARK_CAR_H_MIN[47] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[47] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[48] = 74.1516
+$PARK_CAR_Y[48] = 1616.4927
+$PARK_CAR_Z[48] = 50.3619 
+$PARK_CAR_A[48] = 90.0
+0084: $PARK_CAR_ID[48] = $III_BANDITS_CAR
+$PARK_CAR_ENGINE[48] = 1
+$PARK_CAR_DOORS[48] = 0
+$PARK_CAR_H_MIN[48] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[48] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[49] = 59.5796
+$PARK_CAR_Y[49] = 1641.34
+$PARK_CAR_Z[49] = 52.5552 
+$PARK_CAR_A[49] = 227.1724
+0084: $PARK_CAR_ID[49] = $III_BANDITS_CAR
+$PARK_CAR_ENGINE[49] = 1
+$PARK_CAR_DOORS[49] = 0
+$PARK_CAR_H_MIN[49] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[49] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[50] = 54.7653
+$PARK_CAR_Y[50] = 1628.4583
+$PARK_CAR_Z[50] = 50.4803 
+$PARK_CAR_A[50] = 249.4485
+0084: $PARK_CAR_ID[50] = $III_BANDITS_CAR
+$PARK_CAR_ENGINE[50] = 1
+$PARK_CAR_DOORS[50] = 0
+$PARK_CAR_H_MIN[50] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[50] = CAR_HEALTH_MAX
+
+$PARK_CAR_X[51] = 72.6686
+$PARK_CAR_Y[51] = 1642.3219
+$PARK_CAR_Z[51] = 52.6839 
+$PARK_CAR_A[51] = 150.6886
+0084: $PARK_CAR_ID[51] = $III_BANDITS_CAR
+$PARK_CAR_ENGINE[51] = 1
+$PARK_CAR_DOORS[51] = 0
+$PARK_CAR_H_MIN[51] = CAR_HEALTH_MAX
+$PARK_CAR_H_MAX[51] = CAR_HEALTH_MAX
+
+////////////////////////////////Танк на военной базе в Рокфорде////////////////////////////////
+$PARK_CAR_X[52] = -1206.6785
+$PARK_CAR_Y[52] = 1976.9663
+$PARK_CAR_Z[52] = 11.7826
+$PARK_CAR_A[52] = 0.0
+if
+STORIES_MAP == 0
+then
+$PARK_CAR_ID[52] = 15405
+else
+$PARK_CAR_ID[52] = 15475
+end
+$PARK_CAR_ENGINE[52] = 1
+$PARK_CAR_DOORS[52] = 0
+$PARK_CAR_H_MIN[52] = 5000
+$PARK_CAR_H_MAX[52] = 5000
+
+for 0@ = 22 to 52
+$PARK_CAR_DAMAGED[0@] = 0
+end
+$PARK_CAR_DAMAGED[53] = 1
+
+end
+
+end
+
+return
