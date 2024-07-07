@@ -1,0 +1,626 @@
+const
+GQUEST_SELECTED_REGION = $GQST_SLCTD_RGIN
+GQUEST_SELECTED_QUEST = $GQEST_SLCTD_QST
+GQUEST_SELECTED_REGION_MAX_QUESTS = $GQEST_MX_QSTS
+GQUEST_LOADED_TEXTURE_FLAG = 28@
+end
+
+:GQUES_S
+thread 'GQUES_S'
+
+$ACHIV_TOTAL_SHOW_OFF_FLAG = 0
+
+$ACHIV_TEXT_SIZE_X = 0.6
+$ACHIV_TEXT_SIZE_Y = 1.35
+$ACHIV_TEXT_X = 330.0 
+$ACHIV_TEXT_Y = 200.0 
+
+$ACHIV_TEXT2_SIZE_X = 0.4
+$ACHIV_TEXT2_SIZE_Y = 1.15
+$ACHIV_TEXT2_X = 330.0 
+$ACHIV_TEXT2_Y = 230.0 
+
+$ACHIV_TOTAL_ACHIV_TEXT_SIZE_X = 0.5
+$ACHIV_TOTAL_ACHIV_TEXT_SIZE_Y = 1.25
+$ACHIV_TOTAL_ACHIV_TEXT_X = 330.0
+$ACHIV_TOTAL_ACHIV_TEXT_Y = 380.0    
+
+$ACHIV_TOTAL2_ACHIV_TEXT_SIZE_X = 0.5
+$ACHIV_TOTAL2_ACHIV_TEXT_SIZE_Y = 1.25
+$ACHIV_TOTAL2_ACHIV_TEXT_X = 330.0
+$ACHIV_TOTAL2_ACHIV_TEXT_Y = 240.0    
+
+$ACHIV_TOTAL3_ACHIV_TEXT_SIZE_X = 0.5
+$ACHIV_TOTAL3_ACHIV_TEXT_SIZE_Y = 1.25
+$ACHIV_TOTAL3_ACHIV_TEXT_X = 325.0
+$ACHIV_TOTAL3_ACHIV_TEXT_Y = 183.0        
+
+if and
+$GAMEMODE_SELECTED == 1
+not MAIN_QUEST_MUSIC_FLAG == 1
+not USER_TAPE_TURNED_ON_FLAG == 1
+not $CASETTE_PLAYING_FLAG == 1
+then
+wait 1
+Audiostream.Volume(PERK_THEME_AUDIOSTREAM) = $MUSIC_VOLUME  
+end
+
+gosub @GQUEST_GET_REGION_STRING_BY_NUM
+
+if
+GQUEST_SELECTED_QUEST < 1
+then
+GQUEST_SELECTED_QUEST = 1
+end
+
+if
+GQUEST_SELECTED_REGION_MAX_QUESTS < 1
+then
+gosub @GQUEST_COLUMN_GET_TOTAL_AMOUNT_OF_QUESTS
+gosub @GQUEST_GET_REGION_STRING_BY_NUM
+else
+gosub @GQUEST_GET_REGION_STRING_BY_NUM
+gosub @GQUEST_COMPLETED_STATUS_GET
+end
+
+wait 0
+gosub @LOAD_REGION_TXD
+
+:GQUEST_SHOW_IDLE
+wait 0
+
+03F0: enable_text_draw 1
+0349: set_text_draw_font 2
+if
+DIRECTFONT_INSTALLED == 1
+then    
+0340: set_text_draw_RGBA DIRECTFONT_FONT2_R DIRECTFONT_FONT2_G DIRECTFONT_FONT2_B 255
+end
+
+0342: set_text_draw_centered 1
+0344: set_text_draw_linewidth 500.0 for_centered_text
+081C: draw_text_outline 1 RGBA 0 0 0 255 
+033F: set_text_draw_letter_size $ACHIV_TEXT2_SIZE_X $ACHIV_TEXT2_SIZE_Y
+
+if
+0A4B:   controls_set_to_joystick
+then   
+033E: set_draw_text_position 320.0 20.0 GXT 'GM1442B'  // Push
+else
+033E: set_draw_text_position 320.0 20.0 GXT 'GME1442'  // Push
+end
+
+gosub @GQUEST_GET_REGION_STRING_BY_NUM
+
+fade 1 1
+
+//0AD1: show_formatted_text_highpriority "_GQUEST_SELECTED_REGION = %d, _GQUEST_SELECTED_REGION_MAX_QUESTS = %d, _GQUEST_SELECTED_QUEST = %d, $ACHIV_GOT_FLAG = %d" time 100 GQUEST_SELECTED_REGION GQUEST_SELECTED_REGION_MAX_QUESTS GQUEST_SELECTED_QUEST $ACHIV_GOT_FLAG
+
+if
+00E1: player 0 pressed_key 15
+    then    
+    end_thread
+    end
+    
+if
+8A4B: not  controls_set_to_joystick
+then    
+
+if
+0E3E:   player 0 pressed_key 6
+    then        
+    GQUEST_SELECTED_REGION += 1
+    gosub @GQUEST_COLUMN_GET_TOTAL_AMOUNT_OF_QUESTS
+    GQUEST_SELECTED_QUEST = 1
+    gosub @GQUEST_COMPLETED_STATUS_GET       
+    Audiostream.PerformAction($MENU_FOCUS_SOUND, PLAY)
+    Audiostream.Loop($MENU_FOCUS_SOUND, 0)
+    Audiostream.Volume($MENU_FOCUS_SOUND) = $SOUNDS_VOLUME
+    gosub @LOAD_REGION_TXD     
+    end 
+
+if
+0E3E:   player 0 pressed_key 17
+    then           
+    GQUEST_SELECTED_REGION -= 1
+    gosub @GQUEST_COLUMN_GET_TOTAL_AMOUNT_OF_QUESTS
+    GQUEST_SELECTED_QUEST = 1
+    gosub @GQUEST_COMPLETED_STATUS_GET         
+    Audiostream.PerformAction($MENU_FOCUS_SOUND, PLAY)
+    Audiostream.Loop($MENU_FOCUS_SOUND, 0)
+    Audiostream.Volume($MENU_FOCUS_SOUND) = $SOUNDS_VOLUME
+    gosub @LOAD_REGION_TXD         
+    end
+    
+if
+00E1:   player 0 pressed_key 5
+    then        
+    GQUEST_SELECTED_QUEST += 1
+    gosub @GQUEST_COMPLETED_STATUS_GET       
+    Audiostream.PerformAction($MENU_FOCUS_SOUND, PLAY)
+    Audiostream.Loop($MENU_FOCUS_SOUND, 0)
+    Audiostream.Volume($MENU_FOCUS_SOUND) = $SOUNDS_VOLUME     
+    end 
+
+if
+00E1:   player 0 pressed_key 7
+    then           
+    GQUEST_SELECTED_QUEST -= 1
+    gosub @GQUEST_COMPLETED_STATUS_GET         
+    Audiostream.PerformAction($MENU_FOCUS_SOUND, PLAY)
+    Audiostream.Loop($MENU_FOCUS_SOUND, 0)
+    Audiostream.Volume($MENU_FOCUS_SOUND) = $SOUNDS_VOLUME         
+    end    
+    
+else
+
+if
+32@ > 10
+    then
+        
+    if or
+    0E3E:   player 0 pressed_key 6
+    0E3E:   player 0 pressed_key 11
+        then
+        32@ = 0        
+        GQUEST_SELECTED_REGION += 1
+        gosub @GQUEST_COLUMN_GET_TOTAL_AMOUNT_OF_QUESTS
+        GQUEST_SELECTED_QUEST = 1
+        gosub @GQUEST_COMPLETED_STATUS_GET       
+        Audiostream.PerformAction($MENU_FOCUS_SOUND, PLAY)
+        Audiostream.Loop($MENU_FOCUS_SOUND, 0)
+        Audiostream.Volume($MENU_FOCUS_SOUND) = $SOUNDS_VOLUME 
+        gosub @LOAD_REGION_TXD    
+        end 
+    
+    if or
+    0E3E:   player 0 pressed_key 4
+    0E3E:   player 0 pressed_key 10
+        then 
+        32@ = 0          
+        GQUEST_SELECTED_REGION -= 1
+        gosub @GQUEST_COLUMN_GET_TOTAL_AMOUNT_OF_QUESTS
+        GQUEST_SELECTED_QUEST = 1
+        gosub @GQUEST_COMPLETED_STATUS_GET         
+        Audiostream.PerformAction($MENU_FOCUS_SOUND, PLAY)
+        Audiostream.Loop($MENU_FOCUS_SOUND, 0)
+        Audiostream.Volume($MENU_FOCUS_SOUND) = $SOUNDS_VOLUME
+        gosub @LOAD_REGION_TXD         
+        end
+        
+    if or
+    00E1:   player 0 pressed_key 7
+    0E3E:   player 0 pressed_key 8
+        then
+        32@ = 0        
+        GQUEST_SELECTED_QUEST += 1
+        gosub @GQUEST_COMPLETED_STATUS_GET       
+        Audiostream.PerformAction($MENU_FOCUS_SOUND, PLAY)
+        Audiostream.Loop($MENU_FOCUS_SOUND, 0)
+        Audiostream.Volume($MENU_FOCUS_SOUND) = $SOUNDS_VOLUME     
+        end 
+    
+    if or
+    00E1:   player 0 pressed_key 5
+    0E3E:   player 0 pressed_key 9
+        then
+        32@ = 0           
+        GQUEST_SELECTED_QUEST -= 1
+        gosub @GQUEST_COMPLETED_STATUS_GET         
+        Audiostream.PerformAction($MENU_FOCUS_SOUND, PLAY)
+        Audiostream.Loop($MENU_FOCUS_SOUND, 0)
+        Audiostream.Volume($MENU_FOCUS_SOUND) = $SOUNDS_VOLUME         
+        end
+        
+    end     
+
+end     
+    
+if       
+GQUEST_SELECTED_REGION < 0  
+    then
+    GQUEST_SELECTED_REGION = 8
+    gosub @GQUEST_COLUMN_GET_TOTAL_AMOUNT_OF_QUESTS
+    GQUEST_SELECTED_QUEST = 1
+    gosub @GQUEST_COMPLETED_STATUS_GET
+    gosub @LOAD_REGION_TXD
+    end  
+    
+if 
+GQUEST_SELECTED_REGION > 8
+    then
+    GQUEST_SELECTED_REGION = 0
+    gosub @GQUEST_COLUMN_GET_TOTAL_AMOUNT_OF_QUESTS
+    GQUEST_SELECTED_QUEST = 1
+    gosub @GQUEST_COMPLETED_STATUS_GET
+    gosub @LOAD_REGION_TXD
+    end
+    
+if       
+GQUEST_SELECTED_QUEST < 1 
+    then
+    0085: GQUEST_SELECTED_QUEST = GQUEST_SELECTED_REGION_MAX_QUESTS // (int)
+    gosub @GQUEST_COMPLETED_STATUS_GET
+    end  
+    
+if 
+001D:   GQUEST_SELECTED_QUEST > GQUEST_SELECTED_REGION_MAX_QUESTS  // (int)
+    then
+    GQUEST_SELECTED_QUEST = 1
+    gosub @GQUEST_COMPLETED_STATUS_GET
+    end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+03F0: enable_text_draw 1
+0349: set_text_draw_font 0
+0342: set_text_draw_centered 1
+0344: set_text_draw_linewidth 500.0 for_centered_text
+081C: draw_text_outline 1 RGBA 0 0 0 255 
+033F: set_text_draw_letter_size 1.2 2.7 
+0340: set_text_draw_RGBA 255 255 255 255
+if
+DIRECTFONT_INSTALLED == 1
+then    
+0340: set_text_draw_RGBA DIRECTFONT_FONT2_R DIRECTFONT_FONT2_G DIRECTFONT_FONT2_B 255
+end
+
+033E: set_draw_text_position $ACHIV_TEXT_X $ACHIV_TEXT_Y GXT v$PHRASE1   
+
+03F0: enable_text_draw 1 
+038D: draw_texture 100 position 320.0 125.0 size 180.0 108.0 RGBA 255 255 255 255
+
+if
+$ACHIV_GOT_FLAG == 2
+then
+03F0: enable_text_draw 1
+0349: set_text_draw_font 1
+0342: set_text_draw_centered 1
+0344: set_text_draw_linewidth 500.0 for_centered_text
+081C: draw_text_outline 1 RGBA 0 0 0 255 
+033F: set_text_draw_letter_size $ACHIV_TEXT2_SIZE_X $ACHIV_TEXT2_SIZE_Y                   
+0340: set_text_draw_RGBA 255 255 255 255
+045A: draw_text_1number $ACHIV_TEXT2_X $ACHIV_TEXT2_Y GXT 'GME1219' number GQUEST_SELECTED_QUEST  // ALL RACES WON!~n~~w~$~1~ 
+03F0: enable_text_draw 1     
+038D: draw_texture 101 position 320.0 380.0 size 180.0 108.0 RGBA 255 255 255 255
+jump to @GQUEST_SHOW_IDLE
+else
+03F0: enable_text_draw 1
+
+if
+$ACHIV_GOT_FLAG == 1
+    then
+    038D: draw_texture GQUEST_SELECTED_QUEST position 320.0 380.0 size 180.0 108.0 RGBA 100 100 100 255     
+    else    
+    if
+    not $ACHIV_GOT_FLAG == 3
+        then
+        038D: draw_texture GQUEST_SELECTED_QUEST position 320.0 380.0 size 180.0 108.0 RGBA 255 255 255 255
+        else
+        038D: draw_texture GQUEST_SELECTED_QUEST position 320.0 380.0 size 180.0 108.0 RGBA 100 100 100 255
+        end    
+    end
+
+end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+03F0: enable_text_draw 1
+0349: set_text_draw_font 2
+0342: set_text_draw_centered 1
+0344: set_text_draw_linewidth 500.0 for_centered_text
+081C: draw_text_outline 1 RGBA 0 0 0 255 
+033F: set_text_draw_letter_size $ACHIV_TEXT2_SIZE_X $ACHIV_TEXT2_SIZE_Y 
+
+if
+DIRECTFONT_INSTALLED == 1
+then
+
+if
+$ACHIV_GOT_FLAG == 0
+then                    
+0340: set_text_draw_RGBA DIRECTFONT_FONT2_R DIRECTFONT_FONT2_G DIRECTFONT_FONT2_B 255
+else
+0340: set_text_draw_RGBA DIRECTFONT_FONT2_R DIRECTFONT_FONT2_G DIRECTFONT_FONT2_B 100
+end
+
+else
+
+if
+$ACHIV_GOT_FLAG == 0
+then                    
+0340: set_text_draw_RGBA 255 255 255 255
+else
+0340: set_text_draw_RGBA 255 255 255 100
+end
+
+end
+
+0AD3: v$ACHIV_NAME2 = format "%d" GQUEST_SELECTED_QUEST 
+098B: v$ACHIV_NAME3 = v$PHRASE1 + v$ACHIV_NAME2 // all string variables
+
+033E: set_draw_text_position $ACHIV_TEXT2_X $ACHIV_TEXT2_Y GXT v$ACHIV_NAME3 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+$ACHIV_GOT_FLAG == 1
+then
+
+03F0: enable_text_draw 1
+0349: set_text_draw_font 1
+0342: set_text_draw_centered 1
+0344: set_text_draw_linewidth 500.0 for_centered_text
+081C: draw_text_outline 1 RGBA 0 0 0 255 
+033F: set_text_draw_letter_size $ACHIV_TEXT2_SIZE_X $ACHIV_TEXT2_SIZE_Y                  
+0340: set_text_draw_RGBA 255 255 255 255
+
+0AD3: v$ACHIV_NAME2 = format "%d" GQUEST_SELECTED_QUEST 
+098B: v$ACHIV_NAME3 = v$PHRASE1 + v$ACHIV_NAME2 // all string variables
+
+033E: set_draw_text_position $ACHIV_TEXT2_X 245.0 GXT 'GME1218' 
+
+end
+
+if
+$ACHIV_GOT_FLAG == 3
+then
+
+03F0: enable_text_draw 1
+0349: set_text_draw_font 1
+0342: set_text_draw_centered 1
+0344: set_text_draw_linewidth 500.0 for_centered_text
+081C: draw_text_outline 1 RGBA 0 0 0 255 
+033F: set_text_draw_letter_size $ACHIV_TEXT2_SIZE_X $ACHIV_TEXT2_SIZE_Y                  
+0340: set_text_draw_RGBA 255 255 255 255
+
+0AD3: v$ACHIV_NAME2 = format "%d" GQUEST_SELECTED_QUEST 
+098B: v$ACHIV_NAME3 = v$PHRASE1 + v$ACHIV_NAME2 // all string variables
+
+033E: set_draw_text_position $ACHIV_TEXT2_X 245.0 GXT 'GME1225' 
+
+end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+03F0: enable_text_draw 1
+0349: set_text_draw_font 1
+0342: set_text_draw_centered 1
+0344: set_text_draw_linewidth 500.0 for_centered_text
+081C: draw_text_outline 1 RGBA 0 0 0 255 
+033F: set_text_draw_letter_size $ACHIV_TEXT2_SIZE_X $ACHIV_TEXT2_SIZE_Y 
+
+if
+$ACHIV_GOT_FLAG == 0
+then                    
+0340: set_text_draw_RGBA 255 255 255 255
+else
+0340: set_text_draw_RGBA 255 255 255 100
+end
+
+0AD3: v$ACHIV_NAME2 = format "%dD" GQUEST_SELECTED_QUEST 
+098B: v$ACHIV_NAME3 = v$PHRASE1 + v$ACHIV_NAME2 // all string variables
+
+if
+$ACHIV_GOT_FLAG == 0
+then
+033E: set_draw_text_position $ACHIV_TEXT2_X 245.0 GXT v$ACHIV_NAME3 
+else
+033E: set_draw_text_position $ACHIV_TEXT2_X 255.0 GXT v$ACHIV_NAME3 
+end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+jump to @GQUEST_SHOW_IDLE
+
+:GQUEST_COMPLETED_STATUS_GET
+
+$ACHIV_GOT_FLAG = 0
+
+0AD3: v$PHRASE2 = format "%dGT" GQUEST_SELECTED_QUEST
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SRV" key v$PHRASE3
+
+if
+0@ == 1
+then
+$ACHIV_GOT_FLAG = 1
+end
+
+if
+0@ == 2
+then
+$ACHIV_GOT_FLAG = 2
+end
+
+if
+0@ == 3
+then
+$ACHIV_GOT_FLAG = 3
+end
+
+return
+
+:GQUEST_COLUMN_GET_TOTAL_AMOUNT_OF_QUESTS
+
+gosub @GQUEST_GET_REGION_STRING_BY_NUM
+GQUEST_SELECTED_REGION_MAX_QUESTS = 0
+
+for 1@ = 1 to 200
+
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then       
+    GQUEST_SELECTED_REGION_MAX_QUESTS += 1    
+    else
+    break
+    end
+
+end 
+
+return
+
+:GQUEST_LOAD_TEXTURES
+
+gosub @GQUEST_GET_REGION_STRING_BY_NUM
+GQUEST_SELECTED_REGION_MAX_QUESTS = 0
+
+for 1@ = 1 to 200
+
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then           
+    GQUEST_SELECTED_REGION_MAX_QUESTS += 1
+    038F: load_texture v$PHRASE3 as GQUEST_SELECTED_REGION_MAX_QUESTS // Load dictionary with 0390 first    
+    else
+    break
+    end
+
+end 
+
+gosub @GQUEST_GET_REGION_STRING_BY_NUM
+038F: load_texture v$PHRASE1 as 100 // Load dictionary with 0390 first
+038F: load_texture "CLOSED" as 101 // Load dictionary with 0390 first
+
+return
+
+:GQUEST_GET_REGION_STRING_BY_NUM
+
+if
+GQUEST_SELECTED_REGION == 0
+then
+v$PHRASE1 = "LSQ" // v$ // Sunday
+end
+
+if
+GQUEST_SELECTED_REGION == 1
+then
+v$PHRASE1 = "RCQ" // v$ // Sunday
+end
+
+if
+GQUEST_SELECTED_REGION == 2
+then
+v$PHRASE1 = "FCQ" // v$ // Sunday
+end
+
+if
+GQUEST_SELECTED_REGION == 3
+then
+v$PHRASE1 = "WSQ" // v$ // Sunday
+end
+
+if
+GQUEST_SELECTED_REGION == 4
+then
+v$PHRASE1 = "SFQ" // v$ // Sunday
+end
+
+if
+GQUEST_SELECTED_REGION == 5
+then
+v$PHRASE1 = "TRQ" // v$ // Sunday
+end
+
+if
+GQUEST_SELECTED_REGION == 6
+then
+v$PHRASE1 = "BCQ" // v$ // Sunday
+end
+
+if
+GQUEST_SELECTED_REGION == 7
+then
+v$PHRASE1 = "LVQ" // v$ // Sunday
+end
+
+if
+GQUEST_SELECTED_REGION == 8
+then
+v$PHRASE1 = "OTQ" // v$ // Sunday
+end
+
+return
+
+:LOAD_REGION_TXD
+
+if
+GQUEST_LOADED_TEXTURE_FLAG == 1
+then
+03F0: enable_text_draw 0
+0391: release_textures
+GQUEST_LOADED_TEXTURE_FLAG = 0
+end
+
+if
+GQUEST_SELECTED_REGION == 0
+then
+0390: load_txd_dictionary 'LSQ'
+end
+
+if
+GQUEST_SELECTED_REGION == 1
+then
+0390: load_txd_dictionary 'RCQ'
+end
+
+if
+GQUEST_SELECTED_REGION == 2
+then
+0390: load_txd_dictionary 'FCQ'
+end
+
+if
+GQUEST_SELECTED_REGION == 3
+then
+0390: load_txd_dictionary 'WSQ'
+end
+
+if
+GQUEST_SELECTED_REGION == 4
+then
+0390: load_txd_dictionary 'SFQ'
+end
+
+if
+GQUEST_SELECTED_REGION == 5
+then
+0390: load_txd_dictionary 'TRQ'
+end
+
+if
+GQUEST_SELECTED_REGION == 6
+then
+0390: load_txd_dictionary 'BCQ'
+end
+
+if
+GQUEST_SELECTED_REGION == 7
+then
+0390: load_txd_dictionary 'LVQ'
+end
+
+if
+GQUEST_SELECTED_REGION == 8
+then
+0390: load_txd_dictionary 'OTQ'
+end
+
+if
+GQUEST_LOADED_TEXTURE_FLAG == 0
+then                   
+gosub @GQUEST_LOAD_TEXTURES
+GQUEST_LOADED_TEXTURE_FLAG = 1
+end
+
+return  

@@ -1,0 +1,244 @@
+const
+ZOMBIE_DAMAGE_WINDOW_FLAG = 28@
+ZOMBIE_DAMAGE_WINDOW_RELOAD_TIMER = 27@
+ZOMBIE_DAMAGE_WINDOW_RELOAD_TIMER_FLAG = 26@
+ZOMBIE_DAMAGE_SYS_FALL_POINTS = 25@
+ZOMBIE_DAMAGE_HITTED_FLAG = 24@
+end
+
+:ZMB_DM2
+thread 'ZMB_DM2'
+
+:ZMB_DM2_START
+
+repeat
+wait 0
+until 0800:  in_two_players_mode        
+
+:ZMB_DM2_18 
+0467: clear_actor COOP_ACTOR last_weapon_damage  
+
+:ZMB_DM2_45
+
+repeat
+wait 0
+until 0800:  in_two_players_mode
+
+if and
+056D:   actor COOP_ACTOR defined
+not COOP_ACTOR == -69
+jf @ZMB_DM2_START 
+
+////////////////////////////////////////////////////////////
+
+if
+ZOMBIE_DAMAGE_WINDOW_RELOAD_TIMER_FLAG == 1
+then
+ZOMBIE_DAMAGE_WINDOW_RELOAD_TIMER += 1
+if
+ZOMBIE_DAMAGE_WINDOW_RELOAD_TIMER > 140
+    then
+    ZOMBIE_DAMAGE_WINDOW_RELOAD_TIMER_FLAG = 0
+    ZOMBIE_DAMAGE_WINDOW_RELOAD_TIMER = 0
+    ZOMBIE_DAMAGE_SYS_FALL_POINTS = 0
+    end 
+end
+
+if and
+ZOMBIE_DAMAGE_WINDOW_FLAG == 1
+33@ > 3000
+    then
+    0ED9: set_char_ignore_damage_anims COOP_ACTOR 0
+    ZOMBIE_DAMAGE_WINDOW_FLAG = 0
+    ZOMBIE_DAMAGE_WINDOW_RELOAD_TIMER_FLAG = 1
+    ZOMBIE_DAMAGE_WINDOW_RELOAD_TIMER = 0
+    end
+
+////////////////////////////////////////////////////////////
+
+if
+031D:   actor COOP_ACTOR hit_by_weapon 0
+jf @ZMB_DM2_45
+
+32@ = 0
+0467: clear_actor COOP_ACTOR last_weapon_damage
+random_int 0@ $ZOMBIE_DAMAGE_MIN $ZOMBIE_DAMAGE_MAX
+
+0093: 1@ = integer 0@ to_float           
+006F: 1@ *= PLAYER_RESIST_MULT // (float)
+04DD: 3@ = actor COOP_ACTOR armour
+if
+3@ > 0
+then
+1@ += 0.30
+end
+0092: 1@ = float 1@ to_integer
+0062: 0@ -= 1@  // (int)
+
+0851: set_actor COOP_ACTOR decrease_health_by 0@ affect_armour 1
+ZOMBIE_DAMAGE_SYS_FALL_POINTS = 0
+
+0@ *= 3
+Camera.Shake(0@)
+
+if
+0184:   actor COOP_ACTOR health > 0
+jf @ZMB_DM2_DIE 
+
+:ZMB_DM2_55
+wait 0
+
+if and
+056D:   actor COOP_ACTOR defined
+not COOP_ACTOR == -69
+jf @ZMB_DM2_START
+
+////////////////////////////////////////////////////////////
+
+if
+ZOMBIE_DAMAGE_WINDOW_RELOAD_TIMER_FLAG == 1
+then
+ZOMBIE_DAMAGE_WINDOW_RELOAD_TIMER += 1
+if
+ZOMBIE_DAMAGE_WINDOW_RELOAD_TIMER > 140
+    then
+    ZOMBIE_DAMAGE_WINDOW_RELOAD_TIMER_FLAG = 0
+    ZOMBIE_DAMAGE_WINDOW_RELOAD_TIMER = 0
+    end 
+end
+
+////////////////////////////////////////////////////////////
+
+if and
+ZOMBIE_DAMAGE_WINDOW_FLAG == 0
+ZOMBIE_DAMAGE_WINDOW_RELOAD_TIMER_FLAG == 0
+031D:   actor COOP_ACTOR hit_by_weapon 0
+    then
+    0ED9: set_char_ignore_damage_anims COOP_ACTOR 1
+    ZOMBIE_DAMAGE_WINDOW_FLAG = 1
+    //0AD1: show_formatted_text_highpriority "DAMAGE WINDOW SET FLAG" time 1000    
+    33@ = 0
+    end
+    
+if
+ZOMBIE_DAMAGE_WINDOW_FLAG == 1
+    then
+    
+    if
+    PERK_TOUGHMAN == 0
+    then
+    0@ = 3000
+    else
+    0@ = 4500
+    end
+    
+    if
+    001D:   33@ > 0@  // (int)
+        then
+        0ED9: set_char_ignore_damage_anims COOP_ACTOR 0
+        ZOMBIE_DAMAGE_WINDOW_FLAG = 0
+        ZOMBIE_DAMAGE_WINDOW_RELOAD_TIMER_FLAG = 1
+        ZOMBIE_DAMAGE_WINDOW_RELOAD_TIMER = 0
+        //0AD1: show_formatted_text_highpriority "DAMAGE WINDOW RESET FLAG" time 1000
+        end
+    end
+    
+if
+031D:   actor COOP_ACTOR hit_by_weapon 0
+    then
+    ZOMBIE_DAMAGE_HITTED_FLAG = 1
+    gosub @ZMB_DM2_PROCESS_HIT
+    end    
+    
+////////////////////////////////////////////////////////////
+
+if
+ZOMBIE_DAMAGE_WINDOW_RELOAD_TIMER_FLAG == 0
+    then    
+    if and
+    not actor.Animation(COOP_ACTOR) == "HIT_back"
+    not actor.Animation(COOP_ACTOR) == "HIT_behind"
+    not actor.Animation(COOP_ACTOR) == "HIT_front"
+    not actor.Animation(COOP_ACTOR) == "HIT_L"
+    not actor.Animation(COOP_ACTOR) == "HIT_R"
+    jf @ZMB_DM2_55    
+    end
+    
+if
+not 32@ > 5000
+jf @ZMB_DM2_45
+if
+ZOMBIE_DAMAGE_HITTED_FLAG == 1
+jf @ZMB_DM2_55
+ZOMBIE_DAMAGE_HITTED_FLAG = 0    
+if
+0184:   actor COOP_ACTOR health > 0
+jf @ZMB_DM2_DIE
+if and
+002F:   ZOMBIE_DAMAGE_SYS_FALL_POINTS >= $FALL_HITS // (int)
+$PLAYER_DONT_FALL == 0
+PERK_TOUGHMAN == 0
+jf @ZMB_DM2_55 
+if and 
+not Actor.Animation(COOP_ACTOR) == "getup"
+not Actor.Animation(COOP_ACTOR) == "FLOOR_hit"
+not Actor.Animation(COOP_ACTOR) == "KO_skid_front" 
+jf @ZMB_DM2_45_2
+ZOMBIE_DAMAGE_SYS_FALL_POINTS = 0
+32@ = 0
+0467: clear_actor COOP_ACTOR last_weapon_damage  
+Camera.Shake(120)
+if
+0184:   actor COOP_ACTOR health > 0
+jf @ZMB_DM2_DIE
+gosub @DISEMB_JETP_CHECK_2P
+0792: disembark_instantly_actor COOP_ACTOR  
+//Player.CanMove(PLAYER_CHAR) = False
+0E68: set_player_control_pad 1 1 
+0E69: set_player_control_pad_movement 1 0
+05BB: AS_actor COOP_ACTOR fall_down 0 time_on_ground 5000 
+wait 1
+if and
+056D:   actor COOP_ACTOR defined
+not COOP_ACTOR == -69
+jf @ZMB_DM2_START 
+//Player.CanMove(PLAYER_CHAR) = True
+0E68: set_player_control_pad 1 1 
+0E69: set_player_control_pad_movement 1 1
+
+05C1: AS_actor COOP_ACTOR speak_from_audio_table 346
+
+if
+0184:   actor COOP_ACTOR health > 0
+jf @ZMB_DM2_DIE
+jump @ZMB_DM2_18
+
+:ZMB_DM2_45_2
+ZOMBIE_DAMAGE_SYS_FALL_POINTS = 0
+32@ = 0
+jump to @ZMB_DM2_45
+
+:ZMB_DM2_DIE
+0792: disembark_instantly_actor COOP_ACTOR
+05BE: AS_actor COOP_ACTOR die
+jump to @ZMB_DM2_18
+
+:ZMB_DM2_PROCESS_HIT
+0467: clear_actor COOP_ACTOR last_weapon_damage
+random_int 0@ $ZOMBIE_DAMAGE_MIN $ZOMBIE_DAMAGE_MAX
+
+0093: 1@ = integer 0@ to_float           
+006F: 1@ *= PLAYER_RESIST_MULT // (float)
+0092: 1@ = float 1@ to_integer
+0062: 0@ -= 1@  // (int)
+
+0851: set_actor COOP_ACTOR decrease_health_by 0@ affect_armour 1
+0@ *= 3
+Camera.Shake(0@)
+if
+ZOMBIE_DAMAGE_WINDOW_FLAG == 0
+then
+ZOMBIE_DAMAGE_SYS_FALL_POINTS += 1
+end
+//0AD1: show_formatted_text_highpriority "PROCESS HIT, FALL_POINTS: %d\%d" time 1000 ZOMBIE_DAMAGE_SYS_FALL_POINTS $FALL_HITS
+return

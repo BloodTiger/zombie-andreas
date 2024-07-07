@@ -1,0 +1,955 @@
+const
+STATS_DISTANCE_BY_FOOT_TEMP = $STAT_CACHE1
+STATS_DISTANCE_BY_CAR_TEMP = $STAT_CACHE2
+STATS_DISTANCE_BY_BIKE_TEMP = $STAT_CACHE3
+STATS_DISTANCE_BY_BOAT_TEMP = $STAT_CACHE4
+STATS_DISTANCE_BY_HELICOPTER_TEMP = $STAT_CACHE5
+STATS_DISTANCE_BY_PLANE_TEMP = $STAT_CACHE6
+STATS_DISTANCE_BY_WATER_TEMP = $STAT_CACHE7
+STATS_BULLETS_FIRED_TEMP = $STAT_CACHE8
+STATS_BULLETS_THAT_HIT_TEMP = $STAT_CACHE9
+STATS_HEADSHOTS_TEMP = $STAT_CACHE10                                
+STATS_KANISTRA_FUEL_IN_TOTAL_TEMP = $STAT_CACHE11
+STATS_BENZIN_IN_CAR_TOTAL_TEMP = $STAT_CACHE12
+STATS_RANDOM_ACTORS_SEE_TEMP = $STAT_CACHE13
+STATS_DAYS_PASSED_TEMP = $STAT_CACHE14
+STATS_MONTHS_PASSED_TEMP = $STAT_CACHE15
+STATS_CARS_BLOWED_TEMP = $STAT_CACHE16
+STATS_BENZIN_LOST_TEMP = $STAT_CACHE17
+end
+
+const
+DRUG_EFFECT_FLAG = 4@
+DRUG_EFFECT_OFF = 5@
+DRUG_EFFECT_FX1R = 6@
+DRUG_EFFECT_FX1G = 7@
+DRUG_EFFECT_FX1B = 8@
+DRUG_EFFECT_FX1A = 9@
+DRUG_EFFECT_FX2R = 10@
+DRUG_EFFECT_FX2G = 11@
+DRUG_EFFECT_FX2B = 12@
+DRUG_EFFECT_FX2A = 13@
+DRUG_EFFECT_ACTIVATED_TYPE = 14@
+end
+
+:GLB_STS
+thread 'GLB_STS'
+
+0A8C: write_memory 0x00B70154 size 1 value 1 virtual_protect 0 //Day
+0A8C: write_memory 0x00B70155 size 1 value 10 virtual_protect 0 //Month 
+
+gosub @GLOBAL_STATS_GET_PREV
+gosub @GLOBAL_STATS_GET_PREV_INI
+
+:GLOBAL_STATS_IDLE
+
+gosub @GLOBAL_STATS_GET_PREV
+0652: 2@ = integer_stat 241 
+wait 0
+0652: 3@ = integer_stat 241    
+if or
+803B: not  2@ == 3@  // (int)
+$DRUNK_MODE_FLAG == 1
+    then
+    if
+    SURVIVAL_STARTED_FULLY_FLAG == 1
+        then
+        
+        for 0@ = 0 to 49
+        if and
+        09D1:   pickup $WEAPON_MAX_AM[0@] created
+        $PACKAGE_PICKED_UP_FLAG[0@] == 0
+            then
+            if
+            pickup.Picked_up($WEAPON_MAX_AM[0@])
+                then
+                
+                if
+                UNITED_MAP == 0
+                then
+                0AD3: v$PACKAGE_FILE = format "SAHP%d" 0@
+                else
+                
+                if
+                STORIES_MAP == 0
+                then
+                
+                if
+                $UNITED_III_SPAWN == 1
+                then
+                0AD3: v$PACKAGE_FILE = format "UNHP%d" 0@
+                else
+                0AD3: v$PACKAGE_FILE = format "VNHP%d" 0@
+                end
+                
+                else
+                
+                if
+                $UNITED_III_SPAWN == 1
+                then
+                0AD3: v$PACKAGE_FILE = format "STHP%d" 0@
+                else
+                0AD3: v$PACKAGE_FILE = format "VTHP%d" 0@
+                end
+                
+                end
+                
+                end
+                
+                0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key v$PACKAGE_FILE
+                $PACKAGE_PICKED_UP_FLAG[0@] = 1
+                
+                end
+            end
+        end
+        
+        1@ = 1
+        
+        for 0@ = 0 to 49
+        if
+        not $PACKAGE_PICKED_UP_FLAG[0@] == 1
+            then
+            1@ = 0
+            end
+        end
+        
+        if and
+        1@ == 1
+        UNITED_MAP == 0
+        then
+        0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "PACKAGES_SA_GOT"
+        end
+        
+        if and
+        1@ == 1
+        UNITED_MAP == 1
+        STORIES_MAP == 0
+        $UNITED_III_SPAWN == 1
+        then
+        0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "PACKAGES_LC_GOT"
+        end
+        
+        if and
+        1@ == 1
+        UNITED_MAP == 1
+        STORIES_MAP == 1
+        $UNITED_III_SPAWN == 1
+        then
+        0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "PACKAGES_LCS_GOT"
+        end
+        
+        if and
+        1@ == 1
+        UNITED_MAP == 1
+        STORIES_MAP == 0
+        $UNITED_III_SPAWN == 0
+        then
+        0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "PACKAGES_VC_GOT"
+        end
+        
+        if and
+        1@ == 1
+        UNITED_MAP == 1
+        STORIES_MAP == 1
+        $UNITED_III_SPAWN == 0
+        then
+        0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "PACKAGES_VCS_GOT"
+        end               
+        
+        0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "PACKAGES_SA_GOT"
+        0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "PACKAGES_LC_GOT"
+        0AF0: 2@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "PACKAGES_LCS_GOT"
+        0AF0: 3@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "PACKAGES_VC_GOT"
+        0AF0: 15@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "PACKAGES_VCS_GOT"
+        if and
+        0@ == 1
+        1@ == 1
+        2@ == 1
+        3@ == 1
+        15@ == 1
+            then
+            0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT100_GOT"                            
+            if and
+            1@ == 0
+            $CHEATED_FLAG == 0
+                then
+                v$ACHIEVEMNT = "ACH100"
+                $ACHIEVEMENT_GOT_FLAG = 1                                    
+                0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT100_GOT"
+                end
+            end
+    
+        if
+        $DRUNK_MODE_FLAG == 0
+        then
+        0109: player PLAYER_CHAR money += 500
+        $TEMP_XP = PACKAGE_FIND_XP_PLUS
+        008D: $TEMP_XP = integer $TEMP_XP to_float
+        0069: $TEMP_XP *= $XP_COEFF // (float)
+        008C: $TEMP_XP = float $TEMP_XP to_integer
+        0058: $PLAYER_XP += $TEMP_XP // (int)
+        DRUG_EFFECT_ACTIVATED_TYPE = 0
+        else
+        DRUG_EFFECT_ACTIVATED_TYPE = 1
+        end    
+        
+        if
+        DRUG_EFFECT_FLAG == 0
+        then
+        DRUG_EFFECT_FLAG = 1
+        DRUG_EFFECT_OFF = -1
+        32@ = 0
+        33@ = 0
+        else
+        32@ = 0
+        33@ = 0
+        
+        if
+        $DRUNK_MODE_FLAG == 0
+        then        
+        //////////////////////////////////////////////////////////////////////
+        0A8C: write_memory 0x55F6E9 size 1 value 56 virtual_protect 0
+        0A8C: write_memory 0x55F6FC size 1 value 16 virtual_protect 0
+        0A8C: write_memory 0x55F70F size 1 value 232 virtual_protect 0
+        0A8C: write_memory 0x55F725 size 1 value 192 virtual_protect 0
+        //////////////////////////////////////////////////////////////////////            
+        0A8C: write_memory 0x55F73B size 1 value 152 virtual_protect 0
+        0A8C: write_memory 0x55F751 size 1 value 112 virtual_protect 0
+        0A8C: write_memory 0x55F767 size 1 value 72 virtual_protect 0            
+        0A8C: write_memory 0x55F77D size 1 value 32 virtual_protect 0
+        //////////////////////////////////////////////////////////////////////
+        jump to @DRUG_EFFECT_UPDATE
+        end
+                        
+        end
+        
+        end
+    end
+    
+if and
+DRUG_EFFECT_FLAG == 1
+DRUG_EFFECT_OFF == -1
+    then    
+    DRUG_EFFECT_OFF = 0
+    
+    :DRUG_EFFECT_UPDATE
+    
+    if or
+    UNITED_MAP == 0
+    STORIES_MAP == 1
+    then    
+    random_int DRUG_EFFECT_FX1R 0 256
+    random_int DRUG_EFFECT_FX1G 0 256
+    random_int DRUG_EFFECT_FX1B 0 256
+    random_int DRUG_EFFECT_FX1A 0 256    
+    random_int DRUG_EFFECT_FX2R 0 256
+    random_int DRUG_EFFECT_FX2G 0 256
+    random_int DRUG_EFFECT_FX2B 0 256
+    random_int DRUG_EFFECT_FX2A 0 256
+    else            
+    random_int DRUG_EFFECT_FX1R -20 20    
+    0A8D: 0@ = read_memory 0x55F6E9 size 1 virtual_protect 1
+    005A: 0@ += DRUG_EFFECT_FX1R  // (int)
+    0085: DRUG_EFFECT_FX1R = 0@ // (int)        
+    random_int DRUG_EFFECT_FX1G -20 20    
+    0A8D: 0@ = read_memory 0x55F6FC size 1 virtual_protect 1
+    005A: 0@ += DRUG_EFFECT_FX1G  // (int)
+    0085: DRUG_EFFECT_FX1G = 0@ // (int)        
+    random_int DRUG_EFFECT_FX1B -20 20     
+    0A8D: 0@ = read_memory 0x55F70F size 1 virtual_protect 1
+    005A: 0@ += DRUG_EFFECT_FX1B  // (int)
+    0085: DRUG_EFFECT_FX1B = 0@ // (int)        
+    random_int DRUG_EFFECT_FX1A -20 20    
+    0A8D: 0@ = read_memory 0x55F725 size 1 virtual_protect 1
+    005A: 0@ += DRUG_EFFECT_FX1A  // (int)
+    0085: DRUG_EFFECT_FX1A = 0@ // (int)
+    random_int DRUG_EFFECT_FX2R -20 20    
+    0A8D: 0@ = read_memory 0x55F73B size 1 virtual_protect 1
+    005A: 0@ += DRUG_EFFECT_FX2R  // (int)
+    0085: DRUG_EFFECT_FX2R = 0@ // (int)    
+    random_int DRUG_EFFECT_FX2G -20 20    
+    0A8D: 0@ = read_memory 0x55F767 size 1 virtual_protect 1
+    005A: 0@ += DRUG_EFFECT_FX2G  // (int)
+    0085: DRUG_EFFECT_FX2G = 0@ // (int)        
+    random_int DRUG_EFFECT_FX2B -20 20     
+    0A8D: 0@ = read_memory 0x55F751 size 1 virtual_protect 1
+    005A: 0@ += DRUG_EFFECT_FX2B  // (int)    
+    0085: DRUG_EFFECT_FX2B = 0@ // (int)        
+    random_int DRUG_EFFECT_FX2A -20 20    
+    0A8D: 0@ = read_memory 0x55F77D size 1 virtual_protect 1
+    005A: 0@ += DRUG_EFFECT_FX2A  // (int)
+    0085: DRUG_EFFECT_FX2A = 0@ // (int)
+    end
+        
+    end
+    
+if and
+DRUG_EFFECT_FLAG == 1
+DRUG_EFFECT_OFF == 0
+    then
+    0A8C: write_memory 0xC402B4 size 1 value 1 virtual_protect 0
+    0A8C: write_memory 0xC402D3 size 1 value 1 virtual_protect 0
+    0A8C: write_memory 0xC402BA size 1 value 1 virtual_protect 0
+    
+    if
+    UNITED_MAP == 0
+    then
+    //////////////////////////////////////////////////////////////////////
+    0A8C: write_memory 0x55F6E9 size 1 value DRUG_EFFECT_FX1R virtual_protect 0
+    0A8C: write_memory 0x55F6FC size 1 value DRUG_EFFECT_FX1G virtual_protect 0
+    0A8C: write_memory 0x55F70F size 1 value DRUG_EFFECT_FX1B virtual_protect 0
+    0A8C: write_memory 0x55F725 size 1 value DRUG_EFFECT_FX1A virtual_protect 0
+    //////////////////////////////////////////////////////////////////////            
+    0A8C: write_memory 0x55F73B size 1 value DRUG_EFFECT_FX2R virtual_protect 0
+    0A8C: write_memory 0x55F767 size 1 value DRUG_EFFECT_FX2G virtual_protect 0
+    0A8C: write_memory 0x55F751 size 1 value DRUG_EFFECT_FX2B virtual_protect 0
+    0A8C: write_memory 0x55F77D size 1 value DRUG_EFFECT_FX2A virtual_protect 0
+    //////////////////////////////////////////////////////////////////////
+    else
+    
+    if or
+    STORIES_MAP == 1
+    $UNITED_VC_FLAG == 1
+    then
+    //////////////////////////////////////////////////////////////////////
+    0A8C: write_memory 0x55F6E9 size 1 value DRUG_EFFECT_FX1R virtual_protect 0
+    0A8C: write_memory 0x55F6FC size 1 value DRUG_EFFECT_FX1G virtual_protect 0
+    0A8C: write_memory 0x55F70F size 1 value DRUG_EFFECT_FX1B virtual_protect 0
+    0A8C: write_memory 0x55F725 size 1 value DRUG_EFFECT_FX1A virtual_protect 0
+    //////////////////////////////////////////////////////////////////////            
+    0A8C: write_memory 0x55F73B size 1 value DRUG_EFFECT_FX2R virtual_protect 0
+    0A8C: write_memory 0x55F767 size 1 value DRUG_EFFECT_FX2G virtual_protect 0
+    0A8C: write_memory 0x55F751 size 1 value DRUG_EFFECT_FX2B virtual_protect 0
+    0A8C: write_memory 0x55F77D size 1 value DRUG_EFFECT_FX2A virtual_protect 0
+    //////////////////////////////////////////////////////////////////////
+    else
+    0A8C: write_memory 0x55F6E9 size 1 value 56 virtual_protect 0 //R
+    0A8C: write_memory 0x55F6FC size 1 value 16 virtual_protect 0 //G
+    0A8C: write_memory 0x55F70F size 1 value 232 virtual_protect 0 //B
+    0A8C: write_memory 0x55F725 size 1 value 192 virtual_protect 0 //A
+    //////////////////////////////////////////////////////////////////////            
+    0A8C: write_memory 0x55F73B size 1 value 152 virtual_protect 0 //R
+    0A8C: write_memory 0x55F751 size 1 value 112 virtual_protect 0 //G
+    0A8C: write_memory 0x55F767 size 1 value 72 virtual_protect 0 //B
+    0A8C: write_memory 0x55F77D size 1 value 32 virtual_protect 0 //A
+    end
+    
+    end
+    
+    if or
+    UNITED_MAP == 0
+    STORIES_MAP == 1
+    then
+    0A8C: write_memory 0x8D5170 size 4 value 50.0 virtual_protect 0
+    end
+        
+    player.SetDrunkVisuals(PLAYER_CHAR,100)
+    03FD: set_player 0 handling_responsiveness 5
+    if
+    COOP_ACTIVE_FLAG == 1
+        then
+        03FD: set_player 1 handling_responsiveness 5
+        end
+    
+    if and
+    $SAVESTATUS_TRUE == 1
+    $DRUNK_MODE_FLAG == 0
+    then
+    jump to @DRUGS_EFFECT_OFF
+    end
+    
+    if and
+    DRUG_EFFECT_ACTIVATED_TYPE == 1
+    $DRUNK_MODE_FLAG == 0    
+    then
+    jump to @DRUGS_EFFECT_OFF
+    end
+    
+    if or
+    32@ < 120000
+    $DRUNK_MODE_FLAG == 1
+        then        
+        if
+        33@ > 100
+            then
+            33@ = 0                                                                                                      
+            end
+        else
+        :DRUGS_EFFECT_OFF
+        if
+        $DRUNK_MODE_FLAG == 0        
+            then
+            DRUG_EFFECT_FLAG = 0
+            DRUG_EFFECT_OFF = 0
+            player.SetDrunkVisuals(PLAYER_CHAR,0)
+            03FD: set_player 0 handling_responsiveness 0
+            if
+            COOP_ACTIVE_FLAG == 1
+            then
+            03FD: set_player 1 handling_responsiveness 0
+            end
+            0A8C: write_memory 0xC402B4 size 1 value 0 virtual_protect 0
+            0A8C: write_memory 0xC402D3 size 1 value 0 virtual_protect 0
+            0A8C: write_memory 0xC402BA size 1 value 0 virtual_protect 0
+            0A8C: write_memory 0x8D5170 size 4 value 0.5 virtual_protect 0
+            //////////////////////////////////////////////////////////////////////
+            0A8C: write_memory 0x55F6E9 size 1 value 56 virtual_protect 0
+            0A8C: write_memory 0x55F6FC size 1 value 16 virtual_protect 0
+            0A8C: write_memory 0x55F70F size 1 value 232 virtual_protect 0
+            0A8C: write_memory 0x55F725 size 1 value 192 virtual_protect 0
+            //////////////////////////////////////////////////////////////////////            
+            0A8C: write_memory 0x55F73B size 1 value 152 virtual_protect 0
+            0A8C: write_memory 0x55F751 size 1 value 112 virtual_protect 0
+            0A8C: write_memory 0x55F767 size 1 value 72 virtual_protect 0            
+            0A8C: write_memory 0x55F77D size 1 value 32 virtual_protect 0
+            //////////////////////////////////////////////////////////////////////
+            end
+        end
+    end
+
+if
+$CHEATED_FLAG == 1
+then
+jump to @GLOBAL_STATS_IDLE
+end  
+
+0653: $DISTANCE_BY_FOOT = float_stat 3
+0653: $DISTANCE_BY_CAR = float_stat 4
+0653: $DISTANCE_BY_BIKE = float_stat 5
+0653: $DISTANCE_BY_BOAT = float_stat 6
+0653: $DISTANCE_BY_HELICOPTER = float_stat 8
+0653: $DISTANCE_BY_PLANE = float_stat 9
+0653: $DISTANCE_BY_WATER = float_stat 26
+
+008C: $DISTANCE_BY_FOOT = float $DISTANCE_BY_FOOT to_integer
+008C: $DISTANCE_BY_CAR = float $DISTANCE_BY_CAR to_integer
+008C: $DISTANCE_BY_BIKE = float $DISTANCE_BY_BIKE to_integer
+008C: $DISTANCE_BY_BOAT = float $DISTANCE_BY_BOAT to_integer
+008C: $DISTANCE_BY_HELICOPTER = float $DISTANCE_BY_HELICOPTER to_integer
+008C: $DISTANCE_BY_PLANE = float $DISTANCE_BY_PLANE to_integer
+008C: $DISTANCE_BY_WATER = float $DISTANCE_BY_WATER to_integer
+
+008C: $STATS_BENZIN_LOST = float $BENZIN_LOST to_integer
+008C: $STATS_KANISTRA_FUEL_IN_TOTAL = float $KANISTRA_FUEL_IN_TOTAL to_integer
+008C: $STATS_BENZIN_IN_CAR_TOTAL = float $BENZIN_IN_CAR_TOTAL to_integer
+
+0652: $BULLETS_FIRED = integer_stat 126
+0652: $BULLETS_THAT_HIT = integer_stat 128
+0652: $HEADSHOTS = integer_stat 130
+
+0652: $DAYS_PASSED = integer_stat 134
+0835: get_month_day_to 1@ get_month_to $CURRENT_MONTH
+0652: $CARS_BLOWED = integer_stat 122           
+
+if
+09FA:   is_menu_closed
+    then
+    gosub @GLOBAL_STATS_INI_WRITE
+    end
+
+0EC7: get_fade_alpha 1@
+if and
+1@ >= 200.0
+$HUD_REMOVE == 1
+0E45: frame_mod 15
+    then
+    gosub @GLOBAL_STATS_INI_WRITE
+    end
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+803A: not  $DISTANCE_BY_FOOT == $TEMP_DISTANCE_BY_FOOT // (int)
+    then            
+    
+    if
+    $CHEATED_FLAG == 0 
+    then    
+    STATS_DISTANCE_BY_FOOT_TEMP += 1
+    end                 
+    
+    end    
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+803A: not  $DISTANCE_BY_CAR == $TEMP_DISTANCE_BY_CAR // (int)
+    then    
+    
+    if
+    $CHEATED_FLAG == 0 
+    then    
+    STATS_DISTANCE_BY_CAR_TEMP += 1
+    end                  
+    
+    end   
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+803A: not  $DISTANCE_BY_BIKE == $TEMP_DISTANCE_BY_BIKE // (int)
+    then       
+    
+    if
+    $CHEATED_FLAG == 0 
+    then    
+    STATS_DISTANCE_BY_BIKE_TEMP += 1
+    end             
+        
+    end 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+803A: not  $DISTANCE_BY_BOAT == $TEMP_DISTANCE_BY_BOAT // (int)
+    then        
+    
+    if
+    $CHEATED_FLAG == 0 
+    then    
+    STATS_DISTANCE_BY_BOAT_TEMP += 1
+    end             
+    
+    end     
+    
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+803A: not  $DISTANCE_BY_HELICOPTER == $TEMP_DISTANCE_BY_HELICOPTER // (int)
+    then       
+    
+    if
+    $CHEATED_FLAG == 0 
+    then    
+    STATS_DISTANCE_BY_HELICOPTER_TEMP += 1
+    end             
+    
+    end   
+    
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+803A: not  $DISTANCE_BY_PLANE == $TEMP_DISTANCE_BY_PLANE // (int)
+    then      
+    
+    if
+    $CHEATED_FLAG == 0 
+    then    
+    STATS_DISTANCE_BY_PLANE_TEMP += 1
+    end             
+    
+    end 
+    
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+803A: not  $DISTANCE_BY_WATER == $TEMP_DISTANCE_BY_WATER // (int)
+    then
+         
+    if
+    $CHEATED_FLAG == 0 
+    then    
+    STATS_DISTANCE_BY_WATER_TEMP += 1
+    end                 
+    
+    end           
+    
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+803A: not  $BULLETS_FIRED == $TEMP_BULLETS_FIRED // (int)
+    then      
+    
+    if
+    $CHEATED_FLAG == 0 
+    then    
+    STATS_BULLETS_FIRED_TEMP += 1
+    end                 
+    
+    end  
+    
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+803A: not  $BULLETS_THAT_HIT == $TEMP_BULLETS_THAT_HIT // (int)
+    then
+          
+    if
+    $CHEATED_FLAG == 0 
+    then    
+    STATS_BULLETS_THAT_HIT_TEMP += 1
+    end                 
+    
+    end  
+    
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+803A: not  $HEADSHOTS == $TEMP_HEADSHOTS // (int)
+    then       
+    
+    if
+    $CHEATED_FLAG == 0 
+    then    
+    STATS_HEADSHOTS_TEMP += 1
+    end            
+    
+    $TEMP_XP = HEADSHOT_XP
+    008D: $TEMP_XP = integer $TEMP_XP to_float
+    0069: $TEMP_XP *= $XP_COEFF // (float)
+    008C: $TEMP_XP = float $TEMP_XP to_integer
+    0058: $PLAYER_XP += $TEMP_XP // (int)
+    
+    end   
+    
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+803A: not  $STATS_BENZIN_LOST == $STATS_TEMP_BENZIN_LOST // (int)
+    then
+           
+    if
+    $CHEATED_FLAG == 0 
+    then    
+    STATS_BENZIN_LOST_TEMP += 1
+    end                 
+    
+    end  
+    
+/////////////////////////////////////////////////////////////////////////////////////////////////// 
+
+if
+803A: not  $STATS_KANISTRA_FUEL_IN_TOTAL == $STATS_TEMP_K_FUEL_IN_TOTAL // (int)
+    then      
+    
+    if
+    $CHEATED_FLAG == 0 
+    then    
+    STATS_KANISTRA_FUEL_IN_TOTAL_TEMP += 1
+    end             
+    
+    end  
+    
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+803A: not  $STATS_BENZIN_IN_CAR_TOTAL == $STATS_TEMP_BENZIN_IN_CAR_TOTAL // (int)
+    then
+          
+    if
+    $CHEATED_FLAG == 0 
+    then    
+    STATS_BENZIN_IN_CAR_TOTAL_TEMP += 1
+    end             
+    
+    end   
+    
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+803A: not  $RANDOM_ACTORS_SEE == $TEMP_RANDOM_ACTORS_SEE // (int)
+    then      
+    
+    if
+    $CHEATED_FLAG == 0 
+    then    
+    STATS_RANDOM_ACTORS_SEE_TEMP += 1
+    end             
+    
+    end    
+    
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+if and
+803A: not  $DAYS_PASSED == $TEMP_DAYS_PASSED // (int)
+$GAMEMODE_SELECTED == 1
+    then        
+    
+    if
+    $CHEATED_FLAG == 0 
+    then    
+    STATS_DAYS_PASSED_TEMP += 1
+    end                 
+    
+    if or
+    $MINUTES_PLAYED > 5
+    $HOURS_PLAYED > 0
+    then
+    
+    008B: 15@ = $PLAYER_LEVEL // (int)
+    15@ *= 230
+    005E: $PLAYER_XP += 15@  // (int)
+    $DAYS_PASSED_SURV += 1
+    
+    if and
+    $FREEMODE == 1
+    $HUD_REMOVE == 0
+    then
+    text.ShowTextBox('GAME569')
+    end
+    
+    end        
+    
+    end
+    
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+if and
+803A: not  $CURRENT_MONTH == $TEMP_CURRENT_MONTH // (int)
+$DONT_CHANGE_MONTH_FLAG == 0
+$GAMEMODE_SELECTED == 1
+not $GAMEMODE_STORYLINE == 1
+not PLAYER_IN_OFFICE_FLAG == 1
+    then
+    
+    if and
+    $CURRENT_MONTH == 1
+    $TEMP_CURRENT_MONTH == 12
+    $MONTHS_PASSED > 1
+    then
+    GAME_CURRENT_YEAR += 1
+    end        
+    
+    $SURVIVERS_SPAWN_MIN += 120000
+    $SURVIVERS_SPAWN_MAX += 120000
+    $RNDM_PEOPLE_CAR_SPAWN_MIN += 120
+    $RNDM_PEOPLE_CAR_SPAWN_MAX += 120
+    $ARMY_SPAWN_MIN += 30000
+    $ARMY_SPAWN_MAX += 30000
+    $BANDITS_SPAWN_MIN += 30000
+    $BANDITS_SPAWN_MAX += 30000
+    $FERMER_SPAWN_MIN += 30000
+    $FERMER_SPAWN_MAX += 30000
+    
+    if
+    $CURRENT_MONTH < 10
+    then
+    $SURVIVERS_SPAWN_MIN += 240000
+    $SURVIVERS_SPAWN_MAX += 240000
+    $RNDM_PEOPLE_CAR_SPAWN_MIN += 240
+    $RNDM_PEOPLE_CAR_SPAWN_MAX += 240
+    end
+    
+    if
+    $CURRENT_MONTH == 12
+    then
+    $SURVIVERS_SPAWN_MIN += 360000
+    $SURVIVERS_SPAWN_MAX += 360000
+    $RNDM_PEOPLE_CAR_SPAWN_MIN += 360
+    $RNDM_PEOPLE_CAR_SPAWN_MAX += 360
+    end    
+          
+    if
+    $CHEATED_FLAG == 0 
+    then    
+    STATS_MONTHS_PASSED_TEMP += 1
+    end                         
+    
+    $MONTH_PASSED_FLAG = 1
+    $MONTHS_PASSED += 1
+    
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT102_GOT"                            
+    if and
+    0@ == 0
+    $MONTHS_PASSED >= 3
+    $CHEATED_FLAG == 0
+        then
+        v$ACHIEVEMNT = "ACH102"
+        $ACHIEVEMENT_GOT_FLAG = 1                                    
+        0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT102_GOT"
+        end
+    
+    if or
+    $MONTHS_PASSED == 1
+    $MONTHS_PASSED == 2
+    then
+    $TANK_WAIT_SPAWN_MIN -= 30000
+    $TANK_WAIT_SPAWN_MAX -= 30000
+    $HUNTER_WAIT_SPAWN_MIN -= 30000
+    $HUNTER_WAIT_SPAWN_MAX -= 30000
+    $WITCH_WAIT_SPAWN_MIN -= 30000
+    $WITCH_WAIT_SPAWN_MAX -= 30000
+    $CHARGER_WAIT_SPAWN_MIN -= 30000
+    $CHARGER_WAIT_SPAWN_MAX -= 30000
+    end        
+    
+    end              
+    
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+803A: not  $CARS_BLOWED == $TEMP_CARS_BLOWED // (int)
+    then
+            
+    if
+    $CHEATED_FLAG == 0 
+    then    
+    STATS_CARS_BLOWED_TEMP += 1
+    end                               
+    
+    end                                                                
+
+jump to @GLOBAL_STATS_IDLE
+
+:GLOBAL_STATS_GET_PREV
+0653: $TEMP_DISTANCE_BY_FOOT = float_stat 3
+0653: $TEMP_DISTANCE_BY_CAR = float_stat 4
+0653: $TEMP_DISTANCE_BY_BIKE = float_stat 5
+0653: $TEMP_DISTANCE_BY_BOAT = float_stat 6
+0653: $TEMP_DISTANCE_BY_HELICOPTER = float_stat 8
+0653: $TEMP_DISTANCE_BY_PLANE = float_stat 9
+0653: $TEMP_DISTANCE_BY_WATER = float_stat 26 
+
+008C: $TEMP_DISTANCE_BY_FOOT = float $TEMP_DISTANCE_BY_FOOT to_integer
+008C: $TEMP_DISTANCE_BY_CAR = float $TEMP_DISTANCE_BY_CAR to_integer
+008C: $TEMP_DISTANCE_BY_BIKE = float $TEMP_DISTANCE_BY_BIKE to_integer
+008C: $TEMP_DISTANCE_BY_BOAT = float $TEMP_DISTANCE_BY_BOAT to_integer
+008C: $TEMP_DISTANCE_BY_HELICOPTER = float $TEMP_DISTANCE_BY_HELICOPTER to_integer
+008C: $TEMP_DISTANCE_BY_PLANE = float $TEMP_DISTANCE_BY_PLANE to_integer
+008C: $TEMP_DISTANCE_BY_WATER = float $TEMP_DISTANCE_BY_WATER to_integer
+
+008C: $STATS_TEMP_BENZIN_LOST = float $BENZIN_LOST to_integer
+008C: $STATS_TEMP_K_FUEL_IN_TOTAL = float $KANISTRA_FUEL_IN_TOTAL to_integer
+008C: $STATS_TEMP_BENZIN_IN_CAR_TOTAL = float $BENZIN_IN_CAR_TOTAL to_integer
+
+0652: $TEMP_BULLETS_FIRED = integer_stat 126
+0652: $TEMP_BULLETS_THAT_HIT = integer_stat 128
+0652: $TEMP_HEADSHOTS = integer_stat 130
+
+0652: $TEMP_DAYS_PASSED = integer_stat 134
+0835: get_month_day_to 1@ get_month_to $TEMP_CURRENT_MONTH
+0652: $TEMP_CARS_BLOWED = integer_stat 122
+0084: $TEMP_RANDOM_ACTORS_SEE = $RANDOM_ACTORS_SEE // (int)
+0652: 2@ = integer_stat 241
+return
+
+:GLOBAL_STATS_GET_PREV_INI
+0AF0: STATS_DISTANCE_BY_FOOT_TEMP = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "STATS_DISTANCE_BY_FOOT"
+0AF0: STATS_DISTANCE_BY_CAR_TEMP = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "STATS_DISTANCE_BY_CAR"
+0AF0: STATS_DISTANCE_BY_BIKE_TEMP = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "STATS_DISTANCE_BY_BIKE"
+0AF0: STATS_DISTANCE_BY_BOAT_TEMP = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "STATS_DISTANCE_BY_BOAT"
+0AF0: STATS_DISTANCE_BY_HELICOPTER_TEMP = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "STATS_DISTANCE_BY_HELICOPTER"
+0AF0: STATS_DISTANCE_BY_PLANE_TEMP = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "STATS_DISTANCE_BY_PLANE"
+0AF0: STATS_DISTANCE_BY_WATER_TEMP = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "STATS_DISTANCE_BY_WATER"
+0AF0: STATS_BULLETS_FIRED_TEMP = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "STATS_BULLETS_FIRED"
+0AF0: STATS_BULLETS_THAT_HIT_TEMP = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "STATS_BULLETS_THAT_HIT"
+0AF0: STATS_HEADSHOTS_TEMP = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "STATS_HEADSHOTS"
+0AF0: STATS_BENZIN_LOST_TEMP = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "STATS_BENZIN_LOST"
+0AF0: STATS_DAYS_PASSED_TEMP = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "STATS_DAYS_PASSED"
+0AF0: STATS_MONTHS_PASSED_TEMP = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "STATS_MONTHS_PASSED"
+0AF0: STATS_CARS_BLOWED_TEMP = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "STATS_CARS_BLOWED"
+0AF0: STATS_KANISTRA_FUEL_IN_TOTAL_TEMP = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "STATS_KANISTRA_FUEL_IN_TOTAL"
+0AF0: STATS_BENZIN_IN_CAR_TOTAL_TEMP = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "STATS_BENZIN_IN_CAR_TOTAL"
+0AF0: STATS_RANDOM_ACTORS_SEE_TEMP = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "STATS_RANDOM_ACTORS_SEE"
+return
+
+:GLOBAL_STATS_INI_WRITE
+0AF1: write_int STATS_DISTANCE_BY_FOOT_TEMP to_ini_file "saves\ZACM.set" section "SCR" key "STATS_DISTANCE_BY_FOOT"    
+0AF0: 1@ = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "ACHIEVEMENT54_GOT"    
+    
+if and
+1@ == 0
+STATS_DISTANCE_BY_FOOT_TEMP >= 1000000
+    then
+    v$ACHIEVEMNT = "ACH54"
+    $ACHIEVEMENT_GOT_FLAG = 1        
+    0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "ACHIEVEMENT54_GOT"        
+    end
+        
+0AF1: write_int STATS_DISTANCE_BY_CAR_TEMP to_ini_file "saves\ZACM.set" section "SCR" key "STATS_DISTANCE_BY_CAR"      
+0AF0: 1@ = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "ACHIEVEMENT51_GOT"    
+    
+if and
+1@ == 0
+STATS_DISTANCE_BY_CAR_TEMP >= 1000000
+    then
+    v$ACHIEVEMNT = "ACH51"
+    $ACHIEVEMENT_GOT_FLAG = 1        
+    0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "ACHIEVEMENT51_GOT"        
+    end
+         
+0AF1: write_int STATS_DISTANCE_BY_WATER_TEMP to_ini_file "saves\ZACM.set" section "SCR" key "STATS_DISTANCE_BY_WATER"    
+0AF0: 1@ = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "ACHIEVEMENT52_GOT"    
+    
+if and
+1@ == 0
+STATS_DISTANCE_BY_WATER_TEMP >= 1000
+    then
+    v$ACHIEVEMNT = "ACH52"
+    $ACHIEVEMENT_GOT_FLAG = 1        
+    0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "ACHIEVEMENT52_GOT"        
+    end
+        
+0AF1: write_int STATS_BULLETS_FIRED_TEMP to_ini_file "saves\ZACM.set" section "SCR" key "STATS_BULLETS_FIRED"
+    
+0AF0: STATS_BULLETS_FIRED_TEMP = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "ACHIEVEMENT94_GOT"
+0AF0: 1@ = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "STATS_BULLETS_FIRED"        
+        
+if and
+STATS_BULLETS_FIRED_TEMP == 0
+1@ >= 250000
+$CHEATED_FLAG == 0
+    then
+    v$ACHIEVEMNT = "ACH94"
+    $ACHIEVEMENT_GOT_FLAG = 1            
+    0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "ACHIEVEMENT94_GOT"            
+    end
+        
+0AF1: write_int STATS_BULLETS_THAT_HIT_TEMP to_ini_file "saves\ZACM.set" section "SCR" key "STATS_BULLETS_THAT_HIT"
+    
+0AF0: STATS_BULLETS_THAT_HIT_TEMP = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "ACHIEVEMENT95_GOT"
+0AF0: 1@ = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "STATS_BULLETS_THAT_HIT"        
+        
+if and
+STATS_BULLETS_THAT_HIT_TEMP == 0
+1@ >= 50000
+$CHEATED_FLAG == 0
+    then
+    v$ACHIEVEMNT = "ACH95"
+    $ACHIEVEMENT_GOT_FLAG = 1            
+    0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "ACHIEVEMENT95_GOT"            
+    end
+        
+0AF1: write_int STATS_BENZIN_LOST_TEMP to_ini_file "saves\ZACM.set" section "SCR" key "STATS_BENZIN_LOST"            
+0AF0: 1@ = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "ACHIEVEMENT43_GOT"
+        
+if and
+1@ == 0
+STATS_BENZIN_LOST_TEMP >= 1000
+    then
+    v$ACHIEVEMNT = "ACH43"
+    $ACHIEVEMENT_GOT_FLAG = 1        
+    0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "ACHIEVEMENT43_GOT"        
+    end
+        
+0AF1: write_int STATS_DAYS_PASSED_TEMP to_ini_file "saves\ZACM.set" section "SCR" key "STATS_DAYS_PASSED"
+                
+0AF0: 1@ = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "ACHIEVEMENT42_GOT"    
+    
+if and
+1@ == 0
+STATS_DAYS_PASSED_TEMP >= 200
+    then
+    v$ACHIEVEMNT = "ACH42"
+    $ACHIEVEMENT_GOT_FLAG = 1        
+    0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "ACHIEVEMENT42_GOT"        
+    end
+        
+0AF1: write_int STATS_MONTHS_PASSED_TEMP to_ini_file "saves\ZACM.set" section "SCR" key "STATS_MONTHS_PASSED"            
+        
+0AF1: write_int STATS_CARS_BLOWED_TEMP to_ini_file "saves\ZACM.set" section "SCR" key "STATS_CARS_BLOWED"     
+0AF0: 3@ = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "ACHIEVEMENT59_GOT"
+            
+if and
+3@ == 0
+STATS_CARS_BLOWED_TEMP >= 1000
+$CHEATED_FLAG == 0
+    then
+    v$ACHIEVEMNT = "ACH59"
+    $ACHIEVEMENT_GOT_FLAG = 1                                    
+    0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "ACHIEVEMENT59_GOT"
+    end
+    
+gosub @GLOBAL_STATS_GET_PREV_INI    
+        
+return                                                                        

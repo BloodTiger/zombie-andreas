@@ -1,0 +1,1298 @@
+:SRV_VCE
+thread 'SRV_VCE'
+//end_thread
+//create_thread @SRV_VC2
+create_thread @SRV_VCX 
+
+:SURV_VOICE_START
+wait 0
+if and
+$SAVESTATUS_TRUE == 0
+$INT_ENTERING_FLAG == 0
+$ACTOR_DEAD == 0
+not actor.Dead(PLAYER_ACTOR)
+jf @SURV_VOICE_START
+
+actor.StorePos(PLAYER_ACTOR,1@,2@,3@)
+0665: get_actor PLAYER_ACTOR model_to $RANDOM_MODE_MODEL
+
+//0084: 30@ = $RANDOM_MODE_MODEL // (int)  
+008B: 30@ = $RANDOM_MODE_MODEL // (int)
+if
+PLAYER_HAS_CUSTOM_VOICE > 0
+    then
+//    0084: 30@ = PLAYER_HAS_CUSTOM_VOICE // (int)    
+    008B: 30@ = PLAYER_HAS_CUSTOM_VOICE // (int)
+    end
+
+while not model.Available(30@)    
+model.Load(30@)
+mload
+if
+not model.Available(30@)
+    then
+    wait 0
+    model.Load(30@)
+    mload
+    end    
+end
+
+$VOICE_ACTOR = actor.Create(5,30@,1@,2@,3@)
+
+0619: enable_actor $VOICE_ACTOR collision_detection 0 
+ 
+actor.Health($VOICE_ACTOR) = 9999
+
+if and
+$GAMEMODE_STORYLINE == 0
+$GAMEMODE_VERSUS == 0
+$GAMEMODE_HOLD == 0
+then
+actor.SetImmunities($VOICE_ACTOR,1,1,1,1,1)
+else
+actor.SetImmunities($VOICE_ACTOR,1,1,1,1,1)
+end
+
+actor.LockInCurrentPosition($VOICE_ACTOR) = true
+
+0568: set_actor $VOICE_ACTOR untargetable 1
+0337: set_actor $VOICE_ACTOR visibility 0
+0489: set_actor $VOICE_ACTOR muted 0
+04D8: set_actor $VOICE_ACTOR drowns_in_water 0
+
+077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 23 // see ped.dat
+077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 25 // see ped.dat
+077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 26 // see ped.dat
+077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 27 // see ped.dat
+077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 28 // see ped.dat
+077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 29 // see ped.dat
+077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 4 // see ped.dat
+077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 5 // see ped.dat   
+
+wait 1
+
+:SURV_VOICE_IDLE
+wait 0
+
+if and
+82F2: not  actor PLAYER_ACTOR model == 30@
+not PLAYER_HAS_CUSTOM_VOICE > 0
+    then 
+    if
+    056D:   actor $VOICE_ACTOR defined
+        then   
+        actor.DestroyInstantly($VOICE_ACTOR)
+        jump to @SURV_VOICE_START
+        else
+        jump to @SURV_VOICE_START
+        end       
+    end
+
+if
+actor.Dead(PLAYER_ACTOR)
+    then
+    if
+    056D:   actor $VOICE_ACTOR defined
+        then
+        
+        if
+        PLAYER_DIED_BY_FALL == 1
+        then
+        actor.DestroyInstantly($VOICE_ACTOR)
+        jump to @SURV_VOICE_START
+        end               
+        
+        32@ = 0
+        :DIE_CHECK
+        wait 0
+        
+        actor.StorePos(PLAYER_ACTOR,1@,2@,3@)  
+        4@ = actor.Angle(PLAYER_ACTOR)    
+        
+        if
+        not actor.Driving(PLAYER_ACTOR)
+//        8AE2: not 15@ = random_vehicle_near_point 1@ 2@ 3@ in_radius 6.0 find_next 0 pass_wrecked 1 //IF and SET  
+        then
+        
+        if
+        OOS_MARK == 692875   
+        then
+        3@ += 7.0
+        else 
+        3@ += 3.0
+        end
+        
+        else        
+        3@ += 5.0        
+        end
+        
+        if
+        056D:   actor $VOICE_ACTOR defined
+            then
+            actor.Angle($VOICE_ACTOR) = 4@
+//            actor.PutAtNoOffset($VOICE_ACTOR,1@,2@,3@)
+            0E32: set_char_coordinates_simple $VOICE_ACTOR coord 1@ 2@ 3@
+            end
+        
+        if
+        056D:   actor $VOICE_ACTOR defined        
+        then
+        05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 343 
+        end
+        
+        if
+        32@ > 999
+        jf @DIE_CHECK
+            
+        actor.DestroyInstantly($VOICE_ACTOR)
+        jump to @SURV_VOICE_START
+        else
+        jump to @SURV_VOICE_START
+        end
+    end    
+
+if
+056D:   actor $VOICE_ACTOR defined
+    then   
+    0619: enable_actor $VOICE_ACTOR collision_detection 0
+    0337: set_actor $VOICE_ACTOR visibility 0 
+    actor.Health($VOICE_ACTOR) = 9999
+    end
+
+if or
+$SAVESTATUS_TRUE == 1
+$INT_ENTERING_FLAG == 1
+    then
+    if
+    056D:   actor $VOICE_ACTOR defined
+        then
+        actor.DestroyInstantly($VOICE_ACTOR)
+        jump to @SURV_VOICE_START
+        else 
+        jump to @SURV_VOICE_START 
+        end
+    end
+    
+actor.StorePos(PLAYER_ACTOR,1@,2@,3@)  
+4@ = actor.Angle(PLAYER_ACTOR)    
+
+if
+not actor.Driving(PLAYER_ACTOR)
+//8AE2: not 15@ = random_vehicle_near_point 1@ 2@ 3@ in_radius 6.0 find_next 0 pass_wrecked 1 //IF and SET  
+then
+    
+if
+OOS_MARK == 692875   
+then
+3@ += 7.0
+else 
+3@ += 3.0
+end
+
+else
+3@ += 5.0
+end
+
+if
+056D:   actor $VOICE_ACTOR defined
+    then
+    actor.Angle($VOICE_ACTOR) = 4@
+//    actor.PutAtNoOffset($VOICE_ACTOR,1@,2@,3@)
+    0E32: set_char_coordinates_simple $VOICE_ACTOR coord 1@ 2@ 3@
+    end
+
+jump to @SURV_VOICE_IDLE
+
+:PLA_HIT
+thread 'PLA_HIT'
+
+:PLAYER_HIT_IDLE
+wait 0         
+if and
+$SAVESTATUS_TRUE == 0
+$INT_ENTERING_FLAG == 0
+$ACTOR_DEAD == 0
+not actor.Dead(PLAYER_ACTOR)
+056D:   actor $VOICE_ACTOR defined
+jf @PLAYER_HIT_IDLE
+
+if
+actor.Animation(PLAYER_ACTOR) == "gas_cwr"
+then
+
+if
+$CARL_STORY == 0
+then
+05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 340
+else
+05C1: AS_actor PLAYER_ACTOR speak_from_audio_table 340
+end
+   
+end
+
+04DD: 26@ = actor PLAYER_ACTOR armour
+28@ = Actor.Health(PLAYER_ACTOR)
+wait 10 
+if
+056D:   actor $VOICE_ACTOR defined
+    then
+    04DD: 27@ = actor PLAYER_ACTOR armour
+    29@ = Actor.Health(PLAYER_ACTOR) 
+    if            
+    $ACTOR_BURNING_FLAG == 0
+        then 
+        if or
+        803B: not  28@ == 29@ // (int) 
+        803B: not  26@ == 27@ // (int) 
+            then       
+            if and      
+            $GAMEMODE_SURVIVAL == 1
+            801D:   29@ > 28@  // (int)
+            801D:   27@ > 26@  // (int)
+                then
+                random_int 0@ 344 346 
+                
+                if
+                056D:   actor $VOICE_ACTOR defined
+                then
+                05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 0@   
+                end
+                
+                end 
+            end          
+        end
+    end    
+
+jump to @PLAYER_HIT_IDLE
+
+:PLA_VOI
+thread 'PLA_VOI'
+
+create_thread @SRV_VCE
+wait 1  
+                
+32@ = 0 
+$VOICE_RANDOM_TALK_TIMER = 0 
+
+$VOICE_RANDOM_TALK_TIMER_MIN = 0
+
+if
+$GAMEMODE_STORYLINE == 0
+then
+$VOICE_RANDOM_TALK_TIMER_MAX = 300   
+else
+$VOICE_RANDOM_TALK_TIMER_MAX = 600   
+end
+
+random_int $VOICE_RANDOM_TALK_TIMER_END $VOICE_RANDOM_TALK_TIMER_MIN $VOICE_RANDOM_TALK_TIMER_MAX  
+
+create_thread @PLA_HIT    
+
+:VOICE_CHECK
+wait 0   
+$VOICE_RANDOM_TALK_TIMER += 1
+
+if and
+0AB0:   key_pressed 69
+not actor.Driving(PLAYER_ACTOR)
+89DE:   actor PLAYER_ACTOR entering_car
+then
+$VOICE_RANDOM_TALK_TIMER += 100
+end
+
+if
+056D:   actor $VOICE_ACTOR defined
+    then
+    
+    if or    
+    $INF_SIDE == 1
+    $MIKE_MUTED == 1
+    $VOICE_MUTED == 1
+    then 
+    0489: set_actor $VOICE_ACTOR muted 1   
+    else 
+    0489: set_actor $VOICE_ACTOR muted 0  
+    end
+    
+    end    
+      
+0A8D: 1@ = read_memory 0xB7CB64 size 4 virtual_protect 0
+if
+not 1@ == 1.0 
+then
+jump to @VOICE_CHECK_AHHH_OHHH
+end
+
+if and
+1@ == 1.0
+$GAMEMODE_CRAZY == 0
+jf @VOICE_CHECK   
+
+if
+056D:   actor $VOICE_ACTOR defined
+then
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+if and
+not actor.Driving(PLAYER_ACTOR)
+8449: not  actor PLAYER_ACTOR in_a_car
+8A32: not actor PLAYER_ACTOR on_turret_of_car
+89DE: not  actor PLAYER_ACTOR entering_car
+    then
+    
+    if or
+    $PLAYER_SURVIVOR_SIDE == 1
+    $PLAYER_FERMERS_SIDE == 1
+    $SWAT_FERMERS_SIDE == 1
+        then
+        
+        if
+        $BANDITS_DONT_ATTACK_PLAYER_FLAG == 0
+        then
+        077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 25 // see ped.dat
+        else
+        077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 25 // see ped.dat
+        end
+        
+        if
+        $ARMY_DONT_ATTACK_PLAYER_FLAG == 0
+        then
+        077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 27 // see ped.dat
+        else
+        077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 27 // see ped.dat
+        end
+        
+        end
+        
+    if
+    056D:   actor $VOICE_ACTOR defined
+        then
+        if
+        $PLAYER_ARMY_SIDE == 1    
+            then
+            077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 26 // see ped.dat
+            077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 25 // see ped.dat
+            077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 28 // see ped.dat
+            end
+        end   
+        
+    if
+    056D:   actor $VOICE_ACTOR defined
+        then
+        if or
+        $PLAYER_BANDIT_SIDE == 1
+        CARMA_VERY_BAD_FLAG == 1    
+            then
+            077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 26 // see ped.dat
+            077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 27 // see ped.dat
+            077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 28 // see ped.dat
+            end
+        end  
+        
+    end
+
+///////////////////////////////////////////////////////////////////////////////////////////            
+    
+if or
+actor.Driving(PLAYER_ACTOR)
+0449:   actor PLAYER_ACTOR in_a_car
+0A32:  actor PLAYER_ACTOR on_turret_of_car
+09DE:   actor PLAYER_ACTOR entering_car   
+    then
+    077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 23 // see ped.dat
+    077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 25 // see ped.dat
+    077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 26 // see ped.dat
+    077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 27 // see ped.dat
+    077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 28 // see ped.dat
+    077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 29 // see ped.dat
+    else
+    
+    if
+    $ZOMBIE_DONT_ATTACK_PLAYER == 0
+    then
+    077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 23 // see ped.dat
+    else
+    077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 23 // see ped.dat
+    end
+    
+    end
+    
+/////////////////////////////////////////////////////////////////////////////////////////////             
+
+else
+jump to @VOICE_CHECK
+end
+
+if and
+001C:   $VOICE_RANDOM_TALK_TIMER > $VOICE_RANDOM_TALK_TIMER_END // (int)
+056D:   actor $VOICE_ACTOR defined
+$GAMEMODE_SURVIVAL == 1
+then
+$VOICE_RANDOM_TALK_TIMER = 0
+random_int $VOICE_RANDOM_TALK_TIMER_END $VOICE_RANDOM_TALK_TIMER_MIN $VOICE_RANDOM_TALK_TIMER_MAX  
+gosub @VOICE_CHECK_FRENDLY_START
+end
+
+if 
+$ACTOR_BURNING_FLAG == 1
+    then
+    
+    if
+    056D:   actor $VOICE_ACTOR defined
+    then
+    05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 346     
+    end
+    
+    end
+
+if 
+056D:   actor $VOICE_ACTOR defined
+jf @VOICE_CHECK2
+if
+not actor.Dead($VOICE_ACTOR)  
+jf @VOICE_CHECK2
+:VOICE_CHECK_AHHH_OHHH
+0A8D: 1@ = read_memory 0xB7CB64 size 4 virtual_protect 0
+if and
+0E47: is_char_fighting PLAYER_ACTOR
+8AD2: not 0@ = player PLAYER_CHAR targeted_actor //IF and SET
+1@ == 1.0
+then  
+jump to @FUCK_SKIP_EEIO_FIGHTING  
+end
+
+0E64: get_camera_mode 0@
+if or
+0@ == 7
+0@ == 8
+0@ == 46
+0@ == 51
+    then
+    if
+    056D:   actor $PLAYER_SNIPER_TARGET defined
+        then
+        008B: 0@ = $PLAYER_SNIPER_TARGET // (int)
+        jump to @SHIT_OH_YEAH_EEE
+        end
+    end
+
+if
+0AD2: 0@ = player PLAYER_CHAR targeted_actor //IF and SET
+jf @VOICE_CHECK2
+:SHIT_OH_YEAH_EEE
+0E44: get_char_kill_target_char 0@ store_to 1@
+if
+07D6:   1@ == PLAYER_ACTOR // @ == $ (int) 
+then
+jump to @FUCK_SKIP_EEIO
+end
+
+089F: get_actor 0@ pedtype_to 1@
+
+if
+$PEOPLE_ATTACK_PLAYER_FLAG == 0
+    then
+    if or
+    $PLAYER_SURVIVOR_SIDE == 1
+    $PLAYER_FERMERS_SIDE == 1
+    $PLAYER_SWAT_SIDE == 1
+        then
+        if and
+        not 1@ == 26
+        not 1@ == 28
+        jf @VOICE_CHECK2    
+        end
+    end
+    
+if or
+$PLAYER_ARMY_SIDE == 1
+$ARMY_DONT_ATTACK_PLAYER_FLAG == 1
+    then
+    if
+    not 1@ == 27    
+    jf @VOICE_CHECK2    
+    end         
+    
+if or
+$PLAYER_BANDIT_SIDE == 1
+$BANDITS_DONT_ATTACK_PLAYER_FLAG == 1
+    then
+    if and
+    not 1@ == 25
+    not 1@ == 29   
+    jf @VOICE_CHECK2    
+    end 
+    
+:FUCK_SKIP_EEIO                
+
+gosub @TEAMMATE_FIRE_CHECK
+
+0A8D: 1@ = read_memory 0xB7CB64 size 4 virtual_protect 0
+if and
+32@ > 5000
+1@ == 1.0
+jf @VOICE_CHECK2
+
+:FUCK_SKIP_EEIO_FIGHTING      
+
+if
+056D:   actor $VOICE_ACTOR defined
+then
+05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 89  
+end  
+
+32@ = 0
+
+jump to @VOICE_CHECK2
+
+:TEAMMATE_FIRE_CHECK
+
+if
+$PEOPLE_DONT_ATTACK == 1   
+    then
+    if
+    8E3D: not is_key_just_pressed 69
+        then
+        return
+        end
+    end
+
+if or
+02E0:   actor PLAYER_ACTOR firing_weapon
+0E47: is_char_fighting PLAYER_ACTOR
+0E3D: is_key_just_pressed 69
+then    
+//ass
+else
+return
+end       
+
+for 2@ = 0 to 5
+
+    092B: 3@ = group PLAYER_GROUP member 2@
+    if and
+    056D:   actor 3@ defined
+    87D6: not  3@ == COOP_ACTOR // @ == $ (int)
+        then
+        
+        if
+        $MISSION14_ACTIVE == 1
+            then
+            if
+            not 2@ == 1
+            jf @PLA_TEAM_SKIP_SHOT_AT_AIMED_TARGET
+            end
+            
+        if
+        $QUEST_TYPE == 9
+            then
+            if
+            87D6: not  3@ == $VERSUS_PEOPLE[1] // @ == $ (int)
+            jf @PLA_TEAM_SKIP_SHOT_AT_AIMED_TARGET
+            end
+        
+        gosub @ANIM_CHECK
+                
+        if and
+        not actor.Dead(3@)
+        not actor.Animation(3@) == "CAR_sitpLO"
+        044B:   actor 3@ on_foot  
+        0E3D: is_key_just_pressed 69
+            then
+            text.ClearAll()
+            gosub @RANDOM_DIALOG_REDIRECT_TARGET
+            
+            v$NAME1 = "N_ME"
+            0665: get_actor PLAYER_ACTOR model_to 1@ 
+            if
+            1@ > 10000
+            then
+            v$NAME1 = "N_"
+            end
+            0AD3: v$NAME2 = format "%d" 1@
+            098B: v$NAME3 = v$NAME1 + v$NAME2 // all string variables
+            
+            if
+            FREEMODE_CUSTOM_NAME == 1 
+            then
+            06D1: v$NAME3 = "F_NAME" // v$ = string
+            end
+            
+            09FD: get_gxt_string v$COMMAND3 width_to 8@  // ~k~~PED_SPRINT~ Select
+            0093: 8@ = integer 8@ to_float
+            8@ *= 8.0
+            0092: 8@ = float 8@ to_integer
+            
+            if
+            $PHRASES_OFF_FLAG == 0
+            then
+            0384: show_text_1string GXT v$COMMAND3 string v$NAME3 time 8@ 1
+            end
+            
+            if
+            056D:   actor $VOICE_ACTOR defined
+            then
+            05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 224
+            end
+            
+            ///////////////////////////////////////////////////////////////////////////
+            
+            for 8@ = 0 to 5
+
+            092B: 3@ = group PLAYER_GROUP member 8@
+            if and
+            056D:   actor 3@ defined
+            87D6: not  3@ == COOP_ACTOR // @ == $ (int)
+                then
+                
+                if
+                $MISSION14_ACTIVE == 1
+                    then
+                    if
+                    not 8@ == 1
+                    jf @PLA_TEAM_SKIP_SHOT_AT_AIMED_TARGET2
+                    end
+                    
+                if
+                $QUEST_TYPE == 9
+                    then
+                    if
+                    87D6: not  3@ == $VERSUS_PEOPLE[1] // @ == $ (int)
+                    jf @PLA_TEAM_SKIP_SHOT_AT_AIMED_TARGET2
+                    end
+                
+                0647: AS_actor 3@ clear_look_task
+                05B9: AS_actor 3@ stay_idle 25 ms 
+                wait 25
+                
+                if and
+                056D:   actor 3@ defined
+                056D:   actor 0@ defined  
+                then
+                05E2: AS_actor 3@ kill_actor 0@
+                end
+                    
+                end
+                
+            :PLA_TEAM_SKIP_SHOT_AT_AIMED_TARGET2    
+                    
+            end
+            
+            ///////////////////////////////////////////////////////////////////////////
+             
+            return
+            end
+                
+        if and
+        82E0: not  actor 3@ firing_weapon
+        8E47: not is_char_fighting 3@ 
+        not actor.Dead(3@)
+        not actor.Animation(3@) == "CAR_sitpLO"
+        044B:   actor 3@ on_foot  
+        1@ == 1        
+        then        
+        0647: AS_actor 3@ clear_look_task
+        05B9: AS_actor 3@ stay_idle 25 ms 
+        wait 25
+        
+        if and
+        056D:   actor 3@ defined
+        056D:   actor 0@ defined  
+        then
+        05E2: AS_actor 3@ kill_actor 0@
+        end
+            
+        end
+        
+        :PLA_TEAM_SKIP_SHOT_AT_AIMED_TARGET 
+                
+        end                
+            
+end  
+
+return
+
+:ANIM_CHECK
+1@ = 1
+if and
+not actor.Animation(3@) == "colt45_fire_2hands"
+not actor.Animation(3@) == "python_fire" 
+not actor.Animation(3@) == "shotgun_fire" 
+not actor.Animation(3@) == "buddy_fire" 
+not actor.Animation(3@) == "UZI_fire"
+not actor.Animation(3@) == "RIFLE_fire" 
+jf @ANIM_CHECK_FAIL  
+if and
+not actor.Animation(3@) == "FLAME_fire" 
+not actor.Animation(3@) == "RocketFire" 
+not actor.Animation(3@) == "WEAPON_sniper" 
+not actor.Animation(3@) == "WEAPON_throw"
+jf @ANIM_CHECK_FAIL       
+if and
+not actor.Animation(3@) == "colt45_crouchfire"
+not actor.Animation(3@) == "python_crouchfire" 
+not actor.Animation(3@) == "shotgun_crouchfire" 
+not actor.Animation(3@) == "buddy_crouchfire" 
+not actor.Animation(3@) == "UZI_crouchfire"
+not actor.Animation(3@) == "RIFLE_crouchfire" 
+jf @ANIM_CHECK_FAIL
+if and
+not actor.Animation(3@) == "colt45_reload"
+not actor.Animation(3@) == "python_reload" 
+not actor.Animation(3@) == "shotgun_reload" 
+not actor.Animation(3@) == "buddy_reload" 
+not actor.Animation(3@) == "UZI_reload"
+not actor.Animation(3@) == "RIFLE_load" 
+not actor.Animation(3@) == "gas_cwr"
+jf @ANIM_CHECK_FAIL
+if and
+not actor.Animation(3@) == "colt45_crouchreload"
+not actor.Animation(3@) == "python_crouchreload" 
+not actor.Animation(3@) == "shotgun_crouchreload" 
+not actor.Animation(3@) == "buddy_crouchreload" 
+not actor.Animation(3@) == "UZI_crouchreload"
+not actor.Animation(3@) == "RIFLE_crouchload" 
+jf @ANIM_CHECK_FAIL 
+if and
+not actor.Animation(3@) == "GunMove_BWD"
+not actor.Animation(3@) == "GunMove_FWD"
+not actor.Animation(3@) == "GunMove_L"
+not actor.Animation(3@) == "GunMove_R"
+not actor.Animation(3@) == "Gun_2_IDLE"
+not actor.Animation(3@) == "GUN_BUTT"
+not actor.Animation(3@) == "GUN_BUTT_crouch"
+not actor.Animation(3@) == "Gun_stand" 
+jf @ANIM_CHECK_FAIL   
+if and
+not actor.Animation(3@) == "WEAPON_throw"
+not actor.Animation(3@) == "WEAPON_throwu"
+not actor.Animation(3@) == "WEAPON_start_throw"
+jf @ANIM_CHECK_FAIL  
+return
+                  
+:ANIM_CHECK_FAIL
+1@ = 0 
+return
+
+:VOICE_CHECK2
+09E8: 0@ = actor PLAYER_ACTOR active_interior 
+if and
+0818:  actor PLAYER_ACTOR in_air
+056D:   actor $VOICE_ACTOR defined
+0@ == 0
+jf @VOICE_CHECK
+if or
+actor.Animation(PLAYER_ACTOR) == "FALL_fall"
+actor.Animation(PLAYER_ACTOR) == "FALL_back"
+actor.Animation(PLAYER_ACTOR) == "KO_skid_front"
+jf @VOICE_CHECK
+0819: 2@ = actor PLAYER_ACTOR distance_from_ground
+if
+2@ > 25.0
+jf @VOICE_CHECK
+
+if
+056D:   actor $VOICE_ACTOR defined
+then    
+05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 346  
+end
+
+jump to @VOICE_CHECK
+
+:VOICE_CHECK_FRENDLY_START
+32@ = 0
+
+:VOICE_CHECK_FRENDLY
+wait 0  
+
+gosub @VOICE_CHECK_AHHH_OHHH2
+
+if
+32@ > 2000
+    then
+    return
+    end
+
+actor.StorePos(PLAYER_ACTOR,25@,26@,27@)
+if and
+0AE1: 20@ = random_actor_near_point 25@ 26@ 27@ in_radius 10.0 find_next 1 pass_deads 0 
+056D:   actor $VOICE_ACTOR defined  
+jf @VOICE_CHECK_FRENDLY 
+089F: get_actor 20@ pedtype_to 1@  
+
+if or
+$PLAYER_SURVIVOR_SIDE == 1
+$PLAYER_FERMERS_SIDE == 1
+$SWAT_FERMERS_SIDE == 1
+    then
+    if or
+    1@ == 26
+    1@ == 28
+    jf @VOICE_CHECK_FRENDLY
+    end
+    
+if
+$PLAYER_ARMY_SIDE == 1
+    then
+    if 
+    1@ == 27    
+    jf @VOICE_CHECK_FRENDLY
+    end   
+    
+if or
+$PLAYER_BANDIT_SIDE == 1
+CARMA_VERY_BAD_FLAG == 1
+    then
+    if or
+    1@ == 25
+    1@ == 29    
+    jf @VOICE_CHECK_FRENDLY
+    end      
+
+0A8D: 1@ = read_memory 0xB7CB64 size 4 virtual_protect 0
+if and
+1@ == 1.0
+$INF_SIDE == 0
+jf @VOICE_CHECK_FRENDLY_RETURN
+if and
+056D:   actor 20@ defined
+056D:   actor $VOICE_ACTOR defined
+jf @VOICE_CHECK_FRENDLY_RETURN
+if or
+0364:   actor 20@ spotted_actor $VOICE_ACTOR
+0364:   actor $VOICE_ACTOR spotted_actor 20@
+jf @VOICE_CHECK_FRENDLY_RETURN
+if and
+0104:   actor PLAYER_ACTOR near_actor 20@ radius 10.0 10.0 10.0 sphere 0
+82F2: not  actor 20@ model == #MALE01
+jf @VOICE_CHECK_FRENDLY_RETURN   
+if
+not actor.Dead(20@)
+jf @VOICE_CHECK_FRENDLY_RETURN
+
+random_int $VOICE_TALK1_FLAG 0 to 2    
+
+if
+$VOICE_TALK1_FLAG == 0
+    then     
+    
+    if
+    056D:   actor $VOICE_ACTOR defined
+    then    
+    05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 166 
+    end
+    
+    else     
+        
+    if
+    $GAMEMODE_SURVIVAL == 0
+    then
+    05C1: AS_actor 20@ speak_from_audio_table 166 
+    else
+    05C1: AS_actor 20@ speak_from_audio_table 166   
+    end
+    
+    end    
+
+//wait 1000
+32@ = 0
+repeat
+wait 0
+gosub @VOICE_CHECK_AHHH_OHHH2
+until 32@ >= 1000
+
+gosub @RANDOM_TALK_FRIEND
+
+if and
+056D:   actor 20@ defined
+056D:   actor $VOICE_ACTOR defined
+jf @VOICE_CHECK_FRENDLY_RETURN
+
+0A8D: 1@ = read_memory 0xB7CB64 size 4 virtual_protect 0
+if
+1@ == 1.0
+jf @VOICE_CHECK_FRENDLY_RETURN
+
+if
+$VOICE_TALK1_FLAG == 0  
+then
+05C1: AS_actor 20@ speak_from_audio_table 2@        
+else    
+
+if
+056D:   actor $VOICE_ACTOR defined
+then
+05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 2@   
+end
+
+end
+
+return
+
+:VOICE_CHECK_FRENDLY_RETURN
+return
+
+:VOICE_CHECK_AHHH_OHHH2
+
+0E64: get_camera_mode 0@
+if or
+0@ == 7
+0@ == 8
+0@ == 46
+0@ == 51
+    then
+    if
+    056D:   actor $PLAYER_SNIPER_TARGET defined
+        then
+        008B: 0@ = $PLAYER_SNIPER_TARGET // (int)
+        jump to @SHIT_OH_YEAH_EEE2
+        end
+    end
+
+if
+0AD2: 0@ = player PLAYER_CHAR targeted_actor //IF and SET
+jf @VOICE_CHECK_AHHH_OHHH2_RETURN
+0A8D: 1@ = read_memory 0xB7CB64 size 4 virtual_protect 0
+if and
+0E47: is_char_fighting PLAYER_ACTOR
+8AD2: not 0@ = player PLAYER_CHAR targeted_actor //IF and SET
+1@ == 1.0
+then
+jump to @FUCK_SKIP_EEIO_FIGHTINGB
+end
+:SHIT_OH_YEAH_EEE2
+0E44: get_char_kill_target_char 0@ store_to 1@
+if
+07D6:   1@ == PLAYER_ACTOR // @ == $ (int) 
+then
+jump to @FUCK_SKIP_EEIO2
+end
+
+089F: get_actor 0@ pedtype_to 1@
+
+if
+$PEOPLE_ATTACK_PLAYER_FLAG == 0
+    then
+    if or
+    $PLAYER_SURVIVOR_SIDE == 1
+    $PLAYER_FERMERS_SIDE == 1
+    $PLAYER_SWAT_SIDE == 1
+        then
+        if and
+        not 1@ == 26
+        not 1@ == 28
+        jf @VOICE_CHECK_AHHH_OHHH2_RETURN    
+        end
+    end
+    
+if or
+$PLAYER_ARMY_SIDE == 1
+$ARMY_DONT_ATTACK_PLAYER_FLAG == 1
+    then
+    if
+    not 1@ == 27    
+    jf @VOICE_CHECK_AHHH_OHHH2_RETURN    
+    end         
+    
+if or
+$PLAYER_BANDIT_SIDE == 1
+$BANDITS_DONT_ATTACK_PLAYER_FLAG == 1
+    then
+    if and
+    not 1@ == 25
+    not 1@ == 29   
+    jf @VOICE_CHECK_AHHH_OHHH2_RETURN    
+    end 
+    
+:FUCK_SKIP_EEIO2                
+
+gosub @TEAMMATE_FIRE_CHECK
+
+0A8D: 1@ = read_memory 0xB7CB64 size 4 virtual_protect 0
+if and
+33@ > 5000
+1@ == 1.0
+jf @VOICE_CHECK_AHHH_OHHH2_RETURN 
+
+:FUCK_SKIP_EEIO_FIGHTINGB     
+
+if
+056D:   actor $VOICE_ACTOR defined
+then
+05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 89  
+end  
+
+33@ = 0
+
+jump to @VOICE_CHECK_AHHH_OHHH2_RETURN
+
+:VOICE_CHECK_AHHH_OHHH2_RETURN
+return
+
+:RANDOM_TALK_FRIEND
+random_int 1@ 0 29
+
+if 
+1@ == 0
+    then
+    2@ = 58
+    end
+
+if 
+1@ == 1
+    then
+    2@ = 61
+    end
+
+if 
+1@ == 2
+    then
+    2@ = 74
+    end
+
+if 
+1@ == 3
+    then
+    2@ = 121
+    end
+
+if 
+1@ == 4
+    then
+    2@ = 133
+    end
+
+if 
+1@ == 5
+    then
+    2@ = 161
+    end
+
+if 
+1@ == 6
+    then
+    2@ = 162
+    end
+
+if 
+1@ == 7
+    then
+    2@ = 163
+    end
+
+if 
+1@ == 8
+    then
+    2@ = 165
+    end
+
+if 
+1@ == 9
+    then
+    2@ = 169
+    end
+
+if 
+1@ == 10
+    then
+    2@ = 170
+    end
+
+if 
+1@ == 11
+    then
+    2@ = 171
+    end
+
+if 
+1@ == 12
+    then
+    2@ = 188
+    end
+
+if 
+1@ == 13
+    then
+    2@ = 223
+    end
+
+if 
+1@ == 14
+    then
+    2@ = 189
+    end
+
+if 
+1@ == 15
+    then
+    2@ = 145
+    end  
+    
+if 
+1@ == 16
+    then
+    2@ = 118
+    end  
+    
+if 
+1@ == 17
+    then
+    2@ = 21
+    end 
+    
+if 
+1@ == 18
+    then
+    2@ = 22
+    end   
+    
+if 
+1@ == 19
+    then
+    2@ = 28
+    end  
+    
+if 
+1@ == 20
+    then
+    2@ = 48
+    end   
+    
+if 
+1@ == 21
+    then
+    2@ = 49
+    end  
+    
+if 
+1@ == 22
+    then
+    2@ = 52
+    end  
+    
+if 
+1@ == 23
+    then
+    2@ = 56
+    end   
+    
+if 
+1@ == 24
+    then
+    2@ = 57
+    end  
+    
+if 
+1@ == 25
+    then
+    2@ = 61
+    end  
+    
+if 
+1@ == 26
+    then
+    2@ = 74
+    end 
+    
+if 
+1@ == 27
+    then
+    2@ = 83
+    end 
+    
+if 
+1@ == 27
+    then
+    2@ = 86
+    end         
+
+if 
+1@ == 28
+    then
+    2@ = 124
+    end                                                             
+    
+return
+
+:RANDOM_DIALOG_REDIRECT_TARGET
+
+for 1@ = 0 to 200
+
+046D: 2@ = actor PLAYER_ACTOR members_in_group
+if
+2@ > 1
+then
+v$COMMAND1 = "PH196_" // v$ // Sunday
+else
+v$COMMAND1 = "PH197_" // v$ // Sunday
+end
+
+0AD3: v$COMMAND2 = format "%d" 1@
+098B: v$COMMAND3 = v$COMMAND1 + v$COMMAND2 // all string variables
+
+09FD: get_gxt_string v$COMMAND3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then   
+    1@ += 1 
+    random_int 8@ 0 1@
+    end
+
+end  
+
+046D: 2@ = actor PLAYER_ACTOR members_in_group
+if
+2@ > 1
+then
+v$COMMAND1 = "PH196_" // v$ // Sunday
+else
+v$COMMAND1 = "PH197_" // v$ // Sunday
+end
+
+0AD3: v$COMMAND2 = format "%d" 8@
+098B: v$COMMAND3 = v$COMMAND1 + v$COMMAND2 // all string variables
+
+return
+
+:SRV_VCX
+thread 'SRV_VCX'
+
+while true
+wait 0
+
+if
+056D:   actor $VOICE_ACTOR defined
+    then
+    
+    if
+    094D:  actor $VOICE_ACTOR mutally_active
+        then
+        
+        while 056D:   actor $VOICE_ACTOR defined
+        wait 0
+        
+        if
+        056D:   actor $VOICE_ACTOR defined
+        then
+        if
+        094D:  actor $VOICE_ACTOR mutally_active
+            then
+            0967: actor PLAYER_ACTOR move_mouth 5 ms
+            else
+            break
+            end
+        end
+        
+        end
+        
+        0968: actor PLAYER_ACTOR stop_mouth
+        
+        end        
+    
+    end
+
+end
+
+end_thread
