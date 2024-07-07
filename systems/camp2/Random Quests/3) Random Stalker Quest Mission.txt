@@ -1,0 +1,4545 @@
+const
+STALKE2_QUEST_ACTOR = $VERSUS_PEOPLE[1]
+STALKE2_QUEST_RANDOM_X = 9@
+STALKE2_QUEST_RANDOM_Y = 10@
+STALKE2_QUEST_RANDOM_Z = 11@
+STALKE2_QUEST_MARKER_ON_MAP = MISSION_CHECKPOINT
+STALKE2_QUEST_MARKER_ON_MAP_SPHERE = 17@
+STALKE2_QUEST_ACTION_FLAG = 15@
+STALKE2_QUEST_POINT_X = 21@
+STALKE2_QUEST_POINT_Y = 22@
+STALKE2_QUEST_POINT_Z = 23@
+STALKE2_GOES_FORSELF_FLAG = 24@
+STALKE2_QUEST_ACTOR_MARKER = 128@
+STALKE2_DIED_FLAG = 119@
+STALKE2_SPOTTED_FLAG = 218@
+STALKE2_SPOTTED2_FLAG = 219@
+STALKE2_AMEBA_FLAG = 220@
+STALKE2_QUEST_POINT2_X = $STALKE2_QUEST_POINT2_X
+STALKE2_QUEST_POINT2_Y = $STALKE2_QUEST_POINT2_Y
+STALKE2_QUEST_POINT2_Z = $STALKE2_QUEST_POINT2_Z
+end
+
+const
+STALKE2_PAIN_TIMER = 310@ 
+STALKE2_PAIN_TIMER2 = 311@  
+STALKE2_ATTACK_TIMER = 312@ 
+STALKE2_ATTACK_TIMER2 = 313@ 
+STALKE2_HUNTER_TIMER = 314@ 
+STALKE2_HUNTER_TIMER2 = 315@  
+STALKE2_TANK_TIMER = 316@ 
+STALKE2_TANK_TIMER2 = 317@ 
+STALKE2_HUNTER2_TIMER = 318@ 
+STALKE2_HUNTER2_TIMER2 = 319@ 
+STALKE2_WITCH_TIMER = 320@ 
+STALKE2_WITCH_TIMER2 = 321@   
+STALKE2_CHARGER_TIMER = 322@ 
+STALKE2_CHARGER_TIMER2 = 323@
+end
+
+const
+STALKE2_PAIN_TIMER_MIN = 30
+STALKE2_PAIN_TIMER_MAX = 80
+STALKE2_ATTACK_TIMER_MIN = 60
+STALKE2_ATTACK_TIMER_MAX = 100
+STALKE2_HUNTER_TIMER_MIN = 200  
+STALKE2_HUNTER_TIMER_MAX = 400
+STALKE2_TANK_TIMER_MIN = 700  
+STALKE2_TANK_TIMER_MAX = 1000
+STALKE2_HUNTER2_TIMER_MIN = 700  
+STALKE2_HUNTER2_TIMER_MAX = 1000
+STALKE2_WITCH_TIMER_MIN = 700  
+STALKE2_WITCH_TIMER_MAX = 1000
+STALKE2_CHARGER_TIMER_MIN = 700  
+STALKE2_CHARGER_TIMER_MAX = 1000
+end 
+
+:STALKE2
+thread 'STALKE2'
+gosub @ASSKOD_MISSIIB28 
+if 
+wasted_or_busted 
+jf @ASSPROPUSK_KODAB28 
+gosub @ASSKOD_PROVALAB28 
+
+:ASSPROPUSK_KODAB28        
+gosub @ASSUDALENIE_KODAB28
+end_thread
+
+:ASSKOD_MISSIIB28
+increment_mission_attempts
+0629: change_integer_stat 258 to 87
+
+0089: STALKE2_QUEST_POINT_X = $CAMP_X[$ENTERED_CAMP_NUMBER] // (float)
+0089: STALKE2_QUEST_POINT_Y = $CAMP_Y[$ENTERED_CAMP_NUMBER] // (float)
+0089: STALKE2_QUEST_POINT_Z = $CAMP_Z[$ENTERED_CAMP_NUMBER] // (float)
+0084: $QUEST_CAMP_NUMBER = $ENTERED_BCAMP_NUMBER // (int)
+actor.StorePos(PLAYER_ACTOR,STALKE2_QUEST_POINT2_X,STALKE2_QUEST_POINT2_Y,STALKE2_QUEST_POINT2_Z)
+
+PLAYER_NO_ITEMS_FLAG = 0
+STALKER_BACKPACK_EMPTY_FLAG = 0
+
+repeat
+wait 0
+until $PHRASES_OFF_FLAG == 0
+
+$ONMISSION = 1
+RANDOM_QUEST_CANCEL_FLAG = 0
+$QUEST_READY_FLAG = 0
+$QUEST_TYPE = 0
+QUEST1_DONE_RECENTLY = 1
+
+gosub @RANDOM_STALKE2_COORD_SET
+
+if
+075C:   marker STALKE2_QUEST_MARKER_ON_MAP enabled
+then
+marker.Disable(STALKE2_QUEST_MARKER_ON_MAP)
+end
+
+STALKE2_QUEST_MARKER_ON_MAP = marker.CreateIconAndSphere2(9,STALKE2_QUEST_RANDOM_X,STALKE2_QUEST_RANDOM_Y,STALKE2_QUEST_RANDOM_Z)
+if
+REALISM_MODE == 1
+then
+0843: get_zone_at STALKE2_QUEST_RANDOM_X STALKE2_QUEST_RANDOM_Y STALKE2_QUEST_RANDOM_Z nameA_to REALISM_QUEST_TARGET_ZONE // 8-byte string
+create_thread @REL_ZEN STALKE2_QUEST_RANDOM_X STALKE2_QUEST_RANDOM_Y STALKE2_QUEST_RANDOM_Z
+end
+
+if
+not REALISM_MODE == 1
+then
+v$OBJECTIVE = "GAME802"
+else
+v$OBJECTIVE = "GME1318"
+v$OBJECTIVE2 = "GME1319"
+end
+
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+
+$SAVE_WAIT_TIME = 240000
+03C3: set_timer_to $SAVE_WAIT_TIME type 1 GXT 'INV278'
+
+32@ = 0
+
+//////////////////////////////////////////////////////////////////////////////////
+
+repeat
+wait 0
+
+if
+803A: not  BCAMP_AGRED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @STALKE2_QUEST_FAILED_AGRED
+if
+$SAVE_WAIT_TIME > 0
+jf @STALKE2_QUEST_BANDITS_FAILED_TIME
+if
+803A: not  BLEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @STALKE2_QUEST_FAILED_LDEAD
+if
+RANDOM_QUEST_CANCEL_FLAG == 0
+jf @STALKE2_QUEST_FAILED_CANCEL
+
+if
+00EC:   actor PLAYER_ACTOR sphere 0 near_point STALKE2_QUEST_RANDOM_X STALKE2_QUEST_RANDOM_Y radius 290.0 290.0
+    then            
+    break
+    end
+
+until false
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:RANDOM_STALKE2_COORD_SET2
+wait 0
+04D3: get_nearest_car_path_coords_from STALKE2_QUEST_RANDOM_X STALKE2_QUEST_RANDOM_Y STALKE2_QUEST_RANDOM_Z type 1 store_to STALKE2_QUEST_RANDOM_X STALKE2_QUEST_RANDOM_Y STALKE2_QUEST_RANDOM_Z
+
+gosub @STALKE2_QUEST_CHECKING_MODEL
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+STALKE2_QUEST_ACTOR = actor.Create($TEAMMATES_PED_TYPE,0@,STALKE2_QUEST_RANDOM_X,STALKE2_QUEST_RANDOM_Y,STALKE2_QUEST_RANDOM_Z)
+     
+0D10: set_actor STALKE2_QUEST_ACTOR alpha 255 // IF and SET
+    
+create_thread @PED_BKP STALKE2_QUEST_ACTOR 371
+
+gosub @STALKE2_QUEST_ACTOR_WEAPON_CREATE
+
+0D10: set_actor STALKE2_QUEST_ACTOR alpha 255 // IF and SET
+09F4: set_actor STALKE2_QUEST_ACTOR ignore_height_difference_following_nodes $Z_IGNORE_HEIGHT     
+Actor.SetWalkStyle(STALKE2_QUEST_ACTOR, "SURV3")
+0446: set_actor STALKE2_QUEST_ACTOR dismemberment_possible 0
+060B: set_actor STALKE2_QUEST_ACTOR decision_maker_to $DEC_PEOPLE
+07DD: set_actor STALKE2_QUEST_ACTOR attack_rate 50 // previously known as temper_to
+081A: set_actor STALKE2_QUEST_ACTOR weapon_skill_to 2  
+060F: set_actor STALKE2_QUEST_ACTOR melee_accuracy_to 999.0
+0946: set_actor STALKE2_QUEST_ACTOR actions_uninterupted_by_weapon_fire 1
+0770: set_actor STALKE2_QUEST_ACTOR target_priority 1
+
+if
+UNITED_MAP == 0
+then
+04D8: set_actor STALKE2_QUEST_ACTOR drowns_in_water 0 
+end
+
+09B5: set_actor STALKE2_QUEST_ACTOR signal_after_kill 0  
+0A96: 0@ = actor STALKE2_QUEST_ACTOR struct
+0A8E: 0@ = 0@ + 1376
+0A8C: write_memory 0@ size 4 value $SURVIVORS_ROTATE_SPEED virtual_protect 1
+
+08AF: set_actor STALKE2_QUEST_ACTOR max_health_to $SURVIVER_MAX_HEALTH
+Actor.WeaponAccuracy(STALKE2_QUEST_ACTOR) = $SURV_ACCURACY
+
+STALKE2_QUEST_ACTION_FLAG = 0
+STALKE2_DIED_FLAG = 0
+STALKE2_GOES_FORSELF_FLAG = 0
+STALKE2_SPOTTED_FLAG = 0
+
+$STALKER_VAG_FLAG = 0
+$STALKER_VAG_TIME = 0
+
+STALKER_PAIN_TIMER = 0
+random_int STALKER_PAIN_TIMER2 STALKER_PAIN_TIMER_MIN STALKER_PAIN_TIMER_MAX
+STALKER_ATTACK_TIMER = 0
+random_int STALKER_ATTACK_TIMER2 STALKER_ATTACK_TIMER_MIN STALKER_ATTACK_TIMER_MAX
+STALKER_HUNTER_TIMER = 0
+random_int STALKER_HUNTER_TIMER2 STALKER_HUNTER_TIMER_MIN STALKER_HUNTER_TIMER_MAX
+STALKER_TANK_TIMER = 0
+random_int STALKER_TANK_TIMER2 STALKER_TANK_TIMER_MIN STALKER_TANK_TIMER_MAX
+STALKER_HUNTER2_TIMER = 0
+random_int STALKER_HUNTER2_TIMER2 STALKER_HUNTER2_TIMER_MIN STALKER_HUNTER2_TIMER_MAX
+STALKER_WITCH_TIMER = 0
+random_int STALKER_WITCH_TIMER2 STALKER_WITCH_TIMER_MIN STALKER_WITCH_TIMER_MAX
+STALKER_CHARGER_TIMER = 0
+random_int STALKER_CHARGER_TIMER2 STALKER_CHARGER_TIMER_MIN STALKER_CHARGER_TIMER_MAX
+
+while not animation.Available("CRACK")
+wait 0
+animation.Load("CRACK")
+end
+
+if
+0E4D: random_percent 30
+then
+random_float 0@ 0.0 360.0
+actor.Angle(STALKE2_QUEST_ACTOR) = 0@
+wait 0
+0829: actor STALKE2_QUEST_ACTOR perform_animation "crckdeth1" IFP_file "CRACK" rate 4.0 time -1 and_dies
+STALKE2_DIED_FLAG = 1
+STALKE2_AMEBA_FLAG = 1
+
+wait 5
+if
+0E4D: random_percent 30
+then
+0A96: 0@ = actor STALKE2_QUEST_ACTOR struct
+0@ += 0x46D
+0A8C: write_memory 0@ size 4 value 0xA0 virtual_protect 0
+0@ -= 0x46D
+0@ += 0x754
+0A8C: write_memory 0@ size 4 value 0x02 virtual_protect 0
+end
+
+else
+
+if
+0E4D: random_percent 40
+then
+random_float 0@ 0.0 360.0
+actor.Angle(STALKE2_QUEST_ACTOR) = 0@
+wait 0
+0332: set_actor STALKE2_QUEST_ACTOR bleeding 1
+0812: AS_actor STALKE2_QUEST_ACTOR perform_animation "crckidle1" IFP "CRACK" framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF 0 time 9999999  // versionB
+0209: 0@ = random_int_in_ranges 100 200
+actor.Health(STALKE2_QUEST_ACTOR) = 0@
+STALKE2_AMEBA_FLAG = 1
+else
+random_float 0@ 0.0 360.0
+actor.Angle(STALKE2_QUEST_ACTOR) = 0@
+wait 0
+0209: 0@ = random_int_in_ranges 500 1000
+actor.Health(STALKE2_QUEST_ACTOR) = 0@
+STALKE2_AMEBA_FLAG = 0
+end
+
+end
+
+if
+not STALKE2_DIED_FLAG == 1
+then
+create_thread @PED_BKP STALKE2_QUEST_ACTOR
+end
+
+32@ = 0
+33@ = 0
+
+if
+not REALISM_MODE == 1
+then
+v$OBJECTIVE = "GAME543"
+else
+v$OBJECTIVE = "GME1291"
+v$OBJECTIVE2 = "GME1292"
+end
+
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+
+//////////////////////////////////////////////////////////////////////////////////
+
+while true
+wait 0
+
+if
+not $GAME_SPEED == 0.0
+then   
+STALKE2_PAIN_TIMER += 1 
+STALKE2_ATTACK_TIMER += 1
+STALKE2_HUNTER_TIMER += 1   
+STALKE2_TANK_TIMER += 1  
+STALKE2_HUNTER2_TIMER += 1  
+STALKE2_WITCH_TIMER += 1  
+STALKE2_CHARGER_TIMER += 1 
+end
+
+if and
+STALKE2_AMEBA_FLAG == 0
+STALKE2_DIED_FLAG == 0
+then
+random_int 0@ 0 5
+gosub @STALKE2_ATTACK_PEOPLE1
+gosub @STALKE2_AI_SYSTEM
+end
+
+if
+803A: not  BCAMP_AGRED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @STALKE2_QUEST_FAILED_AGRED
+if
+$SAVE_WAIT_TIME > 0
+jf @STALKE2_QUEST_BANDITS_FAILED_TIME
+if
+803A: not  BLEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @STALKE2_QUEST_FAILED_LDEAD
+if
+RANDOM_QUEST_CANCEL_FLAG == 0
+jf @STALKE2_QUEST_FAILED_CANCEL
+
+if and
+33@ > 60000
+STALKE2_DIED_FLAG == 0
+STALKE2_SPOTTED_FLAG == 0
+STALKE2_AMEBA_FLAG == 1
+    then        
+    33@ = 0
+    STALKE2_DIED_FLAG = 1
+    0829: actor STALKE2_QUEST_ACTOR perform_animation "crckdeth1" IFP_file "CRACK" rate 4.0 time -1 and_dies
+    
+    0A96: 3@ = actor STALKE2_QUEST_ACTOR struct
+    3@ += 0x754
+    0A8D: 1@ = read_memory 3@ size 4 virtual_protect 0
+    2@ = 0    
+    0ECE: get_time_char_is_dead STALKE2_QUEST_ACTOR store_to 2@
+    
+    if and
+    0104:   actor STALKE2_QUEST_ACTOR near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0
+    89A8: not  actor STALKE2_QUEST_ACTOR headshoted 
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0
+    not 1@ == 0x02
+    2@ > 500
+    then    
+    gosub @RANDOM_DIALOG_B_DEAD_STALKER           
+    gosub @STALKE2_NAME_CHECK                    
+    09FD: get_gxt_string v$PHRASE3 width_to 3@
+    0093: 3@ = integer 3@ to_float
+    3@ *= 8.0
+    0092: 3@ = float 3@ to_integer                      
+    0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 3@ 1            
+    end        
+    
+    end
+
+if and
+STALKE2_DIED_FLAG == 0
+STALKE2_SPOTTED_FLAG == 1
+    then
+    if
+    8184:   actor STALKE2_QUEST_ACTOR health < 1
+        then        
+        
+        if and
+        0104:   actor STALKE2_QUEST_ACTOR near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0
+        89A8: not  actor STALKE2_QUEST_ACTOR headshoted 
+        $SPECTATING_FLAG == 0
+        $SCREWHUD_FLAG == 0
+        $PHRASES_OFF_FLAG == 0
+        then    
+        gosub @RANDOM_DIALOG_B_DEAD_STALKER           
+        gosub @STALKE2_NAME_CHECK                    
+        09FD: get_gxt_string v$PHRASE3 width_to 3@
+        0093: 3@ = integer 3@ to_float
+        3@ *= 8.0
+        0092: 3@ = float 3@ to_integer                      
+        0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 3@ 1            
+        end
+        
+        :STALKE2_WAS_ALREADY_DEAD_JUMP
+        
+        v$OBJECTIVE = "GAME797"
+        if
+        REALISM_MODE == 1
+        then
+        v$OBJECTIVE2 = "DUMMY"
+        REALISM_QUEST_TARGET_ZONE = 'DUMMY'
+        REALISM_QUEST_TARGET_ZONE2 = 'DUMMY'
+        end
+        
+        0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+        $SOUNDS_VOLUME3 *= 0.5
+        Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+        Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+        Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+        
+        if
+        actor.Animation(STALKE2_QUEST_ACTOR) == "crckidle1"
+        then
+        0829: actor STALKE2_QUEST_ACTOR perform_animation "crckdeth1" IFP_file "CRACK" rate 4.0 time -1 and_dies
+        end
+        
+        :STALKE2_LOOT_CORPSE_AGAIN
+        
+        if
+        875C: not  marker STALKE2_QUEST_ACTOR_MARKER enabled
+        then
+        STALKE2_QUEST_ACTOR_MARKER = marker.CreateAboveActor(STALKE2_QUEST_ACTOR)
+        end
+        
+        while true
+        wait 0
+        
+        if
+        803A: not  BCAMP_AGRED_FLAG == $QUEST_CAMP_NUMBER // (int)
+        jf @STALKE2_QUEST_FAILED_AGRED
+        if
+        803A: not  BLEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+        jf @STALKE2_QUEST_FAILED_LDEAD
+        if
+        RANDOM_QUEST_CANCEL_FLAG == 0
+        jf @STALKE2_QUEST_FAILED_CANCEL 
+        
+        if and
+        0104:   actor PLAYER_ACTOR near_actor STALKE2_QUEST_ACTOR radius 2.0 2.0 2.0 sphere 0        
+        02A0:   actor PLAYER_ACTOR stopped
+        not actor.Driving(PLAYER_ACTOR)
+        8A32: not actor PLAYER_ACTOR on_turret_of_car
+            then
+            
+            if
+            8A2A: not  text_box 'INV117' displayed
+            then
+            0512: show_permanent_text_box 'INV117'
+            end
+            
+            if
+            0AB0:   key_pressed 69
+                then
+                break
+                end
+                
+            else
+            
+            if
+            0A2A:   text_box 'INV117' displayed
+            then
+            text.RemoveTextBox()
+            end
+            
+            end
+        
+        end
+        
+        if
+        0A2A:   text_box 'INV117' displayed
+        then
+        text.RemoveTextBox()
+        end
+        
+        v$OBJECTIVE = "DUMMY"
+        
+        marker.Disable(STALKE2_QUEST_ACTOR_MARKER)
+        
+        while not animation.Available("BOMBER")
+        wait 0
+        animation.Load("BOMBER")
+        end
+        
+        06AB: set_actor PLAYER_ACTOR all_weapons_hidden 1
+        0992: set_player PLAYER_CHAR weapons_scrollable 0
+        
+        Audiostream.Volume($CAR_SEARCH_SOUND) = $SOUNDS_VOLUME 
+        Audiostream.Loop($CAR_SEARCH_SOUND, 0)
+        Audiostream.PerformAction($CAR_SEARCH_SOUND, PLAY)
+         
+        0605: actor PLAYER_ACTOR perform_animation "BOM_PLANT" IFP "BOMBER" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1
+        
+        32@ = 0
+        
+        repeat
+        wait 0
+        
+        if
+        0E3E: is_button_just_pressed 0 button 15
+        then
+        wait 0
+        0687: clear_actor PLAYER_ACTOR task
+        end
+        
+        if
+        actor.Animation(PLAYER_ACTOR) == "BOM_PLANT"
+            then
+            else
+            v$OBJECTIVE = "GAME797"
+            0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+            $SOUNDS_VOLUME3 *= 0.5
+            Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+            Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+            Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+            06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0
+            0992: set_player PLAYER_CHAR weapons_scrollable 1
+            04EF: release_animation "BOMBER"
+            jump to @STALKE2_LOOT_CORPSE_AGAIN
+            end
+        
+        until 32@ > 2550
+        
+        Audiostream.PerformAction($CAR_SEARCH_SOUND, STOP)                
+        
+        06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0
+        0992: set_player PLAYER_CHAR weapons_scrollable 1
+        04EF: release_animation "BOMBER"
+        
+        if
+        0E4D: random_percent 55
+            then    
+            create_thread @TRS_NVD                    
+            end
+        
+        random_int 0@ 0 8
+        if
+        0@ == 4
+        then
+        STALKER_BACKPACK_EMPTY_FLAG = 1
+        text.ShowTextBox('INV299')
+        else
+        random_float EXTRA_WEIGHT 5.0 10.0
+        end                       
+        
+        STALKE2_DIED_FLAG = 1        
+        $QUEST_READY_FLAG = 1
+        $STALKER_QUEST_FLAG = 1
+        jump to @RANDOM_STALKE2_QUEST_GET_BACK         
+        end
+    end
+    
+if and
+STALKE2_DIED_FLAG == 0
+STALKE2_SPOTTED_FLAG == 0
+STALKE2_AMEBA_FLAG == 1
+    then            
+    if
+    8184:   actor STALKE2_QUEST_ACTOR health < 1
+        then            
+        if
+        actor.Animation(STALKE2_QUEST_ACTOR) == "crckidle1"
+            then
+            0829: actor STALKE2_QUEST_ACTOR perform_animation "crckdeth1" IFP_file "CRACK" rate 4.0 time -1 and_dies
+            STALKE2_DIED_FLAG = 1
+            
+            if and
+            0104:   actor STALKE2_QUEST_ACTOR near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0
+            89A8: not  actor STALKE2_QUEST_ACTOR headshoted 
+            $SPECTATING_FLAG == 0
+            $SCREWHUD_FLAG == 0
+            $PHRASES_OFF_FLAG == 0
+            then    
+            gosub @RANDOM_DIALOG_B_DEAD_STALKER           
+            gosub @STALKE2_NAME_CHECK                    
+            09FD: get_gxt_string v$PHRASE3 width_to 3@
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer                      
+            0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 3@ 1            
+            end
+            
+            end                                              
+        end
+    end
+    
+if and
+STALKE2_DIED_FLAG == 0
+STALKE2_SPOTTED_FLAG == 0
+STALKE2_AMEBA_FLAG == 0
+    then
+    if
+    8184:   actor STALKE2_QUEST_ACTOR health < 1
+        then            
+        STALKE2_DIED_FLAG = 1
+            
+        if and
+        0104:   actor STALKE2_QUEST_ACTOR near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0
+        89A8: not  actor STALKE2_QUEST_ACTOR headshoted 
+        $SPECTATING_FLAG == 0
+        $SCREWHUD_FLAG == 0
+        $PHRASES_OFF_FLAG == 0
+        then    
+        gosub @RANDOM_DIALOG_B_DEAD_STALKER           
+        gosub @STALKE2_NAME_CHECK                    
+        09FD: get_gxt_string v$PHRASE3 width_to 3@
+        0093: 3@ = integer 3@ to_float
+        3@ *= 8.0
+        0092: 3@ = float 3@ to_integer                      
+        0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 3@ 1            
+        end
+                                                         
+        end
+    end
+    
+if and
+$CHEATS_ON == 1
+0AB0:   key_pressed 69
+    then
+    32@ = 120000
+    0AD1: show_formatted_text_highpriority "HIGHLIGHT STALKER" time 2000
+    end
+
+if and
+STALKE2_SPOTTED_FLAG == 0
+32@ > 120000
+    then
+    actor.StorePos(STALKE2_QUEST_ACTOR,1@,2@,3@)
+    3@ += 100.0
+    0D54: draw_corona_with_extra_params_texture 0 color 128 0 0 255 on_entity 0 at 1@ 2@ 3@ size 1.2 far_clip 2000.0 near_clip 1.5 flare 0 enable_reflection 1 check_obstacles 0 flash_while_fading 0 fade_speed 15.0 only_from_below 0    
+    end            
+
+if and
+0364:   actor PLAYER_ACTOR spotted_actor STALKE2_QUEST_ACTOR
+02CB:   actor STALKE2_QUEST_ACTOR bounding_sphere_visible
+875C: not  marker STALKE2_QUEST_ACTOR_MARKER enabled
+86EE: not  actor STALKE2_QUEST_ACTOR in_group PLAYER_GROUP
+STALKE2_SPOTTED_FLAG == 0
+STALKE2_AMEBA_FLAG == 1
+0104:   actor PLAYER_ACTOR near_actor STALKE2_QUEST_ACTOR radius 80.0 80.0 50.0 sphere 0
+    then
+    
+    STALKE2_SPOTTED_FLAG = 1
+    
+    014F: stop_timer $SAVE_WAIT_TIME
+    
+    if
+    075C:   marker STALKE2_QUEST_MARKER_ON_MAP enabled
+    then
+    marker.Disable(STALKE2_QUEST_MARKER_ON_MAP)
+    end
+    
+    if
+    0184:   actor STALKE2_QUEST_ACTOR health > 0
+    then
+    STALKE2_QUEST_ACTOR_MARKER = marker.CreateAboveActor(STALKE2_QUEST_ACTOR)
+    v$OBJECTIVE = "GAME796"
+    if
+    REALISM_MODE == 1
+    then
+    v$OBJECTIVE2 = "DUMMY"
+    REALISM_QUEST_TARGET_ZONE = 'DUMMY'
+    REALISM_QUEST_TARGET_ZONE2 = 'DUMMY'
+    end
+    
+    0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+    $SOUNDS_VOLUME3 *= 0.5
+    Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+    Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+    Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+    else
+    jump to @STALKE2_WAS_ALREADY_DEAD_JUMP
+    end
+    
+    end
+    
+if and
+0364:   actor PLAYER_ACTOR spotted_actor STALKE2_QUEST_ACTOR
+02CB:   actor STALKE2_QUEST_ACTOR bounding_sphere_visible
+875C: not  marker STALKE2_QUEST_ACTOR_MARKER enabled
+86EE: not  actor STALKE2_QUEST_ACTOR in_group PLAYER_GROUP
+STALKE2_SPOTTED_FLAG == 0
+STALKE2_AMEBA_FLAG == 0
+    then
+    
+    STALKE2_SPOTTED_FLAG = 1
+    
+    014F: stop_timer $SAVE_WAIT_TIME
+    
+    if
+    075C:   marker STALKE2_QUEST_MARKER_ON_MAP enabled
+    then
+    marker.Disable(STALKE2_QUEST_MARKER_ON_MAP)
+    end
+    
+    if
+    0184:   actor STALKE2_QUEST_ACTOR health > 0
+    then
+    STALKE2_QUEST_ACTOR_MARKER = marker.CreateAboveActor(STALKE2_QUEST_ACTOR)
+    v$OBJECTIVE = "GAME795"
+    if
+    REALISM_MODE == 1
+    then
+    v$OBJECTIVE2 = "DUMMY"
+    REALISM_QUEST_TARGET_ZONE = 'DUMMY'
+    REALISM_QUEST_TARGET_ZONE2 = 'DUMMY'
+    end
+    
+    0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+    $SOUNDS_VOLUME3 *= 0.5
+    Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+    Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+    Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+    else
+    STALKE2_DIED_FLAG = 0
+    end
+    
+    end    
+
+if and
+STALKE2_QUEST_ACTION_FLAG == 0
+STALKE2_AMEBA_FLAG == 1
+075C:   marker STALKE2_QUEST_ACTOR_MARKER enabled
+0104:   actor PLAYER_ACTOR near_actor STALKE2_QUEST_ACTOR radius 100.0 100.0 10.0 sphere 0
+86EE: not  actor STALKE2_QUEST_ACTOR in_group PLAYER_GROUP
+0184:   actor STALKE2_QUEST_ACTOR health > 0
+    then
+    
+    if
+    STALKE2_SPOTTED2_FLAG == 0
+    then
+    v$OBJECTIVE = "GAME795"
+    if
+    REALISM_MODE == 1
+    then
+    v$OBJECTIVE2 = "DUMMY"
+    REALISM_QUEST_TARGET_ZONE = 'DUMMY'
+    REALISM_QUEST_TARGET_ZONE2 = 'DUMMY'
+    end
+    
+    0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+    $SOUNDS_VOLUME3 *= 0.5
+    Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+    Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+    Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+    STALKE2_SPOTTED2_FLAG = 1
+    end
+    
+    if
+    32@ > 5000
+    then
+    32@ = 0
+    v$PHRASE1 = "QP7_"
+    gosub @RANDOM_DIALOG_B_STALKER_RANDOM2
+    end            
+    
+    end
+    
+if and
+STALKE2_SPOTTED_FLAG == 1
+STALKE2_AMEBA_FLAG == 1
+STALKE2_DIED_FLAG == 0
+    then
+    0@ = actor.Health(STALKER_QUEST_ACTOR)
+    if
+    0@ > 300
+        then
+        v$OBJECTIVE = "DUMMY"        
+        marker.Disable(STALKER_QUEST_ACTOR_MARKER)
+            
+        wait 3000
+            
+        0792: disembark_instantly_actor STALKER_QUEST_ACTOR
+        0332: set_actor STALKER_QUEST_ACTOR bleeding 0
+        0687: clear_actor STALKER_QUEST_ACTOR task
+            
+        STALKE2_SPOTTED_FLAG = 0
+        STALKE2_AMEBA_FLAG = 0
+            
+        end
+    end            
+
+end
+
+//////////////////////////////////////////////////////////////////////////////////
+
+jump to @ASSUDALENIE_KODAB28  
+
+:ASSKOD_PROVALAB28 
+mission_cleanup     
+return 
+
+:ASSUDALENIE_KODAB28
+
+$ONMISSION = 0
+
+if
+075C:   marker MISSION_CHECKPOINT enabled
+then
+marker.Disable(MISSION_CHECKPOINT)
+end
+
+if
+075C:   marker STALKE2_QUEST_ACTOR_MARKER enabled
+then
+marker.Disable(STALKE2_QUEST_ACTOR_MARKER)
+end
+    
+mission_cleanup    
+return
+
+:STALKE2_QUEST_FAILED_AGRED
+
+014F: stop_timer $SAVE_WAIT_TIME
+
+if
+0A2A:   text_box 'INV117' displayed
+then
+text.RemoveTextBox()
+end
+
+text.ClearAll()
+$ONMISSION = 0
+$QUEST_READY_FLAG = 0
+$STALKER_QUEST_FLAG = -1
+v$FAILED_TEXT = "MS_FL59"
+create_thread @GM_2OVR
+mission_cleanup    
+return
+
+:STALKE2_QUEST_FAILED_LDEAD
+
+014F: stop_timer $SAVE_WAIT_TIME
+
+if
+0A2A:   text_box 'INV117' displayed
+then
+text.RemoveTextBox()
+end
+
+text.ClearAll()
+$ONMISSION = 0
+$QUEST_READY_FLAG = 0
+$STALKER_QUEST_FLAG = -1
+v$FAILED_TEXT = "MS_FL43"
+create_thread @GM_2OVR
+mission_cleanup    
+return
+
+:STALKE2_QUEST_FAILED_CANCEL
+
+014F: stop_timer $SAVE_WAIT_TIME
+
+if
+not PERK_CHARISMA == 2
+then
+008B: 0@ = $QUEST_CAMP_NUMBER // (int)
+0@ += 156
+$RNDM_HOUSE_BANKA[0@] -= 10
+end
+
+if
+0A2A:   text_box 'INV117' displayed
+then
+text.RemoveTextBox()
+end
+
+text.ClearAll()
+$ONMISSION = 0
+$QUEST_READY_FLAG = 0
+$STALKER_QUEST_FLAG = -1
+$QUEST_TYPE = -1
+QUARANTINE_SOUND_PLAY_FLAG = 0
+v$FAILED_TEXT = "MS_FL44"
+v$OBJECTIVE = "DUMMY"
+if
+REALISM_MODE == 1
+then
+v$OBJECTIVE2 = "DUMMY"
+REALISM_QUEST_TARGET_ZONE = 'DUMMY'
+REALISM_QUEST_TARGET_ZONE2 = 'DUMMY'
+end
+
+mission_cleanup    
+return
+
+:STALKE2_QUEST_BANDITS_FAILED_TIME
+
+014F: stop_timer $SAVE_WAIT_TIME
+
+text.ClearAll()
+$ONMISSION = 0
+$QUEST_READY_FLAG = 0
+$STALKER_QUEST_FLAG = -1
+v$FAILED_TEXT = "MS_FL58"
+create_thread @GM_2OVR
+mission_cleanup    
+return
+
+:RANDOM_STALKE2_QUEST_GET_BACK
+
+if
+075C:   marker STALKE2_QUEST_MARKER_ON_MAP enabled
+then
+marker.Disable(STALKE2_QUEST_MARKER_ON_MAP)
+end
+
+018A: STALKE2_QUEST_MARKER_ON_MAP = create_checkpoint_at STALKE2_QUEST_POINT2_X STALKE2_QUEST_POINT2_Y STALKE2_QUEST_POINT2_Z
+
+if
+$TALK_SIMULATE == 0
+then
+v$OBJECTIVE = "GAME541"
+if
+REALISM_MODE == 1
+then
+v$OBJECTIVE = "GME1294"
+end
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+$SOUNDS_VOLUME3 *= 0.5
+Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+end
+
+repeat
+wait 0
+until 00FE:   actor PLAYER_ACTOR sphere 0 in_sphere STALKE2_QUEST_POINT2_X STALKE2_QUEST_POINT2_Y STALKE2_QUEST_POINT2_Z radius 5.0 5.0 10.0
+
+if and
+STALKE2_DIED_FLAG == 0
+STALKE2_GOES_FORSELF_FLAG == 0
+then
+v$OBJECTIVE = "GAME696"
+if
+REALISM_MODE == 1
+    then
+    v$OBJECTIVE = "GME1293"
+    end
+else
+v$OBJECTIVE = "GAME556"
+if
+REALISM_MODE == 1
+    then
+    v$OBJECTIVE = "GME1295"
+    end
+end
+
+repeat
+wait 0
+until $STALKER_QUEST_FLAG == -1
+
+marker.Disable(STALKE2_QUEST_MARKER_ON_MAP)
+
+v$OBJECTIVE = "DUMMY"
+$ONMISSION = 0
+
+wait 400
+
+if
+056D:   actor STALKE2_QUEST_ACTOR defined
+    then    
+    if
+    06EE:   actor STALKE2_QUEST_ACTOR in_group PLAYER_GROUP
+        then
+        actor.DestroyWithFade(STALKE2_QUEST_ACTOR)
+        end    
+    end
+
+jump to @ASSUDALENIE_KODAB28
+
+:RANDOM_STALKE2_COORD_SET
+wait 0
+
+//0AD1: show_formatted_text_highpriority "GAY EY" time 500 
+
+if
+UNITED_MAP == 0
+then    
+0208: STALKE2_QUEST_RANDOM_X = random_float_in_ranges -2747.2507 2833.0591 
+0208: STALKE2_QUEST_RANDOM_Y = random_float_in_ranges 2680.6458 -2172.8049   
+else
+
+if
+$UNITED_III_SPAWN == 1
+then
+0208: STALKE2_QUEST_RANDOM_X = random_float_in_ranges -2711.3311 45.7344 
+0208: STALKE2_QUEST_RANDOM_Y = random_float_in_ranges -160.5908 2375.3311
+else     
+0208: STALKE2_QUEST_RANDOM_X = random_float_in_ranges 605.8673 2540.8437 
+0208: STALKE2_QUEST_RANDOM_Y = random_float_in_ranges -2719.9036 675.8437
+end
+
+end
+
+STALKE2_QUEST_RANDOM_Z = 0.0 
+
+gosub @RANDOM_STALKE2_SPAWN_ZONE_CHECK
+
+actor.StorePos(PLAYER_ACTOR,1@,2@,3@)
+0509: 4@ = distance_between_XY 1@ 2@ and_XY STALKE2_QUEST_RANDOM_X STALKE2_QUEST_RANDOM_Y
+02CE: STALKE2_QUEST_RANDOM_Z = ground_z_at STALKE2_QUEST_RANDOM_X STALKE2_QUEST_RANDOM_Y 100.0
+
+if
+UNITED_MAP == 0
+then
+STALKE2_QUEST_RANDOM_Z = 28.0
+end
+
+if
+UNITED_MAP == 0
+then
+if and
+6@ == 1
+4@ > 1000.0
+4@ < 2000.0
+STALKE2_QUEST_RANDOM_Z > 0.0
+jf @RANDOM_STALKE2_COORD_SET
+else
+if and
+6@ == 1
+4@ > 500.0
+4@ < 1500.0
+STALKE2_QUEST_RANDOM_Z > 0.0
+jf @RANDOM_STALKE2_COORD_SET
+end
+
+return
+
+:RANDOM_STALKE2_SPAWN_ZONE_CHECK
+6@ = 1
+
+if
+83CA: not  object DUMMY_OBJECT exists
+then
+DUMMY_OBJECT = object.Init(321,STALKE2_QUEST_RANDOM_X,STALKE2_QUEST_RANDOM_Y,100.0)
+0750: set_object DUMMY_OBJECT visibility 0
+0382: set_object DUMMY_OBJECT collision_detection 0
+object.Indestructibility(DUMMY_OBJECT,true)
+object.KeepInMemory(DUMMY_OBJECT,true)
+else
+object.PutAt(DUMMY_OBJECT,STALKE2_QUEST_RANDOM_X,STALKE2_QUEST_RANDOM_Y,100.0)
+end
+
+if
+UNITED_MAP == 0
+then
+
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA 429.69 2156.25 0.0 cornerB -85.94 1632.81 200.0 flag 0 //Army Zone 1
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2515.8704 -2300.5332 0.0 cornerB 2923.9133 -2714.2751 200.0 flag 0 //Army Zone 2
+04EA:  object DUMMY_OBJECT in_cube_cornerA -291.8675 -743.7072 0.0 cornerB -812.7712 -328.283 200.0 flag 0 //Army Zone 3
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1029.9045 224.8402 0.0 cornerB -1633.7898 742.1226 200.0 flag 0 //Army Zone 4
+04EA:  object DUMMY_OBJECT in_cube_cornerA 885.526 -1511.1262 0.0 cornerB 563.4574 -1238.0656 200.0 flag 0 //Bandit Zone 1
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1015.63 -62.50 0.0 cornerB 1468.75 414.06 200.0 flag 0 //Bandit Zone 2
+04EA:  object DUMMY_OBJECT in_cube_cornerA 894.7634 1538.1443 0.0 cornerB 1236.8 1117.0681 200.0 flag 0 //Bandit Zone 3
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2302.0935 -341.3542 0.0 cornerB -1916.9932 27.9204 200.0 flag 0 //Bandit Zone 4  
+    then
+    6@ = 0
+    end    
+
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1858.78 -1297.43 0.0 cornerB 1903.21 -1333.35 200.0 flag 0 //Trader Zone 0
+04EA:  object DUMMY_OBJECT in_cube_cornerA -404.3865 -1476.689 0.0 cornerB -345.3865 -1394.689 200.0 flag 0 //Trader Zone 1
+04EA:  object DUMMY_OBJECT in_cube_cornerA 427.52 2548.39 0.0 cornerB 407.61 2526.03 200.0 flag 0 //Trader Zone 2
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2619.17 -1511.30 0.0 cornerB 2786.00 -1415.17 200.0 flag 0 //Trader Zone 3
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1886.3972 -1690.2018 0.0 cornerB -1929.0323 -1650.1958 200.0 flag 0 //Trader Zone 4
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2301.83 -20.72 0.0 cornerB 2335.90 23.12 200.0 flag 0 //Trader Zone 5
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1755.02 926.82 0.0 cornerB 1718.80 891.51 200.0 flag 0 //Trader Zone 6
+    then
+    6@ = 0
+    end
+
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA 751.20 -1432.56 0.0 cornerB 691.96 -1516.19 200.0 flag 0 //Trader Zone 7
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1651.67 2606.63 0.0 cornerB -1682.51 2578.91 200.0 flag 0 //Trader Zone 8
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2323.0 1710.1875 0.0 cornerB 2398.0 1612.1875 200.0 flag 0 //Trader Zone 9
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2126.95 173.65 0.0 cornerB -2136.94 153.88 200.0 flag 0 //Trader Zone 10
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1909.89 787.54 0.0 cornerB -1909.89 787.54 200.0 flag 0 //Trader Zone 11
+04EA:  object DUMMY_OBJECT in_cube_cornerA -666.168 919.6441 0.0 cornerB -713.3187 950.6985 200.0 flag 0 //Trader Zone 12
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2210.40 642.64 0.0 cornerB -2201.72 724.11 200.0 flag 0 //Trader Zone 13  
+    then
+    6@ = 0
+    end
+    
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1357.4393 -850.5232 0.0 cornerB 1201.0028 -682.215 200.0 flag 0 //OOS Zone
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1140.63 -265.63 0.0 cornerB 953.13 -421.88 200.0 flag 0 //Survivors Zone 1
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2697.67 225.09 0.0 cornerB -2653.78 246.99 200.0 flag 0 //Survivors Zone 2
+04EA:  object DUMMY_OBJECT in_cube_cornerA -750.8 1498.59 0.0 cornerB -711.96 1572.89 200.0 flag 0 //Survivors Zone 3
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2053.71 -1759.78 0.0 cornerB 2019.05 -1805.22 200.0 flag 0 //Survivors Zone 4
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2519.62 1080.73 0.0 cornerB 2472.25 1188.69 200.0 flag 0 //Survivors Zone 5
+    then
+    6@ = 0
+    end
+    
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2786.9807 -1483.0641 0.0 cornerB 2822.3315 -1424.2843 200.0 flag 0 //Survivors Zone 4B
+04EA:  object DUMMY_OBJECT in_cube_cornerA 359.38 -1453.13 0.0 cornerB 265.63 -1585.94 30.0 flag 0 //Survivors Zone 4C
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2482.6663 -592.8055 0.0 cornerB -2543.678 -721.6879 200.0 flag 0 //Survivors Zone 2B
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2237.1636 935.8976 0.0 cornerB -2162.6333 1076.9303 200.0 flag 0 //Survivors Zone 2C
+04EA:  object DUMMY_OBJECT in_cube_cornerA -264.1352 2641.4204 0.0 cornerB -377.2627 2694.4468 200.0 flag 0 //Survivors Zone 3B
+04EA:  object DUMMY_OBJECT in_cube_cornerA 143.3994 -201.4584 0.0 cornerB 173.7076 -151.1922 200.0 flag 0 //Survivors Zone 1B
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1392.6833 -1604.0728 0.0 cornerB -1471.0334 -1436.6903 200.0 flag 0 //Survivors Zone 1C
+    then
+    6@ = 0
+    end
+    
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2236.3337 2722.114 0.0 cornerB 2460.2527 2824.3809 200.0 flag 0 //Survivors Zone 5B
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1016.7408 2205.6025 0.0 cornerB 1111.224 2062.55 30.0 flag 0 //Survivors Zone 5C
+    then
+    6@ = 0
+    end
+    
+if or
+04E6:   object DUMMY_OBJECT near_point 1701.3729 -478.4831 33.4145 radius 80.0 80.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 1696.6538 -456.1838 33.196 radius 80.0 80.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -196.2035 260.1373 12.0781 radius 40.0 40.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -167.5269 369.0612 12.0781 radius 40.0 40.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -140.9508 470.2005 12.1446 radius 40.0 40.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 568.3724 404.1745 18.9297 radius 40.0 40.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 522.1794 461.4417 18.9297 radius 40.0 40.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 472.3617 541.2493 18.9297 radius 40.0 40.0 10.0 flag 0
+    then
+    6@ = 0
+    end
+    
+if or        
+04E6:   object DUMMY_OBJECT near_point 438.2756 589.9736 18.922 radius 40.0 40.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 1705.9209 387.4872 31.2462 radius 15.0 15.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 1705.9209 387.4872 31.2462 radius 15.0 15.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 1702.4478 419.215 31.6904 radius 80.0 80.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 1713.8755 452.9702 31.7439 radius 80.0 80.0 10.0 flag 0 
+04E6:   object DUMMY_OBJECT near_point 1739.0465 524.6418 27.792 radius 80.0 80.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 1796.9082 803.6421 11.9841 radius 80.0 80.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -91.3199 -925.1218 18.9701 radius 60.0 60.0 10.0 flag 0
+    then
+    6@ = 0
+    end
+    
+if or        
+04E6:   object DUMMY_OBJECT near_point -76.5812 -894.0284 16.0403 radius 60.0 60.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -977.1158 -387.7733 36.2922 radius 60.0 60.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -952.1158 -262.2675 36.742 radius 60.0 60.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -937.7835 -234.6009 38.7915 radius 60.0 60.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 62.6183 -1533.1664 5.1803 radius 80.0 80.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 42.5451 -1530.0872 5.375 radius 80.0 80.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 197.2824 -1119.799 62.6762 radius 80.0 80.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 251.7135 -1023.0703 56.4744 radius 80.0 80.0 10.0 flag 0
+    then
+    6@ = 0
+    end
+    
+if or
+04E6:   object DUMMY_OBJECT near_point -1667.4214 544.2248 38.6321 radius 100.0 100.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -1634.1216 563.6423 39.5937 radius 40.0 40.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -1580.0278 650.1732 43.0643 radius 20.0 20.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -1489.5605 740.6168 46.1023 radius 20.0 20.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -1449.4218 762.1415 46.6998 radius 20.0 20.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -1394.9657 844.0401 47.3516 radius 20.0 20.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -1386.7476 853.6758 47.2528 radius 20.0 20.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -1134.2389 1106.2327 38.556 radius 100.0 100.0 10.0 flag 0
+    then
+    6@ = 0
+    end
+    
+if or
+04E6:   object DUMMY_OBJECT near_point -2688.9521 1405.9114 55.4297 radius 20.0 20.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -2681.6833 1448.6949 55.8125 radius 100.0 100.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -1587.891 -1424.3495 41.1482 radius 100.0 100.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -1903.4186 -1113.4783 38.3967 radius 100.0 100.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -1904.8696 -389.3445 39.0254 radius 100.0 100.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -2043.5305 -360.1454 35.3047 radius 100.0 100.0 10.0 flag 0
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1861.9833 -695.6805 0.0 cornerB -2167.907 -1019.5688 200.0 flag 0 //SF Fortpost
+04E6:   object DUMMY_OBJECT near_point 1176.072 -692.1957 62.1394 radius 80.0 80.0 10.0 flag 0
+    then
+    6@ = 0
+    end
+    
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2831.3398 -842.5018 0.0 cornerB 2920.6084 -798.687 200.0 flag 0 //LS East Fortpost
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2868.0059 -1870.424 0.0 cornerB 2801.4351 -2077.8884 200.0 flag 0 //LS East Fortpost 2
+04E6:   object DUMMY_OBJECT near_point 938.5729 734.5111 10.4818 radius 150.0 150.0 28.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 811.3041 2635.1475 13.5771 radius 200.0 200.0 28.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 755.8602 2644.0227 18.5635 radius 90.0 90.0 28.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 657.864 2524.3191 31.1933 radius 90.0 90.0 28.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 643.3171 2540.0981 32.7013 radius 90.0 90.0 28.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 877.2021 2614.1511 28.2733 radius 200.0 200.0 28.0 flag 0
+    then
+    6@ = 0
+    end    
+    
+//////////////////////////////////////////////////////////////////////////////////////////////////                    
+    
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1226.78 -1771.66 -90.0 -1820.64 -2643.68 200.0 flag 0 //CREEK
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1820.64 -1771.66 -90.0 -2030.12 -2174.89 200.0 flag 0 //CREEK1
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2178.69 -1115.58 -90.0 -2994.49 -2189.91 560.0 flag 0 //MTCHI1
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1936.12 -1250.97 -90.0 -2178.69 -1771.66 560.0 flag 0 //MTCHI2
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2178.69 -971.91 -90.0 -2997.47 -1115.58 560.0 flag 0 //MTCHI3
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2030.12 -1771.66 -90.0 -2178.69 -2189.91 560.0 flag 0 //MTCHI4
+    then
+    6@ = 0
+    end
+
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA 435.99 2677.90 0.0 37.03 2337.18 200.0 flag 0 //MEAD
+04EA:  object DUMMY_OBJECT in_cube_cornerA 421.23 2123.01 -50.0 -91.59 1655.05 250.0 flag 0 //REST
+04EA:  object DUMMY_OBJECT in_cube_cornerA -908.16 -787.39 114.98 -1209.67 -1317.10 250.0 flag 0 //FARM
+04EA:  object DUMMY_OBJECT in_cube_cornerA -592.09 2571.97 0.0 -901.13 2221.86 200.0 flag 0 //ARCO
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1457.46 2863.23 -89.08 1117.40 2723.23 200.0 flag 0 //YBELL1
+    then
+    6@ = 0
+    end
+    
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1457.37 1883.11 -89.08 1236.63 1203.28 200.0 flag 0 //VAIR1
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1777.39 1883.11 -89.08 1457.37 1203.28 200.0 flag 0 //VAIR2
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1213.91 -50.10 0.0 -1794.92 -730.12 200.0 flag 0 //SFAIR1
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1213.91 578.40 0.0 -1242.98 -50.10 200.0 flag 0 //SFAIR2
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1242.98 249.90 0.0 -1499.89 -50.10 200.0 flag 0 //SFAIR3
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1132.82 -50.10 0.0 -1213.91 -730.12 200.0 flag 0 //SFAIR4
+04EA:  object DUMMY_OBJECT in_cube_cornerA -947.98 578.40 0.0 -1213.91 -50.10 200.0 flag 0 //SFAIR5
+    then
+    6@ = 0
+    end
+
+if or    
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1852.0 -2179.25 -89.08 1249.62 -2394.33 200.0 flag 0 //LAIR1
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2201.82 -2394.33 -89.08 1382.73 -2730.88 200.0 flag 0 //LAIR2b
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2089.0 -2179.25 -89.08 1852 -2394.33 200.0 flag 0 //LAIR2a
+    then
+    6@ = 0
+    end
+    
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2616.40 2175.15 0.0 -2741.45 1659.68 200.0 flag 0 //GANTB
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2616.40 1659.68 0.0 -2741.07 1490.47 200.0 flag 0 //GANTB1
+04EA:  object DUMMY_OBJECT in_cube_cornerA 603.03 555.68 0.0 434.34 366.57 200.0 flag 0 //FALLO
+04EA:  object DUMMY_OBJECT in_cube_cornerA -122.13 476.47 0.0 -222.18 293.32 200.0 flag 0 //MART
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1785.14 567.20 0.0 1664.62 401.75 200.0 flag 0 //MAKO
+04EA:  object DUMMY_OBJECT in_cube_cornerA -592.09 2571.97 0.0 -901.13 2221.86 200.0 flag 0 //ARCO
+04EA:  object DUMMY_OBJECT in_cube_cornerA 860.55 1031.71 -115.24 337.24 710.84 200.0 flag 0 //QUARY
+    then
+    6@ = 0
+    end
+
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1213.91 1057.04 -89.08 -1339.89 828.13 200.0 flag 0 //GARV
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1087.93 1178.93 -89.08 -1213.91 502.0 200.0 flag 0 //GARV2
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1339.89 925.35 -179.62 -1499.89 696.44 200.0 flag 0 //GARV3
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1016.933 1199.3302 0.0 1096.097 1222.7902 200.0 flag 0 //BANDIT BASE LV
+04EA:  object DUMMY_OBJECT in_cube_cornerA -173.72 48.6644 0.0 106.1629 -136.1308 200.0 flag 0 //BLUEBERRY FARM
+    then
+    6@ = 0
+    end
+    
+//////////////////////////////////////////////////////////////////////////////////////////////////                  
+    
+else
+
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2635.8787 -354.2914 0.0 cornerB 2916.0 -32.2914 200.0 flag 0 //BIG BILLS BOWLS TRACK VC
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1786.27 -1191.43 0.0 cornerB 2163.66 -152.395 200.0 flag 0 //GOLF CLUB VC
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2635.8787 -354.2914 0.0 cornerB 2916.0 -32.2914 200.0 flag 0 //BEACH TRACK VC
+04EA:  object DUMMY_OBJECT in_cube_cornerA 92.1001 -1895.2 0.0 cornerB 792.1 -1265.2 200.0 flag 0 //AIRPORT VC
+04EA:  object DUMMY_OBJECT in_cube_cornerA 77.7263 -2752.63 0.0 cornerB 792.246 -1895.2 200.0 flag 0 //AIRPORT VC
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2247.4019 2063.7778 0.0 cornerB -2717.0303 2352.8291 200.0 flag 0 //Army Zone 2 LC  
+    then
+    6@ = 0
+    end
+    
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA -277.7767 1109.5814 0.0 cornerB -232.4244 1162.0369 200.0 flag 0 //Survivors Zone 1 LC
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1256.9427 1505.7239 0.0 cornerB -1339.8552 1401.7533 200.0 flag 0 //Survivors Zone 2 LC
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2421.9885 1909.3091 0.0 cornerB -2505.8318 1962.9353 200.0 flag 0 //Survivors Zone 3 LC
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1356.8033 245.7149 0.0 cornerB 1230.6315 357.2882 200.0 flag 0 //Survivors Zone 4 VC
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1010.0256 -1435.0776 0.0 cornerB 1159.0013 -1590.2578 200.0 flag 0 //Survivors Zone 5 VC
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2406.4055 -99.8233 0.0 cornerB 2329.9165 -8.8584 200.0 flag 0 //Survivors Zone 6 VC
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2176.4023 -2087.9294 0.0 cornerB 2079.8772 -2214.2107 200.0 flag 0 //Survivors Zone 7 VC
+    then
+    6@ = 0
+    end
+    
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2263.0713 2368.6123 0.0 cornerB -1685.692 2463.6145 200.0 flag 0 //Survivors Zone 8 LC
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1743.1509 2339.5959 0.0 cornerB -1603.3851 2217.8518 200.0 flag 0 //Survivors Zone 8 LC
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1080.4521 555.1386 0.0 cornerB -1153.1989 636.4949 200.0 flag 0 //Survivors Zone 9 LC
+04EA:  object DUMMY_OBJECT in_cube_cornerA -466.2975 639.7095 0.0 cornerB -274.9772 728.6678 200.0 flag 0 //Survivors Zone 10 LC
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2645.137 1243.5448 0.0 cornerB -2587.1526 1307.369 200.0 flag 0 //Bandits Zone 2 LC
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2247.4019 2063.7778 0.0 cornerB -2717.0303 2352.8291 200.0 flag 0 //Army Zone 2 LC
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2.6522 883.2079 0.0 cornerB 274.8031 1198.0509 200.0 flag 0 //Army Zone 3 LC
+04EA:  object DUMMY_OBJECT in_cube_cornerA -19.5689 1469.4327 0.0 cornerB 277.7072 1843.8197 200.0 flag 0 //Bandits Zone 3 LC
+    then
+    6@ = 0
+    end
+    
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2274.4585 -668.1191 0.0 cornerB 1687.1143 -305.3842 200.0 flag 0 //GOLF CLUB 2 VC
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2235.1589 -726.8676 0.0 cornerB 1885.4563 -1083.7006 200.0 flag 0 //GOLF CLUB 3 VC
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1617.6917 433.6124 0.0 cornerB 1428.5198 581.4255 200.0 flag 0 //OFFROAD TRACK VC
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2641.4382 -292.9647 0.0 cornerB 2909.6777 -11.6561 200.0 flag 0 //RC OFFROAD TRACK VC 
+    then
+    6@ = 0
+    end               
+
+end
+
+return
+
+////////////////////////Вычисление модели////////////////////////
+
+:STALKE2_QUEST_CHECKING_MODEL
+wait 0
+
+if
+UNITED_MAP == 0
+then
+
+///////////////////////////////////////////////////////////////////////////////
+
+if and
+8583: not  player PLAYER_CHAR in_zone 'VE'
+8583: not  player PLAYER_CHAR in_zone 'BONE'
+8583: not  player PLAYER_CHAR in_zone 'ROBAD'
+8583: not  player PLAYER_CHAR in_zone 'ROBAD1'
+then
+6@ = 0
+else
+6@ = 1
+end
+
+if
+6@ == 0
+then
+
+0842: 0@ = player PLAYER_CHAR town_number
+
+if
+not 0@ == 0
+then
+0@ = 12783
+else
+0@ = 12782
+end
+
+else
+0@ = 12781
+end
+
+///////////////////////////////////////////////////////////////////////////////
+
+if
+not model.Available(0@)
+then
+model.Load(0@)
+mload
+end
+
+return
+end   
+
+//////////////////////////////////////////////////
+    
+random_int 0@ = MIN_SKIN_GEN MAX_SKIN_GEN
+if and
+0@ == SKIN_GEN_SET
+UNITED_MAP == 0
+$GAMEMODE_WAR == 0
+    then
+    
+    while true
+    wait 0
+    
+    if
+    0E4D: random_percent NEWSKINS2_GEN_PERCENT
+    then
+    random_int 0@ $MIN_SKIN2 $MAX_SKIN2
+    else
+    random_int 0@ $MIN_SKIN $MAX_SKIN
+    end
+    
+    if
+    not model.Available(0@)
+    then
+    model.Load(0@)
+    mload
+    end
+    
+    if or
+    003C:   $RANDOM_MODE_MODEL == 0@  // (int)
+    07D6:   0@ == $RANDOM_PEOPLE_SKIN[0] // @ == $ (int)
+    07D6:   0@ == $RANDOM_PEOPLE_SKIN[1] // @ == $ (int)
+    07D6:   0@ == $RANDOM_PEOPLE_SKIN[2] // @ == $ (int)
+    07D6:   0@ == $RANDOM_PEOPLE_SKIN[3] // @ == $ (int)
+    07D6:   0@ == $RANDOM_PEOPLE_SKIN[4] // @ == $ (int)
+    07D6:   0@ == $RANDOM_PEOPLE_SKIN[5] // @ == $ (int)
+        then
+        else   
+        break
+        end
+    
+    end
+    
+    return
+    end
+    
+//////////////////////////////////////////////////    
+
+if
+UNITED_MAP == 0
+then
+
+if
+$GAMEMODE_WAR == 0
+then
+0209: 0@ = random_int_in_ranges 7 285
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+
+//////////////////////////////////////////////
+
+if and
+8583: not  player PLAYER_CHAR in_zone 'VE'
+8583: not  player PLAYER_CHAR in_zone 'BONE'
+8583: not  player PLAYER_CHAR in_zone 'ROBAD'
+8583: not  player PLAYER_CHAR in_zone 'ROBAD1'
+then
+1@ = 0
+else
+1@ = 1
+end
+
+if
+1@ == 0
+then
+
+0842: 2@ = player PLAYER_CHAR town_number
+
+if
+not 2@ == 0
+then
+0209: 0@ = random_int_in_ranges 14976 14980
+else
+0209: 0@ = random_int_in_ranges 14980 14984
+end
+
+else
+0209: 0@ = random_int_in_ranges 15000 15004
+end
+
+/////////////////////////////////////////////
+
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+0209: 0@ = random_int_in_ranges 14990 14998
+end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+then
+0209: 0@ = random_int_in_ranges 14985 14989
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+0209: 0@ = random_int_in_ranges #SWAT #SWAT
+end
+
+end
+
+else
+
+if
+$UNITED_VC_FLAG == 1
+then
+
+if
+$GAMEMODE_WAR == 0
+then
+
+if
+STORIES_MAP == 0
+then
+0209: 0@ = random_int_in_ranges MINID_VC_SKIN MAXID_VC_SKIN
+else
+0209: 0@ = random_int_in_ranges MINID_VCS_SKIN MAXID_VCS_SKIN
+end
+
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+0084: $VC_ARMY_SKIN22 = $VC_ARMY_SKIN2 // (int)
+$VC_ARMY_SKIN22 += 1
+0209: 0@ = random_int_in_ranges $VC_ARMY_SKIN $VC_ARMY_SKIN22
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+0084: $VC_BANDITS_SKIN22 = $VC_BANDITS_SKIN2 // (int)
+$VC_BANDITS_SKIN22 += 1
+0209: 0@ = random_int_in_ranges $VC_BANDITS_SKIN1 $VC_BANDITS_SKIN22
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+0209: 0@ = random_int_in_ranges $VC_SWAT_SKIN $VC_SWAT_SKIN
+end
+
+end
+
+else
+
+if
+$GAMEMODE_WAR == 0
+then
+
+if
+STORIES_MAP == 0
+then
+0209: 0@ = random_int_in_ranges MINID_III_SKIN MAXID_III_SKIN
+else
+0209: 0@ = random_int_in_ranges MINID_LCS_SKIN MAXID_LCS_SKIN
+end
+
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+0209: 0@ = random_int_in_ranges $III_ARMY_SKIN $III_ARMY_SKIN
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+0084: $III_BANDITS_SKIN22 = $III_BANDITS_SKIN2 // (int)
+$III_BANDITS_SKIN22 += 1
+0209: 0@ = random_int_in_ranges $III_BANDITS_SKIN1 $III_BANDITS_SKIN22
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+0209: 0@ = random_int_in_ranges $III_SWAT_SKIN $III_SWAT_SKIN
+end
+
+end
+
+end
+
+end
+
+if
+$GAMEMODE_WAR == 1
+then
+jump to @STALKE2_QUEST_CHECKING_MODEL2 
+end
+
+////////////////////////////////////////////////////////
+
+if
+UNITED_MAP == 0
+then
+
+2@ = 0
+
+for 1@ = 0 to $CAMPS_COUNT2
+        
+if or
+07D6:   0@ == $CAMP_MODEL1[1@] // @ == $ (int)
+07D6:   0@ == $CAMP_MODEL2[1@] // @ == $ (int)
+07D6:   0@ == $CAMP_MODEL3[1@] // @ == $ (int)
+07D6:   0@ == $CAMP_MODEL4[1@] // @ == $ (int)
+07D6:   0@ == $CAMP_MODEL5[1@] // @ == $ (int)
+07D6:   0@ == $CAMP_MODEL6[1@] // @ == $ (int)
+07D6:   0@ == $CAMP_MODEL7[1@] // @ == $ (int)
+07D6:   0@ == $CAMP_MODEL8[1@] // @ == $ (int)
+then
+2@ = 1
+end
+
+if or
+07D6:   0@ == $TRADER_MODEL[0] // @ == $ (int)
+07D6:   0@ == $TRADER_MODEL[1] // @ == $ (int)
+07D6:   0@ == $TRADER_MODEL[2] // @ == $ (int)
+07D6:   0@ == $TRADER_MODEL[3] // @ == $ (int)
+07D6:   0@ == $TRADER_MODEL[4] // @ == $ (int)
+07D6:   0@ == $TRADER_MODEL[5] // @ == $ (int)
+07D6:   0@ == $TRADER_MODEL[6] // @ == $ (int)
+07D6:   0@ == $TRADER_MODEL[7] // @ == $ (int)
+then
+2@ = 1
+end
+
+if or
+07D6:   0@ == $TRADER_MODEL[8] // @ == $ (int)
+07D6:   0@ == $TRADER_MODEL[9] // @ == $ (int)
+07D6:   0@ == $TRADER_MODEL[10] // @ == $ (int)
+07D6:   0@ == $TRADER_MODEL[11] // @ == $ (int)
+07D6:   0@ == $TRADER_MODEL[12] // @ == $ (int)
+07D6:   0@ == $TRADER_MODEL[13] // @ == $ (int)
+07D6:   0@ == $TRADER_MODEL[14] // @ == $ (int)
+then
+2@ = 1
+end
+            
+if or
+07D6:   0@ == $CAMP_MODEL9[1@] // @ == $ (int)
+07D6:   0@ == $CAMP_MODEL10[1@] // @ == $ (int)
+003C:   $RANDOM_MODE_MODEL == 0@  // (int)
+then
+2@ = 1
+end   
+
+end
+
+end
+
+////////////////////////////////////////////////////////
+
+if or
+07D6:   0@ == $RANDOM_PEOPLE_SKIN[0] // @ == $ (int)
+07D6:   0@ == $RANDOM_PEOPLE_SKIN[1] // @ == $ (int)
+07D6:   0@ == $RANDOM_PEOPLE_SKIN[2] // @ == $ (int)
+07D6:   0@ == $RANDOM_PEOPLE_SKIN[3] // @ == $ (int)
+07D6:   0@ == $RANDOM_PEOPLE_SKIN[4] // @ == $ (int)
+07D6:   0@ == $RANDOM_PEOPLE_SKIN[5] // @ == $ (int)
+003C:   $RANDOM_MODE_MODEL == 0@  // (int)
+2@ == 1
+jf @STALKE2_QUEST_CHECKING_MODEL2
+jump @STALKE2_QUEST_CHECKING_MODEL
+
+:STALKE2_QUEST_CHECKING_MODEL2
+ 
+if
+07DE:   model 0@ exists  // versionB
+jf @STALKE2_QUEST_CHECKING_MODEL
+
+if
+$GAMEMODE_WAR == 0
+then
+0AD3: 2@v = format "%d" 0@
+0AF0: 1@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key 2@v
+if
+not 1@ == 1
+jf @STALKE2_QUEST_CHECKING_MODEL
+end  
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+  
+return
+
+:STALKE2_QUEST_ACTOR_WEAPON_CREATE
+wait 0 
+
+if
+UNITED_MAP == 0
+then
+random_int 11@ MIN_WEAP_GEN to MAX_WEAP_GEN
+end
+
+if
+not 11@ == WEAP_GEN_SET
+then
+0209: 10@ = random_int_in_ranges 22 35 
+else
+0209: 10@ = random_int_in_ranges MIN_WEAPON_NUM MAX_WEAPON_NUM
+end
+
+if
+UNITED_MAP == 1
+then
+
+if 
+$UNITED_VC_FLAG == 1
+then
+
+if
+STORIES_MAP == 0
+then
+0209: 10@ = random_int_in_ranges MINID_VC_WEAP MAXID_VC_WEAP
+else
+0209: 10@ = random_int_in_ranges MINID_VCS_WEAP MAXID_VCS_WEAP
+end
+
+else
+
+if
+STORIES_MAP == 0
+then
+0209: 10@ = random_int_in_ranges MINID_III_WEAP MAXID_III_WEAP
+else
+0209: 10@ = random_int_in_ranges MINID_LCS_WEAP MAXID_LCS_WEAP
+end
+
+end
+
+end    
+
+////////////////////////////////////////////////////
+
+if or
+10@ == 22
+10@ == 25
+10@ == 26
+10@ == 27
+10@ == 28
+10@ == 29
+10@ == 30 
+    then
+    else
+    if or
+    10@ == 31
+    10@ == 72
+    10@ == 73
+    10@ == 74
+    10@ == 75 
+        then
+        else
+        if or
+        10@ == 76
+        10@ == 77
+        10@ == 136
+        10@ == 138
+        10@ == 139
+        10@ == 140
+            then     
+            else
+            if or
+            10@ == 141
+            10@ == 142
+            10@ == 143
+            10@ == 144
+            10@ == 145
+                then
+                else
+                if or
+                10@ == 111
+                10@ == 112
+                10@ == 113
+                10@ == 116
+                10@ == 117  
+                10@ == 79
+                    then
+                    else
+                    if or
+                    10@ == 81
+                    10@ == 82
+                    10@ == 83
+                    10@ == 84
+                    10@ == 85
+                    10@ == 86  
+                    10@ == 87
+                    10@ == 88
+                        then
+                        else
+                        if or
+                        10@ == 89
+                        10@ == 90
+                        10@ == 91
+                        10@ == 23
+                        10@ == 32
+                            then
+                            else
+                            if or
+                            10@ == 165
+                            10@ == 166
+                            10@ == 167
+                            10@ == 168
+                            10@ == 169
+                            10@ == 170
+                            10@ == 171
+                            10@ == 172
+                                then
+                                else
+                                if or
+                                10@ == 173
+                                10@ == 174
+                                10@ == 195
+                                10@ == 196
+                                10@ == 197
+                                10@ == 198
+                                    then
+                                    else
+                                    if or
+                                    10@ == 199
+                                    10@ == 200
+                                    10@ == 201
+                                    10@ == 202
+                                    10@ == 203
+                                    10@ == 204
+                                        then       
+                                        else
+                                        if or
+                                        10@ == 95
+                                        10@ == 98
+                                        10@ == 99
+                                        10@ == 101
+                                            then
+                                            else       
+                                            if or
+                                            10@ == 104
+                                            10@ == 105
+                                                then       
+                                                else
+                                                jump to @STALKE2_QUEST_ACTOR_WEAPON_CREATE
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+////////////////////////////////////////////////////    
+  
+0781: get_weapon_with_ID 10@ model_to 11@ 
+if 
+07DE:   model 11@ exists // versionB 
+jf @STALKE2_QUEST_ACTOR_WEAPON_CREATE
+
+while not model.Available(11@)
+wait 0
+model.Load(11@)
+mload
+end
+
+Actor.GiveWeaponAndAmmo(STALKE2_QUEST_ACTOR, 10@, 99999)
+return
+
+:RANDOM_DIALOG_B_STALKER_RANDOM
+    
+for 1@ = 0 to 200
+
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 30@ 0 1@
+    end
+
+end
+
+/////////////////////////////////////////////////////////////////////  
+
+0AD3: v$PHRASE2 = format "%d" 30@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 29@
+0093: 29@ = integer 29@ to_float
+29@ *= 8.0
+0092: 29@ = float 29@ to_integer
+
+32@ = 0
+                
+repeat
+wait 0
+
+if
+200@ == 1
+then
+0512: show_permanent_text_box 'GAME718'
+end  
+                                                                            
+0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 99 1
+
+if and
+0E3E: is_button_just_pressed 0 button 11
+200@ == 1
+    then
+    
+    200@ = 0
+    
+    if
+    0A2A:   text_box 'GAME718' displayed
+    then
+    text.RemoveTextBox()
+    end
+        
+    random_int 0@ 0 4
+        
+    if
+    not 0@ == 2
+    then
+    v$PHRASE1 = "QP41_"
+    201@ = 1
+    jump to @RANDOM_DIALOG_B_STALKER_RANDOM
+    else
+    v$PHRASE1 = "QP40_"
+    201@ = 2
+    jump to @RANDOM_DIALOG_B_STALKER_RANDOM
+    end
+    
+    end
+                                
+if or
+$SAVESTATUS_TRUE == 1
+$SAVESTATUS == 1
+actor.Dead(STALKE2_QUEST_ACTOR)
+    then
+    break
+    end
+                                
+until 002D:   32@ >= 29@  // (int)
+
+if
+0A2A:   text_box 'GAME718' displayed
+then
+text.RemoveTextBox()
+end
+
+return
+
+:RANDOM_DIALOG_B_STALKER_RANDOM2
+    
+for 1@ = 0 to 200
+
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 30@ 0 1@
+    end
+
+end
+
+/////////////////////////////////////////////////////////////////////  
+
+0AD3: v$PHRASE2 = format "%d" 30@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 29@
+0093: 29@ = integer 29@ to_float
+29@ *= 8.0
+0092: 29@ = float 29@ to_integer  
+                                                                            
+0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 29@ 1
+
+return
+
+:STALKE2_FOLLOW_ACCEPT
+
+32@ = 0
+$NOT_ALLOW_COMMANDS = 1
+
+while true
+wait 0
+text.ShowH('GAME540',100,1)
+
+if
+0E3E: is_button_just_pressed 0 button 11
+then
+text.ClearAll()
+v$PHRASE1 = "QP10_"
+0@ = 0
+gosub @RANDOM_DIALOG_B_STALKER_RANDOM
+return
+end
+
+if or
+0E3E: is_button_just_pressed 0 button 10
+32@ > 10000
+then
+text.ClearAll()
+v$PHRASE1 = "QP11_"
+0@ = 1
+gosub @RANDOM_DIALOG_B_STALKER_RANDOM
+return
+end
+
+if
+actor.Dead(STALKE2_QUEST_ACTOR)
+then
+text.ClearAll()
+0@ = 2
+$NOT_ALLOW_COMMANDS = 0
+return
+end
+
+end
+
+return
+
+:PEOPLE_STALKE2_PHRASES
+
+////////////////////////////////////////////////Голос получения урона от союзников////////////////////////////////////////////////
+
+if and
+056D:   actor STALKE2_QUEST_ACTOR defined
+FRIENDLY_FIRE_ON == 1
+    then   
+    if and
+    001D:   STALKER_PAIN_TIMER > STALKER_PAIN_TIMER2 // (int)
+    not actor.Dead(STALKE2_QUEST_ACTOR)
+    0104:   actor STALKE2_QUEST_ACTOR near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0
+    06EE:   actor STALKE2_QUEST_ACTOR in_group PLAYER_GROUP  
+    051A:   actor STALKE2_QUEST_ACTOR damaged_by_actor PLAYER_ACTOR 
+        then            
+        
+        3@ = 0
+        2@ = 0
+        1@ = 0
+        
+        04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 2 weapon 26@ ammo 27@ model 28@        
+
+        if or
+        031D:   actor STALKE2_QUEST_ACTOR hit_by_weapon 0
+        031D:   actor STALKE2_QUEST_ACTOR hit_by_weapon 46
+        031D:   actor STALKE2_QUEST_ACTOR hit_by_weapon 26@
+        then
+        0467: clear_actor STALKE2_QUEST_ACTOR last_weapon_damage
+        054E: clear_actor STALKE2_QUEST_ACTOR damage
+        2@ = 1
+        1@ = 1
+        else
+        0467: clear_actor STALKE2_QUEST_ACTOR last_weapon_damage
+        054E: clear_actor STALKE2_QUEST_ACTOR damage
+        2@ = 1
+        1@ = 0
+        end
+        
+        if
+        actor.Driving(PLAYER_ACTOR)
+        then
+        0467: clear_actor STALKE2_QUEST_ACTOR last_weapon_damage
+        054E: clear_actor STALKE2_QUEST_ACTOR damage
+        3@ = 1            
+        end        
+        
+        if
+        2@ == 1
+            then
+            
+            STALKER_PAIN_TIMER = 0
+            random_int STALKER_PAIN_TIMER2 STALKER_PAIN_TIMER_MIN STALKER_PAIN_TIMER_MAX
+            
+            if
+            $GAMEMODE_HOLD == 0
+            then
+            
+            if
+            3@ == 0
+            then
+            
+            if
+            1@ == 0
+            then
+            gosub @RANDOM_DIALOG_B_DAMAGED_BY_WEAPON_STALKER_FRIENDLY  
+//            STALKER_PLAYER_DAMAGE_COUNT += 1
+            else
+            gosub @RANDOM_DIALOG_B_DAMAGED_BY_ZOMBIES_STALKER_FRIENDLY
+//            STALKER_PLAYER_DAMAGE_COUNT += 1  
+            end
+            
+            else
+            gosub @RANDOM_DIALOG_B_DAMAGED_BY_CAR_STALKER_FRIENDLY
+//            STALKER_PLAYER_DAMAGE_COUNT += 1
+            end 
+            
+            end
+        
+            gosub @STALKE2_NAME_CHECK           
+                        
+            09FD: get_gxt_string v$PHRASE3 width_to 3@
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer  
+                        
+            0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 3@ 1      
+            end            
+        end
+    end       
+
+////////////////////////////////////////////////Голос получения урона от врагов////////////////////////////////////////////////
+
+if
+056D:   actor STALKE2_QUEST_ACTOR defined
+    then   
+    if and
+    001D:   STALKER_PAIN_TIMER > STALKER_PAIN_TIMER2 // (int)
+    not actor.Dead(STALKE2_QUEST_ACTOR)
+    0104:   actor STALKE2_QUEST_ACTOR near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0   
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0   
+        then       
+        
+        if
+        06EE:   actor STALKE2_QUEST_ACTOR in_group PLAYER_GROUP
+        then
+        
+        if
+        051A:   actor STALKE2_QUEST_ACTOR damaged_by_actor PLAYER_ACTOR 
+        then
+        jump to @ASSWOOPINSB
+        end
+        
+        end   
+        
+        2@ = 0
+        1@ = 0
+        
+        ///////////////////////
+        
+        for 0@ = 22 to 34
+        
+        if
+        031D:   actor STALKE2_QUEST_ACTOR hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor STALKE2_QUEST_ACTOR last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 70 to MAX_WEAPON_NUM_NORMAL
+        
+        if
+        031D:   actor STALKE2_QUEST_ACTOR hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor STALKE2_QUEST_ACTOR last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 111 to 121
+        
+        if
+        031D:   actor STALKE2_QUEST_ACTOR hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor STALKE2_QUEST_ACTOR last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 136 to 151
+        
+        if
+        031D:   actor STALKE2_QUEST_ACTOR hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor STALKE2_QUEST_ACTOR last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 165 to 183
+        
+        if
+        031D:   actor STALKE2_QUEST_ACTOR hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor STALKE2_QUEST_ACTOR last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 195 to 213
+        
+        if
+        031D:   actor STALKE2_QUEST_ACTOR hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor STALKE2_QUEST_ACTOR last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////        
+        
+        if and 
+        031D:   actor STALKE2_QUEST_ACTOR hit_by_weapon 0
+        851A: not  actor STALKE2_QUEST_ACTOR damaged_by_actor PLAYER_ACTOR
+        then
+        
+        2@ = 1
+        1@ = 1
+        0467: clear_actor STALKE2_QUEST_ACTOR last_weapon_damage
+        end
+        
+        if
+        2@ == 1
+            then
+            
+            STALKER_PAIN_TIMER = 0
+            random_int STALKER_PAIN_TIMER2 STALKER_PAIN_TIMER_MIN STALKER_PAIN_TIMER_MAX
+            
+            if
+            1@ == 0
+            then
+            gosub @RANDOM_DIALOG_B_DAMAGED_BY_WEAPON_STALKER  
+            else
+            gosub @RANDOM_DIALOG_B_DAMAGED_BY_ZOMBIES_STALKER  
+            end 
+        
+            gosub @STALKE2_NAME_CHECK          
+                        
+            09FD: get_gxt_string v$PHRASE3 width_to 3@
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer  
+                        
+            0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 3@ 1      
+            end            
+        end
+    end 
+    
+:ASSWOOPINSB      
+
+////////////////////////////////////////////////Голос атаки////////////////////////////////////////////////
+    
+if 
+056D:   actor STALKE2_QUEST_ACTOR defined
+    then
+    if and
+    001D:   STALKER_ATTACK_TIMER > STALKER_ATTACK_TIMER2 // (int)
+    not actor.Dead(STALKE2_QUEST_ACTOR)
+    0104:   actor STALKE2_QUEST_ACTOR near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0
+    02E0:   actor STALKE2_QUEST_ACTOR firing_weapon  
+        then
+        
+        STALKER_ATTACK_TIMER = 0
+        random_int random_int STALKER_ATTACK_TIMER2 STALKER_ATTACK_TIMER_MIN STALKER_ATTACK_TIMER_MAX
+                
+        gosub @RANDOM_DIALOG_B_ATTACK_STALKER           
+        gosub @STALKE2_NAME_CHECK           
+                    
+        09FD: get_gxt_string v$PHRASE3 width_to 3@
+        0093: 3@ = integer 3@ to_float
+        3@ *= 8.0
+        0092: 3@ = float 3@ to_integer  
+                    
+        0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 3@ 1   
+        end            
+    end
+    
+////////////////////////////////////////////////Голос про охотника////////////////////////////////////////////////      
+
+if 
+056D:   actor STALKE2_QUEST_ACTOR defined
+    then
+    04DD: 0@ = actor STALKE2_QUEST_ACTOR armour
+    if and
+    001D:   STALKER_HUNTER_TIMER > STALKER_HUNTER_TIMER2 // (int)
+    not actor.Dead(STALKE2_QUEST_ACTOR)
+    0104:   actor STALKE2_QUEST_ACTOR near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0  
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0
+    0@ == 1
+        then
+        
+        STALKER_HUNTER_TIMER = 0
+        random_int random_int STALKER_HUNTER_TIMER2 150 350
+                
+        gosub @RANDOM_DIALOG_B_HUNTER_STALKER           
+        gosub @STALKE2_NAME_CHECK
+                    
+        09FD: get_gxt_string v$PHRASE3 width_to 3@
+        0093: 3@ = integer 3@ to_float
+        3@ *= 8.0
+        0092: 3@ = float 3@ to_integer  
+                    
+        0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 3@ 1   
+        end            
+    end  
+    
+////////////////////////////////////////////////Голос про танка////////////////////////////////////////////////      
+
+random_int 3@ 0 to 19
+
+if and
+056D:   actor STALKE2_QUEST_ACTOR defined  
+056D:   actor $TANK[3@] defined
+$PHRASES_OFF_FLAG == 0  
+    then
+    if and
+    001D:   STALKER_TANK_TIMER > STALKER_TANK_TIMER2 // (int)
+    not actor.Dead(STALKE2_QUEST_ACTOR)
+    not actor.Dead($TANK[3@])
+    0104:   actor STALKE2_QUEST_ACTOR near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0  
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    0104:   actor $TANK[3@] near_actor STALKE2_QUEST_ACTOR radius 100.0 100.0 100.0 0      
+    06EE:   actor STALKE2_QUEST_ACTOR in_group PLAYER_GROUP
+        then
+        if or
+        0364:   actor STALKE2_QUEST_ACTOR spotted_actor $TANK[3@]   
+        0364:   actor $TANK[3@] spotted_actor STALKE2_QUEST_ACTOR
+            then
+        
+            STALKER_TANK_TIMER = 0
+            random_int random_int STALKER_TANK_TIMER2 STALKER_PAIN_TIMER_MIN STALKER_TANK_TIMER_MAX
+                    
+            gosub @RANDOM_DIALOG_B_TANK_NEAR_STALKER               
+            gosub @STALKE2_NAME_CHECK
+                        
+            09FD: get_gxt_string v$PHRASE3 width_to 3@
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer  
+                        
+            0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 3@ 1   
+            end        
+         end    
+     end   
+     
+////////////////////////////////////////////////Голос про охотника////////////////////////////////////////////////      
+
+random_int 3@ 0 to 19
+
+if and
+056D:   actor STALKE2_QUEST_ACTOR defined  
+056D:   actor $HUNTER[3@] defined
+$PHRASES_OFF_FLAG == 0  
+    then
+    if and
+    001D:   STALKER_HUNTER2_TIMER > STALKER_HUNTER2_TIMER2 // (int)
+    not actor.Dead(STALKE2_QUEST_ACTOR)
+    not actor.Dead($HUNTER[3@])
+    0104:   actor STALKE2_QUEST_ACTOR near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0  
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    0104:   actor $HUNTER[3@] near_actor STALKE2_QUEST_ACTOR radius 100.0 100.0 100.0 0  
+    06EE:   actor STALKE2_QUEST_ACTOR in_group PLAYER_GROUP    
+        then
+        if or
+        0364:   actor STALKE2_QUEST_ACTOR spotted_actor $HUNTER[3@]   
+        0364:   actor $HUNTER[3@] spotted_actor STALKE2_QUEST_ACTOR
+            then
+        
+            STALKER_HUNTER2_TIMER = 0
+            random_int random_int STALKER_HUNTER_TIMER2 STALKER_HUNTER2_TIMER_MIN STALKER_HUNTER2_TIMER_MAX
+                    
+            gosub @RANDOM_DIALOG_B_HUNTER_NEAR_STALKER               
+            gosub @STALKE2_NAME_CHECK
+                        
+            09FD: get_gxt_string v$PHRASE3 width_to 3@
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer  
+                        
+            0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 3@ 1   
+            end        
+         end    
+     end      
+     
+////////////////////////////////////////////////Голос про ведьму////////////////////////////////////////////////      
+
+random_int 3@ 0 to 19
+
+if and
+056D:   actor STALKE2_QUEST_ACTOR defined  
+056D:   actor $WITCH[3@] defined
+$PHRASES_OFF_FLAG == 0  
+    then
+    if and
+    001D:   STALKER_WITCH_TIMER > STALKER_WITCH_TIMER2 // (int)
+    not actor.Dead(STALKE2_QUEST_ACTOR)
+    not actor.Dead($WITCH[3@])
+    0104:   actor STALKE2_QUEST_ACTOR near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0  
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    0104:   actor $WITCH[3@] near_actor STALKE2_QUEST_ACTOR radius 100.0 100.0 100.0 0   
+    06EE:   actor STALKE2_QUEST_ACTOR in_group PLAYER_GROUP   
+        then
+        if or
+        0364:   actor STALKE2_QUEST_ACTOR spotted_actor $WITCH[3@]   
+        0364:   actor $WITCH[3@] spotted_actor STALKE2_QUEST_ACTOR
+            then
+        
+            STALKER_WITCH_TIMER = 0
+            random_int random_int STALKER_WITCH_TIMER2 STALKER_WITCH_TIMER_MIN STALKER_WITCH_TIMER_MAX
+                    
+            gosub @RANDOM_DIALOG_B_WITCH_NEAR_STALKER               
+            gosub @STALKE2_NAME_CHECK
+                        
+            09FD: get_gxt_string v$PHRASE3 width_to 3@
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer  
+                        
+            0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 3@ 1   
+            end        
+         end    
+     end     
+     
+////////////////////////////////////////////////Голос про громилу////////////////////////////////////////////////      
+
+random_int 3@ 0 to 19
+
+if and
+056D:   actor STALKE2_QUEST_ACTOR defined  
+056D:   actor $CHARGER[3@] defined
+$PHRASES_OFF_FLAG == 0  
+    then
+    if and
+    001D:   STALKER_CHARGER_TIMER > STALKER_CHARGER_TIMER2 // (int)
+    not actor.Dead(STALKE2_QUEST_ACTOR)
+    not actor.Dead($CHARGER[3@])
+    0104:   actor STALKE2_QUEST_ACTOR near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0  
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    0104:   actor $CHARGER[3@] near_actor STALKE2_QUEST_ACTOR radius 100.0 100.0 100.0 0  
+    06EE:   actor STALKE2_QUEST_ACTOR in_group PLAYER_GROUP    
+        then
+        if or
+        0364:   actor STALKE2_QUEST_ACTOR spotted_actor $CHARGER[3@]   
+        0364:   actor $CHARGER[3@] spotted_actor STALKE2_QUEST_ACTOR
+            then
+        
+            STALKER_CHARGER_TIMER = 0
+            random_int random_int STALKER_CHARGER_TIMER2 STALKER_CHARGER_TIMER_MIN STALKER_CHARGER_TIMER_MAX
+                    
+            gosub @RANDOM_DIALOG_B_CHARGER_NEAR_STALKER               
+            gosub @STALKE2_NAME_CHECK
+                        
+            09FD: get_gxt_string v$PHRASE3 width_to 3@
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer  
+                        
+            0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 3@ 1   
+            end        
+         end    
+     end
+    
+return    
+
+:RANDOM_DIALOG_B_DEAD_STALKER
+    
+for 1@ = 0 to 200
+
+/////////////////////////////////////////////////////////////////
+
+if
+$GAMEMODE_WAR == 0
+then
+v$PHRASE1 = "PH1_"
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+v$PHRASE1 = "PH14_"
+end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+then
+v$PHRASE1 = "PH39_"
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+v$PHRASE1 = "PH26_"
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+v$PHRASE1 = "PH53_"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end
+
+/////////////////////////////////////////////////////////////////  
+
+if
+$GAMEMODE_WAR == 0
+then
+v$PHRASE1 = "PH1_"
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+v$PHRASE1 = "PH14_"
+end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+then
+v$PHRASE1 = "PH39_"
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+v$PHRASE1 = "PH26_"
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+v$PHRASE1 = "PH53_"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return
+
+:RANDOM_DIALOG_B_DAMAGED_BY_WEAPON_STALKER
+
+if
+SURVIVOR_IN_PLAYER_TEAM == 1
+then
+    
+for 1@ = 0 to 200
+
+/////////////////////////////////////////////////////////////////
+
+if
+$GAMEMODE_WAR == 0
+then
+v$PHRASE1 = "PH2_"
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+v$PHRASE1 = "PH15_"
+end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+then
+v$PHRASE1 = "PH40_"
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+v$PHRASE1 = "PH27_"
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+v$PHRASE1 = "PH54_"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+/////////////////////////////////////////////////////////////////
+
+if
+$GAMEMODE_WAR == 0
+then
+v$PHRASE1 = "PH2_"
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+v$PHRASE1 = "PH15_"
+end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+then
+v$PHRASE1 = "PH40_"
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+v$PHRASE1 = "PH27_"
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+v$PHRASE1 = "PH54_"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+else
+
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH3_"
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH3_"
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+end
+
+return
+
+:RANDOM_DIALOG_B_DAMAGED_BY_WEAPON_STALKER_FRIENDLY
+    
+for 1@ = 0 to 200
+
+/////////////////////////////////////////////////////////////////
+
+if
+$GAMEMODE_WAR == 0
+then
+v$PHRASE1 = "PH4_"
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+v$PHRASE1 = "PH91_"
+end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+then
+v$PHRASE1 = "PH95_"
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+v$PHRASE1 = "PH93_"
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+v$PHRASE1 = "PH97_"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+/////////////////////////////////////////////////////////////////
+
+if
+$GAMEMODE_WAR == 0
+then
+v$PHRASE1 = "PH4_"
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+v$PHRASE1 = "PH91_"
+end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+then
+v$PHRASE1 = "PH95_"
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+v$PHRASE1 = "PH93_"
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+v$PHRASE1 = "PH97_"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return
+
+:RANDOM_DIALOG_B_DAMAGED_BY_ZOMBIES_STALKER_FRIENDLY
+    
+for 1@ = 0 to 200
+
+/////////////////////////////////////////////////////////////////
+
+if
+$GAMEMODE_WAR == 0
+then
+v$PHRASE1 = "PH5_"
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+v$PHRASE1 = "PH92_"
+end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+then
+v$PHRASE1 = "PH96_"
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+v$PHRASE1 = "PH94_"
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+v$PHRASE1 = "PH98_"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+/////////////////////////////////////////////////////////////////
+
+if
+$GAMEMODE_WAR == 0
+then
+v$PHRASE1 = "PH5_"
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+v$PHRASE1 = "PH92_"
+end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+then
+v$PHRASE1 = "PH96_"
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+v$PHRASE1 = "PH94_"
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+v$PHRASE1 = "PH98_"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return
+
+:RANDOM_DIALOG_B_DAMAGED_BY_CAR_STALKER_FRIENDLY
+    
+for 1@ = 0 to 200
+
+/////////////////////////////////////////////////////////////////
+
+if
+$GAMEMODE_WAR == 0
+then
+v$PHRASE1 = "PH103_"
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+v$PHRASE1 = "PH104_"
+end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+then
+v$PHRASE1 = "PH106_"
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+v$PHRASE1 = "PH105_"
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+v$PHRASE1 = "PH107_"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+/////////////////////////////////////////////////////////////////
+
+if
+$GAMEMODE_WAR == 0
+then
+v$PHRASE1 = "PH103_"
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+v$PHRASE1 = "PH104_"
+end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+then
+v$PHRASE1 = "PH106_"
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+v$PHRASE1 = "PH105_"
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+v$PHRASE1 = "PH107_"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return
+
+:RANDOM_DIALOG_B_DAMAGED_BY_ZOMBIES_STALKER
+    
+for 1@ = 0 to 200
+
+/////////////////////////////////////////////////////////////////
+
+if
+$GAMEMODE_WAR == 0
+then
+v$PHRASE1 = "PH6_"
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+v$PHRASE1 = "PH16_"
+end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+then
+v$PHRASE1 = "PH41_"
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+v$PHRASE1 = "PH28_"
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+v$PHRASE1 = "PH55_"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+/////////////////////////////////////////////////////////////////
+
+if
+$GAMEMODE_WAR == 0
+then
+v$PHRASE1 = "PH6_"
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+v$PHRASE1 = "PH16_"
+end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+then
+v$PHRASE1 = "PH41_"
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+v$PHRASE1 = "PH28_"
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+v$PHRASE1 = "PH55_"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return
+
+:RANDOM_DIALOG_B_GRENADE_STALKER
+    
+for 1@ = 0 to 200
+
+/////////////////////////////////////////////////////////////////
+
+if
+$GAMEMODE_WAR == 0
+then
+v$PHRASE1 = "PH7_"
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+v$PHRASE1 = "PH17_"
+end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+then
+v$PHRASE1 = "PH42_"
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+v$PHRASE1 = "PH29_"
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+v$PHRASE1 = "PH56_"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then   
+    1@ += 1 
+    random_int 0@ 0 1@
+    end
+
+end  
+
+/////////////////////////////////////////////////////////////////
+
+if
+$GAMEMODE_WAR == 0
+then
+v$PHRASE1 = "PH7_"
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+v$PHRASE1 = "PH17_"
+end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+then
+v$PHRASE1 = "PH42_"
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+v$PHRASE1 = "PH29_"
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+v$PHRASE1 = "PH56_"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return
+
+:RANDOM_DIALOG_B_HUNTER_STALKER
+    
+for 1@ = 0 to 200
+
+/////////////////////////////////////////////////////////////////
+
+if
+$GAMEMODE_WAR == 0
+then
+v$PHRASE1 = "PH8_"
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+v$PHRASE1 = "PH24_"
+end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+then
+v$PHRASE1 = "PH49_"
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+v$PHRASE1 = "PH36_"
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+v$PHRASE1 = "PH63_"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+/////////////////////////////////////////////////////////////////
+
+if
+$GAMEMODE_WAR == 0
+then
+v$PHRASE1 = "PH8_"
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+v$PHRASE1 = "PH24_"
+end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+then
+v$PHRASE1 = "PH49_"
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+v$PHRASE1 = "PH36_"
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+v$PHRASE1 = "PH63_"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return
+
+:RANDOM_DIALOG_B_TANK_NEAR_STALKER
+    
+for 1@ = 0 to 200
+
+/////////////////////////////////////////////////////////////////
+
+if
+$GAMEMODE_WAR == 0
+then
+v$PHRASE1 = "PH9_"
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+v$PHRASE1 = "PH20_"
+end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+then
+v$PHRASE1 = "PH45_"
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+v$PHRASE1 = "PH32_"
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+v$PHRASE1 = "PH59_"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+/////////////////////////////////////////////////////////////////
+
+if
+$GAMEMODE_WAR == 0
+then
+v$PHRASE1 = "PH9_"
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+v$PHRASE1 = "PH20_"
+end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+then
+v$PHRASE1 = "PH45_"
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+v$PHRASE1 = "PH32_"
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+v$PHRASE1 = "PH59_"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return
+
+:RANDOM_DIALOG_B_HUNTER_NEAR_STALKER
+    
+for 1@ = 0 to 200
+
+/////////////////////////////////////////////////////////////////
+
+if
+$GAMEMODE_WAR == 0
+then
+v$PHRASE1 = "PH10_"
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+v$PHRASE1 = "PH21_"
+end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+then
+v$PHRASE1 = "PH46_"
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+v$PHRASE1 = "PH33_"
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+v$PHRASE1 = "PH60_"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then   
+    1@ += 1 
+    random_int 0@ 0 1@
+    end
+
+end  
+
+/////////////////////////////////////////////////////////////////
+
+if
+$GAMEMODE_WAR == 0
+then
+v$PHRASE1 = "PH10_"
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+v$PHRASE1 = "PH21_"
+end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+then
+v$PHRASE1 = "PH46_"
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+v$PHRASE1 = "PH33_"
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+v$PHRASE1 = "PH60_"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return
+
+:RANDOM_DIALOG_B_WITCH_NEAR_STALKER
+    
+for 1@ = 0 to 200
+
+/////////////////////////////////////////////////////////////////
+
+if
+$GAMEMODE_WAR == 0
+then
+v$PHRASE1 = "PH11_"
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+v$PHRASE1 = "PH22_"
+end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+then
+v$PHRASE1 = "PH47_"
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+v$PHRASE1 = "PH34_"
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+v$PHRASE1 = "PH61_"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+/////////////////////////////////////////////////////////////////
+
+if
+$GAMEMODE_WAR == 0
+then
+v$PHRASE1 = "PH11_"
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+v$PHRASE1 = "PH22_"
+end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+then
+v$PHRASE1 = "PH47_"
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+v$PHRASE1 = "PH34_"
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+v$PHRASE1 = "PH61_"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return
+
+:RANDOM_DIALOG_B_CHARGER_NEAR_STALKER
+    
+for 1@ = 0 to 200
+
+/////////////////////////////////////////////////////////////////
+
+if
+$GAMEMODE_WAR == 0
+then
+v$PHRASE1 = "PH12_"
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+v$PHRASE1 = "PH23_"
+end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+then
+v$PHRASE1 = "PH48_"
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+v$PHRASE1 = "PH35_"
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+v$PHRASE1 = "PH62_"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+/////////////////////////////////////////////////////////////////
+
+if
+$GAMEMODE_WAR == 0
+then
+v$PHRASE1 = "PH12_"
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+v$PHRASE1 = "PH23_"
+end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+then
+v$PHRASE1 = "PH48_"
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+v$PHRASE1 = "PH35_"
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+v$PHRASE1 = "PH62_"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return
+
+:RANDOM_DIALOG_B_ATTACK_STALKER
+    
+for 1@ = 0 to 200
+
+/////////////////////////////////////////////////////////////////
+
+if
+$GAMEMODE_WAR == 0
+then
+v$PHRASE1 = "PH13_"
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+v$PHRASE1 = "PH18_"
+end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+then
+v$PHRASE1 = "PH43_"
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+v$PHRASE1 = "PH30_"
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+v$PHRASE1 = "PH57_"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+/////////////////////////////////////////////////////////////////
+
+if
+$GAMEMODE_WAR == 0
+then
+v$PHRASE1 = "PH13_"
+else
+
+if
+$PLAYER_ARMY_SIDE == 1
+then
+v$PHRASE1 = "PH18_"
+end
+
+if
+$PLAYER_FERMERS_SIDE == 1
+then
+v$PHRASE1 = "PH43_"
+end
+
+if
+$PLAYER_BANDIT_SIDE == 1
+then
+v$PHRASE1 = "PH30_"
+end
+
+if
+$PLAYER_SWAT_SIDE == 1
+then
+v$PHRASE1 = "PH57_"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////
+
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return
+
+:STALKE2_NAME_CHECK
+
+v$2NAME3 = "GAME500"
+
+if
+06EE:   actor STALKE2_QUEST_ACTOR in_group PLAYER_GROUP
+then
+
+v$2NAME1 = "N_ME"
+0665: get_actor STALKE2_QUEST_ACTOR model_to 0@
+if
+0@ > 10000
+then
+v$2NAME1 = "N_"
+end
+0AD3: v$2NAME2 = format "%d" 0@
+098B: v$2NAME3 = v$2NAME1 + v$2NAME2
+return
+
+end
+
+return
+
+:STALKE2_AI_SYSTEM    
+
+if
+$STALKER_VAG_FLAG == 1
+    then
+    $STALKER_VAG_TIME += 1
+    end
+
+gosub @PEOPLE_STALKE2_PHRASES
+
+/////////////////Поиск цели бойцом///////////////////// 
+
+if and
+056D:   actor STALKE2_QUEST_ACTOR defined
+$STALKER_VAG_FLAG == 0  
+    then
+    gosub @STALKER_ONFOOT_ATTACK_SYSTEM_PLAYER_CHECK
+    random_int 2@ 0 3
+    if and
+    2@ == 1
+    1@ == 1
+        then
+        if or
+        0364:  actor STALKE2_QUEST_ACTOR spotted_actor PLAYER_ACTOR  
+        0364:  actor PLAYER_ACTOR spotted_actor STALKE2_QUEST_ACTOR     
+        00F2:  actor STALKE2_QUEST_ACTOR near_actor PLAYER_ACTOR radius 55.0 55.0 sphere 0
+            then
+            if and
+            $ACTOR_DEAD == 0
+            $SPECTATING_FLAG == 0
+            00F2:  actor STALKE2_QUEST_ACTOR near_actor PLAYER_ACTOR radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+                then       
+                008B: $STALKER_VAG = PLAYER_ACTOR // (int)
+                
+                $STALKER_VAG_FLAG = 1
+                $STALKER_VAG_TIME = 0
+                
+                if
+                $STALKER_ACCQ_FLAG == 1
+                then
+                0A96: 1@ = actor STALKE2_QUEST_ACTOR struct
+                0A8E: 1@ = 1@ + 0x71A                    
+                0A8D: 2@ = read_memory 1@ size 1 virtual_protect 1 
+                    
+                2@ -= AI_ACQ_ADD_OTHER_TARGET                                         
+                                                                            
+                0A8C: write_memory 1@ size 4 value 2@ virtual_protect 1    
+                
+                actor.WeaponAccuracy(STALKE2_QUEST_ACTOR) = 2@                
+                
+                $STALKER_ACCQ_FLAG = 0
+                end    
+                    
+                gosub @STALKER_ONFOOT_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST   
+                wait 250                                                    
+      
+                end
+            end   
+        else    
+        gosub @STALKER_ONFOOT_ATTACK_SYSTEM_TARGET_FIND
+        if and
+        26@ == 1
+        056D:   actor $STALKER_VAG defined
+            then    
+            gosub @STALKER_ONFOOT_ATTACK_SYSTEM_TARGET_CHECK
+            if
+            056D:   actor $STALKER_VAG defined
+                then
+                
+                if
+                DEBUG_OPPCODE_FLAG == 1
+                then
+                
+                DEBUG_STRING_NUMBER += 1
+                0AD3: v$DEBUG_FILE3 = format "STALKE2_QUEST_ACTOR%d" DEBUG_STRING_NUMBER
+                if
+                DEBUG_STRING_NUMBER > DEBUG_STRING_NUMBER_MAX
+                then
+                0B00: delete_file "debug\debug.ini"  // IF and SET
+                DEBUG_STRING_NUMBER = 0
+                end
+                0AF1: write_int $STALKER_VAG to_ini_file "debug\debug.ini" section "OPPCODE" key v$DEBUG_FILE3
+                
+                end
+                        
+                if and
+                not actor.Dead($STALKER_VAG)  
+                0184:   actor $STALKER_VAG health > 0          
+                803A: not  $STALKER_VAG == STALKE2_QUEST_ACTOR // (int) 
+                1@ == 1                 
+                    then
+                    if or
+                    0364:  actor STALKE2_QUEST_ACTOR spotted_actor $STALKER_VAG
+                    0364:  actor $STALKER_VAG spotted_actor STALKE2_QUEST_ACTOR
+                        then 
+                            
+                        $STALKER_VAG_FLAG = 1
+                        $STALKER_VAG_TIME = 0
+                        
+                        if
+                        $STALKER_ACCQ_FLAG == 0
+                        then
+                        0A96: 1@ = actor STALKE2_QUEST_ACTOR struct
+                        0A8E: 1@ = 1@ + 0x71A                    
+                        0A8D: 2@ = read_memory 1@ size 1 virtual_protect 1 
+                            
+                        2@ += AI_ACQ_ADD_OTHER_TARGET                   
+                             
+                        if
+                        2@ > 95
+                        then
+                        2@ = 95
+                        end                                            
+                              
+                        0A8C: write_memory 1@ size 4 value 2@ virtual_protect 1
+                        
+                        actor.WeaponAccuracy(STALKE2_QUEST_ACTOR) = 2@                    
+                        
+                        $STALKER_ACCQ_FLAG = 1
+                        end    
+                            
+                        gosub @STALKER_ONFOOT_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST  
+                        wait 250                      
+                        end                                                                                  
+                    end 
+                end
+            end
+        end               
+    end
+    
+/////////////////Проверка на бездействие бойца если цель НЕ найдена/////////////////////     
+
+if
+$STALKER_VAG_FLAG == 0
+    then
+    if
+    056D:   actor STALKE2_QUEST_ACTOR defined
+        then
+        
+        if
+        DEBUG_OPPCODE_FLAG == 1
+        then
+        
+        DEBUG_STRING_NUMBER += 1
+        0AD3: v$DEBUG_FILE3 = format "STALKE2_QUEST_ACTOR%d" DEBUG_STRING_NUMBER
+        if
+        DEBUG_STRING_NUMBER > DEBUG_STRING_NUMBER_MAX
+        then
+        0B00: delete_file "debug\debug.ini"  // IF and SET
+        DEBUG_STRING_NUMBER = 0
+        end
+        0AF1: write_int STALKE2_QUEST_ACTOR to_ini_file "debug\debug.ini" section "OPPCODE" key v$DEBUG_FILE3
+        
+        end
+                  
+        if
+        0184:   actor STALKE2_QUEST_ACTOR health > 0 
+            then
+            06AC: 2@ = actor STALKE2_QUEST_ACTOR movement_speed
+            gosub @STALKER_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK
+            if and
+            1@ == 0
+            $ACTIVE_INTERIOR == 0        
+            2@ < 0.001
+            82E0: not  actor STALKE2_QUEST_ACTOR firing_weapon 
+                then
+                if or
+                actor.Animation(STALKE2_QUEST_ACTOR) == "idle_stance"
+                actor.Animation(STALKE2_QUEST_ACTOR) == "idle_armed"
+                actor.Animation(STALKE2_QUEST_ACTOR) == "woman_idlestance"
+                actor.Animation(STALKE2_QUEST_ACTOR) == "Swim_Tread"
+                    then
+                    gosub @STALKER_ONFOOT_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST  
+                    wait 250
+                    end
+                end
+            end
+        end
+    end
+    
+/////////////////Проверка на бездействие бойца если цель найдена/////////////////////     
+
+if
+$STALKER_VAG_FLAG == 1
+    then
+    if
+    056D:   actor STALKE2_QUEST_ACTOR defined
+        then
+        
+        if
+        DEBUG_OPPCODE_FLAG == 1
+        then
+        
+        DEBUG_STRING_NUMBER += 1
+        0AD3: v$DEBUG_FILE3 = format "STALKE2_QUEST_ACTOR%d" DEBUG_STRING_NUMBER
+        if
+        DEBUG_STRING_NUMBER > DEBUG_STRING_NUMBER_MAX
+        then
+        0B00: delete_file "debug\debug.ini"  // IF and SET
+        DEBUG_STRING_NUMBER = 0
+        end
+        0AF1: write_int STALKE2_QUEST_ACTOR to_ini_file "debug\debug.ini" section "OPPCODE" key v$DEBUG_FILE3
+        
+        end
+                  
+        if
+        0184:   actor STALKE2_QUEST_ACTOR health > 0 
+            then
+            062E: get_actor STALKE2_QUEST_ACTOR task 1506 status_store_to 2@ // ret 7 if not found
+            gosub @STALKER_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK 
+            if and
+            2@ == 7
+            1@ == 0
+                then
+                gosub @STALKER_ONFOOT_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST  
+                wait 100
+                end
+            end
+        end
+    end    
+    
+/////////////////Проверка на наличие цели атаки///////////////////// 
+
+if and
+056D:   actor STALKE2_QUEST_ACTOR defined
+$STALKER_VAG_FLAG == 1 
+    then
+    if
+    056D:   actor $STALKER_VAG defined
+        then
+        
+        if
+        DEBUG_OPPCODE_FLAG == 1
+        then
+        
+        DEBUG_STRING_NUMBER += 1
+        0AD3: v$DEBUG_FILE3 = format "STALKE2_QUEST_ACTOR%d" DEBUG_STRING_NUMBER
+        if
+        DEBUG_STRING_NUMBER > DEBUG_STRING_NUMBER_MAX
+        then
+        0B00: delete_file "debug\debug.ini"  // IF and SET
+        DEBUG_STRING_NUMBER = 0
+        end
+        0AF1: write_int $STALKER_VAG to_ini_file "debug\debug.ini" section "OPPCODE" key v$DEBUG_FILE3
+        
+        end
+         
+        if or
+        8184:   actor $STALKER_VAG health < 1  
+        80F2: not  actor STALKE2_QUEST_ACTOR near_actor $STALKER_VAG radius $AI_FIND_RADIUS2 $AI_FIND_RADIUS2 sphere 0
+        $STALKER_VAG_TIME > 600        
+            then 
+            $STALKER_VAG_FLAG = 0
+            $STALKER_VAG_TIME = 0  
+            end
+        else
+        $STALKER_VAG_FLAG = 0
+        $STALKER_VAG_TIME = 0
+        end
+    end
+    
+return    
+    
+:STALKER_ONFOOT_ATTACK_SYSTEM_TARGET_FIND
+
+26@ = 0
+
+008B: 1@ = $CREATURE_RANDOM // (int)
+0084: $STALKER_VAG = $CREATURE[1@] // (int)
+
+if and
+056D:   actor $STALKER_VAG defined
+not 1@ == PLAYER_CREATURE_NUMBER
+    then      
+    if
+    00F2:   actor STALKE2_QUEST_ACTOR near_actor $STALKER_VAG radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+        then 
+        26@ = 1
+        end
+    end
+
+return
+
+:STALKER_ONFOOT_ATTACK_SYSTEM_PLAYER_CHECK
+
+1@ = 0
+
+089F: get_actor STALKE2_QUEST_ACTOR pedtype_to 11@  
+
+if
+11@ == 26
+    then
+    1@ = 0    
+    
+    if or
+    051A:   actor STALKE2_QUEST_ACTOR damaged_by_actor PLAYER_ACTOR
+    $PEOPLE_ATTACK_PLAYER_FLAG == 1
+    then
+    1@ = 1
+    else
+    :STALKER_ONFOOT_ATTACK_SYSTEM_PLAYER_CHECK_SKIP
+    1@ = 0
+    end
+    
+    return
+    end            
+
+return   
+
+:STALKER_ONFOOT_ATTACK_SYSTEM_TARGET_CHECK
+
+089F: get_actor STALKE2_QUEST_ACTOR pedtype_to 11@ 
+
+if
+11@ == 26
+    then
+    1@ = 0
+    089F: get_actor $STALKER_VAG pedtype_to 12@ 
+    
+    if or
+    12@ == 23
+    12@ == 25
+    12@ == 27
+    12@ == 29  
+    then
+    1@ = 1
+    else
+    1@ = 0
+    end
+    
+    return
+    end                   
+
+return 
+
+:STALKER_ONFOOT_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST 
+
+if 
+02E0:   actor STALKE2_QUEST_ACTOR firing_weapon 
+    then
+    return
+    end
+
+if 
+$STALKER_VAG_FLAG == 1
+    then 
+    if and
+    056D:   actor $STALKER_VAG defined
+    056D:   actor STALKE2_QUEST_ACTOR defined
+        then            
+        0687: clear_actor STALKE2_QUEST_ACTOR task
+        wait 100
+        if and
+        056D:   actor $STALKER_VAG defined 
+        056D:   actor STALKE2_QUEST_ACTOR defined
+            then              
+                
+            if
+            not actor.Driving(STALKE2_QUEST_ACTOR)   
+            then                  
+            05E2: AS_actor STALKE2_QUEST_ACTOR kill_actor $STALKER_VAG     
+            else   
+            0713: actor STALKE2_QUEST_ACTOR driveby_actor $STALKER_VAG car -1 point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+            end
+            
+            Actor.SetWalkStyle(STALKE2_QUEST_ACTOR, "surv5")
+                                
+            return           
+            end
+        end
+    else       
+    if
+    056D:   actor STALKE2_QUEST_ACTOR defined
+        then 
+        0687: clear_actor STALKE2_QUEST_ACTOR task
+        wait 100         
+        if
+        056D:   actor STALKE2_QUEST_ACTOR defined
+            then      
+            actor.StorePos(STALKE2_QUEST_ACTOR,0@,1@,2@)
+            02C0: store_to 26@ 27@ 28@ ped_path_coords_closest_to 0@ 1@ 2@
+            0509: 3@ = distance_between_XY 0@ 1@ and_XY 26@ 27@
+            
+            if
+            3@ < AI_CAR_PATH_WALK_RADIUS
+            then                                        
+            05DE: AS_actor STALKE2_QUEST_ACTOR walk_around_ped_path
+            else
+            random_float 30@ 30.0 100.0                                                                       
+            04C4: store_coords_to 0@ 1@ 2@ from_actor STALKE2_QUEST_ACTOR with_offset 0.0 30@ 0.0
+            02C1: store_to 26@ 27@ 28@ car_path_coords_closest_to 0@ 1@ 2@
+            
+            if
+            84AD: not  actor STALKE2_QUEST_ACTOR in_water
+            then
+            05D3: AS_actor STALKE2_QUEST_ACTOR goto_point 26@ 27@ 28@ mode 7 time ROAD_WALK_TIME ms // versionA
+            else
+            07E1: AS_actor STALKE2_QUEST_ACTOR swim_to 26@ 27@ 28@
+            end
+            
+            end                        
+                                 
+            return           
+            end 
+        end
+    end  
+    
+return              
+
+:STALKER_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK
+1@ = 0
+
+if and
+not actor.Animation(STALKE2_QUEST_ACTOR) == "colt45_fire_2hands"
+not actor.Animation(STALKE2_QUEST_ACTOR) == "python_fire" 
+not actor.Animation(STALKE2_QUEST_ACTOR) == "shotgun_fire" 
+not actor.Animation(STALKE2_QUEST_ACTOR) == "buddy_fire" 
+not actor.Animation(STALKE2_QUEST_ACTOR) == "UZI_fire"
+not actor.Animation(STALKE2_QUEST_ACTOR) == "RIFLE_fire" 
+jf @STALKER_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2  
+
+if and
+not actor.Animation(STALKE2_QUEST_ACTOR) == "FLAME_fire" 
+not actor.Animation(STALKE2_QUEST_ACTOR) == "RocketFire" 
+not actor.Animation(STALKE2_QUEST_ACTOR) == "WEAPON_sniper" 
+not actor.Animation(STALKE2_QUEST_ACTOR) == "WEAPON_throw"
+jf @STALKER_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2  
+     
+if and
+not actor.Animation(STALKE2_QUEST_ACTOR) == "colt45_crouchfire"
+not actor.Animation(STALKE2_QUEST_ACTOR) == "python_crouchfire" 
+not actor.Animation(STALKE2_QUEST_ACTOR) == "shotgun_crouchfire" 
+not actor.Animation(STALKE2_QUEST_ACTOR) == "buddy_crouchfire" 
+not actor.Animation(STALKE2_QUEST_ACTOR) == "UZI_crouchfire"
+not actor.Animation(STALKE2_QUEST_ACTOR) == "RIFLE_crouchfire" 
+jf @STALKER_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2
+
+if and
+not actor.Animation(STALKE2_QUEST_ACTOR) == "colt45_reload"
+not actor.Animation(STALKE2_QUEST_ACTOR) == "python_reload" 
+not actor.Animation(STALKE2_QUEST_ACTOR) == "shotgun_reload" 
+not actor.Animation(STALKE2_QUEST_ACTOR) == "buddy_reload" 
+not actor.Animation(STALKE2_QUEST_ACTOR) == "UZI_reload"
+not actor.Animation(STALKE2_QUEST_ACTOR) == "RIFLE_load" 
+not actor.Animation(STALKE2_QUEST_ACTOR) == "gas_cwr"
+jf @STALKER_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2
+
+if and
+not actor.Animation(STALKE2_QUEST_ACTOR) == "colt45_crouchreload"
+not actor.Animation(STALKE2_QUEST_ACTOR) == "python_crouchreload" 
+not actor.Animation(STALKE2_QUEST_ACTOR) == "shotgun_crouchreload" 
+not actor.Animation(STALKE2_QUEST_ACTOR) == "buddy_crouchreload" 
+not actor.Animation(STALKE2_QUEST_ACTOR) == "UZI_crouchreload"
+not actor.Animation(STALKE2_QUEST_ACTOR) == "RIFLE_crouchload" 
+jf @STALKER_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2
+ 
+if and
+not actor.Animation(STALKE2_QUEST_ACTOR) == "GunMove_BWD"
+not actor.Animation(STALKE2_QUEST_ACTOR) == "GunMove_FWD"
+not actor.Animation(STALKE2_QUEST_ACTOR) == "GunMove_L"
+not actor.Animation(STALKE2_QUEST_ACTOR) == "GunMove_R"
+not actor.Animation(STALKE2_QUEST_ACTOR) == "Gun_2_IDLE"
+not actor.Animation(STALKE2_QUEST_ACTOR) == "GUN_BUTT"
+not actor.Animation(STALKE2_QUEST_ACTOR) == "GUN_BUTT_crouch"
+not actor.Animation(STALKE2_QUEST_ACTOR) == "Gun_stand" 
+jf @STALKER_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2   
+
+if and
+not actor.Animation(STALKE2_QUEST_ACTOR) == "WEAPON_throw"
+not actor.Animation(STALKE2_QUEST_ACTOR) == "WEAPON_throwu"
+not actor.Animation(STALKE2_QUEST_ACTOR) == "WEAPON_start_throw"
+jf @STALKER_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2
+  
+return
+
+:STALKER_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2
+1@ = 1
+return
+
+/////////////////////Союзники-мародеры атакуют сталкеров которых увидели///////////////
+
+:STALKE2_ATTACK_PEOPLE1
+
+if
+SURVIVOR_IN_PLAYER_TEAM == 1
+then
+return
+end
+
+if
+SURVIVOR_MARODER_FLAG == 1
+then
+else
+return
+end
+
+092B: 3@ = group PLAYER_GROUP member 0@
+
+if
+07D6:   3@ == COOP_ACTOR // @ == $ (int)
+then
+return
+end
+
+if
+056D:  actor 3@ defined
+jf @STALKE2_ATTACK_PEOPLE_BEGIN
+if
+SURVIVOR_MARODER_FLAG == 1
+    then
+    089F: get_actor 3@ pedtype_to 2@
+    if
+    2@ == 29
+        then
+        return
+        end    
+    end
+
+if
+056D:   actor STALKE2_QUEST_ACTOR defined
+jf @STALKE2_ATTACK_PEOPLE_BEGIN
+
+if
+$MISSION14_ACTIVE == 1
+    then
+    if
+    not 0@ == 1
+    jf @STALKE2_ATTACK_PEOPLE_BEGIN
+    end    
+
+if
+056D:   actor 3@ defined
+jf @STALKE2_ATTACK_PEOPLE_BEGIN
+
+if or
+00DF:   actor 3@ driving
+0449:   actor 3@ in_a_car
+    then
+    if
+    $HUNTER_ON_PLAYER == 0
+    //$PEOPLE_DONT_ATTACK == 0
+    //$COMMAND_STAY_IN_CAR == 0
+        then                     
+        gosub @STALKE2_ATTACK_PEOPLE_IN_CAR
+        end
+    end 
+
+if and 
+not actor.Driving(PLAYER_ACTOR)
+$RANDOM_CAR_FLAG == 0  
+89DE:   actor 3@ entering_car  
+80DF:   actor 3@ in_a_car
+jf @STALKE2_ATTACK_PEOPLE_BEGIN
+if or
+0364:   actor 3@ spotted_actor STALKE2_QUEST_ACTOR
+0364:   actor STALKE2_QUEST_ACTOR spotted_actor 3@
+0364:   actor PLAYER_ACTOR spotted_actor STALKE2_QUEST_ACTOR
+0364:   actor STALKE2_QUEST_ACTOR spotted_actor PLAYER_ACTOR
+GROUP_COMMAND_GO_ATTACK == 2
+jf @STALKE2_ATTACK_PEOPLE_BEGIN
+if
+00F2:   actor 3@ near_actor STALKE2_QUEST_ACTOR radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+jf @STALKE2_ATTACK_PEOPLE_BEGIN
+if and
+$HUNTER_ON_PLAYER == 0
+$PEOPLE_DONT_ATTACK == 0
+$COMMAND_STAY_IN_CAR == 0
+jf @STALKE2_ATTACK_PEOPLE_BEGIN
+if
+not actor.Animation(3@) == "FLOOR_hit"
+jf @STALKE2_ATTACK_PEOPLE_BEGIN
+if
+$HUNTER_ON_GROUP == 0
+jf @STALKE2_ATTACK_PEOPLE_BEGIN  
+if
+044B:   actor 3@ on_foot
+jf @STALKE2_ATTACK_PEOPLE_BEGIN  
+if
+82E0: not actor 3@ firing_weapon
+jf @STALKE2_ATTACK_PEOPLE_BEGIN
+062E: get_actor 3@ task 1506 status_store_to 1@ // ret 7 if not found
+if 
+1@ == 7
+jf @STALKE2_ATTACK_PEOPLE_BEGIN  
+if and
+not actor.Animation(3@) == "colt45_fire_2hands"
+not actor.Animation(3@) == "python_fire" 
+not actor.Animation(3@) == "shotgun_fire" 
+not actor.Animation(3@) == "buddy_fire" 
+not actor.Animation(3@) == "UZI_fire"
+not actor.Animation(3@) == "RIFLE_fire" 
+jf @STALKE2_ATTACK_PEOPLE_BEGIN  
+if and
+not actor.Animation(3@) == "FLAME_fire" 
+not actor.Animation(3@) == "RocketFire" 
+not actor.Animation(3@) == "WEAPON_sniper" 
+not actor.Animation(3@) == "WEAPON_throw"
+not actor.Animation(3@) == "BOM_PLANT"   
+jf @STALKE2_ATTACK_PEOPLE_BEGIN       
+if and
+not actor.Animation(3@) == "colt45_crouchfire"
+not actor.Animation(3@) == "python_crouchfire" 
+not actor.Animation(3@) == "shotgun_crouchfire" 
+not actor.Animation(3@) == "buddy_crouchfire" 
+not actor.Animation(3@) == "UZI_crouchfire"
+not actor.Animation(3@) == "RIFLE_crouchfire" 
+jf @STALKE2_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "colt45_reload"
+not actor.Animation(3@) == "python_reload" 
+not actor.Animation(3@) == "shotgun_reload" 
+not actor.Animation(3@) == "buddy_reload" 
+not actor.Animation(3@) == "UZI_reload"
+not actor.Animation(3@) == "RIFLE_load" 
+not actor.Animation(3@) == "gas_cwr"
+jf @STALKE2_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "colt45_crouchreload"
+not actor.Animation(3@) == "python_crouchreload" 
+not actor.Animation(3@) == "shotgun_crouchreload" 
+not actor.Animation(3@) == "buddy_crouchreload" 
+not actor.Animation(3@) == "UZI_crouchreload"
+not actor.Animation(3@) == "RIFLE_crouchload" 
+jf @STALKE2_ATTACK_PEOPLE_BEGIN 
+if and
+not actor.Animation(3@) == "GunMove_BWD"
+not actor.Animation(3@) == "GunMove_FWD"
+not actor.Animation(3@) == "GunMove_L"
+not actor.Animation(3@) == "GunMove_R"
+not actor.Animation(3@) == "Gun_2_IDLE"
+not actor.Animation(3@) == "GUN_BUTT"
+not actor.Animation(3@) == "GUN_BUTT_crouch"
+not actor.Animation(3@) == "Gun_stand" 
+jf @STALKE2_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "CLIMB_idle"
+not actor.Animation(3@) == "CLIMB_jump"
+not actor.Animation(3@) == "CLIMB_jump2fall"
+not actor.Animation(3@) == "CLIMB_jump_B"
+not actor.Animation(3@) == "CLIMB_Pull"
+not actor.Animation(3@) == "CLIMB_Stand"
+not actor.Animation(3@) == "CLIMB_Stand_finish" 
+jf @STALKE2_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "Crouch_Roll_L"
+not actor.Animation(3@) == "Crouch_Roll_R"
+not actor.Animation(3@) == "gas_cwr"
+not actor.Animation(3@) == "getup"
+not actor.Animation(3@) == "getup_front"
+not actor.Animation(3@) == "GunCrouchBwd"
+not actor.Animation(3@) == "GunCrouchFwd"
+8E47: not is_char_fighting 3@
+jf @STALKE2_ATTACK_PEOPLE_BEGIN  
+05C1: AS_actor 3@ speak_from_audio_table $PEOPLE_ZOMBIE_ATTACK_AUDIO_TABLE
+if
+056D:   actor 3@ defined
+jf @STALKE2_ATTACK_PEOPLE_BEGIN 
+if and
+not actor.Driving(PLAYER_ACTOR)
+89DE:   actor PLAYER_ACTOR entering_car
+80DF:   actor PLAYER_ACTOR in_a_car
+80DF:   actor 3@ in_a_car
+not actor.Dead(3@)
+not actor.Dead(STALKE2_QUEST_ACTOR)
+jf @STALKE2_ATTACK_PEOPLE_BEGIN
+//0647: AS_actor 3@ clear_look_task
+//05B9: AS_actor 3@ stay_idle 50 ms 
+wait 50
+if
+056D:   actor 3@ defined  
+then
+05E2: AS_actor 3@ kill_actor STALKE2_QUEST_ACTOR
+end
+
+jump @STALKE2_ATTACK_PEOPLE_BEGIN   
+                                
+:STALKE2_ATTACK_PEOPLE_IN_CAR   
+if and
+not actor.Animation(3@) == "Gang_DrivebyLHS"
+not actor.Animation(3@) == "Gang_DrivebyLHS_Bwd"
+not actor.Animation(3@) == "Gang_DrivebyLHS_Fwd"
+not actor.Animation(3@) == "Gang_DrivebyRHS"
+not actor.Animation(3@) == "Gang_DrivebyRHS_Bwd"
+not actor.Animation(3@) == "Gang_DrivebyRHS_Fwd" 
+jf @STALKE2_ATTACK_PEOPLE_IN_CAR_RETURN 
+if and
+not actor.Animation(3@) == "Gang_DrivebyTop_LHS"
+not actor.Animation(3@) == "Gang_DrivebyTop_RHS" 
+jf @STALKE2_ATTACK_PEOPLE_IN_CAR_RETURN 
+if 
+00F2:   actor 3@ near_actor STALKE2_QUEST_ACTOR radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+jf @STALKE2_ATTACK_PEOPLE_IN_CAR_RETURN
+if or
+0364:   actor 3@ spotted_actor STALKE2_QUEST_ACTOR
+0364:   actor STALKE2_QUEST_ACTOR spotted_actor 3@
+0364:   actor PLAYER_ACTOR spotted_actor STALKE2_QUEST_ACTOR
+0364:   actor STALKE2_QUEST_ACTOR spotted_actor PLAYER_ACTOR
+jf @STALKE2_ATTACK_PEOPLE_IN_CAR_RETURN
+
+///////////////////////////////////////////////////////////////////////////
+if and
+0@ == 0
+TEAMMATE1_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @STALKE2_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 1
+TEAMMATE2_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @STALKE2_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 2
+TEAMMATE3_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @STALKE2_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 3
+TEAMMATE4_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @STALKE2_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 4
+TEAMMATE5_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @STALKE2_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+///////////////////////////////////////////////////////////////////////////
+
+if and
+8E42: not is_char_doing_task_id 3@ 243
+not $COMMAND_STAY_IN_CAR == 1
+then
+06C9: remove_actor 3@ from_group
+0631: put_actor 3@ in_group PLAYER_GROUP
+end          
+0713: actor 3@ driveby_actor STALKE2_QUEST_ACTOR car -1 point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+
+///////////////////////////////////////////////////////////////////////////
+if
+0@ == 0
+    then
+    TEAMMATE1_ATTACK_TIMER = 0
+    end
+if
+0@ == 1
+    then
+    TEAMMATE2_ATTACK_TIMER = 0
+    end
+if
+0@ == 2
+    then
+    TEAMMATE3_ATTACK_TIMER = 0
+    end
+if
+0@ == 3
+    then
+    TEAMMATE4_ATTACK_TIMER = 0
+    end
+if
+0@ == 4
+    then
+    TEAMMATE5_ATTACK_TIMER = 0
+    end
+///////////////////////////////////////////////////////////////////////////
+ 
+return       
+
+:STALKE2_ATTACK_PEOPLE_IN_CAR_RETURN
+return
+
+:STALKE2_ATTACK_PEOPLE_BEGIN
+return         
