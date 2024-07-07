@@ -1,0 +1,260 @@
+:END_TXT
+thread 'END_TXT'
+
+$END_TEXT_FLAG = 1
+$INF_EFF_END = 1
+
+$HUD_REMOVE = 1
+$HUD_OFF_INST = 1
+
+$SPEED_08_FLAG = 1
+
+wait 5
+
+015D: set_gamespeed 0.08
+
+0391: release_textures
+0390: load_txd_dictionary 'msgs' 
+wait 1      
+
+0A0E: disable_text_with_style 1
+wait 80
+0459: end_thread_named 'HUD_SYS'
+
+if
+$GAMEMODE_STORYLINE == 0
+    then
+    text.ClearAll()
+    end
+
+if or
+$GAMEMODE_SURVIVAL == 1
+$GAMEMODE_HOLD == 1
+    then
+    
+    if
+    GAME_OVER_FLAG == 0
+    then    
+    038F: load_texture "you_dead" as 1 // Load dictionary with 0390 first
+    06D1: v$FAILED_TEXT = "DUMMY" // v$ = string
+    end
+         
+    end
+    
+if or
+$SALVATION_FAILED == 1   
+$GAMEMODE_STORYLINE == 1
+GAME_OVER_FLAG == 1
+    then
+    038F: load_texture "game_over" as 1 // Load dictionary with 0390 first 
+    end
+
+wait 1
+1@ = 0
+
+:211DRAW_LOGO_IDLE
+wait 0
+1@ += 15
+2@ += 1
+03F0: enable_text_draw 1
+03E3: set_texture_to_be_drawn_antialiased 1 
+038D: draw_texture 1 position 320.0 200.0 size 300.0 170.0 RGBA 255 255 255 1@
+gosub @DRAW_FAILED_TEXT
+038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA $INF_MODE_COLOR_R $INF_MODE_COLOR_G $INF_MODE_COLOR_B 2@
+if
+1@ == 255
+jf @211DRAW_LOGO_IDLE  
+32@ = 0
+
+:211DRAW_LOGO_IDLE22
+wait 0  
+gosub @DRAW_FAILED_TEXT
+03F0: enable_text_draw 1
+03E3: set_texture_to_be_drawn_antialiased 1
+038D: draw_texture 1 position 320.0 200.0 size 300.0 170.0 RGBA 255 255 255 1@
+038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA $INF_MODE_COLOR_R $INF_MODE_COLOR_G $INF_MODE_COLOR_B 2@ 
+if
+32@ > 216
+jf @211DRAW_LOGO_IDLE22  
+
+:211DRAW_LOGO_OFF
+wait 0  
+1@ -= 15
+2@ -= 1 
+gosub @DRAW_FAILED_TEXT
+03F0: enable_text_draw 1
+03E3: set_texture_to_be_drawn_antialiased 1
+038D: draw_texture 1 position 320.0 200.0 size 300.0 170.0 RGBA 255 255 255 1@
+038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA $INF_MODE_COLOR_R $INF_MODE_COLOR_G $INF_MODE_COLOR_B 2@
+03E3: set_texture_to_be_drawn_antialiased 1 
+if
+1@ == 0
+jf @211DRAW_LOGO_OFF  
+03F0: enable_text_draw 0
+0A0E: disable_text_with_style 0
+
+32@ = 0
+
+repeat
+wait 0
+until 32@ > 50
+
+0391: release_textures
+
+end_thread
+
+:DRAW_FAILED_TEXT
+03F0: enable_text_draw 1
+0342: set_text_draw_centered 1
+0349: set_text_draw_font 2
+033F: set_text_draw_letter_size 0.3 1.4     
+081C: draw_text_outline 1 RGBA 0 0 0 1@
+0340: set_text_draw_RGBA 180 180 180 1@
+if
+DIRECTFONT_INSTALLED == 1
+then    
+0340: set_text_draw_RGBA DIRECTFONT_FONT2_R DIRECTFONT_FONT2_G DIRECTFONT_FONT2_B 1@
+end
+
+033E: set_draw_text_position 320.0 400.0 GXT v$FAILED_TEXT 
+return
+
+///////////////////////////////////////////////////////////////////////////
+
+:GM_2OVR
+thread 'GM_2OVR'
+1@ = 0
+
+if
+actor.Dead(PLAYER_ACTOR)
+then
+06D1: v$FAILED_TEXT = "DUMMY" // v$ = string
+end
+
+v$OBJECTIVE = "DUMMY"
+if
+REALISM_MODE == 1
+then
+v$OBJECTIVE2 = "DUMMY"
+REALISM_QUEST_TARGET_ZONE = 'DUMMY'
+REALISM_QUEST_TARGET_ZONE2 = 'DUMMY'
+end
+
+if and
+not $QUEST_TYPE == 12
+not LEADER_DIED_FLAG == 1
+not $CAMP_DEAD_FLAG[$QUEST_CAMP_NUMBER] == 1
+RAID_FAILED_FLAG == 0
+not $DEFENSE_CHALLENGE_FLAG == 1
+not $GAMEMODE_STORYLINE == 1
+not PERK_CHARISMA == 2
+then
+text.RemoveTextBox()
+
+if
+CARMA_VERY_BAD_FLAG == 0
+then
+text.ShowTextBox('GAME576')
+else
+text.ShowTextBox('GAME810')
+end
+
+end
+
+008B: 0@ = $ENTERED_CAMP_NUMBER // (int)
+0@ += 156
+$RNDM_HOUSE_BANKA[0@] -= 20
+
+$QUEST_READY_FLAG = 0
+$QUEST_TYPE = -1
+$QUEST_SUPPLY_KEYS_GOT = -1
+$AIRDROP_QUEST = 0
+$ONMISSION = 0
+0629: change_integer_stat 258 to 0
+
+if
+$GAMEMODE_STORYLINE == 0
+then
+Audiostream.Volume($MENU_ENTER05_SOUND) = $SOUNDS_VOLUME 
+Audiostream.Loop($MENU_ENTER05_SOUND, 0)
+Audiostream.PerformAction($MENU_ENTER05_SOUND, PLAY)
+end
+
+:211DRAW_LOGO_IDLE_NOFAILO
+wait 0
+1@ += 15
+2@ += 1
+gosub @DRAW_FAILED_TEXT_NOFAILO 
+if
+1@ == 255
+jf @211DRAW_LOGO_IDLE_NOFAILO  
+32@ = 0
+
+:211DRAW_LOGO_IDLE22_NOFAILO
+wait 0  
+gosub @DRAW_FAILED_TEXT_NOFAILO 
+if
+32@ > 4160
+jf @211DRAW_LOGO_IDLE22_NOFAILO  
+
+:211DRAW_LOGO_OFF_NOFAILO
+wait 0
+1@ -= 15
+2@ -= 1 
+gosub @DRAW_FAILED_TEXT_NOFAILO 
+if
+1@ == 0
+jf @211DRAW_LOGO_OFF_NOFAILO
+
+if
+RAID_FAILED_FLAG == 1
+then
+RAID_FAILED_FLAG = 0
+end
+  
+end_thread
+
+:DRAW_FAILED_TEXT_NOFAILO
+03F0: enable_text_draw 1
+0342: set_text_draw_centered 1
+0349: set_text_draw_font 2
+033F: set_text_draw_letter_size 0.3 1.4     
+081C: draw_text_outline 1 RGBA 0 0 0 1@
+0340: set_text_draw_RGBA 180 180 180 1@
+if
+DIRECTFONT_INSTALLED == 1
+then    
+0340: set_text_draw_RGBA DIRECTFONT_FONT2_R DIRECTFONT_FONT2_G DIRECTFONT_FONT2_B 1@
+end
+
+033E: set_draw_text_position 320.0 400.0 GXT v$FAILED_TEXT
+
+03F0: enable_text_draw 1
+0342: set_text_draw_centered 1
+0349: set_text_draw_font 2
+033F: set_text_draw_letter_size 0.6 2.8     
+081C: draw_text_outline 1 RGBA 0 0 0 1@
+0340: set_text_draw_RGBA 180 180 180 1@
+if
+DIRECTFONT_INSTALLED == 1
+then    
+0340: set_text_draw_RGBA DIRECTFONT_FONT2_R DIRECTFONT_FONT2_G DIRECTFONT_FONT2_B 1@
+end
+
+if
+not $CARL_STORY == 1
+then
+
+if
+RAID_FAILED_FLAG == 0
+then
+033E: set_draw_text_position 320.0 200.0 GXT 'GAME577'
+else
+033E: set_draw_text_position 320.0 200.0 GXT 'GAME708'
+end
+
+else
+033E: set_draw_text_position 320.0 200.0 GXT 'DLC985'
+end
+
+return

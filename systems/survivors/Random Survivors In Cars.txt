@@ -1,0 +1,3783 @@
+const
+SURVIVOR_IN_CAR_MARODER_FLAG = 29@
+SURVIVOR_IN_CAR_ATTACKED_BY_PLAYER_FLAG = $SURV_IN_CAR_FLAG1 
+SURVIVOR_IN_CAR_TARGET_FOUNDED_FLAG = 21@
+SURVIVOR_IN_CAR_WRECKED_FLAG = 15@
+SURVIVOR_CAR = 14@
+SURVIVOR_IN_CAR_GROUP = 16@
+SURVIVOR2_PAIN_TIMER = $SURV_CAR_PAIN_TIMER
+SURVIVOR2_PAIN_TIMER2 = $SURV_CAR_PAIN_TIMER2  
+SURVIVOR2_ATTACK_TIMER = $SURV_CAR_ATTACK_TIMER 
+SURVIVOR2_ATTACK_TIMER2 = $SURV_CAR_ATTACK_TIMER2 
+SURVIVOR2_HUNTER_TIMER = $SURV_CAR_HUNTER_TIMER 
+SURVIVOR2_HUNTER_TIMER2 = $SURV_CAR_HUNTER_TIMER2  
+end       
+
+const
+SURVIVOR2_PAIN_TIMER_MIN = 10
+SURVIVOR2_PAIN_TIMER_MAX = 35
+SURVIVOR2_ATTACK_TIMER_MIN = 50
+SURVIVOR2_ATTACK_TIMER_MAX = 30
+SURVIVOR2_HUNTER_TIMER_MIN = 300  
+SURVIVOR2_HUNTER_TIMER_MAX = 600
+AI_FIND_RADIUS = 110.0
+end                                       
+
+:RND_CAR
+thread 'RND_CAR'
+
+if
+$ALLOW_RANDOM_SURVIVERS_ON_CARS == 0
+    then
+    end_thread
+    end    
+
+:RANDOM_PEOPLE_CAR_SPAWN_CHECK
+$RANDOM_PEOPLE_SKIN[5] = -1 
+0209: 0@ = random_int_in_ranges $RNDM_PEOPLE_CAR_SPAWN_MIN $RNDM_PEOPLE_CAR_SPAWN_MAX      
+1@ = 0
+jump @RANDOM_PEOPLE_CAR_START_COUNT
+
+:RANDOM_PEOPLE_CAR_START_COUNT
+
+//////////////////////////////////////////////////////////////////////////////
+
+if
+GLOBAL_SPAWN_TIMER_RANDOM_RESET_SURVIVOR_ON_CAR == 1
+then
+
+repeat
+wait 0
+0209: 0@ = random_int_in_ranges $RNDM_PEOPLE_CAR_SPAWN_MIN $RNDM_PEOPLE_CAR_SPAWN_MAX
+0209: 30@ = random_int_in_ranges $RNDM_PEOPLE_CAR_SPAWN_MIN $RNDM_PEOPLE_CAR_SPAWN_MAX
+
+if
+$FREEMODE == 0
+then
+0209: 1@ = random_int_in_ranges TIMER_RESET_ADD_MIN TIMER_RESET_ADD_MAX
+else
+0209: 1@ = random_int_in_ranges TIMER_RESET_ADD2_MIN TIMER_RESET_ADD2_MAX
+end
+
+0062: 30@ -= 1@  // (int)
+until 801D: not  30@ > 0@  // (int)
+
+0085: 1@ = 30@ // (int)
+0AF1: write_int 30@ to_ini_file "saves\ZACM.set" section "SCR" key "SURVIVOR_ON_CAR_NEW_TIMER_AFTER_SAVE"
+0AF1: write_int 0@ to_ini_file "saves\ZACM.set" section "SCR" key "SURVIVOR_ON_CAR_SPAWN_TIMER"
+ 
+GLOBAL_SPAWN_TIMER_RANDOM_RESET_SURVIVOR_ON_CAR = 0
+end
+
+//////////////////////////////////////////////////////////////////////////////
+
+wait 1000
+//0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "SURVIVOR_ON_CAR_SPAWNED"
+if and
+$SAVESTATUS == 0
+$SAVING_PLACE_FLAG == 0
+$NOTSPAWN == 0
+$NOTSPAWN_ETC == 0
+$SAVEPLACE_ON == 0
+$ACTIVE_INTERIOR == 0
+not $SURV_PROCENT == 0.0 
+jf @RANDOM_PEOPLE_CAR_START_COUNT_PAUSE
+
+if
+$NEAR_SALV_POINT == 0
+then    
+1@ += 1
+end
+
+if or
+003B:   0@ == 1@  // (int)
+001D:   1@ > 0@  // (int)
+RANDOM_CARSURV_SPAWN_FLAG >= 1
+jf @RANDOM_PEOPLE_CAR_START_COUNT
+1@ = 0
+jump @RANDOM_PEOPLE_CAR_START
+
+:RANDOM_PEOPLE_CAR_START_COUNT_PAUSE
+wait 1000
+//0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "SURVIVOR_ON_CAR_SPAWNED"
+if and
+$SAVESTATUS == 0
+$SAVING_PLACE_FLAG == 0
+$NOTSPAWN == 0
+$NOTSPAWN_ETC == 0
+$SAVEPLACE_ON == 0
+$ACTIVE_INTERIOR == 0
+not $SURV_PROCENT == 0.0
+jf @RANDOM_PEOPLE_CAR_START_COUNT_PAUSE
+jump @RANDOM_PEOPLE_CAR_START_COUNT
+
+:RANDOM_PEOPLE_CAR_START
+gosub @RANDOM_PEOPLE_CAR_SET
+gosub @RANDOM_PEOPLE_CAR_CHECKING_MODEL
+:RANDOM_PEOPLE_CAR_COORD_SET
+wait 0 
+0208: 9@ = random_float_in_ranges 160.0 -120.0 
+0208: 10@ = random_float_in_ranges -120.0 160.0
+04C4: store_coords_to 6@ 7@ 8@ from_actor PLAYER_ACTOR with_offset 9@ 10@ 0.0 
+02C1: store_to 9@ 10@ 11@ car_path_coords_closest_to 6@ 7@ 8@ 
+Actor.StorePos(PLAYER_ACTOR, 6@, 7@, 8@)
+050A: 17@ = distance_between_XYZ 6@ 7@ 8@ and_XYZ 9@ 10@ 11@ 
+0092: 17@ = float 17@ to_integer  
+if and
+17@ >= 120 
+not 17@ >= 200 
+jf @RANDOM_PEOPLE_CAR_COORD_SET 
+if and
+8AE2: not 30@ = random_vehicle_near_point 9@ 10@ 11@ in_radius 10.0 find_next 0 pass_wrecked 1 //IF and SET
+8AE1: not 31@ = random_actor_near_point 9@ 10@ 11@ in_radius 5.0 find_next 0 pass_deads 0 //IF and SET
+jf @RANDOM_PEOPLE_CAR_COORD_SET
+
+gosub @RANDOM_SURV_CAR_SPAWN_ZONE_CHECK
+
+if
+6@ == 1
+jf @RANDOM_PEOPLE_CAR_COORD_SET 
+
+while $MODEL_LOADING_END_FLAG == 0
+wait 0
+end
+
+if and
+Model.Available(18@)
+Model.Available(19@)
+jf @RANDOM_PEOPLE_CAR_COORD_SET
+
+0208: 30@ = random_float_in_ranges -2.0 2.0 
+005B: 9@ += 30@ // (float)
+0208: 30@ = random_float_in_ranges -2.0 2.0 
+005B: 10@ += 30@ // (float)
+11@ = -100.0
+
+:CAR_CREATE_SURV_ON_CAR
+//18@ = #PCJ600
+if
+model.Available(18@)
+then  
+SURVIVOR_CAR = Car.Create(18@, 9@, 10@, 11@)
+
+if
+model.Available(18@)
+then
+//model.Destroy(18@)
+end
+
+else
+model.Load(18@)
+mload
+wait 0
+jump to @CAR_CREATE_SURV_ON_CAR
+end
+
+car.StorePos(SURVIVOR_CAR, 6@, 7@, 8@)
+02C1: store_to 9@ 10@ 11@ car_path_coords_closest_to 6@ 7@ 8@
+car.PutAt(SURVIVOR_CAR,9@,10@,11@)
+random_int 24@ 0 2
+06F8: get_nearest_route_for 9@ 10@ 11@ in_direction 24@ store_to 25@ 26@ 27@ Z_angle_to 13@
+car.Angle(SURVIVOR_CAR) = 13@
+0A97: 11@ = car SURVIVOR_CAR struct 
+11@ += 9 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+08BD: set 12@ bit 2 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 2 
+0A97: 11@ = car SURVIVOR_CAR struct 
+11@ += 4 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+08BD: set 12@ bit 1 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 1 
+random_float $BENZIN_ARMY $GASOLINE_MIN $GASOLINE_MAX
+$BENZIN_ARMY *= 2.0 
+0A97: 22@ = car SURVIVOR_CAR struct 
+0A8E: 23@ = 22@ + 5 // int 
+0A8C: write_memory 23@ size 4 value $BENZIN_ARMY virtual_protect 0 
+Car.DoorStatus(SURVIVOR_CAR) = 2
+08F2: set_car SURVIVOR_CAR targettable_by_heatseeker 0       
+
+random_int 1@ 0 6
+
+if or
+AIRDROP_PLAYER_AT_POINT_FLAG == 1
+RANDOM_CARSURV_SPAWN_FLAG == 2
+then
+
+if
+CARMA_VERY_BAD_FLAG == 0
+then
+1@ = 3
+else
+1@ = 4
+end
+
+end
+
+RANDOM_CARSURV_SPAWN_FLAG = 0
+
+if and
+1@ == 3
+$ALLOW_MARODERS == 1
+    then
+
+    while not model.Available(19@)
+    wait 0
+    model.Load(19@)
+    mload
+    end
+
+    $SURV_IN_CAR = actor.CreateAsDriver(29,19@,SURVIVOR_CAR)
+    
+    if
+    model.Available(19@)
+    then
+    //model.Destroy(19@)
+    end
+    
+    SURVIVOR_IN_CAR_MARODER_FLAG = 1   
+    0D10: set_actor $SURV_IN_CAR alpha 255 // IF and SET
+    0E24: fix_char $SURV_IN_CAR ground 1 brightness DO_ACTORS_BRIGHT_CORR and_fade_in 1
+    if
+    CAN_AIM_AT_SURVIVORS == 0
+    then
+    0568: set_actor $SURV_IN_CAR untargetable 1
+    end
+                
+    else
+
+    while not model.Available(19@)
+    wait 0
+    model.Load(19@)
+    mload
+    end
+
+    $SURV_IN_CAR = actor.CreateAsDriver(26,19@,SURVIVOR_CAR)
+    
+    if
+    model.Available(19@)
+    then
+    //model.Destroy(19@)
+    end
+    
+    SURVIVOR_IN_CAR_MARODER_FLAG = 0   
+    0D10: set_actor $SURV_IN_CAR alpha 255 // IF and SET
+    0E24: fix_char $SURV_IN_CAR ground 1 brightness DO_ACTORS_BRIGHT_CORR and_fade_in 1
+    if
+    CAN_AIM_AT_SURVIVORS == 0
+    then
+    0568: set_actor $SURV_IN_CAR untargetable 1
+    end
+            
+    end
+
+gosub @PEOPLE_RANDOM_CAR_DAMAGE
+
+//////////////////////////////////////
+
+if 
+car.Id(SURVIVOR_CAR) == #PATRIOT
+    then
+    
+    if and
+    8583: not  player PLAYER_CHAR in_zone 'VE'
+    8583: not  player PLAYER_CHAR in_zone 'BONE'
+    8583: not  player PLAYER_CHAR in_zone 'ROBAD'
+    8583: not  player PLAYER_CHAR in_zone 'ROBAD1'
+    then
+    6@ = 0
+    else
+    6@ = 1
+    end
+    
+    if
+    6@ == 0
+    then
+    
+    0842: 0@ = player PLAYER_CHAR town_number
+    
+    if
+    not 0@ == 0
+    then
+    0229: set_car SURVIVOR_CAR primary_color_to ARMY_CITY_COLOR secondary_color_to ARMY_CITY_COLOR                   
+    else
+    0229: set_car SURVIVOR_CAR primary_color_to ARMY_COUNTRY_COLOR secondary_color_to ARMY_COUNTRY_COLOR
+    end 
+    
+    else
+    0229: set_car SURVIVOR_CAR primary_color_to ARMY_DESERT_COLOR secondary_color_to ARMY_DESERT_COLOR
+    end
+        
+    end
+
+if 
+car.Id(SURVIVOR_CAR) == 15423
+    then
+    0229: set_car SURVIVOR_CAR primary_color_to $FERMERS_CAR_COLOR1 secondary_color_to $FERMERS_CAR_COLOR2
+    end  
+
+if 
+car.Id(SURVIVOR_CAR) == 15422
+    then
+    0229: set_car SURVIVOR_CAR primary_color_to $BANDITS_CAR_COLOR1 secondary_color_to $BANDITS_CAR_COLOR2
+    end
+
+//////////////////////////////////////       
+
+random_int 1@ 400 1000
+car.Health(SURVIVOR_CAR) = 1@
+08AF: set_actor $SURV_IN_CAR max_health_to 1000
+0209: 11@ = random_int_in_ranges 90 100
+Actor.WeaponAccuracy($SURV_IN_CAR) = 11@
+0209: 11@ = random_int_in_ranges 400 CAR_HEALTH_MAX
+Actor.Health($SURV_IN_CAR) = 11@
+Actor.SetWalkStyle($SURV_IN_CAR, "surv5")
+0446: set_actor $SURV_IN_CAR dismemberment_possible 0
+060B: set_actor $SURV_IN_CAR decision_maker_to $DEC_PEOPLE
+07DD: set_actor $SURV_IN_CAR attack_rate 80 // previously known as temper_to 
+0946: set_actor $SURV_IN_CAR actions_uninterupted_by_weapon_fire 1
+081A: set_actor $SURV_IN_CAR weapon_skill_to 2
+random_int 8@ $PEOPLE_MIN_MONEY $PEOPLE_MAX_MONEY
+03FE: set_actor $SURV_IN_CAR money 8@
+car.SetMaxSpeed(SURVIVOR_CAR,50.0)  
+00AE: set_car SURVIVOR_CAR traffic_behaviour_to 2  
+0423: set_car SURVIVOR_CAR improved_handling_to 2.0 // (float)
+03AB: set_car SURVIVOR_CAR strong 1 
+car.SetDriverBehaviour(SURVIVOR_CAR,1)
+car.SetSpeedInstantly(SURVIVOR_CAR,15.0)
+
+if
+047A:   actor $SURV_IN_CAR driving_bike
+then
+08C6: set_actor $SURV_IN_CAR stay_on_bike 1
+end  
+
+if
+UNITED_MAP == 0
+then
+04D8: set_actor $SURV_IN_CAR drowns_in_water 0
+0A28: set_actor $SURV_IN_CAR swimming_speed_to 2.3 
+end
+
+09B5: set_actor $SURV_IN_CAR signal_after_kill 0
+
+if
+SURVIVOR_IN_CAR_MARODER_FLAG == 0
+then    
+Actor.WeaponAccuracy($SURV_IN_CAR) = $SURV_ACCURACY
+else
+Actor.WeaponAccuracy($SURV_IN_CAR) = $SURV_ACCURACY2
+end
+
+0209: 0@ = random_int_in_ranges $SURVIVER_MIN_HEALTH $SURVIVER_MAX_HEALTH
+Actor.Health($SURV_IN_CAR) = 0@
+
+SURVIVOR_IN_CAR_TARGET_FOUNDED_FLAG = 0
+SURVIVOR_IN_CAR_ATTACKED_BY_PLAYER_FLAG = 0
+SURVIVOR_IN_CAR_WRECKED_FLAG = 0     
+
+$VAGINA4_FLAG[0] = 0
+$VAGINA4_TIME[0] = 0
+
+SURVIVOR2_PAIN_TIMER = 0
+random_int SURVIVOR2_PAIN_TIMER2 SURVIVOR2_PAIN_TIMER_MIN SURVIVOR2_PAIN_TIMER_MAX
+SURVIVOR2_ATTACK_TIMER = 0
+random_int SURVIVOR2_ATTACK_TIMER2 SURVIVOR2_ATTACK_TIMER_MIN SURVIVOR2_ATTACK_TIMER_MAX
+SURVIVOR2_HUNTER_TIMER = 0
+random_int SURVIVOR2_HUNTER_TIMER2 SURVIVOR2_HUNTER_TIMER_MIN SURVIVOR2_HUNTER_TIMER_MAX
+
+//0209: SURVIVOR2_BANKA_COUNT = random_int_in_ranges 0 3 
+//0209: SURVIVOR2_HEAL_COUNT = random_int_in_ranges 0 2
+//0209: SURVIVOR2_BINT_COUNT = random_int_in_ranges 0 2
+//0209: SURVIVOR2_JIMMY_COUNT = random_int_in_ranges 0 3
+
+//SURVIVOR2_REPAIR_COUNT = 0
+//
+//random_int 0@ 0 to 5
+//if
+//0@ == 3
+//then
+//0209: SURVIVOR2_REPAIR_COUNT = random_int_in_ranges 1 2   
+//end
+//
+//random_int 3@ 0 5
+//if
+//3@ == 2
+//    then
+//    SURVIVOR2_KANISTRA_COUNT = 1
+//    end   
+    
+gosub @RANDOM_PEOPLE_CAR_3097
+create_thread @PED_BKP $SURV_IN_CAR 371
+
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "SURVIVOR_ON_CAR_SPAWNED"    
+
+jump @RANDOM_PEOPLE_CAR_DRIVE_CHECK
+
+:PEOPLE_RANDOM_CAR_DAMAGE
+
+1@ = car.Model(SURVIVOR_CAR)
+
+if or
+1@ == 581
+1@ == 462
+1@ == 463
+1@ == 448
+1@ == 461
+1@ == 468
+1@ == 586
+1@ == 521
+    then
+    return
+    end
+    
+if or
+1@ == 523
+1@ == 471
+1@ == 15293
+1@ == 15296
+1@ == 15319
+1@ == 15322
+1@ == 15332
+    then
+    return
+    end
+    
+if or
+1@ == 481
+1@ == 509
+1@ == 510
+1@ == 15418
+1@ == 15421
+1@ == 15428
+1@ == 15430
+1@ == 15435 
+    then
+    return
+    end
+    
+if or
+1@ == 15507
+1@ == 15510
+1@ == 15523
+1@ == 15526
+1@ == 15532
+1@ == 15299 
+    then
+    return
+    end
+    
+if or
+1@ == 15454
+1@ == 15455
+1@ == 15456
+1@ == 15457
+1@ == 15426 
+    then
+    return
+    end
+    
+if or
+1@ == 15550
+1@ == 15552
+1@ == 15565
+1@ == 15556
+1@ == 15558
+1@ == 15566 
+    then
+    return
+    end
+
+random_int 1@ 0 3
+if or
+1@ == 0
+1@ == 2
+jf @PEOPLE_RANDOM_CAR_DAMAGE2
+073C: car SURVIVOR_CAR damage_componentB 0
+
+:PEOPLE_RANDOM_CAR_DAMAGE2  
+random_int 1@ 0 3
+if or
+1@ == 0
+1@ == 2
+jf @PEOPLE_RANDOM_CAR_DAMAGE3
+073C: car SURVIVOR_CAR damage_componentB 1
+
+:PEOPLE_RANDOM_CAR_DAMAGE3  
+random_int 1@ 0 3
+if or
+1@ == 0
+1@ == 2
+jf @PEOPLE_RANDOM_CAR_DAMAGE4
+073C: car SURVIVOR_CAR damage_componentB 2
+
+:PEOPLE_RANDOM_CAR_DAMAGE4  
+random_int 1@ 0 3
+if or
+1@ == 0
+1@ == 2
+jf @PEOPLE_RANDOM_CAR_DAMAGE5
+073C: car SURVIVOR_CAR damage_componentB 3
+
+:PEOPLE_RANDOM_CAR_DAMAGE5  
+random_int 1@ 0 3
+if or
+1@ == 0
+1@ == 2
+jf @PEOPLE_RANDOM_CAR_DAMAGE6
+073C: car SURVIVOR_CAR damage_componentB 4
+
+:PEOPLE_RANDOM_CAR_DAMAGE6  
+random_int 1@ 0 3
+if or
+1@ == 0
+1@ == 2
+jf @PEOPLE_RANDOM_CAR_DAMAGE7
+073C: car SURVIVOR_CAR damage_componentB 5
+
+:PEOPLE_RANDOM_CAR_DAMAGE7  
+random_int 1@ 0 3
+if or
+1@ == 0
+1@ == 2
+jf @PEOPLE_RANDOM_CAR_DAMAGE_RETURN
+073C: car SURVIVOR_CAR damage_componentB 6
+return
+
+:PEOPLE_RANDOM_CAR_DAMAGE_RETURN
+return
+
+:RANDOM_PEOPLE_CAR_DRIVE_CHECK
+wait 0
+
+random_int 0@ 0 5
+gosub @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE1   
+
+if
+not actor.Driving($SURV_IN_CAR)
+then
+gosub @SURVIVER_CAR_ONFOOT_ATTACK_SYSTEM 
+end
+
+if and
+056E:   car SURVIVOR_CAR defined
+actor.Driving($SURV_IN_CAR)
+    then    
+    if
+    $ACTIVE_INTERIOR == 0
+        then
+        car.LockInCurrentPosition(SURVIVOR_CAR,false)
+        else
+        car.LockInCurrentPosition(SURVIVOR_CAR,true)
+        end    
+    end
+
+SURVIVOR2_PAIN_TIMER += 1 
+SURVIVOR2_ATTACK_TIMER += 1
+SURVIVOR2_HUNTER_TIMER += 1        
+
+if and
+$ACTIVE_INTERIOR == 0
+$INT_ENTERING_FLAG == 0
+then
+
+if and
+00F2:   actor $SURV_IN_CAR near_actor PLAYER_ACTOR radius 250.0 250.0 0
+$SAVESTATUS == 0
+jf @RANDOM_PEOPLE_CAR_DELETE
+else
+if
+$SAVESTATUS == 0
+jf @RANDOM_PEOPLE_CAR_DELETE
+end
+
+if 
+not actor.Dead($SURV_IN_CAR)
+jf @RANDOM_PEOPLE_CAR_DELETE2
+
+if or
+car.Wrecked(SURVIVOR_CAR)
+02BF:   car SURVIVOR_CAR sunk
+    then
+    if
+    SURVIVOR_IN_CAR_WRECKED_FLAG == 0  
+        then
+        SURVIVOR_IN_CAR_WRECKED_FLAG = 1
+        
+        if
+        056E:   car SURVIVOR_CAR defined
+        then
+        0423: set_car SURVIVOR_CAR improved_handling_to 1.0 // (float)
+        03AB: set_car SURVIVOR_CAR strong 0
+        end  
+        
+        0687: clear_actor $SURV_IN_CAR task
+        wait 10
+        0633: AS_actor $SURV_IN_CAR exit_car         
+        
+        if and
+        SURVIVOR_IN_CAR_ATTACKED_BY_PLAYER_FLAG == 0
+        SURVIVOR_IN_CAR_MARODER_FLAG == 0
+        then  
+        else          
+        0687: clear_actor $SURV_IN_CAR task
+        wait 10
+        05E2: AS_actor $SURV_IN_CAR kill_actor PLAYER_ACTOR
+        008B: $VAGINA4[0] = PLAYER_ACTOR // (int)
+        0568: set_actor $SURV_IN_CAR untargetable 0               
+        $VAGINA4_FLAG[0] = 1
+        $VAGINA4_TIME[0] = 0        
+        end      
+        
+        end
+    end
+    
+if and
+SURVIVOR_IN_CAR_WRECKED_FLAG == 1
+SURVIVOR_IN_CAR_ATTACKED_BY_PLAYER_FLAG == 0
+SURVIVOR_IN_CAR_MARODER_FLAG == 0
+    then
+    
+    if and
+    056D:   actor COOP_ACTOR defined
+    not COOP_ACTOR == -69
+        then
+        if
+        051A:   actor $SURV_IN_CAR damaged_by_actor COOP_ACTOR
+            then
+            jump to @SURV_IN_CAR_DAMAGED_JUMP
+            end
+        end
+    
+    if or
+    051A:   actor $SURV_IN_CAR damaged_by_actor PLAYER_ACTOR
+    CARMA_VERY_BAD_FLAG == 1    
+        then
+        :SURV_IN_CAR_DAMAGED_JUMP
+        054E: clear_actor $SURV_IN_CAR damage
+        SURVIVOR_IN_CAR_ATTACKED_BY_PLAYER_FLAG = 1
+                        
+        gosub @RANDOM_DIALOG_KILL1_PEOPLE_SURV2 
+        
+        09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+        0093: 3@ = integer 3@ to_float
+        3@ *= 8.0
+        0092: 3@ = float 3@ to_integer 
+                
+        gosub @RANDOM_PEOPLE_CAR_NAME_CHECK   
+        
+        $SWATS1_DAMAGE_FLAG = 1
+        $FERMERS1_DAMAGE_FLAG = 1
+        
+        if
+        0104:   actor $SURV_IN_CAR near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0
+        then        
+        0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 3@ 1
+        end           
+                                  
+        0687: clear_actor $SURV_IN_CAR task
+        wait 10
+        05E2: AS_actor $SURV_IN_CAR kill_actor PLAYER_ACTOR
+        008B: $VAGINA4[0] = PLAYER_ACTOR // (int)
+        0568: set_actor $SURV_IN_CAR untargetable 0               
+        $VAGINA4_FLAG[0] = 1
+        $VAGINA4_TIME[0] = 0
+        
+        $SWATS1_DAMAGE_FLAG = 1
+        $FERMERS1_DAMAGE_FLAG = 1
+        
+        077A: set_actor $SURV_IN_CAR acquaintance 4 to_actors_pedtype 0 // see ped.dat  
+        
+        /////////////////////////////// 
+            
+        0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_SURV_AGRED"                
+                
+        $STATS_SURV_AGRED += 1        
+                        
+        if
+        $CHEATED_FLAG == 0 
+        then   
+        0@ += 1
+        end                    
+                     
+        0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_SURV_AGRED"    
+                    
+        /////////////////////////////// 
+        
+        end
+    end    
+    
+////////////////////////////////////////////////Голос получения урона от врагов////////////////////////////////////////////////
+
+if 
+056D:   actor $SURV_IN_CAR defined
+    then   
+    if and
+    001C:   SURVIVOR2_PAIN_TIMER > SURVIVOR2_PAIN_TIMER2 // (int)
+    not actor.Dead($SURV_IN_CAR)
+    0104:   actor $SURV_IN_CAR near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0   
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0 
+        then            
+        
+        2@ = 0
+        1@ = 0
+        
+        ///////////////////////
+        
+        for 0@ = 22 to 34
+        
+        if
+        031D:   actor $SURV_IN_CAR hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor $SURV_IN_CAR last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 70 to MAX_WEAPON_NUM_NORMAL
+        
+        if
+        031D:   actor $SURV_IN_CAR hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor $SURV_IN_CAR last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 111 to 121
+        
+        if
+        031D:   actor $SURV_IN_CAR hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor $SURV_IN_CAR last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 136 to 151
+        
+        if
+        031D:   actor $SURV_IN_CAR hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor $SURV_IN_CAR last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 165 to 183
+        
+        if
+        031D:   actor $SURV_IN_CAR hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor $SURV_IN_CAR last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 195 to 213
+        
+        if
+        031D:   actor $SURV_IN_CAR hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor $SURV_IN_CAR last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////        
+        
+        if and 
+        031D:   actor $SURV_IN_CAR hit_by_weapon 0
+        851A: not  actor $SURV_IN_CAR damaged_by_actor PLAYER_ACTOR
+        then
+        
+        2@ = 1
+        1@ = 1
+        0467: clear_actor $SURV_IN_CAR last_weapon_damage
+        end
+        
+        if
+        2@ == 1
+        then
+        
+        SURVIVOR2_PAIN_TIMER = 0
+        random_int SURVIVOR2_PAIN_TIMER2 SURVIVOR2_PAIN_TIMER_MIN SURVIVOR2_PAIN_TIMER_MAX
+        
+        if
+        1@ == 0
+        then
+        gosub @RANDOM_DIALOG_DAMAGED_BY_WEAPON_SURV2  
+        else
+        gosub @RANDOM_DIALOG_DAMAGED_BY_ZOMBIES_SURV2  
+        end                       
+        
+        gosub @RANDOM_PEOPLE_CAR_NAME_CHECK                                  
+                    
+        09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+        0093: 3@ = integer 3@ to_float
+        3@ *= 8.0
+        0092: 3@ = float 3@ to_integer  
+                    
+        0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 3@ 1      
+        end            
+
+        end
+    end   
+
+////////////////////////////////////////////////Голос атаки////////////////////////////////////////////////
+    
+if 
+056D:   actor $SURV_IN_CAR defined
+    then
+    if and
+    001C:   SURVIVOR2_ATTACK_TIMER > SURVIVOR2_ATTACK_TIMER2 // (int)
+    not actor.Dead($SURV_IN_CAR)
+    0104:   actor $SURV_IN_CAR near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0
+    02E0:   actor $SURV_IN_CAR firing_weapon  
+        then
+        
+        SURVIVOR2_ATTACK_TIMER = 0
+        random_int random_int SURVIVOR2_ATTACK_TIMER2 SURVIVOR2_ATTACK_TIMER_MIN SURVIVOR2_ATTACK_TIMER_MAX
+                
+        gosub @RANDOM_DIALOG_ATTACK_SURV2           
+        gosub @RANDOM_PEOPLE_CAR_NAME_CHECK               
+                    
+        09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+        0093: 3@ = integer 3@ to_float
+        3@ *= 8.0
+        0092: 3@ = float 3@ to_integer  
+                    
+        0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 3@ 1   
+        end            
+    end
+    
+////////////////////////////////////////////////Голос про охотника////////////////////////////////////////////////      
+
+if 
+056D:   actor $SURV_IN_CAR defined
+    then
+    04DD: 0@ = actor $SURV_IN_CAR armour
+    if and
+    001C:   SURVIVOR2_HUNTER_TIMER > SURVIVOR2_HUNTER_TIMER2 // (int)
+    not actor.Dead($SURV_IN_CAR)
+    0104:   actor $SURV_IN_CAR near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    $PHRASES_OFF_FLAG == 0
+    0@ == 1
+        then
+        
+        SURVIVOR2_HUNTER_TIMER = 0
+        random_int random_int SURVIVOR2_HUNTER_TIMER2 150 350
+                
+        gosub @RANDOM_DIALOG_HUNTER_SURV2           
+        gosub @RANDOM_PEOPLE_CAR_NAME_CHECK
+                    
+        09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+        0093: 3@ = integer 3@ to_float
+        3@ *= 8.0
+        0092: 3@ = float 3@ to_integer  
+                    
+        0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 3@ 1   
+        end            
+    end                            
+
+if and
+SURVIVOR_IN_CAR_ATTACKED_BY_PLAYER_FLAG == 0
+056E:   car SURVIVOR_CAR defined 
+    then
+    
+    if and
+    CARMA_VERY_BAD_FLAG == 1
+    SURVIVOR_IN_CAR_MARODER_FLAG == 0
+        then
+        jump to @RANDOM_PEOPLE_ON_CAR_ATTACK_BAD_PLAYER
+        end
+        
+    if and
+    056D:   actor COOP_ACTOR defined
+    not COOP_ACTOR == -69
+        then
+        if or
+        051C:   car SURVIVOR_CAR damaged_by_actor COOP_ACTOR
+        051A:   actor $SURV_IN_CAR damaged_by_actor COOP_ACTOR
+            then
+            jump to @RANDOM_PEOPLE_ON_CAR_ATTACK_BAD_PLAYER
+            end
+        end    
+    
+    if or
+    051C:   car SURVIVOR_CAR damaged_by_actor PLAYER_ACTOR
+    051A:   actor $SURV_IN_CAR damaged_by_actor PLAYER_ACTOR 
+        then
+        :RANDOM_PEOPLE_ON_CAR_ATTACK_BAD_PLAYER
+        054E: clear_actor $SURV_IN_CAR damage
+        gosub @RANDOM_DIALOG_KILL1_PEOPLE_SURV2 
+        
+        09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+        0093: 3@ = integer 3@ to_float
+        3@ *= 8.0
+        0092: 3@ = float 3@ to_integer 
+        
+        gosub @RANDOM_PEOPLE_CAR_NAME_CHECK
+        
+        if
+        0104:   actor $SURV_IN_CAR near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0
+        then
+        0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 3@ 1
+        end           
+                 
+        Car.SetMaxSpeed(SURVIVOR_CAR, 100.0)
+        0423: set_car SURVIVOR_CAR improved_handling_to 2.0 // (float) 
+        03AB: set_car SURVIVOR_CAR strong 1 
+        00AE: set_car SURVIVOR_CAR traffic_behaviour_to 2 
+        Car.SetToPsychoDriver(SURVIVOR_CAR)
+        0687: clear_actor $SURV_IN_CAR task 
+        Car.SetDriverBehaviour(SURVIVOR_CAR, KillThePlayer)
+        if and
+        847A: not  actor $SURV_IN_CAR driving_bike
+        not CUSTOM_MODE_ONLY_MELEE == 1
+        then
+        0713: actor $SURV_IN_CAR driveby_actor PLAYER_ACTOR car -1 point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+        008B: $VAGINA4[0] = PLAYER_ACTOR // (int)
+        0568: set_actor $SURV_IN_CAR untargetable 0
+        08F2: set_car SURVIVOR_CAR targettable_by_heatseeker 1                
+        $VAGINA4_FLAG[0] = 1
+        $VAGINA4_TIME[0] = 0
+        end 
+        SURVIVOR_IN_CAR_ATTACKED_BY_PLAYER_FLAG = 1 
+        
+        $SWATS1_DAMAGE_FLAG = 1
+        $FERMERS1_DAMAGE_FLAG = 1
+        
+        077A: set_actor $SURV_IN_CAR acquaintance 4 to_actors_pedtype 0 // see ped.dat   
+        
+        /////////////////////////////// 
+            
+        0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_SURV_AGRED"                
+                
+        $STATS_SURV_AGRED += 1        
+                        
+        if
+        $CHEATED_FLAG == 0 
+        then   
+        0@ += 1
+        end                    
+                     
+        0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_SURV_AGRED"    
+                    
+        ///////////////////////////////                        
+        
+        0209: 11@ = random_int_in_ranges $SURV_ACCURACY2_MIN $SURV_ACCURACY2_MAX
+        Actor.WeaponAccuracy($SURV_IN_CAR) = 11@
+        end
+    end        
+    
+if and
+SURVIVOR_IN_CAR_ATTACKED_BY_PLAYER_FLAG == 0
+CARMA_VERY_BAD_FLAG == 0
+056E:   car SURVIVOR_CAR defined 
+    then
+    if and
+    SURVIVOR_IN_CAR_MARODER_FLAG == 1
+    0364:   actor $SURV_IN_CAR spotted_actor PLAYER_ACTOR 
+    not ORIGIN_ABILITY_ACTIVE == 6 
+    $SIMULATING_FLAG == 0
+    $SPECTATING_FLAG == 0
+    $IGNOREALL_FLAG == 0
+    not actor.Dead(PLAYER_ACTOR)
+        then
+        gosub @RANDOM_DIALOG_KILL2_PEOPLE_SURV2 
+        
+        09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+        0093: 3@ = integer 3@ to_float
+        3@ *= 8.0
+        0092: 3@ = float 3@ to_integer 
+        
+        gosub @RANDOM_PEOPLE_CAR_NAME_CHECK
+        
+        if
+        0104:   actor $SURV_IN_CAR near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0
+        then
+        0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 3@ 1
+        end   
+        
+        05C1: AS_actor $SURV_IN_CAR speak_from_audio_table $ARMY_ATTACK_AUDIO_TABLE 
+        wait 5 
+        05C1: AS_actor $SURV_IN_CAR speak_from_audio_table $ARMY_ATTACK_AUDIO_TABLE 
+        wait 5 
+        05C1: AS_actor $SURV_IN_CAR speak_from_audio_table $ARMY_ATTACK_AUDIO_TABLE 
+        Car.SetMaxSpeed(SURVIVOR_CAR, 100.0)
+        0423: set_car SURVIVOR_CAR improved_handling_to 2.0 // (float) 
+        03AB: set_car SURVIVOR_CAR strong 1 
+        00AE: set_car SURVIVOR_CAR traffic_behaviour_to 2 
+        Car.SetToPsychoDriver(SURVIVOR_CAR)
+        0687: clear_actor $SURV_IN_CAR task 
+        Car.SetDriverBehaviour(SURVIVOR_CAR, KillThePlayer)
+        if and
+        847A: not  actor $SURV_IN_CAR driving_bike
+        not CUSTOM_MODE_ONLY_MELEE == 1
+        then
+        0713: actor $SURV_IN_CAR driveby_actor PLAYER_ACTOR car -1 point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+        008B: $VAGINA4[0] = PLAYER_ACTOR // (int)
+        0568: set_actor $SURV_IN_CAR untargetable 0
+        08F2: set_car SURVIVOR_CAR targettable_by_heatseeker 1                
+        $VAGINA4_FLAG[0] = 1
+        $VAGINA4_TIME[0] = 0
+        end 
+        SURVIVOR_IN_CAR_ATTACKED_BY_PLAYER_FLAG = 1                                
+        077A: set_actor $SURV_IN_CAR acquaintance 4 to_actors_pedtype 0 // see ped.dat  
+        0209: 11@ = random_int_in_ranges $SURV_ACCURACY2_MIN $SURV_ACCURACY2_MAX
+        Actor.WeaponAccuracy($SURV_IN_CAR) = 11@
+        end
+    end            
+    
+if and
+SURVIVOR_IN_CAR_ATTACKED_BY_PLAYER_FLAG == 0 
+SURVIVOR_IN_CAR_TARGET_FOUNDED_FLAG == 0
+847A: not  actor $SURV_IN_CAR driving_bike
+not CUSTOM_MODE_ONLY_MELEE == 1 
+    then    
+    Actor.StorePos($SURV_IN_CAR, 10@, 11@, 12@)
+    if 
+    0AE1: 23@ = random_actor_near_point 10@ 11@ 12@ in_radius 100.0 find_next 1 pass_deads 0 //IF and SET 
+        then
+        if 
+        not Actor.Dead(23@)
+            then
+            089F: get_actor 23@ pedtype_to 22@ 
+            if or
+            22@ == 23 
+            22@ == 27 
+            22@ == 28 
+                then
+                SURVIVOR_IN_CAR_TARGET_FOUNDED_FLAG = 1 
+                32@ = 0 
+                0713: actor $SURV_IN_CAR driveby_actor 23@ car -1 point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360 
+                end 
+             end
+          end
+      end 
+                
+if and
+SURVIVOR_IN_CAR_ATTACKED_BY_PLAYER_FLAG == 0 
+SURVIVOR_IN_CAR_TARGET_FOUNDED_FLAG == 1 
+    then           
+    if 
+    056D:   actor 23@ defined 
+        then         
+        if or
+        32@ >= 4000 
+        Actor.Dead(23@)
+            then
+            32@ = 0 
+            SURVIVOR_IN_CAR_TARGET_FOUNDED_FLAG = 0   
+            end  
+        else
+        32@ = 0 
+        SURVIVOR_IN_CAR_TARGET_FOUNDED_FLAG = 0   
+        end
+    end
+    
+if and
+ORIGIN_ABILITY_ACTIVE == 6
+SURVIVOR_IN_CAR_ATTACKED_BY_PLAYER_FLAG == 1
+then
+32@ = 0 
+SURVIVOR_IN_CAR_TARGET_FOUNDED_FLAG = 0
+end    
+                     
+jump @RANDOM_PEOPLE_CAR_DRIVE_CHECK
+
+
+:RANDOM_PEOPLE_CAR_DELETE
+
+if
+07FD:   group SURVIVOR_IN_CAR_GROUP alive
+then
+0632: release_group SURVIVOR_IN_CAR_GROUP
+end
+
+actor.DestroyInstantly($SURV_IN_CAR)    
+$SURV_IN_CAR = -69
+$SURV_IN_CAR_FLAG1 = 0
+
+0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "SURVIVOR_ON_CAR_SPAWNED"
+
+if
+056E:   car SURVIVOR_CAR defined
+then
+
+if
+not actor.InCar(PLAYER_ACTOR,SURVIVOR_CAR)
+then
+car.Destroy(SURVIVOR_CAR)
+end
+
+car.RemoveReferences(SURVIVOR_CAR)
+end
+
+jump @RANDOM_PEOPLE_CAR_SPAWN_CHECK
+
+:RANDOM_PEOPLE_CAR_DELETE2
+
+if
+047A:   actor $SURV_IN_CAR driving_bike
+then
+create_thread @ANTKUK2 $SURV_IN_CAR SURVIVOR_CAR 1
+else
+create_thread @ANTKUKL $SURV_IN_CAR
+end
+
+if
+actor.Dead($SURV_IN_CAR)
+then
+gosub @LOOT_DROP2
+end          
+
+0A96: 0@ = actor $SURV_IN_CAR struct
+0@ += 0x754
+0A8D: 1@ = read_memory 0@ size 4 virtual_protect 0
+2@ = 0    
+0ECE: get_time_char_is_dead $SURV_IN_CAR store_to 2@
+
+if and
+0104:   actor $SURV_IN_CAR near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0
+89A8: not  actor $SURV_IN_CAR headshoted 
+$SPECTATING_FLAG == 0
+$SCREWHUD_FLAG == 0
+$PHRASES_OFF_FLAG == 0
+not 1@ == 0x02
+2@ > 500
+then
+    
+gosub @RANDOM_DIALOG_DEAD_SURV2                   
+        
+gosub @RANDOM_PEOPLE_CAR_NAME_CHECK
+                    
+09FD: get_gxt_string v$PHRASE3 width_to 3@  // ~k~~PED_SPRINT~ Select
+0093: 3@ = integer 3@ to_float
+3@ *= 8.0
+0092: 3@ = float 3@ to_integer  
+                    
+0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 3@ 1            
+end    
+
+if
+056E:   car SURVIVOR_CAR defined
+then
+car.SetDriverBehaviour(SURVIVOR_CAR,0)
+0423: set_car SURVIVOR_CAR improved_handling_to 1.0 // (float)
+03AB: set_car SURVIVOR_CAR strong 0
+car.RemoveReferences(SURVIVOR_CAR)
+end
+
+if
+07FD:   group SURVIVOR_IN_CAR_GROUP alive
+then
+0632: release_group SURVIVOR_IN_CAR_GROUP
+end
+
+/////////////////////////////////////////////////////////////////////////////////////      
+    
+0A96: 0@ = actor $SURV_IN_CAR struct
+0A8E: 0@ = 0@ + 0x764
+0A8D: 1@ = read_memory 0@ size 2 virtual_protect 1
+0A8D: 2@ = read_memory 0xB6F5F0 size 2 virtual_protect 1
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+if
+actor.Driving(PLAYER_ACTOR)
+then
+3@ = actor.CurrentCar(PLAYER_ACTOR)
+if
+056E:   car 3@ defined
+    then
+    if or
+    051B:   actor $SURV_IN_CAR damaged_by_car 3@
+    0547:   actor $SURV_IN_CAR colliding_with_car 3@ 
+        then
+        0085: 1@ = 2@ // (int)
+        end    
+    end
+else
+if
+056E:   car PLAYER_LAST_DEFINED_CAR defined
+    then
+    if or
+    051B:   actor $SURV_IN_CAR damaged_by_car PLAYER_LAST_DEFINED_CAR
+    0547:   actor $SURV_IN_CAR colliding_with_car PLAYER_LAST_DEFINED_CAR
+        then
+        0085: 1@ = 2@ // (int)
+        end
+    end
+end
+        
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+0800:   in_two_players_mode
+then
+0A8D: 0@ = read_memory 0xB7CF28 size 2 virtual_protect 1
+else
+0@ = -69
+end
+
+if or
+003B:   1@ == 2@  // (int)
+003B:   1@ == 0@  // (int)
+    then
+    
+    089F: get_actor $SURV_IN_CAR pedtype_to 1@
+    
+    if
+    1@ == 26
+        then          
+        
+        0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_SURVIVORS_KILLED"    
+        
+        if
+        $CHEATED_FLAG == 0 
+        then                  
+        0@ += 1   
+        end                    
+         
+        0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_SURVIVORS_KILLED"      
+        
+        $SURVIVORS_KILLED += 1
+        $TEMP_XP = USUAL_SURVIVOR_XP_PLUS
+        008D: $TEMP_XP = integer $TEMP_XP to_float
+        0069: $TEMP_XP *= $XP_COEFF // (float)
+        008C: $TEMP_XP = float $TEMP_XP to_integer
+        0058: $PLAYER_XP += $TEMP_XP // (int)
+        
+        if
+        KARMA_SYS_ON_FLAG == 1
+        then
+                
+        if
+        CARMA_VERY_BAD_FLAG == 0
+        then
+        CARMA_BAD_POINTS += 10
+        Audiostream.Loop($KARMA_BAD,0)
+        Audiostream.PerformAction($KARMA_BAD, PLAY)
+        Audiostream.Volume($KARMA_BAD) = $SOUNDS_VOLUME
+        CARMA_GOOD_POINTS -= 10
+        else
+        CARMA_BAD_POINTS += 3
+        Audiostream.Loop($KARMA_THUG,0)
+        Audiostream.PerformAction($KARMA_THUG, PLAY)
+        Audiostream.Volume($KARMA_THUG) = $SOUNDS_VOLUME
+        CARMA_GOOD_POINTS -= 5
+        end
+                
+        end
+        
+        end    
+        
+    if
+    1@ == 29
+        then          
+        
+        0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_MARODERS_KILLED"    
+        
+        if
+        $CHEATED_FLAG == 0 
+        then                  
+        0@ += 1   
+        end
+        
+        $MARODERS_KILLED += 1
+        $TEMP_XP = MARODERS_XP_PLUS
+        008D: $TEMP_XP = integer $TEMP_XP to_float
+        0069: $TEMP_XP *= $XP_COEFF // (float)
+        008C: $TEMP_XP = float $TEMP_XP to_integer
+        0058: $PLAYER_XP += $TEMP_XP // (int)
+        
+        if
+        KARMA_SYS_ON_FLAG == 1
+        then
+        CARMA_BAD_POINTS -= 1
+        CARMA_GOOD_POINTS += 1
+        Audiostream.Loop($KARMA_GOOD,0)
+        Audiostream.PerformAction($KARMA_GOOD, PLAY)
+        Audiostream.Volume($KARMA_GOOD) = $SOUNDS_VOLUME
+        end                    
+         
+        0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_MARODERS_KILLED"                  
+        
+        0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_MARODERS_KILLED"
+        0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT50_GOT"    
+        
+        if and
+        1@ == 0
+        0@ >= 100
+            then
+            v$ACHIEVEMNT = "ACH50"
+            $ACHIEVEMENT_GOT_FLAG = 1        
+            0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT50_GOT"        
+            end    
+        
+        end
+        
+    end
+    
+//////////////////////////////////////////////////////////////////////////////////////    
+    
+wait 500
+actor.RemoveReferences($SURV_IN_CAR)
+$SURV_IN_CAR = -69
+$SURV_IN_CAR_FLAG1 = 0
+
+0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "SURVIVOR_ON_CAR_SPAWNED"                    
+jump @RANDOM_PEOPLE_CAR_SPAWN_CHECK
+
+:RANDOM_PEOPLE_CAR_SET
+wait 0 
+
+if
+UNITED_MAP == 0
+then
+random_int 18@ 400 605 
+else
+
+if
+$UNITED_VC_FLAG == 1
+then
+
+if
+STORIES_MAP == 0
+then
+random_int 18@ MINID_VC_CAR MAXID_VC_CAR
+else
+random_int 18@ MINID_VCS_CAR MAXID_VCS_CAR
+end
+
+else
+
+if
+STORIES_MAP == 0
+then
+random_int 18@ MINID_III_CAR MAXID_III_CAR
+else
+random_int 18@ MINID_LCS_CAR MAXID_LCS_CAR
+end
+
+end
+
+end
+
+gosub @BIKE_CHECK6
+
+if or
+0A01:   model 18@ car
+1@ == 1 
+jf @RANDOM_PEOPLE_CAR_SET
+if and
+07DE:   model 18@ exists  // versionB
+not 18@ == 0   
+jf @RANDOM_PEOPLE_CAR_SET 
+if and
+not 18@ == #RHINO 
+not 18@ == #ARTICT1
+not 18@ == #RCBANDIT
+jf @RANDOM_PEOPLE_CAR_SET
+if and
+not 18@ == #TRAM
+not 18@ == #ARTICT2
+not 18@ == #RCBARON
+not 18@ == #RCRAIDER
+jf @RANDOM_PEOPLE_CAR_SET
+if
+not 18@ == #RCGOBLIN
+jf @RANDOM_PEOPLE_CAR_SET
+if and
+not 18@ == #FREIGHT
+not 18@ == #STREAK
+not 18@ == #VORTEX
+not 18@ == #FIRELA  
+not 18@ == #MONSTERA 
+not 18@ == #MONSTERB
+jf @RANDOM_PEOPLE_CAR_SET
+if and
+not 18@ == #RCTIGER
+not 18@ == #FREIFLAT
+not 18@ == #STREAKC
+jf @RANDOM_PEOPLE_CAR_SET
+if and
+not 18@ == #FREIBOX   
+not 18@ == #ARTICT3
+jf @RANDOM_PEOPLE_CAR_SET
+if
+not 18@ == #RCCAM
+jf @RANDOM_PEOPLE_CAR_SET
+if and
+not 18@ == #GLENSHIT
+not 18@ == #SADLSHIT 
+not 18@ == #BAGBOXA
+not 18@ == #BAGBOXB
+not 18@ == #TUGSTAIR
+not 18@ == #BOXBURG
+not 18@ == #FARMTR1
+jf @RANDOM_PEOPLE_CAR_SET
+if      
+not 18@ == #UTILTR1  
+jf @RANDOM_PEOPLE_CAR_SET
+if and
+not 18@ == 15303
+not 18@ == 15308
+not 18@ == 15305
+not 18@ == 15306
+not 18@ == 15287
+not 18@ == 15384
+not 18@ == 15315
+jf @RANDOM_PEOPLE_CAR_SET
+if and
+not 18@ == 15288
+not 18@ == 15267
+not 18@ == 15347
+not 18@ == 15345
+not 18@ == 15346
+not 18@ == 15355
+jf @RANDOM_PEOPLE_CAR_SET
+if and
+not 18@ == 15548
+not 18@ == 15244
+not 18@ == 15405
+not 18@ == 15251
+not 18@ == 15249
+not 18@ == 15476
+jf @RANDOM_PEOPLE_CAR_SET
+if and
+not 18@ == 15475
+not 18@ == 15598
+not 18@ == 15576
+not 18@ == 15577
+not 18@ == 15578
+not 18@ == 15580
+not 18@ == 15571
+jf @RANDOM_PEOPLE_CAR_SET
+if and
+not 18@ == 15404
+not 18@ == 15570
+jf @RANDOM_PEOPLE_CAR_SET
+
+//0AD3: 2@v = format "%d" 18@
+//0AF0: 0@ = get_int_from_ini_file "data/skins.ini" section "LOCKED2" key 2@v
+//if
+//not 0@ == 1
+//jf @RANDOM_BROKEN_CAR_SET
+
+:RANDOM_PEOPLE_CAR_SET2  
+wait 0 
+if 
+Model.Available(18@)
+jf @RANDOM_PEOPLE_CAR_SET3
+return
+
+:RANDOM_PEOPLE_CAR_SET3
+Model.Load(18@)
+mload
+jump to @RANDOM_PEOPLE_CAR_SET2
+
+:RANDOM_PEOPLE_CAR_CHECKING_MODEL
+wait 0
+
+//////////////////////////////////////////////////
+    
+random_int 19@ = MIN_SKIN_GEN MAX_SKIN_GEN
+if and
+19@ == SKIN_GEN_SET
+UNITED_MAP == 0
+    then
+    
+    while true
+    wait 0
+    
+    if
+    0E4D: random_percent NEWSKINS2_GEN_PERCENT
+    then
+    random_int 19@ $MIN_SKIN2 $MAX_SKIN2
+    else
+    random_int 19@ $MIN_SKIN $MAX_SKIN
+    end
+    
+    if
+    not model.Available(19@)
+    then
+    model.Load(19@)
+    end
+    
+    if or
+    003C:   $RANDOM_MODE_MODEL == 19@  // (int)
+    07D6:   19@ == $RANDOM_PEOPLE_SKIN[0] // @ == $ (int)
+    07D6:   19@ == $RANDOM_PEOPLE_SKIN[1] // @ == $ (int)
+    07D6:   19@ == $RANDOM_PEOPLE_SKIN[2] // @ == $ (int)
+    07D6:   19@ == $RANDOM_PEOPLE_SKIN[3] // @ == $ (int)
+    07D6:   19@ == $RANDOM_PEOPLE_SKIN[4] // @ == $ (int)
+    07D6:   19@ == $RANDOM_PEOPLE_SKIN[5] // @ == $ (int)
+        then
+        else   
+        break
+        end
+    
+    end
+    
+    return
+    end
+    
+//////////////////////////////////////////////////    
+
+if
+UNITED_MAP == 0
+then
+0209: 19@ = random_int_in_ranges 7 285
+else
+
+if
+$UNITED_VC_FLAG == 1
+then
+
+if
+STORIES_MAP == 0
+then
+0209: 19@ = random_int_in_ranges MINID_VC_SKIN MAXID_VC_SKIN
+else
+0209: 19@ = random_int_in_ranges MINID_VCS_SKIN MAXID_VCS_SKIN
+end
+
+else
+
+if
+STORIES_MAP == 0
+then
+0209: 19@ = random_int_in_ranges MINID_III_SKIN MAXID_III_SKIN
+else
+0209: 19@ = random_int_in_ranges MINID_LCS_SKIN MAXID_LCS_SKIN
+end
+
+end
+
+end
+
+////////////////////////////////////////////////////////
+
+if
+UNITED_MAP == 0
+then
+
+2@ = 0
+
+for 1@ = 0 to $CAMPS_COUNT2
+        
+if or
+07D6:   19@ == $CAMP_MODEL1[1@] // @ == $ (int)
+07D6:   19@ == $CAMP_MODEL2[1@] // @ == $ (int)
+07D6:   19@ == $CAMP_MODEL3[1@] // @ == $ (int)
+07D6:   19@ == $CAMP_MODEL4[1@] // @ == $ (int)
+07D6:   19@ == $CAMP_MODEL5[1@] // @ == $ (int)
+07D6:   19@ == $CAMP_MODEL6[1@] // @ == $ (int)
+07D6:   19@ == $CAMP_MODEL7[1@] // @ == $ (int)
+07D6:   19@ == $CAMP_MODEL8[1@] // @ == $ (int)
+then
+2@ = 1
+end
+
+if or
+07D6:   19@ == $TRADER_MODEL[0] // @ == $ (int)
+07D6:   19@ == $TRADER_MODEL[1] // @ == $ (int)
+07D6:   19@ == $TRADER_MODEL[2] // @ == $ (int)
+07D6:   19@ == $TRADER_MODEL[3] // @ == $ (int)
+07D6:   19@ == $TRADER_MODEL[4] // @ == $ (int)
+07D6:   19@ == $TRADER_MODEL[5] // @ == $ (int)
+07D6:   19@ == $TRADER_MODEL[6] // @ == $ (int)
+07D6:   19@ == $TRADER_MODEL[7] // @ == $ (int)
+then
+2@ = 1
+end
+
+if or
+07D6:   19@ == $TRADER_MODEL[8] // @ == $ (int)
+07D6:   19@ == $TRADER_MODEL[9] // @ == $ (int)
+07D6:   19@ == $TRADER_MODEL[10] // @ == $ (int)
+07D6:   19@ == $TRADER_MODEL[11] // @ == $ (int)
+07D6:   19@ == $TRADER_MODEL[12] // @ == $ (int)
+07D6:   19@ == $TRADER_MODEL[13] // @ == $ (int)
+07D6:   19@ == $TRADER_MODEL[14] // @ == $ (int)
+then
+2@ = 1
+end
+            
+if or
+07D6:   19@ == $CAMP_MODEL9[1@] // @ == $ (int)
+07D6:   19@ == $CAMP_MODEL10[1@] // @ == $ (int)
+then
+2@ = 1
+end   
+
+end
+
+end
+
+////////////////////////////////////////////////////////
+
+if or
+003C:   $RANDOM_MODE_MODEL == 19@  // (int)
+2@ == 1
+jf @4SKIN_CHECK
+jump @RANDOM_PEOPLE_CAR_CHECKING_MODEL
+
+:4SKIN_CHECK
+if and
+87D6: not  19@ == $RANDOM_PEOPLE_SKIN[0] // @ == $ (int)
+87D6: not  19@ == $RANDOM_PEOPLE_SKIN[1] // @ == $ (int)
+87D6: not  19@ == $RANDOM_PEOPLE_SKIN[2] // @ == $ (int)
+87D6: not  19@ == $RANDOM_PEOPLE_SKIN[3] // @ == $ (int)
+87D6: not  19@ == $RANDOM_PEOPLE_SKIN[4] // @ == $ (int)
+87D6: not  19@ == $RANDOM_PEOPLE_SKIN[5] // @ == $ (int) 
+jf @RANDOM_PEOPLE_CAR_CHECKING_MODEL
+jump to @RANDOM_PEOPLE_CAR_CHECKING_MODEL2
+
+:RANDOM_PEOPLE_CAR_CHECKING_MODEL2
+    
+if
+07DE:   model 19@ exists  // versionB
+jf @RANDOM_PEOPLE_CAR_CHECKING_MODEL
+
+0AD3: 2@v = format "%d" 19@
+0AF0: 1@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key 2@v
+if
+not 1@ == 1
+jf @RANDOM_PEOPLE_CAR_CHECKING_MODEL
+
+:RANDOM_PEOPLE_CAR_CHECKING_MODEL22
+wait 0
+if
+model.Available(19@)
+jf @RANDOM_PEOPLE_CAR_CHECKING_MODEL3
+008A: $RANDOM_PEOPLE_SKIN[5] = 1@ // (int)
+return
+
+:RANDOM_PEOPLE_CAR_CHECKING_MODEL3
+model.Load(19@)
+038B: load_requested_models                     
+jump to @RANDOM_PEOPLE_CAR_CHECKING_MODEL22
+
+:RANDOM_PEOPLE_CAR_3097
+wait 0 
+
+if
+UNITED_MAP == 0
+then
+random_int 11@ MIN_WEAP_GEN to MAX_WEAP_GEN
+end
+
+if
+not 11@ == WEAP_GEN_SET
+then
+0209: 10@ = random_int_in_ranges 22 35 
+else
+0209: 10@ = random_int_in_ranges MIN_WEAPON_NUM MAX_WEAPON_NUM
+end
+
+if
+UNITED_MAP == 1
+then
+
+if 
+$UNITED_VC_FLAG == 1
+then
+
+if
+STORIES_MAP == 0
+then
+0209: 10@ = random_int_in_ranges MINID_VC_WEAP MAXID_VC_WEAP
+
+if
+10@ == 142
+    then    
+    if
+    0E4D: random_percent 50
+        then
+        10@ = 28
+        end    
+    end
+
+else
+0209: 10@ = random_int_in_ranges MINID_VCS_WEAP MAXID_VCS_WEAP
+
+if
+10@ == 198
+    then
+    if
+    0E4D: random_percent 50
+        then
+        10@ = 28
+        end
+    end
+
+end
+
+else
+
+if
+STORIES_MAP == 0
+then
+0209: 10@ = random_int_in_ranges MINID_III_WEAP MAXID_III_WEAP
+else
+0209: 10@ = random_int_in_ranges MINID_LCS_WEAP MAXID_LCS_WEAP
+
+if
+10@ == 168
+    then    
+    if
+    0E4D: random_percent 50
+        then
+        10@ = 28
+        end    
+    end
+
+end
+
+end
+
+end
+
+////////////////////////////////////////////////////
+
+if or
+10@ == 22
+10@ == 24
+10@ == 25
+10@ == 26
+10@ == 27
+10@ == 28
+10@ == 29
+10@ == 30 
+    then
+    else
+    if or
+    10@ == 31
+    10@ == 71
+    10@ == 72
+    10@ == 73
+    10@ == 74
+    10@ == 75 
+        then
+        else
+        if or
+        10@ == 76
+        10@ == 77
+        10@ == 78
+        10@ == 136
+        10@ == 137
+        10@ == 138
+        10@ == 139
+        10@ == 140
+            then     
+            else
+            if or
+            10@ == 141
+            10@ == 142
+            10@ == 143
+            10@ == 144
+            10@ == 145
+                then
+                else
+                if or
+                10@ == 111
+                10@ == 112
+                10@ == 113
+                10@ == 116
+                10@ == 117  
+                10@ == 79
+                    then
+                    else
+                    if or
+                    10@ == 81
+                    10@ == 82
+                    10@ == 83
+                    10@ == 84
+                    10@ == 85
+                    10@ == 86  
+                    10@ == 87
+                    10@ == 88
+                        then
+                        else
+                        if or
+                        10@ == 89
+                        10@ == 90
+                        10@ == 91
+                        10@ == 23
+                        10@ == 32
+                            then
+                            else       
+                            if or
+                            10@ == 165
+                            10@ == 166
+                            10@ == 167
+                            10@ == 168
+                            10@ == 169
+                            10@ == 170
+                            10@ == 171
+                            10@ == 172
+                                then
+                                else
+                                if or
+                                10@ == 173
+                                10@ == 174
+                                10@ == 195
+                                10@ == 196
+                                10@ == 197
+                                10@ == 198
+                                    then
+                                    else
+                                    if or
+                                    10@ == 199
+                                    10@ == 200
+                                    10@ == 201
+                                    10@ == 202
+                                    10@ == 203
+                                    10@ == 204
+                                        then       
+                                        else
+                                        if or
+                                        10@ == 95
+                                        10@ == 98
+                                        10@ == 99
+                                        10@ == 100
+                                        10@ == 101
+                                        10@ == 102
+                                            then
+                                            else       
+                                            if or
+                                            10@ == 103
+                                            10@ == 104
+                                            10@ == 105
+                                                then       
+                                                else
+                                                jump to @RANDOM_PEOPLE_CAR_3097
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+////////////////////////////////////////////////////  
+
+0781: get_weapon_with_ID 10@ model_to 11@ 
+if 
+07DE:   model 11@ exists // versionB 
+jf @RANDOM_PEOPLE_CAR_3097 
+
+while not model.Available(11@)
+wait 0
+model.Load(11@)
+mload
+end
+
+0AF1: write_int 10@ to_ini_file "saves/ZACM.set" section "SCR" key "SURVIVOR_ON_CAR_WEAPON_ID"
+
+Actor.GiveWeaponAndAmmo($SURV_IN_CAR, 10@, 99999)
+return 
+
+:LOOT_DROP2
+
+actor.StorePos($SURV_IN_CAR,1@,2@,3@)
+06C3: get_number_of_fires_within_sphere_at 1@ 2@ 3@ radius 3.0 store_to 0@
+if
+0@ > 0
+then
+return
+end
+
+actor.StorePos($SURV_IN_CAR,1@,2@,3@) 
+000F: 1@ -= 5.0
+000F: 2@ -= 5.0
+000F: 3@ -= 5.0
+actor.StorePos($SURV_IN_CAR,4@,5@,6@) 
+000F: 4@ -= -5.0
+000F: 5@ -= -5.0
+000F: 6@ -= -5.0
+
+if
+0356:   explosion_type -1 in_cube_cornerA 1@ 2@ 3@ cornerB 4@ 5@ 6@
+then
+return
+end
+
+if
+$FREEMODE == 0
+then
+0209: 25@ = random_int_in_ranges 0 3
+else
+0209: 25@ = random_int_in_ranges 0 2
+end
+
+if
+25@ > 0
+    then
+    
+    0@ = 0    
+    32@ = 0 
+    
+        repeat           
+
+        wait 0
+        0@ += 1
+        
+        //////////////////////////////Создание пикапа пакета с едой//////////////////////////////
+        
+        random_float 4@ -1.0 1.0
+        random_float 5@ 1.0 -1.0
+                        
+        04C4: store_coords_to 1@ 2@ 3@ from_actor $SURV_IN_CAR with_offset 4@ 5@ 0.0
+        
+        02CE: 3@ = ground_z_at 1@ 2@ 3@
+        
+        3@ += 1.0
+                        
+        $FOOD_PICKUP_NUM += 1
+                        
+        if
+        $FOOD_PICKUP_NUM > 28
+        then 
+        $FOOD_PICKUP_NUM = 0                      
+        end            
+        
+        if
+        09D1:   pickup $FOOD_PICKUP[$FOOD_PICKUP_NUM] created
+        then   
+            pickup.Destroy($FOOD_PICKUP[$FOOD_PICKUP_NUM]) 
+            end 
+                        
+        $FOOD_PICKUP[$FOOD_PICKUP_NUM] = pickup.Create(2663,3,1@,2@,3@) 
+        
+        if or                                                  
+        002D:   0@ >= 25@ // (int)  
+        32@ > 1000
+        $SAVESTATUS_TRUE == 1
+        then
+        break
+        end
+        
+        until 002D:   0@ >= 25@ // (int)                  
+                    
+    end
+    
+0209: 25@ = random_int_in_ranges 0 2    
+
+if
+25@ > 0
+    then
+    
+    0@ = 0    
+    32@ = 0 
+    
+        repeat 
+        wait 0
+        0@ += 1
+        
+        //////////////////////////////Создание пикапа аптечки//////////////////////////////
+                
+        random_float 4@ -1.0 1.0
+        random_float 5@ 1.0 -1.0
+                        
+        04C4: store_coords_to 1@ 2@ 3@ from_actor $SURV_IN_CAR with_offset 4@ 5@ 0.0
+        
+        02CE: 3@ = ground_z_at 1@ 2@ 3@
+        
+        3@ += 1.0
+                    
+        $HEAL_PICKUP_NUM += 1
+                    
+        if
+        $HEAL_PICKUP_NUM > 28
+        then 
+        $HEAL_PICKUP_NUM = 0                         
+        end
+                 
+        if
+        09D1:   pickup $HEAL_PICKUP[$HEAL_PICKUP_NUM] created
+            then  
+            pickup.Destroy($HEAL_PICKUP[$HEAL_PICKUP_NUM])
+            end  
+                    
+        $HEAL_PICKUP[$HEAL_PICKUP_NUM] = pickup.Create(#clothesp,3,1@,2@,3@)
+        
+        if or
+        002D:   0@ >= 25@ // (int)
+        32@ > 1000
+        $SAVESTATUS_TRUE == 1
+        then
+        break
+        end
+        
+        until 002D:   0@ >= 25@ // (int)                   
+                    
+    end
+    
+0209: 25@ = random_int_in_ranges 0 2    
+
+if
+25@ > 0
+    then
+    
+    0@ = 0    
+    32@ = 0 
+    
+        repeat 
+        wait 0
+        0@ += 1
+        
+        //////////////////////////////Создание пикапа бинта//////////////////////////////
+                
+        random_float 4@ -1.0 1.0
+        random_float 5@ 1.0 -1.0
+                        
+        04C4: store_coords_to 1@ 2@ 3@ from_actor $SURV_IN_CAR with_offset 4@ 5@ 0.0
+        
+        02CE: 3@ = ground_z_at 1@ 2@ 3@
+        
+        3@ += 1.0
+                    
+        $BINT_PICKUP_NUM += 1
+                    
+        if
+        $BINT_PICKUP_NUM > 28
+        then 
+        $BINT_PICKUP_NUM = 0                     
+        end         
+        
+        if
+        09D1:   pickup $BINT_PICKUP[$BINT_PICKUP_NUM] created
+            then    
+            pickup.Destroy($BINT_PICKUP[$BINT_PICKUP_NUM])
+            end   
+                    
+        $BINT_PICKUP[$BINT_PICKUP_NUM] = pickup.Create(#pain_killer,3,1@,2@,3@)  
+        
+        if or
+        002D:   0@ >= 25@ // (int)
+        32@ > 1000
+        $SAVESTATUS_TRUE == 1
+        then
+        break
+        end
+        
+        until 002D:   0@ >= 25@ // (int)           
+                    
+    end
+            
+25@ = 0
+random_int 3@ 0 5
+if
+3@ == 2
+    then
+    25@ = 1
+    end
+
+if
+25@ > 0
+    then
+    
+    0@ = 0    
+    32@ = 0 
+    
+        repeat 
+        wait 0
+        0@ += 1
+        
+        //////////////////////////////Создание пикапа канистры//////////////////////////////
+                
+        random_float 4@ -1.0 1.0
+        random_float 5@ 1.0 -1.0
+                        
+        04C4: store_coords_to 1@ 2@ 3@ from_actor $SURV_IN_CAR with_offset 4@ 5@ 0.0
+        
+        02CE: 3@ = ground_z_at 1@ 2@ 3@
+        
+        3@ += 1.0
+                    
+        $KANISTRA_PICKUP_NUM += 1
+                    
+        if
+        $KANISTRA_PICKUP_NUM > 28
+        then 
+        $KANISTRA_PICKUP_NUM = 0                      
+        end
+                 
+        if
+        09D1:   pickup $PIZDA_PICKUP[$KANISTRA_PICKUP_NUM] created
+            then   
+            pickup.Destroy($PIZDA_PICKUP[$KANISTRA_PICKUP_NUM])
+            end  
+                    
+        $PIZDA_PICKUP[$KANISTRA_PICKUP_NUM] = pickup.Create(#PETROLCANM,3,1@,2@,3@)
+        
+        if
+        $FREEMODE == 0
+        then
+        random_float $KANISTRA_RANDOM_COUNT 1.0 4.0
+        else
+        random_float $KANISTRA_RANDOM_COUNT 1.0 2.0
+        end
+                
+        0086: $PIZDA_PICKUP_FUEL[$KANISTRA_PICKUP_NUM] = $KANISTRA_RANDOM_COUNT // (float) 
+        
+        if or
+        002D:   0@ >= 25@ // (int)
+        32@ > 1000
+        $SAVESTATUS_TRUE == 1
+        then
+        break
+        end
+        
+        until 002D:   0@ >= 25@ // (int)        
+                    
+    end
+    
+25@ = 0
+random_int 3@ 0 5
+if
+3@ == 2
+    then
+    25@ = 1
+    end    
+
+if
+25@ > 0
+    then
+    
+    0@ = 0    
+    32@ = 0 
+    
+        repeat 
+        wait 0
+        0@ += 1
+        
+        //////////////////////////////Создание пикапа рации//////////////////////////////
+                
+        random_float 4@ -1.0 1.0
+        random_float 5@ 1.0 -1.0
+                        
+        04C4: store_coords_to 1@ 2@ 3@ from_actor $SURV_IN_CAR with_offset 4@ 5@ 0.0
+        
+        02CE: 3@ = ground_z_at 1@ 2@ 3@
+        
+        3@ += 1.0
+                    
+        $RADIO_PICKUP_NUM += 1
+                    
+        if
+        $RADIO_PICKUP_NUM > 18
+        then 
+        $RADIO_PICKUP_NUM = 0                       
+        end
+                 
+        if
+        09D1:   pickup $RADIO_PICKUP[$RADIO_PICKUP_NUM] created
+            then    
+            pickup.Destroy($RADIO_PICKUP[$RADIO_PICKUP_NUM])
+            end   
+                    
+        $RADIO_PICKUP[$RADIO_PICKUP_NUM] = pickup.Create(#CELLPHONE,3,1@,2@,3@)  
+        
+        if or
+        002D:   0@ >= 25@ // (int)
+        32@ > 1000
+        $SAVESTATUS_TRUE == 1
+        then
+        break
+        end
+        
+        until 002D:   0@ >= 25@ // (int)           
+                    
+    end
+
+25@ = 0
+
+if
+$FREEMODE == 0
+then    
+0209: 25@ = random_int_in_ranges 0 3
+else
+0209: 25@ = random_int_in_ranges 0 2
+end    
+
+if
+25@ > 0
+    then
+    
+    0@ = 0    
+    32@ = 0 
+    
+        repeat 
+        wait 0
+        0@ += 1
+        
+        //////////////////////////////Создание пикапа отмычки//////////////////////////////
+                
+        random_float 4@ -1.0 1.0
+        random_float 5@ 1.0 -1.0
+                        
+        04C4: store_coords_to 1@ 2@ 3@ from_actor $SURV_IN_CAR with_offset 4@ 5@ 0.0
+        
+        02CE: 3@ = ground_z_at 1@ 2@ 3@
+        
+        3@ += 1.0
+                    
+        $JIMMY_PICKUP_NUM += 1
+                    
+        if
+        $JIMMY_PICKUP_NUM > 28
+        then 
+        $JIMMY_PICKUP_NUM = 0                                 
+        end             
+        
+        if
+        09D1:   pickup $JIMMY_PICKUP[$RADIO_PICKUP_NUM] created
+            then    
+            pickup.Destroy($JIMMY_PICKUP[$RADIO_PICKUP_NUM])
+            end 
+                    
+        $JIMMY_PICKUP[$JIMMY_PICKUP_NUM] = pickup.Create(#drug_red,3,1@,2@,3@) 
+        
+        if or
+        002D:   0@ >= 25@ // (int)
+        32@ > 1000
+        $SAVESTATUS_TRUE == 1
+        then
+        break
+        end        
+        
+        until 002D:   0@ >= 25@ // (int)           
+                    
+    end
+
+25@ = 0    
+random_int 0@ 0 to 5
+if
+0@ == 3
+then
+0209: 25@ = random_int_in_ranges 1 2   
+end    
+    
+if
+25@ > 0
+    then
+    
+    0@ = 0    
+    32@ = 0 
+    
+        repeat 
+        wait 0
+        0@ += 1
+        
+        //////////////////////////////Создание пикапа инструментов//////////////////////////////
+                
+        random_float 4@ -1.0 1.0
+        random_float 5@ 1.0 -1.0
+                        
+        04C4: store_coords_to 1@ 2@ 3@ from_actor $SURV_IN_CAR with_offset 4@ 5@ 0.0
+        
+        02CE: 3@ = ground_z_at 1@ 2@ 3@
+        
+        3@ += 1.0
+                    
+        $REPAIR_PICKUP_NUM += 1
+                    
+        if
+        $REPAIR_PICKUP_NUM > 28
+        then 
+        $REPAIR_PICKUP_NUM = 0                                 
+        end    
+                 
+        if
+        09D1:   pickup $REPAIR_PICKUP[$REPAIR_PICKUP_NUM] created
+            then    
+            pickup.Destroy($REPAIR_PICKUP[$REPAIR_PICKUP_NUM])
+            end 
+                    
+        $REPAIR_PICKUP[$REPAIR_PICKUP_NUM] = pickup.Create(1273,3,1@,2@,3@) 
+        
+        if or
+        002D:   0@ >= 25@ // (int)
+        32@ > 1000
+        $SAVESTATUS_TRUE == 1
+        then
+        break
+        end        
+        
+        until 002D:   0@ >= 25@ // (int)           
+                    
+    end        
+
+return
+
+:RANDOM_DIALOG_DEAD_SURV2
+    
+for 1@ = 0 to 200
+
+05A9: v$PHRASE1 = "PH1_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+05A9: v$PHRASE1 = "PH1_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+
+return
+
+:RANDOM_DIALOG_DAMAGED_BY_WEAPON_SURV2
+
+for 1@ = 0 to 200
+
+05A9: v$PHRASE1 = "PH3_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then   
+    1@ += 1 
+    random_int 0@ 0 1@
+    end
+
+end  
+
+05A9: v$PHRASE1 = "PH3_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+:RANDOM_DIALOG_DAMAGED_BY_ZOMBIES_SURV2
+    
+for 1@ = 0 to 200
+
+05A9: v$PHRASE1 = "PH6_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then   
+    1@ += 1 
+    random_int 0@ 0 1@
+    end
+
+end  
+
+05A9: v$PHRASE1 = "PH6_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+:RANDOM_DIALOG_GRENADE_SURV2
+    
+for 1@ = 0 to 200
+
+05A9: v$PHRASE1 = "PH7_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+05A9: v$PHRASE1 = "PH7_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+:RANDOM_DIALOG_HUNTER_SURV2
+    
+for 1@ = 0 to 200
+
+05A9: v$PHRASE1 = "PH8_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then   
+    1@ += 1 
+    random_int 0@ 0 1@
+    end
+
+end  
+
+05A9: v$PHRASE1 = "PH8_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+:RANDOM_DIALOG_TANK_NEAR_SURV2
+    
+for 1@ = 0 to 200
+
+05A9: v$PHRASE1 = "PH9_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then   
+    1@ += 1 
+    random_int 0@ 0 1@
+    end
+
+end  
+
+05A9: v$PHRASE1 = "PH9_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+:RANDOM_DIALOG_HUNTER_NEAR_SURV2
+    
+for 1@ = 0 to 200
+
+05A9: v$PHRASE1 = "PH10_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+05A9: v$PHRASE1 = "PH10_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+:RANDOM_DIALOG_WITCH_NEAR_SURV2
+    
+for 1@ = 0 to 200
+
+05A9: v$PHRASE1 = "PH11_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then  
+    1@ += 1  
+    random_int 0@ 0 1@
+    end
+
+end  
+
+05A9: v$PHRASE1 = "PH11_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+:RANDOM_DIALOG_CHARGER_NEAR_SURV2
+    
+for 1@ = 0 to 200
+
+05A9: v$PHRASE1 = "PH12_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then  
+    1@ += 1  
+    random_int 0@ 0 1@
+    end
+
+end  
+
+05A9: v$PHRASE1 = "PH12_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+:RANDOM_DIALOG_ATTACK_SURV2
+    
+for 1@ = 0 to 200
+
+05A9: v$PHRASE1 = "PH13_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+05A9: v$PHRASE1 = "PH13_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return  
+
+:RANDOM_DIALOG_KILL1_PEOPLE_SURV2
+
+for 1@ = 0 to 200
+
+05A9: v$PHRASE1 = "PH74_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then  
+    1@ += 1  
+    random_int 0@ 0 1@
+    end
+
+end  
+
+05A9: v$PHRASE1 = "PH74_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+:RANDOM_DIALOG_KILL2_PEOPLE_SURV2
+
+for 1@ = 0 to 200
+
+05A9: v$PHRASE1 = "PH75_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@  // ~k~~PED_SPRINT~ Select
+
+if
+not 31@ == 0
+    then   
+    1@ += 1 
+    random_int 0@ 0 1@
+    end
+
+end  
+
+05A9: v$PHRASE1 = "PH75_" // v$ // Sunday
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
+
+:RANDOM_PEOPLE_CAR_NAME_CHECK
+
+if
+actor.Driving($SURV_IN_CAR)  
+then  
+
+05A9: v$2NAME3 = "GAME500" // v$ // Sunday        
+
+//089F: get_actor $SURV_IN_CAR pedtype_to 0@
+//
+//if
+//0@ == 29
+//then
+//05A9: v$2NAME3 = 'GAME298' // v$ // Sunday
+//end  
+
+else
+
+05A9: v$2NAME3 = "GAME500" // v$ // Sunday        
+
+//089F: get_actor $SURV_IN_CAR pedtype_to 0@
+//
+//if
+//0@ == 29
+//then
+//05A9: v$2NAME3 = 'GAME349' // v$ // Sunday
+//end  
+
+end
+
+return
+
+/////////////////////Союзники атакуют марадеров которых увидили///////////////
+
+:RANDOM_PEOPLE_CAR_ATTACK_PEOPLE1
+
+if
+CARMA_VERY_BAD_FLAG == 0
+then
+
+if or  
+SURVIVOR_IN_CAR_MARODER_FLAG == 1
+SURVIVOR_IN_CAR_ATTACKED_BY_PLAYER_FLAG == 1
+then
+else
+return
+end
+
+else
+
+if or  
+SURVIVOR_IN_CAR_MARODER_FLAG == 0
+SURVIVOR_IN_CAR_ATTACKED_BY_PLAYER_FLAG == 1
+then
+else
+return
+end
+
+end
+
+092B: 3@ = group PLAYER_GROUP member 0@
+
+if
+07D6:   3@ == COOP_ACTOR // @ == $ (int)
+then
+return
+end
+
+if
+056D:  actor 3@ defined
+jf @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_BEGIN
+
+if
+056D:   actor $SURV_IN_CAR defined
+jf @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_BEGIN    
+
+if
+056D:   actor 3@ defined
+jf @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_BEGIN
+
+if
+$MISSION14_ACTIVE == 1
+    then
+    if
+    not 0@ == 1
+    jf @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_BEGIN
+    end
+    
+if
+$QUEST_TYPE == 9
+    then
+    if
+    87D6: not  3@ == $VERSUS_PEOPLE[1] // @ == $ (int)
+    jf @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_BEGIN
+    end
+
+if or
+00DF:   actor 3@ driving
+0449:   actor 3@ in_a_car
+    then
+    if
+    $HUNTER_ON_PLAYER == 0
+    //$PEOPLE_DONT_ATTACK == 0
+    //$COMMAND_STAY_IN_CAR == 0
+        then                     
+        gosub @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_IN_CAR
+        end
+    end 
+
+if and 
+not actor.Driving(PLAYER_ACTOR)
+$RANDOM_CAR_FLAG == 0  
+89DE:   actor 3@ entering_car  
+80DF:   actor 3@ in_a_car
+jf @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_BEGIN
+if or
+0364:   actor 3@ spotted_actor $SURV_IN_CAR
+0364:   actor $SURV_IN_CAR spotted_actor 3@
+0364:   actor PLAYER_ACTOR spotted_actor $SURV_IN_CAR
+0364:   actor $SURV_IN_CAR spotted_actor PLAYER_ACTOR
+GROUP_COMMAND_GO_ATTACK == 2
+jf @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_BEGIN
+if
+00F2:   actor 3@ near_actor $SURV_IN_CAR radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+jf @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_BEGIN
+if and
+$HUNTER_ON_PLAYER == 0
+$PEOPLE_DONT_ATTACK == 0
+$COMMAND_STAY_IN_CAR == 0
+jf @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_BEGIN
+if
+not actor.Animation(3@) == "FLOOR_hit"
+jf @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_BEGIN
+if
+$HUNTER_ON_GROUP == 0
+jf @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_BEGIN  
+if
+044B:   actor 3@ on_foot
+jf @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_BEGIN  
+if
+82E0: not actor 3@ firing_weapon
+jf @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_BEGIN
+062E: get_actor 3@ task 1506 status_store_to 1@ // ret 7 if not found
+if 
+1@ == 7
+jf @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_BEGIN  
+if and
+not actor.Animation(3@) == "colt45_fire_2hands"
+not actor.Animation(3@) == "python_fire" 
+not actor.Animation(3@) == "shotgun_fire" 
+not actor.Animation(3@) == "buddy_fire" 
+not actor.Animation(3@) == "UZI_fire"
+not actor.Animation(3@) == "RIFLE_fire" 
+jf @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_BEGIN  
+if and
+not actor.Animation(3@) == "FLAME_fire" 
+not actor.Animation(3@) == "RocketFire" 
+not actor.Animation(3@) == "WEAPON_sniper" 
+not actor.Animation(3@) == "WEAPON_throw"
+not actor.Animation(3@) == "BOM_PLANT"   
+jf @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_BEGIN       
+if and
+not actor.Animation(3@) == "colt45_crouchfire"
+not actor.Animation(3@) == "python_crouchfire" 
+not actor.Animation(3@) == "shotgun_crouchfire" 
+not actor.Animation(3@) == "buddy_crouchfire" 
+not actor.Animation(3@) == "UZI_crouchfire"
+not actor.Animation(3@) == "RIFLE_crouchfire" 
+jf @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "colt45_reload"
+not actor.Animation(3@) == "python_reload" 
+not actor.Animation(3@) == "shotgun_reload" 
+not actor.Animation(3@) == "buddy_reload" 
+not actor.Animation(3@) == "UZI_reload"
+not actor.Animation(3@) == "RIFLE_load" 
+jf @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "colt45_crouchreload"
+not actor.Animation(3@) == "python_crouchreload" 
+not actor.Animation(3@) == "shotgun_crouchreload" 
+not actor.Animation(3@) == "buddy_crouchreload" 
+not actor.Animation(3@) == "UZI_crouchreload"
+not actor.Animation(3@) == "RIFLE_crouchload" 
+jf @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_BEGIN   
+if and
+not actor.Animation(3@) == "GunMove_BWD"
+not actor.Animation(3@) == "GunMove_FWD"
+not actor.Animation(3@) == "GunMove_L"
+not actor.Animation(3@) == "GunMove_R"
+not actor.Animation(3@) == "Gun_2_IDLE"
+not actor.Animation(3@) == "GUN_BUTT"
+not actor.Animation(3@) == "GUN_BUTT_crouch"
+not actor.Animation(3@) == "Gun_stand" 
+jf @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "CLIMB_idle"
+not actor.Animation(3@) == "CLIMB_jump"
+not actor.Animation(3@) == "CLIMB_jump2fall"
+not actor.Animation(3@) == "CLIMB_jump_B"
+not actor.Animation(3@) == "CLIMB_Pull"
+not actor.Animation(3@) == "CLIMB_Stand"
+not actor.Animation(3@) == "CLIMB_Stand_finish" 
+jf @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "Crouch_Roll_L"
+not actor.Animation(3@) == "Crouch_Roll_R"
+not actor.Animation(3@) == "gas_cwr"
+not actor.Animation(3@) == "getup"
+not actor.Animation(3@) == "getup_front"
+not actor.Animation(3@) == "GunCrouchBwd"
+not actor.Animation(3@) == "GunCrouchFwd"
+8E47: not is_char_fighting 3@
+jf @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_BEGIN
+05C1: AS_actor 3@ speak_from_audio_table $PEOPLE_ZOMBIE_ATTACK_AUDIO_TABLE
+if
+056D:   actor 3@ defined
+jf @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_BEGIN 
+if and
+not actor.Driving(PLAYER_ACTOR)
+89DE:   actor PLAYER_ACTOR entering_car
+80DF:   actor PLAYER_ACTOR in_a_car
+80DF:   actor 3@ in_a_car
+not actor.Dead(3@)
+jf @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_BEGIN
+//0647: AS_actor 3@ clear_look_task
+//05B9: AS_actor 3@ stay_idle 50 ms 
+wait 50
+if
+056D:   actor 3@ defined  
+then
+05E2: AS_actor 3@ kill_actor $SURV_IN_CAR
+end
+jump @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_BEGIN   
+                                
+:RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_IN_CAR   
+if and
+not actor.Animation(3@) == "Gang_DrivebyLHS"
+not actor.Animation(3@) == "Gang_DrivebyLHS_Bwd"
+not actor.Animation(3@) == "Gang_DrivebyLHS_Fwd"
+not actor.Animation(3@) == "Gang_DrivebyRHS"
+not actor.Animation(3@) == "Gang_DrivebyRHS_Bwd"
+not actor.Animation(3@) == "Gang_DrivebyRHS_Fwd" 
+jf @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_IN_CAR_RETURN 
+if and
+not actor.Animation(3@) == "Gang_DrivebyTop_LHS"
+not actor.Animation(3@) == "Gang_DrivebyTop_RHS" 
+jf @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_IN_CAR_RETURN 
+if 
+00F2:   actor 3@ near_actor $SURV_IN_CAR radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+jf @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_IN_CAR_RETURN
+if or
+0364:   actor 3@ spotted_actor $SURV_IN_CAR
+0364:   actor $SURV_IN_CAR spotted_actor 3@
+0364:   actor PLAYER_ACTOR spotted_actor $SURV_IN_CAR
+0364:   actor $SURV_IN_CAR spotted_actor PLAYER_ACTOR
+jf @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_IN_CAR_RETURN
+
+///////////////////////////////////////////////////////////////////////////
+if and
+0@ == 0
+TEAMMATE1_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 1
+TEAMMATE2_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 2
+TEAMMATE3_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 3
+TEAMMATE4_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 4
+TEAMMATE5_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+///////////////////////////////////////////////////////////////////////////
+
+if and
+8E42: not is_char_doing_task_id 3@ 243
+not $COMMAND_STAY_IN_CAR == 1
+then
+06C9: remove_actor 3@ from_group
+0631: put_actor 3@ in_group PLAYER_GROUP
+end          
+0713: actor 3@ driveby_actor $SURV_IN_CAR car -1 point 0.0 0.0 0.0 radius 180.0 8 1 firing_rate 360
+
+///////////////////////////////////////////////////////////////////////////
+if
+0@ == 0
+    then
+    TEAMMATE1_ATTACK_TIMER = 0
+    end
+if
+0@ == 1
+    then
+    TEAMMATE2_ATTACK_TIMER = 0
+    end
+if
+0@ == 2
+    then
+    TEAMMATE3_ATTACK_TIMER = 0
+    end
+if
+0@ == 3
+    then
+    TEAMMATE4_ATTACK_TIMER = 0
+    end
+if
+0@ == 4
+    then
+    TEAMMATE5_ATTACK_TIMER = 0
+    end
+///////////////////////////////////////////////////////////////////////////
+ 
+return       
+
+:RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_IN_CAR_RETURN
+return
+
+:RANDOM_PEOPLE_CAR_ATTACK_PEOPLE_BEGIN
+return      
+
+//////////////////////////////////////////////////////////////////////////
+
+:SURVIVER_CAR_ONFOOT_ATTACK_SYSTEM
+
+if
+$VAGINA4_FLAG[0] == 1
+    then
+    $VAGINA4_TIME[0] += 1
+    end               
+
+/////////////////Поиск цели бойцом///////////////////// 
+
+if and
+056D:   actor $SURV_IN_CAR defined
+$VAGINA4_FLAG[0] == 0  
+    then
+    gosub @SURVIVER_CAR_ONFOOT_ATTACK_SYSTEM_PLAYER_CHECK
+    random_int 2@ 0 3
+    if and
+    2@ == 1
+    19@ == 1
+        then
+        if or
+        0364:  actor $SURV_IN_CAR spotted_actor PLAYER_ACTOR  
+        0364:  actor PLAYER_ACTOR spotted_actor $SURV_IN_CAR     
+        00F2:  actor $SURV_IN_CAR near_actor PLAYER_ACTOR radius 55.0 55.0 sphere 0
+            then
+            if and
+            $ACTOR_DEAD == 0
+            $SPECTATING_FLAG == 0
+            00F2:  actor $SURV_IN_CAR near_actor PLAYER_ACTOR radius AI_FIND_RADIUS AI_FIND_RADIUS sphere 0
+                then       
+                008B: $VAGINA4[0] = PLAYER_ACTOR // (int)
+                0568: set_actor $SURV_IN_CAR untargetable 0
+                $VAGINA4_FLAG[0] = 1
+                $VAGINA4_TIME[0] = 0
+                
+                if
+                $VAGINA4_ACCQ_FLAG[0] == 1
+                then
+                0A96: 1@ = actor $SURV_IN_CAR struct
+                0A8E: 1@ = 1@ + 0x71A                    
+                0A8D: 2@ = read_memory 1@ size 1 virtual_protect 1 
+                    
+                2@ -= AI_ACQ_ADD_OTHER_TARGET                                         
+                                                                            
+                0A8C: write_memory 1@ size 4 value 2@ virtual_protect 1    
+                
+                actor.WeaponAccuracy($SURV_IN_CAR) = 2@                
+                
+                $VAGINA4_ACCQ_FLAG[0] = 0
+                end    
+                    
+                gosub @SURVIVER_CAR_ONFOOT_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST     
+                wait 100                                                  
+      
+                end
+            end   
+        else    
+        gosub @SURVIVER_CAR_ONFOOT_ATTACK_SYSTEM_TARGET_FIND
+        if and
+        25@ == 1
+        056D:   actor $VAGINA4[0] defined
+            then    
+            gosub @SURVIVER_CAR_ONFOOT_ATTACK_SYSTEM_TARGET_CHECK
+            
+            if
+            DEBUG_OPPCODE_FLAG == 1
+            then
+            
+            DEBUG_STRING_NUMBER += 1
+            0AD3: v$DEBUG_FILE12 = format "SC%d" DEBUG_STRING_NUMBER
+            if
+            DEBUG_STRING_NUMBER > DEBUG_STRING_NUMBER_MAX
+            then
+            0B00: delete_file "debug\debug.ini"  // IF and SET
+            DEBUG_STRING_NUMBER = 0
+            end
+            0AF1: write_int $VAGINA4[0] to_ini_file "debug\debug.ini" section "OPPCODE" key v$DEBUG_FILE12
+            
+            end
+                    
+            if and
+            not actor.Dead($VAGINA4[0])    
+            0184:   actor $VAGINA4[0] health > 0        
+            803A: not  $VAGINA4[0] == $SURV_IN_CAR // (int) 
+            19@ == 1                 
+                then
+                if or
+                0364:  actor $SURV_IN_CAR spotted_actor $VAGINA4[0]
+                0364:  actor $VAGINA4[0] spotted_actor $SURV_IN_CAR
+                    then 
+                        
+                    $VAGINA4_FLAG[0] = 1
+                    $VAGINA4_TIME[0] = 0
+                    
+                    if
+                    $VAGINA4_ACCQ_FLAG[0] == 0
+                    then
+                    0A96: 1@ = actor $SURV_IN_CAR struct
+                    0A8E: 1@ = 1@ + 0x71A                    
+                    0A8D: 2@ = read_memory 1@ size 1 virtual_protect 1 
+                        
+                    2@ += AI_ACQ_ADD_OTHER_TARGET                   
+                         
+                    if
+                    2@ > 95
+                    then
+                    2@ = 95
+                    end                                            
+                          
+                    0A8C: write_memory 1@ size 4 value 2@ virtual_protect 1
+                    
+                    actor.WeaponAccuracy($SURV_IN_CAR) = 2@                    
+                    
+                    $VAGINA4_ACCQ_FLAG[0] = 1
+                    end    
+                        
+                    gosub @SURVIVER_CAR_ONFOOT_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST  
+                    wait 100                      
+                    end                                                                                  
+                end 
+            end
+        end               
+    end
+
+/////////////////Проверка на бездействие бойца если цель найдена/////////////////////     
+
+if
+056D:   actor $SURV_IN_CAR defined
+    then        
+    if
+    0184:   actor $SURV_IN_CAR health > 0 
+        then
+        if or
+        actor.Animation($SURV_IN_CAR) == "idle_stance"
+        actor.Animation($SURV_IN_CAR) == "woman_idlestance"
+        actor.Animation($SURV_IN_CAR) == "Swim_Tread"
+            then
+            06AC: 1@ = actor $SURV_IN_CAR movement_speed
+            gosub @SURVIVER_CAR_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK
+            if and
+            19@ == 0
+            $ACTIVE_INTERIOR == 0        
+            1@ < 0.001
+            82E0: not  actor $SURV_IN_CAR firing_weapon 
+                then
+                gosub @SURVIVER_CAR_ONFOOT_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST  
+                wait 100
+                end
+            end
+        end 
+    end
+     
+/////////////////Проверка на наличие цели атаки///////////////////// 
+
+if and
+056D:   actor $SURV_IN_CAR defined
+$VAGINA4_FLAG[0] == 1 
+    then
+    if
+    056D:   actor $VAGINA4[0] defined
+        then
+        
+        if
+        DEBUG_OPPCODE_FLAG == 1
+        then
+        
+        DEBUG_STRING_NUMBER += 1
+        0AD3: v$DEBUG_FILE12 = format "SC%d" DEBUG_STRING_NUMBER
+        if
+        DEBUG_STRING_NUMBER > DEBUG_STRING_NUMBER_MAX
+        then
+        0B00: delete_file "debug\debug.ini"  // IF and SET
+        DEBUG_STRING_NUMBER = 0
+        end
+        0AF1: write_int $VAGINA4[0] to_ini_file "debug\debug.ini" section "OPPCODE" key v$DEBUG_FILE12
+        
+        end
+         
+        if or
+        8184:   actor $VAGINA4[0] health < 1  
+        80F2: not  actor $SURV_IN_CAR near_actor $VAGINA4[0] radius $AI_FIND_RADIUS2 $AI_FIND_RADIUS2 sphere 0
+        $VAGINA4_TIME[0] > 600        
+            then 
+            $VAGINA4_FLAG[0] = 0
+            $VAGINA4_TIME[0] = 0  
+            end
+        else
+        $VAGINA4_FLAG[0] = 0
+        $VAGINA4_TIME[0] = 0
+        end
+    end             
+
+return
+
+:SURVIVER_CAR_ONFOOT_ATTACK_SYSTEM_TARGET_FIND
+
+25@ = 0
+
+008B: 1@ = $CREATURE_RANDOM // (int)
+0084: $VAGINA4[0] = $CREATURE[1@] // (int)
+
+if and
+056D:   actor $VAGINA4[0] defined
+not 1@ == PLAYER_CREATURE_NUMBER
+    then      
+    if
+    00F2:   actor $SURV_IN_CAR near_actor $VAGINA4[0] radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+        then 
+        25@ = 1
+        end
+    end
+
+return
+
+:SURVIVER_CAR_ONFOOT_ATTACK_SYSTEM_PLAYER_CHECK
+
+19@ = 0
+
+089F: get_actor $SURV_IN_CAR pedtype_to 11@  
+
+if
+11@ == 26
+    then
+    19@ = 0
+    
+    if or
+    SURVIVOR_IN_CAR_ATTACKED_BY_PLAYER_FLAG == 1
+    $PEOPLE_ATTACK_PLAYER_FLAG == 1
+    CARMA_VERY_BAD_FLAG == 1
+    then
+    19@ = 1
+    else
+    19@ = 0
+    end
+    
+    return
+    end
+    
+if and
+11@ == 29
+not CARMA_VERY_BAD_FLAG == 1
+    then
+    19@ = 1    
+    return
+    end        
+
+return   
+
+:SURVIVER_CAR_ONFOOT_ATTACK_SYSTEM_TARGET_CHECK
+
+089F: get_actor $SURV_IN_CAR pedtype_to 11@ 
+
+if
+11@ == 26
+    then
+    19@ = 0
+    089F: get_actor $VAGINA4[0] pedtype_to 12@ 
+    
+    if or
+    12@ == 23
+    12@ == 25
+    12@ == 27
+    12@ == 29  
+    then
+    19@ = 1
+    else
+    19@ = 0
+    end
+    
+    return
+    end
+    
+if
+11@ == 29
+    then
+    19@ = 0
+    089F: get_actor $VAGINA4[0] pedtype_to 12@ 
+    
+    if or
+    12@ == 23
+    12@ == 25
+    12@ == 26
+    12@ == 27
+    12@ == 28
+    then
+    19@ = 1
+    else
+    19@ = 0
+    end
+    
+    return
+    end                
+
+return 
+
+:SURVIVER_CAR_ONFOOT_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST 
+
+if 
+02E0:   actor $SURV_IN_CAR firing_weapon 
+    then
+    return
+    end
+
+if 
+$VAGINA4_FLAG[0] == 1
+    then 
+    if and
+    056D:   actor $VAGINA4[0] defined
+    056D:   actor $SURV_IN_CAR defined
+        then            
+        0687: clear_actor $SURV_IN_CAR task
+        wait 100
+        if and
+        056D:   actor $VAGINA4[0] defined 
+        056D:   actor $SURV_IN_CAR defined
+            then  
+                
+            if
+            not actor.Driving($SURV_IN_CAR)   
+            then                  
+            05E2: AS_actor $SURV_IN_CAR kill_actor $VAGINA4[0]     
+            else   
+            0713: actor $SURV_IN_CAR driveby_actor $VAGINA4[0] car -1 point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+            end
+                                
+            return           
+            end
+        end
+    else       
+    if
+    056D:   actor $SURV_IN_CAR defined
+        then 
+        0687: clear_actor $SURV_IN_CAR task
+        wait 100         
+        if
+        056D:   actor $SURV_IN_CAR defined
+            then           
+
+            actor.StorePos($SURV_IN_CAR,1@,2@,3@)
+            02C0: store_to 26@ 27@ 28@ ped_path_coords_closest_to 1@ 2@ 3@
+            0509: 30@ = distance_between_XY 1@ 2@ and_XY 26@ 27@
+            
+            if
+            30@ < AI_CAR_PATH_WALK_RADIUS
+            then                                        
+            05DE: AS_actor $SURV_IN_CAR walk_around_ped_path
+            else
+            random_float 30@ 30.0 100.0                                                                       
+            04C4: store_coords_to 1@ 2@ 3@ from_actor $SURV_IN_CAR with_offset 0.0 30@ 0.0
+            02C1: store_to 26@ 27@ 28@ car_path_coords_closest_to 1@ 2@ 3@
+            
+            if
+            84AD: not  actor $SURV_IN_CAR in_water
+            then
+            05D3: AS_actor $SURV_IN_CAR goto_point 26@ 27@ 28@ mode 7 time ROAD_WALK_TIME ms // versionA
+            else
+            07E1: AS_actor $SURV_IN_CAR swim_to 26@ 27@ 28@
+            end
+            
+            end                         
+            return           
+            end 
+        end
+    end  
+    
+return              
+
+:SURVIVER_CAR_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK
+19@ = 0
+
+if and
+not actor.Animation($SURV_IN_CAR) == "colt45_fire_2hands"
+not actor.Animation($SURV_IN_CAR) == "python_fire" 
+not actor.Animation($SURV_IN_CAR) == "shotgun_fire" 
+not actor.Animation($SURV_IN_CAR) == "buddy_fire" 
+not actor.Animation($SURV_IN_CAR) == "UZI_fire"
+not actor.Animation($SURV_IN_CAR) == "RIFLE_fire" 
+jf @SURVIVER_CAR_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2  
+
+if and
+not actor.Animation($SURV_IN_CAR) == "FLAME_fire" 
+not actor.Animation($SURV_IN_CAR) == "RocketFire" 
+not actor.Animation($SURV_IN_CAR) == "WEAPON_sniper" 
+not actor.Animation($SURV_IN_CAR) == "WEAPON_throw"
+jf @SURVIVER_CAR_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2  
+     
+if and
+not actor.Animation($SURV_IN_CAR) == "colt45_crouchfire"
+not actor.Animation($SURV_IN_CAR) == "python_crouchfire" 
+not actor.Animation($SURV_IN_CAR) == "shotgun_crouchfire" 
+not actor.Animation($SURV_IN_CAR) == "buddy_crouchfire" 
+not actor.Animation($SURV_IN_CAR) == "UZI_crouchfire"
+not actor.Animation($SURV_IN_CAR) == "RIFLE_crouchfire" 
+jf @SURVIVER_CAR_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2
+
+if and
+not actor.Animation($SURV_IN_CAR) == "colt45_reload"
+not actor.Animation($SURV_IN_CAR) == "python_reload" 
+not actor.Animation($SURV_IN_CAR) == "shotgun_reload" 
+not actor.Animation($SURV_IN_CAR) == "buddy_reload" 
+not actor.Animation($SURV_IN_CAR) == "UZI_reload"
+not actor.Animation($SURV_IN_CAR) == "RIFLE_load" 
+not actor.Animation($SURV_IN_CAR) == "RIFLE_load"
+jf @SURVIVER_CAR_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2
+
+if and
+not actor.Animation($SURV_IN_CAR) == "colt45_crouchreload"
+not actor.Animation($SURV_IN_CAR) == "python_crouchreload" 
+not actor.Animation($SURV_IN_CAR) == "shotgun_crouchreload" 
+not actor.Animation($SURV_IN_CAR) == "buddy_crouchreload" 
+not actor.Animation($SURV_IN_CAR) == "UZI_crouchreload"
+not actor.Animation($SURV_IN_CAR) == "RIFLE_crouchload" 
+jf @SURVIVER_CAR_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2 
+if and
+not actor.Animation($SURV_IN_CAR) == "GunMove_BWD"
+not actor.Animation($SURV_IN_CAR) == "GunMove_FWD"
+not actor.Animation($SURV_IN_CAR) == "GunMove_L"
+not actor.Animation($SURV_IN_CAR) == "GunMove_R"
+not actor.Animation($SURV_IN_CAR) == "Gun_2_IDLE"
+not actor.Animation($SURV_IN_CAR) == "GUN_BUTT"
+not actor.Animation($SURV_IN_CAR) == "GUN_BUTT_crouch"
+not actor.Animation($SURV_IN_CAR) == "Gun_stand" 
+jf @SURVIVER_CAR_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2   
+
+if and
+not actor.Animation($SURV_IN_CAR) == "WEAPON_throw"
+not actor.Animation($SURV_IN_CAR) == "WEAPON_throwu"
+not actor.Animation($SURV_IN_CAR) == "WEAPON_start_throw"
+jf @SURVIVER_CAR_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2
+  
+return
+
+:SURVIVER_CAR_ONFOOT_ATTACK_SYSTEM_FIRING_CHECK2
+19@ = 1
+return
+
+:BIKE_CHECK6
+1@ = 0
+
+if or
+18@ == 581
+18@ == 462
+18@ == 463
+18@ == 448
+18@ == 461
+18@ == 468
+18@ == 586
+18@ == 521
+    then
+    1@ = 1
+    end
+    
+if or
+18@ == 523
+//18@ == 471
+18@ == 15293
+18@ == 15296
+18@ == 15319
+18@ == 15322
+18@ == 15332
+    then
+    1@ = 1
+    end
+    
+if or
+18@ == 481
+18@ == 509
+18@ == 510
+18@ == 15418
+18@ == 15421
+18@ == 15428
+18@ == 15430
+18@ == 15435 
+    then
+    1@ = 1
+    end
+    
+if or
+18@ == 15507
+18@ == 15510
+18@ == 15523
+18@ == 15526
+18@ == 15532
+18@ == 15299 
+    then
+    1@ = 1
+    end
+    
+if or
+18@ == 15454
+18@ == 15455
+18@ == 15456
+18@ == 15457
+18@ == 15426 
+    then
+    1@ = 1
+    end
+    
+if or
+18@ == 15550
+18@ == 15552
+18@ == 15565
+18@ == 15556
+18@ == 15558
+18@ == 15566 
+    then
+    1@ = 1
+    end             
+    
+return
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:RANDOM_SURV_CAR_SPAWN_ZONE_CHECK
+6@ = 1
+
+if
+83CA: not  object DUMMY_OBJECT exists
+then
+DUMMY_OBJECT = object.Init(321,9@,10@,100.0)
+0750: set_object DUMMY_OBJECT visibility 0
+0382: set_object DUMMY_OBJECT collision_detection 0
+object.Indestructibility(DUMMY_OBJECT,true)
+object.KeepInMemory(DUMMY_OBJECT,true)
+else
+object.PutAt(DUMMY_OBJECT,9@,10@,100.0)
+end
+
+if
+UNITED_MAP == 0
+then
+
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA 85.9563 1789.6394 0.0 cornerB 395.747 1947.0049 200.0 flag 0 //Army Zone 1
+04EA:  object DUMMY_OBJECT in_cube_cornerA 395.747 1947.0049 0.0 cornerB 157.8393 2109.071 200.0 flag 0 //Army Zone 1-2
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2864.26 -2296.88 0.0 cornerB 2664.06 -2564.66 200.0 flag 0 //Army Zone 2
+04EA:  object DUMMY_OBJECT in_cube_cornerA -453.13 -460.94 0.0 cornerB -632.81 -570.31 200.0 flag 0 //Army Zone 3
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1236.22 532.73 0.0 cornerB -1479.03 480.11 200.0 flag 0 //Army Zone 4
+04EA:  object DUMMY_OBJECT in_cube_cornerA 788.54 -1327.47 0.0 cornerB 645.23 -1387.39 200.0 flag 0 //Bandit Zone 1
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1359.38 226.56 0.0 cornerB 1250.0 132.81 200.0 flag 0 //Bandit Zone 2
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1098.14 1365.52 0.0 cornerB 1015.68 1220.94 200.0 flag 0 //Bandit Zone 3
+    then
+    6@ = 0
+    end    
+
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1858.78 -1297.43 0.0 cornerB 1903.21 -1333.35 200.0 flag 0 //Trader Zone 0
+04EA:  object DUMMY_OBJECT in_cube_cornerA -404.3865 -1476.689 0.0 cornerB -345.3865 -1394.689 200.0 flag 0 //Trader Zone 1
+04EA:  object DUMMY_OBJECT in_cube_cornerA 427.52 2548.39 0.0 cornerB 407.61 2526.03 200.0 flag 0 //Trader Zone 2
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2619.17 -1511.30 0.0 cornerB 2786.00 -1415.17 200.0 flag 0 //Trader Zone 3
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1886.3972 -1690.2018 0.0 cornerB -1929.0323 -1650.1958 200.0 flag 0 //Trader Zone 4
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2301.83 -20.72 0.0 cornerB 2335.90 23.12 200.0 flag 0 //Trader Zone 5
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1755.02 926.82 0.0 cornerB 1718.80 891.51 200.0 flag 0 //Trader Zone 6
+    then
+    6@ = 0
+    end
+
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA 751.20 -1432.56 0.0 cornerB 691.96 -1516.19 200.0 flag 0 //Trader Zone 7
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1651.67 2606.63 0.0 cornerB -1682.51 2578.91 200.0 flag 0 //Trader Zone 8
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2323.0 1710.1875 0.0 cornerB 2398.0 1612.1875 200.0 flag 0 //Trader Zone 9
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2126.95 173.65 0.0 cornerB -2136.94 153.88 200.0 flag 0 //Trader Zone 10
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1909.89 787.54 0.0 cornerB -1909.89 787.54 200.0 flag 0 //Trader Zone 11
+04EA:  object DUMMY_OBJECT in_cube_cornerA -666.168 919.6441 0.0 cornerB -713.3187 950.6985 200.0 flag 0 //Trader Zone 12
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2210.40 642.64 0.0 cornerB -2201.72 724.11 200.0 flag 0 //Trader Zone 13  
+    then
+    6@ = 0
+    end
+    
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2159.8706 -77.9699 0.0 cornerB -2008.064 -194.9493 200.0 flag 0 //Bandit Zone 4
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2008.064 -194.9493 0.0 cornerB -2206.4624 -284.2897 200.0 flag 0 //Bandit Zone 5
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1357.4393 -850.5232 0.0 cornerB 1201.0028 -682.215 200.0 flag 0 //OOS Zone
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1140.63 -265.63 0.0 cornerB 953.13 -421.88 200.0 flag 0 //Survivors Zone 1
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2697.67 225.09 0.0 cornerB -2653.78 246.99 200.0 flag 0 //Survivors Zone 2
+04EA:  object DUMMY_OBJECT in_cube_cornerA -750.8 1498.59 0.0 cornerB -711.96 1572.89 200.0 flag 0 //Survivors Zone 3
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2053.71 -1759.78 0.0 cornerB 2019.05 -1805.22 200.0 flag 0 //Survivors Zone 4
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2519.62 1080.73 0.0 cornerB 2472.25 1188.69 200.0 flag 0 //Survivors Zone 5
+    then
+    6@ = 0
+    end
+    
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2786.9807 -1483.0641 0.0 cornerB 2822.3315 -1424.2843 200.0 flag 0 //Survivors Zone 4B
+04EA:  object DUMMY_OBJECT in_cube_cornerA 359.38 -1453.13 0.0 cornerB 265.63 -1585.94 30.0 flag 0 //Survivors Zone 4C
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2482.6663 -592.8055 0.0 cornerB -2543.678 -721.6879 200.0 flag 0 //Survivors Zone 2B
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2237.1636 935.8976 0.0 cornerB -2162.6333 1076.9303 200.0 flag 0 //Survivors Zone 2C
+04EA:  object DUMMY_OBJECT in_cube_cornerA -264.1352 2641.4204 0.0 cornerB -377.2627 2694.4468 200.0 flag 0 //Survivors Zone 3B
+04EA:  object DUMMY_OBJECT in_cube_cornerA 143.3994 -201.4584 0.0 cornerB 173.7076 -151.1922 200.0 flag 0 //Survivors Zone 1B
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1392.6833 -1604.0728 0.0 cornerB -1471.0334 -1436.6903 200.0 flag 0 //Survivors Zone 1C
+    then
+    6@ = 0
+    end
+    
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2236.3337 2722.114 0.0 cornerB 2460.2527 2824.3809 200.0 flag 0 //Survivors Zone 5B
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1016.7408 2205.6025 0.0 cornerB 1111.224 2062.55 30.0 flag 0 //Survivors Zone 5C
+    then
+    6@ = 0
+    end
+    
+if or
+04E6:   object DUMMY_OBJECT near_point 1701.3729 -478.4831 33.4145 radius 80.0 80.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 1696.6538 -456.1838 33.196 radius 80.0 80.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -196.2035 260.1373 12.0781 radius 40.0 40.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -167.5269 369.0612 12.0781 radius 40.0 40.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -140.9508 470.2005 12.1446 radius 40.0 40.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 568.3724 404.1745 18.9297 radius 40.0 40.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 522.1794 461.4417 18.9297 radius 40.0 40.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 472.3617 541.2493 18.9297 radius 40.0 40.0 10.0 flag 0
+    then
+    6@ = 0
+    end
+    
+if or        
+04E6:   object DUMMY_OBJECT near_point 438.2756 589.9736 18.922 radius 40.0 40.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 1705.9209 387.4872 31.2462 radius 15.0 15.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 1705.9209 387.4872 31.2462 radius 15.0 15.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 1702.4478 419.215 31.6904 radius 80.0 80.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 1713.8755 452.9702 31.7439 radius 80.0 80.0 10.0 flag 0 
+04E6:   object DUMMY_OBJECT near_point 1739.0465 524.6418 27.792 radius 80.0 80.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 1796.9082 803.6421 11.9841 radius 80.0 80.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -91.3199 -925.1218 18.9701 radius 60.0 60.0 10.0 flag 0
+    then
+    6@ = 0
+    end
+    
+if or        
+04E6:   object DUMMY_OBJECT near_point -76.5812 -894.0284 16.0403 radius 60.0 60.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -977.1158 -387.7733 36.2922 radius 60.0 60.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -952.1158 -262.2675 36.742 radius 60.0 60.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -937.7835 -234.6009 38.7915 radius 60.0 60.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 62.6183 -1533.1664 5.1803 radius 80.0 80.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 42.5451 -1530.0872 5.375 radius 80.0 80.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 197.2824 -1119.799 62.6762 radius 80.0 80.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 251.7135 -1023.0703 56.4744 radius 80.0 80.0 10.0 flag 0
+    then
+    6@ = 0
+    end
+    
+if or
+04E6:   object DUMMY_OBJECT near_point -1667.4214 544.2248 38.6321 radius 100.0 100.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -1634.1216 563.6423 39.5937 radius 40.0 40.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -1580.0278 650.1732 43.0643 radius 20.0 20.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -1489.5605 740.6168 46.1023 radius 20.0 20.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -1449.4218 762.1415 46.6998 radius 20.0 20.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -1394.9657 844.0401 47.3516 radius 20.0 20.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -1386.7476 853.6758 47.2528 radius 20.0 20.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -1134.2389 1106.2327 38.556 radius 100.0 100.0 10.0 flag 0
+    then
+    6@ = 0
+    end
+    
+if or
+04E6:   object DUMMY_OBJECT near_point -2688.9521 1405.9114 55.4297 radius 20.0 20.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -2681.6833 1448.6949 55.8125 radius 100.0 100.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -1587.891 -1424.3495 41.1482 radius 100.0 100.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -1903.4186 -1113.4783 38.3967 radius 100.0 100.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -1904.8696 -389.3445 39.0254 radius 100.0 100.0 10.0 flag 0
+04E6:   object DUMMY_OBJECT near_point -2043.5305 -360.1454 35.3047 radius 100.0 100.0 10.0 flag 0
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1861.9833 -695.6805 0.0 cornerB -2167.907 -1019.5688 200.0 flag 0 //SF Fortpost
+04E6:   object DUMMY_OBJECT near_point 1176.072 -692.1957 62.1394 radius 80.0 80.0 10.0 flag 0
+    then
+    6@ = 0
+    end
+    
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2831.3398 -842.5018 0.0 cornerB 2920.6084 -798.687 200.0 flag 0 //LS East Fortpost
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2868.0059 -1870.424 0.0 cornerB 2801.4351 -2077.8884 200.0 flag 0 //LS East Fortpost 2
+04E6:   object DUMMY_OBJECT near_point 938.5729 734.5111 10.4818 radius 150.0 150.0 28.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 811.3041 2635.1475 13.5771 radius 200.0 200.0 28.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 755.8602 2644.0227 18.5635 radius 90.0 90.0 28.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 657.864 2524.3191 31.1933 radius 90.0 90.0 28.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 643.3171 2540.0981 32.7013 radius 90.0 90.0 28.0 flag 0
+04E6:   object DUMMY_OBJECT near_point 877.2021 2614.1511 28.2733 radius 200.0 200.0 28.0 flag 0
+    then
+    6@ = 0
+    end    
+    
+//////////////////////////////////////////////////////////////////////////////////////////////////                    
+    
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1226.78 -1771.66 -90.0 -1820.64 -2643.68 200.0 flag 0 //CREEK
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1820.64 -1771.66 -90.0 -2030.12 -2174.89 200.0 flag 0 //CREEK1
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2178.69 -1115.58 -90.0 -2994.49 -2189.91 560.0 flag 0 //MTCHI1
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1936.12 -1250.97 -90.0 -2178.69 -1771.66 560.0 flag 0 //MTCHI2
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2178.69 -971.91 -90.0 -2997.47 -1115.58 560.0 flag 0 //MTCHI3
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2030.12 -1771.66 -90.0 -2178.69 -2189.91 560.0 flag 0 //MTCHI4
+    then
+    6@ = 0
+    end
+
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA 435.99 2677.90 0.0 37.03 2337.18 200.0 flag 0 //MEAD
+04EA:  object DUMMY_OBJECT in_cube_cornerA 421.23 2123.01 -50.0 -91.59 1655.05 250.0 flag 0 //REST
+04EA:  object DUMMY_OBJECT in_cube_cornerA -908.16 -787.39 114.98 -1209.67 -1317.10 250.0 flag 0 //FARM
+04EA:  object DUMMY_OBJECT in_cube_cornerA -592.09 2571.97 0.0 -901.13 2221.86 200.0 flag 0 //ARCO
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1457.46 2863.23 -89.08 1117.40 2723.23 200.0 flag 0 //YBELL1
+    then
+    6@ = 0
+    end
+    
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1457.37 1883.11 -89.08 1236.63 1203.28 200.0 flag 0 //VAIR1
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1777.39 1883.11 -89.08 1457.37 1203.28 200.0 flag 0 //VAIR2
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1213.91 -50.10 0.0 -1794.92 -730.12 200.0 flag 0 //SFAIR1
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1213.91 578.40 0.0 -1242.98 -50.10 200.0 flag 0 //SFAIR2
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1242.98 249.90 0.0 -1499.89 -50.10 200.0 flag 0 //SFAIR3
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1132.82 -50.10 0.0 -1213.91 -730.12 200.0 flag 0 //SFAIR4
+04EA:  object DUMMY_OBJECT in_cube_cornerA -947.98 578.40 0.0 -1213.91 -50.10 200.0 flag 0 //SFAIR5
+    then
+    6@ = 0
+    end
+
+if or    
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1852.0 -2179.25 -89.08 1249.62 -2394.33 200.0 flag 0 //LAIR1
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2201.82 -2394.33 -89.08 1382.73 -2730.88 200.0 flag 0 //LAIR2b
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2089.0 -2179.25 -89.08 1852 -2394.33 200.0 flag 0 //LAIR2a
+    then
+    6@ = 0
+    end
+    
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2616.40 2175.15 0.0 -2741.45 1659.68 200.0 flag 0 //GANTB
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2616.40 1659.68 0.0 -2741.07 1490.47 200.0 flag 0 //GANTB1
+04EA:  object DUMMY_OBJECT in_cube_cornerA 603.03 555.68 0.0 434.34 366.57 200.0 flag 0 //FALLO
+04EA:  object DUMMY_OBJECT in_cube_cornerA -122.13 476.47 0.0 -222.18 293.32 200.0 flag 0 //MART
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1785.14 567.20 0.0 1664.62 401.75 200.0 flag 0 //MAKO
+04EA:  object DUMMY_OBJECT in_cube_cornerA -592.09 2571.97 0.0 -901.13 2221.86 200.0 flag 0 //ARCO
+04EA:  object DUMMY_OBJECT in_cube_cornerA 860.55 1031.71 -115.24 337.24 710.84 200.0 flag 0 //QUARY
+    then
+    6@ = 0
+    end
+
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1213.91 1057.04 -89.08 -1339.89 828.13 200.0 flag 0 //GARV
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1087.93 1178.93 -89.08 -1213.91 502.0 200.0 flag 0 //GARV2
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1339.89 925.35 -179.62 -1499.89 696.44 200.0 flag 0 //GARV3
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1016.933 1199.3302 0.0 1096.097 1222.7902 200.0 flag 0 //BANDIT BASE LV
+04EA:  object DUMMY_OBJECT in_cube_cornerA -173.72 48.6644 0.0 106.1629 -136.1308 200.0 flag 0 //BLUEBERRY FARM
+    then
+    6@ = 0
+    end
+    
+//////////////////////////////////////////////////////////////////////////////////////////////////                  
+    
+else
+
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2635.8787 -354.2914 0.0 cornerB 2916.0 -32.2914 200.0 flag 0 //BIG BILLS BOWLS TRACK VC
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1786.27 -1191.43 0.0 cornerB 2163.66 -152.395 200.0 flag 0 //GOLF CLUB VC
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2635.8787 -354.2914 0.0 cornerB 2916.0 -32.2914 200.0 flag 0 //BEACH TRACK VC
+04EA:  object DUMMY_OBJECT in_cube_cornerA 92.1001 -1895.2 0.0 cornerB 792.1 -1265.2 200.0 flag 0 //AIRPORT VC
+04EA:  object DUMMY_OBJECT in_cube_cornerA 77.7263 -2752.63 0.0 cornerB 792.246 -1895.2 200.0 flag 0 //AIRPORT VC
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2247.4019 2063.7778 0.0 cornerB -2717.0303 2352.8291 200.0 flag 0 //Army Zone 2 LC  
+    then
+    6@ = 0
+    end
+    
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA -277.7767 1109.5814 0.0 cornerB -232.4244 1162.0369 200.0 flag 0 //Survivors Zone 1 LC
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1256.9427 1505.7239 0.0 cornerB -1339.8552 1401.7533 200.0 flag 0 //Survivors Zone 2 LC
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2421.9885 1909.3091 0.0 cornerB -2505.8318 1962.9353 200.0 flag 0 //Survivors Zone 3 LC
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1356.8033 245.7149 0.0 cornerB 1230.6315 357.2882 200.0 flag 0 //Survivors Zone 4 VC
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1010.0256 -1435.0776 0.0 cornerB 1159.0013 -1590.2578 200.0 flag 0 //Survivors Zone 5 VC
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2406.4055 -99.8233 0.0 cornerB 2329.9165 -8.8584 200.0 flag 0 //Survivors Zone 6 VC
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2176.4023 -2087.9294 0.0 cornerB 2079.8772 -2214.2107 200.0 flag 0 //Survivors Zone 7 VC
+    then
+    6@ = 0
+    end
+    
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2263.0713 2368.6123 0.0 cornerB -1685.692 2463.6145 200.0 flag 0 //Survivors Zone 8 LC
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1743.1509 2339.5959 0.0 cornerB -1603.3851 2217.8518 200.0 flag 0 //Survivors Zone 8 LC
+04EA:  object DUMMY_OBJECT in_cube_cornerA -1080.4521 555.1386 0.0 cornerB -1153.1989 636.4949 200.0 flag 0 //Survivors Zone 9 LC
+04EA:  object DUMMY_OBJECT in_cube_cornerA -466.2975 639.7095 0.0 cornerB -274.9772 728.6678 200.0 flag 0 //Survivors Zone 10 LC
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2645.137 1243.5448 0.0 cornerB -2587.1526 1307.369 200.0 flag 0 //Bandits Zone 2 LC
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2247.4019 2063.7778 0.0 cornerB -2717.0303 2352.8291 200.0 flag 0 //Army Zone 2 LC
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2.6522 883.2079 0.0 cornerB 274.8031 1198.0509 200.0 flag 0 //Army Zone 3 LC
+04EA:  object DUMMY_OBJECT in_cube_cornerA -19.5689 1469.4327 0.0 cornerB 277.7072 1843.8197 200.0 flag 0 //Bandits Zone 3 LC
+    then
+    6@ = 0
+    end
+    
+if or
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2274.4585 -668.1191 0.0 cornerB 1687.1143 -305.3842 200.0 flag 0 //GOLF CLUB 2 VC
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2235.1589 -726.8676 0.0 cornerB 1885.4563 -1083.7006 200.0 flag 0 //GOLF CLUB 3 VC
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1617.6917 433.6124 0.0 cornerB 1428.5198 581.4255 200.0 flag 0 //OFFROAD TRACK VC
+04EA:  object DUMMY_OBJECT in_cube_cornerA 2641.4382 -292.9647 0.0 cornerB 2909.6777 -11.6561 200.0 flag 0 //RC OFFROAD TRACK VC 
+    then
+    6@ = 0
+    end               
+
+end          
+
+return         

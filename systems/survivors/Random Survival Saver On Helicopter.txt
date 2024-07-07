@@ -1,0 +1,221 @@
+:RNDM_SV
+thread 'RNDM_SV'                
+
+:RANDOM_SAVER_WAIT
+0209: 0@ = random_int_in_ranges $RANDOM_SAVER_WAIT_SPAWN_MIN $RANDOM_SAVER_WAIT_SPAWN_MAX
+32@ = 0 
+jump @RANDOM_SAVER_WAIT_CHECK
+
+:RANDOM_SAVER_WAIT_CHECK
+wait 250
+077E: get_active_interior_to 1@
+if and
+$SAVESTATUS == 0
+$SALVATION_FLAG == 0
+$NEAR_SALV_POINT == 0
+1@ == 0
+jf @RANDOM_SAVER_WAIT_CHECK_PAUSE
+if  
+001D:   32@ > 0@  // (int)
+jf @RANDOM_SAVER_WAIT_CHECK
+32@ = 0
+jump @RANDOM_SAVER_SPAWN_START
+
+:RANDOM_SAVER_WAIT_CHECK_PAUSE
+wait 250
+077E: get_active_interior_to 1@
+if and
+$SAVESTATUS == 0
+$SALVATION_FLAG == 0
+$NEAR_SALV_POINT == 0
+1@ == 0
+jf @RANDOM_SAVER_WAIT_CHECK_PAUSE
+jump @RANDOM_SAVER_WAIT_CHECK
+
+:RANDOM_SAVER_SPAWN_START
+gosub @RANDOM_SAVER_COORD_SET
+
+:RANDOM_SAVE_MODEL_LOAD
+wait 0
+
+if
+UNITED_MAP == 0
+then
+
+:CAR_CREATE_SAVE_HELI
+if
+model.Available(#MAVERICK)
+then
+10@ = car.Create(#MAVERICK,2@,3@,4@)
+0229: set_car 10@ primary_color_to 1 secondary_color_to 2
+
+if
+model.Available(#MAVERICK)
+then
+//model.Destroy(#MAVERICK)
+end
+
+else
+model.Load(#MAVERICK)
+mload
+wait 0
+jump to @CAR_CREATE_SAVE_HELI
+end
+
+else
+
+if
+$UNITED_VC_FLAG == 0
+then
+
+:CAR_CREATE_SAVE_HELI2
+if
+model.Available($III_MAVERICK_ID)
+then
+10@ = car.Create($III_MAVERICK_ID,2@,3@,4@)
+
+if
+model.Available($III_MAVERICK_ID)
+then
+//model.Destroy($III_MAVERICK_ID)
+end
+
+else
+model.Load($III_MAVERICK_ID)
+mload
+wait 0
+jump to @CAR_CREATE_SAVE_HELI2
+end
+
+else
+
+:CAR_CREATE_SAVE_HELI3
+if
+model.Available($VC_MAVERICK_ID)
+then
+10@ = car.Create($VC_MAVERICK_ID,2@,3@,4@)
+
+if
+model.Available($VC_MAVERICK_ID)
+then
+//model.Destroy($VC_MAVERICK_ID)
+end
+
+else
+model.Load($VC_MAVERICK_ID)
+mload
+wait 0
+jump to @CAR_CREATE_SAVE_HELI3
+end
+
+end
+
+end
+ 
+random_float 5@ 0.0 360.0
+car.SetImmunities(10@,1,1,1,1,1)
+car.Angle(10@) = 5@
+0825: set_helicopter 10@ instant_rotor_start
+07BB: set_heli 10@ horizontal_thrust_power 5
+car.SetSpeedInstantly(10@,10.0)
+
+if
+UNITED_MAP == 0
+then
+
+while not model.Available(240)
+wait 0
+model.Load(240)
+mload
+end
+
+20@ = actor.CreateAsDriver(26,240,10@)
+
+if
+model.Available(240)
+then
+//model.Destroy(240)
+end
+
+else
+
+if
+$UNITED_VC_FLAG == 0
+then
+
+while not model.Available($III_SAVER_SKIN)
+wait 0
+model.Load($III_SAVER_SKIN)
+mload
+end
+
+20@ = actor.CreateAsDriver(26,$III_SAVER_SKIN,10@)
+
+if
+model.Available($III_SAVER_SKIN)
+then
+//model.Destroy($III_SAVER_SKIN)
+end
+
+else
+
+while not model.Available($VC_SAVER_SKIN)
+wait 0
+model.Load($VC_SAVER_SKIN)
+mload
+end
+
+20@ = actor.CreateAsDriver(26,$VC_SAVER_SKIN,10@)
+
+if
+model.Available($VC_SAVER_SKIN)
+then
+//model.Destroy($VC_SAVER_SKIN)
+end
+
+end
+
+end
+
+actor.SetImmunities(20@,1,1,1,1,1)
+actor.Health(20@) = 5000
+077A: set_actor 20@ acquaintance 0 to_actors_pedtype $ZOMBIE_SET_PEDTYPE // see ped.dat
+060B: set_actor 20@ decision_maker_to $DEC_PEOPLE
+
+0407: store_coords_to 11@ 12@ 13@ from_car 10@ with_offset 0.0 4000.0 0.0
+04A2: set_heli 10@ fly_to 11@ 12@ 13@ altitude_between 30.0 and 180.0
+
+:RANDOM_SAVER_CHECK1
+wait 0
+if
+056D:   actor 20@ defined
+jf @RANDOM_SAVER_NOT_DEFINED
+if and
+0104:   actor PLAYER_ACTOR near_actor 20@ radius 2000.0 2000.0 2000.0 sphere 0
+$SAVESTATUS == 0
+jf @RANDOM_SAVER_DELETE
+jump @RANDOM_SAVER_CHECK1
+
+:RANDOM_SAVER_DELETE
+actor.DestroyInstantly(20@)
+car.Destroy(10@)
+jump @RANDOM_SAVER_WAIT
+
+:RANDOM_SAVER_NOT_DEFINED
+jump @RANDOM_SAVER_WAIT
+
+:RANDOM_SAVER_COORD_SET
+wait 0
+0208: 27@ = random_float_in_ranges 1560.0 -1560.0 
+0208: 28@ = random_float_in_ranges -1560.0 1560.0
+04C4: store_coords_to 2@ 3@ 4@ from_actor PLAYER_ACTOR with_offset 27@ 28@ 1.0
+Actor.StorePos(PLAYER_ACTOR, 27@, 28@, 29@)
+0509: 30@ = distance_between_XY 2@ 3@ and_XY 27@ 28@ 
+0092: 30@ = float 30@ to_integer
+if 
+30@ > 1500 
+jf @RANDOM_SAVER_COORD_SET
+4@ = 0.0
+02CE: 4@ = ground_z_at 2@ 3@ 4@
+4@ += 190.0
+return

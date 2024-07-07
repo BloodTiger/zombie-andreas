@@ -1,0 +1,788 @@
+const
+PREV_CITY = 10@
+CURRENT_WEATHER = 1@
+PREV_WEATHER = 11@
+CURRENT_WEATHER_ADRESS = 0xC81320
+NEXT_WEATHER_ADRESS = 0xC8131C
+LOCK_WEATHER_ADRESS = 0xC81318  
+end
+
+:WTH_SIM
+thread 'WTH_SIM'
+
+create_thread @WEATHER2
+create_thread @SNW_EFF
+
+if
+LCVC_MAP_NUM == 0
+then
+CURRENT_WEATHER = 5
+PREV_WEATHER = 5
+PREV_CITY = 0
+else
+CURRENT_WEATHER = 1
+PREV_WEATHER = 1
+PREV_CITY = 1
+end
+
+0A8C: write_memory CURRENT_WEATHER_ADRESS size 1 value CURRENT_WEATHER virtual_protect 1
+0A8C: write_memory NEXT_WEATHER_ADRESS size 1 value CURRENT_WEATHER virtual_protect 1
+0A8C: write_memory LOCK_WEATHER_ADRESS size 1 value CURRENT_WEATHER virtual_protect 1
+01B5: force_weather CURRENT_WEATHER
+
+while true
+wait 0
+
+while WEATHER_SYS_IDLE_FLAG == 1
+wait 0
+end
+
+set_weather CURRENT_WEATHER
+01B5: force_weather CURRENT_WEATHER
+0A8C: write_memory NEXT_WEATHER_ADRESS size 1 value CURRENT_WEATHER virtual_protect 1
+
+///////////////////////////////////////////
+
+if
+$WEATHER_SYNC_FLAG == 1
+then
+$WEATHER_SYNC_FLAG = 0
+
+if
+LCVC_MAP_NUM == 1
+then
+PREV_CITY = 1
+gosub @WEATHER_RANDOM_VC
+0A8C: write_memory CURRENT_WEATHER_ADRESS size 1 value CURRENT_WEATHER virtual_protect 1
+0A8C: write_memory LOCK_WEATHER_ADRESS size 1 value CURRENT_WEATHER virtual_protect 1
+0A8C: write_memory NEXT_WEATHER_ADRESS size 1 value CURRENT_WEATHER virtual_protect 1
+01B5: force_weather CURRENT_WEATHER
+$SKYBOX_CHANGE_INST_FLAG = 1
+0085: PREV_WEATHER = CURRENT_WEATHER // (int)
+else
+PREV_CITY = 0
+gosub @WEATHER_RANDOM_III
+0A8C: write_memory CURRENT_WEATHER_ADRESS size 1 value CURRENT_WEATHER virtual_protect 1
+0A8C: write_memory LOCK_WEATHER_ADRESS size 1 value CURRENT_WEATHER virtual_protect 1
+0A8C: write_memory NEXT_WEATHER_ADRESS size 1 value CURRENT_WEATHER virtual_protect 1
+01B5: force_weather CURRENT_WEATHER
+$SKYBOX_CHANGE_INST_FLAG = 1
+0085: PREV_WEATHER = CURRENT_WEATHER // (int)
+end
+
+end
+
+///////////////////////////////////////////
+
+if
+PREV_CITY == 0
+then
+
+if
+LCVC_MAP_NUM == 1
+then
+PREV_CITY = 1
+gosub @WEATHER_RANDOM_VC
+0A8C: write_memory CURRENT_WEATHER_ADRESS size 1 value CURRENT_WEATHER virtual_protect 1
+0A8C: write_memory LOCK_WEATHER_ADRESS size 1 value CURRENT_WEATHER virtual_protect 1
+0A8C: write_memory NEXT_WEATHER_ADRESS size 1 value CURRENT_WEATHER virtual_protect 1
+01B5: force_weather CURRENT_WEATHER
+$SKYBOX_CHANGE_INST_FLAG = 1
+0085: PREV_WEATHER = CURRENT_WEATHER // (int)
+end
+
+else
+
+if
+LCVC_MAP_NUM == 0
+then
+PREV_CITY = 0
+gosub @WEATHER_RANDOM_III
+0A8C: write_memory CURRENT_WEATHER_ADRESS size 1 value CURRENT_WEATHER virtual_protect 1
+0A8C: write_memory LOCK_WEATHER_ADRESS size 1 value CURRENT_WEATHER virtual_protect 1
+0A8C: write_memory NEXT_WEATHER_ADRESS size 1 value CURRENT_WEATHER virtual_protect 1
+01B5: force_weather CURRENT_WEATHER
+$SKYBOX_CHANGE_INST_FLAG = 1
+0085: PREV_WEATHER = CURRENT_WEATHER // (int)
+end
+
+end
+
+///////////////////////////////////////////
+
+if and
+$CHANGE_WEATHER_FLAG_SIM == 1
+$GAMEMODE_SELECTED == 1
+$WEATHER_SYNC_FLAG == 0
+then
+
+$CHANGE_WEATHER_FLAG_SIM = 0
+
+if
+LCVC_MAP_NUM == 1
+then
+
+///////////////////////////////////////////
+
+repeat
+wait 0
+
+while WEATHER_SYS_IDLE_FLAG == 1
+wait 0
+end
+
+0A8D: 0@ = read_memory 0xC8130C size 4 virtual_protect 1
+
+if
+$WEATHER_SYNC_FLAG == 1
+    then
+    0@ = 0.0
+    break
+    end
+
+until 0@ < 0.1
+
+PREV_CITY = 1
+gosub @WEATHER_RANDOM_VC
+0A8C: write_memory LOCK_WEATHER_ADRESS size 1 value 255 virtual_protect 1
+0A8C: write_memory NEXT_WEATHER_ADRESS size 1 value CURRENT_WEATHER virtual_protect 1
+
+repeat
+wait 0
+
+while WEATHER_SYS_IDLE_FLAG == 1
+wait 0
+end
+
+0A8C: write_memory NEXT_WEATHER_ADRESS size 1 value CURRENT_WEATHER virtual_protect 1
+0A8D: 0@ = read_memory CURRENT_WEATHER_ADRESS size 1 virtual_protect 1
+
+if
+$WEATHER_SYNC_FLAG == 1
+    then
+    0A8C: write_memory LOCK_WEATHER_ADRESS size 1 value CURRENT_WEATHER virtual_protect 1
+    01B5: force_weather CURRENT_WEATHER
+    0A8C: write_memory NEXT_WEATHER_ADRESS size 1 value CURRENT_WEATHER virtual_protect 1
+    break
+    end
+
+until 003B:   0@ == CURRENT_WEATHER  // (int)
+
+0A8C: write_memory LOCK_WEATHER_ADRESS size 1 value CURRENT_WEATHER virtual_protect 1
+01B5: force_weather CURRENT_WEATHER
+0A8C: write_memory NEXT_WEATHER_ADRESS size 1 value CURRENT_WEATHER virtual_protect 1
+
+if
+$WEATHER_SYNC_FLAG == 1
+then
+$WEATHER_SYNC_FLAG = 0
+$SKYBOX_CHANGE_INST_FLAG = 1
+end
+
+///////////////////////////////////////////
+
+else
+
+///////////////////////////////////////////
+
+repeat
+wait 0
+
+while WEATHER_SYS_IDLE_FLAG == 1
+wait 0
+end
+
+0A8D: 0@ = read_memory 0xC8130C size 4 virtual_protect 1
+
+if
+$WEATHER_SYNC_FLAG == 1
+    then
+    0@ = 0.0
+    break
+    end
+
+until 0@ < 0.1
+
+PREV_CITY = 0
+gosub @WEATHER_RANDOM_III
+0A8C: write_memory LOCK_WEATHER_ADRESS size 1 value 255 virtual_protect 1
+0A8C: write_memory NEXT_WEATHER_ADRESS size 1 value CURRENT_WEATHER virtual_protect 1
+
+repeat
+wait 0
+
+while WEATHER_SYS_IDLE_FLAG == 1
+wait 0
+end
+
+0A8C: write_memory NEXT_WEATHER_ADRESS size 1 value CURRENT_WEATHER virtual_protect 1
+0A8D: 0@ = read_memory CURRENT_WEATHER_ADRESS size 1 virtual_protect 1
+
+if
+$WEATHER_SYNC_FLAG == 1
+    then
+    0A8C: write_memory LOCK_WEATHER_ADRESS size 1 value CURRENT_WEATHER virtual_protect 1
+    01B5: force_weather CURRENT_WEATHER
+    0A8C: write_memory NEXT_WEATHER_ADRESS size 1 value CURRENT_WEATHER virtual_protect 1
+    break
+    end
+
+until 003B:   0@ == CURRENT_WEATHER  // (int)
+
+0A8C: write_memory LOCK_WEATHER_ADRESS size 1 value CURRENT_WEATHER virtual_protect 1
+01B5: force_weather CURRENT_WEATHER
+0A8C: write_memory NEXT_WEATHER_ADRESS size 1 value CURRENT_WEATHER virtual_protect 1
+
+if
+$WEATHER_SYNC_FLAG == 1
+then
+$WEATHER_SYNC_FLAG = 0
+$SKYBOX_CHANGE_INST_FLAG = 1
+end
+
+///////////////////////////////////////////
+
+end
+
+end
+
+///////////////////////////////////////////
+
+end
+
+end_thread
+
+:WEATHER_RANDOM_III
+
+if
+SNOW_ON_FLAG == 1
+then
+CURRENT_WEATHER = 7 //Cloudy
+0085: PREV_WEATHER = CURRENT_WEATHER // (int)
+return
+end
+
+if
+$STATE_DESTRUCTION_FLAG == 1
+    then
+    CURRENT_WEATHER = 19
+    return
+    end
+    
+if
+WEATHER_CYCLE_CHANGE_WEATHER_SMOOTH_ID > -1
+    then                                                
+    008B: CURRENT_WEATHER = WEATHER_CYCLE_CHANGE_WEATHER_SMOOTH_ID // (int)
+    WEATHER_CYCLE_CHANGE_WEATHER_SMOOTH_ID = -1
+    return
+    end    
+
+//////////////////////////////////////////////////////
+
+if
+STORIES_MAP == 0
+then
+
+random_int 0@ 0 to 7
+
+if
+0@ == 0
+then
+
+if
+BRIGHT_ATMOSPHERE == 1
+then
+CURRENT_WEATHER = 5 //Sunny
+jump to @WEATHER_RANDOM_III_CHECK_JUMP
+else
+CURRENT_WEATHER = 9 //Foggy
+jump to @WEATHER_RANDOM_III_CHECK_JUMP
+end
+
+end
+
+if
+0@ == 1
+then
+CURRENT_WEATHER = 7 //Cloudy
+jump to @WEATHER_RANDOM_III_CHECK_JUMP
+end
+
+if
+0@ == 2
+then
+
+if
+BRIGHT_ATMOSPHERE == 1
+then
+CURRENT_WEATHER = 5 //Sunny
+jump to @WEATHER_RANDOM_III_CHECK_JUMP
+else
+CURRENT_WEATHER = 9 //Foggy
+jump to @WEATHER_RANDOM_III_CHECK_JUMP
+end
+
+end
+
+if and
+CARMA_VERY_BAD_FLAG == 0
+KARMA_SYS_ON_FLAG == 1
+CARMA_BAD_POINTS > 0
+    then    
+    if
+    0E4D: random_percent CARMA_BAD_POINTS
+        then
+        jump to @III_RAIN_CHANCE    
+        end                              
+    end
+
+if
+0@ == 3
+then
+
+:III_RAIN_CHANCE
+if
+not SNOW_ON_FLAG == 1
+then
+CURRENT_WEATHER = 16 //Rainy
+jump to @WEATHER_RANDOM_III_CHECK_JUMP
+else
+CURRENT_WEATHER = 5 //Sunny
+jump to @WEATHER_RANDOM_III_CHECK_JUMP
+end
+
+end
+
+if
+0@ == 4
+then
+
+if
+BRIGHT_ATMOSPHERE == 1
+then
+CURRENT_WEATHER = 5 //Sunny
+jump to @WEATHER_RANDOM_III_CHECK_JUMP
+else
+CURRENT_WEATHER = 7 //Cloudy
+jump to @WEATHER_RANDOM_III_CHECK_JUMP
+end
+
+end
+
+if
+0@ == 5
+then
+
+if and
+$GAMEMODE_SELECTED == 1
+not SNOW_ON_FLAG == 1
+then
+CURRENT_WEATHER = 9 //Foggy
+jump to @WEATHER_RANDOM_III_CHECK_JUMP
+else
+CURRENT_WEATHER = 5 //Sunny
+jump to @WEATHER_RANDOM_III_CHECK_JUMP
+end
+
+end
+
+if
+0@ == 6
+then
+
+if
+BRIGHT_ATMOSPHERE == 1
+then
+CURRENT_WEATHER = 5 //Sunny
+jump to @WEATHER_RANDOM_III_CHECK_JUMP
+else
+CURRENT_WEATHER = 16 //Rainy
+jump to @WEATHER_RANDOM_III_CHECK_JUMP
+end
+
+end
+
+else
+
+///////////////////////////////////
+
+random_int 0@ 0 to 8
+
+if
+0@ == 0
+then
+
+if
+BRIGHT_ATMOSPHERE == 1
+then
+CURRENT_WEATHER = 5 //Sunny
+jump to @WEATHER_RANDOM_III_CHECK_JUMP
+else
+CURRENT_WEATHER = 9 //Foggy
+jump to @WEATHER_RANDOM_III_CHECK_JUMP
+end
+
+end
+
+if
+0@ == 1
+then
+
+if
+BRIGHT_ATMOSPHERE == 1
+then
+CURRENT_WEATHER = 10 //ExtraSunny
+jump to @WEATHER_RANDOM_III_CHECK_JUMP
+else
+CURRENT_WEATHER = 16 //Rainy
+jump to @WEATHER_RANDOM_III_CHECK_JUMP
+end
+
+end
+
+if
+0@ == 2
+then
+CURRENT_WEATHER = 7 //Cloudy
+jump to @WEATHER_RANDOM_III_CHECK_JUMP
+end
+
+if
+0@ == 3
+then
+
+if
+BRIGHT_ATMOSPHERE == 1
+then
+CURRENT_WEATHER = 5 //Sunny
+jump to @WEATHER_RANDOM_III_CHECK_JUMP
+else
+CURRENT_WEATHER = 9 //Foggy
+jump to @WEATHER_RANDOM_III_CHECK_JUMP
+end
+
+end
+
+if and
+CARMA_VERY_BAD_FLAG == 0
+KARMA_SYS_ON_FLAG == 1
+CARMA_BAD_POINTS > 0
+    then    
+    if
+    0E4D: random_percent CARMA_BAD_POINTS
+        then
+        jump to @LCS_RAIN_CHANCE    
+        end                              
+    end
+
+if
+0@ == 4
+then
+
+:LCS_RAIN_CHANCE
+if
+not SNOW_ON_FLAG == 1
+then
+CURRENT_WEATHER = 16 //Rainy
+jump to @WEATHER_RANDOM_III_CHECK_JUMP
+else
+CURRENT_WEATHER = 5 //Sunny
+jump to @WEATHER_RANDOM_III_CHECK_JUMP
+end
+
+end
+
+if
+0@ == 5
+then
+
+if
+BRIGHT_ATMOSPHERE == 1
+then
+CURRENT_WEATHER = 10 //ExtraSunny
+jump to @WEATHER_RANDOM_III_CHECK_JUMP
+else
+CURRENT_WEATHER = 7 //Cloudy
+jump to @WEATHER_RANDOM_III_CHECK_JUMP
+end
+
+end
+
+if
+0@ == 6
+then
+
+if or
+$GAMEMODE_SELECTED == 1
+BRIGHT_ATMOSPHERE == 0
+then
+CURRENT_WEATHER = 9 //Foggy
+jump to @WEATHER_RANDOM_III_CHECK_JUMP
+else
+CURRENT_WEATHER = 5 //Sunny
+jump to @WEATHER_RANDOM_III_CHECK_JUMP
+end
+
+end
+
+if
+0@ == 7
+then
+
+if
+BRIGHT_ATMOSPHERE == 1
+then
+CURRENT_WEATHER = 5 //Sunny
+jump to @WEATHER_RANDOM_III_CHECK_JUMP
+else
+CURRENT_WEATHER = 16 //Rainy
+jump to @WEATHER_RANDOM_III_CHECK_JUMP
+end
+
+end
+
+///////////////////////////////////
+
+end
+
+//////////////////////////////////////////////////////
+
+:WEATHER_RANDOM_III_CHECK_JUMP
+
+if
+003B:  PREV_WEATHER == CURRENT_WEATHER  // (int)
+then
+jump to @WEATHER_RANDOM_III
+else
+0085: PREV_WEATHER = CURRENT_WEATHER // (int)
+end 
+
+return
+
+:WEATHER_RANDOM_VC
+
+if
+SNOW_ON_FLAG == 1
+then
+CURRENT_WEATHER = 4 //Cloudy
+0085: PREV_WEATHER = CURRENT_WEATHER // (int)
+return
+end
+
+if
+$STATE_DESTRUCTION_FLAG == 1
+    then
+    CURRENT_WEATHER = 9
+    return
+    end
+    
+if
+WEATHER_CYCLE_CHANGE_WEATHER_SMOOTH_NOW == 1
+    then                                                
+    008B: CURRENT_WEATHER = WEATHER_CYCLE_CHANGE_WEATHER_SMOOTH_ID // (int)
+    WEATHER_CYCLE_CHANGE_WEATHER_SMOOTH_ID = 0
+    return
+    end    
+
+random_int 0@ 0 to 6
+
+if
+0@ == 0
+then
+
+if
+BRIGHT_ATMOSPHERE == 1
+then
+CURRENT_WEATHER = 3 //ExtraSunny
+jump to @WEATHER_RANDOM_VC_CHECK_JUMP
+else
+CURRENT_WEATHER = 4 //Cloudy
+jump to @WEATHER_RANDOM_VC_CHECK_JUMP
+end
+
+end
+
+if
+0@ == 1
+then
+
+if
+BRIGHT_ATMOSPHERE == 1
+then
+CURRENT_WEATHER = 1 //Sunny
+jump to @WEATHER_RANDOM_VC_CHECK_JUMP
+else
+CURRENT_WEATHER = 4 //Cloudy
+jump to @WEATHER_RANDOM_VC_CHECK_JUMP
+end
+
+end
+
+if
+0@ == 2
+then
+
+if
+BRIGHT_ATMOSPHERE == 1
+then
+CURRENT_WEATHER = 3 //ExtraSunny
+jump to @WEATHER_RANDOM_VC_CHECK_JUMP
+else
+CURRENT_WEATHER = 8 //Rainy
+jump to @WEATHER_RANDOM_VC_CHECK_JUMP
+end
+
+end
+
+if and
+CARMA_VERY_BAD_FLAG == 0
+KARMA_SYS_ON_FLAG == 1
+CARMA_BAD_POINTS > 0
+    then    
+    if
+    0E4D: random_percent CARMA_BAD_POINTS
+        then
+        jump to @VC_RAIN_CHANCE    
+        end                              
+    end
+
+if
+0@ == 3
+then
+
+:VC_RAIN_CHANCE
+if
+not SNOW_ON_FLAG == 1
+then
+CURRENT_WEATHER = 8 //Rainy
+jump to @WEATHER_RANDOM_VC_CHECK_JUMP
+else
+CURRENT_WEATHER = 3 //ExtraSunny
+jump to @WEATHER_RANDOM_VC_CHECK_JUMP
+end
+ 
+end
+
+if
+0@ == 4
+then
+
+random_int 0@ 0 6
+if or
+not 0@ == 3
+BRIGHT_ATMOSPHERE == 0
+then
+CURRENT_WEATHER = 4 //Cloudy
+jump to @WEATHER_RANDOM_VC_CHECK_JUMP
+else
+CURRENT_WEATHER = 3 //Sunny
+jump to @WEATHER_RANDOM_VC_CHECK_JUMP
+end
+
+end
+
+if
+0@ == 5
+then
+
+if
+BRIGHT_ATMOSPHERE == 1
+then
+CURRENT_WEATHER = 1 //Sunny
+jump to @WEATHER_RANDOM_VC_CHECK_JUMP
+else
+CURRENT_WEATHER = 8 //Rainy
+jump to @WEATHER_RANDOM_VC_CHECK_JUMP
+end
+
+end
+
+:WEATHER_RANDOM_VC_CHECK_JUMP
+
+if
+003B:  PREV_WEATHER == CURRENT_WEATHER  // (int)
+then
+jump to @WEATHER_RANDOM_VC
+else
+0085: PREV_WEATHER = CURRENT_WEATHER // (int)
+end 
+
+return
+
+:WEATHER2
+thread 'WEATHER2'
+
+$CHANGE_WEATHER_FLAG_SIM = 0
+
+random_int 1@ 720000 1440000
+32@ = 0
+
+while true
+wait 0
+
+while WEATHER_CYCLE_DONT_CHANGE_FLAG == 1
+wait 0
+end
+
+if and
+$WEATHER_CYCLE_OFF == 1
+$GAMEMODE_STORYLINE == 1
+then
+end_thread
+end
+
+//if and
+//0AB0:   key_pressed 187
+//$CHEATS_ON == 1
+//not $ZOMBIE_DERBY_FLAG == 1
+//not $GAMEMODE_EDITOR == 1
+//then
+//0AD1: show_formatted_text_highpriority "WEATHER TIMER: %d\%d" time 10 32@ 1@
+//end
+//
+//if and
+//0AB0:   key_pressed 8
+//$CHEATS_ON == 1
+//not $ZOMBIE_DERBY_FLAG == 1
+//not $GAMEMODE_EDITOR == 1
+//then
+//32@ += 999999999
+//0AD1: show_formatted_text_highpriority "WEATHER TIMER: %d\%d" time 10 32@ 1@
+//end
+
+/////////////////////////////////////
+
+if and
+$SAVING_DELAY == 1
+SKIP_6HOURS_AFTER_SAVE == 0
+then
+
+32@ += 360000
+
+while $SAVING_DELAY == 1
+wait 0
+end
+
+end
+
+/////////////////////////////////////
+
+if or
+002D:   32@ >= 1@  // (int)
+WEATHER_CYCLE_CHANGE_WEATHER_SMOOTH_NOW == 1
+then
+
+if
+WEATHER_CYCLE_CHANGE_WEATHER_SMOOTH_NOW == 1
+then
+WEATHER_CYCLE_CHANGE_WEATHER_SMOOTH_NOW = 0
+end
+
+32@ = 0
+random_int 1@ 720000 1440000
+$CHANGE_WEATHER_FLAG_SIM = 1
+end
+
+end
+
+end_thread

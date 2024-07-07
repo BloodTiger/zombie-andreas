@@ -1,0 +1,1365 @@
+const
+PREV_CITY = 10@
+PREV_WEATHER = 11@
+CURRENT_CITY = 12@ 
+OLD_WEATHER_TYPE = 0x0C81320
+end
+
+:RND_WTH
+thread 'RND_WTH'
+
+create_thread @WEATHER3
+create_thread @WEATHER2
+create_thread @SNW_EFF
+create_thread @SKY_BEX
+
+PREV_CITY = -1
+PREV_WEATHER = -1
+
+gosub @RANDOM_WEATHER_TOWN_CHECK
+gosub @RANDOM_WEATHER_CHANGE_BY_LOCATION
+
+set_weather PREV_WEATHER
+
+while true
+wait 0
+
+while WEATHER_SYS_IDLE_FLAG == 1
+wait 0
+end      
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+if and
+$WEATHER_CYCLE_OFF == 1
+$GAMEMODE_STORYLINE == 1
+then
+01B7: release_weather
+end_thread
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+if and
+$INF_SIDE == 1
+UNITED_MAP == 0
+then
+set_weather 20
+else
+
+if
+not PLAYER_IN_CANALS_FLAG == 1
+then
+set_weather PREV_WEATHER
+else
+set_weather 9
+end
+
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+$WEATHER_SYNC_FLAG == 1
+then
+$WEATHER_SYNC_FLAG = 0
+$CHANGE_WEATHER_FLAG_SIM2 = 0
+gosub @RANDOM_WEATHER_TOWN_CHECK
+gosub @RANDOM_WEATHER_CHANGE_BY_LOCATION
+
+set_weather PREV_WEATHER
+$SKYBOX_CHANGE_INST_FLAG = 1
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+if and
+$CHANGE_WEATHER_FLAG_SIM2 == 1
+$GAMEMODE_SELECTED == 1
+$WEATHER_SYNC_FLAG == 0
+then
+$CHANGE_WEATHER_FLAG_SIM2 = 0
+
+repeat
+wait 0
+
+while WEATHER_SYS_IDLE_FLAG == 1
+wait 0
+end
+
+if and
+$WEATHER_CYCLE_OFF == 1
+$GAMEMODE_STORYLINE == 1
+then
+01B7: release_weather
+end_thread
+end
+
+0A8D: 0@ = read_memory 0xC8130C size 4 virtual_protect 1
+
+if
+$WEATHER_SYNC_FLAG == 1
+    then
+    0@ = 0.0
+    break
+    end
+
+until 0@ < 0.1
+
+gosub @RANDOM_WEATHER_TOWN_CHECK
+gosub @RANDOM_WEATHER_CHANGE_BY_LOCATION
+
+01B5: force_weather PREV_WEATHER
+
+repeat
+wait 0
+
+while WEATHER_SYS_IDLE_FLAG == 1
+wait 0
+end
+
+if and
+$WEATHER_CYCLE_OFF == 1
+$GAMEMODE_STORYLINE == 1
+then
+01B7: release_weather
+end_thread
+end
+
+01B5: force_weather PREV_WEATHER
+0D59: 0@ = current_weather
+
+if
+$WEATHER_SYNC_FLAG == 1
+    then                      
+    set_weather PREV_WEATHER
+    break
+    end
+
+until 003B:   0@ == PREV_WEATHER  // (int)
+
+if
+$WEATHER_SYNC_FLAG == 1
+then
+$WEATHER_SYNC_FLAG = 0
+$SKYBOX_CHANGE_INST_FLAG = 1
+end
+
+while WEATHER_CYCLE_DONT_CHANGE_FLAG == 1
+wait 0
+end
+
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+if and
+$CHANGE_WEATHER_FLAG_SIM == 1
+$GAMEMODE_SELECTED == 1
+$WEATHER_SYNC_FLAG == 0
+then
+$CHANGE_WEATHER_FLAG_SIM = 0
+
+repeat
+wait 0
+
+while WEATHER_SYS_IDLE_FLAG == 1
+wait 0
+end
+
+if and
+$WEATHER_CYCLE_OFF == 1
+$GAMEMODE_STORYLINE == 1
+then
+01B7: release_weather
+end_thread
+end
+
+0A8D: 0@ = read_memory 0xC8130C size 4 virtual_protect 1
+
+if
+$WEATHER_SYNC_FLAG == 1
+    then
+    0@ = 0.0
+    break
+    end
+
+until 0@ < 0.1
+
+gosub @RANDOM_WEATHER_CHANGE_BY_LOCATION
+
+01B5: force_weather PREV_WEATHER
+
+repeat
+wait 0
+
+while WEATHER_SYS_IDLE_FLAG == 1
+wait 0
+end
+
+if and
+$WEATHER_CYCLE_OFF == 1
+$GAMEMODE_STORYLINE == 1
+then
+01B7: release_weather
+end_thread
+end
+
+01B5: force_weather PREV_WEATHER
+0D59: 0@ = current_weather
+
+if
+$WEATHER_SYNC_FLAG == 1
+    then                    
+    set_weather PREV_WEATHER
+    break
+    end
+
+until 003B:   0@ == PREV_WEATHER  // (int)
+
+if
+$WEATHER_SYNC_FLAG == 1
+then
+$WEATHER_SYNC_FLAG = 0
+$SKYBOX_CHANGE_INST_FLAG = 1
+end
+
+while WEATHER_CYCLE_DONT_CHANGE_FLAG == 1
+wait 0
+end
+
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+end
+
+end_thread
+
+:RANDOM_WEATHER_TOWN_CHECK
+
+if
+not $ACTIVE_INTERIOR == 0
+then
+return
+end
+
+0842: 0@ = player PLAYER_CHAR town_number
+
+if
+0@ == 0
+then
+
+if and
+8583: not  player PLAYER_CHAR in_zone 'VE'
+8583: not  player PLAYER_CHAR in_zone 'BONE'
+8583: not  player PLAYER_CHAR in_zone 'ROBAD'
+8583: not  player PLAYER_CHAR in_zone 'ROBAD1'
+then
+0@ = 0
+else
+0@ = 4
+end
+
+else
+
+if
+0@ == 1
+then
+0@ = 1
+end
+
+if
+0@ == 2
+then
+0@ = 2
+end
+
+if
+0@ == 3
+then
+0@ = 3
+end
+
+end
+
+if
+803B: not  0@ == PREV_CITY  // (int)
+then
+0085: PREV_CITY = 0@ // (int)
+end
+
+return
+
+:RANDOM_WEATHER_CHANGE_BY_LOCATION
+
+if
+$ACTIVE_INTERIOR == 0
+then
+
+0842: 0@ = player PLAYER_CHAR town_number
+if
+0@ > 0
+then
+random_int $ZOMBIES_COUNT 0 20
+else
+random_int $ZOMBIES_COUNT 0 10
+end
+
+end
+
+if
+$STATE_DESTRUCTION_FLAG == 1
+    then
+    PREV_WEATHER = 19
+    return
+    end
+    
+if
+WEATHER_CYCLE_CHANGE_WEATHER_SMOOTH_ID > -1
+    then                                                
+    008B: PREV_WEATHER = WEATHER_CYCLE_CHANGE_WEATHER_SMOOTH_ID // (int)
+    WEATHER_CYCLE_CHANGE_WEATHER_SMOOTH_ID = -1
+    return
+    end        
+
+//////////////////////////////////////////////////////////////////////////////////////
+
+if and
+$INF_SIDE == 1
+UNITED_MAP == 0
+then
+PREV_WEATHER = 20
+return
+end
+
+if
+PLAYER_IN_CANALS_FLAG == 1
+then
+PREV_WEATHER = 9
+return
+end
+
+if
+CLASSIC_CARMA_MAP >= 1
+then
+gosub @RANDOM_WEATHER_CARMA_CLASSIC
+return
+end
+
+if
+PREV_CITY == 0
+then
+gosub @RANDOM_WEATHER_COUNTRYSIDE
+end
+
+if
+PREV_CITY == 4
+then
+gosub @RANDOM_WEATHER_DESERT
+end
+
+if
+PREV_CITY == 1
+then
+gosub @RANDOM_WEATHER_LS
+end
+
+if
+PREV_CITY == 2
+then
+gosub @RANDOM_WEATHER_SF
+end
+
+if
+PREV_CITY == 3
+then
+gosub @RANDOM_WEATHER_LV
+end
+
+return
+
+:RANDOM_WEATHER_CARMA_CLASSIC
+
+random_int 0@ 0 to 7
+
+if
+0@ == 0
+then
+0@ = 0 //ExtraSunny
+jump to @CARMA_CLASSIC_WEATHER_CHECK_JUMP
+end
+
+if
+0@ == 1
+then
+0@ = 1 //Sunny
+jump to @CARMA_CLASSIC_WEATHER_CHECK_JUMP
+end
+
+if
+0@ == 2
+then
+0@ = 2 //ExtraSunnySmog
+jump to @CARMA_CLASSIC_WEATHER_CHECK_JUMP
+end
+
+if
+0@ == 3
+then
+0@ = 3 //SunnySmog
+jump to @CARMA_CLASSIC_WEATHER_CHECK_JUMP
+end
+
+if
+0@ == 4
+then
+0@ = 4 //Cloudy
+jump to @CARMA_CLASSIC_WEATHER_CHECK_JUMP
+end
+
+if
+0@ == 5
+then
+
+if
+not $ACTIVE_INTERIOR == 0
+then
+jump to @CARMA_CLASSIC_WEATHER_CHECK_JUMP
+end
+
+if and
+CLASSIC_CARMA_MAP == 1
+not CARMA_GLOB_RACE_NUMBER == 3
+not CARMA_GLOB_RACE_NUMBER == 7
+not CARMA_GLOB_RACE_NUMBER == 79
+not CARMA_GLOB_RACE_NUMBER == 81
+not CARMA_GLOB_RACE_NUMBER == 25 
+not CARMA_GLOB_RACE_NUMBER == 28
+not CARMA_GLOB_RACE_NUMBER == 69 
+    then
+    0@ = 8 //Rainy
+    jump to @CARMA_CLASSIC_WEATHER_CHECK_JUMP
+    else
+    0@ = 1 //Sunny
+    end
+end
+
+if and
+0@ == 6
+CLASSIC_CARMA_MAP == 1
+then
+
+if
+not $ACTIVE_INTERIOR == 0
+then
+jump to @CARMA_CLASSIC_WEATHER_CHECK_JUMP
+end
+
+if or
+CARMA_GLOB_RACE_NUMBER == 3
+CARMA_GLOB_RACE_NUMBER == 7
+CARMA_GLOB_RACE_NUMBER == 79
+CARMA_GLOB_RACE_NUMBER == 81
+CARMA_GLOB_RACE_NUMBER == 25 
+CARMA_GLOB_RACE_NUMBER == 28
+CARMA_GLOB_RACE_NUMBER == 69 
+    then
+    0@ = 19 //Sandstorm
+    jump to @CARMA_CLASSIC_WEATHER_CHECK_JUMP
+    else
+    0@ = 9 //Foggy
+    jump to @CARMA_CLASSIC_WEATHER_CHECK_JUMP
+    end
+end
+
+if and
+0@ == 6
+CLASSIC_CARMA_MAP == 2
+then
+0@ = 19 //Sandstorm
+jump to @CARMA_CLASSIC_WEATHER_CHECK_JUMP
+end
+
+:CARMA_CLASSIC_WEATHER_CHECK_JUMP
+
+if
+803B: not  0@ == PREV_WEATHER  // (int)
+then
+0085: PREV_WEATHER = 0@ // (int)
+else
+jump to @RANDOM_WEATHER_CARMA_CLASSIC
+end
+
+return
+
+:RANDOM_WEATHER_COUNTRYSIDE
+
+if
+SNOW_ON_FLAG == 1
+then
+jump to @RANDOM_WEATHER_COUNTRYSIDE_WINTER
+end
+
+random_int 0@ 0 to 5
+
+if
+0@ == 0
+then
+
+if
+BRIGHT_ATMOSPHERE == 1
+then
+0@ = 13 //Sunny
+jump to @COUNTRYSIDE_WEATHER_CHECK_JUMP
+else
+0@ = 9 //Foggy  
+jump to @COUNTRYSIDE_WEATHER_CHECK_JUMP
+end
+
+end
+
+if
+0@ == 1
+then
+
+if
+BRIGHT_ATMOSPHERE == 1
+then
+0@ = 14 //ExtraSunny  
+jump to @COUNTRYSIDE_WEATHER_CHECK_JUMP
+else
+0@ = 16 //Rainy 
+jump to @COUNTRYSIDE_WEATHER_CHECK_JUMP
+end
+
+end
+
+if
+0@ == 2
+then
+0@ = 15 //Cloudy  
+jump to @COUNTRYSIDE_WEATHER_CHECK_JUMP
+end
+
+if and
+CARMA_VERY_BAD_FLAG == 0
+KARMA_SYS_ON_FLAG == 1
+CARMA_BAD_POINTS > 0
+    then    
+    if
+    0E4D: random_percent CARMA_BAD_POINTS
+        then
+        jump to @COUNTRYSIDE_RAIN_CHANCE    
+        end                              
+    end
+
+if
+0@ == 3
+then
+:COUNTRYSIDE_RAIN_CHANCE
+0@ = 16 //Rainy
+jump to @COUNTRYSIDE_WEATHER_CHECK_JUMP
+end
+
+if
+0@ == 4
+then
+0@ = 9 //Foggy
+jump to @COUNTRYSIDE_WEATHER_CHECK_JUMP
+end
+
+:COUNTRYSIDE_WEATHER_CHECK_JUMP
+
+if
+803B: not  0@ == PREV_WEATHER  // (int)
+then
+0085: PREV_WEATHER = 0@ // (int)
+else
+jump to @RANDOM_WEATHER_COUNTRYSIDE
+end
+
+return
+
+:RANDOM_WEATHER_COUNTRYSIDE_WINTER
+
+random_int 0@ 0 to 5
+
+if
+0@ == 0
+then
+0@ = 9 //Foggy 
+jump to @COUNTRYSIDE_WEATHER_CHECK_JUMP_WINTER
+end
+
+if
+0@ == 1
+then
+0@ = 15 //Cloudy
+jump to @COUNTRYSIDE_WEATHER_CHECK_JUMP_WINTER
+end
+
+if
+0@ == 2
+then
+0@ = 9 //Foggy
+jump to @COUNTRYSIDE_WEATHER_CHECK_JUMP_WINTER
+end
+
+if
+0@ == 3
+then
+0@ = 15 //Cloudy
+jump to @COUNTRYSIDE_WEATHER_CHECK_JUMP_WINTER
+end
+
+if
+0@ == 4
+then
+0@ = 9 //Foggy
+jump to @COUNTRYSIDE_WEATHER_CHECK_JUMP_WINTER
+end
+
+:COUNTRYSIDE_WEATHER_CHECK_JUMP_WINTER
+
+if
+803B: not  0@ == PREV_WEATHER  // (int)
+then
+0085: PREV_WEATHER = 0@ // (int)
+else
+jump to @RANDOM_WEATHER_COUNTRYSIDE_WINTER
+end
+
+return
+
+:RANDOM_WEATHER_DESERT
+
+if
+SNOW_ON_FLAG == 1
+then
+jump to @RANDOM_WEATHER_DESERT_WINTER
+end    
+
+random_int 0@ 0 to 5
+
+if
+0@ == 0
+then
+
+if
+BRIGHT_ATMOSPHERE == 1
+then
+0@ = 17 //Sunny
+jump to @DESERT_WEATHER_CHECK_JUMP
+else
+0@ = 15 //Cloudy
+jump to @DESERT_WEATHER_CHECK_JUMP
+end
+
+end
+
+if
+0@ == 1
+then
+
+if
+BRIGHT_ATMOSPHERE == 1
+then
+0@ = 18 //ExtraSunny
+jump to @DESERT_WEATHER_CHECK_JUMP
+else
+0@ = 19 //Sandstorm
+jump to @DESERT_WEATHER_CHECK_JUMP
+end
+
+end
+
+if and
+CARMA_VERY_BAD_FLAG == 0
+KARMA_SYS_ON_FLAG == 1
+CARMA_BAD_POINTS > 0
+    then    
+    if
+    0E4D: random_percent CARMA_BAD_POINTS
+        then
+        jump to @DESERT_SANDSTORM_CHANCE    
+        end                              
+    end
+
+if
+0@ == 2
+then
+
+:DESERT_SANDSTORM_CHANCE
+if and
+$GAMEMODE_SELECTED == 1
+$ACTIVE_INTERIOR == 0
+then
+0@ = 19 //Sandstorm
+jump to @DESERT_WEATHER_CHECK_JUMP
+else
+0@ = 9 //Foggy
+jump to @DESERT_WEATHER_CHECK_JUMP
+end
+
+end
+
+if
+0@ == 3
+then
+
+if
+BRIGHT_ATMOSPHERE == 1
+then
+0@ = 17 //Sunny
+jump to @DESERT_WEATHER_CHECK_JUMP
+else
+0@ = 15 //Cloudy
+jump to @DESERT_WEATHER_CHECK_JUMP
+end
+
+end
+
+if
+0@ == 4
+then
+
+if
+BRIGHT_ATMOSPHERE == 1
+then
+0@ = 18 //ExtraSunny
+jump to @DESERT_WEATHER_CHECK_JUMP
+else
+0@ = 19 //Sandstorm
+jump to @DESERT_WEATHER_CHECK_JUMP
+end
+
+end 
+
+:DESERT_WEATHER_CHECK_JUMP
+
+if
+803B: not  0@ == PREV_WEATHER  // (int)
+then
+0085: PREV_WEATHER = 0@ // (int)
+else
+jump to @RANDOM_WEATHER_DESERT
+end
+
+return
+
+:RANDOM_WEATHER_DESERT_WINTER
+
+random_int 0@ 0 to 5
+
+if
+0@ == 0
+then
+0@ = 9 //Foggy
+jump to @DESERT_WEATHER_CHECK_JUMP_WINTER
+end
+
+if
+0@ == 1
+then
+0@ = 15 //Cloudy
+jump to @DESERT_WEATHER_CHECK_JUMP_WINTER
+end
+
+if
+0@ == 2
+then
+0@ = 9 //Foggy
+jump to @DESERT_WEATHER_CHECK_JUMP_WINTER
+end
+
+if
+0@ == 3
+then
+0@ = 15 //Cloudy
+jump to @DESERT_WEATHER_CHECK_JUMP_WINTER
+end
+
+if
+0@ == 4
+then
+0@ = 9 //Foggy
+jump to @DESERT_WEATHER_CHECK_JUMP_WINTER
+end
+
+:DESERT_WEATHER_CHECK_JUMP_WINTER
+
+if
+803B: not  0@ == PREV_WEATHER  // (int)
+then
+0085: PREV_WEATHER = 0@ // (int)
+else
+jump to @RANDOM_WEATHER_DESERT_WINTER
+end
+
+return
+
+:RANDOM_WEATHER_LS
+
+if
+SNOW_ON_FLAG == 1
+then
+jump to @RANDOM_WEATHER_LS_WINTER
+end
+
+random_int 0@ 0 to 6
+
+if
+0@ == 0
+then
+
+if
+BRIGHT_ATMOSPHERE == 1
+then
+0@ = 0 //ExtraSunny  
+jump to @LS_WEATHER_CHECK_JUMP
+else
+0@ = 4 //Cloudy
+jump to @LS_WEATHER_CHECK_JUMP
+end
+
+end
+
+if
+0@ == 1
+then
+
+if
+BRIGHT_ATMOSPHERE == 1
+then
+0@ = 1 //Sunny  
+jump to @LS_WEATHER_CHECK_JUMP
+else
+0@ = 8 //Rainy  
+jump to @LS_WEATHER_CHECK_JUMP
+end
+
+end
+
+if
+0@ == 2
+then
+
+if
+BRIGHT_ATMOSPHERE == 1
+then
+0@ = 2 //ExtraSunnySmog  
+jump to @LS_WEATHER_CHECK_JUMP
+else
+0@ = 4 //Cloudy 
+jump to @LS_WEATHER_CHECK_JUMP
+end
+
+end
+
+if
+0@ == 3
+then
+
+if
+BRIGHT_ATMOSPHERE == 1
+then
+0@ = 3 //SunnySmog 
+jump to @LS_WEATHER_CHECK_JUMP
+else
+0@ = 8 //Rainy    
+jump to @LS_WEATHER_CHECK_JUMP
+end
+
+end
+
+if
+0@ == 4
+then
+0@ = 4 //Cloudy   
+jump to @LS_WEATHER_CHECK_JUMP
+end
+
+if and
+CARMA_VERY_BAD_FLAG == 0
+KARMA_SYS_ON_FLAG == 1
+CARMA_BAD_POINTS > 0
+    then    
+    if
+    0E4D: random_percent CARMA_BAD_POINTS
+        then
+        jump to @LS_RAIN_CHANCE    
+        end                              
+    end
+
+if
+0@ == 5
+then
+:LS_RAIN_CHANCE
+0@ = 8 //Rainy
+jump to @LS_WEATHER_CHECK_JUMP
+end  
+
+:LS_WEATHER_CHECK_JUMP
+
+if
+803B: not  0@ == PREV_WEATHER  // (int)
+then
+0085: PREV_WEATHER = 0@ // (int)
+else
+jump to @RANDOM_WEATHER_LS
+end
+
+return
+
+:RANDOM_WEATHER_LS_WINTER
+
+random_int 0@ 0 to 5
+
+if
+0@ == 0
+then
+0@ = 9 //Foggy
+jump to @LS_WEATHER_CHECK_JUMP_WINTER
+end
+
+if
+0@ == 1
+then
+0@ = 4 //Cloudy
+jump to @LS_WEATHER_CHECK_JUMP_WINTER
+end
+
+if
+0@ == 2
+then
+0@ = 9 //Foggy
+jump to @LS_WEATHER_CHECK_JUMP_WINTER
+end
+
+if
+0@ == 3
+then
+0@ = 4 //Cloudy
+jump to @LS_WEATHER_CHECK_JUMP_WINTER
+end
+
+if
+0@ == 4
+then
+0@ = 9 //Foggy
+jump to @LS_WEATHER_CHECK_JUMP_WINTER
+end
+
+:LS_WEATHER_CHECK_JUMP_WINTER
+
+if
+803B: not  0@ == PREV_WEATHER  // (int)
+then
+0085: PREV_WEATHER = 0@ // (int)
+else
+jump to @RANDOM_WEATHER_LS_WINTER
+end
+
+return
+
+:RANDOM_WEATHER_SF
+
+if
+SNOW_ON_FLAG == 1
+then
+jump to @RANDOM_WEATHER_SF_WINTER
+end
+
+random_int 0@ 0 to 5
+
+if
+0@ == 0
+then
+
+if
+BRIGHT_ATMOSPHERE == 1
+then
+0@ = 5 //Sunny
+jump to @SF_WEATHER_CHECK_JUMP
+else
+0@ = 9 //Foggy
+jump to @SF_WEATHER_CHECK_JUMP
+end
+
+end
+
+if
+0@ == 1
+then
+
+if
+BRIGHT_ATMOSPHERE == 1
+then
+0@ = 6 //ExtraSunny
+jump to @SF_WEATHER_CHECK_JUMP
+else
+0@ = 8 //Rainy
+jump to @SF_WEATHER_CHECK_JUMP
+end
+
+end
+
+if
+0@ == 2
+then
+0@ = 7 //Cloudy
+jump to @SF_WEATHER_CHECK_JUMP
+end
+
+if and
+CARMA_VERY_BAD_FLAG == 0
+KARMA_SYS_ON_FLAG == 1
+CARMA_BAD_POINTS > 0
+    then    
+    if
+    0E4D: random_percent CARMA_BAD_POINTS
+        then
+        jump to @SF_RAIN_CHANCE    
+        end                              
+    end
+
+if
+0@ == 3
+then
+:SF_RAIN_CHANCE
+0@ = 8 //Rainy
+jump to @SF_WEATHER_CHECK_JUMP
+end
+
+if
+0@ == 4
+then
+0@ = 9 //Foggy
+jump to @SF_WEATHER_CHECK_JUMP
+end
+
+:SF_WEATHER_CHECK_JUMP
+
+if
+803B: not  0@ == PREV_WEATHER  // (int)
+then
+0085: PREV_WEATHER = 0@ // (int)
+else
+jump to @RANDOM_WEATHER_SF
+end
+
+return
+
+:RANDOM_WEATHER_SF_WINTER
+
+random_int 0@ 0 to 5
+
+if
+0@ == 0
+then
+0@ = 9 //Foggy
+jump to @SF_WEATHER_CHECK_JUMP_WINTER
+end
+
+if
+0@ == 1
+then
+0@ = 7 //Cloudy
+jump to @SF_WEATHER_CHECK_JUMP_WINTER
+end
+
+if
+0@ == 2
+then
+0@ = 9 //Foggy
+jump to @SF_WEATHER_CHECK_JUMP_WINTER
+end
+
+if
+0@ == 3
+then
+0@ = 7 //Cloudy
+jump to @SF_WEATHER_CHECK_JUMP_WINTER
+end
+
+if
+0@ == 4
+then
+0@ = 9 //Foggy
+jump to @SF_WEATHER_CHECK_JUMP_WINTER
+end
+
+:SF_WEATHER_CHECK_JUMP_WINTER
+
+if
+803B: not  0@ == PREV_WEATHER  // (int)
+then
+0085: PREV_WEATHER = 0@ // (int)
+else
+jump to @RANDOM_WEATHER_SF_WINTER
+end
+
+return
+
+:RANDOM_WEATHER_LV
+
+if
+SNOW_ON_FLAG == 1
+then
+jump to @RANDOM_WEATHER_LV_WINTER
+end
+
+random_int 0@ 0 to 3
+
+if
+0@ == 0
+then
+
+if
+BRIGHT_ATMOSPHERE == 1
+then
+0@ = 10 //Sunny
+jump to @LV_WEATHER_CHECK_JUMP
+else
+0@ = 19 //Sandstorm
+jump to @LV_WEATHER_CHECK_JUMP
+end
+
+end
+
+if
+0@ == 1
+then
+
+if
+BRIGHT_ATMOSPHERE == 1
+then
+0@ = 11 //ExtraSunny
+jump to @LV_WEATHER_CHECK_JUMP
+else
+0@ = 12 //Cloudy
+jump to @LV_WEATHER_CHECK_JUMP
+end
+
+end
+
+if
+0@ == 2
+then
+0@ = 12 //Cloudy
+jump to @LV_WEATHER_CHECK_JUMP
+end
+
+:LV_WEATHER_CHECK_JUMP
+
+if
+803B: not  0@ == PREV_WEATHER  // (int)
+then
+0085: PREV_WEATHER = 0@ // (int)
+else
+jump to @RANDOM_WEATHER_LV
+end
+
+return
+
+:RANDOM_WEATHER_LV_WINTER
+
+random_int 0@ 0 to 6
+
+if
+0@ == 0
+then
+0@ = 9 //Foggy
+jump to @LV_WEATHER_CHECK_JUMP_WINTER
+end
+
+if
+0@ == 1
+then
+0@ = 12 //Cloudy
+jump to @LV_WEATHER_CHECK_JUMP_WINTER
+end
+
+if
+0@ == 2
+then
+0@ = 9 //Foggy
+jump to @LV_WEATHER_CHECK_JUMP_WINTER
+end
+
+if
+0@ == 3
+then
+0@ = 12 //Cloudy
+jump to @LV_WEATHER_CHECK_JUMP_WINTER
+end
+
+if
+0@ == 4
+then
+0@ = 9 //Foggy
+jump to @LV_WEATHER_CHECK_JUMP_WINTER
+end
+
+if
+0@ == 5
+then
+0@ = 12 //Cloudy
+jump to @LV_WEATHER_CHECK_JUMP_WINTER
+end
+
+:LV_WEATHER_CHECK_JUMP_WINTER
+
+if
+803B: not  0@ == PREV_WEATHER  // (int)
+then
+0085: PREV_WEATHER = 0@ // (int)
+else
+jump to @RANDOM_WEATHER_LV_WINTER
+end
+
+return
+
+:WEATHER3
+thread 'WEATHER3'
+
+PREV_CITY = -1
+CURRENT_CITY = -1
+
+gosub @RANDOM_WEATHER_TOWN_CHECK2
+0085: PREV_CITY = CURRENT_CITY // (int)
+
+while true
+wait 0
+
+if and
+$WEATHER_CYCLE_OFF == 1
+$GAMEMODE_STORYLINE == 1
+then
+end_thread
+end
+
+gosub @RANDOM_WEATHER_TOWN_CHECK2
+if
+803B: not  CURRENT_CITY == PREV_CITY  // (int)
+then
+0085: PREV_CITY = CURRENT_CITY // (int)
+$CHANGE_WEATHER_FLAG_SIM2 = 1
+end
+
+end
+
+end_thread
+
+:RANDOM_WEATHER_TOWN_CHECK2
+
+if
+not $ACTIVE_INTERIOR == 0
+then
+return
+end
+
+0842: 0@ = player PLAYER_CHAR town_number
+
+if
+0@ == 0
+then
+
+if and
+8583: not  player PLAYER_CHAR in_zone 'VE'
+8583: not  player PLAYER_CHAR in_zone 'BONE'
+8583: not  player PLAYER_CHAR in_zone 'ROBAD'
+8583: not  player PLAYER_CHAR in_zone 'ROBAD1'
+then
+0@ = 0
+else
+0@ = 4
+end
+
+else
+
+if
+0@ == 1
+then
+0@ = 1
+end
+
+if
+0@ == 2
+then
+0@ = 2
+end
+
+if
+0@ == 3
+then
+0@ = 3
+end
+
+end
+
+if
+803B: not  0@ == PREV_CITY  // (int)
+then
+0085: CURRENT_CITY = 0@ // (int)
+end
+
+return
+
+:SKY_BEX
+thread 'SKY_BEX'
+
+repeat
+00BF: 0@ = current_time_hours, 1@ = current_time_minutes
+008B: 4@ = $SAVING_DELAY // (int)
+008B: 6@ = $PREPARING_CHECKPOINT_OFF // (int)
+wait 10
+00BF: 2@ = current_time_hours, 3@ = current_time_minutes
+008B: 5@ = $SAVING_DELAY // (int)
+008B: 7@ = $PREPARING_CHECKPOINT_OFF // (int)
+
+if or
+$TIME_LOCK_OFF == 0
+$TIME_LOCK_OFF == 1
+then
+
+if
+803B: not  0@ == 2@  // (int)
+    then
+    0EC7: get_fade_alpha 0@
+    0092: 0@ = float 0@ to_integer
+    if
+    0@ == 255
+        then
+        $SKYBOX_CHANGE_INST_FLAG = 1
+        end
+    end
+    
+if
+803B: not  4@ == 5@  // (int)
+    then
+    
+    repeat
+    wait 0
+    $SKYBOX_CHANGE_INST_FLAG = 1
+    until $SAVING_DELAY == 0 
+    
+    end
+    
+if
+803B: not  6@ == 7@  // (int)
+    then
+    
+    repeat
+    wait 0
+    $SKYBOX_CHANGE_INST_FLAG = 1
+    until $PREPARING_CHECKPOINT_OFF == 0 
+    
+    end
+    
+end            
+
+until false
+
+end_thread

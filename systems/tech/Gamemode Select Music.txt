@@ -1,0 +1,127 @@
+:SEL_MUS
+thread 'SEL_MUS'
+
+if
+CLASSIC_CARMA_MAP >= 1
+then
+end_thread
+end
+
+:SELECT_MUSIC_START
+
+gosub @RANDOM_MENU_MUSIC
+
+Audiostream.Volume($SELECT_MUSIC) = 0.0
+Audiostream.Loop($SELECT_MUSIC, 0)
+if
+not GAMEMODE_AUTOSELECT == 1
+then
+Audiostream.PerformAction($SELECT_MUSIC, PLAY)
+end 
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $SELECT_MUSIC // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+//////////////////////////////////////////////////////////
+
+32@ = 0
+
+:SELECT_MUSIC_IDLE
+wait 0
+
+if
+32@ > 500
+then
+Audiostream.Volume($SELECT_MUSIC) = $MUSIC_VOLUME
+end
+
+Player.CanMove(PLAYER_CHAR) = false
+cinema.Hud(0)
+cinema.Radar(0)
+
+if
+$SELECT_MUSIC_END == 1
+then    
+end_thread
+else
+015D: set_gamespeed 1.0
+end   
+
+0AB9: get_mp3 $SELECT_MUSIC state_to 11@
+if 
+11@ == -1 
+    then          
+    audiostream.Release($SELECT_MUSIC)
+    jump to @SELECT_MUSIC_START
+    end
+
+jump to @SELECT_MUSIC_IDLE
+
+:RANDOM_MENU_MUSIC
+
+0AF0: 2@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "PMM"
+
+random_int 1@ 0 3
+
+if
+1@ == 0
+then
+
+    if
+    803B: not  1@ == 2@  // (int)
+    then        
+    0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "PMM"    
+    $SELECT_MUSIC = Audiostream.Load("AUDIO\SOUNDS\MUSIC\MENU_MUSIC1.wav") 
+    else 
+    jump to @RANDOM_MENU_MUSIC
+    end   
+
+end   
+
+if
+1@ == 1
+then
+
+    if
+    803B: not  1@ == 2@  // (int)
+    then        
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "PMM"    
+    $SELECT_MUSIC = Audiostream.Load("AUDIO\SOUNDS\MUSIC\MENU_MUSIC2.wav")  
+    else
+    jump to @RANDOM_MENU_MUSIC
+    end   
+
+end   
+
+if
+1@ == 2
+then
+
+    if
+    803B: not  1@ == 2@  // (int)
+    then        
+    0AF1: write_int 2 to_ini_file "saves/ZACM.set" section "SCR" key "PMM"    
+    $SELECT_MUSIC = Audiostream.Load("AUDIO\SOUNDS\MUSIC\MENU_MUSIC3.wav")  
+    else
+    jump to @RANDOM_MENU_MUSIC
+    end   
+
+end   
+
+return

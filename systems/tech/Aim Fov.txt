@@ -1,0 +1,630 @@
+const
+MAX_AIM_FOV = 27@
+X_AXIS_SENS = 26@
+Y_AXIS_SENS = 25@
+end
+
+:AIM_FOV
+thread 'AIM_FOV'
+
+create_thread @LASER
+
+32@ = 0
+MAX_AIM_FOV = 53.0
+
+while true
+wait 0
+
+if
+PERK_EAGLE == 0
+then
+MAX_AIM_FOV = 53.0
+else
+MAX_AIM_FOV = 41.0
+end
+
+if
+$FP_ACTIVATED == 0
+then
+
+/////////////////////////////////////////////////////////////////////////////
+
+if and
+not actor.Animation(PLAYER_ACTOR) == "FALL_collapse"
+not actor.Animation(PLAYER_ACTOR) == "FLOOR_hit"
+not actor.Animation(PLAYER_ACTOR) == "FLOOR_hit_f"
+not actor.Animation(PLAYER_ACTOR) == "getup"
+not actor.Animation(PLAYER_ACTOR) == "getup_front"
+not actor.Animation(PLAYER_ACTOR) == "BOM_Plant_In"
+8E48: not is_char_fallen_on_ground PLAYER_ACTOR
+8E92: not is_char_really_in_air PLAYER_ACTOR
+    then
+    if and
+    not actor.Animation(PLAYER_ACTOR) == "JUMP_glide"
+    not actor.Animation(PLAYER_ACTOR) == "JUMP_land"
+    not actor.Animation(PLAYER_ACTOR) == "JUMP_launch"
+    not actor.Animation(PLAYER_ACTOR) == "JUMP_launch_R"
+    not actor.Animation(PLAYER_ACTOR) == "FALL_land"
+    not actor.Animation(PLAYER_ACTOR) == "GunCrouchFwd"
+        then
+        0801: get_camera_zoom_factor_to 1@ // float
+        06AC: 29@ = actor PLAYER_ACTOR movement_speed
+        gosub @AIM_FOV_WEAPON_CHECK
+        if and
+        00E1:   player 0 pressed_key 6
+        868C: not  is_player_autoaiming PLAYER_CHAR
+        8800: not  in_two_players_mode
+        not actor.Dead(PLAYER_ACTOR)
+        not actor.Animation(PLAYER_ACTOR) == "gas_cwr"
+        32@ > 500
+        29@ < 7.0
+            then
+            gosub @AIM_FOV_WATER_CHECK    
+            if and
+            1@ == DEFAULT_FOV
+            0@ == 0
+            $HUD_REMOVE == 0
+            $PANEL_OPEN == 0
+            09E7:   player PLAYER_CHAR not_frozen
+            8A29: not  player PLAYER_CHAR climbing
+            044B:   actor PLAYER_ACTOR on_foot            
+            8818: not  actor PLAYER_ACTOR in_air 
+                then
+                
+                0A8D: X_AXIS_SENS = read_memory 0xB6EC1C size 4 virtual_protect 0 // X-Axis sensitivity
+                0A8D: Y_AXIS_SENS = read_memory 0xB6EC18 size 4 virtual_protect 0 // Y-Axis sensitivity                        
+                
+                28@ = Audiostream.Load("AUDIO\SOUNDS\WEAPONS\sniper_zoom.wav")
+                PLAYER_ZOOMING_FLAG = 1
+                33@ = 0
+                if
+                AIM_FOLLOWS_CAM == 0
+                then
+                33@ = 451
+                end
+                
+                while 00E1:   player 0 pressed_key 6
+                wait 0
+                
+                gosub @AIM_FOV_WEAPON_CHECK
+                if or
+                $HUD_REMOVE == 1
+                $PANEL_OPEN == 1
+                89E7: not  player PLAYER_CHAR not_frozen
+                0818:   actor PLAYER_ACTOR in_air
+                $FP_ACTIVATED == 1
+                0@ == 1
+                then
+                break
+                end                
+                
+                2@ = DEFAULT_FOV
+                0088: $GAME_FOV = 2@ // (float)                    
+                
+                while 00E1:   player 0 pressed_key 6
+                wait 0
+                gosub @AIM_FOV_WEAPON_CHECK
+                
+                0087: 3@ = 2@ // (float)
+                3@ *= 0.012987012987013
+                0087: 4@ = X_AXIS_SENS // (float)
+                0087: 5@ = Y_AXIS_SENS // (float)                
+                006B: 4@ *= 3@  // (float)
+                006B: 5@ *= 3@  // (float)                
+                0A8C: write_memory 0xB6EC1C size 4 value 4@ virtual_protect 0
+                0A8C: write_memory 0xB6EC18 size 4 value 5@ virtual_protect 0        
+                
+                if or
+                $HUD_REMOVE == 1
+                $PANEL_OPEN == 1
+                89E7: not  player PLAYER_CHAR not_frozen
+                0818:   actor PLAYER_ACTOR in_air
+                $FP_ACTIVATED == 1
+                0@ == 1
+                then
+                break
+                end    
+                
+                if or
+                0AB0:   key_pressed 4
+                0AB0:   key_pressed $KEY_ZOOM_IN
+                00E1:   player 0 pressed_key 5
+                0E10: is_mouse_wheel_up
+                then
+                
+                if and       
+                8045: not  2@ == MAX_AIM_FOV  // (float)
+                $PLAYER_RELOADING == 0
+                868C: not is_player_autoaiming PLAYER_CHAR
+                33@ > 450
+                then
+                
+                if
+                0E10: is_mouse_wheel_up
+                then
+                2@ -= 3.0
+                end
+                
+                2@ -= 3.0
+                
+                if
+                8025: not  2@ > MAX_AIM_FOV  // (float)
+                then
+                0087: 2@ = MAX_AIM_FOV // (float)
+                end
+                
+                if and
+                82D8: not  actor PLAYER_ACTOR current_weapon == 151
+                82D8: not  actor PLAYER_ACTOR current_weapon == 43
+                then
+                Audiostream.Volume(28@) = $SOUNDS_VOLUME 
+                Audiostream.Loop(28@, 0)
+                Audiostream.PerformAction(28@, PLAY)
+                end
+                
+                end
+                
+                end
+                
+                if or
+                0AB0:   key_pressed 90
+                00E1:   player 0 pressed_key 7
+                0E11: is_mouse_wheel_down                
+                then
+                
+                if and
+                not 2@ == DEFAULT_FOV
+                $PLAYER_RELOADING == 0
+                868C: not is_player_autoaiming PLAYER_CHAR
+                33@ > 450
+                then
+                
+                if
+                0E11: is_mouse_wheel_down
+                then
+                2@ += 3.0
+                end
+                
+                2@ += 3.0
+                
+                if
+                2@ > DEFAULT_FOV
+                then
+                2@ = DEFAULT_FOV
+                end
+                
+                if and
+                82D8: not  actor PLAYER_ACTOR current_weapon == 151
+                82D8: not  actor PLAYER_ACTOR current_weapon == 43
+                then
+                Audiostream.Volume(28@) = $SOUNDS_VOLUME 
+                Audiostream.Loop(28@, 0)
+                Audiostream.PerformAction(28@, PLAY)
+                end
+                
+                end
+                
+                end
+                
+                0088: $GAME_FOV = 2@ // (float)                
+                
+                end
+                
+                if
+                not 2@ == DEFAULT_FOV
+                then                
+                2@ = DEFAULT_FOV
+                0088: $GAME_FOV = 2@ // (float)                                
+                end                    
+                
+                audiostream.PerformAction(28@, STOP)
+                audiostream.Release(28@)
+                PLAYER_ZOOMING_FLAG = 0
+                
+                end
+                
+                32@ = 0
+                0A8C: write_memory 0xB6EC1C size 4 value X_AXIS_SENS virtual_protect 0
+                0A8C: write_memory 0xB6EC18 size 4 value Y_AXIS_SENS virtual_protect 0
+                
+                end
+            end
+        end
+    end
+    
+/////////////////////////////////////////////////////////////////////////////
+
+else
+
+if and
+not actor.Animation(PLAYER_ACTOR) == "FALL_collapse"
+not actor.Animation(PLAYER_ACTOR) == "FLOOR_hit"
+not actor.Animation(PLAYER_ACTOR) == "FLOOR_hit_f"
+not actor.Animation(PLAYER_ACTOR) == "getup"
+not actor.Animation(PLAYER_ACTOR) == "getup_front"
+not actor.Animation(PLAYER_ACTOR) == "BOM_Plant_In"
+8E48: not is_char_fallen_on_ground PLAYER_ACTOR
+8E92: not is_char_really_in_air PLAYER_ACTOR
+    then
+    if and
+    not actor.Animation(PLAYER_ACTOR) == "JUMP_glide"
+    not actor.Animation(PLAYER_ACTOR) == "JUMP_land"
+    not actor.Animation(PLAYER_ACTOR) == "JUMP_launch"
+    not actor.Animation(PLAYER_ACTOR) == "JUMP_launch_R"
+    not actor.Animation(PLAYER_ACTOR) == "FALL_land"
+    not actor.Animation(PLAYER_ACTOR) == "GunCrouchFwd"
+        then
+        0801: get_camera_zoom_factor_to 1@ // float
+        06AC: 29@ = actor PLAYER_ACTOR movement_speed
+        gosub @AIM_FOV_WEAPON_CHECK
+        if and
+        00E1:   player 0 pressed_key 6
+        868C: not  is_player_autoaiming PLAYER_CHAR
+        8800: not  in_two_players_mode
+        not actor.Dead(PLAYER_ACTOR)
+        not actor.Animation(PLAYER_ACTOR) == "gas_cwr"
+        32@ > 300
+        29@ < 7.0
+            then
+            gosub @AIM_FOV_WATER_CHECK    
+            if and
+            1@ == 80.0
+            0@ == 0
+            $HUD_REMOVE == 0
+            $PANEL_OPEN == 0
+            09E7:   player PLAYER_CHAR not_frozen
+            8A29: not  player PLAYER_CHAR climbing
+            044B:   actor PLAYER_ACTOR on_foot
+            8818: not  actor PLAYER_ACTOR in_air 
+                then
+                
+                0A8D: X_AXIS_SENS = read_memory 0xB6EC1C size 4 virtual_protect 0 // X-Axis sensitivity
+                0A8D: Y_AXIS_SENS = read_memory 0xB6EC18 size 4 virtual_protect 0 // Y-Axis sensitivity                
+                
+                28@ = Audiostream.Load("AUDIO\SOUNDS\WEAPONS\sniper_zoom.wav")
+                PLAYER_ZOOMING_FLAG = 1
+                
+                while 00E1:   player 0 pressed_key 6
+                wait 0                
+                
+                2@ = 80.0
+                
+                gosub @AIM_FOV_WEAPON_CHECK
+                if or
+                $HUD_REMOVE == 1
+                $PANEL_OPEN == 1
+                89E7: not  player PLAYER_CHAR not_frozen                
+                0@ == 1
+                $FP_ACTIVATED == 0
+                then
+                break
+                end
+                
+                if or
+                0818:   actor PLAYER_ACTOR in_air
+                0E48:  is_char_fallen_on_ground PLAYER_ACTOR
+                0E92:  is_char_really_in_air PLAYER_ACTOR
+                then
+                break
+                end    
+                
+                0922: set_camera_zoom_from 2@ to 2@ timelimit 10 smooth_transition 1
+                wait 10    
+                
+                while 00E1:   player 0 pressed_key 6
+                wait 0
+                gosub @AIM_FOV_WEAPON_CHECK
+                
+                0087: 3@ = 2@ // (float)
+                3@ *= 0.012987012987013
+                0087: 4@ = X_AXIS_SENS // (float)
+                0087: 5@ = Y_AXIS_SENS // (float)                
+                006B: 4@ *= 3@  // (float)
+                006B: 5@ *= 3@  // (float)                
+                0A8C: write_memory 0xB6EC1C size 4 value 4@ virtual_protect 0
+                0A8C: write_memory 0xB6EC18 size 4 value 5@ virtual_protect 0        
+                
+                if or
+                $HUD_REMOVE == 1
+                $PANEL_OPEN == 1
+                89E7: not  player PLAYER_CHAR not_frozen                
+                0@ == 1
+                $FP_ACTIVATED == 0
+                then
+                break
+                end
+                
+                if or
+                0818:   actor PLAYER_ACTOR in_air
+                0E48:  is_char_fallen_on_ground PLAYER_ACTOR
+                0E92:  is_char_really_in_air PLAYER_ACTOR
+                then
+                break
+                end    
+                
+                if or
+                0AB0:   key_pressed 4
+                0AB0:   key_pressed $KEY_ZOOM_IN
+                00E1:   player 0 pressed_key 5
+                0E10: is_mouse_wheel_up
+                then
+                
+                if and       
+                8045: not  2@ == MAX_AIM_FOV  // (float)
+                $PLAYER_RELOADING == 0
+                868C: not is_player_autoaiming PLAYER_CHAR
+                then
+                
+                if
+                0E10: is_mouse_wheel_up
+                then
+                2@ -= 3.0
+                end
+                
+                2@ -= 3.0
+                
+                if
+                8025: not  2@ > MAX_AIM_FOV  // (float)
+                then
+                0087: 2@ = MAX_AIM_FOV // (float)
+                end
+                
+                if and
+                82D8: not  actor PLAYER_ACTOR current_weapon == 151
+                82D8: not  actor PLAYER_ACTOR current_weapon == 43
+                then
+                Audiostream.Volume(28@) = $SOUNDS_VOLUME 
+                Audiostream.Loop(28@, 0)
+                Audiostream.PerformAction(28@, PLAY)
+                end
+                
+                end
+                
+                end
+                
+                if or
+                0AB0:   key_pressed $KEY_ZOOM_OUT
+                00E1:   player 0 pressed_key 7
+                0E11: is_mouse_wheel_down                
+                then
+                
+                if and
+                not 2@ == 80.0
+                $PLAYER_RELOADING == 0
+                868C: not is_player_autoaiming PLAYER_CHAR
+                then
+                
+                if
+                0E11: is_mouse_wheel_down
+                then
+                2@ += 3.0
+                end
+                
+                2@ += 3.0
+                
+                if
+                2@ > DEFAULT_FOV
+                then
+                2@ = DEFAULT_FOV
+                end
+                
+                if and
+                82D8: not  actor PLAYER_ACTOR current_weapon == 151
+                82D8: not  actor PLAYER_ACTOR current_weapon == 43
+                then
+                Audiostream.Volume(28@) = $SOUNDS_VOLUME 
+                Audiostream.Loop(28@, 0)
+                Audiostream.PerformAction(28@, PLAY)
+                end
+                
+                end
+                
+                end
+                
+                0922: set_camera_zoom_from 2@ to 2@ timelimit GENERAL_FOV_TIMER smooth_transition 0
+                
+                end
+                
+                if and
+                not 2@ == 80.0
+                $FP_ACTIVATED == 0
+                then
+                
+                repeat
+                wait 30
+                2@ += 3.0
+                0922: set_camera_zoom_from 2@ to 2@ timelimit GENERAL_FOV_TIMER smooth_transition 0 
+                until 2@ == 80.0
+                
+                end                                   
+                
+                audiostream.PerformAction(28@, STOP)
+                audiostream.Release(28@)
+                PLAYER_ZOOMING_FLAG = 0
+                
+                end
+                
+                32@ = 0
+                0A8C: write_memory 0xB6EC1C size 4 value X_AXIS_SENS virtual_protect 0
+                0A8C: write_memory 0xB6EC18 size 4 value Y_AXIS_SENS virtual_protect 0
+                
+                end
+            end
+        end
+    end
+    
+end        
+
+end
+
+end_thread
+
+:AIM_FOV_WEAPON_CHECK
+
+0470: 0@ = actor PLAYER_ACTOR current_weapon
+
+if or
+0@ == 0
+0@ < 22
+0@ == 46
+0@ == 35
+0@ == 36
+0@ == 39
+0@ == 40
+    then
+    1@ = 28.0
+    end
+    
+if or
+0@ == 41
+0@ == 44
+0@ == 45
+0@ == 93
+    then
+    1@ = 28.0
+    end
+    
+if or
+0@ == 110
+0@ == 115
+0@ == 118
+0@ == 119
+0@ == 121
+0@ == 122
+0@ == 123
+    then
+    1@ = 28.0
+    end
+    
+if or
+0@ == 124
+0@ == 125
+0@ == 126
+0@ == 127
+0@ == 128
+0@ == 129
+0@ == 130
+0@ == 131
+    then
+    1@ = 28.0
+    end
+    
+if or
+0@ == 132
+0@ == 133
+0@ == 134
+0@ == 135
+0@ == 154
+    then
+    1@ = 28.0
+    end
+    
+if or
+0@ == 155
+0@ == 156
+0@ == 157
+0@ == 158
+0@ == 159
+0@ == 160
+0@ == 161
+0@ == 162
+    then
+    1@ = 28.0
+    end
+    
+if or
+0@ == 163
+0@ == 164
+0@ == 177
+0@ == 178
+0@ == 179
+0@ == 183
+    then
+    1@ = 28.0
+    end
+    
+if or
+0@ == 184
+0@ == 185
+0@ == 186
+0@ == 187
+0@ == 188
+0@ == 189
+0@ == 190
+0@ == 191
+    then
+    1@ = 28.0
+    end
+    
+if or
+0@ == 192
+0@ == 193
+0@ == 194
+0@ == 207
+0@ == 208
+0@ == 209
+    then
+    1@ = 28.0
+    end
+    
+if
+0@ == 213
+    then
+    1@ = 28.0
+    end
+    
+if or
+02D8:   actor PLAYER_ACTOR current_weapon == 34
+02D8:   actor PLAYER_ACTOR current_weapon == 80
+02D8:   actor PLAYER_ACTOR current_weapon == 120
+02D8:   actor PLAYER_ACTOR current_weapon == 146
+02D8:   actor PLAYER_ACTOR current_weapon == 147 
+02D8:   actor PLAYER_ACTOR current_weapon == 43
+    then
+    MAX_AIM_FOV = 23.0
+    end
+    
+if or
+02D8:   actor PLAYER_ACTOR current_weapon == 96
+02D8:   actor PLAYER_ACTOR current_weapon == 97
+02D8:   actor PLAYER_ACTOR current_weapon == 175
+02D8:   actor PLAYER_ACTOR current_weapon == 176
+02D8:   actor PLAYER_ACTOR current_weapon == 205
+02D8:   actor PLAYER_ACTOR current_weapon == 206
+02D8:   actor PLAYER_ACTOR current_weapon == 109
+    then
+    MAX_AIM_FOV = 23.0
+    end
+    
+if or
+02D8:   actor PLAYER_ACTOR current_weapon == 151
+02D8:   actor PLAYER_ACTOR current_weapon == 43
+    then
+    MAX_AIM_FOV = 8.0    
+    end                                            
+
+return
+
+:AIM_FOV_WATER_CHECK
+
+0@ = 0
+
+if
+04AD:   actor PLAYER_ACTOR in_water
+then
+
+if or
+actor.Animation(PLAYER_ACTOR) == "Swim_Tread"
+actor.Animation(PLAYER_ACTOR) == "Swim_Breast"
+actor.Animation(PLAYER_ACTOR) == "SWIM_crawl"
+actor.Animation(PLAYER_ACTOR) == "Swim_Dive_Under"
+actor.Animation(PLAYER_ACTOR) == "Swim_Glide"
+actor.Animation(PLAYER_ACTOR) == "Swim_jumpout"
+actor.Animation(PLAYER_ACTOR) == "Swim_Under"
+then
+0@ = 1
+end
+
+end
+
+return 

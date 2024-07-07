@@ -1,0 +1,800 @@
+const
+DIALOG_SYSTEM_ORIGIN_STRING_FLAG = 15@
+DIALOG_SYSTEM_DUMMY_TIME = 16@
+DIALOG_OZVUCHKA_FLAG = 17@
+DIALOG_OZVUCHKA_SND = 18@
+end
+
+:DG_SYS
+thread 'DG_SYS'
+
+if
+0@ > 0
+then
+0085: 16@ = 0@ // (int)
+end        
+        
+text.RemoveTextBox()
+0A48: enable_menu_access_in_widescreen_mode 1
+$DIALOG_END = 0
+1@ = -1
+$END_DIALOG_INST = 0
+$DIALOG_PAUSE = 0
+DIALOG_SYSTEM_ORIGIN_STRING_FLAG = 0
+
+if
+$PHRASES_OFF_FLAG > 0
+then
+20@ = 1
+else
+20@ = 0
+end
+
+$PHRASES_OFF_FLAG = 1
+
+while not animation.Available('GANGS')
+wait 0
+animation.Load('GANGS')
+end
+   
+:DIALOG_2MAIN2 
+1@ += 1
+008A: $DIALOG_CURRENT_INT = 1@ // (int)
+DIALOG_OZVUCHKA_FLAG = 0
+gosub @DIALOG_ORIGIN_CHECK
+if
+DIALOG_SYSTEM_ORIGIN_STRING_FLAG == 0
+then
+09FD: get_gxt_string $ST_DIALOG(1@,200v) width_to 3@  // ~k~~PED_SPRINT~ Select
+
+///////////////Голосовуха///////////////
+
+if
+OZVUCHKA_FLAG == 1
+then
+
+0AD3: 28@v = format "za\a\%s.mp3" $ST_DIALOG(1@,200v)
+if
+0AAB:   file_exists 28@v
+then
+DIALOG_OZVUCHKA_SND = Audiostream.Load(28@v)
+Audiostream.PerformAction(DIALOG_OZVUCHKA_SND, PLAY)
+Audiostream.Loop(DIALOG_OZVUCHKA_SND, 0)
+Audiostream.Volume(DIALOG_OZVUCHKA_SND) = $SOUNDS_VOLUME
+DIALOG_OZVUCHKA_FLAG = 1
+end
+
+end
+
+else
+09FD: get_gxt_string v$PH_ORIGN width_to 3@  // ~k~~PED_SPRINT~ Select
+
+///////////////Голосовуха///////////////
+
+if
+OZVUCHKA_FLAG == 1
+then
+
+0AD3: 28@v = format "za\a\%s.mp3" v$PH_ORIGN
+if
+0AAB:   file_exists 28@v
+then
+DIALOG_OZVUCHKA_SND = Audiostream.Load(28@v)
+Audiostream.PerformAction(DIALOG_OZVUCHKA_SND, PLAY)
+Audiostream.Loop(DIALOG_OZVUCHKA_SND, 0)
+Audiostream.Volume(DIALOG_OZVUCHKA_SND) = $SOUNDS_VOLUME
+DIALOG_OZVUCHKA_FLAG = 1
+end
+
+end
+
+end
+
+0093: 3@ = integer 3@ to_float
+3@ *= 8.0
+0092: 3@ = float 3@ to_integer  
+
+if
+DIALOG_OZVUCHKA_FLAG == 1
+then
+0AAF: 3@ = get_mp3_length DIALOG_OZVUCHKA_SND
+3@ += 1
+3@ *= 1000
+end
+
+gosub @CHECK_LOONG
+gosub @ACTOR_TALK
+
+while $DIALOG_PAUSE == 1
+wait 0
+$PHRASES_OFF_FLAG = 0
+
+if
+$END_DIALOG_INST == 1
+    then
+    $DIALOG_PAUSE = 0
+    break
+    end
+
+end
+
+$PHRASES_OFF_FLAG = 1
+
+if
+DIALOG_SYSTEM_ORIGIN_STRING_FLAG == 0
+then
+
+if or
+not $QUEST_TYPE > 9
+$QUEST_TYPE == -1
+then
+00BC: show_text_highpriority GXT $ST_DIALOG(1@,200v) time 3@ flag 1
+else
+0384: show_text_1string GXT $ST_DIALOG(1@,200v) string v$NAME3 time 3@ 1
+end
+
+else
+
+if or
+not $QUEST_TYPE > 9
+$QUEST_TYPE == -1
+then
+00BC: show_text_highpriority GXT v$PH_ORIGN time 3@ flag 1
+else
+0384: show_text_1string GXT v$PH_ORIGN string v$NAME3 time 3@ 1
+end
+
+end
+
+32@ = 0
+wait 100
+jump @END_DIALOG_CHECK 
+
+:END_DIALOG_CHECK
+wait 0
+$PHRASES_OFF_FLAG = 1
+if and
+$END_DIALOG_INST == 0
+GAME_OVER_FLAG == 0
+not actor.Dead(PLAYER_ACTOR)
+jf @DIALOG2_END_INST 
+
+if and
+$CHEATS_ON == 1
+0AB0:   key_pressed 81
+then
+
+if 
+002C:   1@ >= $DIALOG_COUNT  // (int)
+then
+jump to @DIALOG_2MAIN2_NOTJUMPTOSKIP
+else
+jump to @DIALOG_2MAIN2
+end
+
+end
+
+if
+not $DIALOG_NOT_SKIP == 1
+then
+if 
+8E8D: not is_any_fire_button_pressed 0
+jf @DIALOG2_END
+end
+//0AD1: show_formatted_text_highpriority "%d > %d" time 500 32@ 3@
+if
+001D:   32@ > 3@  // (int)
+jf @END_DIALOG_CHECK
+gosub @ACTOR_STOP_MOUTH
+
+if
+DIALOG_OZVUCHKA_FLAG == 1
+then
+Audiostream.PerformAction(DIALOG_OZVUCHKA_SND, STOP)
+Audiostream.Release(DIALOG_OZVUCHKA_SND)
+end
+
+if 
+002C:   1@ >= $DIALOG_COUNT  // (int)
+jf @DIALOG_2MAIN2
+:DIALOG_2MAIN2_NOTJUMPTOSKIP
+$DIALOG_END = 1
+$DIALOG_NOT_SKIP = 0 
+$END_DIALOG_INST = 0
+$DIALOG_NOT_ANIMS_FLAG = 0
+
+if
+20@ == 1
+then
+$PHRASES_OFF_FLAG = 1
+else
+$PHRASES_OFF_FLAG = 0
+end
+
+text.ClearAll()
+animation.Release('GANGS')
+//0AD1: show_formatted_text_highpriority "DIALOG END NORMAL" time 2000
+
+if
+DIALOG_OZVUCHKA_FLAG == 1
+then
+Audiostream.PerformAction(DIALOG_OZVUCHKA_SND, STOP)
+Audiostream.Release(DIALOG_OZVUCHKA_SND)
+end
+
+end_thread
+
+:DIALOG2_END  
+if
+$DIALOG_NOT_SKIP == 0
+jf @END_DIALOG_CHECK
+if 
+002C:   1@ >= $DIALOG_COUNT  // (int)
+jf @DIALOG2_END2
+gosub @ACTOR_STOP_MOUTH2 
+$DIALOG_END = 1
+$DIALOG_NOT_SKIP = 0
+$END_DIALOG_INST = 0
+$DIALOG_NOT_ANIMS_FLAG = 0
+
+if
+20@ == 1
+then
+$PHRASES_OFF_FLAG = 1
+else
+$PHRASES_OFF_FLAG = 0
+end
+
+text.ClearAll()
+animation.Release('GANGS')
+//0AD1: show_formatted_text_highpriority "DIALOG END SKIPPED BY PLAYER" time 2000
+
+if
+DIALOG_OZVUCHKA_FLAG == 1
+then
+Audiostream.PerformAction(DIALOG_OZVUCHKA_SND, STOP)
+Audiostream.Release(DIALOG_OZVUCHKA_SND)
+end
+
+end_thread
+
+:DIALOG2_END2
+gosub @ACTOR_STOP_MOUTH2
+jump @DIALOG_2MAIN2
+
+:DIALOG2_END_INST
+if and
+$END_DIALOG_INST == 1
+$DIALOG_PAUSE == 1
+then
+$DIALOG_PAUSE = 0
+end
+gosub @ACTOR_STOP_MOUTH2  
+if
+$DIALOG_NOT_ANIMS_FLAG == 0
+jf @TALK_ANIMS_SKIP2
+
+if and
+056D:   actor $DIALOG_ACTOR[1@] defined
+not $DIALOG_ACTOR[1@] == -69
+then 
+0605: actor $DIALOG_ACTOR[1@] perform_animation 10@v IFP "GANGS" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time 100
+end
+
+:TALK_ANIMS_SKIP2
+$DIALOG_END = 1
+$DIALOG_NOT_SKIP = 0
+$END_DIALOG_INST = 0
+
+if
+20@ == 1
+then
+$PHRASES_OFF_FLAG = 1
+else
+$PHRASES_OFF_FLAG = 0
+end
+
+text.ClearAll()
+animation.Release('GANGS')
+
+//if
+//not actor.Dead(PLAYER_ACTOR)
+//then
+//0@ = 0
+//else
+//0@ = 1
+//end
+
+//0AD1: show_formatted_text_highpriority "DIALOG END INST. ~n~ $END_DIALOG_INST: %d, GAME_OVER_FLAG: %d, PLAYER_DEAD: %d" time 2000 $END_DIALOG_INST GAME_OVER_FLAG 0@
+
+if
+DIALOG_OZVUCHKA_FLAG == 1
+then
+Audiostream.PerformAction(DIALOG_OZVUCHKA_SND, STOP)
+Audiostream.Release(DIALOG_OZVUCHKA_SND)
+end
+
+end_thread     
+
+:RANDOM_ANIM_TALK
+random_int 0@ 0 7
+if
+not 0@ == 0
+jf @RANDOM_ANIM_TALK1
+if
+not 0@ == 1
+jf @RANDOM_ANIM_TALK2
+if
+not 0@ == 2
+jf @RANDOM_ANIM_TALK3
+if
+not 0@ == 3
+jf @RANDOM_ANIM_TALK4
+if
+not 0@ == 4
+jf @RANDOM_ANIM_TALK5
+if
+not 0@ == 5
+jf @RANDOM_ANIM_TALK6
+if
+not 0@ == 6
+jf @RANDOM_ANIM_TALK7
+if
+not 0@ == 7
+jf @RANDOM_ANIM_TALK8
+
+:RANDOM_ANIM_TALK1
+06D2: 10@v = "talk1" // @v = string
+return  
+
+:RANDOM_ANIM_TALK2
+06D2: 10@v = "talk2" // v$ = string  
+return
+
+:RANDOM_ANIM_TALK3
+06D2: 10@v = "talk3" // v$ = string  
+return
+
+:RANDOM_ANIM_TALK4
+06D2: 10@v = "talk4" // v$ = string  
+return
+
+:RANDOM_ANIM_TALK5
+06D2: 10@v = "talk5" // v$ = string  
+return
+
+:RANDOM_ANIM_TALK6
+06D2: 10@v = "talk6" // v$ = string  
+return
+
+:RANDOM_ANIM_TALK7
+06D2: 10@v = "talk7" // v$ = string  
+return
+
+:RANDOM_ANIM_TALK8
+06D2: 10@v = "talk8" // v$ = string  
+return
+
+/////////////////////////////////////////////////////
+
+:ACTOR_TALK
+if and
+056D:   actor $DIALOG_ACTOR[1@] defined
+not $DIALOG_ACTOR[1@] == -69
+jf @ACTOR_TALK_RETURN
+0967: actor $DIALOG_ACTOR[1@] move_mouth 3@ ms 
+
+if
+$DIALOG_NOT_ANIMS_FLAG == 0
+then
+gosub @RANDOM_ANIM_TALK   
+0605: actor $DIALOG_ACTOR[1@] perform_animation 10@v IFP "GANGS" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time 3@
+end
+
+return
+
+:ACTOR_TALK_RETURN
+return
+
+/////////////////////////////////////////////////////
+
+:ACTOR_STOP_MOUTH
+if and
+056D:   actor $DIALOG_ACTOR[1@] defined
+not $DIALOG_ACTOR[1@] == -69
+jf @ACTOR_STOP_MOUTH_RETURN
+0968: actor $DIALOG_ACTOR[1@] stop_mouth
+return
+
+:ACTOR_STOP_MOUTH_RETURN
+return
+
+/////////////////////////////////////////////////////
+
+:ACTOR_STOP_MOUTH2
+if and
+056D:   actor $DIALOG_ACTOR[1@] defined
+not $DIALOG_ACTOR[1@] == -69
+jf @ACTOR_STOP_MOUTH_RETURN2
+0968: actor $DIALOG_ACTOR[1@] stop_mouth
+
+if
+$DIALOG_NOT_ANIMS_FLAG == 0
+then
+0605: actor $DIALOG_ACTOR[1@] perform_animation 10@v IFP "GANGS" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time 100
+end
+
+return
+
+:ACTOR_STOP_MOUTH_RETURN2
+return
+
+/////////////////////////////////////////////////////
+
+:CHECK_LOONG
+
+if
+DIALOG_OZVUCHKA_FLAG == 1
+then
+return
+end
+
+if or
+3@ > 100000
+3@ < 1
+3@ == 0
+jf @CHECK_LOONG_RETURN
+
+if
+DIALOG_SYSTEM_DUMMY_TIME > 0
+then
+0085: 3@ = DIALOG_SYSTEM_DUMMY_TIME // (int)
+else
+3@ = 3000
+end
+
+return 
+
+:CHECK_LOONG_RETURN  
+return
+
+:DIALOG_ORIGIN_CHECK
+
+DIALOG_SYSTEM_ORIGIN_STRING_FLAG = 0
+
+if
+SURVIVAL_CUSTOM_WEAPON_NABOR < 1
+then
+return
+end
+
+0AD3: v$PH_ORIGN = format "%s%s" $ST_DIALOG(1@,200v) v$ORIGIN_STRING
+09FD: get_gxt_string v$PH_ORIGN width_to 0@  // ~k~~PED_SPRINT~ Select
+if
+0@ > 0
+then
+DIALOG_SYSTEM_ORIGIN_STRING_FLAG = 1
+end
+
+return
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////        
+
+:DG_SYS2        
+thread 'DG_SYS2'
+
+if
+0@ > 0
+then
+0085: 16@ = 0@ // (int)
+end        
+        
+0A48: enable_menu_access_in_widescreen_mode 1
+$DIALOG_END = 0
+1@ = -1
+$END_DIALOG_INST = 0
+   
+:2DIALOG_2MAIN2
+1@ += 1
+008A: $DIALOG_CURRENT_INT = 1@ // (int)
+DIALOG_OZVUCHKA_FLAG = 0
+gosub @2DIALOG_ORIGIN_CHECK
+if
+DIALOG_SYSTEM_ORIGIN_STRING_FLAG == 0
+then
+09FD: get_gxt_string $ST_DIALOG(1@,200v) width_to 3@  // ~k~~PED_SPRINT~ Select
+
+///////////////Голосовуха///////////////
+
+if
+OZVUCHKA_FLAG == 1
+then
+
+0AD3: 28@v = format "za\a\%s.mp3" $ST_DIALOG(1@,200v)
+if
+0AAB:   file_exists 28@v
+then
+DIALOG_OZVUCHKA_SND = Audiostream.Load(28@v)
+Audiostream.PerformAction(DIALOG_OZVUCHKA_SND, PLAY)
+Audiostream.Loop(DIALOG_OZVUCHKA_SND, 0)
+Audiostream.Volume(DIALOG_OZVUCHKA_SND) = $SOUNDS_VOLUME
+DIALOG_OZVUCHKA_FLAG = 1
+end
+
+end
+
+else
+09FD: get_gxt_string v$PH_ORIGN width_to 3@  // ~k~~PED_SPRINT~ Select
+
+///////////////Голосовуха///////////////
+
+if
+OZVUCHKA_FLAG == 1
+then
+
+0AD3: 28@v = format "za\a\%s.mp3" v$PH_ORIGN
+if
+0AAB:   file_exists 28@v
+then
+DIALOG_OZVUCHKA_SND = Audiostream.Load(28@v)
+Audiostream.PerformAction(DIALOG_OZVUCHKA_SND, PLAY)
+Audiostream.Loop(DIALOG_OZVUCHKA_SND, 0)
+Audiostream.Volume(DIALOG_OZVUCHKA_SND) = $SOUNDS_VOLUME
+DIALOG_OZVUCHKA_FLAG = 1
+end
+
+end
+
+end
+0093: 3@ = integer 3@ to_float
+3@ *= 8.0
+0092: 3@ = float 3@ to_integer 
+
+if
+DIALOG_OZVUCHKA_FLAG == 1
+then
+0AAF: 3@ = get_mp3_length DIALOG_OZVUCHKA_SND
+3@ += 1
+3@ *= 1000
+end
+ 
+gosub @2CHECK_LOONG
+
+while $DIALOG_PAUSE == 1
+wait 0
+
+if
+$END_DIALOG_INST == 1
+    then
+    $DIALOG_PAUSE = 0
+    break
+    end
+
+end
+
+if
+DIALOG_SYSTEM_ORIGIN_STRING_FLAG == 0
+then
+
+if or
+not $QUEST_TYPE > 9
+$QUEST_TYPE == -1
+then
+00BC: show_text_highpriority GXT $ST_DIALOG(1@,200v) time 3@ flag 1
+else
+0384: show_text_1string GXT $ST_DIALOG(1@,200v) string v$NAME3 time 3@ 1
+end
+
+else
+
+if or
+not $QUEST_TYPE > 9
+$QUEST_TYPE == -1
+then
+00BC: show_text_highpriority GXT v$PH_ORIGN time 3@ flag 1
+else
+0384: show_text_1string GXT v$PH_ORIGN string v$NAME3 time 3@ 1
+end
+
+end
+
+32@ = 0
+wait 100
+jump @2END_DIALOG_CHECK
+
+:2CHECK_LOONG
+
+if
+DIALOG_OZVUCHKA_FLAG == 1
+then
+return
+end
+
+if or
+3@ > 100000
+3@ < 1                                                
+3@ == 0
+jf @2CHECK_LOONG_RETURN
+
+if
+DIALOG_SYSTEM_DUMMY_TIME > 0
+then
+0085: 3@ = DIALOG_SYSTEM_DUMMY_TIME // (int)
+else
+3@ = 3000
+end
+
+return 
+
+:2CHECK_LOONG_RETURN  
+return 
+
+:2END_DIALOG_CHECK
+wait 0
+if and
+$END_DIALOG_INST == 0
+GAME_OVER_FLAG == 0
+not actor.Dead(PLAYER_ACTOR)
+jf @2DIALOG2_END_INST
+
+if and
+$CHEATS_ON == 1
+0AB0:   key_pressed 81
+then
+
+if 
+002C:   1@ >= $DIALOG_COUNT  // (int)
+then
+jump to @2DIALOG_2MAIN2_NOTJUMPTOSKIP
+else
+jump to @2DIALOG_2MAIN2
+end
+
+end
+
+if
+not $DIALOG_NOT_SKIP == 1
+then
+if 
+8E8D: not is_any_fire_button_pressed 0
+jf @2DIALOG2_END
+end
+//0AD1: show_formatted_text_highpriority "%d > %d" time 500 32@ 3@
+if
+001D:   32@ > 3@  // (int)
+jf @2END_DIALOG_CHECK
+
+if
+DIALOG_OZVUCHKA_FLAG == 1
+then
+Audiostream.PerformAction(DIALOG_OZVUCHKA_SND, STOP)
+Audiostream.Release(DIALOG_OZVUCHKA_SND)
+end
+
+if 
+002C:   1@ >= $DIALOG_COUNT  // (int)
+jf @2DIALOG_2MAIN2
+:2DIALOG_2MAIN2_NOTJUMPTOSKIP
+$DIALOG_END = 1
+$DIALOG_NOT_SKIP = 0
+$END_DIALOG_INST = 0
+text.ClearAll()
+
+if
+DIALOG_OZVUCHKA_FLAG == 1
+then
+Audiostream.PerformAction(DIALOG_OZVUCHKA_SND, STOP)
+Audiostream.Release(DIALOG_OZVUCHKA_SND)
+end
+
+end_thread
+
+:2DIALOG2_END 
+if
+$DIALOG_NOT_SKIP == 0
+jf @2END_DIALOG_CHECK 
+if 
+002C:   1@ >= $DIALOG_COUNT  // (int)
+jf @2DIALOG2_END2
+$DIALOG_END = 1
+$DIALOG_NOT_SKIP = 0
+$END_DIALOG_INST = 0
+text.ClearAll()
+
+if
+DIALOG_OZVUCHKA_FLAG == 1
+then
+Audiostream.PerformAction(DIALOG_OZVUCHKA_SND, STOP)
+Audiostream.Release(DIALOG_OZVUCHKA_SND)
+end
+
+end_thread
+
+:2DIALOG2_END2
+jump @2DIALOG_2MAIN2
+
+:2DIALOG2_END_INST
+if and
+$END_DIALOG_INST == 1
+$DIALOG_PAUSE == 1
+then
+$DIALOG_PAUSE = 0
+end
+
+$DIALOG_END = 1
+$DIALOG_NOT_SKIP = 0
+$END_DIALOG_INST = 0
+text.ClearAll()
+
+if
+DIALOG_OZVUCHKA_FLAG == 1
+then
+Audiostream.PerformAction(DIALOG_OZVUCHKA_SND, STOP)
+Audiostream.Release(DIALOG_OZVUCHKA_SND)
+end
+
+end_thread
+
+:2DIALOG_ORIGIN_CHECK
+
+DIALOG_SYSTEM_ORIGIN_STRING_FLAG = 0
+
+if
+SURVIVAL_CUSTOM_WEAPON_NABOR < 1
+then
+return
+end
+
+0AD3: v$PH_ORIGN = format "%s%s" $ST_DIALOG(1@,200v) v$ORIGIN_STRING
+09FD: get_gxt_string v$PH_ORIGN width_to 0@  // ~k~~PED_SPRINT~ Select 
+if
+0@ > 0
+then
+DIALOG_SYSTEM_ORIGIN_STRING_FLAG = 1
+end
+
+return
+
+:SNG_VCE
+thread 'SNG_VCE'
+
+0AD3: 1@v = format "%s" v$NOTES_FILE
+
+///////////////Голосовуха///////////////
+
+if
+OZVUCHKA_FLAG == 1
+then
+
+0AD3: 28@v = format "za\a\%s.mp3" v$NOTES_FILE
+if
+0AAB:   file_exists 28@v
+    then
+    DIALOG_OZVUCHKA_SND = Audiostream.Load(28@v)
+    Audiostream.PerformAction(DIALOG_OZVUCHKA_SND, PLAY)
+    Audiostream.Loop(DIALOG_OZVUCHKA_SND, 0)
+    Audiostream.Volume(DIALOG_OZVUCHKA_SND) = $SOUNDS_VOLUME
+    else
+    end_thread
+    end
+
+else
+end_thread
+end
+
+repeat
+wait 0
+
+if or
+876F: not  text_priority_displayed
+8D49: not 5@ = compare_strings 1@v v$NOTES_FILE // IF and SET
+    then
+    break
+    end
+
+until 002D:   32@ >= 0@  // (int)
+
+Audiostream.PerformAction(DIALOG_OZVUCHKA_SND, STOP)
+Audiostream.Release(DIALOG_OZVUCHKA_SND)
+
+end_thread

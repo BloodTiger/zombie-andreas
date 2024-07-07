@@ -1,0 +1,363 @@
+:PPL_SP
+thread 'PPL_SP'                
+
+:PPL_SP_CHECK
+wait 0
+if
+$SAVESTATUS == 0
+jf @PPL_SP_CHECK
+gosub @CINEMA_PEOPLE_COORD_SET
+gosub @2RANDOM_CINEMA_PEOPLE1_CHECKING_MODEL
+
+while not model.Available(1@)
+wait 0 
+model.Load(1@)
+end
+
+20@ = actor.Create(26,1@,2@,3@,4@)
+
+if
+model.Available(1@)
+then
+//model.Destroy(1@)
+end
+   
+0D10: set_actor 20@ alpha 255 // IF and SET
+0E24: fix_char 20@ ground 1 brightness DO_ACTORS_BRIGHT_CORR and_fade_in 1
+0A96: 11@ = actor 20@ struct 
+11@ += 9 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+08BD: set 12@ bit 5 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 5 
+03FE: set_actor 20@ money 0 
+Actor.StorePos(20@, 2@, 3@, 4@)
+Actor.SetWalkStyle(20@, "man")       
+077A: set_actor 20@ acquaintance 0 to_actors_pedtype $ZOMBIE_SET_PEDTYPE // see ped.dat                       
+077A: set_actor 20@ acquaintance 0 to_actors_pedtype 0 // see ped.dat
+077A: set_actor 20@ acquaintance 0 to_actors_pedtype 5 // see ped.dat
+077A: set_actor 20@ acquaintance 0 to_actors_pedtype 23 // see ped.dat
+077A: set_actor 20@ acquaintance 0 to_actors_pedtype 25 // see ped.dat
+077A: set_actor 20@ acquaintance 0 to_actors_pedtype 26 // see ped.dat
+077A: set_actor 20@ acquaintance 0 to_actors_pedtype 27 // see ped.dat
+077A: set_actor 20@ acquaintance 0 to_actors_pedtype 28 // see ped.dat
+0446: set_actor 20@ dismemberment_possible 0
+05DA: AS_actor 20@ run_away_in_panic_from 2@ 3@ 4@ away_radius 1000.0 timelimit -1
+jump @CINEMA_PEOPLE_DELETE_CHECK
+
+:CINEMA_PEOPLE_DELETE_CHECK
+wait 0
+
+random_int 0@ 0 4
+gosub @RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE1 
+
+if
+$START_CINEMA_END == 0
+jf @PPL_SP_END
+if and
+00F2:   actor 20@ near_actor PLAYER_ACTOR radius 180.0 180.0 0 
+$SAVESTATUS == 0
+jf @CINEMA_PEOPLE_DELETE_SAVE
+if
+not actor.Dead(20@)
+jf @CINEMA_PEOPLE_DELETE
+jump @CINEMA_PEOPLE_DELETE_CHECK
+
+:PPL_SP_END  
+actor.DestroyInstantly(20@)
+end_thread
+
+:CINEMA_PEOPLE_DELETE_SAVE
+wait 500
+actor.DestroyWithFade(20@)
+jump @PPL_SP_CHECK
+
+:CINEMA_PEOPLE_DELETE
+wait 500
+actor.RemoveReferences(20@)
+jump @PPL_SP_CHECK
+
+:CINEMA_PEOPLE_COORD_SET
+wait 0     
+31@ = 0
+0208: 27@ = random_float_in_ranges 130.0 -130.0 
+0208: 28@ = random_float_in_ranges -130.0 130.0
+04C4: store_coords_to 2@ 3@ 4@ from_actor PLAYER_ACTOR with_offset 27@ 28@ 0.0
+02C1: store_to 2@ 3@ 4@ car_path_coords_closest_to 2@ 3@ 4@
+Actor.StorePos(PLAYER_ACTOR, 27@, 28@, 29@)
+050A: 30@ = distance_between_XYZ 2@ 3@ 4@ and_XYZ 27@ 28@ 29@ 
+0092: 30@ = float 30@ to_integer
+if and
+30@ >= 90 
+not 30@ >= 160
+jf @CINEMA_PEOPLE_COORD_SET
+050A: 30@ = distance_between_XYZ 27@ 28@ 4@ and_XYZ 27@ 28@ 29@
+0092: 31@ = float 30@ to_integer
+if
+not 31@ > 40
+jf @CINEMA_PEOPLE_COORD_SET
+if
+not 4@ < 0.0
+jf @CINEMA_PEOPLE_COORD_SET
+
+if and
+8AE2: not 30@ = random_vehicle_near_point 2@ 3@ 4@ in_radius 5.0 find_next 1 pass_wrecked 0 //IF and SET
+8AE1: not 31@ = random_actor_near_point 2@ 3@ 4@ in_radius 2.0 find_next 1 pass_deads 0
+jf @CINEMA_PEOPLE_COORD_SET
+0208: 18@ = random_float_in_ranges -2.0 2.0 
+005B: 9@ += 18@ // (float) 
+0208: 18@ = random_float_in_ranges -2.0 2.0 
+005B: 10@ += 18@ // (float)
+return    
+
+////////////////////////Вычисление модели////////////////////////
+
+:2RANDOM_CINEMA_PEOPLE1_CHECKING_MODEL
+wait 0
+
+//////////////////////////////////////////////////
+    
+random_int 1@ = MIN_SKIN_GEN MAX_SKIN_GEN
+if 
+1@ == SKIN_GEN_SET
+    then
+    
+    while true
+    wait 0
+    
+    if
+    0E4D: random_percent NEWSKINS2_GEN_PERCENT
+    then
+    random_int 1@ $MIN_SKIN2 $MAX_SKIN2
+    else 
+    random_int 1@ $MIN_SKIN $MAX_SKIN
+    end
+    
+    if
+    not model.Available(1@)
+    then
+    model.Load(1@)
+    end
+    
+    if 
+    003C:   $RANDOM_MODE_MODEL == 1@  // (int)
+        then
+        else   
+        break
+        end
+    
+    end
+    
+    return
+    end
+    
+//////////////////////////////////////////////////    
+
+0209: 1@ = random_int_in_ranges 7 264
+if
+003C:   $RANDOM_MODE_MODEL == 1@  // (int)
+jf @2RANDOM_CINEMA_PEOPLE1_CHECKING_MODEL2
+jump @2RANDOM_CINEMA_PEOPLE1_CHECKING_MODEL
+
+:2RANDOM_CINEMA_PEOPLE1_CHECKING_MODEL2
+ 
+if
+07DE:   model 1@ exists  // versionB
+jf @2RANDOM_CINEMA_PEOPLE1_CHECKING_MODEL
+
+if
+$GAMEMODE_WAR == 0
+then
+0AD3: 23@v = format "%d" 1@
+0AF0: 22@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key 23@v
+if
+not 22@ == 1
+jf @2RANDOM_CINEMA_PEOPLE1_CHECKING_MODEL
+end
+
+if
+not model.Available(1@)
+then
+model.Load(1@)
+mload
+end
+
+return    
+
+/////////////////////Союзники атакуют марадеров которых увидили///////////////
+
+:RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE1
+
+if or
+$PLAYER_SURVIVOR_SIDE == 1
+$PLAYER_FERMERS_SIDE == 1
+$PLAYER_SWAT_SIDE == 1
+    then
+    return
+    end
+
+092B: 3@ = group PLAYER_GROUP member 0@
+if
+056D:  actor 3@ defined
+jf @RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_BEGIN
+
+if
+056D:   actor 20@ defined
+jf @RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_BEGIN
+
+if
+$MISSION14_ACTIVE == 1
+    then
+    if
+    not 0@ == 1
+    jf @RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_BEGIN
+    end    
+
+if
+056D:   actor 3@ defined
+jf @RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_BEGIN
+
+if and
+actor.Driving(3@)
+$HUNTER_ON_PLAYER == 0
+$PEOPLE_DONT_ATTACK == 0
+$COMMAND_STAY_IN_CAR == 0
+then                     
+gosub @RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_IN_CAR
+end 
+
+if and 
+not actor.Driving(PLAYER_ACTOR)
+$RANDOM_CAR_FLAG == 0  
+89DE:   actor 3@ entering_car  
+80DF:   actor 3@ in_a_car
+jf @RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_BEGIN
+if or
+0364:   actor 3@ spotted_actor 20@
+0364:   actor 20@ spotted_actor 3@
+jf @RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_BEGIN
+if
+00F2:   actor 3@ near_actor 20@ radius 220.0 220.0 sphere 0
+jf @RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_BEGIN
+if and
+$HUNTER_ON_PLAYER == 0
+$PEOPLE_DONT_ATTACK == 0
+$COMMAND_STAY_IN_CAR == 0
+jf @RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_BEGIN
+if
+not actor.Animation(3@) == "FLOOR_hit"
+jf @RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_BEGIN
+if
+$HUNTER_ON_GROUP == 0
+jf @RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_BEGIN  
+if
+044B:   actor 3@ on_foot
+jf @RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_BEGIN  
+if
+82E0: not actor 3@ firing_weapon
+jf @RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_BEGIN  
+if and
+not actor.Animation(3@) == "colt45_fire_2hands"
+not actor.Animation(3@) == "python_fire" 
+not actor.Animation(3@) == "shotgun_fire" 
+not actor.Animation(3@) == "buddy_fire" 
+not actor.Animation(3@) == "UZI_fire"
+not actor.Animation(3@) == "RIFLE_fire" 
+jf @RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_BEGIN  
+if and
+not actor.Animation(3@) == "FLAME_fire" 
+not actor.Animation(3@) == "RocketFire" 
+not actor.Animation(3@) == "WEAPON_sniper" 
+not actor.Animation(3@) == "WEAPON_throw"   
+jf @RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_BEGIN       
+if and
+not actor.Animation(3@) == "colt45_crouchfire"
+not actor.Animation(3@) == "python_crouchfire" 
+not actor.Animation(3@) == "shotgun_crouchfire" 
+not actor.Animation(3@) == "buddy_crouchfire" 
+not actor.Animation(3@) == "UZI_crouchfire"
+not actor.Animation(3@) == "RIFLE_crouchfire" 
+jf @RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "colt45_reload"
+not actor.Animation(3@) == "python_reload" 
+not actor.Animation(3@) == "shotgun_reload" 
+not actor.Animation(3@) == "buddy_reload" 
+not actor.Animation(3@) == "UZI_reload"
+not actor.Animation(3@) == "RIFLE_load" 
+jf @RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "colt45_crouchreload"
+not actor.Animation(3@) == "python_crouchreload" 
+not actor.Animation(3@) == "shotgun_crouchreload" 
+not actor.Animation(3@) == "buddy_crouchreload" 
+not actor.Animation(3@) == "UZI_crouchreload"
+not actor.Animation(3@) == "RIFLE_crouchload" 
+jf @RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "GunMove_BWD"
+not actor.Animation(3@) == "GunMove_FWD"
+not actor.Animation(3@) == "GunMove_L"
+not actor.Animation(3@) == "GunMove_R"
+not actor.Animation(3@) == "Gun_2_IDLE"
+not actor.Animation(3@) == "GUN_BUTT"
+not actor.Animation(3@) == "GUN_BUTT_crouch"
+not actor.Animation(3@) == "Gun_stand" 
+jf @RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "CLIMB_idle"
+not actor.Animation(3@) == "CLIMB_jump"
+not actor.Animation(3@) == "CLIMB_jump2fall"
+not actor.Animation(3@) == "CLIMB_jump_B"
+not actor.Animation(3@) == "CLIMB_Pull"
+not actor.Animation(3@) == "CLIMB_Stand"
+not actor.Animation(3@) == "CLIMB_Stand_finish" 
+jf @RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_BEGIN   
+05C1: AS_actor 3@ speak_from_audio_table $PEOPLE_ZOMBIE_ATTACK_AUDIO_TABLE
+if
+056D:   actor 3@ defined
+jf @RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_BEGIN 
+if and
+not actor.Driving(PLAYER_ACTOR)
+89DE:   actor PLAYER_ACTOR entering_car
+80DF:   actor PLAYER_ACTOR in_a_car
+80DF:   actor 3@ in_a_car
+jf @RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_BEGIN
+0647: AS_actor 3@ clear_look_task
+05B9: AS_actor 3@ stay_idle 50 ms 
+wait 50
+if
+056D:   actor 3@ defined  
+then
+05E2: AS_actor 3@ kill_actor SURVIVER
+end
+jump @RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_BEGIN   
+                                
+:RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_IN_CAR   
+if and
+not actor.Animation(3@) == "Gang_DrivebyLHS"
+not actor.Animation(3@) == "Gang_DrivebyLHS_Bwd"
+not actor.Animation(3@) == "Gang_DrivebyLHS_Fwd"
+not actor.Animation(3@) == "Gang_DrivebyRHS"
+not actor.Animation(3@) == "Gang_DrivebyRHS_Bwd"
+not actor.Animation(3@) == "Gang_DrivebyRHS_Fwd" 
+jf @RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_IN_CAR_RETURN 
+if and
+not actor.Animation(3@) == "Gang_DrivebyTop_LHS"
+not actor.Animation(3@) == "Gang_DrivebyTop_RHS" 
+jf @RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_IN_CAR_RETURN 
+if 
+00F2:   actor 3@ near_actor 20@ radius 120.0 120.0 sphere 0
+jf @RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_IN_CAR_RETURN
+if or
+0364:   actor 3@ spotted_actor 20@
+0364:   actor 20@ spotted_actor 3@
+jf @RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_IN_CAR_RETURN          
+0713: actor 3@ driveby_actor 20@ car -1 point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360 
+return       
+
+:RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_IN_CAR_RETURN
+return
+
+:RANDOM_PANIC_SURV_CAR_ATTACK_PEOPLE_BEGIN
+return

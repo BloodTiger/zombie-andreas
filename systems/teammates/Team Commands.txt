@@ -1,0 +1,450 @@
+const
+TCOMMANDS_CAR_ROT_POWER_X = 21@
+TCOMMANDS_CAR_ROT_POWER_Y = 20@
+TCOMMANDS_CAR_ROT_POWER_Z = 19@
+end
+
+:TEA_CMD
+thread 'TEA_CMD'
+
+repeat
+wait 250
+
+if or
+$GAMEMODE_STORYLINE == 1
+$GAMEMODE_SURVIVAL == 1
+$GAMEMODE_EDITOR == 1
+    then
+    break
+    end
+
+until false
+
+while true
+wait 0
+
+////////////////////////////////////////////////////////////////////////////////
+
+for 1@ = 0 to 4
+    
+092B: 0@ = group PLAYER_GROUP member 1@                                                     
+if and
+056D:   actor 0@ defined
+87D6: not  0@ == COOP_ACTOR // @ == $ (int)
+    then
+    039E: set_actor 0@ locked 1 while_in_car
+    end
+    
+end
+
+////////////////////////////////////////////////////////////////////////////////        
+
+for 1@ = 0 to 4
+    
+092B: 0@ = group PLAYER_GROUP member 1@                                                     
+if and
+056D:   actor 0@ defined
+87D6: not  0@ == COOP_ACTOR // @ == $ (int)
+    then 
+    if and
+    00DF:   actor 0@ driving
+    8E49: not is_char_entering_any_car 0@ 
+        then
+        2@ = actor.CurrentCar(0@)
+        if
+        056E:   car 2@ defined
+            then
+            if or
+            02BF:   car 2@ sunk
+            8185: not  car 2@ health > 249
+                then
+                
+//                0687: clear_actor 0@ task
+                0E96: clear_char_primary_tasks 0@
+                06C9: remove_actor 0@ from_group
+                0631: put_actor 0@ in_group PLAYER_GROUP                                        
+                0622: AS_actor 0@ bail_car 2@
+                    
+                if
+                1@ == 4
+                then
+                wait 500
+                end
+                
+                end
+            end
+        end  
+    end
+    
+end
+
+////////////////////////////////////////////////////////////////////////////////
+
+for 1@ = 0 to 4
+    
+092B: 0@ = group PLAYER_GROUP member 1@       
+
+if and
+056D:   actor 0@ defined
+87D6: not  0@ == COOP_ACTOR // @ == $ (int)
+    then
+    gosub @TEMMATE_DRIVEBY_CHECK  
+    if and
+    8E49: not is_char_entering_any_car 0@
+    5@ == 0
+        then  
+        if or        
+        $SIMULATING_FLAG == 1
+        $COMMAND_STAY_IN_CAR == 1
+        0A32:  actor PLAYER_ACTOR on_turret_of_car
+            then      
+            if
+            00DF:   actor 0@ driving
+                then
+                2@ = actor.CurrentCar(0@)
+                if
+                056E:   car 2@ defined
+                    then
+                    if and
+                    82BF: not  car 2@ sunk
+                    0185:   car 2@ health > 249                    
+                        then                                                                                                
+                                                       
+                        if or
+                        0E4A: is_char_exiting_any_car 0@
+                        actor.Animation(0@) == "IDLE_stance"
+                        then             
+                        gosub @COMMAND_TP_IN_CAR2                       
+                        end
+                            
+                        else
+                        jump to @TEAM_COMMANDS_BAIL_CAR
+                        end  
+                    end                  
+                end
+            else                             
+            if            
+            00DF:   actor 0@ driving
+                then
+                if and
+                8A32: not actor PLAYER_ACTOR on_turret_of_car
+                $COMMAND_STAY_IN_CAR == 0
+                $SIMULATING_FLAG == 0
+                8E4A: not is_char_exiting_any_car 0@
+                    then  
+                    2@ = actor.CurrentCar(0@)
+                    if
+                    056E:   car 2@ defined
+                        then
+                        if or
+                        80DF: not  actor PLAYER_ACTOR driving
+                        02BF:   car 2@ sunk
+                        8185: not  car 2@ health > 249
+                        0E4A:  is_char_exiting_any_car PLAYER_ACTOR
+                            then
+                            :TEAM_COMMANDS_BAIL_CAR
+//                            0687: clear_actor 0@ task
+                            0E96: clear_char_primary_tasks 0@
+                            06C9: remove_actor 0@ from_group
+                            0631: put_actor 0@ in_group PLAYER_GROUP                                        
+                            0622: AS_actor 0@ bail_car 2@
+                            
+                            if
+                            1@ == 4
+                            then
+                            wait 500
+                            end
+                                                                     
+                            end                
+                        end                                                       
+                    end
+                end
+            end
+        end
+    end  
+      
+end
+
+////////////////////////////////////////////////////////////////////////////////
+
+for 1@ = 0 to 4
+    
+092B: 0@ = group PLAYER_GROUP member 1@       
+
+if and
+056D:   actor 0@ defined
+87D6: not  0@ == COOP_ACTOR // @ == $ (int)
+    then  
+    if
+    8E49: not is_char_entering_any_car 0@
+        then  
+        if and        
+        $SIMULATING_FLAG == 0
+        $COMMAND_STAY_IN_CAR == 0
+        8A32: not actor PLAYER_ACTOR on_turret_of_car
+            then      
+            if
+            00DF:   actor 0@ driving
+                then
+                2@ = actor.CurrentCar(0@)
+                if
+                056E:   car 2@ defined
+                    then
+                    if and
+                    82BF: not  car 2@ sunk
+                    0185:   car 2@ health > 249                    
+                        then
+                                                    
+                        if and
+                        0E4A: is_char_exiting_any_car 0@
+                        8E4A: not is_char_exiting_any_car PLAYER_ACTOR
+                        actor.Driving(PLAYER_ACTOR)
+                        then         
+                        gosub @COMMAND_TP_IN_CAR2
+                        end
+                            
+                        end  
+                    end                  
+                end                                                       
+            end
+        end
+    end  
+      
+end
+
+////////////////////////////////////////////////////////////////////////////////  
+
+end
+
+end_thread
+
+:TEMMATE_DRIVEBY_CHECK
+
+5@ = 0
+
+if or
+actor.Animation(0@) == "Gang_DrivebyLHS"
+actor.Animation(0@) == "Gang_DrivebyLHS_Bwd"
+actor.Animation(0@) == "Gang_DrivebyLHS_Fwd"
+actor.Animation(0@) == "Gang_DrivebyRHS"
+actor.Animation(0@) == "Gang_DrivebyRHS_Bwd"
+actor.Animation(0@) == "Gang_DrivebyRHS_Fwd" 
+    then
+    5@ = 1
+    end
+     
+if or
+actor.Animation(0@) == "Gang_DrivebyTop_LHS"
+actor.Animation(0@) == "Gang_DrivebyTop_RHS" 
+    then
+    5@ = 1
+    end
+
+return
+
+:COMMAND_TP_IN_CAR
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+if
+actor.Driving(PLAYER_ACTOR)
+    then
+    :COMMAND_TP_IN_CAR2
+//    0AD1: show_formatted_text_highpriority "PEDIK %d WAS TRYING TO LEAVE CAR OR WAS STAYING LIKE PIDOR" time 2000 1@
+    0085: 4@ = 2@ // (int)
+    if
+    056E:   car 4@ defined
+        then
+        06A2: get_car 4@ velocity_in_direction_XYZ 27@ 28@ 29@
+        07C5: get_car 4@ axis_angle_relation_to 15@ 16@ 17@ 18@
+        27@ *= 0.02
+        28@ *= 0.02
+        29@ *= 0.02
+        0A97: 30@ = car 4@ struct
+        30@ += 0x50 //X
+        0A8D: TCOMMANDS_CAR_ROT_POWER_X = read_memory 30@ size 4 virtual_protect 0
+        30@ += 4 //Y
+        0A8D: TCOMMANDS_CAR_ROT_POWER_Y = read_memory 30@ size 4 virtual_protect 0
+        30@ += 4 //Z
+        0A8D: TCOMMANDS_CAR_ROT_POWER_Z = read_memory 30@ size 4 virtual_protect 0
+        01EA: 0@ = car 4@ max_passengers
+        02E3: 3@ = car 4@ speed
+        
+        if and
+        0@ < 2
+        0@ > 0        
+        8431: not  car 4@ passenger_seat_free 0
+            then
+            
+            if
+            056E:   car 4@ defined
+                then
+                if
+                8431: not  car 4@ passenger_seat_free 0
+                    then
+                    0432: 2@ = get_actor_handle_from_car 4@ passenger_seat 0                
+                    if and
+                    056D:   actor 2@ defined
+                    87D6: not  2@ == COOP_ACTOR // @ == $ (int)
+                        then
+                        if
+                        actor.InCar(2@,4@)
+                            then
+                            if and
+                            $COMMAND_STAY_IN_CAR == 1
+                            not actor.Driving(PLAYER_ACTOR)
+                                then
+                                0430: put_actor 2@ into_car 4@ passenger_seat 0
+                                0687: clear_actor 2@ task
+                                else
+                                09C9: disembark_actor 2@ from_car 4@ and_freeze_actor_position
+                                06C9: remove_actor 2@ from_group
+                                0430: put_actor 2@ into_car 4@ passenger_seat 0
+                                0631: put_actor 2@ in_group PLAYER_GROUP 
+                                0687: clear_actor 2@ task
+                                end 
+                            end
+                        end
+                    end
+                end
+                
+            car.LockInCurrentPosition(4@,true)
+            car.SetSpeedInstantly(4@,0.0)
+            car.LockInCurrentPosition(4@,false)            
+            07D5: set_car 4@ velocity_in_direction_XYZ 27@ 28@ 29@ rotation_velocitiesXY 0.0 0.0 unk 0.0
+            0A97: 30@ = car 4@ struct
+            30@ += 0x50 //X
+            0A8C: write_memory 30@ size 4 value TCOMMANDS_CAR_ROT_POWER_X virtual_protect 0
+            30@ += 4 //Y
+            0A8C: write_memory 30@ size 4 value TCOMMANDS_CAR_ROT_POWER_Y virtual_protect 0
+            30@ += 4 //Z
+            0A8C: write_memory 30@ size 4 value TCOMMANDS_CAR_ROT_POWER_Z virtual_protect 0
+            07C6: set_car 4@ axis_angle_relation_to 15@ 16@ 17@ 18@    
+            
+            else
+            
+            if
+            0@ >= 3
+                then
+                
+                if
+                056E:   car 4@ defined
+                    then
+                    if
+                    8431: not  car 4@ passenger_seat_free 0
+                        then
+                        0432: 2@ = get_actor_handle_from_car 4@ passenger_seat 0
+                        
+                        if and
+                        056D:   actor 2@ defined
+                        87D6: not  2@ == COOP_ACTOR // @ == $ (int)
+                            then
+                            if
+                            actor.InCar(2@,4@)
+                                then
+                                if and
+                                $COMMAND_STAY_IN_CAR == 1
+                                not actor.Driving(PLAYER_ACTOR)
+                                    then
+                                    0430: put_actor 2@ into_car 4@ passenger_seat 0
+                                    0687: clear_actor 2@ task
+                                    else
+                                    09C9: disembark_actor 2@ from_car 4@ and_freeze_actor_position
+                                    06C9: remove_actor 2@ from_group
+                                    0430: put_actor 2@ into_car 4@ passenger_seat 0
+                                    0631: put_actor 2@ in_group PLAYER_GROUP 
+                                    0687: clear_actor 2@ task
+                                    end
+                                end
+                            end
+                        end
+                    end
+                
+                if
+                056E:   car 4@ defined
+                    then
+                    if
+                    8431: not  car 4@ passenger_seat_free 1
+                        then    
+                        0432: 2@ = get_actor_handle_from_car 4@ passenger_seat 1
+                        
+                        if and
+                        056D:   actor 2@ defined
+                        87D6: not  2@ == COOP_ACTOR // @ == $ (int)
+                            then
+                            if
+                            actor.InCar(2@,4@)
+                                then
+                                if and
+                                $COMMAND_STAY_IN_CAR == 1
+                                not actor.Driving(PLAYER_ACTOR)
+                                    then
+                                    0430: put_actor 2@ into_car 4@ passenger_seat 1
+                                    0687: clear_actor 2@ task
+                                    else
+                                    09C9: disembark_actor 2@ from_car 4@ and_freeze_actor_position
+                                    06C9: remove_actor 2@ from_group
+                                    0430: put_actor 2@ into_car 4@ passenger_seat 1
+                                    0631: put_actor 2@ in_group PLAYER_GROUP 
+                                    0687: clear_actor 2@ task
+                                    end 
+                                end
+                            end
+                        end
+                    end
+                
+                if
+                056E:   car 4@ defined
+                    then
+                    if
+                    8431: not  car 4@ passenger_seat_free 2
+                        then    
+                        0432: 2@ = get_actor_handle_from_car 4@ passenger_seat 2
+                        
+                        if and
+                        056D:   actor 2@ defined
+                        87D6: not  2@ == COOP_ACTOR // @ == $ (int)
+                            then
+                            if
+                            actor.InCar(2@,4@)
+                                then
+                                if and
+                                $COMMAND_STAY_IN_CAR == 1
+                                not actor.Driving(PLAYER_ACTOR)
+                                    then
+                                    0430: put_actor 2@ into_car 4@ passenger_seat 2
+                                    0687: clear_actor 2@ task
+                                    else
+                                    09C9: disembark_actor 2@ from_car 4@ and_freeze_actor_position
+                                    06C9: remove_actor 2@ from_group
+                                    0430: put_actor 2@ into_car 4@ passenger_seat 2
+                                    0631: put_actor 2@ in_group PLAYER_GROUP 
+                                    0687: clear_actor 2@ task  
+                                    end
+                                end
+                            end
+                        end
+                    end
+                    
+                car.LockInCurrentPosition(4@,true)
+                car.SetSpeedInstantly(4@,0.0)
+                car.LockInCurrentPosition(4@,false)            
+                07D5: set_car 4@ velocity_in_direction_XYZ 27@ 28@ 29@ rotation_velocitiesXY 0.0 0.0 unk 0.0
+                0A97: 30@ = car 4@ struct
+                30@ += 0x50 //X
+                0A8C: write_memory 30@ size 4 value TCOMMANDS_CAR_ROT_POWER_X virtual_protect 0
+                30@ += 4 //Y
+                0A8C: write_memory 30@ size 4 value TCOMMANDS_CAR_ROT_POWER_Y virtual_protect 0
+                30@ += 4 //Z
+                0A8C: write_memory 30@ size 4 value TCOMMANDS_CAR_ROT_POWER_Z virtual_protect 0
+                07C6: set_car 4@ axis_angle_relation_to 15@ 16@ 17@ 18@            
+                
+                end
+            end
+        end
+    
+    end
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+return

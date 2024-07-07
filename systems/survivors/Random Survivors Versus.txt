@@ -1,0 +1,3798 @@
+const
+SURVIVOR_VERSUS_THROW_MOLOTOV_TIMER = 7@
+SURVIVOR_VERSUS_THROW_MOLOTOV_FLAG = 13@
+SURVIVOR_VERSUS_THROW_PREV_WEAP = 8@
+SURVIVOR_VERSUS_FINDED_TARGET = 23@
+SURVIVOR_VERSUS_TARGET = 24@
+SURVIVOR_VERSUS_TARGET_TIME = 20@
+SURVIVOR_VERSUS = $VERSUS_PEOPLE[18@]  
+SURVIVOR_NUMBER = 18@   
+SURVIVOR_VERSUS_CLIMB_TIMER = 10@
+SURVIVOR_VERSUS_CAN_TALK = 17@
+SURVIVOR_VERSUS_PAIN_TIMER = 11@ 
+SURVIVOR_VERSUS_PAIN_TIMER2 = 22@  
+SURVIVOR_VERSUS_ATTACK_TIMER = 12@ 
+SURVIVOR_VERSUS_ATTACK_TIMER2 = 14@   
+SURVIVOR_VERSUS_HUNTER_TIMER = 15@ 
+SURVIVOR_VERSUS_HUNTER_TIMER2 = 16@     
+end
+
+const
+SURVIVOR_VERSUS_PAIN_TIMER_MIN = 180
+SURVIVOR_VERSUS_PAIN_TIMER_MAX = 480
+SURVIVOR_VERSUS_ATTACK_TIMER_MIN = 360
+SURVIVOR_VERSUS_ATTACK_TIMER_MAX = 600
+SURVIVOR_VERSUS_HUNTER_TIMER_MIN = 200  
+SURVIVOR_VERSUS_HUNTER_TIMER_MAX = 400
+end
+
+:PEPL_S
+if
+$PEOPLES_NUMBER == 0
+then
+thread 'PEPL_S'
+else
+gosub @PEPL_S_NUM_GET
+end
+
+if
+1@ == 1
+then
+0085: SURVIVOR_NUMBER = 0@ // (int)
+else
+008B: SURVIVOR_NUMBER = $PEOPLES_NUMBER // (int)
+end
+
+33@ = 0 
+
+:PEOPLE_SPAWN_CHECK
+wait 0
+if and
+$SAVESTATUS == 0
+not $SURV_PROCENT == 0.0
+jf @PEOPLE_SPAWN_CHECK
+
+gosub @PEOPLE_COORD_SET
+gosub @2RANDOM_PEOPLE1_CHECKING_MODEL  
+
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+
+SURVIVOR_VERSUS = actor.Create(26,1@,2@,3@,4@)
+
+if
+model.Available(1@)
+then
+//model.Destroy(1@)
+end
+  
+0D10: set_actor SURVIVOR_VERSUS alpha 255 // IF and SET
+0E24: fix_char SURVIVOR_VERSUS ground 1 brightness DO_ACTORS_BRIGHT_CORR and_fade_in 1
+if
+CAN_AIM_AT_SURVIVORS == 0
+then
+0568: set_actor SURVIVOR_VERSUS untargetable 1
+end
+create_thread @PED_BKP SURVIVOR_VERSUS 371
+
+0A96: 11@ = actor SURVIVOR_VERSUS struct 
+11@ += 9 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+08BD: set 12@ bit 5 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 5 
+
+03FE: set_actor SURVIVOR_VERSUS money 0 
+
+9@ = 0
+
+SURVIVOR_VERSUS_THROW_MOLOTOV_TIMER = 0            
+SURVIVOR_VERSUS_THROW_MOLOTOV_FLAG = 0
+
+SURVIVOR_VERSUS_CAN_TALK = 0
+
+if
+$GAMEMODE_CRAZY == 0
+then
+
+if or
+$GAMEMODE_WAR == 1
+$INF_SIDE == 0
+then
+SURVIVOR_VERSUS_CAN_TALK = 1
+end
+
+end
+
+random_int 0@ 0.0 360.0
+actor.Angle(SURVIVOR_VERSUS) = 0@
+
+0648: unknown_actor SURVIVOR_VERSUS task_set 100.0 // float
+
+09B5: set_actor SURVIVOR_VERSUS signal_after_kill 0
+
+if
+$GAMEMODE_CRAZY == 0
+then
+gosub @2RANDOM_PEOPLE1_WEAPON_CREATE
+else
+gosub @2RANDOM_PEOPLE1_WEAPON_CREATE_CRAZY
+end
+
+0209: 0@ = random_int_in_ranges $RANDOM_PEOPLE_ACCURACY_MIN $RANDOM_PEOPLE_ACCURACY_MAX
+Actor.WeaponAccuracy(SURVIVOR_VERSUS) = 0@
+
+random_int 0@ $RANDOM_PEOPLE_HEALTH_MIN $RANDOM_PEOPLE_HEALTH_MAX
+Actor.Health(SURVIVOR_VERSUS) = 0@
+
+Actor.SetWalkStyle(SURVIVOR_VERSUS, "surv5")  
+
+if
+$GAMEMODE_WAR == 0
+then  
+actor.SetImmunities(SURVIVOR_VERSUS,1,1,1,0,0) 
+else
+actor.SetImmunities(SURVIVOR_VERSUS,0,0,0,0,0)
+
+if
+UNITED_MAP == 0
+then
+04D8: set_actor SURVIVOR_VERSUS drowns_in_water 0
+0A28: set_actor SURVIVOR_VERSUS swimming_speed_to 2.3 
+end
+ 
+end
+
+if
+$GAMEMODE_WAR == 0     
+then
+0446: set_actor SURVIVOR_VERSUS dismemberment_possible 1  
+else
+0446: set_actor SURVIVOR_VERSUS dismemberment_possible 0
+end
+060B: set_actor SURVIVOR_VERSUS decision_maker_to $DEC_PEOPLE
+07DD: set_actor SURVIVOR_VERSUS attack_rate 50
+081A: set_actor SURVIVOR_VERSUS weapon_skill_to FRA_WEAP_SKILL
+
+0946: set_actor SURVIVOR_VERSUS actions_uninterupted_by_weapon_fire 1
+
+if or
+$GAMEMODE_CRAZY == 1
+$GAMEMODE_VERSUS == 1
+then
+0568: set_actor SURVIVOR_VERSUS untargetable 1
+end
+
+if
+$GAMEMODE_WAR == 0
+then
+077A: set_actor SURVIVOR_VERSUS acquaintance 0 to_actors_pedtype 0 // see ped.dat
+end
+
+if or
+$INF_SIDE == 1
+$GAMEMODE_VERSUS == 1
+$GAMEMODE_CRAZY == 1
+then
+087E: set_actor SURVIVOR_VERSUS weapon_droppable 0
+end
+
+if
+$GAMEMODE_WAR == 2
+    then
+    random_int 0@ 0 3
+    if
+    0@ == 1
+        then
+        
+        while not model.Available(#ROCKETLA)
+        wait 0
+        model.Load(#ROCKETLA)
+        mload
+        end
+        
+        if
+        UNITED_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 35 model_to 0@
+
+        while not model.Available(0@)
+        wait 0
+        model.Load(0@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo(SURVIVOR_VERSUS,35,3)
+        else
+        
+        if
+        $UNITED_VC_FLAG == 0
+        then
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 119 model_to 0@
+
+        while not model.Available(0@)
+        wait 0
+        model.Load(0@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo(SURVIVOR_VERSUS,119,3)
+        else
+        
+        0781: get_weapon_with_ID 183 model_to 0@
+
+        while not model.Available(0@)
+        wait 0
+        model.Load(0@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo(SURVIVOR_VERSUS,183,3)
+        end
+        
+        else
+        
+        if
+        STORIES_MAP == 0
+        then
+        
+        0781: get_weapon_with_ID 135 model_to 0@
+
+        while not model.Available(0@)
+        wait 0
+        model.Load(0@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo(SURVIVOR_VERSUS,135,3)
+        else
+        
+        0781: get_weapon_with_ID 213 model_to 0@
+
+        while not model.Available(0@)
+        wait 0
+        model.Load(0@)
+        mload
+        end
+        
+        actor.GiveWeaponAndAmmo(SURVIVOR_VERSUS,213,3)
+        end
+        
+        end
+        
+        end 
+        
+        end  
+    end       
+
+077A: set_actor SURVIVOR_VERSUS acquaintance 0 to_actors_pedtype $ZOMBIE_SET_PEDTYPE // see ped.dat
+077A: set_actor SURVIVOR_VERSUS acquaintance 0 to_actors_pedtype 25 // see ped.dat
+077A: set_actor SURVIVOR_VERSUS acquaintance 0 to_actors_pedtype 27 // see ped.dat
+077A: set_actor SURVIVOR_VERSUS acquaintance 0 to_actors_pedtype 28 // see ped.dat
+
+SURVIVOR_VERSUS_FINDED_TARGET = 0
+SURVIVOR_VERSUS_TARGET_TIME = 0
+
+SURVIVOR_VERSUS_CLIMB_TIMER = 0
+
+SURVIVOR_VERSUS_PAIN_TIMER = 0
+random_int SURVIVOR_VERSUS_PAIN_TIMER2 SURVIVOR_VERSUS_PAIN_TIMER_MIN SURVIVOR_VERSUS_PAIN_TIMER_MAX
+SURVIVOR_VERSUS_ATTACK_TIMER = 0
+random_int SURVIVOR_VERSUS_ATTACK_TIMER2 SURVIVOR_VERSUS_ATTACK_TIMER_MIN SURVIVOR_VERSUS_ATTACK_TIMER_MAX
+SURVIVOR_VERSUS_HUNTER_TIMER = 0
+random_int SURVIVOR_VERSUS_HUNTER_TIMER2 SURVIVOR_VERSUS_HUNTER_TIMER_MIN SURVIVOR_VERSUS_HUNTER_TIMER_MAX
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+$ACTIVE_INTERIOR == 0
+then
+
+04C4: store_coords_to 2@ 3@ 4@ from_actor SURVIVOR_VERSUS with_offset 0.0 0.0 -0.1
+04C4: store_coords_to 27@ 28@ 29@ from_actor SURVIVOR_VERSUS with_offset 0.0 0.0 2.0
+
+if
+86BD: not  no_obstacles_between 2@ 3@ 4@ and 27@ 28@ 29@ solid 1 car 0 actor 0 object 0 particle 0
+    then    
+    jump to @PEOPLE_DELETE_SAVE
+    end
+
+else
+
+04C4: store_coords_to 2@ 3@ 4@ from_actor SURVIVOR_VERSUS with_offset 0.0 0.0 -0.1
+04C4: store_coords_to 27@ 28@ 29@ from_actor SURVIVOR_VERSUS with_offset 0.0 0.0 1.0
+
+if
+86BD: not  no_obstacles_between 2@ 3@ 4@ and 27@ 28@ 29@ solid 1 car 0 actor 0 object 0 particle 0
+    then    
+    jump to @PEOPLE_DELETE_SAVE
+    end
+
+end
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+$GAMEMODE_WAR == 0
+then
+21@ = marker.CreateAboveActor(SURVIVOR_VERSUS)
+marker.SetIconSize(21@,1)
+end
+
+if
+$INF_SIDE == 0
+then
+07E0: set_marker 21@ type_to 1  
+end   
+
+jump @PEOPLE_DELETE_CHECK
+
+:PEOPLE_DELETE_CHECK
+wait 0
+
+if and
+$INFECTED_HUNTER == 1
+$HUNTER_IN_AIR == 1
+00F2:   actor SURVIVOR_VERSUS near_actor PLAYER_ACTOR radius 1.3 1.3 0
+0184:   actor SURVIVOR_VERSUS health > 0
+    then
+    if
+    0364:   actor PLAYER_ACTOR spotted_actor SURVIVOR_VERSUS
+        then
+        jump @HUNTER_PEOPLE_ATTACKED
+        end
+    end
+  
+if and
+$INFECTED_TANK == 1
+00F2:   actor SURVIVOR_VERSUS near_actor PLAYER_ACTOR radius 1.3 1.3 0
+0184:   actor SURVIVOR_VERSUS health > 0
+    then
+    if
+    0364:   actor PLAYER_ACTOR spotted_actor SURVIVOR_VERSUS
+        then
+        if or
+        actor.Animation(PLAYER_ACTOR) == "FightA_1"
+        actor.Animation(PLAYER_ACTOR) == "FightA_2"
+        actor.Animation(PLAYER_ACTOR) == "FightA_3"
+        actor.Animation(PLAYER_ACTOR) == "FightA_G"
+        actor.Animation(PLAYER_ACTOR) == "FightA_M"
+            then        
+            jump @TANK_PEOPLE_ATTACKED
+            end
+        end
+    end
+    
+if and
+$INFECTED_CHARGER == 1
+00F2:   actor SURVIVOR_VERSUS near_actor PLAYER_ACTOR radius 1.3 1.3 0
+0184:   actor SURVIVOR_VERSUS health > 0
+    then
+    if
+    0364:   actor PLAYER_ACTOR spotted_actor SURVIVOR_VERSUS
+        then
+        if or 
+        actor.Animation(PLAYER_ACTOR) == "FightA_1"
+        actor.Animation(PLAYER_ACTOR) == "FightA_2"
+        actor.Animation(PLAYER_ACTOR) == "FightA_3"
+        actor.Animation(PLAYER_ACTOR) == "FightA_G"
+        actor.Animation(PLAYER_ACTOR) == "FightA_M"
+            then
+            jump @CHARGER_PEOPLE_ATTACKED
+            end
+        end
+    end    
+    
+if and
+$INFECTED_WITCH == 1
+0104:   actor SURVIVOR_VERSUS near_actor PLAYER_ACTOR radius 1.3 1.3 1.3 sphere 0
+0184:   actor SURVIVOR_VERSUS health > 0
+    then
+    if
+    0364:   actor PLAYER_ACTOR spotted_actor SURVIVOR_VERSUS
+        then
+        if or
+        actor.Animation(PLAYER_ACTOR) == "FightA_1"
+        actor.Animation(PLAYER_ACTOR) == "FightA_2"
+        actor.Animation(PLAYER_ACTOR) == "FightA_3"
+        actor.Animation(PLAYER_ACTOR) == "FightA_G"
+        actor.Animation(PLAYER_ACTOR) == "FightA_M"
+            then
+            0851: set_actor SURVIVOR_VERSUS decrease_health_by 9999 affect_armour 1 
+            09F1: play_audio_at_actor SURVIVOR_VERSUS event 1130
+            
+            0321: AS_actor SURVIVOR_VERSUS die_headshotted
+            0A96: 0@ = actor SURVIVOR_VERSUS struct
+            0@ += 0x46D
+            0A8C: write_memory 0@ size 4 value 0xA0 virtual_protect 0
+            0@ -= 0x46D
+            0@ += 0x754
+            0A8C: write_memory 0@ size 4 value 0x02 virtual_protect 0
+            end
+        end
+    end
+    
+if and
+COOP_ACTIVE_FLAG == 1
+$GAMEMODE_VERSUS == 1
+then
+
+if and
+$INFECTED_HUNTER == 1
+$HUNTER_IN_AIR2P == 1
+00F2:   actor SURVIVOR_VERSUS near_actor COOP_ACTOR radius 1.3 1.3 0
+0184:   actor SURVIVOR_VERSUS health > 0
+    then
+    if
+    0364:   actor COOP_ACTOR spotted_actor SURVIVOR_VERSUS
+        then
+        jump @HUNTER_PEOPLE_ATTACKED_COOP
+        end
+    end
+  
+if and
+$INFECTED_TANK == 1
+00F2:   actor SURVIVOR_VERSUS near_actor COOP_ACTOR radius 1.3 1.3 0
+0184:   actor SURVIVOR_VERSUS health > 0
+    then
+    if
+    0364:   actor COOP_ACTOR spotted_actor SURVIVOR_VERSUS
+        then
+        if or   
+        actor.Animation(COOP_ACTOR) == "FightA_1"
+        actor.Animation(COOP_ACTOR) == "FightA_2"
+        actor.Animation(COOP_ACTOR) == "FightA_3"
+        actor.Animation(COOP_ACTOR) == "FightA_G"
+        actor.Animation(COOP_ACTOR) == "FightA_M"
+            then        
+            jump @TANK_PEOPLE_ATTACKED
+            end
+        end
+    end
+    
+if and
+$INFECTED_CHARGER == 1
+00F2:   actor SURVIVOR_VERSUS near_actor COOP_ACTOR radius 1.3 1.3 0
+0184:   actor SURVIVOR_VERSUS health > 0
+    then
+    if
+    0364:   actor COOP_ACTOR spotted_actor SURVIVOR_VERSUS
+        then
+        if or
+        actor.Animation(COOP_ACTOR) == "FightA_1"
+        actor.Animation(COOP_ACTOR) == "FightA_2"
+        actor.Animation(COOP_ACTOR) == "FightA_3"
+        actor.Animation(COOP_ACTOR) == "FightA_G"
+        actor.Animation(COOP_ACTOR) == "FightA_M"
+            then
+            jump @CHARGER_PEOPLE_ATTACKED
+            end
+        end
+    end    
+    
+if and
+$INFECTED_WITCH == 1
+0104:   actor SURVIVOR_VERSUS near_actor COOP_ACTOR radius 1.3 1.3 1.3 sphere 0
+0184:   actor SURVIVOR_VERSUS health > 0
+    then
+    if
+    0364:   actor COOP_ACTOR spotted_actor SURVIVOR_VERSUS
+        then
+        if or
+        actor.Animation(COOP_ACTOR) == "FightA_1"
+        actor.Animation(COOP_ACTOR) == "FightA_2"
+        actor.Animation(COOP_ACTOR) == "FightA_3"
+        actor.Animation(COOP_ACTOR) == "FightA_G"
+        actor.Animation(COOP_ACTOR) == "FightA_M"
+            then
+            0851: set_actor SURVIVOR_VERSUS decrease_health_by 9999 affect_armour 1 
+            09F1: play_audio_at_actor SURVIVOR_VERSUS event 1130
+            
+            0321: AS_actor SURVIVOR_VERSUS die_headshotted
+            0A96: 0@ = actor SURVIVOR_VERSUS struct
+            0@ += 0x46D
+            0A8C: write_memory 0@ size 4 value 0xA0 virtual_protect 0
+            0@ -= 0x46D
+            0@ += 0x754
+            0A8C: write_memory 0@ size 4 value 0x02 virtual_protect 0
+            end
+        end
+    end
+    
+end                
+
+/////////////////////Проверка на то, что выживший на экране/////////////////////  
+ 
+if and                                                                             
+9@ == 0
+0E45: frame_mod 5
+    then
+    if or
+    0364:   actor PLAYER_ACTOR spotted_actor SURVIVOR_VERSUS
+    $SPECTATING_FLAG == 1
+        then
+        0337: set_actor SURVIVOR_VERSUS visibility 1
+        9@ = 1
+        end
+    end
+
+////////////////////////////////////////////////////////////////////
+
+for 1@ = 0 to 19
+
+if and
+056D:   actor $ZOMBIE[1@] defined
+056D:   actor SURVIVOR_VERSUS defined
+then
+
+if and
+051A:   actor SURVIVOR_VERSUS damaged_by_actor $ZOMBIE[1@]
+80DF:   actor SURVIVOR_VERSUS in_a_car
+not actor.Driving(SURVIVOR_VERSUS)
+not actor.Dead(SURVIVOR_VERSUS)
+not actor.Animation(SURVIVOR_VERSUS) == "FLOOR_hit"
+0184:   actor SURVIVOR_VERSUS health > 0 
+then        
+054E: clear_actor SURVIVOR_VERSUS damage
+0467: clear_actor SURVIVOR_VERSUS last_weapon_damage     
+0792: disembark_instantly_actor SURVIVOR_VERSUS
+wait 10
+if and
+056D:   actor SURVIVOR_VERSUS defined  
+056D:   actor $ZOMBIE[1@] defined
+87D6: not  SURVIVOR_VERSUS_TARGET == $ZOMBIE[1@] // @ == $ (int)
+then               
+SURVIVOR_VERSUS_FINDED_TARGET = 1      
+SURVIVOR_VERSUS_TARGET_TIME = 0         
+008B: SURVIVOR_VERSUS_TARGET = $ZOMBIE[1@] // (int)
+05E2: AS_actor SURVIVOR_VERSUS kill_actor $ZOMBIE[1@] 
+end
+end
+
+end
+
+end
+
+////////////////////////////////////////////////////////////////////
+
+if
+$GAMEMODE_WAR == 1
+then
+random_int 0@ 0 5
+gosub @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE1
+end          
+
+gosub @PEOPLE_VERSUS_AI
+
+if
+not $GAME_SPEED == 0.0
+then
+SURVIVOR_VERSUS_THROW_MOLOTOV_TIMER += 1 
+SURVIVOR_VERSUS_CLIMB_TIMER += 1   
+SURVIVOR_VERSUS_PAIN_TIMER += 1 
+SURVIVOR_VERSUS_ATTACK_TIMER += 1
+SURVIVOR_VERSUS_HUNTER_TIMER += 1
+end
+
+if
+856D: not  actor SURVIVOR_VERSUS defined
+then
+jump to @PEOPLE_SPAWN_CHECK
+end
+
+    if and
+    001F:   SURVIVOR_VERSUS_THROW_MOLOTOV_TIMER > $SURVIVOR_VERSUS_THROW_TIME // (int)
+    SURVIVOR_VERSUS_THROW_MOLOTOV_FLAG == 0  
+        then
+        if
+        not actor.Dead(SURVIVOR_VERSUS)
+            then    
+            0470: SURVIVOR_VERSUS_THROW_PREV_WEAP = actor SURVIVOR_VERSUS current_weapon
+            
+            ///////////////////////////////////////////////////////////////
+            
+            if and
+            $GAMEMODE_VERSUS == 0
+            $GAMEMODE_CRAZY == 0
+            then
+            random_int 3@ 0 3                    
+            else
+            random_int 3@ 0 2                        
+            end
+        
+            if
+            3@ == 0
+            then        
+        
+            if
+            UNITED_MAP == 0
+            then
+            
+            0781: get_weapon_with_ID 18 model_to 0@
+
+            while not model.Available(0@)
+            wait 0
+            model.Load(0@)
+            mload
+            end
+            
+            actor.GiveWeaponAndAmmo(SURVIVOR_VERSUS,18,1)
+            else
+                
+            if
+            $UNITED_VC_FLAG == 1
+            then
+            
+            if
+            STORIES_MAP == 0
+            then
+            
+            0781: get_weapon_with_ID 134 model_to 0@
+
+            while not model.Available(0@)
+            wait 0
+            model.Load(0@)
+            mload
+            end
+            
+            actor.GiveWeaponAndAmmo(SURVIVOR_VERSUS,134,1)
+            else
+            
+            0781: get_weapon_with_ID 209 model_to 0@
+
+            while not model.Available(0@)
+            wait 0
+            model.Load(0@)
+            mload
+            end
+            
+            actor.GiveWeaponAndAmmo(SURVIVOR_VERSUS,209,1)
+            end
+            
+            else
+            
+            if
+            STORIES_MAP == 0
+            then
+            
+            0781: get_weapon_with_ID 118 model_to 0@
+
+            while not model.Available(0@)
+            wait 0
+            model.Load(0@)
+            mload
+            end
+            
+            actor.GiveWeaponAndAmmo(SURVIVOR_VERSUS,118,1)
+            else
+            
+            0781: get_weapon_with_ID 179 model_to 0@
+
+            while not model.Available(0@)
+            wait 0
+            model.Load(0@)
+            mload
+            end
+            
+            actor.GiveWeaponAndAmmo(SURVIVOR_VERSUS,179,1)
+            end
+            
+            end
+                
+            end
+                
+            end
+            
+            ///////////////////////////////////////////////////////////////
+            
+            if
+            3@ == 1
+            then
+        
+            if
+            UNITED_MAP == 0
+            then
+            
+            0781: get_weapon_with_ID 16 model_to 0@
+
+            while not model.Available(0@)
+            wait 0
+            model.Load(0@)
+            mload
+            end
+            
+            actor.GiveWeaponAndAmmo(SURVIVOR_VERSUS,16,1)
+            else
+                
+            if
+            $UNITED_VC_FLAG == 1
+            then
+            
+            if
+            STORIES_MAP == 0
+            then
+            
+            0781: get_weapon_with_ID 132 model_to 0@
+
+            while not model.Available(0@)
+            wait 0
+            model.Load(0@)
+            mload
+            end
+            
+            actor.GiveWeaponAndAmmo(SURVIVOR_VERSUS,132,1)
+            else
+            
+            0781: get_weapon_with_ID 207 model_to 0@
+
+            while not model.Available(0@)
+            wait 0
+            model.Load(0@)
+            mload
+            end
+            
+            actor.GiveWeaponAndAmmo(SURVIVOR_VERSUS,207,1)
+            end
+            
+            else
+            
+            if
+            STORIES_MAP == 0
+            then
+            
+            0781: get_weapon_with_ID 115 model_to 0@
+
+            while not model.Available(0@)
+            wait 0
+            model.Load(0@)
+            mload
+            end
+            
+            actor.GiveWeaponAndAmmo(SURVIVOR_VERSUS,115,1)
+            else
+            
+            0781: get_weapon_with_ID 177 model_to 0@
+
+            while not model.Available(0@)
+            wait 0
+            model.Load(0@)
+            mload
+            end
+            
+            actor.GiveWeaponAndAmmo(SURVIVOR_VERSUS,177,1)
+            end
+            
+            end
+                
+            end
+                
+            end
+                
+            if
+            3@ == 2
+            then
+        
+            if
+            UNITED_MAP == 0
+            then
+            
+            0781: get_weapon_with_ID 17 model_to 0@
+
+            while not model.Available(0@)
+            wait 0
+            model.Load(0@)
+            mload
+            end
+            
+            actor.GiveWeaponAndAmmo(SURVIVOR_VERSUS,17,1)
+            else
+                
+            if
+            $UNITED_VC_FLAG == 1
+            then
+            
+            if
+            STORIES_MAP == 0
+            then
+            
+            0781: get_weapon_with_ID 133 model_to 0@
+
+            while not model.Available(0@)
+            wait 0
+            model.Load(0@)
+            mload
+            end
+            
+            actor.GiveWeaponAndAmmo(SURVIVOR_VERSUS,133,1)
+            else
+            
+            0781: get_weapon_with_ID 208 model_to 0@
+
+            while not model.Available(0@)
+            wait 0
+            model.Load(0@)
+            mload
+            end
+            
+            actor.GiveWeaponAndAmmo(SURVIVOR_VERSUS,208,1)
+            end
+            
+            else
+            
+            if
+            STORIES_MAP == 0
+            then
+            
+            0781: get_weapon_with_ID 115 model_to 0@
+
+            while not model.Available(0@)
+            wait 0
+            model.Load(0@)
+            mload
+            end
+            
+            actor.GiveWeaponAndAmmo(SURVIVOR_VERSUS,115,1)
+            else
+            
+            0781: get_weapon_with_ID 178 model_to 0@
+
+            while not model.Available(0@)
+            wait 0
+            model.Load(0@)
+            mload
+            end
+            
+            actor.GiveWeaponAndAmmo(SURVIVOR_VERSUS,178,1)
+            end
+            
+            end
+                
+            end  
+                
+            end   
+            
+            ///////////////////////////////////////////////////////////////      
+            
+            SURVIVOR_VERSUS_THROW_MOLOTOV_FLAG = 1
+            end
+        end 
+    
+if and
+SURVIVOR_VERSUS_THROW_MOLOTOV_FLAG == 1
+056D:   actor SURVIVOR_VERSUS defined
+    then
+    if
+    not actor.Dead(SURVIVOR_VERSUS)
+        then
+        
+        if and
+        00F2:   actor SURVIVOR_VERSUS near_actor PLAYER_ACTOR radius 2.0 2.0 0        
+        $INF_SIDE == 1
+        then
+        if
+        0364:   actor PLAYER_ACTOR spotted_actor SURVIVOR_VERSUS
+            then
+            jump to @RANDOM_SURV_VERSUS_FUCKOH
+            end
+        end
+        
+        if and
+        COOP_ACTIVE_FLAG == 1
+        $GAMEMODE_VERSUS == 1
+        then
+        
+        if and
+        00F2:   actor SURVIVOR_VERSUS near_actor COOP_ACTOR radius 2.0 2.0 0    
+        $INF_SIDE == 1
+        then
+        if
+        0364:   actor COOP_ACTOR spotted_actor SURVIVOR_VERSUS
+            then
+            jump to @RANDOM_SURV_VERSUS_FUCKOH
+            end
+        end
+        
+        end
+        
+        if 
+        actor.Animation(SURVIVOR_VERSUS) == "WEAPON_throw"   
+            then                                
+            
+            if and
+            0104:   actor SURVIVOR_VERSUS near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+            $SPECTATING_FLAG == 0
+            $SCREWHUD_FLAG == 0
+            SURVIVOR_VERSUS_CAN_TALK == 1
+            then
+            
+            gosub @RANDOM_DIALOG_GRENADE_SURV_VERSUS 
+            
+            v$2NAME3 = "GAME153"
+            
+            09FD: get_gxt_string v$PHRASE3 width_to 3@
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer
+            text.ClearAll()  
+                
+            0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 3@ 1  
+            
+            end                                                                                                         
+            
+            SURVIVOR_VERSUS_THROW_MOLOTOV_TIMER = 0
+            
+            SURVIVOR_VERSUS_THROW_MOLOTOV_FLAG = 0
+            
+            :RANDOM_SURV_VERSUS_FUCKOH
+            
+            repeat 
+            wait 0  
+            
+            if or
+            $SAVESTATUS == 1
+            $SAVESTATUS_TRUE == 1
+                then
+                break
+                end
+                
+            if and
+            $INFECTED_HUNTER == 1
+            $HUNTER_IN_AIR == 1
+            00F2:   actor SURVIVOR_VERSUS near_actor PLAYER_ACTOR radius 1.3 1.3 0            
+                then
+                if
+                0364:   actor PLAYER_ACTOR spotted_actor SURVIVOR_VERSUS
+                    then
+                    jump @HUNTER_PEOPLE_ATTACKED
+                    end
+                end
+              
+            if and
+            $INFECTED_TANK == 1
+            00F2:   actor SURVIVOR_VERSUS near_actor PLAYER_ACTOR radius 1.3 1.3 0            
+                then
+                if
+                0364:   actor PLAYER_ACTOR spotted_actor SURVIVOR_VERSUS
+                    then
+                    if or
+                    actor.Animation(PLAYER_ACTOR) == "FightA_1"
+                    actor.Animation(PLAYER_ACTOR) == "FightA_2"
+                    actor.Animation(PLAYER_ACTOR) == "FightA_3"
+                    actor.Animation(PLAYER_ACTOR) == "FightA_G"
+                    actor.Animation(PLAYER_ACTOR) == "FightA_M"
+                        then        
+                        jump @TANK_PEOPLE_ATTACKED
+                        end
+                    end
+                end
+                
+            if and
+            $INFECTED_CHARGER == 1
+            00F2:   actor SURVIVOR_VERSUS near_actor PLAYER_ACTOR radius 1.3 1.3 0            
+                then
+                if
+                0364:   actor PLAYER_ACTOR spotted_actor SURVIVOR_VERSUS
+                    then
+                    if or
+                    actor.Animation(PLAYER_ACTOR) == "FightA_1"
+                    actor.Animation(PLAYER_ACTOR) == "FightA_2"
+                    actor.Animation(PLAYER_ACTOR) == "FightA_3"
+                    actor.Animation(PLAYER_ACTOR) == "FightA_G"
+                    actor.Animation(PLAYER_ACTOR) == "FightA_M"
+                        then
+                        jump @CHARGER_PEOPLE_ATTACKED
+                        end
+                    end
+                end    
+                
+            if and
+            $INFECTED_WITCH == 1
+            0104:   actor SURVIVOR_VERSUS near_actor PLAYER_ACTOR radius 1.3 1.3 1.3 sphere 0            
+                then
+                if
+                0364:   actor PLAYER_ACTOR spotted_actor SURVIVOR_VERSUS
+                    then
+                    if or
+                    actor.Animation(PLAYER_ACTOR) == "FightA_1"
+                    actor.Animation(PLAYER_ACTOR) == "FightA_2"
+                    actor.Animation(PLAYER_ACTOR) == "FightA_3"
+                    actor.Animation(PLAYER_ACTOR) == "FightA_G"
+                    actor.Animation(PLAYER_ACTOR) == "FightA_M"
+                        then
+                        0851: set_actor SURVIVOR_VERSUS decrease_health_by 9999 affect_armour 1 
+                        09F1: play_audio_at_actor SURVIVOR_VERSUS event 1130
+                        
+                        0321: AS_actor SURVIVOR_VERSUS die_headshotted
+                        0A96: 0@ = actor SURVIVOR_VERSUS struct
+                        0@ += 0x46D
+                        0A8C: write_memory 0@ size 4 value 0xA0 virtual_protect 0
+                        0@ -= 0x46D
+                        0@ += 0x754
+                        0A8C: write_memory 0@ size 4 value 0x02 virtual_protect 0
+                        end
+                    end
+                end
+                
+            if and
+            COOP_ACTIVE_FLAG == 1
+            $GAMEMODE_VERSUS == 1
+            then
+            
+            if and
+            $INFECTED_HUNTER == 1
+            $HUNTER_IN_AIR2P == 1
+            00F2:   actor SURVIVOR_VERSUS near_actor COOP_ACTOR radius 1.3 1.3 0            
+                then
+                if
+                0364:   actor COOP_ACTOR spotted_actor SURVIVOR_VERSUS
+                    then
+                    jump @HUNTER_PEOPLE_ATTACKED_COOP
+                    end
+                end
+              
+            if and
+            $INFECTED_TANK == 1
+            00F2:   actor SURVIVOR_VERSUS near_actor COOP_ACTOR radius 1.3 1.3 0            
+                then
+                if
+                0364:   actor COOP_ACTOR spotted_actor SURVIVOR_VERSUS
+                    then
+                    if or
+                    actor.Animation(COOP_ACTOR) == "FightA_1"
+                    actor.Animation(COOP_ACTOR) == "FightA_2"
+                    actor.Animation(COOP_ACTOR) == "FightA_3"
+                    actor.Animation(COOP_ACTOR) == "FightA_G"
+                    actor.Animation(COOP_ACTOR) == "FightA_M"
+                        then        
+                        jump @TANK_PEOPLE_ATTACKED
+                        end
+                    end
+                end
+                
+            if and
+            $INFECTED_CHARGER == 1
+            00F2:   actor SURVIVOR_VERSUS near_actor COOP_ACTOR radius 1.3 1.3 0            
+                then
+                if
+                0364:   actor COOP_ACTOR spotted_actor SURVIVOR_VERSUS
+                    then
+                    if or
+                    actor.Animation(COOP_ACTOR) == "FightA_1"
+                    actor.Animation(COOP_ACTOR) == "FightA_2"
+                    actor.Animation(COOP_ACTOR) == "FightA_3"
+                    actor.Animation(COOP_ACTOR) == "FightA_G"
+                    actor.Animation(COOP_ACTOR) == "FightA_M"
+                        then
+                        jump @CHARGER_PEOPLE_ATTACKED
+                        end
+                    end
+                end    
+                
+            if and
+            $INFECTED_WITCH == 1
+            0104:   actor SURVIVOR_VERSUS near_actor COOP_ACTOR radius 1.3 1.3 1.3 sphere 0            
+                then
+                if
+                0364:   actor COOP_ACTOR spotted_actor SURVIVOR_VERSUS
+                    then
+                    if or
+                    actor.Animation(COOP_ACTOR) == "FightA_1"
+                    actor.Animation(COOP_ACTOR) == "FightA_2"
+                    actor.Animation(COOP_ACTOR) == "FightA_3"
+                    actor.Animation(COOP_ACTOR) == "FightA_G"
+                    actor.Animation(COOP_ACTOR) == "FightA_M"
+                        then
+                        0851: set_actor SURVIVOR_VERSUS decrease_health_by 9999 affect_armour 1 
+                        09F1: play_audio_at_actor SURVIVOR_VERSUS event 1130
+                        
+                        0321: AS_actor SURVIVOR_VERSUS die_headshotted
+                        0A96: 0@ = actor SURVIVOR_VERSUS struct
+                        0@ += 0x46D
+                        0A8C: write_memory 0@ size 4 value 0xA0 virtual_protect 0
+                        0@ -= 0x46D
+                        0@ += 0x754
+                        0A8C: write_memory 0@ size 4 value 0x02 virtual_protect 0
+                        end
+                    end
+                end
+                
+            end                        
+                
+            until not actor.Animation(SURVIVOR_VERSUS) == "WEAPON_throw"                                                   
+            
+            01B9: set_actor SURVIVOR_VERSUS armed_weapon_to SURVIVOR_VERSUS_THROW_PREV_WEAP                              
+            
+            end
+        else
+        SURVIVOR_VERSUS_THROW_MOLOTOV_TIMER = 0            
+        SURVIVOR_VERSUS_THROW_MOLOTOV_FLAG = 0
+        end
+    end 
+
+if
+056D:   actor SURVIVOR_VERSUS defined
+then
+    
+if and
+0184:   actor SURVIVOR_VERSUS health > 0
+874F: not  actor SURVIVOR_VERSUS ped_event == 33  
+8818: not  actor SURVIVOR_VERSUS in_air 
+SURVIVOR_VERSUS_CLIMB_TIMER > 200
+$ACTIVE_INTERIOR == 0
+    then    
+    if and
+    not actor.Animation(SURVIVOR_VERSUS) == "CLIMB_idle"
+    not actor.Animation(SURVIVOR_VERSUS) == "CLIMB_jump"
+    not actor.Animation(SURVIVOR_VERSUS) == "CLIMB_jump2fall"
+    not actor.Animation(SURVIVOR_VERSUS) == "CLIMB_jump_B"
+    not actor.Animation(SURVIVOR_VERSUS) == "CLIMB_Pull" 
+    not actor.Animation(SURVIVOR_VERSUS) == "CLIMB_Stand"
+    not actor.Animation(SURVIVOR_VERSUS) == "CLIMB_Stand_finish"             
+        then
+        if or
+        actor.Animation(SURVIVOR_VERSUS) == "run_civi"  
+        actor.Animation(SURVIVOR_VERSUS) == "sprint_civi"   
+        actor.Animation(SURVIVOR_VERSUS) == "swat_run"     
+            then    
+            actor.StorePos(SURVIVOR_VERSUS, 3@, 4@, 5@) 
+            04C4: store_coords_to 27@ 28@ 29@ from_actor SURVIVOR_VERSUS with_offset 0.0 3.0 0.3                                 
+            if                         
+            86BD: not no_obstacles_between 27@ 28@ 29@ and 3@ 4@ 5@ solid 1 car 0 actor 0 object 1 particle 0   
+                then  
+                SURVIVOR_VERSUS_CLIMB_TIMER = 0  
+                
+                0687: clear_actor SURVIVOR_VERSUS task
+                wait 10                                                                                                                                                    
+                078F: AS_actor SURVIVOR_VERSUS climb 0  
+                
+                wait 50                             
+                actor.StorePos(SURVIVOR_VERSUS, 27@, 28@, 29@) 
+                04C4: store_coords_to 3@ 4@ 5@ from_actor SURVIVOR_VERSUS with_offset 0.0 2.0 5.0
+                0063: 3@ -= 27@  // (float) 
+                0063: 4@ -= 28@  // (float) 
+                0063: 5@ -= 29@  // (float) 
+                083C: set_actor SURVIVOR_VERSUS velocity_in_direction_XYZ 3@ 4@ 5@
+                wait 50                             
+                actor.StorePos(SURVIVOR_VERSUS, 27@, 28@, 29@) 
+                04C4: store_coords_to 3@ 4@ 5@ from_actor SURVIVOR_VERSUS with_offset 0.0 2.0 5.0
+                0063: 3@ -= 27@  // (float) 
+                0063: 4@ -= 28@  // (float) 
+                0063: 5@ -= 29@  // (float) 
+                083C: set_actor SURVIVOR_VERSUS velocity_in_direction_XYZ 3@ 4@ 5@
+                                                                                         
+                end
+            end                                            
+        end 
+    end
+     
+end    
+    
+////////////////////////////////////////////////Голос получения урона от врагов////////////////////////////////////////////////
+
+if
+001D:   SURVIVOR_VERSUS_PAIN_TIMER > SURVIVOR_VERSUS_PAIN_TIMER2 // (int)
+then
+if 
+056D:   actor SURVIVOR_VERSUS defined
+    then 
+    if and    
+    not actor.Dead(SURVIVOR_VERSUS)
+    0104:   actor SURVIVOR_VERSUS near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0   
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    SURVIVOR_VERSUS_CAN_TALK == 1
+        then       
+        
+        if
+        06EE:   actor SURVIVOR_VERSUS in_group PLAYER_GROUP
+        then
+        
+        if
+        051A:   actor SURVIVOR_VERSUS damaged_by_actor PLAYER_ACTOR 
+        then
+        jump to @ASSWOOPIN2
+        end
+        
+        end   
+        
+        2@ = 0
+        1@ = 0
+        
+        ///////////////////////
+        
+        for 0@ = 22 to 34
+        
+        if
+        031D:   actor SURVIVOR_VERSUS hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor SURVIVOR_VERSUS last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 70 to MAX_WEAPON_NUM_NORMAL
+        
+        if
+        031D:   actor SURVIVOR_VERSUS hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor SURVIVOR_VERSUS last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 111 to 121
+        
+        if
+        031D:   actor SURVIVOR_VERSUS hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor SURVIVOR_VERSUS last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 136 to 151
+        
+        if
+        031D:   actor SURVIVOR_VERSUS hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor SURVIVOR_VERSUS last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 165 to 183
+        
+        if
+        031D:   actor SURVIVOR_VERSUS hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor SURVIVOR_VERSUS last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////
+        
+        for 0@ = 195 to 213
+        
+        if
+        031D:   actor SURVIVOR_VERSUS hit_by_weapon 0@
+        then
+        2@ = 1
+        0467: clear_actor SURVIVOR_VERSUS last_weapon_damage
+        end
+        
+        end
+        
+        ///////////////////////        
+        
+        if and 
+        031D:   actor SURVIVOR_VERSUS hit_by_weapon 0
+        851A: not  actor SURVIVOR_VERSUS damaged_by_actor PLAYER_ACTOR
+        then
+        
+        2@ = 1
+        1@ = 1
+        0467: clear_actor SURVIVOR_VERSUS last_weapon_damage
+        end
+        
+        if
+        2@ == 1
+            then
+            
+            SURVIVOR_VERSUS_PAIN_TIMER = 0
+            random_int SURVIVOR_VERSUS_PAIN_TIMER2 SURVIVOR_VERSUS_PAIN_TIMER_MIN SURVIVOR_VERSUS_PAIN_TIMER_MAX
+            
+            if
+            1@ == 0
+            then
+            gosub @RANDOM_DIALOG_DAMAGED_BY_WEAPON_SURV_VERSUS  
+            else
+            gosub @RANDOM_DIALOG_DAMAGED_BY_ZOMBIES_SURV_VERSUS  
+            end 
+        
+            v$2NAME3 = "GAME153"          
+                        
+            09FD: get_gxt_string v$PHRASE3 width_to 3@
+            0093: 3@ = integer 3@ to_float
+            3@ *= 8.0
+            0092: 3@ = float 3@ to_integer  
+                        
+            0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 3@ 1      
+            end            
+        end
+    end
+end 
+    
+:ASSWOOPIN2      
+
+////////////////////////////////////////////////Голос атаки////////////////////////////////////////////////
+
+if
+001D:   SURVIVOR_VERSUS_ATTACK_TIMER > SURVIVOR_VERSUS_ATTACK_TIMER2 // (int)
+then    
+if 
+056D:   actor SURVIVOR_VERSUS defined
+    then
+    if and    
+    not actor.Dead(SURVIVOR_VERSUS)
+    0104:   actor SURVIVOR_VERSUS near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0 
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    02E0:   actor SURVIVOR_VERSUS firing_weapon  
+    SURVIVOR_VERSUS_CAN_TALK == 1
+        then
+        
+        SURVIVOR_VERSUS_ATTACK_TIMER = 0
+        random_int random_int SURVIVOR_VERSUS_ATTACK_TIMER2 SURVIVOR_VERSUS_ATTACK_TIMER_MIN SURVIVOR_VERSUS_ATTACK_TIMER_MAX
+                
+        gosub @RANDOM_DIALOG_ATTACK_SURV_VERSUS       
+    
+        v$2NAME3 = "GAME153"           
+                    
+        09FD: get_gxt_string v$PHRASE3 width_to 3@
+        0093: 3@ = integer 3@ to_float
+        3@ *= 8.0
+        0092: 3@ = float 3@ to_integer  
+                    
+        0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 3@ 1   
+        end            
+    end
+end        
+    
+////////////////////////////////////////////////Голос про охотника////////////////////////////////////////////////      
+
+if
+001D:   SURVIVOR_VERSUS_HUNTER_TIMER > SURVIVOR_VERSUS_HUNTER_TIMER2 // (int)
+then
+if 
+056D:   actor SURVIVOR_VERSUS defined
+    then
+    04DD: 0@ = actor SURVIVOR_VERSUS armour
+    if and    
+    not actor.Dead(SURVIVOR_VERSUS)
+    0104:   actor SURVIVOR_VERSUS near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0  
+    $SPECTATING_FLAG == 0
+    $SCREWHUD_FLAG == 0
+    SURVIVOR_VERSUS_CAN_TALK == 1
+    0@ == 1
+        then
+        
+        SURVIVOR_VERSUS_HUNTER_TIMER = 0
+        random_int random_int SURVIVOR_VERSUS_HUNTER_TIMER2 150 350
+                
+        gosub @RANDOM_DIALOG_HUNTER_SURV_VERSUS       
+    
+        v$2NAME3 = "GAME153"
+                    
+        09FD: get_gxt_string v$PHRASE3 width_to 3@
+        0093: 3@ = integer 3@ to_float
+        3@ *= 8.0
+        0092: 3@ = float 3@ to_integer  
+                    
+        0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 3@ 1   
+        end            
+    end
+end                             
+
+if
+056D:   actor SURVIVOR_VERSUS defined
+jf @PEOPLE_SPAWN_CHECK
+if and
+00F2:   actor SURVIVOR_VERSUS near_actor PLAYER_ACTOR radius 180.0 180.0 0 
+$SAVESTATUS == 0
+jf @PEOPLE_DELETE_SAVE
+if
+not actor.Dead(SURVIVOR_VERSUS)
+jf @PEOPLE_DELETE
+jump @PEOPLE_DELETE_CHECK    
+
+:CHARGER_PEOPLE_ATTACKED
+0792: disembark_instantly_actor SURVIVOR_VERSUS      
+05C1: AS_actor SURVIVOR_VERSUS speak_from_audio_table 346     
+05BB: AS_actor SURVIVOR_VERSUS fall_down 0 time_on_ground 100
+09F1: play_audio_at_actor SURVIVOR_VERSUS event 1130
+actor.storepos(SURVIVOR_VERSUS, 27@, 28@, 29@)
+04C4: store_coords_to 3@ 4@ 5@ from_actor SURVIVOR_VERSUS with_offset 0.0 -5.0 12.0
+0063: 3@ -= 27@  // (float) 
+0063: 4@ -= 28@  // (float) 
+0063: 5@ -= 29@  // (float)
+3@ *= 4.0
+4@ *= 4.0
+5@ *= 3.0 
+083C: set_actor SURVIVOR_VERSUS velocity_in_direction_XYZ 3@ 4@ 10.0
+0851: set_actor SURVIVOR_VERSUS decrease_health_by 999 affect_armour 1
+jump @PEOPLE_DELETE_CHECK
+
+:TANK_PEOPLE_ATTACKED
+0792: disembark_instantly_actor SURVIVOR_VERSUS      
+05C1: AS_actor SURVIVOR_VERSUS speak_from_audio_table 346     
+05BB: AS_actor SURVIVOR_VERSUS fall_down 0 time_on_ground 100
+09F1: play_audio_at_actor SURVIVOR_VERSUS event 1130
+actor.storepos(SURVIVOR_VERSUS, 1@, 2@, 3@)
+04C4: store_coords_to 4@ 5@ 6@ from_actor SURVIVOR_VERSUS with_offset 0.0 -40.0 20.0 
+0063: 4@ -= 1@  // (float) 
+0063: 5@ -= 2@  // (float) 
+0063: 6@ -= 3@  // (float)  
+3@ *= 4.0
+4@ *= 4.0
+5@ *= 3.0  
+083C: set_actor SURVIVOR_VERSUS velocity_in_direction_XYZ 4@ 5@ 6@
+0851: set_actor SURVIVOR_VERSUS decrease_health_by 999 affect_armour 1
+jump @PEOPLE_DELETE_CHECK
+ 
+:HUNTER_PEOPLE_ATTACKED
+0687: clear_actor SURVIVOR_VERSUS task
+0792: disembark_instantly_actor SURVIVOR_VERSUS
+05BB: AS_actor SURVIVOR_VERSUS fall_down 1 time_on_ground -1
+0332: set_actor SURVIVOR_VERSUS bleeding 1 
+0619: enable_actor SURVIVOR_VERSUS collision_detection 0
+actor.StorePos(PLAYER_ACTOR, 1@, 2@, 3@) 
+04C4: store_coords_to 4@ 5@ 6@ from_actor PLAYER_ACTOR with_offset 0.0 0.0 -190.0 
+0063: 4@ -= 1@  // (float) 
+0063: 5@ -= 2@  // (float) 
+0063: 6@ -= 3@  // (float) 
+083C: set_actor PLAYER_ACTOR velocity_in_direction_XYZ 4@ 5@ 6@
+wait 1
+0812: AS_actor SURVIVOR_VERSUS perform_animation "FLOOR_hit" IFP "PED" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 999999
+audiostream.Release(25@)
+gosub @HUNTER_RANDOM_KILLING
+Audiostream.Loop(25@, 1)
+Audiostream.Volume(25@) = $SOUNDS_VOLUME
+Audiostream.LinkToActor(25@,PLAYER_ACTOR)
+Audiostream.PerformAction(25@, PLAY)
+32@ = 0
+0851: set_actor SURVIVOR_VERSUS decrease_health_by 50 affect_armour 0
+0332: set_actor SURVIVOR_VERSUS bleeding 1
+05C1: AS_actor SURVIVOR_VERSUS speak_from_audio_table 346
+09F1: play_audio_at_actor SURVIVOR_VERSUS event 1130
+09B8: create_blood_gush_at 29@ 30@ 31@ with_offset $HUNTER_BLOOD_X_OFSSET $HUNTER_BLOOD_Y_OFSSET $HUNTER_BLOOD_Z_OFSSET density $HUNTER_BLOOD_COUNT on_actor SURVIVOR_VERSUS   
+
+:HUNTER_PLAYER_ATTACK_IDLE
+wait 0
+actor.StorePos(SURVIVOR_VERSUS, 29@, 30@, 31@)  
+0812: AS_actor PLAYER_ACTOR perform_animation "hunter_attack" IFP "PED" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 999999 
+if
+00F2:   actor PLAYER_ACTOR near_actor SURVIVOR_VERSUS radius 1.3 1.3 sphere 0
+jf @HUNTER_PLAYER_ATTACK_CANCEL1
+if
+not actor.Dead(SURVIVOR_VERSUS)
+jf @HUNTER_PLAYER_ATTACK_END
+if
+32@ > 450
+jf @HUNTER_PLAYER_ATTACK_IDLE
+if
+actor.Animation(PLAYER_ACTOR) == "hunter_attack"
+jf @HUNTER_PLAYER_ATTACK_CANCEL1
+09B8: create_blood_gush_at 29@ 30@ 31@ with_offset $HUNTER_BLOOD_X_OFSSET $HUNTER_BLOOD_Y_OFSSET $HUNTER_BLOOD_Z_OFSSET density $HUNTER_BLOOD_COUNT on_actor SURVIVOR_VERSUS
+0851: set_actor SURVIVOR_VERSUS decrease_health_by 280 affect_armour 0
+05C1: AS_actor SURVIVOR_VERSUS speak_from_audio_table 346
+09F1: play_audio_at_actor SURVIVOR_VERSUS event 1130
+actor.StorePos(SURVIVOR_VERSUS, 29@, 30@, 31@)
+09B8: create_blood_gush_at 29@ 30@ 31@ with_offset $HUNTER_BLOOD_X_OFSSET $HUNTER_BLOOD_Y_OFSSET $HUNTER_BLOOD_Z_OFSSET density $HUNTER_BLOOD_COUNT on_actor SURVIVOR_VERSUS
+32@ = 0
+if or
+actor.Dead(SURVIVOR_VERSUS)
+$ROUND_ENDED == 1
+jf @HUNTER_PLAYER_ATTACK_IDLE
+jump to @HUNTER_PLAYER_ATTACK_END
+
+:HUNTER_RANDOM_KILLING
+random_int 1@ 0 4
+if and
+not 1@ == 0
+not 1@ == 1
+not 1@ == 2
+jf @HUNTER_RANDOM_KILLING1
+if
+not 1@ == 3
+jf @HUNTER_RANDOM_KILLING2
+
+:HUNTER_RANDOM_KILLING1
+25@ = Audiostream.Load3d("AUDIO\SOUNDS\infected_sounds\hunter_sounds\hunter_killing2.mp3")
+return
+
+:HUNTER_RANDOM_KILLING2
+25@ = Audiostream.Load3d("AUDIO\SOUNDS\infected_sounds\hunter_sounds\hunter_killing.mp3")
+return
+
+:HUNTER_PLAYER_ATTACK_END
+audiostream.Release(25@)
+0792: disembark_instantly_actor PLAYER_ACTOR 
+0623: add 1 to_integer_stat 121
+//0321: AS_actor SURVIVOR_VERSUS die_headshotted
+0792: disembark_instantly_actor SURVIVOR_VERSUS
+0829: actor SURVIVOR_VERSUS perform_animation "FLOOR_hit" IFP_file "PED" rate 4.0 time 0 and_dies
+0A96: 0@ = actor SURVIVOR_VERSUS struct
+0@ += 0x46D
+0A8C: write_memory 0@ size 4 value 0xA0 virtual_protect 0
+0@ -= 0x46D
+0@ += 0x754
+0A8C: write_memory 0@ size 4 value 0x02 virtual_protect 0
+jump @PEOPLE_DELETE_CHECK
+
+:HUNTER_PLAYER_ATTACK_CANCEL1
+audiostream.Release(25@) 
+0792: disembark_instantly_actor SURVIVOR_VERSUS
+0812: AS_actor SURVIVOR_VERSUS perform_animation "getup" IFP "PED" framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF 0 time -1
+0619: enable_actor SURVIVOR_VERSUS collision_detection 1
+0812: AS_actor PLAYER_ACTOR perform_animation "hunter_attack" IFP "PED" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 1 
+0332: set_actor SURVIVOR_VERSUS bleeding 0 
+jump @PEOPLE_DELETE_CHECK
+
+:HUNTER_PEOPLE_ATTACKED_COOP
+0687: clear_actor SURVIVOR_VERSUS task
+0792: disembark_instantly_actor SURVIVOR_VERSUS
+05BB: AS_actor SURVIVOR_VERSUS fall_down 1 time_on_ground -1
+0332: set_actor SURVIVOR_VERSUS bleeding 1 
+0619: enable_actor SURVIVOR_VERSUS collision_detection 0
+actor.StorePos(COOP_ACTOR, 1@, 2@, 3@) 
+04C4: store_coords_to 4@ 5@ 6@ from_actor COOP_ACTOR with_offset 0.0 0.0 -190.0 
+0063: 4@ -= 1@  // (float) 
+0063: 5@ -= 2@  // (float) 
+0063: 6@ -= 3@  // (float) 
+083C: set_actor COOP_ACTOR velocity_in_direction_XYZ 4@ 5@ 6@
+wait 1
+0812: AS_actor SURVIVOR_VERSUS perform_animation "FLOOR_hit" IFP "PED" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 999999
+audiostream.Release(25@)
+gosub @HUNTER_RANDOM_KILLING
+Audiostream.Loop(25@, 1)
+Audiostream.Volume(25@) = $SOUNDS_VOLUME
+Audiostream.LinkToActor(25@,COOP_ACTOR)
+Audiostream.PerformAction(25@, PLAY)
+32@ = 0
+0851: set_actor SURVIVOR_VERSUS decrease_health_by 50 affect_armour 0
+0332: set_actor SURVIVOR_VERSUS bleeding 1
+05C1: AS_actor SURVIVOR_VERSUS speak_from_audio_table 346
+09F1: play_audio_at_actor SURVIVOR_VERSUS event 1130
+09B8: create_blood_gush_at 29@ 30@ 31@ with_offset $HUNTER_BLOOD_X_OFSSET $HUNTER_BLOOD_Y_OFSSET $HUNTER_BLOOD_Z_OFSSET density $HUNTER_BLOOD_COUNT on_actor SURVIVOR_VERSUS   
+
+:HUNTER_PLAYER_ATTACK_IDLE_COOP
+wait 0
+actor.StorePos(SURVIVOR_VERSUS, 29@, 30@, 31@)  
+0812: AS_actor COOP_ACTOR perform_animation "hunter_attack" IFP "PED" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 999999 
+if
+00F2:   actor COOP_ACTOR near_actor SURVIVOR_VERSUS radius 1.3 1.3 sphere 0
+jf @HUNTER_PLAYER_ATTACK_CANCEL1_COOP
+if
+not actor.Dead(SURVIVOR_VERSUS)
+jf @HUNTER_PLAYER_ATTACK_END_COOP
+if
+32@ > 450
+jf @HUNTER_PLAYER_ATTACK_IDLE_COOP
+if
+actor.Animation(COOP_ACTOR) == "hunter_attack"
+jf @HUNTER_PLAYER_ATTACK_CANCEL1_COOP
+09B8: create_blood_gush_at 29@ 30@ 31@ with_offset $HUNTER_BLOOD_X_OFSSET $HUNTER_BLOOD_Y_OFSSET $HUNTER_BLOOD_Z_OFSSET density $HUNTER_BLOOD_COUNT on_actor SURVIVOR_VERSUS
+0851: set_actor SURVIVOR_VERSUS decrease_health_by 280 affect_armour 0
+05C1: AS_actor SURVIVOR_VERSUS speak_from_audio_table 346
+09F1: play_audio_at_actor SURVIVOR_VERSUS event 1130
+actor.StorePos(SURVIVOR_VERSUS, 29@, 30@, 31@)
+09B8: create_blood_gush_at 29@ 30@ 31@ with_offset $HUNTER_BLOOD_X_OFSSET $HUNTER_BLOOD_Y_OFSSET $HUNTER_BLOOD_Z_OFSSET density $HUNTER_BLOOD_COUNT on_actor SURVIVOR_VERSUS
+32@ = 0
+if or
+actor.Dead(SURVIVOR_VERSUS)
+$ROUND_ENDED == 1
+jf @HUNTER_PLAYER_ATTACK_IDLE_COOP
+jump to @HUNTER_PLAYER_ATTACK_END_COOP
+
+:HUNTER_PLAYER_ATTACK_END_COOP
+audiostream.Release(25@)
+0792: disembark_instantly_actor COOP_ACTOR 
+0623: add 1 to_integer_stat 121
+//0321: AS_actor SURVIVOR_VERSUS die_headshotted
+0792: disembark_instantly_actor SURVIVOR_VERSUS
+0829: actor SURVIVOR_VERSUS perform_animation "FLOOR_hit" IFP_file "PED" rate 4.0 time 0 and_dies
+0A96: 0@ = actor SURVIVOR_VERSUS struct
+0@ += 0x46D
+0A8C: write_memory 0@ size 4 value 0xA0 virtual_protect 0
+0@ -= 0x46D
+0@ += 0x754
+0A8C: write_memory 0@ size 4 value 0x02 virtual_protect 0
+jump @PEOPLE_DELETE_CHECK
+
+:HUNTER_PLAYER_ATTACK_CANCEL1_COOP
+audiostream.Release(25@) 
+0792: disembark_instantly_actor SURVIVOR_VERSUS
+0812: AS_actor SURVIVOR_VERSUS perform_animation "getup" IFP "PED" framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF 0 time -1
+0619: enable_actor SURVIVOR_VERSUS collision_detection 1
+0812: AS_actor COOP_ACTOR perform_animation "hunter_attack" IFP "PED" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 1 
+0332: set_actor SURVIVOR_VERSUS bleeding 0 
+jump @PEOPLE_DELETE_CHECK
+
+:HNTR_ATTACK_3
+jump @PEOPLE_DELETE_CHECK
+
+:RANDOM_SOUND
+0209: 0@ = random_int_in_ranges 0 3
+if 
+not 0@ == 0
+jf @RANDOM_SOUND1
+if 
+not 0@ == 1
+jf @RANDOM_SOUND2
+if 
+not 0@ == 2
+jf @RANDOM_SOUND3
+
+:RANDOM_SOUND1
+21@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\hunter_sounds\hunter_attackmix_01.wav")
+return
+
+:RANDOM_SOUND2
+21@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\hunter_sounds\hunter_attackmix_02.wav")
+return
+
+:RANDOM_SOUND3
+21@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\hunter_sounds\hunter_attackmix_03.wav")
+return
+
+:RANDOM_SOUND_RETURN
+return
+
+:PEOPLE_SPAWN_END
+end_thread
+
+:PEOPLE_VERSUS_AI
+
+if
+056D:   actor SURVIVOR_VERSUS defined
+    then
+    if and
+    not actor.Dead(SURVIVOR_VERSUS)
+    $ACTIVE_INTERIOR == 0
+    $INT_ENTERING_FLAG == 0
+        then
+        actor.StorePos(SURVIVOR_VERSUS,25@,26@,27@)
+        if
+        27@ < Z_COORD_DELETE_PED          
+            then
+            05BE: AS_actor SURVIVOR_VERSUS die
+            end
+        end
+    end     
+
+/////////////Увеличиваем таймер продолжительности атаки цели///////////////////// 
+
+if
+SURVIVOR_VERSUS_FINDED_TARGET == 1
+    then        
+    SURVIVOR_VERSUS_TARGET_TIME += 1    
+    end
+    
+/////////////Поиск цели бойцом/////////////////////    
+
+if and
+056D:   actor SURVIVOR_VERSUS defined
+SURVIVOR_VERSUS_FINDED_TARGET == 0  
+    then
+    random_int 2@ 0 $VERSUS_AGRO_MAX
+    if and
+    07D6:   2@ == $VERSUS_AGRO_SET // @ == $ (int)
+    $PLAYER_SURVIVOR_SIDE == 0
+    $PLAYER_SWAT_SIDE == 0
+    $PLAYER_FERMERS_SIDE == 0
+    not $IGNOREALL_FLAG == 1      
+        then  
+        if or
+        0364:  actor SURVIVOR_VERSUS spotted_actor PLAYER_ACTOR  
+        0364:  actor PLAYER_ACTOR spotted_actor SURVIVOR_VERSUS     
+            then
+            if and
+            $ACTOR_DEAD == 0
+            $SPECTATING_FLAG == 0
+            00F2:  actor SURVIVOR_VERSUS near_actor PLAYER_ACTOR radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0                
+                then
+                      
+                if and
+                0E4D: random_percent 50
+                0800:   in_two_players_mode
+                then
+                008B: SURVIVOR_VERSUS_TARGET = COOP_ACTOR // (int)
+                else
+                008B: SURVIVOR_VERSUS_TARGET = PLAYER_ACTOR // (int)
+                end
+                                        
+                SURVIVOR_VERSUS_FINDED_TARGET = 1
+                SURVIVOR_VERSUS_TARGET_TIME = 0
+                0568: set_actor SURVIVOR_VERSUS untargetable 0                            
+                gosub @SURVIVOR_VERSUS_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST                                                                     
+                end
+            end   
+        else   
+        gosub @SURVIVOR_VERSUS_ONFOOT_ATTACK_SYSTEM_TARGET_FIND
+        if
+        25@ == 1
+            then
+            089F: get_actor SURVIVOR_VERSUS_TARGET pedtype_to 1@           
+            if and
+            not actor.Dead(SURVIVOR_VERSUS_TARGET)            
+            803A: not  SURVIVOR_VERSUS_TARGET == SURVIVOR_VERSUS // (int)
+            not 1@ == 26
+            not 1@ == 28                  
+                then
+                if or
+                0364:  actor SURVIVOR_VERSUS spotted_actor SURVIVOR_VERSUS_TARGET
+                0364:  actor SURVIVOR_VERSUS_TARGET spotted_actor SURVIVOR_VERSUS
+                $GAMEMODE_VERSUS == 1
+                $GAMEMODE_CRAZY == 1
+                    then
+//                    0AD1: show_formatted_text_highpriority "target found, do attack" time 100                            
+                    SURVIVOR_VERSUS_FINDED_TARGET = 1
+                    SURVIVOR_VERSUS_TARGET_TIME = 0                            
+                    gosub @SURVIVOR_VERSUS_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST    
+                    end                                                                                  
+                end 
+            end
+        end               
+    end
+
+/////////////Проверка на бездействие бойца если цель НЕ найдена/////////////////////     
+
+if and
+056D:   actor SURVIVOR_VERSUS defined
+SURVIVOR_VERSUS_FINDED_TARGET == 0
+    then         
+    if
+    0184:   actor SURVIVOR_VERSUS health > 0 
+        then
+        if or
+        actor.Animation(SURVIVOR_VERSUS) == "idle_stance"
+        actor.Animation(SURVIVOR_VERSUS) == "idle_armed" 
+        actor.Animation(SURVIVOR_VERSUS) == "woman_idlestance"
+        actor.Animation(SURVIVOR_VERSUS) == "Swim_Tread"
+            then         
+            06AC: 0@ = actor SURVIVOR_VERSUS movement_speed
+            gosub @SURVIVOR_VERSUS_ATTACK_SYSTEM_FIRING_CHECK
+            if and
+            19@ == 0
+            0@ < 0.01
+            82E0: not  actor SURVIVOR_VERSUS firing_weapon 
+                then
+//                0AD1: show_formatted_text_highpriority "surv is doing nothing when target is not found" time 100
+                gosub @SURVIVOR_VERSUS_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST
+                
+                33@ = 0
+                
+                repeat
+                wait 0
+                
+                if and
+                $INFECTED_HUNTER == 1
+                $HUNTER_IN_AIR == 1
+                00F2:   actor SURVIVOR_VERSUS near_actor PLAYER_ACTOR radius 1.3 1.3 0               
+                    then
+                    if
+                    0364:   actor PLAYER_ACTOR spotted_actor SURVIVOR_VERSUS
+                        then
+                        jump @HUNTER_PEOPLE_ATTACKED
+                        end
+                    end
+                  
+                if and
+                $INFECTED_TANK == 1
+                00F2:   actor SURVIVOR_VERSUS near_actor PLAYER_ACTOR radius 1.3 1.3 0                
+                    then
+                    if
+                    0364:   actor PLAYER_ACTOR spotted_actor SURVIVOR_VERSUS
+                        then
+                        if or
+                        actor.Animation(PLAYER_ACTOR) == "FightA_1"
+                        actor.Animation(PLAYER_ACTOR) == "FightA_2"
+                        actor.Animation(PLAYER_ACTOR) == "FightA_3"
+                        actor.Animation(PLAYER_ACTOR) == "FightA_G"
+                        actor.Animation(PLAYER_ACTOR) == "FightA_M"
+                            then        
+                            jump @TANK_PEOPLE_ATTACKED
+                            end
+                        end
+                    end
+                    
+                if and
+                $INFECTED_CHARGER == 1
+                00F2:   actor SURVIVOR_VERSUS near_actor PLAYER_ACTOR radius 1.3 1.3 0                
+                    then
+                    if
+                    0364:   actor PLAYER_ACTOR spotted_actor SURVIVOR_VERSUS
+                        then
+                        if or
+                        actor.Animation(PLAYER_ACTOR) == "FightA_1"
+                        actor.Animation(PLAYER_ACTOR) == "FightA_2"
+                        actor.Animation(PLAYER_ACTOR) == "FightA_3"
+                        actor.Animation(PLAYER_ACTOR) == "FightA_G"
+                        actor.Animation(PLAYER_ACTOR) == "FightA_M"
+                            then
+                            jump @CHARGER_PEOPLE_ATTACKED
+                            end
+                        end
+                    end    
+                    
+                if and
+                $INFECTED_WITCH == 1
+                0104:   actor SURVIVOR_VERSUS near_actor PLAYER_ACTOR radius 1.3 1.3 1.3 sphere 0                
+                    then
+                    if
+                    0364:   actor PLAYER_ACTOR spotted_actor SURVIVOR_VERSUS
+                        then
+                        if or
+                        actor.Animation(PLAYER_ACTOR) == "FightA_1"
+                        actor.Animation(PLAYER_ACTOR) == "FightA_2"
+                        actor.Animation(PLAYER_ACTOR) == "FightA_3"
+                        actor.Animation(PLAYER_ACTOR) == "FightA_G"
+                        actor.Animation(PLAYER_ACTOR) == "FightA_M"
+                            then
+                            0851: set_actor SURVIVOR_VERSUS decrease_health_by 9999 affect_armour 1 
+                            09F1: play_audio_at_actor SURVIVOR_VERSUS event 1130
+                            
+                            0321: AS_actor SURVIVOR_VERSUS die_headshotted
+                            0A96: 0@ = actor SURVIVOR_VERSUS struct
+                            0@ += 0x46D
+                            0A8C: write_memory 0@ size 4 value 0xA0 virtual_protect 0
+                            0@ -= 0x46D
+                            0@ += 0x754
+                            0A8C: write_memory 0@ size 4 value 0x02 virtual_protect 0
+                            end
+                        end
+                    end
+                    
+                if and
+                COOP_ACTIVE_FLAG == 1
+                $GAMEMODE_VERSUS == 1
+                then
+                
+                if and
+                $INFECTED_HUNTER == 1
+                $HUNTER_IN_AIR2P == 1
+                00F2:   actor SURVIVOR_VERSUS near_actor COOP_ACTOR radius 1.3 1.3 0                
+                    then
+                    if
+                    0364:   actor COOP_ACTOR spotted_actor SURVIVOR_VERSUS
+                        then
+                        jump @HUNTER_PEOPLE_ATTACKED_COOP
+                        end
+                    end
+                  
+                if and
+                $INFECTED_TANK == 1
+                00F2:   actor SURVIVOR_VERSUS near_actor COOP_ACTOR radius 1.3 1.3 0                
+                    then
+                    if
+                    0364:   actor COOP_ACTOR spotted_actor SURVIVOR_VERSUS
+                        then
+                        if or
+                        actor.Animation(COOP_ACTOR) == "FightA_1"
+                        actor.Animation(COOP_ACTOR) == "FightA_2"
+                        actor.Animation(COOP_ACTOR) == "FightA_3"
+                        actor.Animation(COOP_ACTOR) == "FightA_G"
+                        actor.Animation(COOP_ACTOR) == "FightA_M"
+                            then        
+                            jump @TANK_PEOPLE_ATTACKED
+                            end
+                        end
+                    end
+                    
+                if and
+                $INFECTED_CHARGER == 1
+                00F2:   actor SURVIVOR_VERSUS near_actor COOP_ACTOR radius 1.3 1.3 0                
+                    then
+                    if
+                    0364:   actor COOP_ACTOR spotted_actor SURVIVOR_VERSUS
+                        then
+                        if or
+                        actor.Animation(COOP_ACTOR) == "FightA_1"
+                        actor.Animation(COOP_ACTOR) == "FightA_2"
+                        actor.Animation(COOP_ACTOR) == "FightA_3"
+                        actor.Animation(COOP_ACTOR) == "FightA_G"
+                        actor.Animation(COOP_ACTOR) == "FightA_M"
+                            then
+                            jump @CHARGER_PEOPLE_ATTACKED
+                            end
+                        end
+                    end    
+                    
+                if and
+                $INFECTED_WITCH == 1
+                0104:   actor SURVIVOR_VERSUS near_actor COOP_ACTOR radius 1.3 1.3 1.3 sphere 0                
+                    then
+                    if
+                    0364:   actor COOP_ACTOR spotted_actor SURVIVOR_VERSUS
+                        then
+                        if or
+                        actor.Animation(COOP_ACTOR) == "FightA_1"
+                        actor.Animation(COOP_ACTOR) == "FightA_2"
+                        actor.Animation(COOP_ACTOR) == "FightA_3"
+                        actor.Animation(COOP_ACTOR) == "FightA_G"
+                        actor.Animation(COOP_ACTOR) == "FightA_M"
+                            then
+                            0851: set_actor SURVIVOR_VERSUS decrease_health_by 9999 affect_armour 1 
+                            09F1: play_audio_at_actor SURVIVOR_VERSUS event 1130
+                            
+                            0321: AS_actor SURVIVOR_VERSUS die_headshotted
+                            0A96: 0@ = actor SURVIVOR_VERSUS struct
+                            0@ += 0x46D
+                            0A8C: write_memory 0@ size 4 value 0xA0 virtual_protect 0
+                            0@ -= 0x46D
+                            0@ += 0x754
+                            0A8C: write_memory 0@ size 4 value 0x02 virtual_protect 0
+                            end
+                        end
+                    end
+                    
+                end    
+                
+                until 33@ > 250
+                  
+//                wait 250
+                
+                end
+            end
+        end        
+    end
+    
+/////////////Проверка на бездействие бойца если цель найдена/////////////////////     
+
+if and
+056D:   actor SURVIVOR_VERSUS defined
+SURVIVOR_VERSUS_FINDED_TARGET == 1
+0E45: frame_mod 30
+    then         
+    if
+    0184:   actor SURVIVOR_VERSUS health > 0 
+        then         
+        062E: get_actor SURVIVER task 1506 status_store_to 0@ // ret 7 if not found
+        gosub @SURVIVOR_VERSUS_ATTACK_SYSTEM_FIRING_CHECK
+        if and
+        0@ == 7
+        19@ == 0 
+            then
+//            0AD1: show_formatted_text_highpriority "surv is doing nothing when target is found" time 100
+            gosub @SURVIVOR_VERSUS_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST
+            
+            33@ = 0
+            
+            repeat
+            wait 0
+            
+            if and
+            $INFECTED_HUNTER == 1
+            $HUNTER_IN_AIR == 1
+            00F2:   actor SURVIVOR_VERSUS near_actor PLAYER_ACTOR radius 1.3 1.3 0            
+                then
+                if
+                0364:   actor PLAYER_ACTOR spotted_actor SURVIVOR_VERSUS
+                    then
+                    jump @HUNTER_PEOPLE_ATTACKED
+                    end
+                end
+              
+            if and
+            $INFECTED_TANK == 1
+            00F2:   actor SURVIVOR_VERSUS near_actor PLAYER_ACTOR radius 1.3 1.3 0            
+                then
+                if
+                0364:   actor PLAYER_ACTOR spotted_actor SURVIVOR_VERSUS
+                    then
+                    if or
+                    actor.Animation(PLAYER_ACTOR) == "FightA_1"
+                    actor.Animation(PLAYER_ACTOR) == "FightA_2"
+                    actor.Animation(PLAYER_ACTOR) == "FightA_3"
+                    actor.Animation(PLAYER_ACTOR) == "FightA_G"
+                    actor.Animation(PLAYER_ACTOR) == "FightA_M"
+                        then        
+                        jump @TANK_PEOPLE_ATTACKED
+                        end
+                    end
+                end
+                
+            if and
+            $INFECTED_CHARGER == 1
+            00F2:   actor SURVIVOR_VERSUS near_actor PLAYER_ACTOR radius 1.3 1.3 0            
+                then
+                if
+                0364:   actor PLAYER_ACTOR spotted_actor SURVIVOR_VERSUS
+                    then
+                    if or   
+                    actor.Animation(PLAYER_ACTOR) == "FightA_1"
+                    actor.Animation(PLAYER_ACTOR) == "FightA_2"
+                    actor.Animation(PLAYER_ACTOR) == "FightA_3"
+                    actor.Animation(PLAYER_ACTOR) == "FightA_G"
+                    actor.Animation(PLAYER_ACTOR) == "FightA_M"
+                        then
+                        jump @CHARGER_PEOPLE_ATTACKED
+                        end
+                    end
+                end    
+                
+            if and
+            $INFECTED_WITCH == 1
+            0104:   actor SURVIVOR_VERSUS near_actor PLAYER_ACTOR radius 1.3 1.3 1.3 sphere 0            
+                then
+                if
+                0364:   actor PLAYER_ACTOR spotted_actor SURVIVOR_VERSUS
+                    then
+                    if or
+                    actor.Animation(PLAYER_ACTOR) == "FightA_1"
+                    actor.Animation(PLAYER_ACTOR) == "FightA_2"
+                    actor.Animation(PLAYER_ACTOR) == "FightA_3"
+                    actor.Animation(PLAYER_ACTOR) == "FightA_G"
+                    actor.Animation(PLAYER_ACTOR) == "FightA_M"
+                        then
+                        0851: set_actor SURVIVOR_VERSUS decrease_health_by 9999 affect_armour 1 
+                        09F1: play_audio_at_actor SURVIVOR_VERSUS event 1130
+                        
+                        0321: AS_actor SURVIVOR_VERSUS die_headshotted
+                        0A96: 0@ = actor SURVIVOR_VERSUS struct
+                        0@ += 0x46D
+                        0A8C: write_memory 0@ size 4 value 0xA0 virtual_protect 0
+                        0@ -= 0x46D
+                        0@ += 0x754
+                        0A8C: write_memory 0@ size 4 value 0x02 virtual_protect 0
+                        end
+                    end
+                end
+                
+            if and
+            COOP_ACTIVE_FLAG == 1
+            $GAMEMODE_VERSUS == 1
+            then
+            
+            if and
+            $INFECTED_HUNTER == 1
+            $HUNTER_IN_AIR2P == 1
+            00F2:   actor SURVIVOR_VERSUS near_actor COOP_ACTOR radius 1.3 1.3 0            
+                then
+                if
+                0364:   actor COOP_ACTOR spotted_actor SURVIVOR_VERSUS
+                    then
+                    jump @HUNTER_PEOPLE_ATTACKED_COOP
+                    end
+                end
+              
+            if and
+            $INFECTED_TANK == 1
+            00F2:   actor SURVIVOR_VERSUS near_actor COOP_ACTOR radius 1.3 1.3 0            
+                then
+                if
+                0364:   actor COOP_ACTOR spotted_actor SURVIVOR_VERSUS
+                    then
+                    if or
+                    actor.Animation(COOP_ACTOR) == "FightA_1"
+                    actor.Animation(COOP_ACTOR) == "FightA_2"
+                    actor.Animation(COOP_ACTOR) == "FightA_3"
+                    actor.Animation(COOP_ACTOR) == "FightA_G"
+                    actor.Animation(COOP_ACTOR) == "FightA_M"
+                        then        
+                        jump @TANK_PEOPLE_ATTACKED
+                        end
+                    end
+                end
+                
+            if and
+            $INFECTED_CHARGER == 1
+            00F2:   actor SURVIVOR_VERSUS near_actor COOP_ACTOR radius 1.3 1.3 0            
+                then
+                if
+                0364:   actor COOP_ACTOR spotted_actor SURVIVOR_VERSUS
+                    then
+                    if or
+                    actor.Animation(COOP_ACTOR) == "FightA_1"
+                    actor.Animation(COOP_ACTOR) == "FightA_2"
+                    actor.Animation(COOP_ACTOR) == "FightA_3"
+                    actor.Animation(COOP_ACTOR) == "FightA_G"
+                    actor.Animation(COOP_ACTOR) == "FightA_M"
+                        then
+                        jump @CHARGER_PEOPLE_ATTACKED
+                        end
+                    end
+                end    
+                
+            if and
+            $INFECTED_WITCH == 1
+            0104:   actor SURVIVOR_VERSUS near_actor COOP_ACTOR radius 1.3 1.3 1.3 sphere 0            
+                then
+                if
+                0364:   actor COOP_ACTOR spotted_actor SURVIVOR_VERSUS
+                    then
+                    if or
+                    actor.Animation(COOP_ACTOR) == "FightA_1"
+                    actor.Animation(COOP_ACTOR) == "FightA_2"
+                    actor.Animation(COOP_ACTOR) == "FightA_3"
+                    actor.Animation(COOP_ACTOR) == "FightA_G"
+                    actor.Animation(COOP_ACTOR) == "FightA_M"
+                        then
+                        0851: set_actor SURVIVOR_VERSUS decrease_health_by 9999 affect_armour 1 
+                        09F1: play_audio_at_actor SURVIVOR_VERSUS event 1130
+                        
+                        0321: AS_actor SURVIVOR_VERSUS die_headshotted
+                        0A96: 0@ = actor SURVIVOR_VERSUS struct
+                        0@ += 0x46D
+                        0A8C: write_memory 0@ size 4 value 0xA0 virtual_protect 0
+                        0@ -= 0x46D
+                        0@ += 0x754
+                        0A8C: write_memory 0@ size 4 value 0x02 virtual_protect 0
+                        end
+                    end
+                end
+                
+            end    
+            
+            until 33@ > 100
+              
+//            wait 100
+            
+            end
+        end        
+    end                    
+     
+/////////////Проверка на наличие цели атаки///////////////////// 
+
+if and
+056D:   actor SURVIVOR_VERSUS defined
+SURVIVOR_VERSUS_FINDED_TARGET == 1 
+    then    
+    if and
+    07D6:   SURVIVOR_VERSUS_TARGET == PLAYER_ACTOR // @ == $ (int)
+    $INF_SIDE == 0
+    $GAMEMODE_VERSUS == 1
+        then
+        SURVIVOR_VERSUS_FINDED_TARGET = 0
+        SURVIVOR_VERSUS_TARGET_TIME = 0
+        gosub @SURVIVOR_VERSUS_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST
+        else
+        if
+        056D:   actor SURVIVOR_VERSUS_TARGET defined
+            then 
+            if or
+            8184:   actor SURVIVOR_VERSUS_TARGET health < 1  
+            80F2: not  actor SURVIVOR_VERSUS near_actor SURVIVOR_VERSUS_TARGET radius $AI_FIND_RADIUS2 $AI_FIND_RADIUS2 sphere 0
+            SURVIVOR_VERSUS_TARGET_TIME > 300        
+                then
+//                0AD1: show_formatted_text_highpriority "do forget target" time 100
+                SURVIVOR_VERSUS_FINDED_TARGET = 0
+                SURVIVOR_VERSUS_TARGET_TIME = 0
+                gosub @SURVIVOR_VERSUS_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST  
+                end
+            else
+//            0AD1: show_formatted_text_highpriority "do forget target" time 100
+            SURVIVOR_VERSUS_FINDED_TARGET = 0
+            SURVIVOR_VERSUS_TARGET_TIME = 0
+            gosub @SURVIVOR_VERSUS_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST
+            end
+        end
+    end  
+    
+return     
+
+:SURVIVOR_VERSUS_ONFOOT_ATTACK_SYSTEM_TARGET_FIND
+
+25@ = 0
+
+if
+$GAMEMODE_VERSUS == 0
+then
+008B: 1@ = $CREATURE_RANDOM // (int)
+else
+
+random_int 1@ 0 2
+if
+1@ == 0
+then
+
+if or
+COOP_ACTIVE_FLAG == 0
+$INF_SIDE == 0
+then
+random_int 1@ 1 25
+else
+random_int 1@ 0 2
+if
+1@ == 0
+    then
+    random_int 1@ 1 25
+    else
+    008B: SURVIVOR_VERSUS_TARGET = COOP_ACTOR // (int)
+    jump to @SURVIVOR_VERSUS_SKIP_CREATURE_SHITSET
+    end
+end
+
+else
+
+random_int 1@ 0 4
+if
+1@ == 0
+    then
+    008B: SURVIVOR_VERSUS_TARGET = $TANK[0] // (int)
+    end
+    
+if
+1@ == 1
+    then
+    008B: SURVIVOR_VERSUS_TARGET = $HUNTER[0] // (int)
+    end
+    
+if
+1@ == 2
+    then
+    008B: SURVIVOR_VERSUS_TARGET = $WITCH[0] // (int)
+    end
+    
+if
+1@ == 3
+    then
+    008B: SURVIVOR_VERSUS_TARGET = $CHARGER[0] // (int)
+    end
+jump to @SURVIVOR_VERSUS_SKIP_CREATURE_SHITSET                
+
+end
+
+end
+
+008B: SURVIVOR_VERSUS_TARGET = $CREATURE[1@] // (int)
+
+:SURVIVOR_VERSUS_SKIP_CREATURE_SHITSET
+
+if
+$GAMEMODE_CRAZY == 1
+then
+
+random_int 1@ 0 4
+if
+1@ == 0
+    then
+    008B: 0@ = TANKS_TO_SPAWN_COUNT // (int)
+    0@ += 1
+    random_int 1@ 0 0@
+    008B: SURVIVOR_VERSUS_TARGET = $TANK[1@] // (int)
+    end
+    
+if
+1@ == 1
+    then
+    008B: 0@ = HUNTERS_TO_SPAWN_COUNT // (int)
+    0@ += 1
+    random_int 1@ 0 0@
+    008B: SURVIVOR_VERSUS_TARGET = $HUNTER[1@] // (int)
+    end
+    
+if
+1@ == 2
+    then
+    008B: 0@ = WITCHES_TO_SPAWN_COUNT // (int)
+    0@ += 1
+    random_int 1@ 0 0@
+    008B: SURVIVOR_VERSUS_TARGET = $WITCH[1@] // (int)
+    end
+    
+if
+1@ == 3
+    then
+    008B: 0@ = CHARGERS_TO_SPAWN_COUNT // (int)
+    0@ += 1
+    random_int 1@ 0 0@
+    008B: SURVIVOR_VERSUS_TARGET = $CHARGER[1@] // (int)
+    end            
+
+end        
+
+if and
+056D:   actor SURVIVOR_VERSUS_TARGET defined
+not 1@ == PLAYER_CREATURE_NUMBER
+    then      
+    if
+    00F2:   actor SURVIVOR_VERSUS near_actor SURVIVOR_VERSUS_TARGET radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+        then         
+        25@ = 1
+        end
+    end
+
+return           
+           
+:SURVIVOR_VERSUS_ATTACK_SYSTEM_CHECK_ATTACK_TARGET_EXSIST 
+
+gosub @SURVIVOR_VERSUS_ATTACK_SYSTEM_FIRING_CHECK
+
+if or
+02E0:   actor SURVIVOR_VERSUS firing_weapon 
+19@ == 1
+    then
+//    0AD1: show_formatted_text_highpriority "do check for attack cancel" time 100
+    return
+    end
+
+if 
+SURVIVOR_VERSUS_FINDED_TARGET == 1
+    then            
+    0687: clear_actor SURVIVOR_VERSUS task
+    wait 100
+    if
+    056D:   actor SURVIVOR_VERSUS_TARGET defined 
+        then
+        05E2: AS_actor SURVIVOR_VERSUS kill_actor SURVIVOR_VERSUS_TARGET
+//        0AD1: show_formatted_text_highpriority "do attack" time 100
+        Actor.SetWalkStyle(SURVIVOR_VERSUS, "surv5")                                                            
+        actor.StorePos(SURVIVOR_VERSUS,1@,2@,3@)
+        actor.StorePos(SURVIVOR_VERSUS_TARGET,27@,28@,29@)                                                                                       
+                
+        050A: 25@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 27@ 28@ 29@
+        0092: 25@ = float 25@ to_integer
+                
+        5@ = 150
+                
+        if
+        25@ > 100
+        then
+        25@ = 100
+        end
+                
+        0062: 5@ -= 25@  // (int)
+                
+        if
+        5@ < 10
+        then
+        5@ = 10
+        end                        
+                
+        07DD: set_actor SURVIVOR_VERSUS attack_rate 5@                                     
+        return           
+        end
+    else
+    0687: clear_actor SURVIVOR_VERSUS task
+    wait 100
+    if
+    056D:   actor SURVIVOR_VERSUS defined 
+        then
+        
+//        0AD1: show_formatted_text_highpriority "do walk" time 100
+        
+        if and
+        $GAMEMODE_VERSUS == 0
+        $GAMEMODE_CRAZY == 0
+        $GAMEMODE_WAR == 0
+        then 
+        Actor.SetWalkStyle(SURVIVOR_VERSUS, "gang2")
+        else
+        Actor.SetWalkStyle(SURVIVOR_VERSUS, "surv5")
+        end
+
+        actor.StorePos(SURVIVOR_VERSUS,1@,2@,3@)
+        02C0: store_to 26@ 27@ 28@ ped_path_coords_closest_to 1@ 2@ 3@
+        0509: 30@ = distance_between_XY 1@ 2@ and_XY 26@ 27@
+            
+        if
+        30@ < AI_CAR_PATH_WALK_RADIUS
+        then                                        
+        05DE: AS_actor SURVIVOR_VERSUS walk_around_ped_path
+        else
+        random_float 30@ 30.0 100.0                                                                       
+        04C4: store_coords_to 1@ 2@ 3@ from_actor SURVIVOR_VERSUS with_offset 0.0 30@ 0.0
+        02C1: store_to 26@ 27@ 28@ car_path_coords_closest_to 1@ 2@ 3@
+        
+        if
+        84AD: not  actor SURVIVOR_VERSUS in_water
+        then
+        05D3: AS_actor SURVIVOR_VERSUS goto_point 26@ 27@ 28@ mode 7 time ROAD_WALK_TIME ms // versionA
+        else
+        07E1: AS_actor SURVIVOR_VERSUS swim_to 26@ 27@ 28@
+        end
+        
+        end
+
+        return
+        end
+    end  
+    
+return   
+
+//:SURVIVOR_VERSUS_WALK 
+//wait 0
+//
+//if
+//32@ > 200
+//    then
+//    random_float 26@ 0.0 360.0  
+//    05D4: AS_actor SURVIVOR_VERSUS rotate_angle 26@  
+//    return
+//    end
+//
+//0208: 27@ = random_float_in_ranges -10.0 10.1
+//0208: 28@ = random_float_in_ranges 10.0 30.1  
+//
+//04C4: store_coords_to 27@ 28@ 29@ from_actor SURVIVOR_VERSUS with_offset 27@ 28@ 0.0
+//02C1: store_to 27@ 28@ 29@ car_path_coords_closest_to 27@ 28@ 29@
+//
+//actor.StorePos(SURVIVOR_VERSUS,2@,3@,4@)
+//050A: 30@ = distance_between_XYZ 2@ 3@ 4@ and_XYZ 27@ 28@ 29@ 
+//008E: 30@ = float 30@ to_integer
+//if and
+//30@ > 5 
+//not 30@ > 100
+//jf @SURVIVOR_VERSUS_WALK 
+//
+//if 
+//056D:   actor SURVIVOR_VERSUS defined 
+//    then                     
+//    0687: clear_actor SURVIVOR_VERSUS task
+//    wait 10
+//    05D3: AS_actor SURVIVOR_VERSUS goto_point 27@ 28@ 29@ mode 4 time 90000 ms    
+//    end
+
+:SURVIVOR_VERSUS_ATTACK_SYSTEM_FIRING_CHECK
+19@ = 0
+
+if and
+not actor.Animation(SURVIVOR_VERSUS) == "colt45_fire_2hands"
+not actor.Animation(SURVIVOR_VERSUS) == "python_fire" 
+not actor.Animation(SURVIVOR_VERSUS) == "shotgun_fire" 
+not actor.Animation(SURVIVOR_VERSUS) == "buddy_fire" 
+not actor.Animation(SURVIVOR_VERSUS) == "UZI_fire"
+not actor.Animation(SURVIVOR_VERSUS) == "RIFLE_fire" 
+jf @SURVIVOR_VERSUS_ATTACK_SYSTEM_FIRING_CHECK2  
+
+if and
+not actor.Animation(SURVIVOR_VERSUS) == "FLAME_fire" 
+not actor.Animation(SURVIVOR_VERSUS) == "RocketFire" 
+not actor.Animation(SURVIVOR_VERSUS) == "WEAPON_sniper" 
+not actor.Animation(SURVIVOR_VERSUS) == "WEAPON_throw"
+not actor.Animation(SURVIVOR_VERSUS) == "WEAPON_throwu"
+not actor.Animation(SURVIVOR_VERSUS) == "WEAPON_start_throw"  
+jf @SURVIVOR_VERSUS_ATTACK_SYSTEM_FIRING_CHECK2  
+     
+if and
+not actor.Animation(SURVIVOR_VERSUS) == "colt45_crouchfire"
+not actor.Animation(SURVIVOR_VERSUS) == "python_crouchfire" 
+not actor.Animation(SURVIVOR_VERSUS) == "shotgun_crouchfire" 
+not actor.Animation(SURVIVOR_VERSUS) == "buddy_crouchfire" 
+not actor.Animation(SURVIVOR_VERSUS) == "UZI_crouchfire"
+not actor.Animation(SURVIVOR_VERSUS) == "RIFLE_crouchfire" 
+jf @SURVIVOR_VERSUS_ATTACK_SYSTEM_FIRING_CHECK2
+
+if and
+not actor.Animation(SURVIVOR_VERSUS) == "colt45_reload"
+not actor.Animation(SURVIVOR_VERSUS) == "python_reload" 
+not actor.Animation(SURVIVOR_VERSUS) == "shotgun_reload" 
+not actor.Animation(SURVIVOR_VERSUS) == "buddy_reload" 
+not actor.Animation(SURVIVOR_VERSUS) == "UZI_reload"
+not actor.Animation(SURVIVOR_VERSUS) == "RIFLE_load" 
+not actor.Animation(SURVIVOR_VERSUS) == "gas_cwr"
+jf @SURVIVOR_VERSUS_ATTACK_SYSTEM_FIRING_CHECK2
+
+if and
+not actor.Animation(SURVIVOR_VERSUS) == "colt45_crouchreload"
+not actor.Animation(SURVIVOR_VERSUS) == "python_crouchreload" 
+not actor.Animation(SURVIVOR_VERSUS) == "shotgun_crouchreload" 
+not actor.Animation(SURVIVOR_VERSUS) == "buddy_crouchreload" 
+not actor.Animation(SURVIVOR_VERSUS) == "UZI_crouchreload"
+not actor.Animation(SURVIVOR_VERSUS) == "RIFLE_crouchload" 
+jf @SURVIVOR_VERSUS_ATTACK_SYSTEM_FIRING_CHECK2 
+
+if and
+not actor.Animation(SURVIVOR_VERSUS) == "GunMove_BWD"
+not actor.Animation(SURVIVOR_VERSUS) == "GunMove_FWD"
+not actor.Animation(SURVIVOR_VERSUS) == "GunMove_L"
+not actor.Animation(SURVIVOR_VERSUS) == "GunMove_R"
+not actor.Animation(SURVIVOR_VERSUS) == "Gun_2_IDLE"
+not actor.Animation(SURVIVOR_VERSUS) == "GUN_BUTT"
+not actor.Animation(SURVIVOR_VERSUS) == "GUN_BUTT_crouch"
+not actor.Animation(SURVIVOR_VERSUS) == "Gun_stand" 
+jf @SURVIVOR_VERSUS_ATTACK_SYSTEM_FIRING_CHECK2
+
+if and
+not actor.Animation(SURVIVOR_VERSUS) == "walk_start"
+not actor.Animation(SURVIVOR_VERSUS) == "walk_civi"
+not actor.Animation(SURVIVOR_VERSUS) == "run_civi"            
+not actor.Animation(SURVIVOR_VERSUS) == "swat_run"
+not actor.Animation(SURVIVOR_VERSUS) == "sprint_civi"
+not actor.Animation(SURVIVOR_VERSUS) == "BOM_PLANT"
+not actor.Animation(SURVIVOR_VERSUS) == "EAT_BURGER" 
+jf @SURVIVOR_VERSUS_ATTACK_SYSTEM_FIRING_CHECK2 
+  
+return
+
+:SURVIVOR_VERSUS_ATTACK_SYSTEM_FIRING_CHECK2
+19@ = 1
+return               
+
+:PEOPLE_DELETE_SAVE
+
+if
+075C:   marker 21@ enabled
+then
+marker.Disable(21@)
+end
+
+actor.DestroyWithFade(SURVIVOR_VERSUS)
+SURVIVOR_VERSUS = -69
+jump @PEOPLE_SPAWN_CHECK
+
+:PEOPLE_DELETE
+
+create_thread @ANTKUKL SURVIVOR_VERSUS    
+
+if
+075C:   marker 21@ enabled
+then
+marker.Disable(21@)
+end
+
+if or
+$FREEMODE == 1
+$GAMEMODE_WAR == 1
+then
+
+if
+$GAMEMODE_WAR == 0
+then
+$SURV_PROCENT -= SURV_USUAL_PROCENT_MINUS
+else
+
+if
+UNITED_MAP == 0
+then
+$SURV_PROCENT -= SURV_USUAL_PROCENT_MINUS_WAR
+else
+$SURV_PROCENT -= SURV_USUAL_PROCENT_MINUS_WAR_UNITED
+end
+
+end
+
+end
+
+$INFECTED_SCORE += 2
+
+0A96: 0@ = actor SURVIVOR_VERSUS struct
+0A8E: 0@ = 0@ + 0x764
+0A8D: 1@ = read_memory 0@ size 2 virtual_protect 1
+0A8D: 2@ = read_memory 0xB6F5F0 size 2 virtual_protect 1                    
+
+if
+0800:   in_two_players_mode
+then
+0A8D: 0@ = read_memory 0xB7CF28 size 2 virtual_protect 1
+else
+0@ = -69
+end
+        
+if or
+003B:   1@ == 2@  // (int)
+003B:   1@ == 0@  // (int)
+$GAMEMODE_VERSUS == 1
+then
+$INF_PEOPLE_KILLED += 1
+end   
+
+0A96: 0@ = actor SURVIVOR_VERSUS struct
+0@ += 0x754
+0A8D: 1@ = read_memory 0@ size 4 virtual_protect 0
+2@ = 0    
+0ECE: get_time_char_is_dead SURVIVOR_VERSUS store_to 2@
+
+if and
+0104:   actor SURVIVOR_VERSUS near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0
+89A8: not  actor SURVIVOR_VERSUS headshoted 
+$SPECTATING_FLAG == 0
+$SCREWHUD_FLAG == 0 
+SURVIVOR_VERSUS_CAN_TALK == 1
+not 1@ == 0x02
+2@ > 500    
+    then
+    gosub @RANDOM_DIALOG_DEAD_SURV_VERSUS   
+        
+    v$2NAME3 = "GAME153"
+                    
+    09FD: get_gxt_string v$PHRASE3 width_to 3@
+    0093: 3@ = integer 3@ to_float
+    3@ *= 8.0
+    0092: 3@ = float 3@ to_integer  
+                    
+    0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 3@ 1            
+    end        
+
+wait 1000
+actor.RemoveReferences(SURVIVOR_VERSUS)
+SURVIVOR_VERSUS = -69
+jump @PEOPLE_SPAWN_CHECK
+
+:PEOPLE_COORD_SET
+wait 0
+0208: 27@ = random_float_in_ranges 100.0 -100.0 
+0208: 28@ = random_float_in_ranges -100.0 100.0   
+04C4: store_coords_to 2@ 3@ 4@ from_actor PLAYER_ACTOR with_offset 27@ 28@ 0.0 
+02CE: 4@ = ground_z_at 2@ 3@ 4@
+
+if and
+$GAMEMODE_CRAZY == 1
+SNOW_ADDON_INSTALLED_FLAG == 1
+then
+//ice ass skip
+else
+
+if
+UNITED_MAP == 0
+then
+
+if
+80A4: not  actor PLAYER_ACTOR sphere 0 in_cube_cornerA 860.55 1031.71 -100.0 cornerB 337.24 710.84 0.0
+then
+
+if
+not QUEST_NEST_NUMBER == 15
+then
+if
+4@ > 0.25
+jf @PEOPLE_COORD_SET
+end
+
+end
+
+else
+if
+4@ > 0.25
+jf @PEOPLE_COORD_SET
+end
+
+end
+ 
+if and
+8AE2: 30@ = random_vehicle_near_point 2@ 3@ 4@ in_radius 10.0 find_next 0 pass_wrecked 1 //IF and SET
+8AE1: 31@ = random_actor_near_point 2@ 3@ 4@ in_radius 5.0 find_next 0 pass_deads 0 //IF and SET 
+jf @PEOPLE_COORD_SET
+Actor.StorePos(PLAYER_ACTOR, 27@, 28@, 29@)
+050A: 30@ = distance_between_XYZ 27@ 28@ 4@ and_XYZ 27@ 28@ 29@ 
+0092: 30@ = float 30@ to_integer
+if
+not 30@ > 2
+jf @PEOPLE_COORD_SET
+Actor.StorePos(PLAYER_ACTOR, 27@, 28@, 29@)
+050A: 30@ = distance_between_XYZ 2@ 3@ 4@ and_XYZ 27@ 28@ 29@ 
+0092: 30@ = float 30@ to_integer
+if and
+30@ > 90 
+not 30@ > 120
+jf @PEOPLE_COORD_SET
+
+if and
+$GAMEMODE_CRAZY == 1
+SNOW_ADDON_INSTALLED_FLAG == 1
+then
+//ice ass skip
+else
+
+if
+UNITED_MAP == 0
+then
+if or
+not 4@ < 0.0
+00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA 860.55 1031.71 -100.0 cornerB 337.24 710.84 0.0
+jf @PEOPLE_COORD_SET
+else
+if
+not 4@ < 0.0
+jf @PEOPLE_COORD_SET
+end
+
+end
+
+if and
+8AE2: 30@ = random_vehicle_near_point 2@ 3@ 4@ in_radius 10.0 find_next 0 pass_wrecked 1 //IF and SET
+8AE1: 31@ = random_actor_near_point 2@ 3@ 4@ in_radius 5.0 find_next 0 pass_deads 0 //IF and SET 
+jf @PEOPLE_COORD_SET
+
+if
+$GAMEMODE_WAR == 1
+then
+
+gosub @PEOPLE_SPAWN_ZONE_CHECK
+
+if
+6@ == 1
+jf @PEOPLE_COORD_SET
+
+end
+
+return
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:PEOPLE_SPAWN_ZONE_CHECK
+
+6@ = 1
+
+{$INCLUDE zone_check/Versus Survivors Spawn Zone Check.txt}
+
+return
+
+:2RANDOM_PEOPLE1_WEAPON_CREATE
+wait 0 
+
+if
+UNITED_MAP == 0
+then
+random_int 11@ MIN_WEAP_GEN to MAX_WEAP_GEN
+end
+
+if
+not 11@ == WEAP_GEN_SET
+then
+0209: 10@ = random_int_in_ranges 22 35 
+else
+0209: 10@ = random_int_in_ranges MIN_WEAPON_NUM MAX_WEAPON_NUM
+end
+
+if
+UNITED_MAP == 1
+then
+
+if 
+$UNITED_VC_FLAG == 1
+then
+
+if
+STORIES_MAP == 0
+then
+0209: 10@ = random_int_in_ranges MINID_VC_WEAP MAXID_VC_WEAP
+
+if
+10@ == 142
+    then
+    if
+    0E4D: random_percent 50
+        then
+        10@ = 28
+        end
+    end
+
+else
+0209: 10@ = random_int_in_ranges MINID_VCS_WEAP MAXID_VCS_WEAP
+
+if
+10@ == 198
+    then    
+    if
+    0E4D: random_percent 50
+        then
+        10@ = 28
+        end    
+    end
+
+end
+
+else
+
+if
+STORIES_MAP == 0
+then
+0209: 10@ = random_int_in_ranges MINID_III_WEAP MAXID_III_WEAP
+else
+0209: 10@ = random_int_in_ranges MINID_LCS_WEAP MAXID_LCS_WEAP
+
+if
+10@ == 168
+    then
+    if
+    0E4D: random_percent 50
+        then
+        10@ = 28
+        end
+    end
+
+end
+
+end
+
+end    
+
+////////////////////////////////////////////////////
+
+if or
+10@ == 22
+10@ == 25
+10@ == 26
+10@ == 27
+10@ == 28
+10@ == 29
+10@ == 30 
+    then
+    else
+    if or
+    10@ == 31
+    10@ == 72
+    10@ == 73
+    10@ == 74
+    10@ == 75 
+        then
+        else
+        if or
+        10@ == 76
+        10@ == 77
+        10@ == 136
+        10@ == 138
+        10@ == 139
+        10@ == 140
+            then     
+            else
+            if or
+            10@ == 141
+            10@ == 142
+            10@ == 143
+            10@ == 144
+            10@ == 145
+                then
+                else
+                if or
+                10@ == 111
+                10@ == 112
+                10@ == 113
+                10@ == 116
+                10@ == 117  
+                10@ == 79
+                    then
+                    else
+                    if or
+                    10@ == 81
+                    10@ == 82
+                    10@ == 83
+                    10@ == 84
+                    10@ == 85
+                    10@ == 86  
+                    10@ == 87
+                    10@ == 88
+                        then
+                        else
+                        if or
+                        10@ == 89
+                        10@ == 90
+                        10@ == 91
+                        10@ == 23
+                        10@ == 32
+                            then
+                            else
+                            if or
+                            10@ == 165
+                            10@ == 166
+                            10@ == 167
+                            10@ == 168
+                            10@ == 169
+                            10@ == 170
+                            10@ == 171
+                            10@ == 172
+                                then
+                                else
+                                if or
+                                10@ == 173
+                                10@ == 174
+                                10@ == 195
+                                10@ == 196
+                                10@ == 197
+                                10@ == 198
+                                    then
+                                    else
+                                    if or
+                                    10@ == 199
+                                    10@ == 200
+                                    10@ == 201
+                                    10@ == 202
+                                    10@ == 203
+                                    10@ == 204
+                                        then       
+                                        else
+                                        if or
+                                        10@ == 95
+                                        10@ == 98
+                                        10@ == 99
+                                        10@ == 101
+                                            then
+                                            else       
+                                            if or
+                                            10@ == 104
+                                            10@ == 105
+                                                then       
+                                                else
+                                                jump to @2RANDOM_PEOPLE1_WEAPON_CREATE
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+////////////////////////////////////////////////////    
+  
+0781: get_weapon_with_ID 10@ model_to 11@ 
+if 
+07DE:   model 11@ exists // versionB 
+jf @2RANDOM_PEOPLE1_WEAPON_CREATE
+
+while not model.Available(11@)
+wait 0
+model.Load(11@)
+end
+
+Actor.GiveWeaponAndAmmo(SURVIVOR_VERSUS, 10@, 99999)
+return
+
+:2RANDOM_PEOPLE1_WEAPON_CREATE_CRAZY
+wait 0 
+
+if
+UNITED_MAP == 0
+then
+random_int 11@ MIN_WEAP_GEN to MAX_WEAP_GEN
+end
+
+if
+not 11@ == WEAP_GEN_SET
+then
+0209: 10@ = random_int_in_ranges 35 39 
+else
+0209: 10@ = random_int_in_ranges MIN_WEAPON_NUM MAX_WEAPON_NUM
+end
+
+if
+UNITED_MAP == 1
+then
+
+if 
+$UNITED_VC_FLAG == 1
+then
+
+if
+STORIES_MAP == 0
+then
+0209: 10@ = random_int_in_ranges MINID_VC_WEAP 151
+else
+0209: 10@ = random_int_in_ranges MINID_VCS_WEAP 214
+end
+
+else
+
+if
+STORIES_MAP == 0
+then
+0209: 10@ = random_int_in_ranges MINID_III_WEAP 121
+else
+0209: 10@ = random_int_in_ranges MINID_LCS_WEAP 184
+end
+
+end
+
+end    
+
+////////////////////////////////////////////////////
+
+if or
+10@ == 38
+10@ == 70
+10@ == 80
+10@ == 94
+10@ == 96
+10@ == 97 
+    then
+    else
+    if or
+    10@ == 116
+    10@ == 120
+    10@ == 147
+    10@ == 149
+    10@ == 150 
+        then
+        else
+        if or
+        10@ == 176
+        10@ == 181
+        10@ == 182
+            then     
+            else
+            if or
+            10@ == 206
+            10@ == 211
+            10@ == 212
+                then
+                else
+                jump to @2RANDOM_PEOPLE1_WEAPON_CREATE_CRAZY                
+                end
+            end
+        end
+    end
+    
+////////////////////////////////////////////////////    
+  
+0781: get_weapon_with_ID 10@ model_to 11@ 
+if 
+07DE:   model 11@ exists // versionB 
+jf @2RANDOM_PEOPLE1_WEAPON_CREATE_CRAZY
+
+while not model.Available(11@)
+wait 0
+model.Load(11@)
+end
+
+Actor.GiveWeaponAndAmmo(SURVIVOR_VERSUS, 10@, 99999)
+return
+
+////////////////////////Вычисление модели////////////////////////
+
+:2RANDOM_PEOPLE1_CHECKING_MODEL
+wait 0
+
+//////////////////////////////////////////////////
+    
+random_int 1@ = MIN_SKIN_GEN MAX_SKIN_GEN
+if and
+1@ == SKIN_GEN_SET
+UNITED_MAP == 0
+    then
+    
+    while true
+    wait 0
+    
+    if
+    0E4D: random_percent NEWSKINS2_GEN_PERCENT
+    then
+    random_int 1@ $MIN_SKIN2 $MAX_SKIN2
+    else
+    random_int 1@ $MIN_SKIN $MAX_SKIN
+    end
+    
+    if
+    not model.Available(1@)
+    then
+    model.Load(1@)
+    mload
+    end
+    
+    if 
+    003C:   $RANDOM_MODE_MODEL == 1@  // (int)
+        then
+        else   
+        break
+        end
+    
+    end
+    
+    return
+    end
+    
+//////////////////////////////////////////////////
+
+random_int 1@ = MIN_SKIN_GEN MAX_SKIN_GEN
+if and
+1@ == SKIN_GEN_SET
+$GAMEMODE_CRAZY == 1
+    then
+    
+    while true
+    wait 0    
+    
+    //////////////////////////////////////////////////////////////////////////////////////
+    
+    if
+    UNITED_MAP == 0
+    then
+    0AF0: 0@ = get_int_from_ini_file "data/otherskins.ini" section "INFO" key "MAX"
+    0@ += 1
+    random_int 6@ 1 0@
+    0AD3: 5@v = format "%d" 6@
+    0AF0: 1@ = get_int_from_ini_file "data/otherskins.ini" section "SKINS" key 5@v
+    else
+    
+    if
+    STORIES_MAP == 0
+    then
+    
+    if
+    $UNITED_VC_FLAG == 0
+    then
+    0AF0: 0@ = get_int_from_ini_file "data/otherskins1.ini" section "INFO" key "MAX"
+    0@ += 1
+    random_int 6@ 1 0@
+    0AD3: 5@v = format "%d" 6@
+    0AF0: 1@ = get_int_from_ini_file "data/otherskins1.ini" section "SKINS" key 5@v
+    else
+    0AF0: 0@ = get_int_from_ini_file "data/otherskins2.ini" section "INFO" key "MAX"
+    0@ += 1
+    random_int 6@ 1 0@
+    0AD3: 5@v = format "%d" 6@
+    0AF0: 1@ = get_int_from_ini_file "data/otherskins2.ini" section "SKINS" key 5@v
+    end
+    
+    else
+    
+    if
+    $UNITED_VC_FLAG == 0
+    then
+    0AF0: 0@ = get_int_from_ini_file "data/otherskins4.ini" section "INFO" key "MAX"
+    0@ += 1
+    random_int 6@ 1 0@
+    0AD3: 5@v = format "%d" 6@
+    0AF0: 1@ = get_int_from_ini_file "data/otherskins4.ini" section "SKINS" key 5@v
+    else
+    0AF0: 0@ = get_int_from_ini_file "data/otherskins5.ini" section "INFO" key "MAX"
+    0@ += 1
+    random_int 6@ 1 0@
+    0AD3: 5@v = format "%d" 6@
+    0AF0: 1@ = get_int_from_ini_file "data/otherskins5.ini" section "SKINS" key 5@v
+    end
+    
+    end
+    
+    end
+    
+    //////////////////////////////////////////////////////////////////////////////////////
+    
+    if
+    not model.Available(1@)
+    then
+    model.Load(1@)
+    mload
+    end
+    
+    if 
+    003C:   $RANDOM_MODE_MODEL == 1@  // (int)
+        then
+        else   
+        break
+        end
+    
+    end
+    
+    return
+    end
+    
+//////////////////////////////////////////////////    
+
+if
+UNITED_MAP == 0
+then
+0209: 1@ = random_int_in_ranges 7 285
+else
+
+if
+$UNITED_VC_FLAG == 1
+then
+
+if
+STORIES_MAP == 0
+then
+0209: 1@ = random_int_in_ranges MINID_VC_SKIN MAXID_VC_SKIN
+else
+0209: 1@ = random_int_in_ranges MINID_VCS_SKIN MAXID_VCS_SKIN
+end
+
+else
+
+if
+STORIES_MAP == 0
+then
+0209: 1@ = random_int_in_ranges MINID_III_SKIN MAXID_III_SKIN
+else
+0209: 1@ = random_int_in_ranges MINID_LCS_SKIN MAXID_LCS_SKIN
+end
+
+end
+
+end
+
+if
+003C:   $RANDOM_MODE_MODEL == 1@  // (int)
+jf @2RANDOM_PEOPLE1_CHECKING_MODEL2
+jump @2RANDOM_PEOPLE1_CHECKING_MODEL
+
+:2RANDOM_PEOPLE1_CHECKING_MODEL2
+ 
+if
+07DE:   model 1@ exists
+jf @2RANDOM_PEOPLE1_CHECKING_MODEL
+
+0AD3: 5@v = format "%d" 1@
+0AF0: 6@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key 5@v
+if or
+not 6@ == 1
+$GAMEMODE_CRAZY == 1
+jf @2RANDOM_PEOPLE1_CHECKING_MODEL
+
+if
+not model.Available(1@)
+then
+model.Load(1@)
+mload
+end
+
+return
+
+////////////////////////////////////////////////////////         
+
+:RANDOM_DIALOG_DAMAGED_BY_WEAPON_SURV_VERSUS
+
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH3_"
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH3_"
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return
+
+////////////////////////////////////////////////////////
+
+:RANDOM_DIALOG_DAMAGED_BY_ZOMBIES_SURV_VERSUS
+    
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH6_"
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH6_"
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return
+
+////////////////////////////////////////////////////////
+
+:RANDOM_DIALOG_ATTACK_SURV_VERSUS
+    
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH13_"
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH13_"
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return
+
+////////////////////////////////////////////////////////  
+
+:RANDOM_DIALOG_DEAD_SURV_VERSUS
+    
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH1_"
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH1_"
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return
+
+////////////////////////////////////////////////////////
+
+:RANDOM_DIALOG_GRENADE_SURV_VERSUS
+    
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH7_"
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then   
+    1@ += 1 
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH7_"
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return
+
+////////////////////////////////////////////////////////
+
+:RANDOM_DIALOG_HUNTER_SURV_VERSUS
+    
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH8_"
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+v$PHRASE1 = "PH8_"
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return
+
+/////////////////////Союзники атакуют марадеров которых увидили///////////////
+
+:RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE1
+
+if
+$GAMEMODE_WAR == 0
+then
+else
+
+if or
+$PLAYER_FERMERS_SIDE == 1
+$PLAYER_SWAT_SIDE == 1
+then
+return
+end
+
+end
+
+092B: 3@ = group PLAYER_GROUP member 0@
+
+if
+07D6:   3@ == COOP_ACTOR // @ == $ (int)
+then
+return
+end
+
+if
+056D:  actor 3@ defined
+jf @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_BEGIN
+
+if
+056D:   actor SURVIVOR_VERSUS defined
+jf @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_BEGIN    
+
+if
+056D:   actor 3@ defined
+jf @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_BEGIN
+
+if
+$MISSION14_ACTIVE == 1
+    then
+    if
+    not 0@ == 1
+    jf @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_BEGIN
+    end
+    
+if
+$QUEST_TYPE == 9
+    then
+    if
+    87D6: not  3@ == $VERSUS_PEOPLE[1] // @ == $ (int)
+    jf @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_BEGIN
+    end
+
+if or
+00DF:   actor 3@ driving
+0449:   actor 3@ in_a_car
+    then
+    if
+    $HUNTER_ON_PLAYER == 0
+    //$PEOPLE_DONT_ATTACK == 0
+    //$COMMAND_STAY_IN_CAR == 0
+        then                     
+        gosub @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_IN_CAR
+        end
+    end 
+
+if and 
+not actor.Driving(PLAYER_ACTOR)
+$RANDOM_CAR_FLAG == 0  
+89DE:   actor 3@ entering_car  
+80DF:   actor 3@ in_a_car
+jf @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_BEGIN
+if
+00F2:   actor 3@ near_actor SURVIVOR_VERSUS radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+jf @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_BEGIN
+if and
+$HUNTER_ON_PLAYER == 0
+$PEOPLE_DONT_ATTACK == 0
+$COMMAND_STAY_IN_CAR == 0
+jf @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_BEGIN
+if
+not actor.Animation(3@) == "FLOOR_hit"
+jf @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_BEGIN
+if
+$HUNTER_ON_GROUP == 0
+jf @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_BEGIN  
+if
+044B:   actor 3@ on_foot
+jf @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_BEGIN  
+if
+82E0: not actor 3@ firing_weapon
+jf @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_BEGIN
+062E: get_actor 3@ task 1506 status_store_to 1@ // ret 7 if not found
+if 
+1@ == 7
+jf @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_BEGIN  
+if and
+not actor.Animation(3@) == "colt45_fire_2hands"
+not actor.Animation(3@) == "python_fire" 
+not actor.Animation(3@) == "shotgun_fire" 
+not actor.Animation(3@) == "buddy_fire" 
+not actor.Animation(3@) == "UZI_fire"
+not actor.Animation(3@) == "RIFLE_fire" 
+jf @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_BEGIN  
+if and
+not actor.Animation(3@) == "FLAME_fire" 
+not actor.Animation(3@) == "RocketFire" 
+not actor.Animation(3@) == "WEAPON_sniper" 
+not actor.Animation(3@) == "WEAPON_throw"
+not actor.Animation(3@) == "BOM_PLANT"   
+jf @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_BEGIN       
+if and
+not actor.Animation(3@) == "colt45_crouchfire"
+not actor.Animation(3@) == "python_crouchfire" 
+not actor.Animation(3@) == "shotgun_crouchfire" 
+not actor.Animation(3@) == "buddy_crouchfire" 
+not actor.Animation(3@) == "UZI_crouchfire"
+not actor.Animation(3@) == "RIFLE_crouchfire" 
+jf @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "colt45_reload"
+not actor.Animation(3@) == "python_reload" 
+not actor.Animation(3@) == "shotgun_reload" 
+not actor.Animation(3@) == "buddy_reload" 
+not actor.Animation(3@) == "UZI_reload"
+not actor.Animation(3@) == "RIFLE_load" 
+not actor.Animation(3@) == "gas_cwr"
+jf @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "colt45_crouchreload"
+not actor.Animation(3@) == "python_crouchreload" 
+not actor.Animation(3@) == "shotgun_crouchreload" 
+not actor.Animation(3@) == "buddy_crouchreload" 
+not actor.Animation(3@) == "UZI_crouchreload"
+not actor.Animation(3@) == "RIFLE_crouchload" 
+jf @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_BEGIN 
+if and
+not actor.Animation(3@) == "GunMove_BWD"
+not actor.Animation(3@) == "GunMove_FWD"
+not actor.Animation(3@) == "GunMove_L"
+not actor.Animation(3@) == "GunMove_R"
+not actor.Animation(3@) == "Gun_2_IDLE"
+not actor.Animation(3@) == "GUN_BUTT"
+not actor.Animation(3@) == "GUN_BUTT_crouch"
+not actor.Animation(3@) == "Gun_stand" 
+jf @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "CLIMB_idle"
+not actor.Animation(3@) == "CLIMB_jump"
+not actor.Animation(3@) == "CLIMB_jump2fall"
+not actor.Animation(3@) == "CLIMB_jump_B"
+not actor.Animation(3@) == "CLIMB_Pull"
+not actor.Animation(3@) == "CLIMB_Stand"
+not actor.Animation(3@) == "CLIMB_Stand_finish" 
+jf @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_BEGIN
+if and
+not actor.Animation(3@) == "Crouch_Roll_L"
+not actor.Animation(3@) == "Crouch_Roll_R"
+not actor.Animation(3@) == "gas_cwr"
+not actor.Animation(3@) == "getup"
+not actor.Animation(3@) == "getup_front"
+not actor.Animation(3@) == "GunCrouchBwd"
+not actor.Animation(3@) == "GunCrouchFwd"
+8E47: not is_char_fighting 3@
+jf @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_BEGIN 
+if or
+0364:   actor 3@ spotted_actor SURVIVOR_VERSUS
+0364:   actor SURVIVOR_VERSUS spotted_actor 3@
+jf @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_BEGIN 
+05C1: AS_actor 3@ speak_from_audio_table $PEOPLE_ZOMBIE_ATTACK_AUDIO_TABLE
+if
+056D:   actor 3@ defined
+jf @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_BEGIN 
+if and
+not actor.Driving(PLAYER_ACTOR)
+89DE:   actor PLAYER_ACTOR entering_car
+80DF:   actor PLAYER_ACTOR in_a_car
+80DF:   actor 3@ in_a_car
+not actor.Dead(3@)
+jf @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_BEGIN
+//0647: AS_actor 3@ clear_look_task
+//05B9: AS_actor 3@ stay_idle 50 ms 
+wait 50
+if
+056D:   actor 3@ defined  
+then
+05E2: AS_actor 3@ kill_actor SURVIVOR_VERSUS
+end
+
+jump @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_BEGIN   
+                                
+:RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_IN_CAR   
+if and
+not actor.Animation(3@) == "Gang_DrivebyLHS"
+not actor.Animation(3@) == "Gang_DrivebyLHS_Bwd"
+not actor.Animation(3@) == "Gang_DrivebyLHS_Fwd"
+not actor.Animation(3@) == "Gang_DrivebyRHS"
+not actor.Animation(3@) == "Gang_DrivebyRHS_Bwd"
+not actor.Animation(3@) == "Gang_DrivebyRHS_Fwd" 
+jf @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_IN_CAR_RETURN 
+if and
+not actor.Animation(3@) == "Gang_DrivebyTop_LHS"
+not actor.Animation(3@) == "Gang_DrivebyTop_RHS" 
+jf @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_IN_CAR_RETURN 
+if 
+00F2:   actor 3@ near_actor SURVIVOR_VERSUS radius $AI_FIND_RADIUS1 $AI_FIND_RADIUS1 sphere 0
+jf @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_IN_CAR_RETURN
+if or
+0364:   actor 3@ spotted_actor SURVIVOR_VERSUS
+0364:   actor SURVIVOR_VERSUS spotted_actor 3@
+jf @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_IN_CAR_RETURN
+
+///////////////////////////////////////////////////////////////////////////
+if and
+0@ == 0
+TEAMMATE1_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 1
+TEAMMATE2_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 2
+TEAMMATE3_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 3
+TEAMMATE4_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+if and
+0@ == 4
+TEAMMATE5_ATTACK_TIMER < TEAMMATE_ATTACK_TIMER_MAX
+    then
+    jump to @RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_IN_CAR_RETURN
+    end
+///////////////////////////////////////////////////////////////////////////
+
+if and
+8E42: not is_char_doing_task_id 3@ 243
+not $COMMAND_STAY_IN_CAR == 1
+then
+06C9: remove_actor 3@ from_group
+0631: put_actor 3@ in_group PLAYER_GROUP
+end          
+0713: actor 3@ driveby_actor SURVIVOR_VERSUS car -1 point 0.0 0.0 0.0 radius 180.0 8 1 firing_rate 360
+
+///////////////////////////////////////////////////////////////////////////
+if
+0@ == 0
+    then
+    TEAMMATE1_ATTACK_TIMER = 0
+    end
+if
+0@ == 1
+    then
+    TEAMMATE2_ATTACK_TIMER = 0
+    end
+if
+0@ == 2
+    then
+    TEAMMATE3_ATTACK_TIMER = 0
+    end
+if
+0@ == 3
+    then
+    TEAMMATE4_ATTACK_TIMER = 0
+    end
+if
+0@ == 4
+    then
+    TEAMMATE5_ATTACK_TIMER = 0
+    end
+///////////////////////////////////////////////////////////////////////////
+ 
+return       
+
+:RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_IN_CAR_RETURN
+return
+
+:RANDOM_VERSUS_PEOPLE1_ATTACK_PEOPLE_BEGIN
+return
+
+:PEPL_S_NUM_GET
+
+if
+0@ == 1
+then
+thread 'PEPL_S1'
+end
+
+if
+0@ == 2
+then
+thread 'PEPL_S2'
+end
+
+if
+0@ == 3
+then
+thread 'PEPL_S3'
+end
+
+if
+0@ == 4
+then
+thread 'PEPL_S4'
+end
+
+if
+0@ == 5
+then
+thread 'PEPL_S5'
+end
+
+if
+0@ == 6
+then
+thread 'PEPL_S6'
+end
+
+if
+0@ == 7
+then
+thread 'PEPL_S7'
+end
+
+if
+0@ == 8
+then
+thread 'PEPL_S9'
+end
+
+if
+0@ == 9
+then
+thread 'PEPLS10'
+end
+
+if
+0@ == 10
+then
+thread 'PEPLS11'
+end
+
+if
+0@ == 11
+then
+thread 'PEPLS12'
+end
+
+if
+0@ == 12
+then
+thread 'PEPLS13'
+end
+
+if
+0@ == 13
+then
+thread 'PEPLS14'
+end
+
+if
+0@ == 14
+then
+thread 'PEPLS15'
+end
+
+if
+0@ == 15
+then
+thread 'PEPLS16'
+end
+
+if
+0@ == 16
+then
+thread 'PEPLS17'
+end
+
+if
+0@ == 17
+then
+thread 'PEPLS18'
+end
+
+if
+0@ == 18
+then
+thread 'PEPLS19'
+end
+
+if
+0@ == 19
+then
+thread 'PEPLS20'
+end
+
+return

@@ -1,0 +1,248 @@
+:STRT_SV
+thread 'STRT_SV'        
+        
+:STARTER_SAVER
+wait 0
+
+if
+SURV_SECOND_WAVE_EVACUATION_STARTED == 0
+then
+0208: 27@ = random_float_in_ranges 80.0 -80.0 
+0208: 28@ = random_float_in_ranges -80.0 80.0
+04C4: store_coords_to 2@ 3@ 4@ from_actor PLAYER_ACTOR with_offset 27@ 28@ 1.0
+4@ = 0.0
+02CE: 4@ = ground_z_at 2@ 3@ 4@
+4@ += 90.0
+else
+0208: 27@ = random_float_in_ranges 500.0 -500.0 
+0208: 28@ = random_float_in_ranges -500.0 500.0
+04C4: store_coords_to 2@ 3@ 4@ from_actor PLAYER_ACTOR with_offset 27@ 28@ 1.0
+4@ = 300.0
+end
+
+:STARTER_SAVE_MODEL_LOAD
+wait 0  
+
+if
+UNITED_MAP == 0
+then
+
+:CAR_CREATE_START_SAVE_HELI
+if
+model.Available(#MAVERICK)
+then 
+10@ = car.Create(#MAVERICK,2@,3@,4@)
+0229: set_car 10@ primary_color_to 1 secondary_color_to 2
+
+if
+model.Available(#MAVERICK)
+then
+//model.Destroy(#MAVERICK)
+end
+
+else
+model.Load(#MAVERICK)
+mload
+wait 0
+jump to @CAR_CREATE_START_SAVE_HELI
+end
+
+else
+
+if
+$UNITED_VC_FLAG == 0
+then
+
+:CAR_CREATE_START_SAVE_HELI2
+if
+model.Available($III_MAVERICK_ID)
+then 
+10@ = car.Create($III_MAVERICK_ID,2@,3@,4@)
+
+if
+model.Available($III_MAVERICK_ID)
+then
+//model.Destroy($III_MAVERICK_ID)
+end
+
+else
+model.Load($III_MAVERICK_ID)
+mload
+wait 0
+jump to @CAR_CREATE_START_SAVE_HELI2
+end
+
+else
+
+:CAR_CREATE_START_SAVE_HELI3
+if
+model.Available($VC_MAVERICK_ID)
+then
+10@ = car.Create($VC_MAVERICK_ID,2@,3@,4@)
+
+if
+model.Available($VC_MAVERICK_ID)
+then
+//model.Destroy($VC_MAVERICK_ID)
+end
+
+else
+model.Load($VC_MAVERICK_ID)
+mload
+wait 0
+jump to @CAR_CREATE_START_SAVE_HELI3
+end
+
+end
+
+end
+
+random_float 5@ 0.0 360.0
+car.SetImmunities(10@,1,1,1,1,1)
+car.Angle(10@) = 5@
+0825: set_helicopter 10@ instant_rotor_start
+07BB: set_heli 10@ horizontal_thrust_power 5
+car.SetSpeedInstantly(10@,10.0)
+
+if
+UNITED_MAP == 0
+then
+
+while not model.Available(240)
+wait 0
+model.Load(240)
+mload
+end
+
+20@ = actor.CreateAsDriver(26,240,10@)
+
+if
+model.Available(240)
+then
+//model.Destroy(240)
+end
+
+else
+
+if
+$UNITED_VC_FLAG == 0
+then
+
+while not model.Available($III_SAVER_SKIN)
+wait 0
+model.Load($III_SAVER_SKIN)
+mload
+end
+
+20@ = actor.CreateAsDriver(26,$III_SAVER_SKIN,10@)
+
+if
+model.Available($III_SAVER_SKIN)
+then
+//model.Destroy($III_SAVER_SKIN)
+end
+
+else
+
+while not model.Available($VC_SAVER_SKIN)
+wait 0
+model.Load($VC_SAVER_SKIN)
+mload
+end
+
+20@ = actor.CreateAsDriver(26,$VC_SAVER_SKIN,10@)
+
+if
+model.Available($VC_SAVER_SKIN)
+then
+//model.Destroy($VC_SAVER_SKIN)
+end
+
+end
+
+end
+
+0407: store_coords_to 11@ 12@ 13@ from_car 10@ with_offset 0.0 4000.0 0.0
+04A2: set_heli 10@ fly_to 11@ 12@ 13@ altitude_between 4@ and 180.0
+wait 1000
+gosub @RANDOM_HELI_SAVER_SAY
+
+09FD: get_gxt_string v$PHRASE3 width_to 3@
+0093: 3@ = integer 3@ to_float
+3@ *= 8.0
+0092: 3@ = float 3@ to_integer  
+
+32@ = 0
+
+repeat
+wait 0                        
+0384: show_text_1string GXT v$PHRASE3 string v$2NAME3 time 3@ 1
+
+if or
+$SAVESTATUS_TRUE == 1
+$SAVESTATUS == 1
+$PANEL_OPEN == 1
+    then
+    $PHRASES_OFF_FLAG = 0
+    break
+    end
+
+until 001D:   32@ > 3@  // (int)
+
+:STARTER_SAVER_CHECK1
+wait 0
+if
+056D:   actor 20@ defined
+jf @STARTER_SAVER_NOT_DEFINED
+if and
+0104:   actor PLAYER_ACTOR near_actor 20@ radius 2000.0 2000.0 240.0 sphere 0
+$SAVESTATUS == 0
+jf @STARTER_SAVER_DELETE
+jump @STARTER_SAVER_CHECK1
+
+:STARTER_SAVER_DELETE
+actor.DestroyInstantly(20@)
+actor.RemoveReferences(20@)
+car.Destroy(10@)
+car.RemoveReferences(10@)
+end_thread
+
+:STARTER_SAVER_NOT_DEFINED
+end_thread
+
+:RANDOM_HELI_SAVER_SAY
+
+for 1@ = 0 to 200
+
+if
+SURV_SECOND_WAVE_EVACUATION_STARTED == 0
+then
+v$PHRASE1 = "PH108_" // v$ // Sunday
+else
+v$PHRASE1 = "PH134_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+09FD: get_gxt_string v$PHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 0@ 0 1@
+    end
+
+end  
+
+if
+SURV_SECOND_WAVE_EVACUATION_STARTED == 0
+then
+v$PHRASE1 = "PH108_" // v$ // Sunday
+else
+v$PHRASE1 = "PH134_" // v$ // Sunday
+end
+0AD3: v$PHRASE2 = format "%d" 0@
+098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2 // all string variables
+
+return
