@@ -1,0 +1,346 @@
+//Super Fast Teleporter by starblind94
+
+:SFTEL
+thread 'SFTEL'
+0@ = 0
+04AF: 7@ = 640.0  // @ = constant
+04AF: 8@ = 448.0  // @ = constant
+/*04AF: 25@ = 6000.0  // @ = constant GTA MAP X-SIZE
+04AF: 26@ = 6000.0  // @ = constant GTA MAP Y-SIZE*/
+//9@ = 10.0 // Size of the marker
+//0ADF: add_dynamic_GXT_entry "SFTELB1" text "Press ~k~~PED_FIREWEAPON~ on the map to teleport."
+
+:SFTEL_1
+wait 0
+if
+    Player.Defined(PLAYER_CHAR)
+jf @SFTEL_1
+if
+    not Actor.Dead(PLAYER_ACTOR)
+jf @SFTEL_1
+/*if
+    Player.Controllable(PLAYER_CHAR)
+jf @SFTEL_1*/
+if    
+    $CHEATS_ON == 1
+//    0AAB:   file_exists "models\txd\SFTEL.txd"
+jf @SFTEL_1
+if or
+    0AB0:   key_pressed 220 // \
+    0AB0:   key_pressed 226 // < or >
+jf @SFTEL_1
+if
+0AAB:   file_exists "data\sftel.ini"
+jf @SFTEL_1
+0AF0: 3@ = get_int_from_ini_file "data\sftel.ini" section "MAIN" key "Alpha"
+0AF0: 4@ = get_int_from_ini_file "data\sftel.ini" section "MAIN" key "PCanMove"
+0AF0: 20@ = get_int_from_ini_file "data\sftel.ini" section "MAIN" key "EnableHUD"
+0826: enable_hud 20@
+0AF0: 20@ = get_int_from_ini_file "data\sftel.ini" section "MAIN" key "EnableRad"
+0581: enable_radar 20@
+0AF0: 20@ = get_int_from_ini_file "data\sftel.ini" section "MAIN" key "EnableZone"
+09BA: show_entered_zone_name 20@
+0AF2: 11@ = get_float_from_ini_file "data\sftel.ini" section "MAIN" key "Size"
+11@ /= 2.0
+0AF2: 16@ = get_float_from_ini_file "data\sftel.ini" section "MAIN" key "CentreX"
+0AF2: 17@ = get_float_from_ini_file "data\sftel.ini" section "MAIN" key "CentreY"
+if
+    0@ == 0
+then
+    0087: 29@ = 16@ // (float)
+    0087: 30@ = 17@ // (float)
+    0390: load_txd_dictionary "SFTEL"
+    0AF0: 10@ = get_int_from_ini_file "config.ini" section "LAUNCHER" key "UNITED_MAP"
+    if
+    10@ == 0
+    then
+    038F: load_texture "samap" as 218 // Load dictionary with 0390 first
+    else
+    0AF0: 10@ = get_int_from_ini_file "config.ini" section "LAUNCHER" key "STORIES_MAP"
+    if
+    10@ == 0
+    then
+    038F: load_texture "samap2" as 218 // Load dictionary with 0390 first
+    else
+    038F: load_texture "samap3" as 218 // Load dictionary with 0390 first
+    end
+    end
+    038F: load_texture "mark" as 219 // Load dictionary with 0390 first
+end
+0AF2: 25@ = get_float_from_ini_file "data\sftel.ini" section "MAIN" key "GTAX" // GTA MAP X-SIZE
+0AF2: 26@ = get_float_from_ini_file "data\sftel.ini" section "MAIN" key "GTAY" // GTA MAP Y-SIZE
+0AF2: 9@ = get_float_from_ini_file "data\sftel.ini" section "MAIN" key "MSize" // Size of the marker
+0087: 5@ = 29@ // (float)
+0087: 6@ = 30@ // (float)
+0087: 12@ = 16@ // (float)
+0087: 13@ = 17@ // (float)
+0087: 14@ = 16@ // (float)
+0087: 15@ = 17@ // (float)
+005B: 12@ += 11@  // (float) // Max X
+005B: 13@ += 11@  // (float) // Max Y
+0063: 14@ -= 11@  // (float) // Min X
+0063: 15@ -= 11@  // (float) // Min Y
+11@ *= 2.0
+//0512: show_permanent_text_box "SFTELB1"  // Press ~k~~PED_FIREWEAPON~ on the map to teleport.
+03E0: draw_text_behind_textures 0
+Player.CanMove(PLAYER_CHAR) = 4@
+0AF2: 4@ = get_float_from_ini_file "data\sftel.ini" section "MAIN" key "GameSpeed"
+//015D: set_gamespeed 4@
+$17 = 1
+
+:SFTEL_2
+wait 0
+if
+    not Actor.Dead(PLAYER_ACTOR)
+jf @SFTEL_3
+if or
+    0AB0:   key_pressed 220 // \
+    0AB0:   key_pressed 226 // < or >
+jf @SFTEL_3
+03F0: enable_text_draw 1
+gosub @MAP
+0A4A: store_joystick_X_offset_to 18@ Y_offset_to 19@
+0AF2: 4@ = get_float_from_ini_file "data\sftel.ini" section "MAIN" key "Sensitivity"
+006B: 18@ *= 4@  // (float)
+006B: 19@ *= 4@  // (float)
+if
+0A4C:   mouse_not_inverted_vertically
+then
+    19@ *= -1.0
+end
+if
+    0025:   12@ > 5@  // (float) // right limit
+then
+    005B: 5@ += 18@  // (float)
+else
+    0087: 5@ = 12@ // (float)
+end
+if
+    0025:   14@ > 5@  // (float) // left limit
+then
+    0087: 5@ = 14@ // (float)
+else
+    005B: 5@ += 18@  // (float)
+end
+if
+    0025:   13@ > 6@  // (float) // lower limit
+then
+    005B: 6@ += 19@  // (float)
+else
+    0087: 6@ = 13@ // (float)
+end
+if
+    0025:   15@ > 6@  // (float) // upper limit
+then
+    0087: 6@ = 15@ // (float)
+else
+    005B: 6@ += 19@  // (float)
+end
+gosub @MARK
+if
+    00E1:   player 0 pressed_key 17
+jf @SFTEL_2
+select_interior 0
+0860: link_actor PLAYER_ACTOR to_interior 0
+0087: 29@ = 5@ // (float)
+0087: 30@ = 6@ // (float)
+//Get X
+0063: 5@ -= 14@  // (float)
+0073: 5@ /= 11@ // (float)
+006B: 5@ *= 25@  // (float)
+0087: 27@ = 25@ // (float)
+27@ /= 2.0
+0063: 5@ -= 27@  // (float)
+//Get Y
+0063: 6@ -= 15@  // (float)
+0073: 6@ /= 11@ // (float)
+006B: 6@ *= 26@  // (float)
+0087: 28@ = 26@ // (float)
+28@ /= 2.0
+0063: 6@ -= 28@  // (float)
+6@ *= -1.0
+03CB: set_rendering_origin_at 5@ 6@ 100.0
+04E4: refresh_game_renderer_at 5@ 6@
+02CE: 21@ = ground_z_at 5@ 6@ 900.0
+092E: get_water_height_at 5@ 6@ ignore_waves 0 store_to 22@
+while 21@ == 0.0
+    wait 0
+    03CB: set_rendering_origin_at 5@ 6@ 100.0
+    04E4: refresh_game_renderer_at 5@ 6@
+    02CE: 21@ = ground_z_at 5@ 6@ 900.0
+    092E: get_water_height_at 5@ 6@ ignore_waves 0 store_to 22@
+    if or
+        22@ >= 0.0
+        //00E1:   player 0 pressed_key 15 // if you are in a infinite loop
+        0AB0:   key_pressed 32 // Spacebar
+    then
+        break
+    end
+end
+0AF0: 20@ = get_int_from_ini_file "data\sftel.ini" section "MAIN" key "IgnoreW"
+if
+    20@ == 0
+then
+    092E: get_water_height_at 5@ 6@ ignore_waves 0 store_to 22@
+    if
+        0025:   22@ > 21@  // (float)
+    then
+        0087: 21@ = 22@ // (float)
+    end
+end
+if
+    not Actor.Driving(PLAYER_ACTOR)
+then
+    if
+        0A0C:   player PLAYER_CHAR on_jetpack
+    then
+        4@ = 1
+    else
+        4@ = 0
+    end
+    if
+        0A32:  actor PLAYER_ACTOR on_turret_of_car
+    then
+        0465: remove_actor PLAYER_ACTOR from_turret_mode
+    end
+    /*if or
+        $FLAG_PLAYER_IN_CRANE == 1
+        $FLAG_PLAYER_IN_CRANE == 2
+    then
+        $FLAG_PLAYER_IN_CRANE = 0
+        079F: unknown_set_game_controller_to_steer_no_crane_objects
+        0465: remove_actor PLAYER_ACTOR from_turret_mode
+        Actor.LockInCurrentPosition(PLAYER_ACTOR) = False
+        0337: set_actor PLAYER_ACTOR visibility 1 
+        0619: enable_actor PLAYER_ACTOR collision_detection 1
+        Actor.SetImmunities(PLAYER_ACTOR, 0, 0, 0, 0, 0)
+        Player.CanMove(PLAYER_CHAR) = True
+    end*/
+    if or
+        Actor.Animation(PLAYER_ACTOR) == "FALL_SKYDIVE"
+        Actor.Animation(PLAYER_ACTOR) == "FALL_SKYDIVE_R"
+        Actor.Animation(PLAYER_ACTOR) == "FALL_SKYDIVE_L"
+        Actor.Animation(PLAYER_ACTOR) == "FALL_SKYDIVE_ACCEL"
+        Actor.Animation(PLAYER_ACTOR) == "PARA_OPEN"
+        Actor.Animation(PLAYER_ACTOR) == "FALL_SKYDIVE_DIE"
+    then
+//        $FREEFALL_STAGE = 6
+        wait 0 // Neccesary to add parachute to the player
+        gosub @PARAC
+        Actor.PutAt(PLAYER_ACTOR, 5@, 6@, 21@)
+        19@ = actor.Angle(PLAYER_ACTOR)
+        0A0B: set_rendering_origin_at_3D_coord 5@ 6@ 21@ angle 19@
+//        0915: sync_weather_with_time_and_location_instantly
+        $16 = 1
+        
+        while not model.Available(#GUN_PARA)
+        wait 0
+        model.Load(#GUN_PARA)
+        mload
+        end
+        
+        Actor.GiveWeaponAndAmmo(PLAYER_ACTOR, Parachute, 1)
+        01B9: set_actor PLAYER_ACTOR armed_weapon_to 46
+    else
+        Actor.PutAt(PLAYER_ACTOR, 5@, 6@, 21@)
+        19@ = actor.Angle(PLAYER_ACTOR)
+        0A0B: set_rendering_origin_at_3D_coord 5@ 6@ 21@ angle 19@
+//        0915: sync_weather_with_time_and_location_instantly
+        $16 = 1
+    end
+    if
+        4@ == 1
+    then
+        gosub @JETPACK
+        07A7: put_jetpack_on_actor PLAYER_ACTOR
+    end
+    Camera.Restore_WithJumpCut()
+else
+    03C0: 23@ = actor PLAYER_ACTOR car
+    if and
+        09AE:   actor PLAYER_ACTOR driving_train
+        8981:   not train 23@ wrecked
+    then
+        0AF0: 20@ = get_int_from_ini_file "data\sftel.ini" section "MAIN" key "MoveTr"
+        if
+            20@ == 1
+        then
+            07C7: put_train 23@ at 5@ 6@ 21@
+            0840: link_car 23@ to_interior 0
+        else
+            0362: remove_actor PLAYER_ACTOR from_car_and_place_at 5@ 6@ 21@
+        end
+    else
+        if
+            0241:   player PLAYER_CHAR in_remote_mode
+        then
+            0484: 24@ = player PLAYER_CHAR RC_car
+            0840: link_car 24@ to_interior 0
+            Car.PutAt(24@, 5@, 6@, 21@)
+            19@ = car.Angle(24@)
+            0A0B: set_rendering_origin_at_3D_coord 5@ 6@ 21@ angle 19@
+//            0915: sync_weather_with_time_and_location_instantly
+            $16 = 1
+            //Car.RemoveReferences(24@)
+            Camera.Restore()
+        else
+            Car.PutAt(23@, 5@, 6@, 21@)
+            19@ = car.Angle(23@)
+            0A0B: set_rendering_origin_at_3D_coord 5@ 6@ 21@ angle 19@
+//            0915: sync_weather_with_time_and_location_instantly
+            $16 = 1
+            0840: link_car 23@ to_interior 0
+            //Car.RemoveReferences(23@)
+            Camera.Restore_WithJumpCut()
+        end
+    end
+end
+0687: clear_actor PLAYER_ACTOR task
+04FA: reset_sky_colors_with_fade 0
+0@ = 1
+jump @SFTEL_4
+
+:SFTEL_3
+//03E6: remove_text_box
+0@ = 0
+
+:SFTEL_4
+//03F0: enable_text_draw 0
+015D: set_gamespeed 1.0
+$17 = 0
+0826: enable_hud 1
+0581: enable_radar 1
+09BA: show_entered_zone_name 1
+if
+    0@ == 0
+then
+//    0391: release_textures
+end
+Player.CanMove(PLAYER_CHAR) = True
+jump @SFTEL_1
+
+:MAP
+03E3: set_texture_to_be_drawn_antialiased 1
+038D: draw_texture 218 position 16@ 17@ size 11@ 11@ RGBA 255 255 255 3@
+return
+
+:MARK
+03E3: set_texture_to_be_drawn_antialiased 1
+038D: draw_texture 219 position 5@ 6@ size 9@ 9@ RGBA 255 255 255 255
+return
+
+:JETPACK
+Model.Load(#JETPACK)
+038B: load_requested_models
+while not Model.Available(#JETPACK)
+wait 0
+end
+return
+
+:PARAC
+Model.Load(#GUN_PARA)
+038B: load_requested_models
+while not Model.Available(#GUN_PARA)
+wait 0
+end
+return
