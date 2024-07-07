@@ -1,0 +1,770 @@
+thread 'MAIN'       
+
+0AF1: write_int -1 to_ini_file "saves\ZACM.set" section "SCR" key "PLAYER_SPAWNED_FLAG"
+
+0662: printstring "-----------------------------"
+0662: printstring "Zombie Andreas Complete Script"
+0662: printstring "Made by BloodTiger"
+0662: printstring "This script contains some memory adresses and functions found by GTA Community"
+0662: printstring "Every author was mentioned and I deeply respect them"
+0662: printstring "99 and 9 percent of this code is NOT based on something other"
+0662: printstring "99 percent of this mod is NOT based on thirdparty mods and plugins"
+0662: printstring "Thank you and have a nice day!"
+0662: printstring "-----------------------------"      
+
+fade 0 0   
+                   
+042C: set_total_missions_to 0
+01F0: set_max_wanted_level_to 0 
+0111: toggle_wasted_busted_check 0 
+09BA: show_entered_zone_name 0
+09B9: show_entered_car_name 0
+
+///////////////Выключаем нахуй показ окна краша FLA///////////////
+0EFE: get_loaded_library "$fastman92limitAdjuster.asi" store_to 0@
+0@ += 0x009FD5D
+0E6A: make_nop 0@ size 5
+
+///////////////Выключаем билдинг одежды Карла///////////////
+0E6A: make_nop 0x5A834D size 5    
+
+{$INCLUDE Arrays.txt}
+
+///////////////Спавн игрока///////////////
+
+0053: PLAYER_CHAR = create_player #NULL at 1377.9486 -3931.9926 3400.1875
+01F5: PLAYER_ACTOR = create_player_actor PLAYER_CHAR 
+07AF: PLAYER_GROUP = player PLAYER_CHAR group
+
+07B3: set_group PLAYER_GROUP give_command 1
+
+06F0: set_group PLAYER_GROUP distance_limit_to 28000.0
+0940: set_group PLAYER_GROUP enters_leaders_vehicle 0
+0373: set_camera_directly_behind_player
+0330: set_player PLAYER_CHAR infinite_run 1
+
+0D10: set_actor PLAYER_ACTOR alpha 0 // IF and SET      
+
+0489: set_actor PLAYER_ACTOR muted 1
+057E: set_radar_grey 1
+
+0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "PLAYER_SPAWNED_FLAG"
+
+actor.LockInCurrentPosition(PLAYER_ACTOR) = true 
+
+create_thread @FPS_CNT     
+
+///////////////Установлние макс. FPS///////////////
+
+$FPS_MAX = FPS_MAX_NORMAL 
+0A8C: write_memory 0xC1704C size 1 value $FPS_MAX virtual_protect 0
+08CA: reset_zones_info   
+
+0AF0: UNITED_MAP = get_int_from_ini_file "config.ini" section "LAUNCHER" key "UNITED_MAP"
+0AF0: STORIES_MAP = get_int_from_ini_file "config.ini" section "LAUNCHER" key "STORIES_MAP"
+0AF0: CLASSIC_CARMA_MAP = get_int_from_ini_file "config.ini" section "LAUNCHER" key "CLASSIC_CARMA"
+if
+UNITED_MAP == 1
+then
+0AF0: LCVC_MAP_NUM = get_int_from_ini_file "config.ini" section "LAUNCHER" key "LCVC_MAP_NUM"
+PLAYER_CANT_SWIM_FLAG = 1
+else
+0917: audio_zone "DAM" enable_sound 0
+LCVC_MAP_NUM = -1
+LCVC_MAP_NUM2 = -1
+end
+
+if or
+UNITED_MAP == 1
+STORIES_MAP == 1
+then
+
+if
+LCVC_MAP_NUM == 0
+then
+$UNITED_III_SPAWN = 1
+$UNITED_VC_FLAG = 0
+else
+$UNITED_III_SPAWN = 0
+$UNITED_VC_FLAG = 1
+end
+
+end
+
+///////////////Переключаем игрока в начальное меню после загрузки мейна если это первый запуск игры///////////////
+
+if and
+0E2D: is_game_first_start
+not CLASSIC_CARMA_MAP >= 1
+then
+
+///////////////Загрузка моделей///////////////
+
+create_thread @MD_LOAD
+
+///////////////Дебаг меню///////////////
+
+create_thread @CTRL_MD
+
+//Обновляем языки
+0AF0: ENGLISH_TRANSLATE = get_int_from_ini_file "config.ini" section "GAME" key "ENGLISH_TRANSLATE"
+09FB: 0@ = current_language
+if and
+not 0@ == 4
+ENGLISH_TRANSLATE == 1
+    then  
+    0A8C: write_memory 0xBA67CC size 1 value 4 virtual_protect 0    
+    1@ = 4    
+    2@ = 0x0BA6748
+    2@ += 0xEB
+    0A8C: write_memory 2@ size 1 value 1 virtual_protect 0
+    0AA6: call_method 0x0573260 _ZN12CMenuManager33InitialiseChangedLanguageSettingsEv struct 0x0BA6748 num_params 1 pop 0 0        
+    end
+    
+if and
+not 0@ == 0
+ENGLISH_TRANSLATE == 0
+    then  
+    0A8C: write_memory 0xBA67CC size 1 value 0 virtual_protect 0            
+    1@ = 0    
+    2@ = 0x0BA6748
+    2@ += 0xEB
+    0A8C: write_memory 2@ size 1 value 1 virtual_protect 0
+    0AA6: call_method 0x0573260 _ZN12CMenuManager33InitialiseChangedLanguageSettingsEv struct 0x0BA6748 num_params 1 pop 0 0    
+    end
+
+repeat
+wait 0
+
+if and
+WS_CHECK_WAS_DONE == 1
+DEV_CHECK_WAS_DONE == 1
+    then
+    break
+    end
+
+until false
+
+if
+0AAB:   file_exists "data\fakepg.pg"
+then
+0B00: delete_file "data\fakepg.pg"  // IF and SET
+end
+
+if
+0AAB:   file_exists "data\fakepg2.pg"
+then
+0B00: delete_file "data\fakepg2.pg"  // IF and SET
+end
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "GAMEMODE_AUTOSELECT"
+0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_TOURNAMENT"
+
+if and
+$DEBUG_MENU_ON == 1
+$CHEATS_ON == 1
+    then
+    jump to @STRAIGHT_INTO_GAMEMODE_SELECT_DEV_JUMP_SKIP2
+    end
+    
+if or
+0@ == 1
+1@ == 1
+    then
+    jump to @STRAIGHT_INTO_GAMEMODE_SELECT_DEV_JUMP_SKIP2
+    end    
+
+while true
+0A8C: write_memory 0xBA6831 size 1 value 1 virtual_protect 0
+wait 0
+0A8C: write_memory 0xBA6831 size 1 value 1 virtual_protect 0
+
+if 
+0AA2: 0@ = load_library "User32.dll"
+    then
+    if 
+    0AA4: 1@ = get_proc_address "keybd_event" library 0@
+        then                                              
+        0AA5: call 1@ num_params 4 pop 0 0 0 0 0x1B
+        wait 0
+        
+        if
+        09FA:   is_menu_closed
+        then
+        0AA5: call 1@ num_params 4 pop 0 0 0x02 0 0x1B
+        0AA3: free_library 0@
+        wait 99999999999999999999
+        end
+                   
+        end
+    end
+    
+end    
+
+else
+0A8C: write_memory 0xBA6831 size 1 value 0 virtual_protect 0
+
+if
+CLASSIC_CARMA_MAP >= 1
+then
+
+if
+0AAB:   file_exists "modloader\ZOMBIEGEDDON CLASSIC ADDON\classic_zombiegeddon_ac_addon"
+then
+CLASSIC_CARMA_MAP_AC_MODE = 1
+end
+
+if
+0AAB:   file_exists "data\fakepg.pg"
+then
+0B00: delete_file "data\fakepg.pg"  // IF and SET
+end
+
+if
+0AAB:   file_exists "data\fakepg2.pg"
+then
+0B00: delete_file "data\fakepg2.pg"  // IF and SET
+end
+
+end
+    
+end
+
+:STRAIGHT_INTO_GAMEMODE_SELECT_DEV_JUMP_SKIP2
+
+///////////////Время дня и т.д///////////////
+
+set_weather 0
+
+wait 0
+
+00C0: set_current_time_hours_to 12 minutes_to 0 
+
+04BB: select_interior 0 
+
+0629: change_integer_stat 181 to 4 
+
+0180: set_on_mission_flag_to $ONMISSION    
+
+0004: $DEFAULT_WAIT_TIME = 250
+
+01B4: toggle_player PLAYER_CHAR can_move 0  
+
+///////////////Телепорт в начальную локацию/////////////// 
+
+actor.PutAtNoOffset(PLAYER_ACTOR,1377.9486, -3931.9926, 3400.1875)
+actor.Angle(PLAYER_ACTOR) = 173.7605    
+
+actor.LockInCurrentPosition(PLAYER_ACTOR) = true
+
+renderer 1377.9855 -3931.6558
+renderer2 1377.9486 -3931.9926 3400.1875 
+
+0A96: 0@ = actor PLAYER_ACTOR struct
+0A8E: 0@ = 0@ + 1376
+0A8D: $TURN_SPEED_NORMAL = read_memory 0@ size 4 virtual_protect 1 
+
+BLACK_POLOSKI_ON = 0   
+
+///////////////Установление констант музыки сюжетной линии///////////////     
+
+const
+MUSIC_0A = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\0-A.wav"
+MUSIC_1A = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\1-A.wav"
+MUSIC_2A = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\2-A.wav"
+MUSIC_3A = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\3-A.wav"
+MUSIC_4A = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\4-A.wav"
+MUSIC_5A = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\5-A.wav"
+MUSIC_6A = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\6-A.wav"
+MUSIC_7A = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\7-A.wav"
+MUSIC_8A = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\8-A.wav"
+MUSIC_8B = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\8-B.wav"
+MUSIC_9A = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\9-A.wav"
+MUSIC_9B = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\9-B.wav"
+MUSIC_10A = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\10-A.wav"
+MUSIC_11A = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\11-A.wav"
+MUSIC_11B = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\11-B.wav"
+MUSIC_12A = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\12-A.wav"
+MUSIC_12A0 = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\12-A0.wav" 
+MUSIC_12B = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\12-B.wav"
+MUSIC_12C = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\12-C.wav"
+MUSIC_13A = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\13-A.wav"
+MUSIC_14A = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\14-A.wav"
+MUSIC_15A = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\15-A.wav"
+MUSIC_15B = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\15-B.wav"
+MUSIC_16A = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\16-A.wav"
+MUSIC_16B = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\16-B.wav"
+MUSIC_18A = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\18-A.wav"
+MUSIC_18B = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\18-B.wav"
+MUSIC_19A = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\19-A.wav"
+MUSIC_20A = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\20-A.wav"
+MUSIC_21and2A = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\21.2-A.wav"
+MUSIC_21and5A = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\21.5-A.wav"
+MUSIC_21A = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\21-A.wav"
+MUSIC_22A = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\22-A.wav"
+MUSIC_22B = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\22-B.wav"
+MUSIC_22B2 = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\22-B2.wav"
+MUSIC_22C1 = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\22-C1.wav"
+MUSIC_22C2 = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\22-C2.wav"
+MUSIC_22C3 = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\22-C3.wav"
+MUSIC_22D = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\22-D.wav"
+MUSIC_XX = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\XX.wav"
+MUSIC_XX2 = "AUDIO\SOUNDS\MUSIC\storyline_music\rock\XX2.wav"
+end        
+
+/////////////////////////////////////////////////////////////////////////////    
+
+const
+CLASSIC_MUSIC_0A = "AUDIO\SOUNDS\MUSIC\storyline_music\0-A.wav"
+CLASSIC_MUSIC_1A = "AUDIO\SOUNDS\MUSIC\storyline_music\1-A.wav"
+CLASSIC_MUSIC_1B = "AUDIO\SOUNDS\MUSIC\storyline_music\1-B.wav"
+CLASSIC_MUSIC_2A = "AUDIO\SOUNDS\MUSIC\storyline_music\2-A.wav"
+CLASSIC_MUSIC_3A = "AUDIO\SOUNDS\MUSIC\storyline_music\3-A.wav"
+CLASSIC_MUSIC_4A = "AUDIO\SOUNDS\MUSIC\storyline_music\4-A.wav"
+CLASSIC_MUSIC_5A = "AUDIO\SOUNDS\MUSIC\storyline_music\5-A.wav"
+CLASSIC_MUSIC_6A = "AUDIO\SOUNDS\MUSIC\storyline_music\6-A.wav"
+CLASSIC_MUSIC_7A = "AUDIO\SOUNDS\MUSIC\storyline_music\7-A.wav"
+CLASSIC_MUSIC_8A = "AUDIO\SOUNDS\MUSIC\storyline_music\8-A.wav"
+CLASSIC_MUSIC_8B = "AUDIO\SOUNDS\MUSIC\storyline_music\8-B.wav"
+CLASSIC_MUSIC_9A = "AUDIO\SOUNDS\MUSIC\storyline_music\9-A.wav"
+CLASSIC_MUSIC_9B = "AUDIO\SOUNDS\MUSIC\storyline_music\9-B.wav"
+CLASSIC_MUSIC_10A = "AUDIO\SOUNDS\MUSIC\storyline_music\10-A.wav"
+CLASSIC_MUSIC_11A = "AUDIO\SOUNDS\MUSIC\storyline_music\11-A.wav"
+CLASSIC_MUSIC_11B = "AUDIO\SOUNDS\MUSIC\storyline_music\11-B.wav"
+CLASSIC_MUSIC_12A = "AUDIO\SOUNDS\MUSIC\storyline_music\12-A.wav"
+CLASSIC_MUSIC_12A0 = "AUDIO\SOUNDS\MUSIC\storyline_music\12-A0.wav" 
+CLASSIC_MUSIC_12B = "AUDIO\SOUNDS\MUSIC\storyline_music\12-B.wav"
+CLASSIC_MUSIC_13A = "AUDIO\SOUNDS\MUSIC\storyline_music\13-A.wav"
+CLASSIC_MUSIC_14A = "AUDIO\SOUNDS\MUSIC\storyline_music\14-A.wav"
+CLASSIC_MUSIC_15A = "AUDIO\SOUNDS\MUSIC\storyline_music\15-A.wav"
+CLASSIC_MUSIC_15B = "AUDIO\SOUNDS\MUSIC\storyline_music\15-B.wav"
+CLASSIC_MUSIC_16A = "AUDIO\SOUNDS\MUSIC\storyline_music\16-A.wav"
+CLASSIC_MUSIC_16B = "AUDIO\SOUNDS\MUSIC\storyline_music\16-B.wav"
+CLASSIC_MUSIC_18A = "AUDIO\SOUNDS\MUSIC\storyline_music\18-A.wav"
+CLASSIC_MUSIC_18B = "AUDIO\SOUNDS\MUSIC\storyline_music\18-B.wav"
+CLASSIC_MUSIC_19A = "AUDIO\SOUNDS\MUSIC\storyline_music\19-A.wav"
+CLASSIC_MUSIC_20A = "AUDIO\SOUNDS\MUSIC\storyline_music\20-A.wav"
+CLASSIC_MUSIC_20B = "AUDIO\SOUNDS\MUSIC\storyline_music\20-B.wav"
+CLASSIC_MUSIC_21and2A = "AUDIO\SOUNDS\MUSIC\storyline_music\21.2-A.wav"
+CLASSIC_MUSIC_21and5A = "AUDIO\SOUNDS\MUSIC\storyline_music\21.5-A.wav"
+CLASSIC_MUSIC_21A = "AUDIO\SOUNDS\MUSIC\storyline_music\21-A.wav"
+CLASSIC_MUSIC_21B = "AUDIO\SOUNDS\MUSIC\storyline_music\21-B.wav"
+CLASSIC_MUSIC_22A = "AUDIO\SOUNDS\MUSIC\storyline_music\22-A.wav"
+CLASSIC_MUSIC_22B = "AUDIO\SOUNDS\MUSIC\storyline_music\22-B.wav"
+CLASSIC_MUSIC_22B2 = "AUDIO\SOUNDS\MUSIC\storyline_music\22-B2.wav"
+CLASSIC_MUSIC_22C = "AUDIO\SOUNDS\MUSIC\storyline_music\22-C.wav"
+CLASSIC_MUSIC_22D = "AUDIO\SOUNDS\MUSIC\storyline_music\22-D.wav"
+CLASSIC_MUSIC_22E = "AUDIO\SOUNDS\MUSIC\storyline_music\22-E.wav"
+CLASSIC_MUSIC_XX = "AUDIO\SOUNDS\MUSIC\storyline_music\XX.wav"
+CLASSIC_MUSIC_XX2 = "AUDIO\SOUNDS\MUSIC\storyline_music\XX2.wav"
+end
+
+///////////////Установление констант музыки безумия///////////////     
+
+const
+CRAZY_MUSIC1 = "AUDIO\SOUNDS\music\crazy_music\crazy_music1.wav"
+CRAZY_MUSIC2 = "AUDIO\SOUNDS\music\crazy_music\crazy_music2.wav"
+CRAZY_MUSIC3 = "AUDIO\SOUNDS\music\crazy_music\crazy_music3.wav"
+CRAZY_MUSIC4 = "AUDIO\SOUNDS\music\crazy_music\crazy_music4.wav"
+CRAZY_MUSIC5 = "AUDIO\SOUNDS\music\crazy_music\crazy_music5.wav"
+CRAZY_MUSIC6 = "AUDIO\SOUNDS\music\crazy_music\crazy_music6.wav"
+CRAZY_MUSIC7 = "AUDIO\SOUNDS\music\crazy_music\crazy_music7.wav"
+CRAZY_MUSIC8 = "AUDIO\SOUNDS\music\crazy_music\crazy_music8.wav"
+CRAZY_MUSIC9 = "AUDIO\SOUNDS\music\crazy_music\crazy_music9.wav"
+CRAZY_MUSIC10 = "AUDIO\SOUNDS\music\crazy_music\crazy_music10.wav"
+CRAZY_MUSIC11 = "AUDIO\SOUNDS\music\crazy_music\crazy_music11.wav"
+CRAZY_MUSIC12 = "AUDIO\SOUNDS\music\crazy_music\crazy_music12.wav"
+end
+
+///////////////Установление констант музыки кассет/////////////// 
+
+const
+CASSETTE1 = "AUDIO\SOUNDS\music\cassettes\cassette1.ogg"
+CASSETTE2 = "AUDIO\SOUNDS\music\cassettes\cassette2.ogg"
+CASSETTE3 = "AUDIO\SOUNDS\music\cassettes\cassette3.ogg"
+CASSETTE4 = "AUDIO\SOUNDS\music\cassettes\cassette4.ogg"
+CASSETTE5 = "AUDIO\SOUNDS\music\cassettes\cassette5.ogg"
+CASSETTE6 = "AUDIO\SOUNDS\music\cassettes\cassette6.ogg"
+CASSETTE7 = "AUDIO\SOUNDS\music\cassettes\cassette7.ogg"
+CASSETTE8 = "AUDIO\SOUNDS\music\cassettes\cassette8.ogg"
+CASSETTE9 = "AUDIO\SOUNDS\music\cassettes\cassette9.ogg"
+CASSETTE10 = "AUDIO\SOUNDS\music\cassettes\cassette10.ogg"
+CASSETTE11 = "AUDIO\SOUNDS\music\cassettes\cassette11.ogg"
+CASSETTE12 = "AUDIO\SOUNDS\music\cassettes\cassette12.ogg"
+CASSETTE13 = "AUDIO\SOUNDS\music\cassettes\cassette13.ogg"
+CASSETTE14 = "AUDIO\SOUNDS\music\cassettes\cassette14.ogg"
+CASSETTE15 = "AUDIO\SOUNDS\music\cassettes\cassette15.ogg"
+CASSETTE16 = "AUDIO\SOUNDS\music\cassettes\cassette16.ogg"
+CASSETTE17 = "AUDIO\SOUNDS\music\cassettes\cassette17.ogg"
+CASSETTE18 = "AUDIO\SOUNDS\music\cassettes\cassette18.ogg"
+CASSETTE19 = "AUDIO\SOUNDS\music\cassettes\cassette19.ogg"
+CASSETTE20 = "AUDIO\SOUNDS\music\cassettes\cassette20.ogg"
+CASSETTE21 = "AUDIO\SOUNDS\music\cassettes\cassette21.ogg"
+CASSETTE22 = "AUDIO\SOUNDS\music\cassettes\cassette22.ogg"
+CASSETTE23 = "AUDIO\SOUNDS\music\cassettes\cassette23.ogg"
+CASSETTE24 = "AUDIO\SOUNDS\music\cassettes\cassette24.ogg"
+CASSETTE25 = "AUDIO\SOUNDS\music\cassettes\cassette25.ogg"
+end         
+
+const
+UNITED_CASSETTE1 = "AUDIO\SOUNDS\music\cassettes\united\cassette1.ogg"
+UNITED_CASSETTE2 = "AUDIO\SOUNDS\music\cassettes\united\cassette2.ogg"
+UNITED_CASSETTE3 = "AUDIO\SOUNDS\music\cassettes\united\cassette3.ogg"
+UNITED_CASSETTE4 = "AUDIO\SOUNDS\music\cassettes\united\cassette4.ogg"
+UNITED_CASSETTE5 = "AUDIO\SOUNDS\music\cassettes\united\cassette5.ogg"
+UNITED_CASSETTE6 = "AUDIO\SOUNDS\music\cassettes\united\cassette6.ogg"
+UNITED_CASSETTE7 = "AUDIO\SOUNDS\music\cassettes\united\cassette7.ogg"
+UNITED_CASSETTE8 = "AUDIO\SOUNDS\music\cassettes\united\cassette8.ogg"
+UNITED_CASSETTE9 = "AUDIO\SOUNDS\music\cassettes\united\cassette9.ogg"
+UNITED_CASSETTE10 = "AUDIO\SOUNDS\music\cassettes\united\cassette10.ogg"
+UNITED_CASSETTE11 = "AUDIO\SOUNDS\music\cassettes\united\cassette11.ogg"
+UNITED_CASSETTE12 = "AUDIO\SOUNDS\music\cassettes\united\cassette12.ogg"
+UNITED_CASSETTE13 = "AUDIO\SOUNDS\music\cassettes\united\cassette13.ogg"
+UNITED_CASSETTE14 = "AUDIO\SOUNDS\music\cassettes\united\cassette14.ogg"
+UNITED_CASSETTE15 = "AUDIO\SOUNDS\music\cassettes\united\cassette15.ogg"
+UNITED_CASSETTE16 = "AUDIO\SOUNDS\music\cassettes\united\cassette16.ogg"
+UNITED_CASSETTE17 = "AUDIO\SOUNDS\music\cassettes\united\cassette17.ogg"
+UNITED_CASSETTE18 = "AUDIO\SOUNDS\music\cassettes\united\cassette18.ogg"
+UNITED_CASSETTE19 = "AUDIO\SOUNDS\music\cassettes\united\cassette19.ogg"
+UNITED_CASSETTE20 = "AUDIO\SOUNDS\music\cassettes\united\cassette20.ogg"
+UNITED_CASSETTE21 = "AUDIO\SOUNDS\music\cassettes\united\cassette21.ogg"
+UNITED_CASSETTE22 = "AUDIO\SOUNDS\music\cassettes\united\cassette22.ogg"
+UNITED_CASSETTE23 = "AUDIO\SOUNDS\music\cassettes\united\cassette23.ogg"
+UNITED_CASSETTE24 = "AUDIO\SOUNDS\music\cassettes\united\cassette24.ogg"
+UNITED_CASSETTE25 = "AUDIO\SOUNDS\music\cassettes\united\cassette25.ogg"
+end              
+
+///////////////Проверка наличия .set файла/////////////// 
+
+if
+8AAB: not  file_exists "saves\ZACM.set"   
+    then
+    create_thread @MPS_ZER
+    end 
+
+gosub @ZA_SET_FILE_CHECK
+
+///////////////Обнуляем флаги собранных записок///////////////
+
+for 1@ = 0 to 49
+0AD3: v$NOTES_FILE = format "nt%d" 1@    
+0AF1: write_int 1 to_ini_file "data/notes.ini" section v$NOTES_FILE key "PONY"  
+end
+
+///////////////Создание директорий если они не существуют///////////////
+
+if
+8AE4: not  directory_exists "za"
+    then
+    0AE5: create_directory "za" //IF and SET
+    end
+    
+if
+8AE4: not  directory_exists "saves\gallery"
+    then
+    0AE5: create_directory "saves\gallery" //IF and SET
+    end                    
+
+///////////////Установление значения переменных///////////////   
+
+gosub @VARS_SET   
+
+///////////////Создание необходимых изначальных потоков///////////////
+
+create_thread @ADD_MEM
+create_thread @UZI_CRA
+create_thread @ZMAFIX
+
+create_thread @PED_FIR
+create_thread @HUD_SYS
+create_thread @PLD_TME
+ 
+create_thread @RES_SET
+create_thread @VOL_SET
+
+create_thread @RELOAD   
+create_thread @FRI_MRK 
+create_thread @FRI_INT      
+create_thread @LOOP
+     
+create_thread @CAM_DEB
+
+create_thread @STAYCMD
+
+create_thread @CHT_PRC
+create_thread @CH_TYPE 
+create_thread @CHET_ON
+       
+create_thread @ACHIEVE
+create_thread @GLB_STS
+create_thread @PLD_TM3
+
+create_thread @C_SPD
+create_thread @GATES       
+create_thread @LADDERS 
+create_thread @TEA_CMD   
+create_thread @C_DRDM 
+create_thread @FAL_DMG
+create_thread @FRA_ZMB  
+
+create_thread @WEP_PICK
+create_thread @GRE_FIX     
+create_thread @HORN_A 
+create_thread @C_GEAR
+create_thread @CLIMB
+create_thread @HED_SET
+create_thread @C_BURN
+create_thread @GRND_LN
+create_thread @GRND_BO
+create_thread @SPR_FIX
+
+///////////////Проверяем номер билда///////////////
+
+0AF0: $BUILD_VERSION1 = get_int_from_ini_file "data\script\build.ini" section "BUILD_VERSION" key "BUILD1"
+0AF0: $BUILD_VERSION2 = get_int_from_ini_file "data\script\build.ini" section "BUILD_VERSION" key "BUILD2"
+
+///////////////Проверяем флаги туториалов///////////////
+
+0AF0: $WAR_TUTORIAL = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "WAR_TUTORIAL"  
+0AF0: $SURV_TUTORIAL = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "SURV_TUTORIAL"  
+0AF0: $VERSUS_TUTORIAL = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "VERSUS_TUTORIAL" 
+0AF0: $HOLD_TUTORIAL = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "HOLD_TUTORIAL"   
+0AF0: $CRAZY_TUTORIAL = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "CRAZY_TUTORIAL"  
+0AF0: $MUT_TUTORIAL = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "MUT_TUTORIAL"   
+
+///////////////Дебаг меню///////////////
+
+if
+DEV_CHECK_WAS_DONE == 0
+then
+create_thread @CTRL_MD
+end                           
+
+///////////////Установление дефолтной анимации хождения///////////////
+
+0@ = 0x609A4E 
+0A8C: write_memory 0@ size 4 value 0x4D48689 virtual_protect 1 
+0@ += 4 
+0A8C: write_memory 0@ size 2 value 0 virtual_protect 1
+
+///////////////Включение скриптовых читов///////////////
+
+0A8C: write_memory 0x4384F6 size 2 value 0xE990 virtual_protect 1
+
+///////////////Установление треугольничка с ХП при прицеливании///////////////
+
+0A8C: write_memory 0x53E1EC size 1 value 0xEB virtual_protect 1
+
+0169: set_fade_color_RGB 0 0 0
+
+///////////////Установление доп. значений некоторых адресов памяти///////////////
+
+0662: printstring "-----------------------------" 
+0662: printstring "Display settings"
+0A8C: write_memory 0xBA6769 size 1 value 0 virtual_protect 1
+0A8C: write_memory 0xBA676C size 1 value 0 virtual_protect 1 
+0A8C: write_memory 0xBA6830 size 1 value 1 virtual_protect 1
+0A8C: write_memory 0xBA6792 size 1 value 0 virtual_protect 1
+0662: printstring "-----------------------------"
+0662: printstring "Control settings"
+0A8C: write_memory 0xC1CC02 size 1 value 0 virtual_protect 1
+0A8C: write_memory 0xC1CC03 size 1 value 0 virtual_protect 1
+0662: printstring "-----------------------------"
+0662: printstring "Other settings"
+0A8C: write_memory 0x969174 size 1 value 1 virtual_protect 1
+0A8C: write_memory 0x969175 size 1 value 1 virtual_protect 1
+0662: printstring "-----------------------------"            
+
+if and
+UNITED_MAP == 0
+CLASSIC_CARMA_MAP < 1
+then  
+{$INCLUDE Objects Create.txt}
+else
+
+if and
+UNITED_MAP == 1
+STORIES_MAP == 0
+CLASSIC_CARMA_MAP < 1
+then
+{$INCLUDE Objects Create United.txt}
+end
+
+if and
+UNITED_MAP == 1
+STORIES_MAP == 1
+CLASSIC_CARMA_MAP < 1
+then
+{$INCLUDE Objects Create Stories.txt}
+end
+
+end
+
+if
+CLASSIC_CARMA_MAP >= 1
+then
+{$INCLUDE Objects Create Zombiegeddon.txt}
+end           
+
+///////////////Выгрузка моделей///////////////
+
+create_thread @MD_UNLD
+wait 0
+
+while $MODEL_UNLOADING_END_FLAG == 0
+wait 0
+end
+
+///////////////Загрузка моделей///////////////
+
+if
+$MODEL_LOADED_FLAG == 0
+then
+create_thread @MD_LOAD
+end
+
+wait 0
+
+while $MODEL_LOADING_END_FLAG == 0
+wait 0
+end
+
+///////////////Установление точки рестарта///////////////
+
+016C: restart_if_wasted_at 28.0 28.0 2800.0 angle 90.0 town_number 0 
+016D: restart_if_busted_at 28.0 28.0 2800.0 angle 90.0 town_number 0
+
+///////////////Установление макс. навыка вождения//////////////
+
+0629: change_integer_stat 160 to 1000 
+0629: change_integer_stat 229 to 1000 
+
+///////////////Установление некоторых параметров///////////////
+
+03DE: set_pedestrians_density_multiplier_to 0.0 
+01EB: set_traffic_density_multiplier_to 0.0 
+06D0: enable_emergency_traffic 0 
+06D7: enable_train_traffic 0 
+096A: enable_flying_helis 0 
+099E: enable_police_patrols 0   
+0923: enable_air_traffic 0
+0A48: enable_menu_access_in_widescreen_mode 1
+08E7: disable_entrance_markers 0
+09E6: set_burglary_houses_accessible 0
+08F4: set_max_group_members 6
+
+///////////////Установление макс. брони///////////////
+
+055F: set_player PLAYER_CHAR max_armour += 100
+035F: actor PLAYER_ACTOR armour += -200
+
+///////////////Установление маркеров поведения///////////////
+
+060A: create_decision_maker_type 4 store_to $DEC_PEOPLE
+0708: reset_decision_maker $DEC_PEOPLE event 11
+0708: reset_decision_maker $DEC_PEOPLE event 13
+0708: reset_decision_maker $DEC_PEOPLE event 15
+0708: reset_decision_maker $DEC_PEOPLE event 2
+0708: reset_decision_maker $DEC_PEOPLE event 3
+0708: reset_decision_maker $DEC_PEOPLE event 4
+0708: reset_decision_maker $DEC_PEOPLE event 9
+0708: reset_decision_maker $DEC_PEOPLE event 75
+
+060A: create_decision_maker_type 4 store_to $DEC_PCAMP
+0708: reset_decision_maker $DEC_PCAMP event 11
+0708: reset_decision_maker $DEC_PCAMP event 12
+0708: reset_decision_maker $DEC_PCAMP event 13
+0708: reset_decision_maker $DEC_PCAMP event 15
+0708: reset_decision_maker $DEC_PCAMP event 2
+0708: reset_decision_maker $DEC_PCAMP event 3
+0708: reset_decision_maker $DEC_PCAMP event 4
+0708: reset_decision_maker $DEC_PCAMP event 9
+0708: reset_decision_maker $DEC_PCAMP event 75
+
+060A: create_decision_maker_type 0 store_to $DEC_ZOMBIE
+0708: reset_decision_maker $DEC_ZOMBIE event 11
+0708: reset_decision_maker $DEC_ZOMBIE event 12
+0708: reset_decision_maker $DEC_ZOMBIE event 13
+0708: reset_decision_maker $DEC_ZOMBIE event 36
+0708: reset_decision_maker $DEC_ZOMBIE event 37
+0708: reset_decision_maker $DEC_ZOMBIE event 2
+0708: reset_decision_maker $DEC_ZOMBIE event 3
+0708: reset_decision_maker $DEC_ZOMBIE event 4
+0708: reset_decision_maker $DEC_ZOMBIE event 9
+0708: reset_decision_maker $DEC_ZOMBIE event 75
+
+06AE: create_group_decision_maker_type 0 store_to $DEC_GROUP // decision\\allowed\\mission.grp 
+0749: reset_group_decision_maker $DEC_GROUP event 54
+0749: reset_group_decision_maker $DEC_GROUP event 61
+0749: reset_group_decision_maker $DEC_GROUP event 62
+06AD: set_group PLAYER_GROUP group_decision_maker_to $DEC_GROUP
+
+///////////////Создание помощника для нормального сохранения игры///////////////
+
+create_thread @SAV_MAK
+
+///////////////Поток Jiggle камеры///////////////
+
+create_thread @JIGGLE
+
+///////////////Офис ZA///////////////
+
+create_thread @OFFICE
+
+///////////////pickups.lua///////////////
+
+create_thread @PIC_GRB
+
+///////////////Выбор игрового режима///////////////
+
+//gosub @GAMEMODE_SELECT
+create_thread @BRK_CAR
+
+32@ = 0
+gosub @RANDOM_PLACE
+
+while true
+wait 0
+
+if and
+UNLOAD_MODELS_ON == 1
+$AMAZING_OPENED_FLAG == 0
+then
+0E9F: remove_all_unused_models
+end
+
+gosub @RANDOM_TIME
+gosub @RANDOM_MELEE
+gosub @RANDOM_WEAPON
+gosub @RANDOM_THROWING_WEAPON
+gosub @RANDOM_MODEL
+if
+0E45: frame_mod 45
+then
+gosub @RANDOM_PLACE
+end
+
+if
+32@ > 3500
+    then
+//    32@ = 0
+//    0AF0: 0@ = get_int_from_ini_file "debug\1_sore_test.ini" section "TOTAL" key "RESTARTS"
+//    0@ += 1
+//    0AF1: write_int 0@ to_ini_file "debug\1_sore_test.ini" section "TOTAL" key "RESTARTS"
+//    0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "NO_INIT_TEXT_FLAG"
+//    0A8C: write_memory 0x0440F73 size 1 value 255 virtual_protect 1
+//    0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
+//    if
+//    0@ == 5
+//        then
+        0AF1: write_int 0 to_ini_file "debug\1_sore_test.ini" section "TOTAL" key "RESTARTS"
+        0AF1: write_int 1 to_ini_file "config.ini" section "LAUNCHER" key "RESTART_GAME"
+        0AA2: 0@ = load_library "kernel32.dll" // IF and SET
+        0AA4: 1@ = get_proc_address "ExitProcess" library 0@ // IF and SET
+        0AA5: call 1@ num_params 1 pop 0 0
+//        end
+    end
+
+end
+
+end_thread

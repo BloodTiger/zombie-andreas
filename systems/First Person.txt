@@ -1,0 +1,3327 @@
+const
+KEY_ACTIVATE = 86
+ALPHA_NORMAL = 255  
+PLAYER_ALPHA = 19@
+FP_CAM_NEAR_CLIP = 0.08
+FP_CARL_HEAD_OBJECT = $FP_CARL_HEAD_OBJECT
+FP_STORY_TURNED_OFF_CINEMA = $FP_STORY_TURNED_OFF_CINEMA
+FP_TURNED_OFF_FOR_CUTSCENE = $FP_TURNED_OFF_CUTSCENE
+FP_PREV_STATUS = $REALISM_NRTH_FLAG
+FP_ONLY_IN_CAR = $FP_ONLY_IN_CAR   
+end
+
+:F_PERS
+thread 'F_PERS'   
+
+repeat
+wait 0
+until $GAMEMODE_SELECTED == 1
+
+if
+$RANDOM_MODE_MODEL == 0
+then
+
+while not model.Available(4227)
+wait 0
+model.Load(4227)
+mload
+end
+
+FP_CARL_HEAD_OBJECT = object.Create(4227,0.0,0.0,0.0)
+08D2: object FP_CARL_HEAD_OBJECT scale_model 0.0
+0750: set_object FP_CARL_HEAD_OBJECT visibility 0 
+Object.CollisionDetection(FP_CARL_HEAD_OBJECT) = False
+object.KeepInMemory(FP_CARL_HEAD_OBJECT) = true
+
+end
+
+if and
+$FP_ON == 0
+not FP_ONLY_IN_CAR == 1
+then
+$FP_ACTIVATED = 0
+end_thread
+end 
+
+if
+UNITED_MAP == 1
+then
+FP_ONLY_IN_CAR = 1
+$FP_ON = 0
+$FP_ACTIVATED = 0
+end
+
+if
+FP_DEACTIVATED == 1
+then
+$FP_ON = 0
+$FP_ACTIVATED = 0
+end_thread
+end
+
+0AF0: $FP_ACTIVATED = get_int_from_ini_file "config.ini" section "GAME" key "FP_ENABLED"       
+
+if
+$GAMEMODE_STORYLINE == 1
+then
+$FP_ACTIVATED = 0
+end
+
+if or
+$MUTATION_ACTIVE == 3
+CUSTOM_MODE_ONLY_FP_CAM == 1
+then
+$FP_ACTIVATED = 1
+$FP_ON = 1
+end
+
+33@ = 0   
+
+if
+$FP_ACTIVATED == 1
+then     
+
+0A96: 1@ = actor PLAYER_ACTOR struct
+0A8E: 1@ = 1@ + 1376
+
+0A8D: 7@ = read_memory 1@ size 4 virtual_protect 1
+
+0A8C: write_memory 1@ size 4 value 147456.0 virtual_protect 1       
+
+gosub @FP_SKIN_ON
+
+if and
+not FP_PLAYER_SHOW_FLAG == 1
+8E46: not is_char_using_gun PLAYER_ACTOR
+then
+0D10: set_actor PLAYER_ACTOR alpha 0 // IF and SET 
+else
+0D10: set_actor PLAYER_ACTOR alpha 255 // IF and SET
+end
+
+if
+not actor.Driving(PLAYER_ACTOR)
+then
+gosub @REMOVE_HEAD
+else
+
+3@ = actor.CurrentCar(PLAYER_ACTOR)
+gosub @FP_SEAT_HANDLE_GET_FOR_PLAYER
+
+06A2: get_car 3@ velocity_in_direction_XYZ 25@ 26@ 27@
+25@ *= 0.02
+26@ *= 0.02
+27@ *= 0.02
+gosub @FP_READ_ROTATION_VECTOR
+
+actor.StorePos(PLAYER_ACTOR,0@,1@,2@)
+2@ += 10.0
+
+0362: remove_actor PLAYER_ACTOR from_car_and_place_at 0@ 1@ 2@
+gosub @REMOVE_HEAD
+
+1@ = 0
+        
+if
+8ABE: not  vehicle 3@ engine_on
+then
+1@ = 1
+end
+
+if
+8@ == -1
+then
+036A: put_actor PLAYER_ACTOR in_car 3@
+else
+0430: put_actor PLAYER_ACTOR into_car 3@ passenger_seat 8@
+end
+
+if and
+1@ == 1
+not car.Id(3@) == #FREIGHT
+not car.Id(3@) == #STREAK
+not car.Id(3@) == #STREAKC
+then
+02D4: car 3@ turn_off_engine
+end
+
+car.LockInCurrentPosition(3@,true)
+car.SetSpeedInstantly(3@,0.0)
+car.LockInCurrentPosition(3@,false)            
+07D5: set_car 3@ velocity_in_direction_XYZ 25@ 26@ 27@ rotation_velocitiesXY 0.0 0.0 unk 0.0
+gosub @FP_GET_BACK_ROTATION_VECTOR    
+
+end
+
+end    
+
+repeat
+wait 0
+until $GAMEMODE_SELECTED == 1
+
+while true
+wait 0
+
+//if and
+//UNITED_MAP == 1
+//$EXPE_FLAG == 1
+//then
+//FP_ONLY_IN_CAR = 0
+//$FP_ON = 1
+//end     
+
+if
+0597:   actor PLAYER_ACTOR crouching
+then
+24@ = 1
+else
+24@ = 0
+end     
+
+///////////////////////////////////////////////////////////////////////////////////   
+
+0A8D: 1@ = read_memory 0xB7CB64 size 4 virtual_protect 0
+if
+$SPEED_099_FLAG == 1
+then
+1@ = 1.0
+end
+0A8D: 0@ = read_memory 0x53BF8A size 2 virtual_protect 1
+
+:FP_CANT_OFF
+
+if and
+$GAMEMODE_STORYLINE == 1
+FP_TURNED_OFF_FOR_CUTSCENE == 0
+FP_PREV_STATUS == 1
+then      
+FP_PREV_STATUS = 0 
+jump to @FP_ON
+end
+
+if and
+$GAMEMODE_EDITOR == 1
+FP_TURNED_OFF_FOR_CUTSCENE == 0
+FP_PREV_STATUS == 1
+then      
+FP_PREV_STATUS = 0 
+jump to @FP_ON
+end  
+
+if and
+$GAMEMODE_STORYLINE == 1
+FP_STORY_TURNED_OFF_CINEMA == 1
+then       
+
+if and
+$HUD_ALPHA > 0
+8A32: not actor PLAYER_ACTOR on_turret_of_car
+then
+FP_STORY_TURNED_OFF_CINEMA = 0
+jump to @FP_ON
+end
+
+end        
+
+if or
+$QUEST_TYPE == 26
+$QUEST_TYPE == 27
+$QUEST_TYPE == 666
+$QUEST_TYPE == 667  
+then
+
+if
+FP_STORY_TURNED_OFF_CINEMA == 1
+then
+
+if and
+$HUD_ALPHA > 0
+8A32: not actor PLAYER_ACTOR on_turret_of_car
+then
+FP_STORY_TURNED_OFF_CINEMA = 0
+jump to @FP_ON
+end
+
+end
+
+end
+
+if and
+$QUEST_TYPE == 20
+$FP_ACTIVATED == 0
+$HUD_REMOVE == 0
+$FP_ON == 1
+056E:   car SUPPLY_QUEST_TRUCK defined
+    then
+    if
+    actor.InCar(PLAYER_ACTOR,SUPPLY_QUEST_TRUCK)
+        then
+        jump to @FP_ON
+        end 
+    end
+    
+if and
+$QUEST_TYPE == 22
+$FP_ACTIVATED == 0
+$HUD_REMOVE == 0
+$FP_ON == 1
+056E:   car SUPPLY_QUEST_TRUCK defined
+    then
+    if and
+    actor.InCar(PLAYER_ACTOR,SUPPLY_QUEST_TRUCK)
+    not car.Id(SUPPLY_QUEST_TRUCK) == #BMX
+        then
+        jump to @FP_ON
+        end 
+    end
+    
+if and
+FP_ACTIVATE_SCRIPTED == 1
+$FP_ACTIVATED == 0
+$HUD_REMOVE == 0
+    then
+    FP_ACTIVATE_SCRIPTED = 0
+    jump to @FP_ON
+    end
+    
+if
+0A4B:   controls_set_to_joystick
+    then
+    if and
+    $FP_ACTIVATED == 0 
+    $HUD_REMOVE == 0
+    $FP_ON == 1
+    0E3E: is_button_just_pressed 0 button 13
+    1@ == 1.0
+    not 0@ == 0x9066
+    09E7:   player PLAYER_CHAR not_frozen 
+    33@ > 500
+        then
+        
+        if
+        actor.Driving(PLAYER_ACTOR)
+        then
+        018C: play_sound 1057 at 0.0 0.0 0.0
+        end
+        
+        jump to @FP_ON_PRE1
+        end
+    end
+    
+if and
+FP_ONLY_IN_CAR == 1
+actor.Driving(PLAYER_ACTOR)
+$FP_ACTIVATED == 0
+$HUD_REMOVE == 0
+1@ == 1.0
+not 0@ == 0x9066
+09E7:   player PLAYER_CHAR not_frozen 
+33@ > 500
+    then
+    0A39: get_vehicle_camera_mode_to 0@
+    if and
+    0@ == 0
+    8E4A: not is_char_exiting_any_car PLAYER_ACTOR
+    8A32: not actor PLAYER_ACTOR on_turret_of_car
+    not actor.Animation(PLAYER_ACTOR) == "EAT_Vomit_P_Car"
+        then
+        jump to @FP_ON
+        end
+    end                
+
+if and
+$FP_ACTIVATED == 0 
+$HUD_REMOVE == 0
+$FP_ON == 1
+0E3D: is_key_just_pressed KEY_ACTIVATE
+1@ == 1.0
+not 0@ == 0x9066
+09E7:   player PLAYER_CHAR not_frozen 
+33@ > 500
+    then
+    
+    if and
+    0E92:  is_char_really_in_air PLAYER_ACTOR
+    8449: not  actor PLAYER_ACTOR in_a_car
+    then
+    jump to @FP_ON_SKIP
+    end
+    
+    :FP_ON_PRE1
+    
+    if and
+    8A32: not actor PLAYER_ACTOR on_turret_of_car
+    8A0C: not  player PLAYER_CHAR on_jetpack
+    8E48: not is_char_fallen_on_ground PLAYER_ACTOR
+    not actor.Animation(PLAYER_ACTOR) == "EAT_Vomit_P_Car"    
+        then
+        
+        if
+        actor.Driving(PLAYER_ACTOR)
+        then
+        018C: play_sound 1057 at 0.0 0.0 0.0
+        end
+    
+        :FP_ON    
+        
+        33@ = 0            
+                    
+        041D: set_camera_near_clip FP_CAM_NEAR_CLIP        
+        $FP_ACTIVATED = 1   
+        0AF1: write_int $FP_ACTIVATED to_ini_file "config.ini" section "GAME" key "FP_ENABLED"                
+        
+        gosub @FP_SKIN_ON
+        
+        if and
+        not FP_PLAYER_SHOW_FLAG == 1
+        8E46: not is_char_using_gun PLAYER_ACTOR
+        then
+        0D10: set_actor PLAYER_ACTOR alpha 0 // IF and SET 
+        else
+        0D10: set_actor PLAYER_ACTOR alpha 255 // IF and SET
+        end                    
+        
+        0A96: 1@ = actor PLAYER_ACTOR struct
+        0A8E: 1@ = 1@ + 1376
+        
+        0A8D: 7@ = read_memory 1@ size 4 virtual_protect 1
+        
+        0A8C: write_memory 1@ size 4 value 147456.0 virtual_protect 1                
+        
+        if
+        not actor.Driving(PLAYER_ACTOR)
+        then
+        gosub @REMOVE_HEAD
+        else
+        
+        3@ = actor.CurrentCar(PLAYER_ACTOR)
+        gosub @FP_SEAT_HANDLE_GET_FOR_PLAYER
+        06A2: get_car 3@ velocity_in_direction_XYZ 25@ 26@ 27@
+        25@ *= 0.02
+        26@ *= 0.02
+        27@ *= 0.02
+        gosub @FP_READ_ROTATION_VECTOR
+        
+        actor.StorePos(PLAYER_ACTOR,0@,1@,2@)
+        2@ += 10.0
+        
+        0362: remove_actor PLAYER_ACTOR from_car_and_place_at 0@ 1@ 2@
+        gosub @REMOVE_HEAD
+        
+        1@ = 0
+        
+        if
+        8ABE: not  vehicle 3@ engine_on
+        then
+        1@ = 1
+        end
+        
+        if
+        8@ == -1
+        then
+        036A: put_actor PLAYER_ACTOR in_car 3@
+        else
+        0430: put_actor PLAYER_ACTOR into_car 3@ passenger_seat 8@
+        end
+        
+        if and
+        1@ == 1
+        not car.Id(3@) == #FREIGHT
+        not car.Id(3@) == #STREAK
+        not car.Id(3@) == #STREAKC
+        then
+        02D4: car 3@ turn_off_engine
+        end
+        
+        car.LockInCurrentPosition(3@,true)
+        car.SetSpeedInstantly(3@,0.0)
+        car.LockInCurrentPosition(3@,false)            
+        07D5: set_car 3@ velocity_in_direction_XYZ 25@ 26@ 27@ rotation_velocitiesXY 0.0 0.0 unk 0.0
+        gosub @FP_GET_BACK_ROTATION_VECTOR
+        
+        end      
+        
+        33@ = 0       
+        
+        if
+        24@ == 1
+        then
+        0792: disembark_instantly_actor PLAYER_ACTOR
+        04EB: AS_actor PLAYER_ACTOR crouch 1
+        end
+        
+        end
+    end
+    
+:FP_ON_SKIP          
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+0470: 3@ = actor PLAYER_ACTOR current_weapon   
+
+0D0B: get_actor PLAYER_ACTOR bone 8 matrix_pointer_to 25@ // IF and SET
+
+5@ = 0
+
+for 4@ = 121 to 131
+
+if
+02D8:   actor PLAYER_ACTOR current_weapon == 4@
+then
+5@ = 1 
+end
+
+if or
+02D8:   actor PLAYER_ACTOR current_weapon == 115
+02D8:   actor PLAYER_ACTOR current_weapon == 118
+02D8:   actor PLAYER_ACTOR current_weapon == 132
+02D8:   actor PLAYER_ACTOR current_weapon == 133
+02D8:   actor PLAYER_ACTOR current_weapon == 134
+02D8:   actor PLAYER_ACTOR current_weapon == 44
+02D8:   actor PLAYER_ACTOR current_weapon == 45
+02D8:   actor PLAYER_ACTOR current_weapon == 221
+then
+5@ = 1
+end
+
+end
+    
+if or
+0A29:   player PLAYER_CHAR climbing
+0818:  actor PLAYER_ACTOR in_air
+actor.Animation(PLAYER_ACTOR) == "FALL_collapse"
+actor.Animation(PLAYER_ACTOR) == "FALL_glide"
+actor.Animation(PLAYER_ACTOR) == "JUMP_launch"
+actor.Animation(PLAYER_ACTOR) == "JUMP_launch_R"
+    then
+    5@ = 1
+    end
+    
+if or
+0818:  actor PLAYER_ACTOR in_air
+0E48:  is_char_fallen_on_ground PLAYER_ACTOR
+0E92:  is_char_really_in_air PLAYER_ACTOR
+    then
+    5@ = 1
+    end                        
+
+if and
+00E1:   player 0 pressed_key 6  
+044B:   actor PLAYER_ACTOR on_foot
+3@ > 21
+not 3@ == 110
+5@ == 0   
+$FP_ACTIVATED == 1 
+$HUD_REMOVE == 0 
+then    
+
+0D04: 29@ = matrix 25@ z_angle
+actor.Angle(PLAYER_ACTOR) = 29@ 
+
+0881: set_player PLAYER_CHAR able_to_shoot_weapons 1
+
+4@ = 0.20
+5@ = 0.05
+6@ = 0.05
+
+gosub @SKIN_OFFSET_SET
+
+06AC: 11@ = actor PLAYER_ACTOR movement_speed
+11@ *= 0.05
+005B: 4@ += 11@  // (float) 
+
+0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
+
+0930: (unknown) 1
+                                 
+if
+$RANDOM_MODE_MODEL == 0
+then
+0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
+0D06: get_matrix 0@ position_to 1@ 2@ 3@
+01BC: put_object FP_CARL_HEAD_OBJECT at 1@ 2@ 3@
+0@ = actor.Angle(PLAYER_ACTOR)
+0177: set_object FP_CARL_HEAD_OBJECT Z_angle_to 0@
+0400: store_coords_to 1@ 2@ 3@ from_object FP_CARL_HEAD_OBJECT with_offset 0.0 0.1 0.05  
+0936: set_camera 1@ 2@ 3@ position_to 1@ 2@ 3@ GENERAL_FP_CAM_TIMER ms 1
+else
+0D0A: store_coords_to 1@ 2@ 3@ from_matrix 0@ with_offsets 4@ 5@ 6@  
+0936: set_camera 1@ 2@ 3@ position_to 1@ 2@ 3@ GENERAL_FP_CAM_TIMER ms 1
+end
+
+0936: set_camera 1@ 2@ 3@ position_to 1@ 2@ 3@ GENERAL_FP_CAM_TIMER ms 1 
+
+06A9: AS_actor PLAYER_ACTOR look_at_point 10@ 11@ 12@ 10 ms
+
+0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET  
+                          
+if
+$RANDOM_MODE_MODEL == 0
+then
+0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
+0D06: get_matrix 0@ position_to 1@ 2@ 3@
+01BC: put_object FP_CARL_HEAD_OBJECT at 1@ 2@ 3@
+0@ = actor.Angle(PLAYER_ACTOR)
+0177: set_object FP_CARL_HEAD_OBJECT Z_angle_to 0@
+0400: store_coords_to 1@ 2@ 3@ from_object FP_CARL_HEAD_OBJECT with_offset 0.0 0.1 0.05  
+0936: set_camera 1@ 2@ 3@ position_to 1@ 2@ 3@ GENERAL_FP_CAM_TIMER ms 1
+else
+0D0A: store_coords_to 1@ 2@ 3@ from_matrix 0@ with_offsets 4@ 5@ 6@  
+0936: set_camera 1@ 2@ 3@ position_to 1@ 2@ 3@ GENERAL_FP_CAM_TIMER ms 1
+end
+
+0930: (unknown) 1
+
+gosub @SNIPER_CHECK_FP
+
+if or
+0@ == 0
+0@ == 1 
+then          
+0922: set_camera_zoom_from 80.0 to 80.0 timelimit GENERAL_FOV_TIMER smooth_transition 0
+end
+
+068D: get_camera_position_to 1@ 2@ 3@   
+068E: get_camera_target_point_to 10@ 11@ 12@
+
+camera.SetPosition(1@,2@,3@,0.0,0.0,0.0)    
+camera.PointAt(10@,11@,12@,2)
+
+32@ = 0 
+
+///////////////////////////////////////////////////       
+
+33@ = 0
+         
+while 32@ < 10
+wait 0
+
+gosub @SNIPER_CHECK_FP
+if and 
+8A4B: not  controls_set_to_joystick
+not 0@ == 1
+then
+0159: camera_on_ped PLAYER_ACTOR mode 53 switchstyle 2
+end             
+
+4@ = 0.20
+5@ = 0.05
+6@ = 0.05  
+
+gosub @SKIN_OFFSET_SET
+
+06AC: 11@ = actor PLAYER_ACTOR movement_speed
+11@ *= 0.05
+005B: 4@ += 11@  // (float) 
+
+0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
+  
+if
+$RANDOM_MODE_MODEL == 0
+then
+0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
+0D06: get_matrix 0@ position_to 1@ 2@ 3@
+01BC: put_object FP_CARL_HEAD_OBJECT at 1@ 2@ 3@
+0@ = actor.Angle(PLAYER_ACTOR)
+0177: set_object FP_CARL_HEAD_OBJECT Z_angle_to 0@
+0400: store_coords_to 1@ 2@ 3@ from_object FP_CARL_HEAD_OBJECT with_offset 0.0 0.1 0.05  
+0936: set_camera 1@ 2@ 3@ position_to 1@ 2@ 3@ GENERAL_FP_CAM_TIMER ms 1
+else
+0D0A: store_coords_to 1@ 2@ 3@ from_matrix 0@ with_offsets 4@ 5@ 6@  
+0936: set_camera 1@ 2@ 3@ position_to 1@ 2@ 3@ GENERAL_FP_CAM_TIMER ms 1
+end
+
+0930: (unknown) 1
+
+068D: get_camera_position_to 1@ 2@ 3@     
+068E: get_camera_target_point_to 10@ 11@ 12@
+
+gosub @SNIPER_CHECK_FP
+
+if or
+0@ == 0
+0@ == 1 
+then
+0922: set_camera_zoom_from 80.0 to 80.0 timelimit GENERAL_FOV_TIMER smooth_transition 0
+end
+
+camera.SetPosition(1@,2@,3@,0.0,0.0,0.0)    
+camera.PointAt(10@,11@,12@,2)
+
+end
+
+gosub @SNIPER_CHECK_FP
+if
+0@ == 1
+then
+camera.Restore()
+end   
+
+32@ = 0   
+
+if
+not 18@ == 1
+then
+18@ = 0
+end
+
+21@ = 0
+
+///////////////////////////////////////////////////
+
+if
+0A4B:  controls_set_to_joystick
+then
+0159: camera_on_ped PLAYER_ACTOR mode 53 switchstyle 2
+end
+
+while 00E1:   player 0 pressed_key 6
+wait 0
+
+gosub @SNIPER_CHECK_FP
+if and
+8A4B: not  controls_set_to_joystick
+not 0@ == 1
+then
+0159: camera_on_ped PLAYER_ACTOR mode 53 switchstyle 2
+end
+
+gosub @FP_WEAPON_ANIM_CHECK   
+
+0A8D: 10@ = read_memory 0xB7CB64 size 4 virtual_protect 0
+if
+$SPEED_099_FLAG == 1
+then
+10@ = 1.0
+end
+0A8D: 0@ = read_memory 0x53BF8A size 2 virtual_protect 1
+
+if and
+0E3D: is_key_just_pressed KEY_ACTIVATE
+10@ == 1.0
+not 0@ == 0x9066
+not $MUTATION_ACTIVE == 3
+not CUSTOM_MODE_ONLY_FP_CAM == 1
+$FP_ON == 1
+    then
+    if or
+    not $GAMEMODE_STORYLINE == 2
+    $CHEATS_ON == 1
+        then
+        jump to @FP_OFF
+        end
+    end
+
+0470: 0@ = actor PLAYER_ACTOR current_weapon    
+041A: 1@ = actor PLAYER_ACTOR weapon 0@ ammo
+if or 
+0@ < 22
+1@ <= 0
+    then
+    break
+    end
+
+if and
+18@ == 0
+0597:   actor PLAYER_ACTOR crouching
+    then
+    if or
+    001F:   33@ > $FP_CROUCH_TIME1 // (int)
+    001D:   9@ > 8@  // (int)
+        then
+        18@ = 1            
+        33@ = 0            
+        end
+    end   
+    
+if and
+18@ == 0  
+21@ == 1
+PLAYER_ALPHA == 0
+    then
+    if and
+    801F: not  33@ > $FP_CROUCH_TIME1 // (int)
+    801D: not  9@ > 8@  // (int)
+        then                
+        0D10: set_actor PLAYER_ACTOR alpha 0 // IF and SET
+        PLAYER_ALPHA = 0                             
+        else 
+        21@ = 0  
+        0D10: set_actor PLAYER_ACTOR alpha ALPHA_NORMAL // IF and SET
+        PLAYER_ALPHA = ALPHA_NORMAL                
+        end  
+    end
+    
+if 
+18@ == 1
+    then
+    if and
+    801F: not  33@ > $FP_CROUCH_TIME2 // (int)
+    801D: not  9@ > 8@  // (int)
+        then        
+        0D10: set_actor PLAYER_ACTOR alpha 0 // IF and SET
+        PLAYER_ALPHA = 0                     
+        else
+        0D10: set_actor PLAYER_ACTOR alpha ALPHA_NORMAL // IF and SET
+        PLAYER_ALPHA = ALPHA_NORMAL    
+        end  
+    end        
+    
+if and    
+18@ == 1
+001F:   33@ > $FP_CROUCH_TIME2 // (int)
+    then
+    if or
+    8597: not  actor PLAYER_ACTOR crouching
+    00E1:   player 0 pressed_key 18
+        then
+        18@ = 0
+        21@ = 1
+        33@ = 0
+        end 
+    end      
+
+4@ = 0.20
+5@ = 0.05
+6@ = 0.05     
+
+gosub @SKIN_OFFSET_SET
+
+if or
+844B: not  actor PLAYER_ACTOR on_foot  
+0818:  actor PLAYER_ACTOR in_air
+0E48:  is_char_fallen_on_ground PLAYER_ACTOR
+0E92:  is_char_really_in_air PLAYER_ACTOR
+    then
+    break
+    end    
+
+if and
+8AB0: not  key_pressed 66
+8AB0: not  key_pressed 83
+8AB0: not  key_pressed 68    
+then
+
+if
+$SLOWMODE_ACTIVE == 0
+then
+
+///////////////////////////////////////////////////////////
+
+if or
+actor.Animation(PLAYER_ACTOR) == "GunCrouchFwd"
+actor.Animation(PLAYER_ACTOR) == "GUN_BUTT_crouch"
+32@ < 500        
+$PLAYER_RELOADING == 1  
+then
+06AC: 11@ = actor PLAYER_ACTOR movement_speed
+11@ *= 0.05    
+005B: 4@ += 11@  // (float)  
+end
+
+///////////////////////////////////////////////////////////
+
+else
+
+///////////////////////////////////////////////////////////
+
+if or
+actor.Animation(PLAYER_ACTOR) == "GunCrouchFwd"
+actor.Animation(PLAYER_ACTOR) == "GUN_BUTT_crouch"
+32@ < 100        
+$PLAYER_RELOADING == 1  
+then
+06AC: 11@ = actor PLAYER_ACTOR movement_speed
+11@ *= 0.05    
+005B: 4@ += 11@  // (float)  
+end
+
+///////////////////////////////////////////////////////////
+
+end
+
+end      
+
+gosub @SNIPER_CHECK_FP
+
+if or
+0@ == 0
+0@ == 1 
+then
+
+if and
+32@ > 100
+18@ == 0
+21@ == 0
+80E1: not  player 0 pressed_key 18
+then
+0D10: set_actor PLAYER_ACTOR alpha ALPHA_NORMAL // IF and SET
+PLAYER_ALPHA = ALPHA_NORMAL            
+end
+
+0922: set_camera_zoom_from 80.0 to 80.0 timelimit GENERAL_FOV_TIMER smooth_transition 0
+end    
+     
+0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
+
+0930: (unknown) 1   
+
+if
+$RANDOM_MODE_MODEL == 0
+then
+0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
+0D06: get_matrix 0@ position_to 1@ 2@ 3@
+01BC: put_object FP_CARL_HEAD_OBJECT at 1@ 2@ 3@
+0@ = actor.Angle(PLAYER_ACTOR)
+0177: set_object FP_CARL_HEAD_OBJECT Z_angle_to 0@
+0400: store_coords_to 1@ 2@ 3@ from_object FP_CARL_HEAD_OBJECT with_offset 0.0 0.1 0.05  
+0936: set_camera 1@ 2@ 3@ position_to 1@ 2@ 3@ GENERAL_FP_CAM_TIMER ms 1
+else
+0D0A: store_coords_to 1@ 2@ 3@ from_matrix 0@ with_offsets 4@ 5@ 6@  
+0936: set_camera 1@ 2@ 3@ position_to 1@ 2@ 3@ GENERAL_FP_CAM_TIMER ms 1
+end
+
+041D: set_camera_near_clip FP_CAM_NEAR_CLIP    
+end  
+
+if
+0597:   actor PLAYER_ACTOR crouching
+then
+0@ = 1 
+end    
+
+/////////////////////////////
+
+//camera.Restore_WithJumpCut()    
+0159: camera_on_ped PLAYER_ACTOR mode 4 switchstyle 2     
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+else  
+ 
+if 
+$FP_ACTIVATED == 1
+then   
+
+if
+$SAVESTATUS_TRUE == 1
+then
+
+gosub @BACK_HEAD
+
+while $SAVESTATUS_TRUE == 1
+wait 0
+end
+
+gosub @REMOVE_HEAD
+
+end
+
+:FUCKME22    
+
+0A96: 1@ = actor PLAYER_ACTOR struct
+0A8E: 1@ = 1@ + 1376
+
+0A8D: 21@ = read_memory 1@ size 4 virtual_protect 1
+
+0A8C: write_memory 1@ size 4 value 147456.0 virtual_protect 1
+
+if
+not actor.Driving(PLAYER_ACTOR)
+then
+4@ = 0.20
+5@ = 0.05    
+6@ = -0.06   
+gosub @SKIN_OFFSET_SET
+else      
+4@ = 0.0
+5@ = -0.05
+6@ = 0.64
+end    
+
+if
+not actor.Driving(PLAYER_ACTOR)
+then
+else
+22@ = actor.CurrentCar(PLAYER_ACTOR)
+
+if
+056E:   car 22@ defined
+then
+0@ = car.Model(22@)
+
+if or
+0A01:   model 0@ car
+0@ == 15496
+0@ == 444
+0@ == 556
+0@ == 557
+0@ == 574
+0@ == 15497
+0@ == 15594
+then
+0697: set_car 22@ remove_component 4 visible_effect_flag 0
+else
+
+if
+car.Id(22@) == #DUMPER
+then
+0D12: set_car 22@ component "cglass" alpha 25 // IF and SET 
+end
+
+if or
+car.Id(22@) == #MONSTER
+car.Id(22@) == #MONSTERA
+car.Id(22@) == #MONSTERB
+car.Id(22@) == #DUNERIDE
+then
+0697: set_car 22@ remove_component 4 visible_effect_flag 0
+end
+
+if
+car.Id(22@) == ARMY_HUNTER_MODEL_NUMBER
+then
+0D12: set_car 22@ component "door_lf_dummy" alpha 25 // IF and SET 
+end
+
+if
+car.Id(22@) == #SEASPAR
+then
+0D12: set_car 22@ component "door_rr_dummy" alpha 45 // IF and SET 
+end
+
+if
+car.Id(22@) == #HYDRA
+then
+0D12: set_car 22@ component "door_lf_dummy" alpha 25 // IF and SET
+0D12: set_car 22@ component "door_lr_dummy" alpha 25 // IF and SET 
+end
+
+if
+car.Id(22@) == #RUSTLER
+then
+0D12: set_car 22@ component "door_lf_dummy" alpha 25 // IF and SET
+0D12: set_car 22@ component "door_lr_dummy" alpha 25 // IF and SET 
+end
+
+if
+car.Id(22@) == #BEAGLE
+then
+0D12: set_car 22@ component "door_lr_dummy" alpha 25 // IF and SET 
+end
+
+if
+car.Id(22@) == #CROPDUST
+then
+0D12: set_car 22@ component "door_lr_dummy" alpha 25 // IF and SET 
+end
+
+if
+car.Id(22@) == #DODO
+then
+0D12: set_car 22@ component "door_lr_dummy" alpha 25 // IF and SET 
+end
+
+if
+car.Id(22@) == #NEVADA
+then
+0D12: set_car 22@ component "door_lr_dummy" alpha 25 // IF and SET 
+end
+
+if
+car.Id(22@) == #SHAMAL
+then
+0D12: set_car 22@ component "door_lr_dummy" alpha 25 // IF and SET 
+end
+
+if
+car.Id(22@) == #STUNT
+then
+0D12: set_car 22@ component "door_lf_dummy" alpha 25 // IF and SET
+0D12: set_car 22@ component "door_lr_dummy" alpha 25 // IF and SET 
+end
+
+if
+car.Id(22@) == #SKIMMER
+then
+0D12: set_car 22@ component "door_lr_dummy" alpha 25 // IF and SET 
+end
+
+if
+car.Id(22@) == #CARGOBOB
+then
+0D12: set_car 22@ component "door_lr_dummy" alpha 25 // IF and SET 
+end
+
+if
+car.Id(22@) == #LEVIATHN
+then
+0D12: set_car 22@ component "door_lr_dummy" alpha 25 // IF and SET 
+end
+
+if
+car.Id(22@) == #MAVERICK
+then
+0D12: set_car 22@ component "glass" alpha 25 // IF and SET 
+end
+
+if
+car.Id(22@) == #POLMAV
+then
+0D12: set_car 22@ component "glass" alpha 25 // IF and SET 
+end
+
+if
+car.Id(22@) == #RAINDANC
+then
+0D12: set_car 22@ component "glass" alpha 25 // IF and SET 
+end
+
+if
+car.Id(22@) == #VCNMAV
+then
+0D12: set_car 22@ component "glass" alpha 25 // IF and SET 
+end
+
+if
+car.Id(22@) == #SPARROW
+then
+0D12: set_car 22@ component "glass" alpha 25 // IF and SET 
+end
+
+if
+car.Id(22@) == #PREDATOR
+then
+0D12: set_car 22@ component "glass" alpha 0 // IF and SET 
+end
+
+if
+car.Id(22@) == #REEFER
+then
+0D12: set_car 22@ component "glass" alpha 0 // IF and SET 
+end
+
+if
+car.Id(22@) == #TROPIC
+then
+0D12: set_car 22@ component "glass" alpha 0 // IF and SET 
+end
+
+if
+car.Id(22@) == 15501
+then
+0D12: set_car 22@ component "spikes" alpha 0 // IF and SET 
+end
+
+end
+
+end
+
+end
+
+0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
+0D0B: get_actor PLAYER_ACTOR bone 8 matrix_pointer_to 25@ // IF and SET
+
+if
+not actor.Driving(PLAYER_ACTOR)
+then
+
+if
+$RANDOM_MODE_MODEL == 0
+then
+0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
+0D06: get_matrix 0@ position_to 1@ 2@ 3@
+01BC: put_object FP_CARL_HEAD_OBJECT at 1@ 2@ 3@
+0@ = actor.Angle(PLAYER_ACTOR)
+0177: set_object FP_CARL_HEAD_OBJECT Z_angle_to 0@
+0400: store_coords_to 1@ 2@ 3@ from_object FP_CARL_HEAD_OBJECT with_offset 0.0 0.1 0.05  
+0936: set_camera 1@ 2@ 3@ position_to 1@ 2@ 3@ GENERAL_FP_CAM_TIMER ms 1
+else
+0D0A: store_coords_to 1@ 2@ 3@ from_matrix 0@ with_offsets 4@ 5@ 6@  
+0936: set_camera 1@ 2@ 3@ position_to 1@ 2@ 3@ GENERAL_FP_CAM_TIMER ms 1
+end
+
+if
+04AD:   actor PLAYER_ACTOR in_water
+then
+
+if or
+actor.Animation(PLAYER_ACTOR) == "Swim_Tread"
+actor.Animation(PLAYER_ACTOR) == "Swim_Breast"
+actor.Animation(PLAYER_ACTOR) == "SWIM_crawl"
+actor.Animation(PLAYER_ACTOR) == "Swim_Dive_Under"
+actor.Animation(PLAYER_ACTOR) == "Swim_Glide"
+actor.Animation(PLAYER_ACTOR) == "Swim_jumpout"
+actor.Animation(PLAYER_ACTOR) == "Swim_Under"
+then
+3@ += 0.5
+end
+
+end
+
+else
+04C4: store_coords_to 1@ 2@ 3@ from_actor PLAYER_ACTOR with_offset 4@ 5@ 6@
+end
+
+068E: get_camera_target_point_to 10@ 11@ 12@
+
+06A9: AS_actor PLAYER_ACTOR look_at_point 10@ 11@ 12@ 1000 ms 
+
+if 
+26@ == 1
+    then   
+    if     
+    not actor.Driving(PLAYER_ACTOR)
+        then
+        
+        0D10: set_actor PLAYER_ACTOR alpha 0 // IF and SET  
+        
+        if
+        056E:   car 22@ defined
+        then
+        0@ = car.Model(22@) 
+        
+        if               
+        0A01:   model 0@ car
+        then
+        0698: set_car 22@ repair_componentB 4
+        else
+        
+        if
+        car.Id(22@) == #DUMPER
+        then
+        0D12: set_car 22@ component "cglass" alpha 148 // IF and SET 
+        end
+        
+        if or
+        car.Id(22@) == #MONSTER
+        car.Id(22@) == #MONSTERA
+        car.Id(22@) == #MONSTERB
+        car.Id(22@) == #DUNERIDE
+        then
+        0698: set_car 22@ repair_componentB 4
+        end
+        
+        if
+        car.Id(22@) == ARMY_HUNTER_MODEL_NUMBER
+        then
+        0D12: set_car 22@ component "door_lf_dummy" alpha 102 // IF and SET 
+        end
+        
+        if
+        car.Id(22@) == #SEASPAR
+        then
+        0D12: set_car 22@ component "door_rr_dummy" alpha 128 // IF and SET 
+        end
+        
+        if
+        car.Id(22@) == #HYDRA
+        then
+        0D12: set_car 22@ component "door_lf_dummy" alpha 128 // IF and SET
+        0D12: set_car 22@ component "door_lr_dummy" alpha 128 // IF and SET 
+        end
+        
+        if
+        car.Id(22@) == #RUSTLER
+        then
+        0D12: set_car 22@ component "door_lf_dummy" alpha 77 // IF and SET
+        0D12: set_car 22@ component "door_lr_dummy" alpha 77 // IF and SET 
+        end
+        
+        if
+        car.Id(22@) == #BEAGLE
+        then
+        0D12: set_car 22@ component "door_lr_dummy" alpha 128 // IF and SET 
+        end
+        
+        if
+        car.Id(22@) == #CROPDUST
+        then
+        0D12: set_car 22@ component "door_lr_dummy" alpha 64 // IF and SET 
+        end
+        
+        if
+        car.Id(22@) == #DODO
+        then
+        0D12: set_car 22@ component "door_lr_dummy" alpha 128 // IF and SET 
+        end
+        
+        if
+        car.Id(22@) == #NEVADA
+        then
+        0D12: set_car 22@ component "door_lr_dummy" alpha 128 // IF and SET 
+        end
+        
+        if
+        car.Id(22@) == #SHAMAL
+        then
+        0D12: set_car 22@ component "door_lr_dummy" alpha 77 // IF and SET 
+        end
+        
+        if
+        car.Id(22@) == #STUNT
+        then
+        0D12: set_car 22@ component "door_lf_dummy" alpha 128 // IF and SET
+        0D12: set_car 22@ component "door_lr_dummy" alpha 128 // IF and SET 
+        end
+        
+        if
+        car.Id(22@) == #SKIMMER
+        then
+        0D12: set_car 22@ component "door_lr_dummy" alpha 128 // IF and SET 
+        end
+        
+        if
+        car.Id(22@) == #CARGOBOB
+        then
+        0D12: set_car 22@ component "door_lr_dummy" alpha 89 // IF and SET 
+        end
+        
+        if
+        car.Id(22@) == #LEVIATHN
+        then
+        0D12: set_car 22@ component "door_lr_dummy" alpha 77 // IF and SET 
+        end
+        
+        if
+        car.Id(22@) == #MAVERICK
+        then
+        0D12: set_car 22@ component "glass" alpha 128 // IF and SET 
+        end
+        
+        if
+        car.Id(22@) == #POLMAV
+        then
+        0D12: set_car 22@ component "glass" alpha 128 // IF and SET 
+        end
+        
+        if
+        car.Id(22@) == #RAINDANC
+        then
+        0D12: set_car 22@ component "glass" alpha 102 // IF and SET 
+        end
+        
+        if
+        car.Id(22@) == #VCNMAV
+        then
+        0D12: set_car 22@ component "glass" alpha 128 // IF and SET 
+        end
+        
+        if
+        car.Id(22@) == #SPARROW
+        then
+        0D12: set_car 22@ component "glass" alpha 102 // IF and SET 
+        end
+        
+        if
+        car.Id(22@) == #PREDATOR
+        then
+        0D12: set_car 22@ component "glass" alpha 77 // IF and SET 
+        end
+        
+        if
+        car.Id(22@) == #REEFER
+        then
+        0D12: set_car 22@ component "glass" alpha 128 // IF and SET 
+        end
+        
+        if
+        car.Id(22@) == #TROPIC
+        then
+        0D12: set_car 22@ component "glass" alpha 77 // IF and SET 
+        end
+        
+        if
+        car.Id(22@) == 15501
+        then
+        0D12: set_car 22@ component "spikes" alpha 255 // IF and SET 
+        end         
+              
+        end
+        
+        end
+        
+        27@ = 0.0
+        28@ = 0.0
+        
+        26@ = 0
+        0930: (unknown) 0
+        camera.Restore_WithJumpCut()  
+        end
+    end
+
+///////////////////////////////////
+
+if 
+not actor.Driving(PLAYER_ACTOR)   
+then    
+
+0470: 0@ = actor PLAYER_ACTOR current_weapon                         
+
+4@ = 0
+
+if or
+02D8:   actor PLAYER_ACTOR current_weapon == 115
+02D8:   actor PLAYER_ACTOR current_weapon == 118
+02D8:   actor PLAYER_ACTOR current_weapon == 132
+02D8:   actor PLAYER_ACTOR current_weapon == 133
+02D8:   actor PLAYER_ACTOR current_weapon == 134
+02D8:   actor PLAYER_ACTOR current_weapon == 44
+02D8:   actor PLAYER_ACTOR current_weapon == 45
+then
+4@ = 1
+end
+
+if and
+82D8: not  actor PLAYER_ACTOR current_weapon == 16
+82D8: not  actor PLAYER_ACTOR current_weapon == 17
+82D8: not  actor PLAYER_ACTOR current_weapon == 18
+4@ == 0      
+8A32: not  actor PLAYER_ACTOR on_turret_of_car
+then
+0881: set_player PLAYER_CHAR able_to_shoot_weapons 0  
+else
+0881: set_player PLAYER_CHAR able_to_shoot_weapons 1  
+end
+
+if and
+00E1:   player 0 pressed_key 15
+09E7:   player PLAYER_CHAR not_frozen
+then
+14@ = 1
+32@ = 0
+end
+
+if and
+14@ == 1
+32@ > 5
+then  
+14@ = 0
+end
+
+if and
+not FP_PLAYER_SHOW_FLAG == 1
+8E46: not is_char_using_gun PLAYER_ACTOR
+then
+0D10: set_actor PLAYER_ACTOR alpha 0 // IF and SET 
+else
+0D10: set_actor PLAYER_ACTOR alpha 255 // IF and SET
+end
+ 
+0930: (unknown) 1        
+0936: set_camera 1@ 2@ 3@ position_to 1@ 2@ 3@ GENERAL_FP_CAM_TIMER ms 1   
+041D: set_camera_near_clip FP_CAM_NEAR_CLIP   
+
+///////////////////////////////////
+  
+else  
+
+if
+84C8: not  actor PLAYER_ACTOR driving_flying_vehicle
+then  
+
+if and
+00E1:   player 0 pressed_key 5
+00E1:   player 0 pressed_key 7    
+then    
+
+gosub @LOOK_BACK_OFFSET
+
+camera.SetPosition(10@,11@,12@,0.0,0.0,0.0)
+
+0407: store_coords_to 10@ 11@ 12@ from_car 22@ with_offset 15@ -20.0 0.64
+camera.PointAt(10@,11@,12@,2)
+
+gosub @BACK_HEAD
+
+else
+
+0A8D: 10@ = read_memory 0x05E7189 size 4 virtual_protect 0
+
+if
+not 10@ == 40937
+then
+
+/////////////////////////////////////////
+
+3@ = actor.CurrentCar(PLAYER_ACTOR)
+gosub @FP_SEAT_HANDLE_GET_FOR_PLAYER
+02E3: 4@ = car 3@ speed
+06A2: get_car 3@ velocity_in_direction_XYZ 25@ 26@ 27@
+25@ *= 0.02
+26@ *= 0.02
+27@ *= 0.02
+gosub @FP_READ_ROTATION_VECTOR
+        
+actor.StorePos(PLAYER_ACTOR,0@,1@,2@)
+2@ += 10.0
+        
+0362: remove_actor PLAYER_ACTOR from_car_and_place_at 0@ 1@ 2@
+gosub @REMOVE_HEAD
+        
+1@ = 0
+        
+if
+8ABE: not  vehicle 3@ engine_on
+then
+1@ = 1
+end
+        
+if
+8@ == -1
+then
+036A: put_actor PLAYER_ACTOR in_car 3@
+else
+0430: put_actor PLAYER_ACTOR into_car 3@ passenger_seat 8@
+end
+        
+if and
+1@ == 1
+not car.Id(3@) == #FREIGHT
+not car.Id(3@) == #STREAK
+not car.Id(3@) == #STREAKC
+then
+02D4: car 3@ turn_off_engine
+end
+
+car.LockInCurrentPosition(3@,true)
+car.SetSpeedInstantly(3@,0.0)
+car.LockInCurrentPosition(3@,false)            
+07D5: set_car 3@ velocity_in_direction_XYZ 25@ 26@ 27@ rotation_velocitiesXY 0.0 0.0 unk 0.0
+gosub @FP_GET_BACK_ROTATION_VECTOR
+
+/////////////////////////////////////////
+
+end
+
+end 
+
+end
+
+if
+8A4B: not  controls_set_to_joystick
+then
+0A4A: store_joystick_X_offset_to 30@ Y_offset_to 31@
+else
+0494: get_joystick 0 data_to 0@ 2@ 30@ 31@
+0093: 30@ = integer 30@ to_float
+31@ /= -2
+31@ *= 2
+0093: 31@ = integer 31@ to_float
+end
+
+0A8D: 0@ = read_memory 0xB6EC1C size 4 virtual_protect 1
+0@ *= 287.17
+
+006B: 30@ *= 0@  // (float)
+006B: 31@ *= 0@  // (float)
+
+005B: 27@ += 30@ // (float) 
+005B: 28@ += 31@ // (float)
+
+if 
+27@ > 360.0 
+then
+27@ = 360.0 
+end
+
+if 
+not 27@ >= -360.0 
+then
+27@ = -360.0 
+end
+
+if 
+28@ > 20.0 
+then
+28@ = 20.0 
+end
+
+if 
+not 28@ >= -90.0 
+then
+28@ = -90.0 
+end
+
+gosub @CAR_CHECK
+
+if 
+0@ == 1
+    then          
+    26@ = 1   
+    
+    0930: (unknown) 0
+    
+    if
+    actor.DrivingVehicleType(PLAYER_ACTOR,#COACH)
+    then
+    jump to @BIKE_CHECK3_PRE1
+    end                   
+     
+    if and
+    847A: not  actor PLAYER_ACTOR driving_bike
+    84A7: not  actor PLAYER_ACTOR driving_boat
+    84C8: not  actor PLAYER_ACTOR driving_flying_vehicle
+    not actor.DrivingVehicleType(PLAYER_ACTOR,#QUAD)
+    not actor.DrivingVehicleType(PLAYER_ACTOR,15426)
+    not actor.DrivingVehicleType(PLAYER_ACTOR,RHINO_MODEL_NUMBER)
+    not actor.DrivingVehicleType(PLAYER_ACTOR,#SWATVAN)
+    not actor.DrivingVehicleType(PLAYER_ACTOR,15501)    
+    then
+    
+    if and
+    80E1: not  player 0 pressed_key 5
+    80E1: not  player 0 pressed_key 7  
+    then
+    067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.0 0.64 rotation 27@ 180.0 28@ tilt 0.0 switchstyle 2
+    end
+    
+    if and
+    00E1:  player 0 pressed_key 5
+    80E1: not  player 0 pressed_key 7
+    then
+    067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.0 0.64 rotation -520.0 180.0 28@ tilt 0.0 switchstyle 2
+    end   
+    
+    if and
+    00E1:  player 0 pressed_key 7 
+    80E1: not  player 0 pressed_key 5
+    then
+    067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.0 0.64 rotation 520.0 180.0 28@ tilt 0.0 switchstyle 2
+    end
+                    
+    else
+    :BIKE_CHECK3_PRE1
+    gosub @BIKE_CHECK3          
+    end  
+             
+    041D: set_camera_near_clip FP_CAM_NEAR_CLIP
+         
+    if and
+    not FP_PLAYER_SHOW_FLAG == 1
+    8E46: not is_char_using_gun PLAYER_ACTOR
+    then
+    0D10: set_actor PLAYER_ACTOR alpha 0 // IF and SET 
+    else
+    0D10: set_actor PLAYER_ACTOR alpha 255 // IF and SET
+    end
+        
+    jump to @CAR_FUCK    
+    end                
+
+0D10: set_actor PLAYER_ACTOR alpha 255 // IF and SET
+0881: set_player PLAYER_CHAR able_to_shoot_weapons 1
+26@ = 1               
+if and
+00E1:   player 0 pressed_key 5
+00E1:   player 0 pressed_key 7    
+then     
+else 
+
+0930: (unknown) 0
+
+if
+actor.DrivingVehicleType(PLAYER_ACTOR,#COACH)
+then
+jump to @BIKE_CHECK3_PRE2
+end
+
+if and
+847A: not  actor PLAYER_ACTOR driving_bike
+84A7: not  actor PLAYER_ACTOR driving_boat
+84C8: not  actor PLAYER_ACTOR driving_flying_vehicle
+not actor.DrivingVehicleType(PLAYER_ACTOR,#QUAD)
+not actor.DrivingVehicleType(PLAYER_ACTOR,15426)
+not actor.DrivingVehicleType(PLAYER_ACTOR,RHINO_MODEL_NUMBER)
+not actor.DrivingVehicleType(PLAYER_ACTOR,#SWATVAN)
+not actor.DrivingVehicleType(PLAYER_ACTOR,15501)
+then
+          
+if and
+80E1: not  player 0 pressed_key 5
+80E1: not  player 0 pressed_key 7  
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.0 0.64 rotation 27@ 180.0 28@ tilt 0.0 switchstyle 2
+end
+    
+if and
+00E1:  player 0 pressed_key 5
+80E1: not  player 0 pressed_key 7
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.0 0.64 rotation -520.0 180.0 0.0 tilt 0.0 switchstyle 2
+end   
+    
+if and
+00E1:  player 0 pressed_key 7 
+80E1: not  player 0 pressed_key 5
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.0 0.64 rotation 520.0 180.0 0.0 tilt 0.0 switchstyle 2
+end
+  
+else
+:BIKE_CHECK3_PRE2
+gosub @BIKE_CHECK3          
+end
+  
+end        
+041D: set_camera_near_clip FP_CAM_NEAR_CLIP                     
+end
+
+///////////////////////////////////
+
+:CAR_FUCK
+
+if
+8A32: not actor PLAYER_ACTOR on_turret_of_car
+then
+0922: set_camera_zoom_from 90.0 to 90.0 timelimit GENERAL_FOV_TIMER smooth_transition 0 
+else
+0922: set_camera_zoom_from 80.0 to 80.0 timelimit GENERAL_FOV_TIMER smooth_transition 0
+end
+
+/////////////////////////////////////////////////////////////////////////////////////    
+
+0A8D: 1@ = read_memory 0xB7CB64 size 4 virtual_protect 0
+if
+$SPEED_099_FLAG == 1
+then
+1@ = 1.0
+end
+0A8D: 0@ = read_memory 0x53BF8A size 2 virtual_protect 1
+
+if
+$GAMEMODE_EDITOR == 1
+then
+
+if and
+FP_TURNED_OFF_FOR_CUTSCENE == 1
+8A32: not actor PLAYER_ACTOR on_turret_of_car
+then
+FP_PREV_STATUS = 1
+jump to @FP_OFF
+end
+
+end
+
+if
+$GAMEMODE_STORYLINE == 1
+then
+
+if and
+FP_TURNED_OFF_FOR_CUTSCENE == 1
+8A32: not actor PLAYER_ACTOR on_turret_of_car
+then
+FP_PREV_STATUS = 1
+jump to @FP_OFF
+end 
+
+if and
+$HUD_ALPHA == 0
+8A32: not actor PLAYER_ACTOR on_turret_of_car
+then
+FP_STORY_TURNED_OFF_CINEMA = 1
+jump to @FP_OFF
+end
+
+end
+
+if or
+$QUEST_TYPE == 26
+$QUEST_TYPE == 27
+$QUEST_TYPE == 666
+$QUEST_TYPE == 667 
+then
+
+if and
+$HUD_ALPHA == 0
+8A32: not actor PLAYER_ACTOR on_turret_of_car
+then
+FP_STORY_TURNED_OFF_CINEMA = 1
+jump to @FP_OFF
+end
+
+end
+
+if and
+$FP_ON == 0
+$FP_ACTIVATED == 1
+    then
+    if
+    FP_ONLY_IN_CAR == 1
+        then
+        
+        if and
+        0A4B:   controls_set_to_joystick
+        0E3E: is_button_just_pressed 0 button 13
+            then          
+            jump to @FP_OFF_JUMP_PRE2
+            end
+        
+        0A39: get_vehicle_camera_mode_to 2@
+        if or
+        not 2@ == 0
+        not actor.Driving(PLAYER_ACTOR)
+        0E4A: is_char_exiting_any_car PLAYER_ACTOR
+        0E3D: is_key_just_pressed KEY_ACTIVATE
+            then
+            :FP_OFF_JUMP_PRE2
+            gosub @CAR_CHECK
+            0A8D: 2@ = read_memory 0x53BF8A size 2 virtual_protect 1
+            if and
+            09E7:   player PLAYER_CHAR not_frozen
+            1@ == 1.0
+            not 2@ == 0x9066
+            $FP_ACTIVATED == 1
+            not $MUTATION_ACTIVE == 3    
+            33@ > 500
+            0@ == 0        
+                then
+                
+                if
+                8A4B: not  controls_set_to_joystick
+                then
+                
+                if
+                8AB0: not  key_pressed KEY_ACTIVATE
+                then
+                
+                if or
+                not actor.Driving(PLAYER_ACTOR)
+                0E4A: is_char_exiting_any_car PLAYER_ACTOR
+                then
+                09AD: set_vehicle_camera_mode 2
+                FP_ONLY_IN_CAR = 2
+                else
+                09AD: set_vehicle_camera_mode 3
+                end
+                
+                else
+                09AD: set_vehicle_camera_mode 4
+                end
+                
+                else
+                
+                if
+                8E3E: not is_button_just_pressed 0 button 13
+                then
+                
+                if or
+                not actor.Driving(PLAYER_ACTOR)
+                0E4A: is_char_exiting_any_car PLAYER_ACTOR
+                then
+                09AD: set_vehicle_camera_mode 2
+                else
+                09AD: set_vehicle_camera_mode 3
+                end
+                
+                else
+                09AD: set_vehicle_camera_mode 4
+                end
+                
+                end
+                
+                jump to @FP_OFF
+                end        
+            end
+        else
+        jump to @FP_OFF
+        end   
+    end
+    
+if
+0A0C:   player PLAYER_CHAR on_jetpack
+    then
+    jump to @FP_OFF
+    end    
+    
+if
+0A4B:   controls_set_to_joystick
+    then
+    if and
+    $FP_ON == 1
+    0E3E: is_button_just_pressed 0 button 13
+        then                
+        jump to @FP_OFF_JUMP_PRE
+        end
+    end    
+
+if and
+0E3D: is_key_just_pressed KEY_ACTIVATE
+$FP_ON == 1 
+    then
+    :FP_OFF_JUMP_PRE
+    
+    if and
+    $QUEST_TYPE == 20
+    $FP_ACTIVATED == 0
+    $HUD_REMOVE == 0
+    056E:   car SUPPLY_QUEST_TRUCK defined
+        then
+        if
+        actor.InCar(PLAYER_ACTOR,SUPPLY_QUEST_TRUCK)
+            then
+            jump to @FP_CANT_OFF
+            end 
+        end
+        
+    if and
+    $QUEST_TYPE == 22
+    $FP_ACTIVATED == 0
+    $HUD_REMOVE == 0
+    056E:   car SUPPLY_QUEST_TRUCK defined
+        then
+        if and
+        actor.InCar(PLAYER_ACTOR,SUPPLY_QUEST_TRUCK)
+        not car.Id(SUPPLY_QUEST_TRUCK) == #BMX
+            then
+            jump to @FP_CANT_OFF
+            end 
+        end    
+        
+    if and
+    8A32: not actor PLAYER_ACTOR on_turret_of_car
+    not CUSTOM_MODE_ONLY_FP_CAM == 1
+        then
+        gosub @CAR_CHECK
+        0A8D: 2@ = read_memory 0x53BF8A size 2 virtual_protect 1
+        if and
+        09E7:   player PLAYER_CHAR not_frozen
+        1@ == 1.0
+        not 2@ == 0x9066
+        $FP_ACTIVATED == 1
+        not $MUTATION_ACTIVE == 3    
+        33@ > 500
+        $FP_ON == 1
+        0@ == 0
+            then   
+            
+            :FP_OFF
+            
+            33@ = 0    
+            
+            0A96: 1@ = actor PLAYER_ACTOR struct
+            0A8E: 1@ = 1@ + 1376                
+            0A8C: write_memory 1@ size 4 value 7@ virtual_protect 1     
+            
+            gosub @BACK_HEAD
+            
+            gosub @FP_SKIN_OFF                            
+                    
+            0881: set_player PLAYER_CHAR able_to_shoot_weapons 1        
+            
+            0922: set_camera_zoom_from 90.0 to 80.0 timelimit GENERAL_FOV_TIMER smooth_transition 0
+            
+            if
+            056E:   car 22@ defined
+            then
+            
+            0@ = car.Model(22@) 
+            
+            if or              
+            0A01:   model 0@ car
+            0@ == 15496
+            0@ == 444
+            0@ == 556
+            0@ == 557
+            0@ == 574
+            0@ == 15497
+            0@ == 15594
+            then
+            0698: set_car 22@ repair_componentB 4
+            else
+            
+            if
+            car.Id(22@) == ARMY_HUNTER_MODEL_NUMBER
+            then
+            0D12: set_car 22@ component "door_lf_dummy" alpha 102 // IF and SET 
+            end
+            
+            if
+            car.Id(22@) == #SEASPAR
+            then
+            0D12: set_car 22@ component "door_rr_dummy" alpha 128 // IF and SET 
+            end
+            
+            if
+            car.Id(22@) == #HYDRA
+            then
+            0D12: set_car 22@ component "door_lf_dummy" alpha 128 // IF and SET
+            0D12: set_car 22@ component "door_lr_dummy" alpha 128 // IF and SET 
+            end
+            
+            if
+            car.Id(22@) == #RUSTLER
+            then
+            0D12: set_car 22@ component "door_lf_dummy" alpha 77 // IF and SET
+            0D12: set_car 22@ component "door_lr_dummy" alpha 77 // IF and SET 
+            end
+            
+            if
+            car.Id(22@) == #BEAGLE
+            then
+            0D12: set_car 22@ component "door_lr_dummy" alpha 128 // IF and SET 
+            end
+            
+            if
+            car.Id(22@) == #CROPDUST
+            then
+            0D12: set_car 22@ component "door_lr_dummy" alpha 64 // IF and SET 
+            end
+            
+            if
+            car.Id(22@) == #DODO
+            then
+            0D12: set_car 22@ component "door_lr_dummy" alpha 128 // IF and SET 
+            end
+            
+            if
+            car.Id(22@) == #NEVADA
+            then
+            0D12: set_car 22@ component "door_lr_dummy" alpha 128 // IF and SET 
+            end
+            
+            if
+            car.Id(22@) == #SHAMAL
+            then
+            0D12: set_car 22@ component "door_lr_dummy" alpha 77 // IF and SET 
+            end
+            
+            if
+            car.Id(22@) == #STUNT
+            then
+            0D12: set_car 22@ component "door_lf_dummy" alpha 128 // IF and SET
+            0D12: set_car 22@ component "door_lr_dummy" alpha 128 // IF and SET 
+            end
+            
+            if
+            car.Id(22@) == #SKIMMER
+            then
+            0D12: set_car 22@ component "door_lr_dummy" alpha 128 // IF and SET 
+            end
+            
+            if
+            car.Id(22@) == #CARGOBOB
+            then
+            0D12: set_car 22@ component "door_lr_dummy" alpha 89 // IF and SET 
+            end
+            
+            if
+            car.Id(22@) == #LEVIATHN
+            then
+            0D12: set_car 22@ component "door_lr_dummy" alpha 77 // IF and SET 
+            end
+            
+            if
+            car.Id(22@) == #MAVERICK
+            then
+            0D12: set_car 22@ component "glass" alpha 128 // IF and SET 
+            end
+            
+            if
+            car.Id(22@) == #POLMAV
+            then
+            0D12: set_car 22@ component "glass" alpha 128 // IF and SET 
+            end
+            
+            if
+            car.Id(22@) == #RAINDANC
+            then
+            0D12: set_car 22@ component "glass" alpha 102 // IF and SET 
+            end
+            
+            if
+            car.Id(22@) == #VCNMAV
+            then
+            0D12: set_car 22@ component "glass" alpha 128 // IF and SET 
+            end
+            
+            if
+            car.Id(22@) == #SPARROW
+            then
+            0D12: set_car 22@ component "glass" alpha 102 // IF and SET 
+            end
+            
+            if
+            car.Id(22@) == #PREDATOR
+            then
+            0D12: set_car 22@ component "glass" alpha 77 // IF and SET 
+            end
+            
+            if
+            car.Id(22@) == #REEFER
+            then
+            0D12: set_car 22@ component "glass" alpha 128 // IF and SET 
+            end
+            
+            if
+            car.Id(22@) == #TROPIC
+            then
+            0D12: set_car 22@ component "glass" alpha 77 // IF and SET 
+            end
+            
+            if
+            car.Id(22@) == 15501
+            then
+            0D12: set_car 22@ component "spikes" alpha 255 // IF and SET 
+            end
+                  
+            end
+            
+            end
+            
+            0930: (unknown) 0
+            camera.SetBehindPlayer()
+            camera.Restore_WithJumpCut()
+            $FP_ACTIVATED = 0      
+            0AF1: write_int $FP_ACTIVATED to_ini_file "config.ini" section "GAME" key "FP_ENABLED" 
+            041D: set_camera_near_clip 0.3
+            wait 50
+            0D10: set_actor PLAYER_ACTOR alpha 255 // IF and SET
+            
+            if
+            FP_ONLY_IN_CAR == 2
+            then
+            
+            wait 500              
+            FP_ONLY_IN_CAR = 1
+            
+            repeat
+            wait 0
+            until 8E4A: not is_char_exiting_any_car PLAYER_ACTOR
+            
+            09AD: set_vehicle_camera_mode 0
+            
+            end
+            
+            end  
+        end
+    end
+end 
+
+end
+
+end
+
+end_thread
+
+:CAR_CHECK
+0@ = 0
+
+if or
+Actor.Animation(PLAYER_ACTOR) == "CAR_FALLOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_FALLOUT_RHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_GETOUTL_LHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_GETOUTL_RHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_GETOUT_RHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_JACKEDLHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_JACKEDRHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_PULLOUTL_LHS"
+    then
+    0@ = 1
+    end
+    
+if or
+Actor.Animation(PLAYER_ACTOR) == "CAR_PULLOUTL_RHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_PULLOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_PULLOUT_RHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_QJACKED"
+Actor.Animation(PLAYER_ACTOR) == "CAR_ROLLOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_ROLLOUT_RHS"
+Actor.Animation(PLAYER_ACTOR) == "BIKE_FALL_OFF"
+Actor.Animation(PLAYER_ACTOR) == "BF_GETOUT_LHS"    
+    then
+    0@ = 1
+    end
+    
+if or
+Actor.Animation(PLAYER_ACTOR) == "BIKED_GETOFFBACK"
+Actor.Animation(PLAYER_ACTOR) == "BIKED_GETOFFLHS"
+Actor.Animation(PLAYER_ACTOR) == "BIKED_GETOFFRHS"
+Actor.Animation(PLAYER_ACTOR) == "BIKEH_GETOFFRHS"
+Actor.Animation(PLAYER_ACTOR) == "BIKEH_GETOFFLHS"
+Actor.Animation(PLAYER_ACTOR) == "BIKEH_GETOFFBACK"
+Actor.Animation(PLAYER_ACTOR) == "BIKES_GETOFFBACK"
+Actor.Animation(PLAYER_ACTOR) == "BIKES_GETOFFLHS"
+    then
+    0@ = 1
+    end  
+    
+if or
+Actor.Animation(PLAYER_ACTOR) == "BIKEV_GETOFFBACK"
+Actor.Animation(PLAYER_ACTOR) == "BIKEV_GETOFFLHS"
+Actor.Animation(PLAYER_ACTOR) == "BIKEV_GETOFFRHS"
+Actor.Animation(PLAYER_ACTOR) == "BMX_GETOFFLHS"
+Actor.Animation(PLAYER_ACTOR) == "BMX_GETOFFRHS"
+Actor.Animation(PLAYER_ACTOR) == "BMX_GETOFFBACK"
+Actor.Animation(PLAYER_ACTOR) == "BUS_GETOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "BUS_GETOUT_RHS"
+    then
+    0@ = 1
+    end 
+    
+if or
+Actor.Animation(PLAYER_ACTOR) == "BUS_PULLOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "BIKES_GETOFFRHS"
+Actor.Animation(PLAYER_ACTOR) == "BF_GETOUT_RHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_GETOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "KART_GETOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "KART_GETOUT_RHS"
+Actor.Animation(PLAYER_ACTOR) == "MTB_GETOFFBACK"
+Actor.Animation(PLAYER_ACTOR) == "MTB_GETOFFLHS"
+   then
+   0@ = 1
+   end
+
+if or
+Actor.Animation(PLAYER_ACTOR) == "MTB_GETOFFRHS"
+Actor.Animation(PLAYER_ACTOR) == "COP_GETOUTCAR_LHS"
+Actor.Animation(PLAYER_ACTOR) == "PLANE_GETOUT"
+Actor.Animation(PLAYER_ACTOR) == "SHAMAL_GETOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "TRUCK_GETOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "TRUCK_GETOUT_RHS"
+Actor.Animation(PLAYER_ACTOR) == "TRUCK_PULLOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "TRUCK_PULLOUT_RHS"
+    then
+    0@ = 1
+    end
+
+if or
+Actor.Animation(PLAYER_ACTOR) == "VAN_GETOUT_BACK_LHS"
+Actor.Animation(PLAYER_ACTOR) == "VAN_GETOUT_BACK_RHS"
+Actor.Animation(PLAYER_ACTOR) == "VORTEX_GETOUT_RHS"
+Actor.Animation(PLAYER_ACTOR) == "VORTEX_GETOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "WF_GETOFFBACK"
+Actor.Animation(PLAYER_ACTOR) == "WF_GETOFFRHS"
+Actor.Animation(PLAYER_ACTOR) == "WF_GETOFFLHS"
+Actor.Animation(PLAYER_ACTOR) == "CHOPPA_GETOFFBACK"
+    then
+    0@ = 1
+    end
+
+if or
+Actor.Animation(PLAYER_ACTOR) == "CHOPPA_GETOFFLHS"
+Actor.Animation(PLAYER_ACTOR) == "CHOPPA_GETOFF_RHS"
+Actor.Animation(PLAYER_ACTOR) == "QUAD_GETOFF_B"
+Actor.Animation(PLAYER_ACTOR) == "CAR_GETOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_CRAWLOUTRHS"
+Actor.Animation(PLAYER_ACTOR) == "QUAD_GETOFF_LHS"
+Actor.Animation(PLAYER_ACTOR) == "QUAD_GETOFF_RHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_GETOUT_LHS"
+    then
+    0@ = 1
+    end
+
+if or
+Actor.Animation(PLAYER_ACTOR) == "CAR_LJACKEDLHS"
+Actor.Animation(PLAYER_ACTOR) == "CAR_LJACKEDLHS"
+Actor.Animation(PLAYER_ACTOR) == "COACH_OUTL"
+Actor.Animation(PLAYER_ACTOR) == "DOZER_PULLOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "COACH_OUTR"
+Actor.Animation(PLAYER_ACTOR) == "DOZER_GETOUT_LHS"
+Actor.Animation(PLAYER_ACTOR) == "DOZER_GETOUT_RHS"
+    then
+    0@ = 1
+    end
+
+if or
+Actor.Animation(PLAYER_ACTOR) == "DOZER_PULLOUT_RHS"
+Actor.Animation(PLAYER_ACTOR) == "TRUCK_JACKEDLHS"
+Actor.Animation(PLAYER_ACTOR) == "TRUCK_JACKEDRHS"
+actor.Animation(PLAYER_ACTOR) == "CAR_close_LHS"
+actor.Animation(PLAYER_ACTOR) == "CAR_close_RHS"
+Actor.Animation(PLAYER_ACTOR) == "TANK_getout_LHS"
+    then
+    0@ = 1
+    end            
+
+return
+
+:LOOK_BACK_OFFSET
+
+02E3: 1@ = car 22@ speed
+1@ *= 0.035
+1@ -= 0.5
+
+15@ = -1.0
+
+if
+047A:   actor PLAYER_ACTOR driving_bike
+then
+0407: store_coords_to 10@ 11@ 12@ from_car 22@ with_offset 15@ 1@ 0.64
+return
+end
+
+if
+0D0C: get_car 22@ component "door_lf_dummy" matrix_pointer_to 0@ // IF and SET
+then
+0D0A: store_coords_to 10@ 11@ 12@ from_matrix 0@ with_offsets -0.25 1@ 0.64
+else
+0407: store_coords_to 10@ 11@ 12@ from_car 22@ with_offset 15@ 1@ 0.64 
+end
+
+return
+
+//////////////////////////////////////////////////////////////////////////
+
+15@ = -1.0
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,#LINERUN)
+actor.DrivingVehicleType(PLAYER_ACTOR,#RDTRAIN)
+actor.DrivingVehicleType(PLAYER_ACTOR,#PACKER)
+actor.DrivingVehicleType(PLAYER_ACTOR,#PETRO)
+actor.DrivingVehicleType(PLAYER_ACTOR,#TRASH)
+actor.DrivingVehicleType(PLAYER_ACTOR,#MULE)
+actor.DrivingVehicleType(PLAYER_ACTOR,#AMBULAN)
+actor.DrivingVehicleType(PLAYER_ACTOR,#ENFORCER)
+then
+15@ = -1.5
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,#SECURICA)
+actor.DrivingVehicleType(PLAYER_ACTOR,#BUS)
+actor.DrivingVehicleType(PLAYER_ACTOR,#BARRACKS)
+actor.DrivingVehicleType(PLAYER_ACTOR,#FLATBED)
+actor.DrivingVehicleType(PLAYER_ACTOR,#YANKEE)
+actor.DrivingVehicleType(PLAYER_ACTOR,#BOXVILLE)
+actor.DrivingVehicleType(PLAYER_ACTOR,#BOXBURG)
+actor.DrivingVehicleType(PLAYER_ACTOR,#BENSON)
+then
+15@ = -1.5
+end
+
+if
+actor.DrivingVehicleType(PLAYER_ACTOR,#COACH)
+then
+15@ = -1.5
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,#JOURNEY)
+actor.DrivingVehicleType(PLAYER_ACTOR,#CEMENT)
+actor.DrivingVehicleType(PLAYER_ACTOR,#TOWTRUCK)
+actor.DrivingVehicleType(PLAYER_ACTOR,#UTILITY)
+actor.DrivingVehicleType(PLAYER_ACTOR,#DUNERIDE)
+actor.DrivingVehicleType(PLAYER_ACTOR,#BOXVILLE)
+actor.DrivingVehicleType(PLAYER_ACTOR,#BOXBURG)
+actor.DrivingVehicleType(PLAYER_ACTOR,#BENSON)
+then
+15@ = -1.5
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,#PATRIOT)
+actor.DrivingVehicleType(PLAYER_ACTOR,#RANCHER)
+actor.DrivingVehicleType(PLAYER_ACTOR,#SANDKING)
+actor.DrivingVehicleType(PLAYER_ACTOR,#YOSEMITE)
+actor.DrivingVehicleType(PLAYER_ACTOR,#DFT30)
+actor.DrivingVehicleType(PLAYER_ACTOR,#HUNTLEY)
+actor.DrivingVehicleType(PLAYER_ACTOR,#STAFFORD)
+actor.DrivingVehicleType(PLAYER_ACTOR,#NEWSVAN)
+then
+15@ = -1.3
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,#COPCARRU)
+actor.DrivingVehicleType(PLAYER_ACTOR,#RANCHER)
+actor.DrivingVehicleType(PLAYER_ACTOR,#SANDKING)
+actor.DrivingVehicleType(PLAYER_ACTOR,#YOSEMITE)
+actor.DrivingVehicleType(PLAYER_ACTOR,#DFT30)
+actor.DrivingVehicleType(PLAYER_ACTOR,#HUNTLEY)
+actor.DrivingVehicleType(PLAYER_ACTOR,#STAFFORD)
+actor.DrivingVehicleType(PLAYER_ACTOR,#NEWSVAN)
+then
+15@ = -1.3
+end
+
+if
+actor.DrivingVehicleType(PLAYER_ACTOR,#RHINO)
+then
+15@ = -2.5
+end
+
+if
+actor.DrivingVehicleType(PLAYER_ACTOR,#SWATVAN)
+then
+15@ = -2.0
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,#FIRETRUK)
+actor.DrivingVehicleType(PLAYER_ACTOR,#FIRELA)
+actor.DrivingVehicleType(PLAYER_ACTOR,#FBIRANCH)
+then
+15@ = -1.6
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,15375)
+actor.DrivingVehicleType(PLAYER_ACTOR,15310)
+actor.DrivingVehicleType(PLAYER_ACTOR,15424)
+actor.DrivingVehicleType(PLAYER_ACTOR,15516)
+actor.DrivingVehicleType(PLAYER_ACTOR,15408)
+actor.DrivingVehicleType(PLAYER_ACTOR,15493)
+then
+15@ = -1.5
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,15396)
+actor.DrivingVehicleType(PLAYER_ACTOR,15275)
+actor.DrivingVehicleType(PLAYER_ACTOR,15442)
+actor.DrivingVehicleType(PLAYER_ACTOR,15540)
+then
+15@ = -1.5
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,15356)
+actor.DrivingVehicleType(PLAYER_ACTOR,15364)
+actor.DrivingVehicleType(PLAYER_ACTOR,15380)
+actor.DrivingVehicleType(PLAYER_ACTOR,15314)
+actor.DrivingVehicleType(PLAYER_ACTOR,15289)
+actor.DrivingVehicleType(PLAYER_ACTOR,15426)
+actor.DrivingVehicleType(PLAYER_ACTOR,15453)
+actor.DrivingVehicleType(PLAYER_ACTOR,15467)
+then
+15@ = -1.5
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,15399)
+actor.DrivingVehicleType(PLAYER_ACTOR,15266)
+actor.DrivingVehicleType(PLAYER_ACTOR,15406)
+actor.DrivingVehicleType(PLAYER_ACTOR,15491)
+then
+15@ = -1.5
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,15365)
+actor.DrivingVehicleType(PLAYER_ACTOR,15291)
+actor.DrivingVehicleType(PLAYER_ACTOR,15416)
+actor.DrivingVehicleType(PLAYER_ACTOR,15505)
+then
+15@ = -1.5
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,15386)
+actor.DrivingVehicleType(PLAYER_ACTOR,15331)
+actor.DrivingVehicleType(PLAYER_ACTOR,15436)
+actor.DrivingVehicleType(PLAYER_ACTOR,15534)
+then
+15@ = -1.5
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,15359)
+actor.DrivingVehicleType(PLAYER_ACTOR,15278)
+actor.DrivingVehicleType(PLAYER_ACTOR,15500)
+actor.DrivingVehicleType(PLAYER_ACTOR,15479)
+then
+15@ = -1.5
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,15370)
+actor.DrivingVehicleType(PLAYER_ACTOR,15295)
+actor.DrivingVehicleType(PLAYER_ACTOR,15420)
+actor.DrivingVehicleType(PLAYER_ACTOR,15509)
+then
+15@ = -1.5
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,15383)
+actor.DrivingVehicleType(PLAYER_ACTOR,15304)
+actor.DrivingVehicleType(PLAYER_ACTOR,15444)
+actor.DrivingVehicleType(PLAYER_ACTOR,15545)
+then
+15@ = -1.5
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,15276)
+actor.DrivingVehicleType(PLAYER_ACTOR,15498)
+then
+15@ = -1.5
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,15270)
+actor.DrivingVehicleType(PLAYER_ACTOR,15494)
+then
+15@ = -1.5
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,15377)
+actor.DrivingVehicleType(PLAYER_ACTOR,15318)
+actor.DrivingVehicleType(PLAYER_ACTOR,15427)
+actor.DrivingVehicleType(PLAYER_ACTOR,15522)
+then
+15@ = -1.3
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,15325)
+actor.DrivingVehicleType(PLAYER_ACTOR,15433)
+actor.DrivingVehicleType(PLAYER_ACTOR,15528)
+then
+15@ = -1.3
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,15330)
+actor.DrivingVehicleType(PLAYER_ACTOR,15533)
+then
+15@ = -1.3
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,15376)
+actor.DrivingVehicleType(PLAYER_ACTOR,15297)
+actor.DrivingVehicleType(PLAYER_ACTOR,15461)
+actor.DrivingVehicleType(PLAYER_ACTOR,15555)
+then
+15@ = -1.6
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,15382)
+actor.DrivingVehicleType(PLAYER_ACTOR,15327)
+actor.DrivingVehicleType(PLAYER_ACTOR,15433)
+actor.DrivingVehicleType(PLAYER_ACTOR,15559)
+then
+15@ = -1.6
+end
+
+return
+
+:SKIN_OFFSET_SET
+
+if
+$RANDOM_MODE_MODEL > 0
+then
+15@ = -0.145
+16@ = -0.035
+17@ = 0.005
+005B: 4@ += 15@  // (float)
+005B: 5@ += 16@  // (float)
+005B: 6@ += 17@  // (float)
+else
+15@ = 0.145
+16@ = 0.035
+17@ = 0.005
+005B: 4@ += 15@  // (float)
+005B: 5@ += 16@  // (float)
+005B: 6@ += 17@  // (float)
+end  
+
+return                
+
+:REMOVE_HEAD
+0A8C: write_memory 0x05E7189 size 4 value 40937 virtual_protect 1
+0A8C: write_memory 0x05E718B size 2 value 0 virtual_protect 1
+0A96: 0@ = actor PLAYER_ACTOR struct
+0@ += 0x46D
+0A8D: 1@ = read_memory 0@ size 4 virtual_protect 0
+0A8C: write_memory 0@ size 4 value 0xA0 virtual_protect 0
+0@ -= 0x46D
+0@ += 0x754
+0A8D: 11@ = read_memory 0@ size 4 virtual_protect 0
+0A8C: write_memory 0@ size 4 value 0x02 virtual_protect 0
+return
+
+:BACK_HEAD
+0A8C: write_memory 0x05E7189 size 4 value 10389775 virtual_protect 1
+0A8C: write_memory 0x05E718B size 2 value 158 virtual_protect 1  
+0A96: 23@ = actor PLAYER_ACTOR struct
+23@ += 0x46D   
+if
+00DF:   actor PLAYER_ACTOR driving
+then
+0A8C: write_memory 23@ size 1 value 0x21 virtual_protect 0  //0x21 on vehicle
+else                                                                                                                    
+0A8C: write_memory 23@ size 1 value 0x20 virtual_protect 0  //0x21 on vehicle  
+end                               
+23@ -= 0x46D
+23@ += 0x754                                                                                      
+0A8C: write_memory 23@ size 1 value 0xFF virtual_protect 0    
+return     
+
+:FP_SKIN_ON
+
+if and
+$PLAYER_BANDIT_SIDE == 1
+$GAMEMODE_STORYLINE == 0
+UNITED_MAP == 0
+then
+
+if
+not actor.Driving(PLAYER_ACTOR)
+then
+
+while not model.Available(#BANDITWAR_FP)    
+model.Load(#BANDITWAR_FP)
+mload
+if
+not model.Available(#BANDITWAR_FP)
+    then
+    wait 0
+    model.Load(#BANDITWAR_FP)
+    mload
+    end    
+end
+
+09C7: change_player PLAYER_CHAR model_to #BANDITWAR_FP
+0792: disembark_instantly_actor PLAYER_ACTOR
+else
+28@ = actor.CurrentCar(PLAYER_ACTOR)
+02E3: 29@ = car 28@ speed
+06A2: get_car 28@ velocity_in_direction_XYZ 0@ 1@ 2@
+0@ *= 0.02
+1@ *= 0.02
+2@ *= 0.02
+gosub @FP_READ_ROTATION_VECTOR2
+04C4: store_coords_to 25@ 26@ 27@ from_actor PLAYER_ACTOR with_offset 0.0 0.0 10.0
+0362: remove_actor PLAYER_ACTOR from_car_and_place_at 25@ 26@ 27@
+
+while not model.Available(#BANDITWAR_FP)    
+model.Load(#BANDITWAR_FP)
+mload
+if
+not model.Available(#BANDITWAR_FP)
+    then
+    wait 0
+    model.Load(#BANDITWAR_FP)
+    mload
+    end    
+end
+
+09C7: change_player PLAYER_CHAR model_to #BANDITWAR_FP
+036A: put_actor PLAYER_ACTOR in_car 28@
+car.LockInCurrentPosition(28@,true)
+car.SetSpeedInstantly(28@,0.0)
+car.LockInCurrentPosition(28@,false)            
+07D5: set_car 28@ velocity_in_direction_XYZ 0@ 1@ 2@ rotation_velocitiesXY 0.0 0.0 unk 0.0
+gosub @FP_GET_BACK_ROTATION_VECTOR2
+end
+
+end
+
+//if and
+//$PLAYER_SWAT_SIDE == 1
+//$GAMEMODE_STORYLINE == 0
+//then
+//
+//if
+//not actor.Driving(PLAYER_ACTOR)
+//then
+//
+//while not model.Available(#SWATWAR_FP)    
+//model.Load(#SWATWAR_FP)
+//mload
+//if
+//not model.Available(#SWATWAR_FP)
+//    then
+//    wait 0
+//    model.Load(#SWATWAR_FP)
+//    mload
+//    end    
+//end
+//
+//09C7: change_player PLAYER_CHAR model_to #SWATWAR_FP
+//0792: disembark_instantly_actor PLAYER_ACTOR
+//else
+//28@ = actor.CurrentCar(PLAYER_ACTOR)
+//02E3: 29@ = car 28@ speed
+//06A2: get_car 28@ velocity_in_direction_XYZ 0@ 1@ 2@
+//0@ *= 0.02
+//1@ *= 0.02
+//2@ *= 0.02
+//gosub @FP_READ_ROTATION_VECTOR2
+//04C4: store_coords_to 25@ 26@ 27@ from_actor PLAYER_ACTOR with_offset 0.0 0.0 10.0
+//0362: remove_actor PLAYER_ACTOR from_car_and_place_at 25@ 26@ 27@
+//
+//while not model.Available(#SWATWAR_FP)    
+//model.Load(#SWATWAR_FP)
+//mload
+//if
+//not model.Available(#SWATWAR_FP)
+//    then
+//    wait 0
+//    model.Load(#SWATWAR_FP)
+//    mload
+//    end    
+//end
+//
+//09C7: change_player PLAYER_CHAR model_to #SWATWAR_FP
+//036A: put_actor PLAYER_ACTOR in_car 28@
+//car.LockInCurrentPosition(28@,true)
+//car.SetSpeedInstantly(28@,0.0)
+//car.LockInCurrentPosition(28@,false)            
+//07D5: set_car 28@ velocity_in_direction_XYZ 0@ 1@ 2@ rotation_velocitiesXY 0.0 0.0 unk 0.0
+//gosub @FP_GET_BACK_ROTATION_VECTOR2
+//end
+//
+//end
+
+return
+
+:FP_SKIN_OFF
+
+if and
+$PLAYER_BANDIT_SIDE == 1
+$GAMEMODE_STORYLINE == 0
+UNITED_MAP == 0
+then
+
+if
+not actor.Driving(PLAYER_ACTOR)
+then
+
+while not model.Available(#BANDITWAR)    
+model.Load(#BANDITWAR)
+mload
+if
+not model.Available(#BANDITWAR)
+    then
+    wait 0
+    model.Load(#BANDITWAR)
+    mload
+    end    
+end
+
+09C7: change_player PLAYER_CHAR model_to #BANDITWAR
+0792: disembark_instantly_actor PLAYER_ACTOR
+else
+28@ = actor.CurrentCar(PLAYER_ACTOR)
+02E3: 29@ = car 28@ speed
+06A2: get_car 28@ velocity_in_direction_XYZ 0@ 1@ 2@
+0@ *= 0.02
+1@ *= 0.02
+2@ *= 0.02
+gosub @FP_READ_ROTATION_VECTOR2
+04C4: store_coords_to 25@ 26@ 27@ from_actor PLAYER_ACTOR with_offset 0.0 0.0 10.0
+0362: remove_actor PLAYER_ACTOR from_car_and_place_at 25@ 26@ 27@
+
+while not model.Available(#BANDITWAR)    
+model.Load(#BANDITWAR)
+mload
+if
+not model.Available(#BANDITWAR)
+    then
+    wait 0
+    model.Load(#BANDITWAR)
+    mload
+    end    
+end
+
+09C7: change_player PLAYER_CHAR model_to #BANDITWAR
+036A: put_actor PLAYER_ACTOR in_car 28@
+car.LockInCurrentPosition(28@,true)
+car.SetSpeedInstantly(28@,0.0)
+car.LockInCurrentPosition(28@,false)            
+07D5: set_car 28@ velocity_in_direction_XYZ 0@ 1@ 2@ rotation_velocitiesXY 0.0 0.0 unk 0.0
+gosub @FP_GET_BACK_ROTATION_VECTOR2
+end
+
+end
+
+//if and
+//$PLAYER_SWAT_SIDE == 1
+//$GAMEMODE_STORYLINE == 0
+//then
+//
+//if
+//not actor.Driving(PLAYER_ACTOR)
+//then
+//
+//while not model.Available(#SWATWAR)    
+//model.Load(#SWATWAR)
+//mload
+//if
+//not model.Available(#SWATWAR)
+//    then
+//    wait 0
+//    model.Load(#SWATWAR)
+//    mload
+//    end    
+//end
+//
+//09C7: change_player PLAYER_CHAR model_to #SWATWAR
+//0792: disembark_instantly_actor PLAYER_ACTOR
+//else
+//28@ = actor.CurrentCar(PLAYER_ACTOR)
+//02E3: 29@ = car 28@ speed
+//06A2: get_car 28@ velocity_in_direction_XYZ 0@ 1@ 2@
+//0@ *= 0.02
+//1@ *= 0.02
+//2@ *= 0.02
+//gosub @FP_READ_ROTATION_VECTOR2
+//04C4: store_coords_to 25@ 26@ 27@ from_actor PLAYER_ACTOR with_offset 0.0 0.0 10.0
+//0362: remove_actor PLAYER_ACTOR from_car_and_place_at 25@ 26@ 27@
+//
+//while not model.Available(#SWATWAR)    
+//model.Load(#SWATWAR)
+//mload
+//if
+//not model.Available(#SWATWAR)
+//    then
+//    wait 0
+//    model.Load(#SWATWAR)
+//    mload
+//    end    
+//end
+//
+//09C7: change_player PLAYER_CHAR model_to #SWATWAR
+//036A: put_actor PLAYER_ACTOR in_car 28@
+//car.LockInCurrentPosition(28@,true)
+//car.SetSpeedInstantly(28@,0.0)
+//car.LockInCurrentPosition(28@,false)            
+//07D5: set_car 28@ velocity_in_direction_XYZ 0@ 1@ 2@ rotation_velocitiesXY 0.0 0.0 unk 0.0
+//gosub @FP_GET_BACK_ROTATION_VECTOR2
+//end
+//
+//end
+
+return
+
+:BIKE_CHECK3
+
+if and
+80E1: not  player 0 pressed_key 5
+80E1: not  player 0 pressed_key 7  
+then
+0087: 20@ = 27@ // (float)
+0087: 13@ = 28@ // (float)
+end
+
+if
+84C8: not  actor PLAYER_ACTOR driving_flying_vehicle
+then
+
+if and
+00E1:  player 0 pressed_key 5
+80E1: not  player 0 pressed_key 7
+then
+20@ = -520.0
+13@ = 0.0   
+end
+
+if and
+80E1: not player 0 pressed_key 5
+00E1:   player 0 pressed_key 7
+then
+20@ = 520.0
+13@ = 0.0    
+end
+
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,#FCR900)
+actor.DrivingVehicleType(PLAYER_ACTOR,15403)
+actor.DrivingVehicleType(PLAYER_ACTOR,#PCJ600)
+actor.DrivingVehicleType(PLAYER_ACTOR,#BF400)
+actor.DrivingVehicleType(PLAYER_ACTOR,#NRG500)
+actor.DrivingVehicleType(PLAYER_ACTOR,#FAGGIO)
+actor.DrivingVehicleType(PLAYER_ACTOR,#PIZZABOY)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.50 0.44 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,15491)
+actor.DrivingVehicleType(PLAYER_ACTOR,15492)
+actor.DrivingVehicleType(PLAYER_ACTOR,15493)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.50 0.44 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,15319)
+actor.DrivingVehicleType(PLAYER_ACTOR,15428)
+actor.DrivingVehicleType(PLAYER_ACTOR,15523)
+actor.DrivingVehicleType(PLAYER_ACTOR,15550)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.50 0.44 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,15293)
+actor.DrivingVehicleType(PLAYER_ACTOR,15322)
+actor.DrivingVehicleType(PLAYER_ACTOR,15430)
+actor.DrivingVehicleType(PLAYER_ACTOR,15457)
+actor.DrivingVehicleType(PLAYER_ACTOR,15507)
+actor.DrivingVehicleType(PLAYER_ACTOR,15565)
+actor.DrivingVehicleType(PLAYER_ACTOR,15418)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.40 0.44 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,#BMX)
+actor.DrivingVehicleType(PLAYER_ACTOR,#BIKE)
+actor.DrivingVehicleType(PLAYER_ACTOR,#MTBIKE)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.50 0.44 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if
+actor.DrivingVehicleType(PLAYER_ACTOR,15489)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 1.00 0.44 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end 
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,#FREEWAY)
+actor.DrivingVehicleType(PLAYER_ACTOR,15420)
+actor.DrivingVehicleType(PLAYER_ACTOR,15494)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.50 0.84 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,15296)
+actor.DrivingVehicleType(PLAYER_ACTOR,15299)
+actor.DrivingVehicleType(PLAYER_ACTOR,15421)
+actor.DrivingVehicleType(PLAYER_ACTOR,15454)
+actor.DrivingVehicleType(PLAYER_ACTOR,15455)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.50 0.84 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,#SANCHEZ)
+actor.DrivingVehicleType(PLAYER_ACTOR,15332)
+actor.DrivingVehicleType(PLAYER_ACTOR,15435)
+actor.DrivingVehicleType(PLAYER_ACTOR,15456)
+actor.DrivingVehicleType(PLAYER_ACTOR,15532)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.35 0.54 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if 
+actor.DrivingVehicleType(PLAYER_ACTOR,#WAYFARER)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.50 0.74 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if 
+actor.DrivingVehicleType(PLAYER_ACTOR,#COPBIKE)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.60 0.60 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,#QUAD)
+actor.DrivingVehicleType(PLAYER_ACTOR,15426)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.35 0.62 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if 
+actor.DrivingVehicleType(PLAYER_ACTOR,#RHINO)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 -1.1 2.2 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if 
+actor.DrivingVehicleType(PLAYER_ACTOR,#COACH)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 3.0 0.0 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,15405)
+actor.DrivingVehicleType(PLAYER_ACTOR,15251)
+actor.DrivingVehicleType(PLAYER_ACTOR,15475)
+actor.DrivingVehicleType(PLAYER_ACTOR,15598)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 -1.7 3.1 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if 
+actor.DrivingVehicleType(PLAYER_ACTOR,#SWATVAN)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.0 1.95 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if
+actor.DrivingVehicleType(PLAYER_ACTOR,15501)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 1.0 0.55 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if 
+actor.DrivingVehicleType(PLAYER_ACTOR,#RUSTLER)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.0 0.86 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,#MAVERICK)
+actor.DrivingVehicleType(PLAYER_ACTOR,ARMY_HUNTER_MODEL_NUMBER)
+actor.DrivingVehicleType(PLAYER_ACTOR,#HYDRA)
+actor.DrivingVehicleType(PLAYER_ACTOR,SEASPAR_MODEL_NUMBER)
+actor.DrivingVehicleType(PLAYER_ACTOR,#BEAGLE)
+actor.DrivingVehicleType(PLAYER_ACTOR,15469)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.0 0.64 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,#CARGOBOB)
+actor.DrivingVehicleType(PLAYER_ACTOR,#LEVIATHN)
+actor.DrivingVehicleType(PLAYER_ACTOR,#POLMAV)
+actor.DrivingVehicleType(PLAYER_ACTOR,#RAINDANC)
+actor.DrivingVehicleType(PLAYER_ACTOR,#VCNMAV)
+actor.DrivingVehicleType(PLAYER_ACTOR,#SPARROW)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.0 0.64 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if or
+actor.DrivingVehicleType(PLAYER_ACTOR,#DODO)
+actor.DrivingVehicleType(PLAYER_ACTOR,#SHAMAL)
+actor.DrivingVehicleType(PLAYER_ACTOR,#SKIMMER)
+actor.DrivingVehicleType(PLAYER_ACTOR,#STUNT)
+actor.DrivingVehicleType(PLAYER_ACTOR,#NEVADA)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.0 0.64 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if
+actor.DrivingVehicleType(PLAYER_ACTOR,#CROPDUST)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.0 0.82 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if
+actor.DrivingVehicleType(PLAYER_ACTOR,#DINGHY)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.3 0.54 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if
+actor.DrivingVehicleType(PLAYER_ACTOR,#COASTG)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.3 0.54 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if
+actor.DrivingVehicleType(PLAYER_ACTOR,#JETMAX)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.26 0.91 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if
+actor.DrivingVehicleType(PLAYER_ACTOR,#LAUNCH)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.0 0.74 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if
+actor.DrivingVehicleType(PLAYER_ACTOR,#MARQUIS)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.2 0.64 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if
+actor.DrivingVehicleType(PLAYER_ACTOR,#PREDATOR)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.3 0.64 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if
+actor.DrivingVehicleType(PLAYER_ACTOR,#REEFER)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.3 0.64 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if
+actor.DrivingVehicleType(PLAYER_ACTOR,#SPEEDER)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.0 0.74 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if
+actor.DrivingVehicleType(PLAYER_ACTOR,#SQUALO)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.0 0.74 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+if
+actor.DrivingVehicleType(PLAYER_ACTOR,#TROPIC)
+then
+067C: put_camera_on_actor PLAYER_ACTOR offset 0.0 0.0 0.74 rotation 20@ 180.0 13@ tilt 0.0 switchstyle 2
+end
+
+return
+
+:SNIPER_CHECK_FP
+
+0@ = 0
+
+if or
+02D8:   actor PLAYER_ACTOR current_weapon == 34
+02D8:   actor PLAYER_ACTOR current_weapon == 80
+02D8:   actor PLAYER_ACTOR current_weapon == 120
+02D8:   actor PLAYER_ACTOR current_weapon == 146
+02D8:   actor PLAYER_ACTOR current_weapon == 147
+02D8:   actor PLAYER_ACTOR current_weapon == 151 
+02D8:   actor PLAYER_ACTOR current_weapon == 43 
+    then
+    0@ = 1
+    end
+    
+if or
+02D8:   actor PLAYER_ACTOR current_weapon == 119
+02D8:   actor PLAYER_ACTOR current_weapon == 135
+02D8:   actor PLAYER_ACTOR current_weapon == 96
+02D8:   actor PLAYER_ACTOR current_weapon == 97
+02D8:   actor PLAYER_ACTOR current_weapon == 109
+02D8:   actor PLAYER_ACTOR current_weapon == 93
+02D8:   actor PLAYER_ACTOR current_weapon == 35
+02D8:   actor PLAYER_ACTOR current_weapon == 36
+    then
+    0@ = 1
+    end 
+
+return
+
+:FP_WEAPON_ANIM_CHECK
+
+0470: 0@ = actor PLAYER_ACTOR current_weapon
+
+//////////////////////////////////////////////////////////////////////////////////
+
+if or
+0@ == 30
+0@ == 31
+0@ == 33
+0@ == 70
+0@ == 72
+0@ == 74
+0@ == 75
+0@ == 81
+    then
+    0613: 9@ = actor PLAYER_ACTOR animation "RIFLE_crouchfire" time
+    8@ = 0.15
+    end
+
+if or    
+0@ == 82
+0@ == 83
+0@ == 88
+0@ == 94
+0@ == 95
+0@ == 99
+0@ == 101
+0@ == 104
+    then
+    0613: 9@ = actor PLAYER_ACTOR animation "RIFLE_crouchfire" time
+    8@ = 0.15
+    end
+
+if    
+0@ == 105
+    then
+    0613: 9@ = actor PLAYER_ACTOR animation "RIFLE_crouchfire" time
+    8@ = 0.15
+    end
+    
+//////////////////////////////////////////////////////////////////////////////////    
+    
+if or   
+0@ == 22
+0@ == 26
+0@ == 28
+0@ == 32
+0@ == 76
+0@ == 89
+0@ == 90
+0@ == 98
+    then
+    0613: 9@ = actor PLAYER_ACTOR animation "colt45_crouchfire" time
+    8@ = 0.15
+    end
+    
+if   
+0@ == 87
+    then
+    0613: 9@ = actor PLAYER_ACTOR animation "colt45_crouchfire" time
+    8@ = 0.15
+    end    
+    
+//////////////////////////////////////////////////////////////////////////////////    
+    
+if
+0@ == 23
+    then
+    0613: 9@ = actor PLAYER_ACTOR animation "SilenceCrouchfire" time
+    8@ = 0.15
+    end
+    
+//////////////////////////////////////////////////////////////////////////////////    
+    
+if or
+0@ == 24
+0@ == 71
+    then
+    0613: 9@ = actor PLAYER_ACTOR animation "python_crouchfire" time
+    8@ = 0.09
+    end
+    
+//////////////////////////////////////////////////////////////////////////////////        
+    
+if or
+0@ == 25
+0@ == 73
+0@ == 91
+    then
+    0613: 9@ = actor PLAYER_ACTOR animation "shotgun_crouchfire" time
+    8@ = 0.06
+    end
+    
+//////////////////////////////////////////////////////////////////////////////////        
+    
+if or
+0@ == 27
+0@ == 78
+0@ == 100
+0@ == 102
+0@ == 103
+    then
+    0613: 9@ = actor PLAYER_ACTOR animation "buddy_crouchfire" time
+    8@ = 0.13
+    end
+    
+//////////////////////////////////////////////////////////////////////////////////        
+    
+if or
+0@ == 29
+0@ == 77
+0@ == 79
+0@ == 85
+0@ == 86
+    then
+    0613: 9@ = actor PLAYER_ACTOR animation "UZI_crouchfire" time
+    8@ = 0.21
+    end                    
+    
+return
+
+:FP_SEAT_HANDLE_GET_FOR_PLAYER
+
+046C: 8@ = car 3@ driver
+if or
+856D: not  actor 8@ defined
+07D6:   8@ == PLAYER_ACTOR // @ == $ (int)
+then
+8@ = -1
+return
+end
+
+01EA: 8@ = car 3@ max_passengers
+
+if
+8@ == 0
+then
+8@ = -1
+return
+end
+
+if
+8@ == 1
+then
+8@ = -1
+0432: 5@ = get_actor_handle_from_car 3@ passenger_seat 0
+if
+07D6:   5@ == PLAYER_ACTOR // @ == $ (int)
+    then
+    8@ = 0
+    end
+else
+8@ = -1
+0432: 5@ = get_actor_handle_from_car 3@ passenger_seat 0
+if
+07D6:   5@ == PLAYER_ACTOR // @ == $ (int)
+    then
+    8@ = 0
+    end
+if or
+$QUEST_TYPE == 20
+$QUEST_TYPE == 22
+then
+return
+end    
+0432: 5@ = get_actor_handle_from_car 3@ passenger_seat 1
+if
+07D6:   5@ == PLAYER_ACTOR // @ == $ (int)
+    then
+    8@ = 1
+    end
+8@ = 0
+0432: 5@ = get_actor_handle_from_car 3@ passenger_seat 2
+if
+07D6:   5@ == PLAYER_ACTOR // @ == $ (int)
+    then
+    8@ = 2
+    end        
+end
+
+return
+
+:FP_READ_ROTATION_VECTOR
+0A97: 0@ = car 3@ struct
+0@ += 0x50 //X
+0A8D: TURRET_CAR_ROT_POWER_X = read_memory 0@ size 4 virtual_protect 0
+0@ += 4 //Y
+0A8D: TURRET_CAR_ROT_POWER_Y = read_memory 0@ size 4 virtual_protect 0
+0@ += 4 //Z
+0A8D: TURRET_CAR_ROT_POWER_Z = read_memory 0@ size 4 virtual_protect 0
+0@ += 0x7F4 //HELI ROTOR POWER
+0A8D: TURRET_CAR_HEL_ROTOR_P = read_memory 0@ size 4 virtual_protect 0
+return
+
+:FP_READ_ROTATION_VECTOR2
+0A97: 25@ = car 28@ struct
+25@ += 0x50 //X
+0A8D: TURRET_CAR_ROT_POWER_X = read_memory 25@ size 4 virtual_protect 0
+25@ += 4 //Y
+0A8D: TURRET_CAR_ROT_POWER_Y = read_memory 25@ size 4 virtual_protect 0
+25@ += 4 //Z
+0A8D: TURRET_CAR_ROT_POWER_Z = read_memory 25@ size 4 virtual_protect 0
+25@ += 0x7F4 //HELI ROTOR POWER
+0A8D: TURRET_CAR_HEL_ROTOR_P = read_memory 25@ size 4 virtual_protect 0
+return
+
+:FP_GET_BACK_ROTATION_VECTOR
+0A97: 25@ = car 3@ struct
+25@ += 0x50 //X
+0A8C: write_memory 25@ size 4 value TURRET_CAR_ROT_POWER_X virtual_protect 0
+25@ += 4 //Y
+0A8C: write_memory 25@ size 4 value TURRET_CAR_ROT_POWER_Y virtual_protect 0
+25@ += 4 //Z
+0A8C: write_memory 25@ size 4 value TURRET_CAR_ROT_POWER_Z virtual_protect 0
+25@ += 0x7F4 //HELI ROTOR POWER
+0A8C: write_memory 25@ size 4 value TURRET_CAR_HEL_ROTOR_P virtual_protect 0  
+return
+
+:FP_GET_BACK_ROTATION_VECTOR2
+0A97: 0@ = car 28@ struct
+0@ += 0x50 //X
+0A8C: write_memory 0@ size 4 value TURRET_CAR_ROT_POWER_X virtual_protect 0
+0@ += 4 //Y
+0A8C: write_memory 0@ size 4 value TURRET_CAR_ROT_POWER_Y virtual_protect 0
+0@ += 4 //Z
+0A8C: write_memory 0@ size 4 value TURRET_CAR_ROT_POWER_Z virtual_protect 0
+0@ += 0x7F4 //HELI ROTOR POWER
+0A8C: write_memory 0@ size 4 value TURRET_CAR_HEL_ROTOR_P virtual_protect 0
+return    

@@ -1,0 +1,175 @@
+:VOL_SET 
+thread 'VOL_SET'                
+0A8D: 1@ = read_memory 0xBA6797 size 1 virtual_protect 0
+0A8D: 2@ = read_memory 0xBA6798 size 1 virtual_protect 0
+gosub @VOLUME_CHANGE
+gosub @MUSIC_PLAYING_VOLUME_SET
+:VOLUME_CHECK
+wait 0
+0A8D: 1@ = read_memory 0xBA6797 size 1 virtual_protect 0
+0A8D: 2@ = read_memory 0xBA6798 size 1 virtual_protect 0
+008B: 5@ = $MUTE_MUSIC_FLAG // (int)
+:VOLUME_CHECK2
+wait 0       
+if
+$SAVESTATUS_TRUE == 0
+jf @VOLUME_CHECK2
+0A8D: 3@ = read_memory 0xBA6797 size 1 virtual_protect 0
+0A8D: 4@ = read_memory 0xBA6798 size 1 virtual_protect 0
+008B: 6@ = $MUTE_MUSIC_FLAG // (int)
+if and
+003B:   3@ == 1@  // (int)
+003B:   4@ == 2@  // (int)
+jf @VOLUME_CHANGE
+jump @VOLUME_CHECK2
+                                                                   
+:VOLUME_CHANGE
+0A8D: 1@ = read_memory 0xBA6797 size 1 virtual_protect 0
+0A8D: 2@ = read_memory 0xBA6798 size 1 virtual_protect 0
+
+0093: 28@ = integer 1@ to_float
+28@ /= 64.0
+
+if
+28@ > 1.0
+then
+28@ = 1.0
+end
+
+if
+28@ < 0.0
+then
+28@ = 0.0
+end
+
+0088: $SOUNDS_VOLUME = 28@ // (float)
+
+0093: 29@ = integer 2@ to_float
+29@ /= 64.0
+
+if
+29@ > 1.0
+then
+29@ = 1.0
+end
+
+if
+29@ < 0.0
+then
+29@ = 0.0
+end
+
+0088: $MUSIC_VOLUME = 29@ // (float)
+0AF3: write_float $MUSIC_VOLUME to_ini_file "scripts\MenuMusic.ini" section "MAIN" key "MusicVolume"
+
+0AF0: 0@ = get_int_from_ini_file "config.ini" section "LAUNCHER" key "MENU_MUSIC_ON"
+if
+0@ == 1
+then
+
+//Устанавливаем значение громкости музыки в меню
+0EFE: get_loaded_library "MenuMusic.asi" store_to 0@
+0@ += 0x0012E58
+0A8C: write_memory 0@ size 4 value $MUSIC_VOLUME virtual_protect 0
+
+//Выгружаем поток музыки в меню
+if 
+0AA2: 1@ = load_library "bass.dll" // IF and SET 
+    then
+    if
+    0AA4: 2@ = get_proc_address "BASS_ChannelStop" library 1@ // IF and SET 
+        then
+        0EFE: get_loaded_library "MenuMusic.asi" store_to 0@
+        0@ += 0x0012E50
+        0A8D: 3@ = read_memory 0@ size 4 virtual_protect 0     
+        0AA5: call 2@ num_params 1 pop 0 3@
+        0AA3: free_library 1@
+        wait 0 
+        end
+    end
+
+//Перезапускаем поток музыки в меню    
+0EFE: get_loaded_library "MenuMusic.asi" store_to 0@
+0@ += 0x0012E60
+0A8C: write_memory 0@ size 1 value 0 virtual_protect 0
+
+end
+
+if and
+$MUTE_MUSIC_FLAG == 1
+$GAMEMODE_STORYLINE == 1
+not USER_TAPE_TURNED_ON_FLAG == 1
+then
+$MUSIC_VOLUME = 0.0
+end
+
+if
+$MUSIC_VOLUME == 0.0
+then
+$MUSIC_TURN_OFF_FLAG = 1
+else
+$MUSIC_TURN_OFF_FLAG = 0
+end
+
+gosub @MUSIC_PLAYING_VOLUME_SET
+jump @VOLUME_CHECK
+
+:MUSIC_PLAYING_VOLUME_SET
+
+if
+MAIN_QUEST_MUSIC_FLAG == 1
+then
+audiostream.Volume($MUSIC_ASSHOLE) = $MUSIC_VOLUME
+end
+ 
+if
+not $MUSIC_MISSION == -1
+jf @MUSIC_PLAYING_VOLUME_SET3
+0AB9: get_mp3 $MUSIC_MISSION state_to 28@
+if
+not 28@ == -1
+jf @MUSIC_PLAYING_VOLUME_SET3
+
+if or
+$GAME_SPEED >= 1.0 
+CURRENT_USHER_TUTORIAL_NUM == -444666
+then
+audiostream.Volume($MUSIC_MISSION) = $MUSIC_VOLUME
+else
+audiostream.Volume($MUSIC_MISSION) = 0.0
+end
+
+:MUSIC_PLAYING_VOLUME_SET3
+if
+not $MUSIC_CRAZY == -1
+jf @MUSIC_PLAYING_VOLUME_SET4
+0AB9: get_mp3 $MUSIC_CRAZY state_to 28@
+if
+not 28@ == -1
+jf @MUSIC_PLAYING_VOLUME_SET4
+audiostream.Volume($MUSIC_CRAZY) = $MUSIC_VOLUME
+
+:MUSIC_PLAYING_VOLUME_SET4
+if
+not $MUSIC_SAVER == -1
+jf @MUSIC_PLAYING_VOLUME_SET5
+0AB9: get_mp3 $MUSIC_SAVER state_to 28@
+if
+not 28@ == -1
+jf @MUSIC_PLAYING_VOLUME_SET5
+audiostream.Volume($MUSIC_SAVER) = $MUSIC_VOLUME
+return
+
+:MUSIC_PLAYING_VOLUME_SET5
+if
+not $SELECT_MUSIC == -1
+jf @MUSIC_PLAYING_VOLUME_SET_RETURN
+0AB9: get_mp3 $SELECT_MUSIC state_to 28@
+if
+not 28@ == -1
+jf @MUSIC_PLAYING_VOLUME_SET_RETURN
+audiostream.Volume($SELECT_MUSIC) = $MUSIC_VOLUME
+return
+
+:MUSIC_PLAYING_VOLUME_SET_RETURN
+return

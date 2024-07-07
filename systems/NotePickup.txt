@@ -1,0 +1,959 @@
+const
+NOTES_PAGES_COUNT_TOTAL = 4@
+NOTE_CAN_BE_READ = 5@
+NOTE_NUMBER = 0@
+NOTE_SPHERE_CREATED = 12@
+NOTE_SPHERE = 13@
+NOTE_SYS_ARRAY_STRUCT = $NOT_SYS_ARR_STR
+end
+
+:NOTES
+thread 'NOTES'
+
+NOTE_SPHERE_CREATED = 0
+
+if or
+UNITED_MAP == 1
+CUSTOM_MODE_TURN_OFF_STORY_THINGS == 1
+then
+end_thread
+end
+
+0AF0: 19@ = get_int_from_ini_file "data/notes.ini" section "NOTES" key "COUNT"
+0AF0: 26@ = get_int_from_ini_file "config.ini" section "GAME" key "ENGLISH_TRANSLATE"
+
+if
+26@ == 1
+then
+19@ = 39
+end
+
+gosub @NOTE_SYS_WRITE_ARRAY 
+
+:NOTE_PICKUP_IDLE
+wait 500
+
+////////////////////////////////////////////////////////////////////
+
+if and
+$SAVESTATUS_TRUE == 1
+$SAVING_DELAY == 1
+then
+
+while $SAVESTATUS_TRUE == 1
+wait 0
+end
+
+while $SAVING_DELAY == 1
+wait 0
+end
+
+gosub @NOTE_SYS_WRITE_ARRAY
+
+end
+
+////////////////////////////////////////////////////////////////////
+
+if or
+0A2A:   text_box 'GAME287' displayed  // ~h~Gambling Skill~w~ - Gambler level reached. Your maximum wager has increased to $1,000. You can now borrow up to $1,000 from the casino.
+0A2A:   text_box 'GA287_2' displayed  // ~h~Gambling Skill~w~ - Gambler level reached. Your maximum wager has increased to $1,000. You can now borrow up to $1,000 from the casino.
+    then
+    text.RemoveTextBox() 
+    end  
+
+for NOTE_NUMBER = 0 to 19@        
+    
+//0AD3: v$NOTES_FILE = format "nt%d" NOTE_NUMBER
+//    
+//0AF2: 1@ = get_float_from_ini_file "data/notes.ini" section v$NOTES_FILE key "NTX" 
+//0AF2: 2@ = get_float_from_ini_file "data/notes.ini" section v$NOTES_FILE key "NTY" 
+//0AF2: 3@ = get_float_from_ini_file "data/notes.ini" section v$NOTES_FILE key "NTZ"
+//0AF0: 8@ = get_int_from_ini_file "data/notes.ini" section v$NOTES_FILE key "MAP"     
+//0AF0: NOTES_PAGES_COUNT_TOTAL = get_int_from_ini_file "data/notes.ini" section v$NOTES_FILE key "PAGES"
+//0AF0: NOTE_CAN_BE_READ = get_int_from_ini_file "data/notes.ini" section v$NOTES_FILE key "PONY"
+
+0085: 31@ = NOTE_NUMBER
+31@ *= 24 //size of xyz
+0EE2: read_struct_offset_multi NOTE_SYS_ARRAY_STRUCT offset 31@ count 6 size 4 1@ 2@ 3@ 8@ NOTES_PAGES_COUNT_TOTAL NOTE_CAN_BE_READ
+
+if
+UNITED_MAP == 0
+then
+
+if
+8@ == 1
+then
+21@ = 1 
+else
+21@ = 0
+end
+
+else
+
+if
+8@ == 2
+then
+21@ = 1
+else
+21@ = 0
+end
+
+end
+    
+///////////////////////////////////Поднятие записки///////////////////////////////////
+    
+
+while 00FE:   actor PLAYER_ACTOR sphere 0 in_sphere 1@ 2@ 3@ radius 10.0 10.0 10.0
+wait 0
+
+0D54: draw_corona_with_extra_params_texture 0 color 255 0 0 155 on_entity 0 at 1@ 2@ 3@ size 0.5 far_clip 10.0 near_clip 0.5 flare 0 enable_reflection 1 check_obstacles 0 flash_while_fading 0 fade_speed 15.0 only_from_below 0
+       
+if and
+0101:   actor PLAYER_ACTOR in_sphere 1@ 2@ 3@ radius 1.5 1.5 3.0 sphere 0 stopped
+21@ == 1
+    then
+    
+    if and
+    $KEY_USE == 69
+    8A4B: not  controls_set_to_joystick
+    then  
+    0512: show_permanent_text_box 'GAME287'  // If your health reaches zero, you will pass out and you will be treated at the local medical center.
+    else
+    if
+    8A4B: not  controls_set_to_joystick
+        then
+        0512: show_permanent_text_box 'GA287_2'  // If your health reaches zero, you will pass out and you will be treated at the local medical center.
+        else
+        0512: show_permanent_text_box 'GA287_3'  // If your health reaches zero, you will pass out and you will be treated at the local medical center.
+        end
+    end
+    
+    if
+    0AB0:   key_pressed 69
+        then        
+        text.RemoveTextBox()             
+        gosub @NOTE_PICKUP           
+        end
+    else 
+    if or
+    0A2A:   text_box 'GAME287' displayed  // ~h~Gambling Skill~w~ - Gambler level reached. Your maximum wager has increased to $1,000. You can now borrow up to $1,000 from the casino.
+    0A2A:   text_box 'GA287_2' displayed  // ~h~Gambling Skill~w~ - Gambler level reached. Your maximum wager has increased to $1,000. You can now borrow up to $1,000 from the casino.
+    0A2A:   text_box 'GA287_3' displayed  // ~h~Gambling Skill~w~ - Gambler level reached. Your maximum wager has increased to $1,000. You can now borrow up to $1,000 from the casino.
+        then
+        text.RemoveTextBox() 
+        end  
+    end
+
+end   
+    
+end                                             
+    
+jump to @NOTE_PICKUP_IDLE
+
+:NOTE_PICKUP   
+
+$READING_NOTE_FLAG = 1
+USER_TAPE_OFF_FLAG = 1
+
+//player.CanMove(PLAYER_CHAR) = false
+0E68: set_player_control_pad 0 1 
+0E69: set_player_control_pad_movement 0 0
+
+$HUD_REMOVE = 1
+$HUD_OFF_INST = 1
+cinema.Radar(0)
+
+////////////////////////////////////////////////
+
+wait 1
+03F0: enable_text_draw 0
+wait 1
+0391: release_textures 
+
+wait 1
+
+0A0E: disable_text_with_style 1
+
+gosub @TXD_LOAD_ZAPISKA
+
+015D: set_gamespeed 0.0
+$SPEED_00_FLAG = 1
+
+//////////Показываем странички записки//////////
+
+for 1@ = 1 to NOTES_PAGES_COUNT_TOTAL
+gosub @SHOW_ZAPISKA
+end   
+
+////////////////////////////////////////////////
+
+$SPEED_00_FLAG = 0   
+
+015D: set_gamespeed 1.0
+
+wait 1
+03F0: enable_text_draw 0
+wait 1
+0391: release_textures 
+
+wait 1
+
+0A0E: disable_text_with_style 1 
+
+//player.CanMove(PLAYER_CHAR) = true
+0E68: set_player_control_pad 0 1 
+0E69: set_player_control_pad_movement 0 1
+
+$HUD_REMOVE = 0
+$HUD_ON_INST = 1
+cinema.Radar(1)
+
+if
+NOTE_NUMBER == 0
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE1_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 1
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE2_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 2
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE3_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 3
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE4_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 4
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE5_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 5
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE6_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 6
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE7_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 7
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE8_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 8
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE9_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 9
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE10_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 10
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE11_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 11
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE12_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 12
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE13_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 13
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE14_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 14
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE15_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 15
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE16_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 16
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE17_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 17
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE18_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 18
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE19_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 19
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE20_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 20
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE21_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 21
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE22_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 22
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE23_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 23
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE24_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 24
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE25_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 25
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE26_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 26
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE27_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 27
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE28_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 28
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE29_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 29
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE30_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 30
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE31_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 31
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE32_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 32
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE33_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 33
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE34_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 34
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE35_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 35
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE36_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 36
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE37_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 37
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE38_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 38
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE39_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 39
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE40_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 40
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE41_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 41
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE42_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 42
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE43_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 43
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE44_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 44
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE45_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 45
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE46_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 46
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE47_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 47
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE48_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 48
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE49_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 49
+then
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE50_FOUNDED" 
+end 
+
+if and
+16@ == 0
+$CHEATED_FLAG == 0 
+then
+
+if
+NOTE_NUMBER == 0
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE1_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 1
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE2_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 2
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE3_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 3
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE4_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 4
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE5_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 5
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE6_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 6
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE7_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 7
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE8_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 8
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE9_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 9
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE10_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 10
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE11_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 11
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE12_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 12
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE13_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 13
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE14_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 14
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE15_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 15
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE16_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 16
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE17_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 17
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE18_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 18
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE19_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 19
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE20_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 20
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE21_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 21
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE22_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 22
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE23_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 23
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE24_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 24
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE25_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 25
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE26_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 26
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE27_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 27
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE28_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 28
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE29_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 29
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE30_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 30
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE31_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 31
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE32_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 32
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE33_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 33
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE34_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 34
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE35_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 35
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE36_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 36
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE37_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 37
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE38_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 38
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE39_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 39
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE40_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 40
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE41_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 41
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE42_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 42
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE43_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 43
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE44_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 44
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE45_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 45
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE46_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 46
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE47_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 47
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE48_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 48
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE49_FOUNDED" 
+end
+
+if
+NOTE_NUMBER == 49
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "NOTE50_FOUNDED" 
+end
+
+0AF0: 10@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "NOTE_FOUNDED_TOTAL"
+    
+if
+$CHEATED_FLAG == 0 
+then   
+10@ += 1
+end
+    
+0AF1: write_int 10@ to_ini_file "saves/ZACM.set" section "SCR" key "NOTE_FOUNDED_TOTAL"
+
+0AF0: 11@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT16_GOT"
+0AF0: 26@ = get_int_from_ini_file "config.ini" section "GAME" key "ENGLISH_TRANSLATE"
+
+if
+26@ == 0
+then
+25@ = 34
+else
+25@ = 24
+end
+    
+if and
+11@ == 0
+002D:   10@ >= 25@  // (int)
+    then
+    v$ACHIEVEMNT = "ACH16"
+    $ACHIEVEMENT_GOT_FLAG = 1    
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT16_GOT"    
+    end
+
+Audiostream.Volume($MENU_MISC42_SOUND) = $SOUNDS_VOLUME 
+Audiostream.Loop($MENU_MISC42_SOUND, 0)
+Audiostream.PerformAction($MENU_MISC42_SOUND, PLAY) 
+
+01E3: show_text_1number_styled GXT "GAME200" number 10@ time 5000 style 5  // NEW HIGH SCORE!!~n~~w~~1~
+
+$TEMP_XP = NOTE_FOUND_XP
+008D: $TEMP_XP = integer $TEMP_XP to_float
+0069: $TEMP_XP *= $XP_COEFF // (float)
+008C: $TEMP_XP = float $TEMP_XP to_integer
+0058: $PLAYER_XP += $TEMP_XP // (int)
+
+16@ = 1
+
+end
+
+$READING_NOTE_FLAG = 0
+
+return
+
+:TXD_LOAD_ZAPISKA
+
+////////////////////////////////////////////
+
+v$NOTE_NAME1 = "note" // v$ // Sunday  
+
+0AD3: v$NOTE_NAME2 = format "%d" NOTE_NUMBER 
+098B: v$NOTE_NAME3 = v$NOTE_NAME1 + v$NOTE_NAME2 // all string variables
+
+0390: load_txd_dictionary v$NOTE_NAME3 
+
+////////////////////////////////////////////
+
+for 1@ = 1 to NOTES_PAGES_COUNT_TOTAL 
+v$NOTE_NAME1 = "note" // v$ // Sunday  
+0AD3: v$NOTE_NAME2 = format "%d_%d" NOTE_NUMBER 1@ 
+098B: v$NOTE_NAME3 = v$NOTE_NAME1 + v$NOTE_NAME2 // all string variables
+038F: load_texture v$NOTE_NAME3 as 1@ // Load dictionary with 0390 first 
+end
+
+////////////////////////////////////////////
+
+return
+
+:SHOW_ZAPISKA  
+
+15@ = 0    
+
+random_int 16@ 0 to 5 
+
+if
+16@ == 0
+then
+14@ = Audiostream.Load("AUDIO\SOUNDS\PageScroll1.mp3") 
+end
+
+if
+16@ == 1
+then
+14@ = Audiostream.Load("AUDIO\SOUNDS\PageScroll2.mp3") 
+end
+
+if
+16@ == 2
+then
+14@ = Audiostream.Load("AUDIO\SOUNDS\PageScroll3.mp3") 
+end
+
+if
+16@ == 3
+then
+14@ = Audiostream.Load("AUDIO\SOUNDS\PageScroll4.mp3") 
+end
+
+if
+16@ == 4
+then
+14@ = Audiostream.Load("AUDIO\SOUNDS\PageScroll5.mp3") 
+end
+   
+Audiostream.PerformAction(14@, PLAY)
+Audiostream.Volume(14@) = $SOUNDS_VOLUME 
+
+ repeat 
+wait 0
+//fade 0 0
+03F0: enable_text_draw 1
+03E3: set_texture_to_be_drawn_antialiased 0
+038D: draw_texture 1@ position 320.0 224.5 size 640.0 449.0 RGBA 255 255 255 255 
+ until 0E3E: is_button_just_pressed 0 17   
+
+Audiostream.PerformAction(14@, STOP)
+audiostream.Release(14@)
+
+return
+
+:NOTE_SYS_WRITE_ARRAY
+
+0AC6: NOTE_SYS_ARRAY_STRUCT = label @NOTES_POSITIONS_ARRAY offset
+
+for 13@ = 0 to 19@
+0AD3: v$NOTES_FILE = format "nt%d" 13@
+0AF2: 21@ = get_float_from_ini_file "data/notes.ini" section v$NOTES_FILE key "NTX" 
+0AF2: 22@ = get_float_from_ini_file "data/notes.ini" section v$NOTES_FILE key "NTY" 
+0AF2: 23@ = get_float_from_ini_file "data/notes.ini" section v$NOTES_FILE key "NTZ"
+0AF0: 24@ = get_int_from_ini_file "data/notes.ini" section v$NOTES_FILE key "MAP"     
+0AF0: 25@ = get_int_from_ini_file "data/notes.ini" section v$NOTES_FILE key "PAGES"
+0AF0: 26@ = get_int_from_ini_file "data/notes.ini" section v$NOTES_FILE key "PONY"
+0085: 31@ = 13@
+31@ *= 24 //size of xyz
+0EE3: write_struct_offset_multi NOTE_SYS_ARRAY_STRUCT offset 31@ count 6 size 4 21@ 22@ 23@ 24@ 25@ 26@
+end
+
+return 

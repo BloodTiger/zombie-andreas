@@ -1,0 +1,2498 @@
+:DED_CHK
+thread 'DED_CHK'
+
+0AB9: get_mp3 $PUDDLEOFYOUHIT_SOUND state_to 28@
+                
+if
+28@ == 1
+then
+audiostream.PerformAction($PUDDLEOFYOUHIT_SOUND,STOP)
+end                        
+        
+repeat
+wait 0 
+
+0A96: 0@ = actor PLAYER_ACTOR struct
+0A8E: 0@ = 0@ + 1376
+0A8D: 1@ = read_memory 0@ size 4 virtual_protect 1
+
+if and
+$SLOWMODE_ACTIVE == 0
+$FP_ACTIVATED == 0
+87D7: not  1@ == $TURN_SPEED_NORMAL // @ == $ (float)
+    then
+    0A8C: write_memory 0@ size 4 value $TURN_SPEED_NORMAL virtual_protect 1
+    end
+    
+if
+COOP_2P_DIED_FLAG == 1
+    then
+    break
+    end            
+
+until actor.Dead(PLAYER_ACTOR)
+
+09BD: allow_other_threads_to_display_text_boxes 1
+
+if or
+COOP_2P_DIED_FLAG == 0
+$ONMISSION == 1
+then
+if
+not $GAMEMODE_WAR == 1
+    then
+    create_thread @ANTKUKL PLAYER_ACTOR
+    end
+end
+
+if
+$FREEMODE == 1
+then
+gosub @WRITE_SAVES_PLAYED_TIME
+end
+
+if
+HARDCORE_MODE == 1
+then
+
+if
+UNITED_MAP == 0
+then
+gosub @CHECK_ALL_SA_SAVES_TO_DELETE_HARDCORE
+end
+
+if and
+UNITED_MAP == 1
+STORIES_MAP == 0
+LCVC_MAP_NUM == 0
+then
+gosub @CHECK_ALL_III_SAVES_TO_DELETE_HARDCORE
+end
+
+if and
+UNITED_MAP == 1
+STORIES_MAP == 0
+LCVC_MAP_NUM == 1
+then
+gosub @CHECK_ALL_VC_SAVES_TO_DELETE_HARDCORE
+end
+
+if and
+UNITED_MAP == 1
+STORIES_MAP == 1
+LCVC_MAP_NUM == 0
+then
+gosub @CHECK_ALL_LCS_SAVES_TO_DELETE_HARDCORE
+end
+
+if and
+UNITED_MAP == 1
+STORIES_MAP == 1
+LCVC_MAP_NUM == 1
+then
+gosub @CHECK_ALL_VCS_SAVES_TO_DELETE_HARDCORE
+end
+
+end 
+  
+text.ClearAll()
+ 
+if
+GAME_OVER_FLAG == 1
+    then
+    
+    if
+    COOP_ACTIVE_FLAG == 0
+    then
+    
+    repeat
+    wait 0
+    until 00FE:   actor PLAYER_ACTOR sphere 0 in_sphere 28.0 28.0 2800.0 radius 15.0 15.0 15.0
+    
+    else
+    
+    repeat
+    wait 0
+    until 00FE:   actor PLAYER_ACTOR sphere 0 in_sphere 0.0 0.0 0.0 radius 15.0 15.0 15.0
+    
+    end
+    
+    $ACTOR_DEAD = 1
+    fade 0 0
+    
+    repeat
+    wait 0
+    fade 0 0
+    player.CanMove(PLAYER_CHAR) = false
+    until false
+    end_thread
+    
+    end  
+  
+$ACTOR_DEAD = 1 
+
+if
+not $GAMEMODE_WAR == 1
+then
+$SPEED_08_FLAG = 1
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_PEOPLE_DEATHS"
+
+if
+$CHEATED_FLAG == 0 
+then                 
+0@ += 1
+end                
+ 
+0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_PEOPLE_DEATHS" 
+
+0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT44_GOT"
+    
+if and
+1@ == 0
+0@ >= 50
+    then
+    v$ACHIEVEMNT = "ACH44"
+    $ACHIEVEMENT_GOT_FLAG = 1    
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT44_GOT"    
+    end
+    
+//////////////////////////////////////////////////////////////////////////////////////////////////    
+
+$FPS_COUNTER_ENABLED = 0
+
+if or  
+$MINUTES_PLAYED > 20
+$HOURS_PLAYED > 0
+    then
+    $STATS_SHOW_FLAG = 0
+    $STATS_DONT_SHOW_FLAG = 1
+    $STATS_SHOW_GAMEMODE = 1
+    create_thread @STS_SHW
+    end
+
+0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+
+$SOUNDS_VOLUME = 0.0
+if
+not $GAMEMODE_WAR == 1
+then 
+015D: set_gamespeed 0.08
+end 
+
+if
+not $GAMEMODE_WAR == 1
+then
+create_thread @END_TXT
+end
+
+text.ClearAll()
+text.RemoveTextBox()
+
+if and
+$GAMEMODE_HOLD == 0
+$GAMEMODE_WAR == 0
+    then
+    0209: 0@ = random_int_in_ranges 0 2
+    0AAC: $DEAD_MP3 = load_audiostream "AUDIO\SOUNDS\DEAD.wav"   
+    0ABC: set_audiostream $DEAD_MP3 volume $MUSIC_VOLUME
+    0AAD: set_mp3 $DEAD_MP3 perform_action 1
+    $MUTE_MUSIC_FLAG = 1
+    00BF: 1@ = current_time_hours, 0@ = current_time_minutes
+    end
+
+if or
+$GAMEMODE_HOLD == 1
+$GAMEMODE_WAR == 1
+    then
+    
+    if
+    $GAMEMODE_WAR == 1
+    then
+    create_thread @GMW_RSP
+    end
+    
+    end_thread
+    end
+    
+$STORY_FLAG = 1
+
+//////////////////////////////////////////////////////////////////////////////////////////////////    
+
+if
+UNITED_MAP == 0
+then
+
+31@ = 0
+32@ = 0
+33@ = 0
+
+repeat
+wait 0
+
+if
+00E1:   player 0 pressed_key 17
+    then
+    31@ += 1
+    end
+
+if
+31@ > 48
+    then
+    fade 0 50
+    wait 50
+    $SPEED_08_FLAG = 0
+    015D: set_gamespeed 1.0
+    jump to @DEAD_SKIP
+    end
+
+until 32@ > 499
+
+else
+
+if
+04AD:   actor PLAYER_ACTOR in_water
+then
+
+31@ = 0
+32@ = 0
+33@ = 0
+
+repeat
+wait 0
+
+if
+00E1:   player 0 pressed_key 17
+    then
+    31@ += 1
+    end
+
+if
+31@ > 48
+    then
+    fade 0 50
+    wait 50
+    $SPEED_08_FLAG = 0
+    015D: set_gamespeed 1.0
+    jump to @DEAD_SKIP
+    end
+
+until 32@ > 49
+
+fade 0 50
+
+else
+
+32@ = 0
+33@ = 0
+
+repeat
+wait 0
+
+if and
+00E1: key_pressed 0 17
+33@ > 50
+    then
+    fade 0 50
+    wait 50
+    $SPEED_08_FLAG = 0
+    015D: set_gamespeed 1.0 
+    jump to @DEAD_SKIP
+    end
+
+until 32@ > 499
+
+end
+
+end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+$IWNSE_FLAG == 1
+    then       
+    00BF: 30@ = current_time_hours, 31@ = current_time_minutes
+    actor.StorePos(PLAYER_ACTOR,1@,2@,3@)
+    08DF: override_restart_if_wasted_at 1@ 2@ 3@ within_radius 3000.0 angle 0.0      
+    $SPECTATING_FLAG = 1
+    $DELETE_TEAMMATES = 1
+    $ZOMBIE_DONT_ATTACK_PLAYER = 1     
+    Actor.SetImmunities(PLAYER_ACTOR, 1, 1, 1, 1, 1)
+    Actor.Health(PLAYER_ACTOR) = 1000
+    03BF: set_player PLAYER_CHAR ignored_by_everyone 1
+    end
+    
+//////////////////////////////////////////////////////////////////////////////////////////////////    
+
+fade 0 100
+wait 100
+
+$SPEED_08_FLAG = 0
+015D: set_gamespeed 1.0          
+
+repeat
+wait 0  
+
+if
+$IWNSE_FLAG == 1
+    then       
+    0086: $SOUNDS_VOLUME4 = $SOUNDS_VOLUME3 // (float)
+    $SOUNDS_VOLUME4 *= 0.5
+    Audiostream.Volume($MENU_HORROR01_SOUND) = $SOUNDS_VOLUME4 
+    Audiostream.Loop($MENU_HORROR01_SOUND, 0)
+    Audiostream.PerformAction($MENU_HORROR01_SOUND, PLAY) 
+    
+    create_thread @SPECTAT
+    
+    while actor.Dead(PLAYER_ACTOR)
+    wait 0       
+    end
+    
+    0086: $SOUNDS_VOLUME = $SOUNDS_VOLUME3 // (float)
+    
+    00C0: set_current_time 30@ 31@
+    
+    $ACTOR_DEAD = 0
+    $SAVESTATUS = 0
+    
+    end_thread
+    end
+    
+if
+GAME_OVER_FLAG == 1
+    then
+    end_thread
+    end
+    
+if
+COOP_ACTIVE_FLAG == 0
+then        
+    
+if
+00FE:   actor PLAYER_ACTOR sphere 0 in_sphere 28.0 28.0 2800.0 radius 15.0 15.0 15.0
+    then
+    break
+    end
+    
+else
+
+if
+00FE:   actor PLAYER_ACTOR sphere 0 in_sphere 0.0 0.0 0.0 radius 15.0 15.0 15.0
+    then
+    break
+    end
+
+end        
+    
+until false      
+
+if and
+$GAMEMODE_WAR == 2
+$FREEMODE == 2
+    then    
+    if or
+    $SURVIVOR_IN_PLAYER_TEAM[0] == 1
+    $SURVIVOR_IN_PLAYER_TEAM[1] == 1
+    $SURVIVOR_IN_PLAYER_TEAM[2] == 1
+    $SURVIVOR_IN_PLAYER_TEAM[3] == 1
+    $SURVIVOR_IN_PLAYER_TEAM[4] == 1
+        then        
+        $MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\AfterStory.mp3")
+        Audiostream.Volume($MUSIC_MISSION) = 0.0    
+        Audiostream.PerformAction($MUSIC_MISSION, PLAY)
+        Audiostream.Loop($MUSIC_MISSION, 0)
+        
+        /////////////////////Плавное нарастание/////////////////////
+        
+        $MUSIC_FADE_NUMBER += 1
+        if
+        $MUSIC_FADE_NUMBER > 4
+            then
+            $MUSIC_FADE_NUMBER = 0 
+            end    
+        
+        0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int) 
+        0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+        
+        $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+        $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+        $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+        create_thread @MUS_FAD
+        
+        wait 1
+        
+        //////////////////////////////////////////////////////////
+        
+        gosub @TEAMMATES_STORIES   
+        
+        fade 0 3000
+        
+        0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int)
+        $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+        
+        $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+        $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+        $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+        create_thread @MUS_FAD
+        
+        wait 1
+        
+        wait 3000          
+        end    
+    end
+
+:DEAD_SKIP
+
+$ACTOR_DEAD = 1
+fade 0 0
+$HUD_REMOVE = 1
+$SAVESTATUS = 1
+wait 500
+
+$LOADING_THEME = Audiostream.Load("AUDIO\SOUNDS\loading_theme.wav") 
+    
+Audiostream.PerformAction($LOADING_THEME, PLAY)
+Audiostream.Loop($LOADING_THEME, 1)
+0086: $MUSIC_VOLUME22 = $MUSIC_VOLUME // (float)
+$MUSIC_VOLUME22 *= 0.5
+Audiostream.Volume($LOADING_THEME) = $MUSIC_VOLUME22
+
+0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "NO_INIT_TEXT_FLAG"
+0A8C: write_memory 0x0440F73 size 1 value 255 virtual_protect 1
+0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
+end_thread     
+
+:TEAMMATES_STORIES  
+
+$SAVESTATUS = 1
+$STORY_FLAG = 1
+
+text.RemoveTextBox()
+cinema.Widescreen(1)
+
+player.CanMove(PLAYER_CHAR,false) 
+actor.LockInCurrentPosition(PLAYER_ACTOR,TRUE)
+
+camera.SetPosition(1031.1207, 2993.572, 3.7057,0.0,0.0,0.0)
+camera.PointAt(1031.1583, 3015.572, 3.6057,2)
+
+0619: enable_actor PLAYER_ACTOR collision_detection 0
+0568: set_actor PLAYER_ACTOR untargetable 1
+0337: set_actor PLAYER_ACTOR visibility 0
+
+wait 200
+
+fade 1 2000
+wait 500
+
+15@ = -1
+
+if and
+056D:   actor $SURVIVER[0] defined
+$SURVIVOR_IN_PLAYER_TEAM[0] == 1
+    then
+    if
+    not actor.Dead($SURVIVER[0])
+        then    
+        15@ += 1
+        
+        v$NAME1 = "N_ME" // v$ // Sunday
+        0665: get_actor $SURVIVER[0] model_to 1@ 
+        if
+        1@ > 10000
+        then
+        v$NAME1 = "N_" // v$ // Sunday
+        end
+        0AD3: v$NAME2 = format "%d" 1@
+        098B: v$NAME3 = v$NAME1 + v$NAME2 // all string variables 
+        
+        gosub @RANDOM_STORY_TELL
+        end
+    end
+    
+if and
+056D:   actor $SURVIVER[1] defined
+$SURVIVOR_IN_PLAYER_TEAM[1] == 1
+    then    
+    if
+    not actor.Dead($SURVIVER[1])
+        then
+        v$NAME1 = "N_ME" // v$ // Sunday
+        0665: get_actor $SURVIVER[1] model_to 1@ 
+        if
+        1@ > 10000
+        then
+        v$NAME1 = "N_" // v$ // Sunday
+        end
+        0AD3: v$NAME2 = format "%d" 1@
+        098B: v$NAME3 = v$NAME1 + v$NAME2 // all string variables 
+        
+        15@ += 1
+        gosub @RANDOM_STORY_TELL
+        end
+    end  
+    
+if and
+056D:   actor $SURVIVER[2] defined
+$SURVIVOR_IN_PLAYER_TEAM[2] == 1
+    then    
+    if
+    not actor.Dead($SURVIVER[2])
+        then
+        v$NAME1 = "N_ME" // v$ // Sunday
+        0665: get_actor $SURVIVER[2] model_to 1@ 
+        if
+        1@ > 10000
+        then
+        v$NAME1 = "N_" // v$ // Sunday
+        end
+        0AD3: v$NAME2 = format "%d" 1@
+        098B: v$NAME3 = v$NAME1 + v$NAME2 // all string variables 
+        
+        15@ += 1
+        gosub @RANDOM_STORY_TELL
+        end
+    end
+    
+if and
+056D:   actor $SURVIVER[3] defined
+$SURVIVOR_IN_PLAYER_TEAM[3] == 1
+    then    
+    if
+    not actor.Dead($SURVIVER[3])
+        then
+        v$NAME1 = "N_ME" // v$ // Sunday
+        0665: get_actor $SURVIVER[3] model_to 1@ 
+        if
+        1@ > 10000
+        then
+        v$NAME1 = "N_" // v$ // Sunday
+        end
+        0AD3: v$NAME2 = format "%d" 1@
+        098B: v$NAME3 = v$NAME1 + v$NAME2 // all string variables 
+        
+        15@ += 1
+        gosub @RANDOM_STORY_TELL
+        end
+    end
+    
+if and
+056D:   actor $SURVIVER[4] defined
+$SURVIVOR_IN_PLAYER_TEAM[4] == 1
+    then    
+    if
+    not actor.Dead($SURVIVER[4])
+        then
+        v$NAME1 = "N_ME" // v$ // Sunday
+        0665: get_actor $SURVIVER[4] model_to 1@ 
+        if
+        1@ > 10000
+        then
+        v$NAME1 = "N_" // v$ // Sunday
+        end
+        0AD3: v$NAME2 = format "%d" 1@
+        098B: v$NAME3 = v$NAME1 + v$NAME2 // all string variables 
+        
+        15@ += 1
+        gosub @RANDOM_STORY_TELL
+        end
+    end                
+
+return
+
+:RANDOM_STORY_TELL
+{$INCLUDE gamemode_survival/Random AfterDeath Story.txt}                             
+return   
+
+:DEAD_SPECTATE
+create_thread @SPECTAT
+end_thread
+
+:CHECK_ALL_SA_SAVES_TO_DELETE_HARDCORE
+
+0AF0: 0@ = get_int_from_ini_file "saves\GTAZAsf1.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\GTAZAsf1.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\GTAZAsf1.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\GTAZAsf1.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\GTAZAsf1.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\GTAZAsf1.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\GTAZAsf1.c" section "SCR" key "HK_ST_Y"        
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\GTAZAsf1.b"  // IF and SET
+        0B00: delete_file "saves\GTAZAsf1.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\GTAZAsf2.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\GTAZAsf2.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\GTAZAsf2.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\GTAZAsf2.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\GTAZAsf2.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\GTAZAsf2.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\GTAZAsf2.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\GTAZAsf2.b"  // IF and SET
+        0B00: delete_file "saves\GTAZAsf2.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\GTAZAsf3.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\GTAZAsf3.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\GTAZAsf3.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\GTAZAsf3.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\GTAZAsf3.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\GTAZAsf3.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\GTAZAsf3.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\GTAZAsf3.b"  // IF and SET
+        0B00: delete_file "saves\GTAZAsf3.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\GTAZAsf4.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\GTAZAsf4.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\GTAZAsf4.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\GTAZAsf4.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\GTAZAsf4.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\GTAZAsf4.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\GTAZAsf4.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\GTAZAsf4.b"  // IF and SET
+        0B00: delete_file "saves\GTAZAsf4.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\GTAZAsf5.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\GTAZAsf5.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\GTAZAsf5.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\GTAZAsf5.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\GTAZAsf5.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\GTAZAsf5.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\GTAZAsf5.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\GTAZAsf5.b"  // IF and SET
+        0B00: delete_file "saves\GTAZAsf5.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\GTAZAsf6.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\GTAZAsf6.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\GTAZAsf6.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\GTAZAsf6.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\GTAZAsf6.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\GTAZAsf6.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\GTAZAsf6.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\GTAZAsf6.b"  // IF and SET
+        0B00: delete_file "saves\GTAZAsf6.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\GTAZAsf7.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\GTAZAsf7.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\GTAZAsf7.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\GTAZAsf7.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\GTAZAsf7.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\GTAZAsf7.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\GTAZAsf7.c" section "SCR" key "HK_ST_Y"        
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\GTAZAsf7.b"  // IF and SET
+        0B00: delete_file "saves\GTAZAsf7.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\GTAZAsf8.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\GTAZAsf8.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\GTAZAsf8.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\GTAZAsf8.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\GTAZAsf8.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\GTAZAsf8.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\GTAZAsf8.c" section "SCR" key "HK_ST_Y"        
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\GTAZAsf8.b"  // IF and SET
+        0B00: delete_file "saves\GTAZAsf8.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end                                                    
+
+return
+
+:CHECK_ALL_III_SAVES_TO_DELETE_HARDCORE
+
+0AF0: 0@ = get_int_from_ini_file "saves\saves2\GTAZAsf1.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves2\GTAZAsf1.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves2\GTAZAsf1.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves2\GTAZAsf1.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves2\GTAZAsf1.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves2\GTAZAsf1.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves2\GTAZAsf1.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves2\GTAZAsf1.b"  // IF and SET
+        0B00: delete_file "saves\saves2\GTAZAsf1.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\saves2\GTAZAsf2.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves2\GTAZAsf2.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves2\GTAZAsf2.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves2\GTAZAsf2.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves2\GTAZAsf2.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves2\GTAZAsf2.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves2\GTAZAsf2.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves2\GTAZAsf2.b"  // IF and SET
+        0B00: delete_file "saves\saves2\GTAZAsf2.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\saves2\GTAZAsf3.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves2\GTAZAsf3.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves2\GTAZAsf3.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves2\GTAZAsf3.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves2\GTAZAsf3.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves2\GTAZAsf3.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves2\GTAZAsf3.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves2\GTAZAsf3.b"  // IF and SET
+        0B00: delete_file "saves\saves2\GTAZAsf3.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\saves2\GTAZAsf4.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves2\GTAZAsf4.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves2\GTAZAsf4.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves2\GTAZAsf4.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves2\GTAZAsf4.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves2\GTAZAsf4.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves2\GTAZAsf4.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves2\GTAZAsf4.b"  // IF and SET
+        0B00: delete_file "saves\saves2\GTAZAsf4.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\saves2\GTAZAsf5.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves2\GTAZAsf5.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves2\GTAZAsf5.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves2\GTAZAsf5.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves2\GTAZAsf5.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves2\GTAZAsf5.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves2\GTAZAsf5.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves2\GTAZAsf5.b"  // IF and SET
+        0B00: delete_file "saves\saves2\GTAZAsf5.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\saves2\GTAZAsf6.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves2\GTAZAsf6.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves2\GTAZAsf6.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves2\GTAZAsf6.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves2\GTAZAsf6.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves2\GTAZAsf6.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves2\GTAZAsf6.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves2\GTAZAsf6.b"  // IF and SET
+        0B00: delete_file "saves\saves2\GTAZAsf6.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\saves2\GTAZAsf7.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves2\GTAZAsf7.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves2\GTAZAsf7.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves2\GTAZAsf7.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves2\GTAZAsf7.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves2\GTAZAsf7.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves2\GTAZAsf7.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves2\GTAZAsf7.b"  // IF and SET
+        0B00: delete_file "saves\saves2\GTAZAsf7.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\saves2\GTAZAsf8.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves2\GTAZAsf8.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves2\GTAZAsf8.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves2\GTAZAsf8.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves2\GTAZAsf8.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves2\GTAZAsf8.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves2\GTAZAsf8.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves2\GTAZAsf8.b"  // IF and SET
+        0B00: delete_file "saves\saves2\GTAZAsf8.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end                                                    
+
+return
+
+:CHECK_ALL_VC_SAVES_TO_DELETE_HARDCORE
+
+0AF0: 0@ = get_int_from_ini_file "saves\saves2b\GTAZAsf1.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves2b\GTAZAsf1.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves2b\GTAZAsf1.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves2b\GTAZAsf1.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves2b\GTAZAsf1.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves2b\GTAZAsf1.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves2b\GTAZAsf1.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves2b\GTAZAsf1.b"  // IF and SET
+        0B00: delete_file "saves\saves2b\GTAZAsf1.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\saves2b\GTAZAsf2.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves2b\GTAZAsf2.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves2b\GTAZAsf2.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves2b\GTAZAsf2.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves2b\GTAZAsf2.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves2b\GTAZAsf2.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves2b\GTAZAsf2.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves2b\GTAZAsf2.b"  // IF and SET
+        0B00: delete_file "saves\saves2b\GTAZAsf2.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\saves2b\GTAZAsf3.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves2b\GTAZAsf3.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves2b\GTAZAsf3.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves2b\GTAZAsf3.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves2b\GTAZAsf3.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves2b\GTAZAsf3.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves2b\GTAZAsf3.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves2b\GTAZAsf3.b"  // IF and SET
+        0B00: delete_file "saves\saves2b\GTAZAsf3.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\saves2b\GTAZAsf4.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves2b\GTAZAsf4.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves2b\GTAZAsf4.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves2b\GTAZAsf4.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves2b\GTAZAsf4.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves2b\GTAZAsf4.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves2b\GTAZAsf4.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves2b\GTAZAsf4.b"  // IF and SET
+        0B00: delete_file "saves\saves2b\GTAZAsf4.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\saves2b\GTAZAsf5.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves2b\GTAZAsf5.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves2b\GTAZAsf5.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves2b\GTAZAsf5.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves2b\GTAZAsf5.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves2b\GTAZAsf5.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves2b\GTAZAsf5.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves2b\GTAZAsf5.b"  // IF and SET
+        0B00: delete_file "saves\saves2b\GTAZAsf5.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\saves2b\GTAZAsf6.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves2b\GTAZAsf6.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves2b\GTAZAsf6.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves2b\GTAZAsf6.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves2b\GTAZAsf6.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves2b\GTAZAsf6.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves2b\GTAZAsf6.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves2b\GTAZAsf6.b"  // IF and SET
+        0B00: delete_file "saves\saves2b\GTAZAsf6.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\saves2b\GTAZAsf7.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves2b\GTAZAsf7.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves2b\GTAZAsf7.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves2b\GTAZAsf7.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves2b\GTAZAsf7.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves2b\GTAZAsf7.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves2b\GTAZAsf7.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves2b\GTAZAsf7.b"  // IF and SET
+        0B00: delete_file "saves\saves2b\GTAZAsf7.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\saves2b\GTAZAsf8.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves2b\GTAZAsf8.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves2b\GTAZAsf8.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves2b\GTAZAsf8.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves2b\GTAZAsf8.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves2b\GTAZAsf8.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves2b\GTAZAsf8.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves2b\GTAZAsf8.b"  // IF and SET
+        0B00: delete_file "saves\saves2b\GTAZAsf8.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end                                                    
+
+return
+
+:CHECK_ALL_LCS_SAVES_TO_DELETE_HARDCORE
+
+0AF0: 0@ = get_int_from_ini_file "saves\saves3\GTAZAsf1.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves3\GTAZAsf1.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves3\GTAZAsf1.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves3\GTAZAsf1.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves3\GTAZAsf1.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves3\GTAZAsf1.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves3\GTAZAsf1.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves3\GTAZAsf1.b"  // IF and SET
+        0B00: delete_file "saves\saves3\GTAZAsf1.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\saves3\GTAZAsf2.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves3\GTAZAsf2.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves3\GTAZAsf2.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves3\GTAZAsf2.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves3\GTAZAsf2.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves3\GTAZAsf2.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves3\GTAZAsf2.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves3\GTAZAsf2.b"  // IF and SET
+        0B00: delete_file "saves\saves3\GTAZAsf2.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\saves3\GTAZAsf3.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves3\GTAZAsf3.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves3\GTAZAsf3.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves3\GTAZAsf3.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves3\GTAZAsf3.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves3\GTAZAsf3.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves3\GTAZAsf3.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves3\GTAZAsf3.b"  // IF and SET
+        0B00: delete_file "saves\saves3\GTAZAsf3.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\saves3\GTAZAsf4.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves3\GTAZAsf4.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves3\GTAZAsf4.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves3\GTAZAsf4.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves3\GTAZAsf4.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves3\GTAZAsf4.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves3\GTAZAsf4.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves3\GTAZAsf4.b"  // IF and SET
+        0B00: delete_file "saves\saves3\GTAZAsf4.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\saves3\GTAZAsf5.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves3\GTAZAsf5.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves3\GTAZAsf5.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves3\GTAZAsf5.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves3\GTAZAsf5.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves3\GTAZAsf5.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves3\GTAZAsf5.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves3\GTAZAsf5.b"  // IF and SET
+        0B00: delete_file "saves\saves3\GTAZAsf5.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\saves3\GTAZAsf6.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves3\GTAZAsf6.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves3\GTAZAsf6.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves3\GTAZAsf6.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves3\GTAZAsf6.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves3\GTAZAsf6.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves3\GTAZAsf6.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves3\GTAZAsf6.b"  // IF and SET
+        0B00: delete_file "saves\saves3\GTAZAsf6.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\saves3\GTAZAsf7.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves3\GTAZAsf7.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves3\GTAZAsf7.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves3\GTAZAsf7.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves3\GTAZAsf7.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves3\GTAZAsf7.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves3\GTAZAsf7.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves3\GTAZAsf7.b"  // IF and SET
+        0B00: delete_file "saves\saves3\GTAZAsf7.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\saves3\GTAZAsf8.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves3\GTAZAsf8.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves3\GTAZAsf8.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves3\GTAZAsf8.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves3\GTAZAsf8.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves3\GTAZAsf8.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves3\GTAZAsf8.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves3\GTAZAsf8.b"  // IF and SET
+        0B00: delete_file "saves\saves3\GTAZAsf8.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end                                                    
+
+return
+
+:CHECK_ALL_VCS_SAVES_TO_DELETE_HARDCORE
+
+0AF0: 0@ = get_int_from_ini_file "saves\saves3b\GTAZAsf1.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves3b\GTAZAsf1.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves3b\GTAZAsf1.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves3b\GTAZAsf1.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves3b\GTAZAsf1.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves3b\GTAZAsf1.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves3b\GTAZAsf1.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves3b\GTAZAsf1.b"  // IF and SET
+        0B00: delete_file "saves\saves3b\GTAZAsf1.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\saves3b\GTAZAsf2.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves3b\GTAZAsf2.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves3b\GTAZAsf2.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves3b\GTAZAsf2.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves3b\GTAZAsf2.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves3b\GTAZAsf2.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves3b\GTAZAsf2.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves3b\GTAZAsf2.b"  // IF and SET
+        0B00: delete_file "saves\saves3b\GTAZAsf2.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\saves3b\GTAZAsf3.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves3b\GTAZAsf3.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves3b\GTAZAsf3.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves3b\GTAZAsf3.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves3b\GTAZAsf3.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves3b\GTAZAsf3.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves3b\GTAZAsf3.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves3b\GTAZAsf3.b"  // IF and SET
+        0B00: delete_file "saves\saves3b\GTAZAsf3.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\saves3b\GTAZAsf4.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves3b\GTAZAsf4.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves3b\GTAZAsf4.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves3b\GTAZAsf4.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves3b\GTAZAsf4.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves3b\GTAZAsf4.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves3b\GTAZAsf4.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves3b\GTAZAsf4.b"  // IF and SET
+        0B00: delete_file "saves\saves3b\GTAZAsf4.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\saves3b\GTAZAsf5.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves3b\GTAZAsf5.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves3b\GTAZAsf5.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves3b\GTAZAsf5.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves3b\GTAZAsf5.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves3b\GTAZAsf5.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves3b\GTAZAsf5.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves3b\GTAZAsf5.b"  // IF and SET
+        0B00: delete_file "saves\saves3b\GTAZAsf5.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\saves3b\GTAZAsf6.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves3b\GTAZAsf6.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves3b\GTAZAsf6.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves3b\GTAZAsf6.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves3b\GTAZAsf6.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves3b\GTAZAsf6.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves3b\GTAZAsf6.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves3b\GTAZAsf6.b"  // IF and SET
+        0B00: delete_file "saves\saves3b\GTAZAsf6.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\saves3b\GTAZAsf7.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves3b\GTAZAsf7.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves3b\GTAZAsf7.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves3b\GTAZAsf7.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves3b\GTAZAsf7.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves3b\GTAZAsf7.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves3b\GTAZAsf7.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves3b\GTAZAsf7.b"  // IF and SET
+        0B00: delete_file "saves\saves3b\GTAZAsf7.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end
+    
+0AF0: 0@ = get_int_from_ini_file "saves\saves3b\GTAZAsf8.c" section "SCR" key "HARDCORE_MODE"
+if
+0@ == 1
+    then
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    0AF0: $HARDCORE_HOUR2 = get_int_from_ini_file "saves\saves3b\GTAZAsf8.c" section "SCR" key "HK_ST_H" 
+    0AF0: $HARDCORE_MINUTE2 = get_int_from_ini_file "saves\saves3b\GTAZAsf8.c" section "SCR" key "HK_ST_M" 
+    0AF0: $HARDCORE_SECOND2 = get_int_from_ini_file "saves\saves3b\GTAZAsf8.c" section "SCR" key "HK_ST_S" 
+    0AF0: $HARDCORE_DAY2 = get_int_from_ini_file "saves\saves3b\GTAZAsf8.c" section "SCR" key "HK_ST_D" 
+    0AF0: $HARDCORE_MONTH2 = get_int_from_ini_file "saves\saves3b\GTAZAsf8.c" section "SCR" key "HK_ST_MN" 
+    0AF0: $HARDCORE_YEAR2 = get_int_from_ini_file "saves\saves3b\GTAZAsf8.c" section "SCR" key "HK_ST_Y"    
+    if and
+    003A:   $HARDCORE_HOUR2 == $HARDCORE_HOUR // (int)
+    003A:   $HARDCORE_MINUTE2 == $HARDCORE_MINUTE // (int)
+    003A:   $HARDCORE_SECOND2 == $HARDCORE_SECOND // (int)
+    003A:   $HARDCORE_DAY2 == $HARDCORE_DAY // (int)
+    003A:   $HARDCORE_MONTH2 == $HARDCORE_MONTH // (int)
+    003A:   $HARDCORE_YEAR2 == $HARDCORE_YEAR // (int)
+        then
+        0B00: delete_file "saves\saves3b\GTAZAsf8.b"  // IF and SET
+        0B00: delete_file "saves\saves3b\GTAZAsf8.c"  // IF and SET
+        end
+        
+    ////////////////////////////////////////////////////////////////////////////////////////////////////    
+    
+    end                                                    
+
+return
+
+:WRITE_SAVES_PLAYED_TIME
+
+0AF0: 0@ = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "SAVED_SLOT_NUM2"
+//if
+//0@ < 0
+//then
+//0E2C: get_current_save_slot 0@
+//0AF1: write_int 0@ to_ini_file "saves\ZACM.set" section "SCR" key "SAVED_SLOT_NUM2"
+//end
+                         
+/////////////////////////////////////////////////////////////////////////////////////////
+
+if and
+UNITED_MAP == 0
+not $MIKE_STORY == 1
+not $CARL_STORY == 1
+then
+
+if
+0@ == 1
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\GTAZAsf1.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\GTAZAsf1.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\GTAZAsf1.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 2
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\GTAZAsf2.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\GTAZAsf2.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\GTAZAsf2.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 3
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\GTAZAsf3.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\GTAZAsf3.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\GTAZAsf3.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 4
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\GTAZAsf4.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\GTAZAsf4.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\GTAZAsf4.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 5
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\GTAZAsf5.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\GTAZAsf5.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\GTAZAsf5.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 6
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\GTAZAsf6.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\GTAZAsf6.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\GTAZAsf6.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 7
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\GTAZAsf7.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\GTAZAsf7.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\GTAZAsf7.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 8
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\GTAZAsf8.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\GTAZAsf8.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\GTAZAsf8.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+end
+
+return
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+if and
+UNITED_MAP == 0
+$MIKE_STORY == 1
+not $CARL_STORY == 1
+then
+
+if
+0@ == 1
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MIKE_STORY_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MIKE_STORY_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MIKE_STORY_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\GTAZAsf1.c" section "SCR" key "MIKE_STORY_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\GTAZAsf1.c" section "SCR" key "MIKE_STORY_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\GTAZAsf1.c" section "SCR" key "MIKE_STORY_MINUTES"
+end
+
+if
+0@ == 2
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MIKE_STORY_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MIKE_STORY_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MIKE_STORY_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\GTAZAsf2.c" section "SCR" key "MIKE_STORY_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\GTAZAsf2.c" section "SCR" key "MIKE_STORY_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\GTAZAsf2.c" section "SCR" key "MIKE_STORY_MINUTES"
+end
+
+if
+0@ == 3
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MIKE_STORY_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MIKE_STORY_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MIKE_STORY_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\GTAZAsf3.c" section "SCR" key "MIKE_STORY_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\GTAZAsf3.c" section "SCR" key "MIKE_STORY_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\GTAZAsf3.c" section "SCR" key "MIKE_STORY_MINUTES"
+end
+
+if
+0@ == 4
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MIKE_STORY_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MIKE_STORY_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MIKE_STORY_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\GTAZAsf4.c" section "SCR" key "MIKE_STORY_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\GTAZAsf4.c" section "SCR" key "MIKE_STORY_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\GTAZAsf4.c" section "SCR" key "MIKE_STORY_MINUTES"
+end
+
+if
+0@ == 5
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MIKE_STORY_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MIKE_STORY_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MIKE_STORY_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\GTAZAsf5.c" section "SCR" key "MIKE_STORY_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\GTAZAsf5.c" section "SCR" key "MIKE_STORY_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\GTAZAsf5.c" section "SCR" key "MIKE_STORY_MINUTES"
+end
+
+if
+0@ == 6
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MIKE_STORY_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MIKE_STORY_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MIKE_STORY_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\GTAZAsf6.c" section "SCR" key "MIKE_STORY_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\GTAZAsf6.c" section "SCR" key "MIKE_STORY_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\GTAZAsf6.c" section "SCR" key "MIKE_STORY_MINUTES"
+end
+
+if
+0@ == 7
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MIKE_STORY_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MIKE_STORY_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MIKE_STORY_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\GTAZAsf7.c" section "SCR" key "MIKE_STORY_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\GTAZAsf7.c" section "SCR" key "MIKE_STORY_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\GTAZAsf7.c" section "SCR" key "MIKE_STORY_MINUTES"
+end
+
+if
+0@ == 8
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MIKE_STORY_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MIKE_STORY_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MIKE_STORY_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\GTAZAsf8.c" section "SCR" key "MIKE_STORY_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\GTAZAsf8.c" section "SCR" key "MIKE_STORY_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\GTAZAsf8.c" section "SCR" key "MIKE_STORY_MINUTES"
+end
+
+end
+
+return
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+if and
+UNITED_MAP == 0
+not $MIKE_STORY == 1
+$CARL_STORY == 1
+then
+
+if
+0@ == 1
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "CARL_STORY_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "CARL_STORY_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "CARL_STORY_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\GTAZAsf1.c" section "SCR" key "CARL_STORY_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\GTAZAsf1.c" section "SCR" key "CARL_STORY_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\GTAZAsf1.c" section "SCR" key "CARL_STORY_MINUTES"
+end
+
+if
+0@ == 2
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "CARL_STORY_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "CARL_STORY_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "CARL_STORY_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\GTAZAsf2.c" section "SCR" key "CARL_STORY_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\GTAZAsf2.c" section "SCR" key "CARL_STORY_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\GTAZAsf2.c" section "SCR" key "CARL_STORY_MINUTES"
+end
+
+if
+0@ == 3
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "CARL_STORY_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "CARL_STORY_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "CARL_STORY_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\GTAZAsf3.c" section "SCR" key "CARL_STORY_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\GTAZAsf3.c" section "SCR" key "CARL_STORY_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\GTAZAsf3.c" section "SCR" key "CARL_STORY_MINUTES"
+end
+
+if
+0@ == 4
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "CARL_STORY_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "CARL_STORY_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "CARL_STORY_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\GTAZAsf4.c" section "SCR" key "CARL_STORY_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\GTAZAsf4.c" section "SCR" key "CARL_STORY_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\GTAZAsf4.c" section "SCR" key "CARL_STORY_MINUTES"
+end
+
+if
+0@ == 5
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "CARL_STORY_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "CARL_STORY_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "CARL_STORY_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\GTAZAsf5.c" section "SCR" key "CARL_STORY_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\GTAZAsf5.c" section "SCR" key "CARL_STORY_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\GTAZAsf5.c" section "SCR" key "CARL_STORY_MINUTES"
+end
+
+if
+0@ == 6
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "CARL_STORY_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "CARL_STORY_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "CARL_STORY_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\GTAZAsf6.c" section "SCR" key "CARL_STORY_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\GTAZAsf6.c" section "SCR" key "CARL_STORY_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\GTAZAsf6.c" section "SCR" key "CARL_STORY_MINUTES"
+end
+
+if
+0@ == 7
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "CARL_STORY_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "CARL_STORY_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "CARL_STORY_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\GTAZAsf7.c" section "SCR" key "CARL_STORY_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\GTAZAsf7.c" section "SCR" key "CARL_STORY_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\GTAZAsf7.c" section "SCR" key "CARL_STORY_MINUTES"
+end
+
+if
+0@ == 8
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "CARL_STORY_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "CARL_STORY_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "CARL_STORY_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\GTAZAsf8.c" section "SCR" key "CARL_STORY_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\GTAZAsf8.c" section "SCR" key "CARL_STORY_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\GTAZAsf8.c" section "SCR" key "CARL_STORY_MINUTES"
+end
+
+end
+
+return
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+if and
+UNITED_MAP == 1
+STORIES_MAP == 0
+LCVC_MAP_NUM == 0
+then
+
+if
+0@ == 1
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves2\GTAZAsf1.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves2\GTAZAsf1.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves2\GTAZAsf1.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 2
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves2\GTAZAsf2.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves2\GTAZAsf2.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves2\GTAZAsf2.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 3
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves2\GTAZAsf3.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves2\GTAZAsf3.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves2\GTAZAsf3.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 4
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves2\GTAZAsf4.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves2\GTAZAsf4.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves2\GTAZAsf4.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 5
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves2\GTAZAsf5.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves2\GTAZAsf5.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves2\GTAZAsf5.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 6
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves2\GTAZAsf6.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves2\GTAZAsf6.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves2\GTAZAsf6.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 7
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves2\GTAZAsf7.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves2\GTAZAsf7.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves2\GTAZAsf7.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 8
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves2\GTAZAsf8.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves2\GTAZAsf8.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves2\GTAZAsf8.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+if and
+UNITED_MAP == 1
+STORIES_MAP == 0
+LCVC_MAP_NUM == 1
+then
+
+if
+0@ == 1
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves2b\GTAZAsf1.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves2b\GTAZAsf1.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves2b\GTAZAsf1.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 2
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves2b\GTAZAsf2.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves2b\GTAZAsf2.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves2b\GTAZAsf2.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 3
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves2b\GTAZAsf3.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves2b\GTAZAsf3.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves2b\GTAZAsf3.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 4
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves2b\GTAZAsf4.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves2b\GTAZAsf4.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves2b\GTAZAsf4.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 5
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves2b\GTAZAsf5.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves2b\GTAZAsf5.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves2b\GTAZAsf5.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 6
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves2b\GTAZAsf6.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves2b\GTAZAsf6.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves2b\GTAZAsf6.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 7
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves2b\GTAZAsf7.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves2b\GTAZAsf7.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves2b\GTAZAsf7.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 8
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves2b\GTAZAsf8.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves2b\GTAZAsf8.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves2b\GTAZAsf8.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+if and
+UNITED_MAP == 1
+STORIES_MAP == 1
+LCVC_MAP_NUM == 0
+then
+
+if
+0@ == 1
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves3\GTAZAsf1.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves3\GTAZAsf1.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves3\GTAZAsf1.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 2
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves3\GTAZAsf2.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves3\GTAZAsf2.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves3\GTAZAsf2.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 3
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves3\GTAZAsf3.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves3\GTAZAsf3.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves3\GTAZAsf3.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 4
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves3\GTAZAsf4.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves3\GTAZAsf4.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves3\GTAZAsf4.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 5
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves3\GTAZAsf5.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves3\GTAZAsf5.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves3\GTAZAsf5.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 6
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves3\GTAZAsf6.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves3\GTAZAsf6.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves3\GTAZAsf6.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 7
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves3\GTAZAsf7.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves3\GTAZAsf7.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves3\GTAZAsf7.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 8
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves3\GTAZAsf8.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves3\GTAZAsf8.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves3\GTAZAsf8.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+if and
+UNITED_MAP == 1
+STORIES_MAP == 1
+LCVC_MAP_NUM == 1
+then
+
+if
+0@ == 1
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves3b\GTAZAsf1.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves3b\GTAZAsf1.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves3b\GTAZAsf1.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 2
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves3b\GTAZAsf2.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves3b\GTAZAsf2.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves3b\GTAZAsf2.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 3
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves3b\GTAZAsf3.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves3b\GTAZAsf3.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves3b\GTAZAsf3.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 4
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves3b\GTAZAsf4.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves3b\GTAZAsf4.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves3b\GTAZAsf4.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 5
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves3b\GTAZAsf5.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves3b\GTAZAsf5.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves3b\GTAZAsf5.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 6
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves3b\GTAZAsf6.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves3b\GTAZAsf6.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves3b\GTAZAsf6.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 7
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves3b\GTAZAsf7.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves3b\GTAZAsf7.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves3b\GTAZAsf7.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+if
+0@ == 8
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
+0AF0: 1@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 2@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
+0AF1: write_int 0@ to_ini_file "saves\saves3b\GTAZAsf8.c" section "SCR" key "SURVIVAL_SECONDS"
+0AF1: write_int 1@ to_ini_file "saves\saves3b\GTAZAsf8.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 2@ to_ini_file "saves\saves3b\GTAZAsf8.c" section "SCR" key "SURVIVAL_MINUTES"
+end
+
+end
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+return

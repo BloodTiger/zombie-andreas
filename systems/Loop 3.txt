@@ -1,0 +1,1754 @@
+const
+LCVC_DROWNING_FLAG1 = 10@
+LCVC_DROWNING_FLAG2 = 11@
+FIREFIGHTER_PERK_TIMER = 12@
+AFTER_ON_MISSION_TIMER_TURN_FLAG = 13@
+UNLOAD_ALL_MODELS_FOR_STREAM_USAGE = 14@
+end
+
+:LOOP3
+thread 'LOOP3'
+
+0AF0: UNLOAD_ALL_MODELS_FOR_STREAM_USAGE = get_int_from_ini_file "config.ini" section "EXTRA" key "UNLOAD_MODELS_STREAM_LIMIT"
+if
+UNLOAD_ALL_MODELS_FOR_STREAM_USAGE < -1
+then
+UNLOAD_ALL_MODELS_FOR_STREAM_USAGE = 384
+0AF1: write_int UNLOAD_ALL_MODELS_FOR_STREAM_USAGE to_ini_file "config.ini" section "EXTRA" key "UNLOAD_MODELS_STREAM_LIMIT"
+end
+
+create_thread @INT_PED
+create_thread @PARASKP
+
+16@ = 0
+32@ = 0
+LCVC_DROWNING_FLAG1 = 0
+LCVC_DROWNING_FLAG2 = 0
+AFTER_ON_MISSION_TIMER = -1
+
+while true
+wait 0
+
+if
+32@ >= 100
+then
+32@ = 0
+
+//TIMERS_COUNTERS_START
+
+if and
+AFTER_ON_MISSION_TIMER_TURN_FLAG == 0
+$ONMISSION == 1
+    then
+    AFTER_ON_MISSION_TIMER_TURN_FLAG = 1
+    AFTER_ON_MISSION_TIMER = 840
+    end
+    
+if and
+AFTER_ON_MISSION_TIMER_TURN_FLAG == 1
+$ONMISSION == 0
+AFTER_ON_MISSION_TIMER > 0
+    then
+    AFTER_ON_MISSION_TIMER -= 3
+    if
+    AFTER_ON_MISSION_TIMER == 0
+        then
+        AFTER_ON_MISSION_TIMER_TURN_FLAG = 0
+        AFTER_ON_MISSION_TIMER = -1
+        end
+    end
+    
+if or
+NO_MORE_BANDITS_CAMPS == 0
+NO_MORE_ARMY_CAMPS == 0
+then
+if or
+$ALLOW_ARMY_CONVOY == 1
+$ALLOW_BANDIT_CONVOY == 1
+    then
+    if and
+    not $ENTERED_CAMP_NUMBER == -1
+    not $SLAVING_STARTED == 1
+    $DEFENSE_CHALLENGE_FLAG == 0
+    $GAMEMODE_SELECTED == 1
+    $FREEMODE == 1
+    not $FIST_HUD_ALWAYS == 1
+    not $GAMEMODE_STORYLINE == 1
+    AFTER_ON_MISSION_TIMER == -1
+        then
+        
+        if and
+        not RAID_FRACTION_FLAG == 1
+        not RAID_FRACTION_FLAG == 2
+        not CAMP_RAID_FLAG == 1
+        $PLAYER_LEVEL >= 5       
+        then
+        CAMP_RAID_TIMER += 4
+        end
+        
+        if and
+        $ONMISSION == 0
+        $SAVESTATUS == 0
+        $SAVESTATUS_TRUE == 0        
+        CAMP_RAID_FLAG == 0
+        $HUD_REMOVE == 0
+        not $CAMP_AGRED_FLAG[$ENTERED_CAMP_NUMBER] == 1        
+            then
+            if or
+            CAMP_RAID_TIMER > 15080
+            RAID_FRACTION_FLAG == 1
+            RAID_FRACTION_FLAG == 2
+                then
+                
+                if and
+                UNITED_MAP == 1
+                $MONTHS_PASSED < 3
+                $CAMP_SPOTTED_FLAG == 1
+                not $CAMP_DEAD_FLAG[$ENTERED_CAMP_NUMBER] == 1
+                then
+                jump to @RAID_CAMPS_SKIP
+                end
+                
+                if and
+                UNITED_MAP == 0
+                $ENTERED_CAMP_NUMBER == 13            
+                not RAID_FRACTION_FLAG == 1
+                not RAID_FRACTION_FLAG == 2
+                then
+                if
+                RAID_FRACTION_FLAG == 2
+                    then
+                    jump to @RAID_CAMPS_SKIP
+                    end
+                if
+                MAIN_QUEST10_COMPLETED_FLAG < 1
+                    then
+                    RAID_FRACTION_FLAG = 1
+                    random_int CAMP_RAID_TIMER -2500 -5000
+                    else
+                    RAID_FRACTION_FLAG = 2
+                    random_int CAMP_RAID_TIMER -2500 -5000
+                    end
+                end            
+                
+                if and
+                UNITED_MAP == 0
+                $ENTERED_CAMP_NUMBER == 11            
+                not RAID_FRACTION_FLAG == 1
+                not RAID_FRACTION_FLAG == 2
+                then
+                if
+                RAID_FRACTION_FLAG == 2
+                    then
+                    jump to @RAID_CAMPS_SKIP
+                    end
+                if
+                MAIN_QUEST12_COMPLETED_FLAG < 1
+                    then
+                    RAID_FRACTION_FLAG = 1
+                    random_int CAMP_RAID_TIMER -2500 -5000
+                    else
+                    RAID_FRACTION_FLAG = 2
+                    random_int CAMP_RAID_TIMER -2500 -5000
+                    end
+                end
+                
+                if and
+                UNITED_MAP == 0
+                $ENTERED_CAMP_NUMBER == 3            
+                MAIN_QUEST4_COMPLETED_FLAG == 1
+                    then
+                    jump to @RAID_CAMPS_SKIP2
+                    end
+                
+                0652: 1@ = integer_stat 258
+                if and
+                not $CAMP_DEAD_FLAG[$ENTERED_CAMP_NUMBER] == 1
+                $CAMP_SPOTTED_FLAG == 1
+                CARMA_VERY_BAD_FLAG == 0
+                $MONTHS_PASSED < 3
+                1@ == 0
+                8E1D: not is_on_mission
+                    then
+                    :RAID_CAMPS_SKIP
+                    
+                    if and
+                    not RAID_FRACTION_FLAG == 1
+                    not RAID_FRACTION_FLAG == 2
+                    then
+                    random_int CAMP_RAID_TIMER -2500 -5000
+                    else                    
+                    if
+                    CAMP_RAID_TIMER > 10080
+                        then
+                        random_int CAMP_RAID_TIMER 8080 11080
+                        end                    
+                    end
+                    
+                    start_mission 37
+                    end
+                end
+            end
+        end
+    end
+end    
+    
+//TIMERS_COUNTERS_END
+
+end        
+
+if and
+0E45: frame_mod 120
+UNLOAD_MODELS_ON == 1
+$AMAZING_OPENED_FLAG == 0
+SURVIVAL_STARTED_FULLY_FLAG == 1
+then
+
+//for 0@ = 8 to 19999
+//0A8C: write_memory 0xB7CE50 size 4 value 0@ virtual_protect 0
+//0EA3: remove_model_if_unused 0@
+//end
+
+0A8D: 0@ = read_memory 0x8E4CB4 size 4 virtual_protect 0
+0@ /= 1048576
+if
+002D:   0@ >= UNLOAD_ALL_MODELS_FOR_STREAM_USAGE  // (int)
+    then
+    0E9F: remove_all_unused_models
+    end
+
+end
+
+0A8D: 0@ = read_memory 0x0C0994C size 4 virtual_protect 0
+if
+0@ < 28000.0
+then
+//0AD1: show_formatted_text_highpriority "MISSION_CLEANUP WAS DONE, BACKING UP SOME SHIT" time 2000
+06F0: set_group PLAYER_GROUP distance_limit_to 28000.0
+0940: set_group PLAYER_GROUP enters_leaders_vehicle 0
+0912: set_text_priority 1 leftmargin 355 maxwidth 750
+06AD: set_group PLAYER_GROUP group_decision_maker_to $DEC_GROUP
+if
+$FLAG_COMMAND == 1
+    then
+    07B3: set_group PLAYER_GROUP give_command 2
+    else
+    07B3: set_group PLAYER_GROUP give_command 1
+    end
+end
+
+0A8D: 0@ = read_memory 0x08E4CB8 size 4 virtual_protect 1
+if and
+0@ > 0
+0E45: frame_mod 15
+then
+actor.StorePos(PLAYER_ACTOR,0@,1@,2@)
+renderer 0@ 1@     
+renderer2 0@ 1@ 2@
+//0AD1: show_formatted_text_highpriority "LOAD SCENE AT %f %f %f" time 500 0@ 1@ 2@
+end
+
+if
+MONEY_FOUND_TEXT_TIME > 1
+then
+MONEY_FOUND_TEXT_TIME -= 1
+if
+MONEY_FOUND_TEXT_TIME == 1
+    then
+    MONEY_FOUND_TEXT_TIME = 0
+    text.RemoveTextBox()
+    end
+end
+
+//////////////////////////////////////////////////////////////
+
+if and
+UNITED_MAP == 0
+not $CHEAT_TYPE_FLAG == 1
+then
+
+0A8D: 0@ = read_memory 0x969160 size 1 virtual_protect 0
+if and
+actor.DrivingVehicleType(PLAYER_ACTOR,15468)
+0@ == 0
+then
+if or
+0E3E: is_button_just_pressed 0 button 19
+0E3D: is_key_just_pressed 71
+    then
+    0A8C: write_memory 0x969160 size 1 value 1 virtual_protect 0
+    0A8C: write_memory 0x969152 size 1 value 1 virtual_protect 0
+    text.ShowTextBox('GAME882')
+    $NOTSPAWN_ETC = 1
+    wait 0
+    end
+end
+
+if and
+actor.DrivingVehicleType(PLAYER_ACTOR,15468)
+0@ == 1
+then
+if or
+0E3E: is_button_just_pressed 0 button 19
+0E3D: is_key_just_pressed 71
+    then
+    0A8C: write_memory 0x969160 size 1 value 0 virtual_protect 0
+    0A8C: write_memory 0x969152 size 1 value 0 virtual_protect 0
+    text.ShowTextBox('GAME883')
+    $NOTSPAWN_ETC = 0
+    end
+end
+
+if
+actor.DrivingVehicleType(PLAYER_ACTOR,15469)
+then
+0@ = actor.CurrentCar(PLAYER_ACTOR)
+0745: set_hydra 0@ thrust_to_horizontal
+end
+
+end
+
+//////////////////////////////////////////////////////////////
+
+if and
+UNITED_MAP == 1
+0E45: frame_mod 60
+then
+
+if
+$UNITED_III_SPAWN == 0
+then
+$TRADER_DEAD_FLAG[0] = 2
+$TRADER_DEAD_FLAG[7] = 2
+$TRADER_DEAD_FLAG[8] = 2
+$TRADER_DEAD_FLAG[9] = 2
+$TRADER_DEAD_FLAG[10] = 2
+$TRADER_DEAD_FLAG[11] = 2
+$CAMP_DEAD_FLAG[0] = 2
+$CAMP_DEAD_FLAG[1] = 2
+$CAMP_DEAD_FLAG[4] = 2
+$CAMP_DEAD_FLAG[7] = 2
+$CAMP_DEAD_FLAG[8] = 2
+$CAMP_DEAD_FLAG[9] = 2
+else
+$TRADER_DEAD_FLAG[1] = 2
+$TRADER_DEAD_FLAG[2] = 2
+$TRADER_DEAD_FLAG[3] = 2
+$TRADER_DEAD_FLAG[4] = 2
+$TRADER_DEAD_FLAG[5] = 2
+$TRADER_DEAD_FLAG[6] = 2
+$CAMP_DEAD_FLAG[2] = 2
+$CAMP_DEAD_FLAG[3] = 2
+$CAMP_DEAD_FLAG[5] = 2
+$CAMP_DEAD_FLAG[6] = 2
+end
+
+end
+
+//////////////////////////////////////////////////////////////
+
+if and
+$QUEST_TYPE >= 10
+not $QUEST_TYPE == 100
+then
+
+if
+$NOTSPAWN_ETC == 0
+then 
+$NOTSPAWN_ETC = 1
+end
+
+if
+$SURVIVORS_DONT_SPAWN_FLAG == 0
+then
+$SURVIVORS_DONT_SPAWN_FLAG = 1
+end
+
+end
+
+//////////////////////////////////////////////////////////////
+
+if
+0E45: frame_mod 30
+then
+
+if
+PERK_TITAN == 1
+    then
+    0ED9: set_char_ignore_damage_anims PLAYER_ACTOR 1
+    end
+
+if
+$FREEMODE == 1
+    then
+    
+    if and
+    NO_MORE_BANDITS_CAMPS == 1
+    NO_MORE_BANDITS_CAMPS_MSG == 0
+        then
+        text.ShowTextBox('GME1160')
+        NO_MORE_BANDITS_CAMPS_MSG = 1
+        end
+        
+    if and
+    NO_MORE_ARMY_CAMPS == 1
+    NO_MORE_ARMY_CAMPS_MSG == 0
+        then
+        text.ShowTextBox('GME1159')
+        NO_MORE_ARMY_CAMPS_MSG = 1
+        end
+        
+    end        
+
+////////////////////////////////////
+
+if and
+not $ENTERED_CAMP_NUMBER == -1
+$GAMEMODE_WAR == 0
+$GAMEMODE_VERSUS == 0
+UNITED_MAP == 1
+$FREEMODE == 1
+    then
+    
+    for 0@ = 0 to 13
+    
+    if
+    $CAMP_DEAD_FLAG[0@] == 0
+        then
+        
+        if and
+        $CAMP_DONE_MARK[0@] == 0
+        $CAMP_AGRED_FLAG[0@] == 0
+            then
+            
+            0085: 1@ = 0@ // (int)
+            1@ += 156
+            if
+            $RNDM_HOUSE_BANKA[1@] >= 100
+                then
+                marker.Disable($CAMP_MARKER[0@])
+                $CAMP_MARKER[0@] = 0
+                $CAMP_MARKER[0@] = Marker.CreateIconWithoutSphere(34, $CAMP_X[0@], $CAMP_Y[0@], $CAMP_Z[0@])
+                $CAMP_DONE_MARK[0@] = 1
+                end
+                
+            else
+            
+            0085: 1@ = 0@ // (int)
+            1@ += 156
+            if or
+            $RNDM_HOUSE_BANKA[1@] < 100
+            $CAMP_AGRED_FLAG[0@] == 1
+                then
+                marker.Disable($CAMP_MARKER[0@])
+                $CAMP_MARKER[0@] = 0
+                $CAMP_MARKER[0@] = Marker.CreateIconWithoutSphere(31, $CAMP_X[0@], $CAMP_Y[0@], $CAMP_Z[0@])
+                $CAMP_DONE_MARK[0@] = 0
+                end
+            
+            end
+        
+        end
+    
+    end
+    
+    end
+
+////////////////////////////////////
+
+if and
+not $ENTERED_CAMP_NUMBER == -1
+$GAMEMODE_WAR == 0
+$GAMEMODE_VERSUS == 0
+UNITED_MAP == 0
+$FREEMODE == 1
+CUSTOM_MODE_TURN_OFF_STORY_THINGS == 1
+    then
+    
+    for 0@ = 0 to 14
+    
+    if
+    $CAMP_DEAD_FLAG[0@] == 0
+        then
+        
+        if and
+        $CAMP_DONE_MARK[0@] == 0
+        $CAMP_AGRED_FLAG[0@] == 0
+            then
+            
+            0085: 1@ = 0@ // (int)
+            1@ += 156
+            if
+            $RNDM_HOUSE_BANKA[1@] >= 100
+                then
+                marker.Disable($CAMP_MARKER[0@])
+                $CAMP_MARKER[0@] = 0
+                $CAMP_MARKER[0@] = Marker.CreateIconWithoutSphere(34, $CAMP_X[0@], $CAMP_Y[0@], $CAMP_Z[0@])
+                $CAMP_DONE_MARK[0@] = 1
+                end
+                
+            else
+            
+            0085: 1@ = 0@ // (int)
+            1@ += 156
+            if or
+            $RNDM_HOUSE_BANKA[1@] < 100
+            $CAMP_AGRED_FLAG[0@] == 1
+                then
+                marker.Disable($CAMP_MARKER[0@])
+                $CAMP_MARKER[0@] = 0
+                $CAMP_MARKER[0@] = Marker.CreateIconWithoutSphere(31, $CAMP_X[0@], $CAMP_Y[0@], $CAMP_Z[0@])
+                $CAMP_DONE_MARK[0@] = 0
+                end
+            
+            end
+        
+        end
+    
+    end 
+    
+    end
+
+////////////////////////////////////
+
+if and
+not $ENTERED_CAMP_NUMBER == -1
+$GAMEMODE_WAR == 0
+$GAMEMODE_VERSUS == 0
+UNITED_MAP == 0
+$FREEMODE == 1
+not CUSTOM_MODE_TURN_OFF_STORY_THINGS == 1
+    then
+    
+    for 0@ = 0 to 13
+    
+    if
+    $CAMP_DEAD_FLAG[0@] == 0
+        then
+        
+        if and
+        $CAMP_DONE_MARK[0@] == 0
+        $CAMP_AGRED_FLAG[0@] == 0
+            then
+            
+            if and
+            0@ == 12
+            $ALLOW_SURVIVERS_CAMP == 1
+            $DEFENSE_CHALLENGE_FLAG == 0
+            $GAMEMODE_SELECTED == 1
+            SURVIVAL_STARTED_FULLY_FLAG == 1
+            then
+            if
+            875C: not  marker $CAMP_MARKER[12] enabled
+                then
+                $CAMP_MARKER[12] = Marker.CreateIconWithoutSphere(31, $CAMP_X[12], $CAMP_Y[12], $CAMP_Z[12])
+                end
+            end
+            
+            0085: 1@ = 0@ // (int)
+            1@ += 156
+            if
+            $RNDM_HOUSE_BANKA[1@] >= 100        
+                then
+                if
+                0@ == 5
+                    then
+                    if and
+                    $CAMP_DEAD_FLAG[0] == 0
+                    $CAMP_MODEL3[0] == 12785
+                    $CAMP_DEAD_FLAG[3] == 0
+                    $CAMP_MODEL8[3] == 12788
+                        then
+                        jump to @CAMP_SA_READY_MAINQUEST
+                        else
+                        jump to @CAMP_SA_DONE_MAINQUEST
+                        end
+                    else
+                    :CAMP_SA_READY_MAINQUEST
+                    if
+                    CAMP_LEADER_RANDOM_FLAG == 1
+                    then
+                    jump to @CAMP_SA_DONE_MAINQUEST
+                    end
+                    
+                    marker.Disable($CAMP_MARKER[0@])
+                    $CAMP_MARKER[0@] = 0
+                    $CAMP_MARKER[0@] = Marker.CreateIconAndSphere2(51, $CAMP_X[0@], $CAMP_Y[0@], $CAMP_Z[0@])
+                    $CAMP_DONE_MARK[0@] = 1
+                    $CHECKPOINT[0@] += 15160 
+                    end  
+                end
+                
+            else                
+            
+            0085: 1@ = 0@ // (int)
+            1@ += 156
+            if or
+            $RNDM_HOUSE_BANKA[1@] < 100
+            $CAMP_AGRED_FLAG[0@] == 1
+                then
+                marker.Disable($CAMP_MARKER[0@])
+                $CAMP_MARKER[0@] = 0
+                $CAMP_MARKER[0@] = Marker.CreateIconWithoutSphere(31, $CAMP_X[0@], $CAMP_Y[0@], $CAMP_Z[0@])
+                $CAMP_DONE_MARK[0@] = 0
+                else
+                0085: 2@ = 0@ // (int)
+                2@ += 8
+                if
+                $WEAPON_DAMAGE[2@] >= 1            
+                    then
+                    marker.Disable($CAMP_MARKER[0@])
+                    $CAMP_MARKER[0@] = 0
+                    $CAMP_MARKER[0@] = Marker.CreateIconWithoutSphere(17, $CAMP_X[0@], $CAMP_Y[0@], $CAMP_Z[0@])
+                    $CAMP_DONE_MARK[0@] = 2
+                    end
+                if
+                $WEAPON_DAMAGE[2@] == -1
+                    then
+                    0085: 1@ = 0@ // (int)
+                    1@ += 156
+                    if
+                    $RNDM_HOUSE_BANKA[1@] >= 150        
+                        then
+                        :CAMP_SA_DONE_MAINQUEST
+                        marker.Disable($CAMP_MARKER[0@])
+                        $CAMP_MARKER[0@] = 0
+                        $CAMP_MARKER[0@] = Marker.CreateIconWithoutSphere(17, $CAMP_X[0@], $CAMP_Y[0@], $CAMP_Z[0@])
+                        $CAMP_DONE_MARK[0@] = 2
+                        end
+                    end    
+                end
+            
+            end
+        
+        end
+    
+    end
+    
+    end
+
+if and
+not $ENTERED_BCAMP_NUMBER == -1
+$GAMEMODE_WAR == 0
+$GAMEMODE_VERSUS == 0
+UNITED_MAP == 0
+CARMA_VERY_BAD_FLAG == 1
+    then
+    
+    for 0@ = 1 to 4
+        
+    if
+    $CAMP_DONE_MARK[0@] == 0
+        then        
+        0085: 1@ = 0@ // (int)
+        1@ += 156
+        if
+        $RNDM_HOUSE_BANKA[1@] >= 100        
+            then       
+            
+            if
+            0@ == 1
+            then
+            marker.Disable($BANDITS1)
+            $BANDITS1 = 0
+            $BANDITS1 = Marker.CreateIconWithoutSphere(20, 766.8173, -1362.4546, 13.5271)
+            end
+            
+            if
+            0@ == 2
+            then
+            marker.Disable($BANDITS2)
+            $BANDITS2 = 0
+            $BANDITS2 = Marker.CreateIconWithoutSphere(20, 1291.8058, 174.3143, 20.4609)
+            end
+            
+            if
+            0@ == 3
+            then
+            marker.Disable($BANDITS3)
+            $BANDITS3 = 0
+            $BANDITS3 = Marker.CreateIconWithoutSphere(20, 1065.738, 1277.0488, 10.8203)
+            end
+            
+            if
+            0@ == 4
+            then
+            marker.Disable($BANDITS4)
+            $BANDITS4 = 0
+            $BANDITS4 = Marker.CreateIconWithoutSphere(20, -2124.2634, -122.7974, 35.3203)
+            end
+            
+            $CAMP_DONE_MARK[0@] = 1
+            end            
+        end
+              
+    
+    end
+    
+    end 
+    
+if and
+not $ENTERED_BCAMP_NUMBER == -1
+$GAMEMODE_WAR == 0
+$GAMEMODE_VERSUS == 0
+UNITED_MAP == 1
+$UNITED_III_SPAWN == 1
+CARMA_VERY_BAD_FLAG == 1
+    then
+    
+    for 0@ = 6 to 8
+        
+    if
+    $CAMP_DONE_MARK[0@] == 0
+        then        
+        0085: 1@ = 0@ // (int)
+        1@ += 156
+        if
+        $RNDM_HOUSE_BANKA[1@] >= 100        
+            then       
+            
+            if
+            0@ == 6
+            then
+            marker.Disable($BANDITS4)
+            $BANDITS4 = 0
+            $BANDITS4 = Marker.CreateIconWithoutSphere(20, -1428.1434, 332.7063, 26.1075)
+            end
+            
+            if
+            0@ == 7
+            then
+            marker.Disable($BANDITS1)
+            $BANDITS1 = 0
+            $BANDITS1 = Marker.CreateIconWithoutSphere(20, -2614.6572, 1282.2435, 11.0766)
+            end
+            
+            if
+            0@ == 8
+            then
+            marker.Disable($BANDITS3)
+            $BANDITS3 = 0
+            $BANDITS3 = Marker.CreateIconWithoutSphere(20, 98.4936, 1621.6096, 55.5983)
+            end        
+            
+            $CAMP_DONE_MARK[0@] = 1
+            end            
+        end
+              
+    
+    end
+    
+    end  
+    
+if and
+not $ENTERED_BCAMP_NUMBER == -1
+$GAMEMODE_WAR == 0
+$GAMEMODE_VERSUS == 0
+UNITED_MAP == 1
+$UNITED_III_SPAWN == 0
+CARMA_VERY_BAD_FLAG == 1
+    then
+    
+    for 0@ = 9 to 11
+        
+    if
+    $CAMP_DONE_MARK[0@] == 0
+        then        
+        0085: 1@ = 0@ // (int)
+        1@ += 156
+        if
+        $RNDM_HOUSE_BANKA[1@] >= 100        
+            then       
+            
+            if
+            0@ == 9
+            then
+            marker.Disable($BANDITS2)
+            $BANDITS2 = 0
+            $BANDITS2 = Marker.CreateIconWithoutSphere(20, 1619.5303, -1519.8556, 34.5056)
+            end
+            
+            if
+            0@ == 10
+            then
+            marker.Disable($BANDITS5)
+            $BANDITS5 = 0
+            $BANDITS5 = Marker.CreateIconWithoutSphere(20, 907.5723, -629.6017, 5.7196)
+            end
+            
+            if
+            0@ == 11
+            then
+            marker.Disable($BANDITS6)
+            $BANDITS6 = 0
+            $BANDITS6 = Marker.CreateIconWithoutSphere(20, 2002.3646, -1886.791, 4.9197)
+            end        
+            
+            $CAMP_DONE_MARK[0@] = 1
+            end            
+        end
+              
+    
+    end
+    
+    end          
+
+///////////////////////////////////
+
+end
+
+//////////////////////////////////////////////////////////////
+
+if
+KARMA_SYS_ON_FLAG == 1
+then
+
+if
+CARMA_BAD_POINTS < 0
+then
+CARMA_BAD_POINTS = 0
+end
+
+if
+CARMA_GOOD_POINTS < 0
+then
+CARMA_GOOD_POINTS = 0
+end
+
+if
+CARMA_VERY_BAD_FLAG == 0
+then
+
+if
+CARMA_GOOD_POINTS > 100
+then
+CARMA_GOOD_POINTS = 100
+end
+
+end
+
+end
+
+/////////////////////////////////////////////////////////////////////////
+
+if
+UNITED_MAP == 0
+then
+
+if and
+actor.Driving(PLAYER_ACTOR)
+//844B: not  actor PLAYER_ACTOR on_foot
+8E4A: not is_char_exiting_any_car PLAYER_ACTOR
+89DE: not actor PLAYER_ACTOR entering_car
+then
+PLAYER_LAST_DEFINED_CAR = actor.CurrentCar(PLAYER_ACTOR)
+end
+
+else
+
+if and
+//actor.Driving(PLAYER_ACTOR)
+844B: not  actor PLAYER_ACTOR on_foot
+8E4A: not is_char_exiting_any_car PLAYER_ACTOR
+89DE: not actor PLAYER_ACTOR entering_car
+then
+//PLAYER_LAST_DEFINED_CAR = actor.CurrentCar(PLAYER_ACTOR)
+0811: PLAYER_LAST_DEFINED_CAR = actor PLAYER_ACTOR used_car
+end
+
+end
+
+/////////////////////////////////////////////////////////////////////////
+
+if and
+056E:   car PLAYER_LAST_DEFINED_CAR defined
+$FREEMODE == 1
+then
+0441: 0@ = car PLAYER_LAST_DEFINED_CAR model
+PLAYER_CAR_BONUS_FLAG = 0
+
+//Выживший
+if
+SURVIVAL_CUSTOM_WEAPON_NABOR == 0
+then
+if or
+0@ == #BMX
+0@ == #MTBIKE
+0@ == #BIKE
+    then
+    PLAYER_CAR_BONUS_FLAG = 1
+    088B: set_car PLAYER_LAST_DEFINED_CAR form_drag_multiplier_to 0.25
+    end
+end
+
+//Зверолов (Все внедорожно-фургонное говно)
+if
+SURVIVAL_CUSTOM_WEAPON_NABOR == 1
+then
+if or
+0@ == #HUNTLEY
+0@ == #LANDSTAL
+0@ == #RANCHER
+0@ == #BOBCAT
+0@ == #SADLER
+0@ == #WALTON
+0@ == #YOSEMITE
+0@ == #BANDITO
+    then
+    PLAYER_CAR_BONUS_FLAG = 1
+    end
+
+if or
+0@ == #BFINJECT
+0@ == #MESA
+0@ == #QUAD
+0@ == #SANDKING
+0@ == #REGINA
+0@ == 15401 //Tim's Bobcat
+0@ == 15423 //Bulldog
+0@ == 15424 //Huntley XS
+    then
+    PLAYER_CAR_BONUS_FLAG = 1
+    end
+    
+if
+0@ == #PICADOR 
+    then
+    PLAYER_CAR_BONUS_FLAG = 1
+    end   
+    
+end
+
+//Патрульный (Копкары + маслкары)
+if
+SURVIVAL_CUSTOM_WEAPON_NABOR == 2
+then
+if or
+0@ == #BUFFALO
+0@ == #CLOVER
+0@ == #PHOENIX
+0@ == #SABRE
+0@ == 15421 //Hazzard
+    then
+    PLAYER_CAR_BONUS_FLAG = 1
+    end
+
+if or
+0@ == #COPBIKE
+0@ == #COPCARLA
+0@ == #COPCARVG
+0@ == #COPCARRU
+0@ == #COPCARSF
+    then
+    PLAYER_CAR_BONUS_FLAG = 1
+    end
+end
+
+//Анархист
+if
+SURVIVAL_CUSTOM_WEAPON_NABOR == 3
+then
+if and
+047A:   actor PLAYER_ACTOR driving_bike
+not 0@ == #BMX
+not 0@ == #MTBIKE
+not 0@ == #BIKE
+    then
+    PLAYER_CAR_BONUS_FLAG = 1
+    end
+end
+
+//Снайпер (4-х дверные седаны)
+if
+SURVIVAL_CUSTOM_WEAPON_NABOR == 4
+then
+
+if or
+0@ == #ADMIRAL
+0@ == #ELEGANT
+0@ == #EMPEROR
+0@ == #MERIT
+0@ == #PREMIER
+0@ == #SENTINEL
+0@ == #STAFFORD
+0@ == #EMPEROR
+    then
+    PLAYER_CAR_BONUS_FLAG = 1
+    end
+
+if or
+0@ == #GLENDALE
+0@ == #INTRUDER	
+0@ == #GREENWOO
+0@ == #NEBULA	
+0@ == #OCEANIC
+0@ == #PRIMO
+0@ == #SUNRISE
+0@ == #TAHOMA
+    then
+    PLAYER_CAR_BONUS_FLAG = 1
+    end
+
+if or
+0@ == #VINCENT
+0@ == #WASHING
+0@ == #WILLARD
+    then
+    PLAYER_CAR_BONUS_FLAG = 1
+    end
+
+end
+
+//Джаггернаут - Подрывник (Броневики)
+if or
+SURVIVAL_CUSTOM_WEAPON_NABOR == 5
+SURVIVAL_CUSTOM_WEAPON_NABOR == 7
+then
+if or
+0@ == #ENFORCER
+0@ == #FBITRUCK
+0@ == #SWATVAN
+0@ == #SECURICA
+0@ == 15435 //Military APC
+    then
+    PLAYER_CAR_BONUS_FLAG = 1
+    end
+end
+
+//Дезертир 
+if
+SURVIVAL_CUSTOM_WEAPON_NABOR == 6
+then
+if or
+0@ == #RHINO
+0@ == #HUNTER
+0@ == #PATRIOT
+0@ == #BARRACKS
+    then
+    PLAYER_CAR_BONUS_FLAG = 1
+    end
+end
+
+//Каннибал - КДЗшник (Фургоны)
+if or
+SURVIVAL_CUSTOM_WEAPON_NABOR == 8
+SURVIVAL_CUSTOM_WEAPON_NABOR == 9
+then
+if or
+0@ == #BOXBURG
+0@ == #BOXVILLE
+0@ == #TOPFUN
+0@ == #BURRITO
+0@ == #MOONBEAM
+0@ == #PONY
+0@ == 15422
+    then
+    PLAYER_CAR_BONUS_FLAG = 1
+    end
+end
+
+//Жнец (Спорткары)
+if
+SURVIVAL_CUSTOM_WEAPON_NABOR == 10
+then
+if or
+0@ == #BANSHEE
+0@ == #BULLET
+0@ == #CHEETAH
+0@ == #COMET
+0@ == #ELEGY	
+0@ == #FLASH
+0@ == #HOTKNIFE
+0@ == #HOTRING
+    then
+    PLAYER_CAR_BONUS_FLAG = 1
+    end
+
+if or
+0@ == #HOTRINA    
+0@ == #HOTRINB
+0@ == #INFERNUS
+0@ == #JESTER
+0@ == #STRATUM
+0@ == #SULTAN
+0@ == #SUPERGT
+0@ == #TURISMO
+    then
+    PLAYER_CAR_BONUS_FLAG = 1
+    end
+
+if or
+0@ == #URANUS 
+0@ == #WINDSOR
+0@ == #ZR350
+    then
+    PLAYER_CAR_BONUS_FLAG = 1
+    end    
+end
+
+end
+
+/////////////////////////////////////////////////////////////////////////
+
+if and
+0AB0:   key_pressed 113 
+0AB0:   key_pressed 69
+$DEBUG_MENU_ON == 1  
+then
+$HUD_OFF_INST = 1
+fade 0 50
+wait 50
+
+if and
+00E1:   player 0 pressed_key 6
+not actor.Driving(PLAYER_ACTOR)
+then
+:DO_DEV_RESTART
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "GAMEMODE_AUTOSELECT_CRASH"
+
+if or
+$EXPE_FLAG == 1
+$FREEMODE == 1
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART"
+    actor.StorePos(PLAYER_ACTOR,1@,2@,3@)
+    4@ = actor.Angle(PLAYER_ACTOR)
+    0AF3: write_float 1@ to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_X"
+    0AF3: write_float 2@ to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_Y"
+    0AF3: write_float 3@ to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_Z"
+    0AF3: write_float 4@ to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_A"
+    0AF1: write_int $ACTIVE_INTERIOR to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_INT"
+    0AF1: write_int $SAVESTATUS to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_SAVESTATUS"
+    0AF1: write_int $GODMODE_FLAG to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_GODMODE"
+    end    
+else
+if
+00E1:   player 0 pressed_key 4
+    then
+    jump to @DO_DEV_RESTART
+    end
+end
+
+0A8C: write_memory 0x0440F73 size 1 value 255 virtual_protect 1
+0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
+end_thread
+end
+
+/////////////////////////////////////////////////////////////////////////
+
+if
+$DRAW_RED == 1
+    then
+    03F0: enable_text_draw 1
+    038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA $INF_MODE_COLOR_R $INF_MODE_COLOR_G $INF_MODE_COLOR_B $INF_MODE_COLOR_A
+    end
+    
+if
+$DRAW_RED == 2
+    then
+    03F0: enable_text_draw 1
+    038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA 230 150 40 75
+    end
+    
+if
+$DRAW_RED == 3
+    then    
+    03F0: enable_text_draw 1
+    038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA $INF_MODE_COLOR_R $INF_MODE_COLOR_G $INF_MODE_COLOR_B $INF_MODE_COLOR_A
+    0332: set_actor PLAYER_ACTOR bleeding 1    
+    if
+    0E45: frame_mod 30
+        then
+        0@ = actor.Health(PLAYER_ACTOR)
+        0D39: 1@ = actor PLAYER_ACTOR max_health
+        0092: 1@ = float 1@ to_integer
+        0093: 1@ = integer 1@ to_float
+        1@ /= 100.0
+        0092: 1@ = float 1@ to_integer
+        0@ = actor.Health(PLAYER_ACTOR)
+        0062: 0@ -= 1@  // (int)
+        actor.Health(PLAYER_ACTOR) = 0@
+        end         
+    end 
+    
+if
+$DRAW_RED == 4
+    then
+    03F0: enable_text_draw 1
+    038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA 0 0 0 100
+    end           
+
+/////////////////////////////////////////////////////////////////////////
+
+if
+UNITED_MAP == 0
+then
+
+if and
+$BANDITS_ZONE1_CAPTURED == 1
+$BANDITS_ZONE2_CAPTURED == 1
+$BANDITS_ZONE3_CAPTURED == 1
+$BANDITS_ZONE4_CAPTURED == 1
+NO_MORE_BANDITS_CAMPS == 0
+    then
+    NO_MORE_BANDITS_CAMPS = 1
+    RAID_FRACTION_FLAG = 0
+    $TEMP_XP = 80000
+    008D: $TEMP_XP = integer $TEMP_XP to_float
+    0069: $TEMP_XP *= $XP_COEFF // (float)
+    008C: $TEMP_XP = float $TEMP_XP to_integer
+    0058: $PLAYER_XP += $TEMP_XP // (int)
+    end
+    
+if and
+$ZONE69_CAPTURED == 1
+$ZONE2_CAPTURED == 1
+$ZONE3_CAPTURED == 1
+$ZONE4_CAPTURED == 1
+NO_MORE_ARMY_CAMPS == 0
+    then
+    NO_MORE_ARMY_CAMPS = 1
+    
+    if
+    $GAMEMODE_WAR == 0
+    then
+    $ARMY_PROCENT = 0.0
+    end
+    
+    RAID_FRACTION_FLAG = 0
+    $TEMP_XP = 80000
+    008D: $TEMP_XP = integer $TEMP_XP to_float
+    0069: $TEMP_XP *= $XP_COEFF // (float)
+    008C: $TEMP_XP = float $TEMP_XP to_integer
+    0058: $PLAYER_XP += $TEMP_XP // (int)
+    end        
+
+else
+
+if
+$UNITED_VC_FLAG == 0
+then
+
+if and
+$BANDITS_ZONE1_CAPTURED == 1
+$BANDITS_ZONE3_CAPTURED == 1        
+$BANDITS_ZONE4_CAPTURED == 1
+NO_MORE_BANDITS_CAMPS == 0
+    then
+    NO_MORE_BANDITS_CAMPS = 1
+    RAID_FRACTION_FLAG = 0
+    end
+    
+if and
+$ZONE_ARMY_LC_CAPTURED == 1
+$ZONE_ARMY2_LC_CAPTURED == 1
+$ZONE_ARMY3_LC_CAPTURED == 1
+NO_MORE_ARMY_CAMPS == 0
+    then
+    NO_MORE_ARMY_CAMPS = 1
+    
+    if
+    $GAMEMODE_WAR == 0
+    then
+    $ARMY_PROCENT = 0.0
+    end
+    
+    RAID_FRACTION_FLAG = 0
+    end    
+
+else
+
+if and
+$BANDITS_ZONE2_CAPTURED == 1
+$BANDITS_ZONE5_CAPTURED == 1
+$BANDITS_ZONE6_CAPTURED == 1
+NO_MORE_BANDITS_CAMPS == 0
+    then
+    NO_MORE_BANDITS_CAMPS = 1
+    RAID_FRACTION_FLAG = 0
+    end
+    
+if and
+$ZONE_ARMY_VC_CAPTURED == 1
+$ZONE_ARMY2_VC_CAPTURED == 1
+$ZONE_ARMY3_VC_CAPTURED == 1
+NO_MORE_ARMY_CAMPS == 0
+    then
+    NO_MORE_ARMY_CAMPS = 1
+    
+    if
+    $GAMEMODE_WAR == 0
+    then
+    $ARMY_PROCENT = 0.0
+    end
+    
+    RAID_FRACTION_FLAG = 0
+    end
+
+end
+
+end
+
+//////////////////////////////////////////
+
+1@ = 0
+
+for 0@ = 0 to 19
+
+if and
+056D:   actor $WITCH[0@] defined
+not $WITCH[0@] == -69
+then
+    
+if and
+0104:   actor $WITCH[0@] near_actor PLAYER_ACTOR radius 40.0 40.0 15.0 sphere 0       
+not $MUTATION_ACTIVE == 5
+PLAYER_IN_NEST_FLAG == 0
+then
+1@ = 1
+end
+
+end
+    
+end
+
+if and
+$WITCH_NEAR == 0
+1@ == 1
+then
+$WITCH_NEAR = 1
+end
+
+if and
+$WITCH_NEAR == 1
+1@ == 0
+then
+$WITCH_NEAR = 0
+end
+
+//////////////////////////////////////////
+
+1@ = 0
+
+for 0@ = 0 to 19
+    
+if and
+$WTH_AGRED_FLAG[0@] == 1
+056D:   actor $WITCH[0@] defined
+not $WITCH[0@] == -69
+then
+1@ = 1
+end
+    
+end
+
+if and
+ANY_WITCH_AGRED_FLAG == 0
+1@ == 1
+then
+ANY_WITCH_AGRED_FLAG = 1
+end
+
+if and
+ANY_WITCH_AGRED_FLAG == 1
+1@ == 0
+then
+ANY_WITCH_AGRED_FLAG = 0
+end
+
+:RAID_CAMPS_SKIP2
+
+//////////////////////////////////////////////////////////////////////////////////
+
+if and
+$GAMEMODE_SELECTED == 1
+$GAMEMODE_STORYLINE == 0
+$GAMEMODE_WAR == 0
+then
+if or
+$GAME_SPEED == 1.0
+$GAME_SPEED == 0.2
+    then
+    {$INCLUDE Loop 3 Generic Dialogs Timers.txt}
+    {$INCLUDE Loop 3 Camp Actor Respawn Timers.txt}
+    
+    if
+    RANDOM_DYING_CAMP_PROCESS == 1
+    then                        
+    RANDOM_DYING_CAMP_PROCESS = 0 
+    gosub @RANDOM_SURVIVIAL_CAMP_DYING  
+    end
+    
+    if
+    RANDOM_DYING_TRADER_PROCESS == 1
+    then
+    RANDOM_DYING_TRADER_PROCESS = 0
+    gosub @RANDOM_SURVIVIAL_TRADER_DYING
+    EXTINCTION_DONE = 1
+    else
+    EXTINCTION_DONE = 1
+    end
+    
+    end
+end
+
+///////////////////////////////////////////////////////////////////////////
+
+if
+$SLOWMODE_ACTIVE == 1
+    then
+    0A8D: 0@ = read_memory 0xB7CDC8 size 4 virtual_protect 1
+    if
+    0@ > 3.5
+        then
+        0@ -= 0.5
+        0A8C: write_memory 0xB7CDC8 size 4 value 0@ virtual_protect 1
+        end    
+    end
+
+///////////////////////////////////////////////////////////////////////////
+
+//fuck this stupid gay bullshit 0x00469629 crash wtf game fuck you im tired of this shit go and fuck your creator cockstar please 
+//if
+//actor.DrivingVehicleType(PLAYER_ACTOR,15572)
+//then
+//
+//while 84EE: not  animation "QUAD" loaded
+//wait 0
+//04ED: load_animation "QUAD"
+//end
+//
+//0812: AS_actor PLAYER_ACTOR perform_animation "QUAD_ride" IFP "QUAD" framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF 0 time -1
+//end
+
+///////////////////////////////////////////////////////////////////////////
+
+if
+$KANISTRA_FUEL > 25.0
+then
+$KANISTRA_FUEL = 25.0
+end
+
+///////////////////////////////////////////////////////////////////////////  
+
+if
+0E45: frame_mod 5
+then
+
+for 0@ = 0 to 19
+
+if and
+056D:   actor $ZOMBIE[0@] defined
+not $ZOMBIE[0@] == -69
+    then 
+    if                                                                              
+    $ZMB_SPOTTED_FLAG[0@] == 0
+        then
+        
+        if or
+        $ZOMBIES_ALWAYS_VISIBLE == 1
+        $SPECTATING_FLAG == 1
+        PLAYER_IN_OFFICE_FLAG == 1
+        then
+        jump to @ZMB_VIS
+        end
+        
+        if and
+        $ZOMBIES_HORDE == 1
+        $ZMB_TARGET_FINDED[0@] == 0
+        then
+        jump to @ZMB_VIS_SKIP
+        end            
+        
+        if and
+        056D:   actor $ZOMBIE[0@] defined
+        not $ZOMBIE[0@] == -69
+            then
+            
+            if and
+            COOP_ACTIVE_FLAG == 1
+            056D:   actor COOP_ACTOR defined
+            then
+            
+            if or
+            0364:   actor PLAYER_ACTOR spotted_actor $ZOMBIE[0@]
+            0364:   actor COOP_ACTOR spotted_actor $ZOMBIE[0@]                
+                then
+                0337: set_actor $ZOMBIE[0@] visibility 1
+                0E24: fix_char $ZOMBIE[0@] ground 1 brightness DO_ACTORS_BRIGHT_CORR and_fade_in 1
+                $ZMB_SPOTTED_FLAG[0@] = 1
+                end
+            
+            else
+            
+            if and
+            056D:   actor $ZOMBIE[0@] defined
+            not $ZOMBIE[0@] == -69
+            then
+            if
+            0364:   actor PLAYER_ACTOR spotted_actor $ZOMBIE[0@]                
+                then
+                :ZMB_VIS
+                0337: set_actor $ZOMBIE[0@] visibility 1
+                0E24: fix_char $ZOMBIE[0@] ground 1 brightness DO_ACTORS_BRIGHT_CORR and_fade_in 1
+                $ZMB_SPOTTED_FLAG[0@] = 1
+                end
+            end
+                
+            end    
+                
+            end        
+        end
+    end
+    
+:ZMB_VIS_SKIP    
+    
+end
+
+end
+
+///////////////////////////////////////////////////////////////////////////    
+
+if and
+LCVC_DROWNING_FLAG1 == 1
+8184:   actor PLAYER_ACTOR health < 10
+then
+0829: actor PLAYER_ACTOR perform_animation "Drown" IFP_file "ped" rate 4.0 time 0 and_dies
+LCVC_DROWNING_FLAG1 = 0
+LCVC_DROWNING_FLAG2 = 1
+end
+
+if and
+LCVC_DROWNING_FLAG2 == 1
+84AD: not  actor PLAYER_ACTOR in_water
+then
+camera.Restore_WithJumpCut()
+LCVC_DROWNING_FLAG2 = 0
+PLAYER_LCVC_DROWNING_FLAG = 0
+end
+
+if and
+PLAYER_LCVC_DROWNING_FLAG == 1
+LCVC_DROWNING_FLAG1 == 0
+LCVC_DROWNING_FLAG2 == 0
+then
+04C4: store_coords_to 0@ 1@ 2@ from_actor PLAYER_ACTOR with_offset 0.0 -3.5 4.0
+015F: set_camera_position 0@ 1@ 2@ rotation 0.0 0.0 0.0
+camera.OnPed(PLAYER_ACTOR,15,1)
+LCVC_DROWNING_FLAG1 = 1
+end
+
+///////////////////////////////////////////////////////////////////////////
+
+//if
+//UNITED_MAP == 1
+//then
+//041D: set_camera_near_clip 0.5
+//end
+
+///////////////////////////////////////////////////////////////////////////
+
+if
+PLAYER_RC_MODE_FLAG == 1
+then
+PLAYER_RC_IN_TIMER += 1
+05B9: AS_actor PLAYER_ACTOR stay_idle 999999 ms
+end
+
+///////////////////////////////////////////////////////////////////////////
+
+if and
+PLAYER_RC_MODE_FLAG == 1
+0241:   player PLAYER_CHAR in_remote_mode
+00E1:   player 0 pressed_key 15
+PLAYER_RC_IN_TIMER > 46
+then
+PLAYER_RC_MODE_FLAG = 0
+0792: disembark_instantly_actor PLAYER_ACTOR
+04DB: exit_RC_mode // on foot version
+end
+
+if and
+PLAYER_RC_MODE_FLAG == 1
+8241: not  player PLAYER_CHAR in_remote_mode
+then
+PLAYER_RC_MODE_FLAG = 0
+0792: disembark_instantly_actor PLAYER_ACTOR
+end
+    
+///////////////////////////////////////////////////////////////////////////        
+
+if and
+$MONTH_PASSED_FLAG == 1
+$FREEMODE == 1
+$GAMEMODE_SELECTED == 1
+not $GAMEMODE_STORYLINE == 1
+not PLAYER_IN_OFFICE_FLAG == 1
+    then
+    $MONTH_PASSED_FLAG = 0
+    $TEMP_XP = MONTH_PASSED_XP
+    008D: $TEMP_XP = integer $TEMP_XP to_float
+    0069: $TEMP_XP *= $XP_COEFF // (float)
+    008C: $TEMP_XP = float $TEMP_XP to_integer
+    0058: $PLAYER_XP += $TEMP_XP // (int)    
+    
+    text.RemoveTextBox()
+    text.ShowTextBox('GAME568')
+    
+    if
+    UNITED_MAP == 1
+    then
+    $ZOMBIE_HP_MIN += 35
+    $ZOMBIE_HP_MAX += 65    
+    $TANK_HEALTH += 800
+    $HUNTER_HEALTH += 200
+    $WITCH_HEALTH += 200
+    $CHARGER_HEALTH += 200
+    else
+    $ZOMBIE_HP_MIN += 22
+    $ZOMBIE_HP_MAX += 42    
+    $TANK_HEALTH += 520
+    $HUNTER_HEALTH += 130
+    $WITCH_HEALTH += 130
+    $CHARGER_HEALTH += 130
+    end
+    
+    $XP_COEFF += 0.1
+    
+    if
+    $ZOMBIE_RUN_SPEED < 1.6
+        then
+        
+        if
+        UNITED_MAP == 1
+        then
+        $ZOMBIE_SPEED_MULTIPER += 0.05
+        $ZOMBIE_SPEED_MULTIPER2 += 0.05
+        else
+        $ZOMBIE_SPEED_MULTIPER += 0.035
+        $ZOMBIE_SPEED_MULTIPER2 += 0.035
+        end
+        
+        0069: $ZOMBIE_RUN_SPEED *= $ZOMBIE_SPEED_MULTIPER // (float)
+        0069: $ZOMBIE_PREFIGHT_SPEED *= $ZOMBIE_SPEED_MULTIPER // (float)
+        0069: $ZOMBIE_ATTACK_SPEED *= $ZOMBIE_SPEED_MULTIPER // (float)
+        
+        0069: $WITCH_RUN_SPEED *= $ZOMBIE_SPEED_MULTIPER2 // (float)
+        0069: $TANK_RUN_SPEED *= $ZOMBIE_SPEED_MULTIPER2 // (float)
+        0069: $CHARGER_RUN_SPEED *= $ZOMBIE_SPEED_MULTIPER2 // (float)
+        
+        end
+    
+    end
+    
+///////////////////////////////////////////////////////////////////////////        
+
+end
+
+end_thread
+
+:RANDOM_MODEL_CAMP_RESPAWN
+
+if or
+1@ == 3
+1@ == 4
+1@ == 5
+1@ == 14
+    then
+    if
+    UNITED_MAP == 0
+        then
+        random_int 17@ 14985 14989
+        return
+        end
+    end
+
+//////////////////////////////////////////////////
+    
+random_int 17@ = MIN_SKIN_GEN MAX_SKIN_GEN
+if and
+17@ == SKIN_GEN_SET
+UNITED_MAP == 0
+    then
+    
+    while true
+    
+    if
+    0E4D: random_percent NEWSKINS2_GEN_PERCENT
+    then
+    random_int 17@ $MIN_SKIN2 $MAX_SKIN2
+    else
+    random_int 17@ $MIN_SKIN $MAX_SKIN
+    end    
+    
+    if 
+    003C:   $RANDOM_MODE_MODEL == 17@  // (int)
+        then
+        else   
+        break
+        end
+    
+    end
+    
+    return
+    end
+    
+//////////////////////////////////////////////////    
+
+if
+UNITED_MAP == 0
+then
+0209: 17@ = random_int_in_ranges 7 285
+else
+
+if 
+$CAMP_X[1@] > 0.0
+then
+
+if
+STORIES_MAP == 0
+then
+0209: 17@ = random_int_in_ranges MINID_VC_SKIN MAXID_VC_SKIN
+else
+0209: 17@ = random_int_in_ranges MINID_VCS_SKIN MAXID_VCS_SKIN
+end
+  
+else
+
+if
+STORIES_MAP == 0
+then
+0209: 17@ = random_int_in_ranges MINID_III_SKIN MAXID_III_SKIN
+else
+0209: 17@ = random_int_in_ranges MINID_LCS_SKIN MAXID_LCS_SKIN
+end
+
+end              
+
+end
+    
+if
+07DE:   model 17@ exists  // versionB
+jf @RANDOM_MODEL_CAMP_RESPAWN
+
+0AD3: v$FP_FILE = format "%d" 17@
+0AF0: 25@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key v$FP_FILE
+if
+not 25@ == 1
+jf @RANDOM_MODEL_CAMP_RESPAWN
+25@ = -69  
+
+return
+
+:SURV_KINGPIN_END_CAMP_CHECK
+
+if
+$CAMP_DEAD_FLAG[0@] == 0
+    then
+    1@ = 1
+    end
+
+return
+
+{$INCLUDE Loop 3 Camp Actor Dying Process.txt}
+{$INCLUDE Loop 3 Trader Dying Process.txt}

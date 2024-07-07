@@ -1,0 +1,1239 @@
+const
+PICKUP2_ARRAY_PREV_NUMBER = 0@
+PICKUP2_ARRAY_CURR_NUMBER = 1@
+MOON_SIZE_PREV_NUMBER = 2@
+MOON_SIZE_CURR_NUMBER = 3@
+COOP_PICKED_UP_FLAG = 28@
+end
+
+:FD_PICK
+thread 'FD_PICK'
+
+29@ = 0 
+
+if
+$GAMEMODE_WAR == 1
+    then
+    end_thread
+    end
+
+repeat
+wait 0
+until $GENERAL_FLAG == 1
+
+:PICKUP_IDLE        
+0A8D: PICKUP2_ARRAY_PREV_NUMBER = read_memory 0x978624 size 4 virtual_protect 0
+0A8D: MOON_SIZE_PREV_NUMBER = read_memory 0x08D4B60 size 4 virtual_protect 0
+wait 10
+0A8D: PICKUP2_ARRAY_CURR_NUMBER = read_memory 0x978624 size 4 virtual_protect 0
+0A8D: MOON_SIZE_CURR_NUMBER = read_memory 0x08D4B60 size 4 virtual_protect 0
+
+if
+803B: not  MOON_SIZE_PREV_NUMBER == MOON_SIZE_CURR_NUMBER  // (int)
+then
+if
+MOON_KILLED_FLAG == 0
+    then
+    if and
+    02D8:   actor PLAYER_ACTOR current_weapon == 109
+    02E0:   actor PLAYER_ACTOR firing_weapon
+        then
+        0AC6: 1@ = label @MOON_SIZE_AFTERKILL offset
+        0A8C: write_memory 1@ size 4 value 1.0 virtual_protect 0 
+        0A8C: write_memory 0x0713A0D size 4 value 1@ virtual_protect 0
+        0A8C: write_memory 0x0713A2B size 4 value 1@ virtual_protect 0                                                             
+        MOON_KILLED_FLAG = 1 
+        end
+    end
+end 
+
+if
+25@ == 1
+then  
+if
+32@ > 100
+    then
+    25@ = 0
+    06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0 
+    01B9: set_actor PLAYER_ACTOR armed_weapon_to 15@  
+    0992: set_player PLAYER_CHAR weapons_scrollable 1
+    $CAR_CHECKING_FLAG = 0
+    end
+end
+
+if
+30@ == 1
+then  
+if
+32@ > 100
+    then
+    30@ = 0
+    06AB: set_actor COOP_ACTOR all_weapons_hidden 0 
+    01B9: set_actor COOP_ACTOR armed_weapon_to 15@  
+    0992: set_player 1 weapons_scrollable 1
+    $CAR_CHECKING_FLAG_2P = 0
+    end
+end
+
+if
+803B: not  PICKUP2_ARRAY_PREV_NUMBER == PICKUP2_ARRAY_CURR_NUMBER  // (int)
+then
+
+33@ = 0
+
+while 33@ < 100
+wait 0
+
+////////////////////////////Пикапы еды, выброшенной из рюкзака////////////////////////////
+        
+    for 0@ = 0 to 29        
+    
+        if
+        09D1:   pickup $FOOD_PICKUP[0@] created
+            then
+            if
+            pickup.Picked_up($FOOD_PICKUP[0@])
+                then
+                065B: store_pickup $FOOD_PICKUP[0@] position_to 1@ 2@ 3@
+                pickup.Destroy($FOOD_PICKUP[0@])
+                
+                if
+                8800: not  in_two_players_mode
+                then
+                COOP_PICKED_UP_FLAG = 0                  
+                $BANKA += 1
+                $BANKA_FIND += 1
+                else
+                COOP_PICKED_UP_FLAG = 0                
+                actor.StorePos(PLAYER_ACTOR,4@,5@,6@)
+                actor.StorePos(COOP_ACTOR,7@,8@,9@)
+                050A: 10@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 4@ 5@ 6@
+                050A: 11@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 7@ 8@ 9@
+                if
+                0025:   11@ > 10@  // (float)
+                    then
+                    $BANKA += 1
+                    $BANKA_FIND += 1
+                    else
+                    $SURVIVOR_BANKA_COUNT[COOP_ACTOR_SURV_NUM] += 1
+                    $BANKA_FIND += 1
+                    COOP_PICKED_UP_FLAG = 1
+                    end                
+                end
+                
+                if
+                COOP_PICKED_UP_FLAG == 1
+                then                                
+                gosub @PICKUP_ANIMATION_COOP
+                else
+                gosub @PICKUP_ANIMATION
+                end
+                                
+                end
+            end  
+        
+    end
+    
+////////////////////////////Пикап еды, сгенерированной в магазинах и т.д///////////////////////////    
+    
+    for 0@ = 0 to 99       
+    
+        if
+        09D1:   pickup $BANKA_PICKUP[0@] created
+            then
+            if
+            pickup.Picked_up($BANKA_PICKUP[0@])
+                then
+                065B: store_pickup $BANKA_PICKUP[0@] position_to 1@ 2@ 3@                
+                pickup.Destroy($BANKA_PICKUP[0@])                                
+                $BANKA_X[0@] = 2800.0                
+                                
+                if
+                $BANKA_Z[0@] < 900.0            
+                    then
+                    
+                    12@ = 60                    
+                    0064: 12@ -= PLAYER_FOOD_ZAPAS  // (int)
+                    if
+                    12@ < 10
+                    then
+                    12@ = 10
+                    end
+                    
+                    if
+                    PERK_FINDGOODS == 1
+                    then
+                    12@ += 15
+                    end
+                    
+                    if
+                    PERK_FINDGOODS == 2
+                    then
+                    12@ += 30
+                    end                    
+                                                                                
+                    if
+                    0E4D: random_percent 12@
+                        then
+                        jump to @BANKA_FIND_DOUBLE2                        
+                        else
+                        text.ShowTextBox('INV313')                        
+                        end                        
+                    else
+                    0652: 4@ = integer_stat 258
+                    
+                    if
+                    4@ == 2
+                    then
+                    jump to @BANKA_FIND_DOUBLE2
+                    end
+                    
+                    12@ = 65                   
+                    0064: 12@ -= PLAYER_FOOD_ZAPAS  // (int)
+                    if
+                    12@ < 10
+                    then
+                    12@ = 10
+                    end
+                    
+                    if
+                    PERK_FINDGOODS == 1
+                    then
+                    12@ += 15
+                    end
+                    
+                    if
+                    PERK_FINDGOODS == 2
+                    then
+                    12@ += 30
+                    end                    
+                                        
+                    if
+                    8E4D: not random_percent 12@                    
+                        then
+                        text.ShowTextBox('INV313')
+                        else                    
+                        :BANKA_FIND_DOUBLE2  
+                        
+                        if
+                        8800: not  in_two_players_mode
+                        then
+                        COOP_PICKED_UP_FLAG = 0                  
+                        $BANKA += 1
+                        $BANKA_FIND += 1
+                        
+                        if and
+                        PERK_FINDGOODS == 1
+                        0E4D: random_percent 15
+                            then
+                            $BANKA += 1
+                            $BANKA_FIND += 1
+                            $TEMP_XP = BANKA_FIND_XP
+                            008D: $TEMP_XP = integer $TEMP_XP to_float
+                            0069: $TEMP_XP *= $XP_COEFF // (float)
+                            008C: $TEMP_XP = float $TEMP_XP to_integer
+                            0058: $PLAYER_XP += $TEMP_XP // (int)
+                            end
+                        if and
+                        PERK_FINDGOODS == 2
+                        0E4D: random_percent 25
+                            then
+                            $BANKA += 1 
+                            $BANKA_FIND += 1
+                            $TEMP_XP = BANKA_FIND_XP
+                            008D: $TEMP_XP = integer $TEMP_XP to_float
+                            0069: $TEMP_XP *= $XP_COEFF // (float)
+                            008C: $TEMP_XP = float $TEMP_XP to_integer
+                            0058: $PLAYER_XP += $TEMP_XP // (int)
+                            end
+                        
+                        else
+                        COOP_PICKED_UP_FLAG = 0                
+                        actor.StorePos(PLAYER_ACTOR,4@,5@,6@)
+                        actor.StorePos(COOP_ACTOR,7@,8@,9@)
+                        050A: 10@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 4@ 5@ 6@
+                        050A: 11@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 7@ 8@ 9@
+                        if
+                        0025:   11@ > 10@  // (float)
+                            then
+                            $BANKA += 1
+                            $BANKA_FIND += 1
+                            
+                            if and
+                            PERK_FINDGOODS == 1
+                            0E4D: random_percent 15
+                                then
+                                $BANKA += 1
+                                $BANKA_FIND += 1
+                                $TEMP_XP = BANKA_FIND_XP
+                                008D: $TEMP_XP = integer $TEMP_XP to_float
+                                0069: $TEMP_XP *= $XP_COEFF // (float)
+                                008C: $TEMP_XP = float $TEMP_XP to_integer
+                                0058: $PLAYER_XP += $TEMP_XP // (int)
+                                end
+                            if and
+                            PERK_FINDGOODS == 2
+                            0E4D: random_percent 25
+                                then
+                                $BANKA += 1 
+                                $BANKA_FIND += 1
+                                $TEMP_XP = BANKA_FIND_XP
+                                008D: $TEMP_XP = integer $TEMP_XP to_float
+                                0069: $TEMP_XP *= $XP_COEFF // (float)
+                                008C: $TEMP_XP = float $TEMP_XP to_integer
+                                0058: $PLAYER_XP += $TEMP_XP // (int)
+                                end
+                            
+                            else
+                            $SURVIVOR_BANKA_COUNT[COOP_ACTOR_SURV_NUM] += 1
+                            $BANKA_FIND += 1
+                            COOP_PICKED_UP_FLAG = 1
+                            
+                            if and
+                            PERK_FINDGOODS == 1
+                            0E4D: random_percent 15
+                                then
+                                $SURVIVOR_BANKA_COUNT[COOP_ACTOR_SURV_NUM] += 1
+                                $BANKA_FIND += 1
+                                $TEMP_XP = BANKA_FIND_XP
+                                008D: $TEMP_XP = integer $TEMP_XP to_float
+                                0069: $TEMP_XP *= $XP_COEFF // (float)
+                                008C: $TEMP_XP = float $TEMP_XP to_integer
+                                0058: $PLAYER_XP += $TEMP_XP // (int)
+                                end
+                            if and
+                            PERK_FINDGOODS == 2
+                            0E4D: random_percent 25
+                                then
+                                $SURVIVOR_BANKA_COUNT[COOP_ACTOR_SURV_NUM] += 1 
+                                $BANKA_FIND += 1
+                                $TEMP_XP = BANKA_FIND_XP
+                                008D: $TEMP_XP = integer $TEMP_XP to_float
+                                0069: $TEMP_XP *= $XP_COEFF // (float)
+                                008C: $TEMP_XP = float $TEMP_XP to_integer
+                                0058: $PLAYER_XP += $TEMP_XP // (int)
+                                end
+                            
+                            end                
+                        end
+                        
+                        $TEMP_XP = BANKA_FIND_XP
+                        008D: $TEMP_XP = integer $TEMP_XP to_float
+                        0069: $TEMP_XP *= $XP_COEFF // (float)
+                        008C: $TEMP_XP = float $TEMP_XP to_integer
+                        0058: $PLAYER_XP += $TEMP_XP // (int)
+                        text.ShowTextBox('INV311')
+                        end                    
+                    end
+                    
+                if
+                COOP_PICKED_UP_FLAG == 1
+                then                                
+                gosub @PICKUP_ANIMATION_COOP
+                else
+                gosub @PICKUP_ANIMATION
+                end    
+                                                                                                            
+                end
+            end  
+        
+    end
+    
+////////////////////////////Пикап еды, сгенерированной в домах которых нет///////////////////////////    
+    
+    for 0@ = 0 to 99       
+    
+        if
+        09D1:   pickup $RNDM_HOUSE_BANKA[0@] created
+            then
+            if
+            pickup.Picked_up($RNDM_HOUSE_BANKA[0@])
+                then
+                065B: store_pickup $RNDM_HOUSE_BANKA[0@] position_to 1@ 2@ 3@
+                pickup.Destroy($RNDM_HOUSE_BANKA[0@])                                
+                
+                if
+                $RNDM_HOUSE_ITEM_Z[0@] < 900.0            
+                    then
+                    
+                    12@ = 60                    
+                    0064: 12@ -= PLAYER_FOOD_ZAPAS  // (int)
+                    if
+                    12@ < 10
+                    then
+                    12@ = 10
+                    end
+                    
+                    if
+                    PERK_FINDGOODS == 1
+                    then
+                    12@ += 15
+                    end
+                    
+                    if
+                    PERK_FINDGOODS == 2
+                    then
+                    12@ += 30
+                    end                    
+                                                            
+                    if
+                    0E4D: random_percent 12@
+                        then
+                        jump to @BANKA_FIND_DOUBLE                        
+                        else
+                        text.ShowTextBox('INV313')                        
+                        end
+                    else
+                    
+                    12@ = 65                   
+                    0064: 12@ -= PLAYER_FOOD_ZAPAS  // (int)
+                    if
+                    12@ < 10
+                    then
+                    12@ = 10
+                    end
+                    
+                    if
+                    PERK_FINDGOODS == 1
+                    then
+                    12@ += 15
+                    end
+                    
+                    if
+                    PERK_FINDGOODS == 2
+                    then
+                    12@ += 30
+                    end                    
+                                        
+                    if
+                    8E4D: not random_percent 12@
+                        then
+                        text.ShowTextBox('INV313')
+                        else
+                        :BANKA_FIND_DOUBLE  
+                        
+                        if
+                        8800: not  in_two_players_mode
+                        then
+                        COOP_PICKED_UP_FLAG = 0                  
+                        $BANKA += 1
+                        $BANKA_FIND += 1
+                        
+                        if and
+                        PERK_FINDGOODS == 1
+                        0E4D: random_percent 15
+                            then
+                            $BANKA += 1
+                            $BANKA_FIND += 1
+                            $TEMP_XP = BANKA_FIND_XP
+                            008D: $TEMP_XP = integer $TEMP_XP to_float
+                            0069: $TEMP_XP *= $XP_COEFF // (float)
+                            008C: $TEMP_XP = float $TEMP_XP to_integer
+                            0058: $PLAYER_XP += $TEMP_XP // (int)
+                            end
+                        if and
+                        PERK_FINDGOODS == 2
+                        0E4D: random_percent 25
+                            then
+                            $BANKA += 1 
+                            $BANKA_FIND += 1
+                            $TEMP_XP = BANKA_FIND_XP
+                            008D: $TEMP_XP = integer $TEMP_XP to_float
+                            0069: $TEMP_XP *= $XP_COEFF // (float)
+                            008C: $TEMP_XP = float $TEMP_XP to_integer
+                            0058: $PLAYER_XP += $TEMP_XP // (int)
+                            end
+                        
+                        else
+                        COOP_PICKED_UP_FLAG = 0                
+                        actor.StorePos(PLAYER_ACTOR,4@,5@,6@)
+                        actor.StorePos(COOP_ACTOR,7@,8@,9@)
+                        050A: 10@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 4@ 5@ 6@
+                        050A: 11@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 7@ 8@ 9@
+                        if
+                        0025:   11@ > 10@  // (float)
+                            then
+                            $BANKA += 1
+                            $BANKA_FIND += 1
+                            
+                            if and
+                            PERK_FINDGOODS == 1
+                            0E4D: random_percent 15
+                                then
+                                $BANKA += 1
+                                $BANKA_FIND += 1
+                                $TEMP_XP = BANKA_FIND_XP
+                                008D: $TEMP_XP = integer $TEMP_XP to_float
+                                0069: $TEMP_XP *= $XP_COEFF // (float)
+                                008C: $TEMP_XP = float $TEMP_XP to_integer
+                                0058: $PLAYER_XP += $TEMP_XP // (int)
+                                end
+                            if and
+                            PERK_FINDGOODS == 2
+                            0E4D: random_percent 25
+                                then
+                                $BANKA += 1 
+                                $BANKA_FIND += 1
+                                $TEMP_XP = BANKA_FIND_XP
+                                008D: $TEMP_XP = integer $TEMP_XP to_float
+                                0069: $TEMP_XP *= $XP_COEFF // (float)
+                                008C: $TEMP_XP = float $TEMP_XP to_integer
+                                0058: $PLAYER_XP += $TEMP_XP // (int)
+                                end
+                            
+                            else
+                            $SURVIVOR_BANKA_COUNT[COOP_ACTOR_SURV_NUM] += 1
+                            $BANKA_FIND += 1
+                            COOP_PICKED_UP_FLAG = 1
+                            
+                            if and
+                            PERK_FINDGOODS == 1
+                            0E4D: random_percent 15
+                                then
+                                $SURVIVOR_BANKA_COUNT[COOP_ACTOR_SURV_NUM] += 1
+                                $BANKA_FIND += 1
+                                $TEMP_XP = BANKA_FIND_XP
+                                008D: $TEMP_XP = integer $TEMP_XP to_float
+                                0069: $TEMP_XP *= $XP_COEFF // (float)
+                                008C: $TEMP_XP = float $TEMP_XP to_integer
+                                0058: $PLAYER_XP += $TEMP_XP // (int)
+                                end
+                            if and
+                            PERK_FINDGOODS == 2
+                            0E4D: random_percent 25
+                                then
+                                $SURVIVOR_BANKA_COUNT[COOP_ACTOR_SURV_NUM] += 1 
+                                $BANKA_FIND += 1
+                                $TEMP_XP = BANKA_FIND_XP
+                                008D: $TEMP_XP = integer $TEMP_XP to_float
+                                0069: $TEMP_XP *= $XP_COEFF // (float)
+                                008C: $TEMP_XP = float $TEMP_XP to_integer
+                                0058: $PLAYER_XP += $TEMP_XP // (int)
+                                end
+                            
+                            end                
+                        end
+                        
+                        $TEMP_XP = BANKA_FIND_XP
+                        008D: $TEMP_XP = integer $TEMP_XP to_float
+                        0069: $TEMP_XP *= $XP_COEFF // (float)
+                        008C: $TEMP_XP = float $TEMP_XP to_integer
+                        0058: $PLAYER_XP += $TEMP_XP // (int)
+                        text.ShowTextBox('INV311')
+                        end                                        
+                    end                                            
+                
+                if
+                COOP_PICKED_UP_FLAG == 1
+                then                                
+                gosub @PICKUP_ANIMATION_COOP
+                else
+                gosub @PICKUP_ANIMATION
+                end
+                                
+                end
+            end  
+        
+    end        
+    
+////////////////////////////Пикап аптечки, выброшенной из рюкзака////////////////////////////       
+    
+    for 0@ = 0 to 29         
+                          
+        if
+        09D1:   pickup $HEAL_PICKUP[0@] created
+            then
+            if
+            pickup.Picked_up($HEAL_PICKUP[0@])
+                then
+                065B: store_pickup $HEAL_PICKUP[0@] position_to 1@ 2@ 3@       
+                pickup.Destroy($HEAL_PICKUP[0@])
+                
+                if
+                8800: not  in_two_players_mode
+                then
+                COOP_PICKED_UP_FLAG = 0  
+                $HEAL += 1
+                else
+                COOP_PICKED_UP_FLAG = 0                
+                actor.StorePos(PLAYER_ACTOR,4@,5@,6@)
+                actor.StorePos(COOP_ACTOR,7@,8@,9@)
+                050A: 10@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 4@ 5@ 6@
+                050A: 11@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 7@ 8@ 9@
+                if
+                0025:   11@ > 10@  // (float)
+                    then
+                    $HEAL += 1
+                    else
+                    $SURVIVOR_HEAL_COUNT[COOP_ACTOR_SURV_NUM] += 1
+                    COOP_PICKED_UP_FLAG = 1
+                    end
+                end
+                
+                if
+                COOP_PICKED_UP_FLAG == 1
+                then                                
+                gosub @PICKUP_ANIMATION_COOP
+                else
+                gosub @PICKUP_ANIMATION
+                end
+                                
+                end
+            end  
+        
+    end
+    
+////////////////////////////Пикап бинтов, выброшенной из рюкзака////////////////////////////       
+ 
+    for 0@ = 0 to 29         
+    
+        if
+        09D1:   pickup $BINT_PICKUP[0@] created
+            then
+            if
+            pickup.Picked_up($BINT_PICKUP[0@])
+                then
+                065B: store_pickup $BINT_PICKUP[0@] position_to 1@ 2@ 3@
+                pickup.Destroy($BINT_PICKUP[0@])
+                
+                if
+                8800: not  in_two_players_mode
+                then
+                COOP_PICKED_UP_FLAG = 0  
+                $BINT += 1
+                else
+                COOP_PICKED_UP_FLAG = 0                
+                actor.StorePos(PLAYER_ACTOR,4@,5@,6@)
+                actor.StorePos(COOP_ACTOR,7@,8@,9@)
+                050A: 10@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 4@ 5@ 6@
+                050A: 11@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 7@ 8@ 9@
+                if
+                0025:   11@ > 10@  // (float)
+                    then
+                    $BINT += 1
+                    else
+                    $SURVIVOR_BINT_COUNT[COOP_ACTOR_SURV_NUM] += 1
+                    COOP_PICKED_UP_FLAG = 1
+                    end
+                end
+                
+                if
+                COOP_PICKED_UP_FLAG == 1
+                then                                
+                gosub @PICKUP_ANIMATION_COOP
+                else
+                gosub @PICKUP_ANIMATION
+                end
+                                
+                end
+            end  
+        
+    end
+
+////////////////////////////Пикап денег////////////////////////////
+
+if
+UNITED_MAP == 0
+then
+24@ = 11
+else
+24@ = 22
+end               
+    
+    for 0@ = 0 to 24@   
+    
+        if
+        09D1:   pickup $RNDM_HOUSE_WEAPON[0@] created
+            then
+            if
+            pickup.Picked_up($RNDM_HOUSE_WEAPON[0@])
+                then
+                065B: store_pickup $RNDM_HOUSE_WEAPON[0@] position_to 1@ 2@ 3@
+                pickup.Destroy($RNDM_HOUSE_WEAPON[0@])
+                
+                if
+                $FREEMODE == 0
+                then
+                random_int 1@ 115 235
+                else
+                random_int 1@ 245 350
+                end
+                
+                008A: $TEMP_DOLLAR = 1@ // (int)
+                008D: $TEMP_DOLLAR = integer $TEMP_DOLLAR to_float
+                0069: $TEMP_DOLLAR *= QUESTS_MONEY_COEFF // (float)
+                008C: $TEMP_DOLLAR = float $TEMP_DOLLAR to_integer
+                0109: player PLAYER_CHAR money += $TEMP_DOLLAR
+                008B: 1@ = $TEMP_DOLLAR // (int)
+                                
+                $TEMP_XP = CASH_FIND_XP
+                008D: $TEMP_XP = integer $TEMP_XP to_float
+                0069: $TEMP_XP *= $XP_COEFF // (float)
+                008C: $TEMP_XP = float $TEMP_XP to_integer
+                0058: $PLAYER_XP += $TEMP_XP // (int)
+                $RNDM_HOUSE_ITEM_X[0@] = 2800.0
+                actor.StorePos(PLAYER_ACTOR,25@,26@,27@)
+                097A: play_audio_at 25@ 26@ 27@ event 1052
+                0513: show_text_box_1number 'INV310' number 1@  // ~k~~VEHICLE_ENTER_EXIT~ Use Slot Machine $~1~
+                MONEY_FOUND_TEXT_TIME = 85
+                018C: play_sound 1057 at 0.0 0.0 0.0
+                
+                if
+                8800: not  in_two_players_mode
+                    then
+                    //ass
+                    COOP_PICKED_UP_FLAG = 0
+                    else
+                    COOP_PICKED_UP_FLAG = 0                
+                    actor.StorePos(PLAYER_ACTOR,4@,5@,6@)
+                    actor.StorePos(COOP_ACTOR,7@,8@,9@)
+                    050A: 10@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 4@ 5@ 6@
+                    050A: 11@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 7@ 8@ 9@
+                    if
+                    0025:   11@ > 10@  // (float)
+                        then
+                        //ass
+                        else
+                        COOP_PICKED_UP_FLAG = 1
+                        end
+                    end
+                
+                if
+                COOP_PICKED_UP_FLAG == 1
+                then                                
+                gosub @PICKUP_ANIMATION_COOP
+                else
+                gosub @PICKUP_ANIMATION
+                end
+                                
+                end
+            end  
+        
+    end    
+    
+////////////////////////////Пикап канистры////////////////////////////      
+    
+    for 0@ = 0 to 89           
+    
+        if 
+        09D1:   pickup $KANISTRA_PICKUP[0@] created      
+            then
+            065B: store_pickup $KANISTRA_PICKUP[0@] position_to 2@ 3@ 4@
+            if
+            pickup.Picked_up($KANISTRA_PICKUP[0@])            
+                then
+                if or
+                00EC:   actor PLAYER_ACTOR sphere 0 near_point 2@ 3@ radius 5.0 5.0
+                COOP_ACTIVE_FLAG == 1
+                    then
+                    065B: store_pickup $KANISTRA_PICKUP[0@] position_to 1@ 2@ 3@
+                    pickup.Destroy($KANISTRA_PICKUP[0@])
+                    $KANISTRA_FINDED += 1
+                    $TEMP_XP = KANISTRA_FIND_XP
+                    008D: $TEMP_XP = integer $TEMP_XP to_float
+                    0069: $TEMP_XP *= $XP_COEFF // (float)
+                    008C: $TEMP_XP = float $TEMP_XP to_integer
+                    0058: $PLAYER_XP += $TEMP_XP // (int)
+                    
+                    $KANISTRA_PICKUP[0@] = 28
+                    
+                    0AF0: 4@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_KANISTRA_FINDED"
+        
+                    if
+                    $CHEATED_FLAG == 0 
+                    then
+                    4@ += 1
+                    end                    
+                     
+                    0AF1: write_int 4@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_KANISTRA_FINDED"
+                    
+                    0AF0: 4@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_KANISTRA_FINDED"
+                    0AF0: 5@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT53_GOT"                
+                    
+                    if and
+                    5@ == 0
+                    4@ >= 400
+                        then
+                        v$ACHIEVEMNT = "ACH53"
+                        $ACHIEVEMENT_GOT_FLAG = 1                    
+                        0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT53_GOT"                    
+                        end                                           
+                    
+                    if
+                    8800: not  in_two_players_mode
+                        then
+                        //ass
+                        COOP_PICKED_UP_FLAG = 0
+                        else
+                        COOP_PICKED_UP_FLAG = 0                
+                        actor.StorePos(PLAYER_ACTOR,4@,5@,6@)
+                        actor.StorePos(COOP_ACTOR,7@,8@,9@)
+                        050A: 10@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 4@ 5@ 6@
+                        050A: 11@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 7@ 8@ 9@
+                        if
+                        0025:   11@ > 10@  // (float)
+                            then
+                            //ass
+                            else
+                            COOP_PICKED_UP_FLAG = 1
+                            end
+                        end
+                    
+                    if
+                    COOP_PICKED_UP_FLAG == 1
+                    then
+                    gosub @KANISTRA_PICKUP_COOP                                
+                    gosub @PICKUP_ANIMATION_COOP                    
+                    else
+                    gosub @KANISTRA_PICKUP
+                    gosub @PICKUP_ANIMATION                    
+                    end
+                    
+                    end
+                
+                end
+            end  
+        
+    end
+    
+    
+////////////////////////////Пикап канистры 2////////////////////////////      
+    
+    for 0@ = 0 to 29         
+    
+        if 
+        09D1:   pickup $PIZDA_PICKUP[0@] created      
+            then            
+            if
+            pickup.Picked_up($PIZDA_PICKUP[0@])
+                then
+                065B: store_pickup $PIZDA_PICKUP[0@] position_to 2@ 3@ 4@
+                if or                
+                00EC:   actor PLAYER_ACTOR sphere 0 near_point 2@ 3@ radius 5.0 5.0
+                COOP_ACTIVE_FLAG == 1
+                    then
+                    065B: store_pickup $PIZDA_PICKUP[0@] position_to 1@ 2@ 3@
+                    pickup.Destroy($PIZDA_PICKUP[0@])
+                    
+                    if
+                    8800: not  in_two_players_mode
+                        then
+                        //ass
+                        COOP_PICKED_UP_FLAG = 0
+                        else
+                        COOP_PICKED_UP_FLAG = 0                
+                        actor.StorePos(PLAYER_ACTOR,4@,5@,6@)
+                        actor.StorePos(COOP_ACTOR,7@,8@,9@)
+                        050A: 10@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 4@ 5@ 6@
+                        050A: 11@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 7@ 8@ 9@
+                        if
+                        0025:   11@ > 10@  // (float)
+                            then
+                            //ass
+                            else
+                            COOP_PICKED_UP_FLAG = 1
+                            end
+                        end                
+                    
+                    if
+                    COOP_PICKED_UP_FLAG == 1
+                    then
+                    gosub @XUY_PICKUP2_COOP                                
+                    gosub @PICKUP_ANIMATION_COOP                
+                    else
+                    gosub @XUY_PICKUP2
+                    gosub @PICKUP_ANIMATION                
+                    end
+                    
+                    end
+                end
+            end  
+        
+    end    
+    
+////////////////////////////Пикап рации////////////////////////////      
+    
+    for 0@ = 0 to 19         
+    
+        if 
+        09D1:   pickup $RADIO_PICKUP[0@] created      
+            then
+            if
+            pickup.Picked_up($RADIO_PICKUP[0@])
+                then
+                065B: store_pickup $RADIO_PICKUP[0@] position_to 1@ 2@ 3@               
+                pickup.Destroy($RADIO_PICKUP[0@])
+                
+                if
+                8800: not  in_two_players_mode
+                then                                
+                $RADIO += 1
+                COOP_PICKED_UP_FLAG = 0
+                else
+                COOP_PICKED_UP_FLAG = 0                
+                actor.StorePos(PLAYER_ACTOR,4@,5@,6@)
+                actor.StorePos(COOP_ACTOR,7@,8@,9@)
+                050A: 10@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 4@ 5@ 6@
+                050A: 11@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 7@ 8@ 9@
+                if
+                0025:   11@ > 10@  // (float)
+                    then
+                    $RADIO += 1
+                    else
+                    $SURVIVOR_RADIO_COUNT[COOP_ACTOR_SURV_NUM] += 1
+                    COOP_PICKED_UP_FLAG = 1
+                    end
+                end
+                    
+                end
+            end  
+        
+    end   
+    
+////////////////////////////Пикап отмычки////////////////////////////      
+    
+    for 0@ = 0 to 29         
+    
+        if 
+        09D1:   pickup $JIMMY_PICKUP[0@] created      
+            then
+            if
+            pickup.Picked_up($JIMMY_PICKUP[0@])
+                then
+                065B: store_pickup $JIMMY_PICKUP[0@] position_to 1@ 2@ 3@
+                pickup.Destroy($JIMMY_PICKUP[0@])
+                
+                if
+                8800: not  in_two_players_mode
+                then
+                $JIMMY += 1
+                COOP_PICKED_UP_FLAG = 0
+                else
+                COOP_PICKED_UP_FLAG = 0                
+                actor.StorePos(PLAYER_ACTOR,4@,5@,6@)
+                actor.StorePos(COOP_ACTOR,7@,8@,9@)
+                050A: 10@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 4@ 5@ 6@
+                050A: 11@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 7@ 8@ 9@
+                if
+                0025:   11@ > 10@  // (float)
+                    then
+                    $JIMMY += 1
+                    else
+                    $SURVIVOR_JIMMY_COUNT[COOP_ACTOR_SURV_NUM] += 1
+                    COOP_PICKED_UP_FLAG = 1
+                    end
+                end
+                
+                end
+            end  
+        
+    end    
+    
+////////////////////////////Пикап инструментов////////////////////////////      
+    
+    for 0@ = 0 to 29        
+    
+        if 
+        09D1:   pickup $REPAIR_PICKUP[0@] created      
+            then
+            if
+            pickup.Picked_up($REPAIR_PICKUP[0@])
+                then
+                065B: store_pickup $REPAIR_PICKUP[0@] position_to 1@ 2@ 3@
+                pickup.Destroy($REPAIR_PICKUP[0@])
+                
+                if
+                8800: not  in_two_players_mode
+                then                
+                $REPAIR_KIT += 1
+                COOP_PICKED_UP_FLAG = 0
+                else
+                COOP_PICKED_UP_FLAG = 0                
+                actor.StorePos(PLAYER_ACTOR,4@,5@,6@)
+                actor.StorePos(COOP_ACTOR,7@,8@,9@)
+                050A: 10@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 4@ 5@ 6@
+                050A: 11@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 7@ 8@ 9@
+                if
+                0025:   11@ > 10@  // (float)
+                    then
+                    $REPAIR_KIT += 1
+                    else
+                    $SURVIVOR_REPAIR_COUNT[COOP_ACTOR_SURV_NUM] += 1
+                    COOP_PICKED_UP_FLAG = 1
+                    end
+                end
+                
+                if
+                COOP_PICKED_UP_FLAG == 1
+                then                                
+                gosub @PICKUP_ANIMATION_COOP
+                else
+                gosub @PICKUP_ANIMATION
+                end
+                
+                end
+            end  
+        
+    end
+    
+end    
+    
+end                                        
+    
+jump to @PICKUP_IDLE
+
+:PICKUP_ANIMATION
+
+if
+0A32:  actor PLAYER_ACTOR on_turret_of_car
+    then
+    return
+    end
+
+25@ = 1
+$CAR_CHECKING_FLAG = 1
+
+0470: 15@ = actor PLAYER_ACTOR current_weapon 
+01B9: set_actor PLAYER_ACTOR armed_weapon_to 0
+0992: set_player PLAYER_CHAR weapons_scrollable 0   
+07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 0
+
+while not animation.Available("BOMBER")
+wait 0
+04ED: load_animation "BOMBER"
+end 
+
+while 0818:  actor PLAYER_ACTOR in_air
+wait 10
+end
+      
+0792: disembark_instantly_actor PLAYER_ACTOR     
+  
+0605: actor PLAYER_ACTOR perform_animation "BOM_Plant_In" IFP "BOMBER" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1
+0629: change_integer_stat 280 to 1       
+
+$FATIGUE_LEVEL += 0.5
+
+wait 10
+
+while actor.Animation(PLAYER_ACTOR) == "BOM_Plant_In"
+wait 0
+end
+
+07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 1
+
+animation.Release("BOMBER")
+
+05B9: AS_actor PLAYER_ACTOR stay_idle 150 ms
+0629: change_integer_stat 280 to 0
+
+32@ = 0
+33@ = 0
+
+return
+
+:PICKUP_ANIMATION_COOP
+
+if
+0A32:  actor COOP_ACTOR on_turret_of_car
+    then
+    return
+    end
+
+30@ = 1
+$CAR_CHECKING_FLAG_2P = 1
+
+0470: 15@ = actor COOP_ACTOR current_weapon
+01B9: set_actor COOP_ACTOR armed_weapon_to 0
+0992: set_player 1 weapons_scrollable 0   
+07CC: set_player 1 can_enter_exit_vehicles 0
+
+while not animation.Available("BOMBER")
+wait 0
+04ED: load_animation "BOMBER"
+end 
+
+if
+856D: not  actor COOP_ACTOR defined
+then
+jump to @PICKUP_ANIMATION_COOP_RETURN_NOT_EXISTS
+end
+
+while 0818:  actor COOP_ACTOR in_air
+wait 10
+end
+
+if
+856D: not  actor COOP_ACTOR defined
+then
+jump to @PICKUP_ANIMATION_COOP_RETURN_NOT_EXISTS
+end
+      
+0792: disembark_instantly_actor COOP_ACTOR     
+  
+0605: actor COOP_ACTOR perform_animation "BOM_Plant_In" IFP "BOMBER" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1
+0629: change_integer_stat 280 to 1       
+
+wait 10
+
+if
+856D: not  actor COOP_ACTOR defined
+then
+jump to @PICKUP_ANIMATION_COOP_RETURN_NOT_EXISTS
+end
+
+while actor.Animation(COOP_ACTOR) == "BOM_Plant_In"
+wait 0
+if
+SAVE_PRE_TP_TEAMMATES_FLAG == 1
+    then    
+    jump to @PICKUP_ANIMATION_COOP_RETURN_NOT_EXISTS
+    end
+end
+
+07CC: set_player 1 can_enter_exit_vehicles 1
+
+animation.Release("BOMBER")
+
+05B9: AS_actor COOP_ACTOR stay_idle 150 ms
+0629: change_integer_stat 280 to 0
+
+32@ = 0
+33@ = 0
+
+return
+
+:PICKUP_ANIMATION_COOP_RETURN_NOT_EXISTS
+30@ = 0
+06AB: set_actor COOP_ACTOR all_weapons_hidden 0 
+01B9: set_actor COOP_ACTOR armed_weapon_to 15@  
+0992: set_player 1 weapons_scrollable 1
+return
+
+:KANISTRA_PICKUP
+wait 0 
+
+if
+$KANISTRA == 0
+    then
+    $KANISTRA = 1 
+    end
+    
+random_float $KANISTRA_RANDOM_COUNT $GASOLINE_MIN $GASOLINE_MAX
+
+if
+$KANISTRA_RANDOM_COUNT < 1.75
+then
+$KANISTRA_RANDOM_COUNT = 1.75
+end
+
+if
+$KANISTRA_RANDOM_COUNT > 5.0
+then
+$KANISTRA_RANDOM_COUNT = 5.0
+end
+  
+$KANISTRA_RANDOM_COUNT *= 1.95   
+0059: $KANISTRA_FUEL += $KANISTRA_RANDOM_COUNT // (float)
+
+if
+$KANISTRA_FUEL > 25.1
+then
+wait 100
+text.ShowTextBox('GAME17')  
+$KANISTRA_FUEL = 25.0
+end
+
+Audiostream.Volume($GASCAN_PICKUP_SOUND) = $SOUNDS_VOLUME 
+Audiostream.Loop($GASCAN_PICKUP_SOUND, 0)
+Audiostream.PerformAction($GASCAN_PICKUP_SOUND, PLAY) 
+
+return
+
+:KANISTRA_PICKUP_COOP
+wait 0 
+
+if
+$SURVIVOR_KANISTRA_COUNT[COOP_ACTOR_SURV_NUM] == 0
+    then
+    $SURVIVOR_KANISTRA_COUNT[COOP_ACTOR_SURV_NUM] = 1 
+    end
+    
+random_float $KANISTRA_RANDOM_COUNT $GASOLINE_MIN $GASOLINE_MAX
+
+if
+$KANISTRA_RANDOM_COUNT < 1.75
+then
+$KANISTRA_RANDOM_COUNT = 1.75
+end
+
+if
+$KANISTRA_RANDOM_COUNT > 5.0
+then
+$KANISTRA_RANDOM_COUNT = 5.0
+end
+  
+$KANISTRA_RANDOM_COUNT *= 1.95   
+0059: $KANISTRA_FUEL_2P += $KANISTRA_RANDOM_COUNT // (float)
+
+if
+$KANISTRA_FUEL_2P > 25.1
+then
+wait 100
+text.ShowTextBox('GAME17B')  
+$KANISTRA_FUEL_2P = 25.0
+end
+
+Audiostream.Volume($GASCAN_PICKUP_SOUND) = $SOUNDS_VOLUME 
+Audiostream.Loop($GASCAN_PICKUP_SOUND, 0)
+Audiostream.PerformAction($GASCAN_PICKUP_SOUND, PLAY) 
+
+return
+
+:XUY_PICKUP2
+wait 0
+
+if
+$KANISTRA == 0
+    then
+    $KANISTRA = 1 
+    end
+    
+0059: $KANISTRA_FUEL += $PIZDA_PICKUP_FUEL[0@] // (float)
+if
+$KANISTRA_FUEL > 25.1
+then
+wait 100
+text.ShowTextBox('GAME17')  
+$KANISTRA_FUEL = 25.0
+end
+
+Audiostream.Volume($GASCAN_PICKUP_SOUND) = $SOUNDS_VOLUME 
+Audiostream.Loop($GASCAN_PICKUP_SOUND, 0)
+Audiostream.PerformAction($GASCAN_PICKUP_SOUND, PLAY) 
+
+return
+
+:XUY_PICKUP2_COOP
+wait 0
+
+if
+$SURVIVOR_KANISTRA_COUNT[COOP_ACTOR_SURV_NUM] == 0
+    then
+    $SURVIVOR_KANISTRA_COUNT[COOP_ACTOR_SURV_NUM] = 1 
+    end
+    
+0059: $KANISTRA_FUEL_2P += $PIZDA_PICKUP_FUEL[0@] // (float)
+if
+$KANISTRA_FUEL_2P > 25.1
+then
+wait 100
+text.ShowTextBox('GAME17B')  
+$KANISTRA_FUEL_2P = 25.0
+end
+
+Audiostream.Volume($GASCAN_PICKUP_SOUND) = $SOUNDS_VOLUME 
+Audiostream.Loop($GASCAN_PICKUP_SOUND, 0)
+Audiostream.PerformAction($GASCAN_PICKUP_SOUND, PLAY) 
+
+return
