@@ -633,8 +633,10 @@ else
 0AD3: ZAME_KONTROLT4K_STRING = format "me\cp%d.set" ZAME_MISSION_LOAD_NUMBER
 end
 
-if
+0AF0: get_int 2@ from_ini_file "saves\ZACM.set" section "SCR" key "EDITOR_LAUNCH_FROM_OBJ"
+if and
 0AAB:   file_exists ZAME_KONTROLT4K_STRING
+not 2@ == 1
 then
 
 repeat
@@ -1253,6 +1255,8 @@ ZAME_CUTSCENE_MODE == 1
 not 0@ == 1
 not 0@ == 8
 not 0@ == 9
+not 0@ == 18
+not 0@ == 16
 then                
 ZAME_CUTSCENE_MODE = 0       
 cinema.Widescreen(0)
@@ -1261,6 +1265,7 @@ $HUD_REMOVE = 0
 $HUD_OFF_INST = 0     
 camera.Restore_WithJumpCut() 
 player.CanMove(PLAYER_CHAR,true)
+0E69: set_player_control_pad_movement 0 1
 create_thread @REFR_3D  
 
 if
@@ -1277,7 +1282,13 @@ if
     0AF2: get_float 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CHECKPOINT_X"
     0AF2: get_float 3@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CHECKPOINT_Y"
     0AF2: get_float 4@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CHECKPOINT_Z"
+    
+    0AF0: get_int 6@ from_ini_file "me\temp.dat" section v$RACE_FILE key "HIDDEN_FLAG"
+    if
+    6@ < 1
+    then
     018A: MISSION_CHECKPOINT = create_checkpoint_at 2@ 3@ 4@
+    end
     
     0085: 5@ = ZAME_CURRENT_OBJECTIVE_INDEX // (int)
     5@ += 1
@@ -1291,7 +1302,13 @@ if
     5@ = 2.0
     end
     
+    0AF0: get_int 6@ from_ini_file "me\temp.dat" section v$RACE_FILE key "HIDDEN_FLAG"
+    if
+    not 6@ == 2
+    then
     03BC: MISSION_SPHERE = create_sphere_at 2@ 3@ 4@ radius 5@
+    end
+    
     if or
     $CHEATS_ON == 1
     ZAME_TARGETSKIP_MODE > 0
@@ -1344,6 +1361,7 @@ if
     0AF2: get_float 4@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TELEPORT_Z"
     0AF2: get_float 5@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TELEPORT_A"
     0AF0: get_int 6@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TELEPORT_INT"
+    0AF0: get_int 7@ from_ini_file "me\temp.dat" section v$RACE_FILE key "NO_TP_TEAMMATES"
     
     player.CanMove(PLAYER_CHAR,false)
     text.RemoveTextBox()
@@ -1359,7 +1377,13 @@ if
     ZAME_TELEPORT_OUTFADED = 1
     end
     
+    if
+    7@ == 1
+    then
+    09BC: put_actor PLAYER_ACTOR at 2@ 3@ 4@ no_offset_and_dont_warp_gang
+    else
     actor.PutAtNoOffset(PLAYER_ACTOR,2@,3@,4@)
+    end
     actor.Angle(PLAYER_ACTOR) = 5@
     
     if
@@ -1408,7 +1432,12 @@ if
     092B: 4@ = group PLAYER_GROUP member 4
     092B: 5@ = group PLAYER_GROUP member 5
     092B: 6@ = group PLAYER_GROUP member 6
-    gosub @FRNDS_INT_CHECK_TP    
+    0AF0: get_int 7@ from_ini_file "me\temp.dat" section v$RACE_FILE key "NO_TP_TEAMMATES"
+    if
+    not 7@ == 1
+    then
+    gosub @FRNDS_INT_CHECK_TP
+    end    
     0085: 0@ = ZAME_TEMP_FUCKEEE // (int)                
     
     if and
@@ -1436,6 +1465,7 @@ if
     
     if and
     not 5@ == 9
+    not 5@ == 1
     not ZAME_CUTSCENE_MODE == 1          
     then
     $HUD_REMOVE = 0
@@ -1470,6 +1500,7 @@ if
     actor.Angle(PLAYER_ACTOR) = 5@ 
     camera.Restore_WithJumpCut() 
     player.CanMove(PLAYER_CHAR,true)
+    0E69: set_player_control_pad_movement 0 1
     create_thread @REFR_3D 
     
     if
@@ -2457,7 +2488,21 @@ if
     gosub @CHECK_FOR_CP_PONOS
     
     0AF0: get_int $HORDE_TIME from_ini_file "me\temp.dat" section v$RACE_FILE key "HORDE_SECONDS"
-    $HORDE_TIME *= 1000                
+    $HORDE_TIME *= 1000
+    if
+    $HORDE_TIME == 0
+    then    
+    if
+    $ZOMBIES_HORDE == 1
+        then
+        0459: end_thread_named 'RND_HR2'
+        $ZOMBIES_HORDE = 0
+        $HORDE_TIME = 0
+        create_thread @RND_HR2
+        else
+        $HORDE_TIME = 9999999999
+        end    
+    end                
     
     {$INCLUDE Zame Objective Plus.txt}    
     return
@@ -3028,7 +3073,8 @@ if and
     $PHRASES_OFF_FLAG = 0
     
     else
-    text.ShowH(0@v,11@,1)
+//    text.ShowH(0@v,11@,1)
+    create_thread @ZAMFXT 0@ 1@ 2@ 3@ 11@
     $PHRASES_OFF_FLAG = 0    
     end
     
@@ -3067,7 +3113,13 @@ if
     
     end   
     
+    if
+    8E4B: not is_char_playing_any_script_animation PLAYER_ACTOR include_anims 1
+    then
     player.CanMove(PLAYER_CHAR,false)
+    else
+    0E69: set_player_control_pad_movement 0 0 
+    end
     cinema.Widescreen(1)
     BLACK_POLOSKI_ON = 1
     $HUD_REMOVE = 1
@@ -3136,6 +3188,8 @@ if
         6@ == 8
         6@ == 9
         6@ == 1
+        6@ == 18
+        6@ == 16
         then
         camera.SetPosition(20@,30@,40@,0.0,0.0,0.0)
         camera.PointAt(50@,60@,70@,2)
@@ -3168,9 +3222,12 @@ if
     not 6@ == 8
     not 6@ == 9
     not 6@ == 1
+    not 6@ == 18
+    not 6@ == 16
     then     
     camera.Restore_WithJumpCut()   
-    player.CanMove(PLAYER_CHAR,true)    
+    player.CanMove(PLAYER_CHAR,true)
+    0E69: set_player_control_pad_movement 0 1    
     cinema.Widescreen(0)
     BLACK_POLOSKI_ON = 0    
     $HUD_REMOVE = 0
@@ -3195,10 +3252,15 @@ if
     if and
     ZAME_CUTSCENE_MODE == 1
     not 6@ == 8
+    not 6@ == 9
+    not 6@ == 1
+    not 6@ == 18
+    not 6@ == 16
     then
     ZAME_CUTSCENE_MODE = 0
     camera.Restore_WithJumpCut()
-    player.CanMove(PLAYER_CHAR,true)    
+    player.CanMove(PLAYER_CHAR,true)
+    0E69: set_player_control_pad_movement 0 1    
     cinema.Widescreen(0)
     BLACK_POLOSKI_ON = 0    
     $HUD_REMOVE = 0
@@ -3229,7 +3291,13 @@ if
     0AF2: get_float 4@ from_ini_file "me\temp.dat" section v$RACE_FILE key "PICKUP_Z"
     0AF0: get_int 5@ from_ini_file "me\temp.dat" section v$RACE_FILE key "PICKUP_ID"    
     28@ = Pickup.Create(5@, 3, 2@, 3@, 4@)
+    
+    0AF0: get_int 6@ from_ini_file "me\temp.dat" section v$RACE_FILE key "HIDDEN_FLAG"
+    if
+    not 6@ == 1
+    then
     03DC: 1@ = create_marker_above_pickup 28@
+    end
     
     repeat
     wait 0
@@ -3559,6 +3627,7 @@ if
                 actor.DestroyInstantly(ZAME_PROTECT_THE_OBJECT_CHAR)
                 ZAME_PROTECT_THE_OBJECT_FLAG = 0
                 audiostream.Release(ZAME_PROTECT_THE_OBJECT_SND)
+                marker.Disable(ZAME_OBJECT_MARKER_HANLDE)
                 
                 jump to @ZAM_OBJ_DEST_JUMP
                 
@@ -4056,6 +4125,15 @@ if
     $SAVESTATUS = 0
     end
     
+    if
+    $ZOMBIES_HORDE == 1
+    then    
+    0459: end_thread_named 'RND_HR2'
+    $ZOMBIES_HORDE = 0
+    $HORDE_TIME = 0
+    create_thread @RND_HR2
+    end
+    
     if or
     ZAME_TARGETSKIP_MODE == 2
     ZAME_TARGETSKIP_MODE < 1
@@ -4144,12 +4222,18 @@ if
     then
 
     text.ClearAll()
-    text.RemoveTextBox()
-    
-    1@ = 0
+    text.RemoveTextBox()        
     
     0AF0: get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJ_GOTO_NUM"
     0AD3: 4@v = format "zgto%d" 2@
+    09FD: get_gxt_string 4@v width_to 1@
+    if
+    1@ < 1
+    then
+    0AD3: 4@v = format "zgt%d" 2@
+    end
+    
+    1@ = 0
     
     while true
     wait 0
@@ -4378,7 +4462,23 @@ if
     0AF0: get_int 22@ from_ini_file "me\temp.dat" section v$RACE_FILE key "MARODER_WEP_ID"
     end
     
-    create_thread @SURVVER 3@ 23@ ZAME_HUENEMY_POS_X ZAME_HUENEMY_POS_Y ZAME_HUENEMY_POS_Z ZAME_HUENEMY_POS_A 22@
+    if
+    0AF0: get_int 40@ from_ini_file "me\temp.dat" section v$RACE_FILE key "MARODER_HEALTH"
+    then
+    0AF0: get_int 24@ from_ini_file "me\temp.dat" section v$RACE_FILE key "MARODER_HEALTH"
+    else 
+    24@ = 0
+    end
+    
+    if
+    0AF0: get_int 40@ from_ini_file "me\temp.dat" section v$RACE_FILE key "MARODER_ACCURACY"
+    then
+    0AF0: get_int 25@ from_ini_file "me\temp.dat" section v$RACE_FILE key "MARODER_ACCURACY"
+    else
+    25@ = 0
+    end
+    
+    create_thread @SURVVER 3@ 23@ ZAME_HUENEMY_POS_X ZAME_HUENEMY_POS_Y ZAME_HUENEMY_POS_Z ZAME_HUENEMY_POS_A 22@ 24@ 25@
     
     repeat
     wait 0
@@ -7846,6 +7946,12 @@ then
 0AF0: PLAYER_CANT_SWIM_FLAG = get_int_from_ini_file 0@v section "DIFF" key "PLAYER_CANT_SWIM"
 else
 PLAYER_CANT_SWIM_FLAG = 0
+end
+
+if
+UNITED_MAP == 1
+then
+PLAYER_CANT_SWIM_FLAG = 1
 end    
 
 //////////////////////////////////////

@@ -1,0 +1,166 @@
+:TNK_RCK
+thread 'TNK_RCK'
+
+:TNK_RCK_IDLE
+wait 0
+
+///////////////////Выгрузка звуков THROW///////////////////  
+
+if
+15@ == 1
+    then
+    0AB9: get_mp3 11@ state_to 0@
+    if or
+    0@ == -1
+    not $GAME_SPEED == 1.0
+        then
+        audiostream.Release(11@)
+        15@ = 0
+        end
+    end
+
+if or
+$END_ROUND_INF == 1
+$INF_SIDE == 0
+    then
+    end_thread
+    end
+    
+if and
+0184:   actor PLAYER_ACTOR health >= 1
+044B:   actor PLAYER_ACTOR on_foot
+8818:  actor PLAYER_ACTOR in_air
+$SLOW_BAR > 38.0
+    then
+    if and
+    00E1: key_pressed 0 6
+    not actor.Dead(PLAYER_ACTOR)
+        then    
+        if or
+        actor.Animation(PLAYER_ACTOR) == "tank_run"
+        actor.Animation(PLAYER_ACTOR) == "charger_run"
+        actor.Animation(PLAYER_ACTOR) == "witch_run"
+            then
+            
+            if
+            not COOP_ACTIVE_FLAG == 1
+            then
+            $SLOW_BAR -= 40.0
+            else
+            $SLOW_BAR -= 13.0
+            end
+            
+            0812: AS_actor PLAYER_ACTOR perform_animation "tank_throw" IFP "PED" framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF 0 time -1 // versionB
+            
+            33@ = 0
+            
+            7@ = 1.0
+                                
+            repeat
+            wait 0
+            
+            if
+            00E1:   player 0 pressed_key 6
+            then                 
+            $SLOW_BAR += 1.0
+            end
+            
+            if and
+            33@ > 500
+            15@ == 0
+            then
+            if
+            $GAME_SPEED == 1.0
+                then            
+                gosub @TANK_RANDOM_THROW_SOUND
+                Audiostream.LinkToActor(11@, PLAYER_ACTOR)
+                Audiostream.PerformAction(11@, PLAY)
+                Audiostream.Volume(11@) = $SOUNDS_VOLUME
+                15@ = 1
+                end
+            end
+                                            
+            if or
+            actor.Dead(PLAYER_ACTOR)
+            $SAVESTATUS == 1
+            not actor.Animation(PLAYER_ACTOR) == "tank_throw"
+            then
+            jump to @TNK_RCK_IDLE
+            end            
+                                            
+            until 33@ > 800
+                                                            
+            33@ = 0
+            
+            if
+            UNITED_MAP == 0
+            then
+            31@ = object.Init(905,0.0,0.0,0.0)
+            else
+            31@ = object.Init(1803,0.0,0.0,0.0)
+            end
+            
+            070A: AS_actor PLAYER_ACTOR attach_to_object 31@ offset 0.0 0.0 0.0 on_bone 6 16 perform_animation "NULL" IFP_file "NULL" time 600
+            
+            33@ = 0
+                                
+            repeat
+            wait 0
+            
+            if
+            00E1:   player 0 pressed_key 6
+            then                 
+            $SLOW_BAR += 1.0
+            else
+            0614: set_actor PLAYER_ACTOR animation "tank_throw" progress_to 0.8667 // 0.0 to 1.0
+            break
+            end
+                                            
+            if or
+            actor.Dead(PLAYER_ACTOR)
+            $SAVESTATUS == 1
+            not actor.Animation(PLAYER_ACTOR) == "tank_throw"
+            then
+            object.Destroy(31@)
+            jump to @TNK_RCK_IDLE 
+            end
+                                                        
+            until 33@ > 500
+            
+            0089: 7@ = $SLOW_BAR // (float)
+            7@ *= 5.2
+            0089: 8@ = $SLOW_BAR // (float)
+            8@ /= 20.0
+            8@ += 3.0
+            if
+            8@ > 4.5
+            then
+            8@ = 4.5
+            end
+            
+            $SLOW_BAR = 0.0
+            070B: set_actor PLAYER_ACTOR onbone_attached_object_operation 0
+            wait 0
+            if
+            03CA:   object 31@ exists
+                then 
+                Object.ToggleInMovingList(31@) = True            
+                Object.SetImmunities(31@, 0, 1, 1, 1, 1)
+                0906: set_object 31@ mass_to 1000.0 // float
+                Actor.StorePos(PLAYER_ACTOR, 1@, 2@, 3@)
+                04C4: store_coords_to 4@ 5@ 6@ from_actor PLAYER_ACTOR with_offset 0.0 7@ 8@
+                0063: 4@ -= 1@ // (float) 
+                0063: 5@ -= 2@ // (float) 
+                0063: 6@ -= 3@ // (float) 
+                038C: object 31@ scatter 4@ 5@ 6@        
+                04D9: object 31@ set_scripted_collision_check 1
+                071F: set_object 31@ health_to 999999
+                07F7: set_object 31@ destructible 0
+                035D: set_object 31@ targetable 1
+                create_thread @ROCK 31@
+                end            
+            end
+        end
+    end        
+
+jump to @TNK_RCK_IDLE
