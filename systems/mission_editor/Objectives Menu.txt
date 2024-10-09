@@ -133,9 +133,15 @@ Cinema.Radar(0)
 if
 8A4B: not  controls_set_to_joystick
 then
-08DB: set_panel $PANEL column 0 header 'dummy' data 'SE333' 'SE408' 'SE411' 'SE412' 'SE513' 'SE524' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 
+08DB: set_panel $PANEL column 0 header 'dummy' data 'SE333' 'SE408' 'SE411' 'SE412' 'SE513' 'SE524' 'SE547' 'SE548' 'SE549' 'SE550' 'SE551' 'GAME164' 
 else 
 //08DB: set_panel $PANEL column 0 header 'dummy' data 'SE51' 'dummy' 'dummy' 'SE300' 'SE303' 'SE316' 'SE333' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy'
+end
+
+if
+not ZAME_OBJECTS_COUNT > 0
+then
+08D9: set_panel $PANEL row 8 enable 0
 end
 
 //if
@@ -174,8 +180,8 @@ Text.RemoveTextBox
 if
 8A4B: not  controls_set_to_joystick
 then
-0871: init_jump_table 0@ total_jumps 12 default_jump 0 @ZAME_OPEN_CHECK jumps 0 @ZAME_HUMAN_ENEMY_CREATE_MENU 1 @zame_ally_jump_pre 2 @ZAME_CAR_ADVENTRUE_JUMP_PRE 3 @CAM_SHAKE_SELECT 4 @KONTROL_TO4KA_CREATE 5 @CHANGE_TIME_OBJECTIVE_21408 6 @ZAME_OPEN_CHECK 
-0872: jump_table_jumps 7 @FADE_IN_OUT_SELECT 8 @ZAME_OPEN_CHECK 9 @ZAME_OPEN_CHECK 10 @ZAME_OPEN_CHECK 11 @ZAME_OPEN_CHECK 12 @ZAME_OPEN_CHECK 13 @ZAME_OPEN_CHECK 14 @ZAME_OPEN_CHECK 15 @ZAME_OPEN_CHECK
+0871: init_jump_table 0@ total_jumps 12 default_jump 0 @ZAME_OPEN_CHECK jumps 0 @ZAME_HUMAN_ENEMY_CREATE_MENU 1 @zame_ally_jump_pre 2 @ZAME_CAR_ADVENTRUE_JUMP_PRE 3 @CAM_SHAKE_SELECT 4 @KONTROL_TO4KA_CREATE 5 @CHANGE_TIME_OBJECTIVE_21408 6 @ZAME_CODENUMBER_OBJECTIVE 
+0872: jump_table_jumps 7 @ZAME_REMOVE_WEPS_OBJECTIVE 8 @zame_menu_object_grab 9 @zame_menu_lookphoto_point 10 @zame_menu_protect_teammate 11 @TARGETS_SETTINGS4 12 @ZAME_OPEN_CHECK 13 @ZAME_OPEN_CHECK 14 @ZAME_OPEN_CHECK 15 @ZAME_OPEN_CHECK
 else
 //0871: init_jump_table 0@ total_jumps 11 default_jump 0 @ZAME_OPEN_CHECK jumps 0 @zame_menu_explode_trigger_27207 1 @zame_menu_object_destroy 2 @zame_menu_weather_change_21732 3 @FADE_IN_OUT_SELECT 4 @SAVESTATUS_ON_OFF_SELECT 5 @BOMBARDING_SELECT 6 @ZAME_HUMAN_ENEMY_CREATE_MENU 
 //0872: jump_table_jumps 7 @ZAME_OPEN_CHECK 8 @ZAME_OPEN_CHECK 9 @ZAME_OPEN_CHECK 10 @ZAME_OPEN_CHECK 11 @ZAME_OPEN_CHECK 12 @ZAME_OPEN_CHECK 13 @ZAME_OPEN_CHECK 14 @ZAME_OPEN_CHECK 15 @ZAME_OPEN_CHECK
@@ -185,6 +191,8 @@ end
 
 :ZAME_CAR_ADVENTRUE_JUMP_PRE
 ZAME_CREATE_CAR_ADVETNURE_OBJ = 1
+008B: ZAME_ADVENTURE_CAR_UKAZATEL = ZAME_CAR_ADVENTURE_CAR // (int)
+008B: ZAME_ADVENTURE_CAR_UKAZATEL2 = ZAME_CAR_ADVENTURE_CAR // (int)
 if
 056E:   car ZAME_CAR_ADVENTURE_CAR defined
 then
@@ -229,6 +237,8 @@ if
     0581: enable_radar 1 
     Player.CanMove(PLAYER_CHAR) = True
     018C: play_sound 1057 at 0.0 0.0 0.0 
+    text.ClearAll()
+    text.RemoveTextBox()
     wait 100      
     jump to @CAR_ADVENTURE_DO_PREV_CAR 
     end  
@@ -295,6 +305,12 @@ wait 100
     
 repeat
 wait 0 
+
+if
+8A2A: not  text_box 'SE415' displayed
+then
+0512: show_permanent_text_box 'SE415'
+end
     
 if 
 00E1:   player 0 pressed_key 11 
@@ -369,12 +385,95 @@ until false
 
 :CAR_ADVENTURE_DO_PREV_CAR
 
+01EC: make_car ZAME_CAR_ADVENTURE_CAR very_heavy 0
+
 //0AD1: show_formatted_text_highpriority "OBJ STRING FOR POINTS PARAMS %s" time 2000 v$RACE_FILE
 //wait 2000
 
 ////////////////////////////////////////////////////////////////////
 
 ZAME_CAR_ADVENTURE_DEST_POINTS_TOTAL = -1
+
+///////////////Скриптовая поездка?///////////////////
+
+text.ClearAll()
+text.RemoveTextBox()
+            
+while true
+wait 0
+            
+text.ShowH('SE589',10,1)
+                
+if
+0E3E: is_button_just_pressed 0 button 11
+    then
+    
+    0AF0: get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CARREC_NUM"
+    if
+    2@ > 83
+    then
+    text.RemoveTextBox()
+    text.ClearAll()
+    text.ShowH('SE623',5000,1)
+    wait 5000
+    jump to @CAR_ADVENTURE_ADD_DEST
+    end                     
+    
+    car.LockInCurrentPosition(ZAME_CAR_ADVENTURE_CAR,true)
+    0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "SCRIPTED_ON_RAILS_DRIVE"
+    0AF1: write_int 5000 to_ini_file "me\temp.dat" section v$RACE_FILE key "CAR_HEALTH"        
+    gosub @SCRIPTED_DRIVE_ID_ALLY_FOR_DRIVER_NUMBER_SELECT
+    
+    if
+    ZAME_RECREATE_OBJECTIVE_FLAG == 0
+    then
+    0AD3: v$RACE_FILE = format "OBJ%d" ZAME_CURRENT_OBJECTIVE_INDEX
+    else
+    0AD3: v$RACE_FILE = format "OBJ%d" ZAME_RECREATE_INDEX
+    end
+    
+    if or
+    ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG == 1
+    ZAME_RECREATE_OBJECTIVE_FLAG == 2
+    then
+    0AD3: v$RACE_FILE = format "%s" v$RACB_FILE
+    end
+    
+    gosub @ZAME_DRIVEBY_SCRIPTED_WEP_SELECT
+    0687: clear_actor PLAYER_ACTOR task
+    camera.Restore_WithJumpCut()
+    ZAME_CAR_ADVENTURE_DEST_POINTS_TOTAL = 0
+    
+    if
+    ZAME_RECREATE_OBJECTIVE_FLAG == 0
+    then
+    0AD3: v$RACE_FILE = format "OBJ%d" ZAME_CURRENT_OBJECTIVE_INDEX
+    else
+    0AD3: v$RACE_FILE = format "OBJ%d" ZAME_RECREATE_INDEX
+    end
+    
+    if or
+    ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG == 1
+    ZAME_RECREATE_OBJECTIVE_FLAG == 2
+    then
+    0AD3: v$RACE_FILE = format "%s" v$RACB_FILE
+    end
+    
+    gosub @ZAME_CARREC_RECORD           
+    text.ClearAll()
+    jump to @CAR_ADVENTURE_END_DEST2
+    break
+    end
+                
+if
+0E3E: is_button_just_pressed 0 button 10
+    then    
+    gosub @SCRIPTED_CHASE_SELECT    
+    text.ClearAll()
+    break
+    end
+                                
+end
 
 :CAR_ADVENTURE_ADD_DEST
 0512: show_permanent_text_box 'SE418'
@@ -383,6 +482,12 @@ wait 100
     
 repeat
 wait 0 
+
+if
+8A2A: not  text_box 'SE418' displayed
+then
+0512: show_permanent_text_box 'SE418'
+end
         
 if 
 00E1:   player 0 pressed_key 11
@@ -466,6 +571,35 @@ until false
 //0AD1: show_formatted_text_highpriority "OBJ STRING FOR TRIGGER PARAMS %s" time 2000 v$RACE_FILE
 //wait 2000   
 
+///////////////Не выходить в конце поездки чтобы продолжить её после других триггеров?///////////////////
+
+text.ClearAll()
+text.RemoveTextBox()
+            
+while true
+wait 0
+            
+text.ShowH('SE588',10,1)
+                
+if
+0E3E: is_button_just_pressed 0 button 11
+    then 
+    0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "DONT_EXIT_AFTER_DRIVE"               
+    text.ClearAll()
+    break
+    end
+                
+if
+0E3E: is_button_just_pressed 0 button 10
+    then
+    text.ClearAll()
+    break
+    end
+                                
+end
+
+:CAR_ADVENTURE_END_DEST2
+
 0AF1: write_int ZAME_CAR_ADVENTURE_DEST_POINTS_TOTAL to_ini_file "me\temp.dat" section v$RACE_FILE key "DESTS_COUNT"
 0AF1: write_int ZAME_OBJECTIVES_COUNT to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "OBJECTIVES_COUNT"
 0AF1: write_int ZAME_CURRENT_OBJECTIVE_INDEX to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "OBJECTIVE_INDEX" 
@@ -526,6 +660,18 @@ ZAME_CAR_ADVENTURE_USE_PREV_CAR_FLAG == 1
     0AF1: write_int ZAME_CAR_ADVENTURE_USE_PREV_CAR_C2 to_ini_file "me\temp.dat" section v$RACE_FILE key "COLOR2"
     0AF1: write_int $ACTIVE_INTERIOR to_ini_file "me\temp.dat" section v$RACE_FILE key "CAR_INT"           
     end
+    
+0AF0: get_int 6@ from_ini_file "me\temp.dat" section v$RACE_FILE key "SCRIPTED_ON_RAILS_DRIVE"
+if
+6@ >= 1
+    then                            
+    0AF0: get_int 6@ from_ini_file "me\temp.dat" section v$RACE_FILE key "SCRIPTED_ON_RAILS_DRIVE"
+    if
+    6@ == 2
+        then
+        
+        end            
+    end    
 
 if and
 ZAME_RECREATE_OBJECTIVE_FLAG == 0
@@ -553,6 +699,339 @@ end
 Player.CanMove(PLAYER_CHAR) = False
 0581: enable_radar 0 
 jump @TARGETS_SETTINGS3
+
+:SCRIPTED_CHASE_SELECT
+
+///////////////Скриптовая поездка за кем-то?///////////////////
+
+text.ClearAll()
+text.RemoveTextBox()
+                
+while true
+wait 0
+                
+text.ShowH('SE608',10,1)
+                    
+if
+0E3E: is_button_just_pressed 0 button 11
+    then 
+    text.ClearAll()
+    text.RemoveTextBox()
+    car.LockInCurrentPosition(ZAME_CAR_ADVENTURE_CAR,true)
+    0AF1: write_int 2 to_ini_file "me\temp.dat" section v$RACE_FILE key "SCRIPTED_ON_RAILS_DRIVE"
+    gosub @SCRIPTED_CHASE_SELECT2
+    jump to @CAR_ADVENTURE_END_DEST2
+    end
+if
+0E3E: is_button_just_pressed 0 button 10
+    then 
+    text.ClearAll()
+    text.RemoveTextBox()
+    return
+    end    
+    
+    
+end
+    
+return    
+
+:SCRIPTED_CHASE_SELECT2
+
+/////////////////////////////////////////////////////////////////////////////////
+                          
+if
+ZAME_RECREATE_OBJECTIVE_FLAG == 0
+then
+0AD3: v$RACE_FILE = format "OBJ%d" ZAME_CURRENT_OBJECTIVE_INDEX
+else
+0AD3: v$RACE_FILE = format "OBJ%d" ZAME_RECREATE_INDEX
+end
+        
+if or
+ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG == 1
+ZAME_RECREATE_OBJECTIVE_FLAG == 2
+then
+0AD3: v$RACE_FILE = format "%s" v$RACB_FILE
+end
+
+gosub @CHASER_ID_SELECT
+
+/////////////////////////////////////////////////////////////////////////////////
+
+if
+ZAME_RECREATE_OBJECTIVE_FLAG == 0
+then
+0AD3: v$RACE_FILE = format "OBJ%d" ZAME_CURRENT_OBJECTIVE_INDEX
+else
+0AD3: v$RACE_FILE = format "OBJ%d" ZAME_RECREATE_INDEX
+end
+
+if or
+ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG == 1
+ZAME_RECREATE_OBJECTIVE_FLAG == 2
+then
+0AD3: v$RACE_FILE = format "%s" v$RACB_FILE
+end
+
+ZAME_CAR_ADVENTURE_DEST_POINTS_TOTAL = 0
+
+gosub @ZAME_CARREC_RECORD   
+text.ClearAll()
+
+0AF0: get_int 6@ from_ini_file "me\temp.dat" section v$RACE_FILE key "DRIVER_ID"
+
+while not model.Available(6@)
+wait 0
+model.Load(6@)
+end
+
+actor.CreateAsDriver(0@,26,6@,ZAME_CAR_ADVENTURE_CAR)
+actor.Health(0@) = 9999
+actor.SetImmunities(0@,1,1,1,1,1)
+
+/////////////////////////////////////////////////////////////////////////////////
+       
+0AF2: get_float 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CAR_X"
+0AF2: get_float 3@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CAR_Y"
+0AF2: get_float 4@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CAR_Z"
+0AF2: get_float 5@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CAR_A"
+actor.PutAtNoOffset(PLAYER_ACTOR,2@,3@,4@)
+actor.Angle(PLAYER_ACTOR) = 5@
+camera.Restore_WithJumpCut()
+create_thread @3D_REFR     
+
+/////////////////////////////////////////////////////////////////////////////////////
+    
+if
+056E:   car ZAME_ADVENTURE_CAR_UKAZATEL defined
+then
+
+///////////////////////////////////////////////////
+
+while true
+wait 0
+text.ShowH('SE621',100,1)
+
+if
+0E3E: is_button_just_pressed 0 button 11
+    then   
+    
+    if
+    ZAME_RECREATE_OBJECTIVE_FLAG == 0
+    then
+    0AD3: v$RACE_FILE = format "OBJ%d" ZAME_CURRENT_OBJECTIVE_INDEX
+    else
+    0AD3: v$RACE_FILE = format "OBJ%d" ZAME_RECREATE_INDEX
+    end
+    
+    if or
+    ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG == 1
+    ZAME_RECREATE_OBJECTIVE_FLAG == 2
+    then
+    0AD3: v$RACE_FILE = format "%s" v$RACB_FILE
+    end   
+    
+    car.StorePos(ZAME_ADVENTURE_CAR_UKAZATEL,ZAME_CAR_ADVENTURE_USE_PREV_CAR_X,ZAME_CAR_ADVENTURE_USE_PREV_CAR_Y,ZAME_CAR_ADVENTURE_USE_PREV_CAR_Z)
+    ZAME_CAR_ADVENTURE_USE_PREV_CAR_A = car.Angle(ZAME_ADVENTURE_CAR_UKAZATEL)
+    03F3: get_car ZAME_ADVENTURE_CAR_UKAZATEL primary_color_to ZAME_CAR_ADVENTURE_USE_PREV_CAR_C1 secondary_color_to ZAME_CAR_ADVENTURE_USE_PREV_CAR_C2    
+    0441: ZAME_CAR_ADVENTURE_USE_PREV_CAR_ID = car ZAME_ADVENTURE_CAR_UKAZATEL model
+    
+    0085: 25@ = ZAME_ADVENTURE_CAR_UKAZATEL // (int)
+    car.LockInCurrentPosition(ZAME_ADVENTURE_CAR_UKAZATEL,false)
+    099A: set_car ZAME_ADVENTURE_CAR_UKAZATEL collision_detection 1
+    actor.StorePos(PLAYER_ACTOR,2@,3@,4@)
+    car.PutAt(ZAME_ADVENTURE_CAR_UKAZATEL,2@,3@,4@)
+    036A: put_actor PLAYER_ACTOR in_car ZAME_ADVENTURE_CAR_UKAZATEL  
+    ZAME_CAR_ADVENTURE_USE_PREV_CAR_FLAG = 1 
+    0581: enable_radar 1 
+    Player.CanMove(PLAYER_CHAR) = True
+    018C: play_sound 1057 at 0.0 0.0 0.0 
+    text.ClearAll()
+    text.RemoveTextBox()
+    wait 100      
+    jump to @CAR_ADVENTURE_DO_PREV_CAR222 
+    end  
+
+if
+0E3E: is_button_just_pressed 0 button 10
+    then
+    :CREATE_NEW_CAR_FOR_CHASE
+    gosub @CARSPAWN_SELECT_ALT_NABOR_CHECK
+
+//    gosub @CARSPAWN_CHEATCODE    
+    ZAME_CREATE_CAR_ADVETNURE_OBJ_CALL = 1    
+    repeat
+    wait 0    
+    
+    if
+    ZAME_CREATE_CAR_ADVETNURE_OBJ == 0
+    then
+    jump to @TARGETS_SETTINGS3
+    end
+    
+    until 056E:   car ZAME_CREATE_CAR_ADVETNURE_OBJ_CALL defined
+    008B: 25@ = ZAME_CREATE_CAR_ADVETNURE_OBJ_CALL // (int)
+      
+    jump to @CAR_ADVENTURE_DO_PREV_CAR222
+    end      
+
+end  
+else
+jump to @CREATE_NEW_CAR_FOR_CHASE
+end
+
+///////////////////////////////////////////////////
+
+:CAR_ADVENTURE_DO_PREV_CAR222
+
+0581: enable_radar 1 
+Player.CanMove(PLAYER_CHAR) = True
+0512: show_permanent_text_box 'SE619'
+018C: play_sound 1057 at 0.0 0.0 0.0 
+wait 100 
+
+////////////////////////////////////////////////////////////////////
+    
+repeat
+wait 0 
+
+if
+8A2A: not  text_box 'SE619' displayed
+then
+0512: show_permanent_text_box 'SE619'
+end
+    
+if 
+00E1:   player 0 pressed_key 11 
+then
+03E6: remove_text_box 
+0581: enable_radar 0
+0407: store_coords_to 1@ 2@ 3@ from_car 25@ with_offset 0.0 0.0 1.0
+0362: remove_actor PLAYER_ACTOR from_car_and_place_at 1@ 2@ 3@
+wait 0
+car.Destroy(25@) 
+jump to @TRIGGERS_SETTINGS
+end 
+            
+if 
+00E1:   player 0 pressed_key 10
+    then
+            
+    if
+    ZAME_RECREATE_OBJECTIVE_FLAG == 0
+    then
+    0AD3: v$RACE_FILE = format "OBJ%d" ZAME_CURRENT_OBJECTIVE_INDEX
+    else
+    0AD3: v$RACE_FILE = format "OBJ%d" ZAME_RECREATE_INDEX
+    end
+            
+    if or
+    ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG == 1
+    ZAME_RECREATE_OBJECTIVE_FLAG == 2
+    then
+    0AD3: v$RACE_FILE = format "%s" v$RACB_FILE
+    end
+            
+    car.StorePos(25@,2@,3@,4@)    
+    099A: set_car 25@ collision_detection 0
+    car.LockInCurrentPosition(25@,true)
+    car.SetImmunities(25@,1,1,1,1,1)  
+            
+    0@ = 0
+    0@ = Marker.CreateIconAndSphere2(ZAME_CAR_ADVENTURE_TRIGGER_ICON_ID, 2@, 3@, 4@)
+            
+    ZAME_OBJECT_HANLDE = Object.Init(ZAME_CAR_ADVENTURE_OBJECT_ID, 2@, 3@, 4@)
+    0E0D: mark_object_as_needed ZAME_OBJECT_HANLDE
+    0566: link_object ZAME_OBJECT_HANLDE to_interior $ACTIVE_INTERIOR
+                
+    0441: 7@ = car 25@ model
+    0AF1: write_int 7@ to_ini_file "me\temp.dat" section v$RACE_FILE key "CAR_ID_2"
+    0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "CAR_X_2"
+    0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "CAR_Y_2"
+    0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "CAR_Z_2"
+    0AF3: write_float 128@ to_ini_file "me\temp.dat" section v$RACE_FILE key "CAR_A_2"    
+    03F3: get_car 25@ primary_color_to 5@ secondary_color_to 6@
+    0AF1: write_int 5@ to_ini_file "me\temp.dat" section v$RACE_FILE key "COLOR1_2"
+    0AF1: write_int 6@ to_ini_file "me\temp.dat" section v$RACE_FILE key "COLOR2_2"
+    0AF1: write_int $ACTIVE_INTERIOR to_ini_file "me\temp.dat" section v$RACE_FILE key "CAR_INT_2" 
+            
+    0AF2: get_float 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CAR_X_2"
+    0AF2: get_float 3@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CAR_Y_2"
+    0AF2: get_float 4@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CAR_Z_2"
+    0AF2: get_float 5@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CAR_A_2" 
+    0AF0: get_int 6@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CAR_ID_2"  
+    0AF0: get_int 7@ from_ini_file "me\temp.dat" section v$RACE_FILE key "COLOR1_2" 
+    0AF0: get_int 8@ from_ini_file "me\temp.dat" section v$RACE_FILE key "COLOR2_2"
+    0407: store_coords_to 1@ 2@ 3@ from_car 25@ with_offset 0.0 0.0 1.0
+    0362: remove_actor PLAYER_ACTOR from_car_and_place_at 1@ 2@ 3@
+    wait 0
+    car.Destroy(25@) 
+    gosub @CAR_CREATE_ZAME_KUKLA2                                   
+    return
+    end                        
+                                        
+until false
+        
+////////////////////////////////////////////////////////////////////
+        
+return
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:CHASER_ID_SELECT
+
+06D1: v$SNAME3 = "" // v$ // Sunday
+06D1: v$SNAME2 = "" // v$ // Sunday
+
+29@ = 0
+33@ = 0
+KEYS_TYPED_NUM = 0
+
+ZAME_NAME_AUD_TYPING_FLAG = 2
+    
+0AE0: remove_dynamic_GXT_entry "F_NAME"
+0ADF: add_dynamic_GXT_entry "F_NAME" text ""
+
+0512: show_permanent_text_box 'SE609'
+
+while true
+wait 0
+
+if
+8A2A: not  text_box 'SE609' displayed
+    then
+    0512: show_permanent_text_box 'SE609'
+    end
+
+CURRENT_LAYOUT = 1
+gosub @OBJECT_ID_SELECT_KEYS_CHECK
+
+if
+8846: not  string v$SNAME3 empty // v$
+then
+0384: show_text_1string GXT "SE620" string "F_NAME" time 99999999 1
+else
+0384: show_text_1string GXT "SE620" string v$NAME3 time 99999999 1
+end
+
+if and
+0E3E: is_button_just_pressed 0 button 16
+33@ > 500
+8846: not  string v$SNAME3 empty // v$
+    then
+    
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5
+    ZAME_NAME_AUD_TYPING_FLAG = 0        
+    
+    0AF5: write_string v$SNAME3 to_ini_file "me\temp.dat" section v$RACE_FILE key "DRIVER_ID"    
+    return
+    
+    end
+
+end
 
 :zame_ally_jump_pre
 
@@ -593,6 +1072,13 @@ Player.CanMove(PLAYER_CHAR) = True
 
 :zame_menu_25161
 wait 0 
+
+if
+8A2A: not  text_box 'SE39' displayed
+then
+0512: show_permanent_text_box 'SE39'
+end
+
 if 
 00E1:   player 0 pressed_key 15 
 jf @zame_menu_25523 
@@ -743,6 +1229,14 @@ then
 end
 
 gosub @ALLY_DELETE_ID_NUMBER_SELECT
+if
+ZAME_NAME_AUD_TYPING_FLAG == -669966
+then
+ZAME_NAME_AUD_TYPING_FLAG = 0
+Player.CanMove(PLAYER_CHAR) = False
+0581: enable_radar 0 
+jump @TARGETS_SETTINGS3
+end
 
 Actor.StorePos(PLAYER_ACTOR, 2@, 3@, 4@)
 0@ = Marker.CreateIconAndSphere2(ZAME_ALLY_TRIGGER_ICON_ID, 2@, 3@, 4@)
@@ -874,6 +1368,13 @@ Player.CanMove(PLAYER_CHAR) = True
 
 :zame_menu_teleport_25161
 wait 0 
+
+if
+8A2A: not  text_box 'SE32' displayed
+then
+0512: show_permanent_text_box 'SE32'
+end
+
 if 
 00E1:   player 0 pressed_key 15 
 jf @zame_menu_teleport_25523 
@@ -1050,7 +1551,7 @@ Cinema.Radar(0)
 08DB: set_panel $PANEL column 0 header 'SE50' data 'SE154' 'SE155' 'SE156' 'SE157' 'SE158' 'SE159' 'SE160' 'SE161' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 
 wait 100     
 else
-25@ = 0
+25@ = 0     
 jump to @ZAME_SPEC_INF_CREATE_HAZMAT_JUMP
 end
 
@@ -1072,6 +1573,8 @@ jf @ZAME_SPEC_INF_CREATE_MENU2_CLOSE_CHECK
 
 08D7: 25@ = panel $PANEL active_row 
 08DA: remove_panel $PANEL
+
+:ZAME_SPEC_INF_CREATE_HAZMAT_JUMP
 
 Player.CanMove(PLAYER_CHAR) = False
 Cinema.Radar(0)
@@ -1098,8 +1601,6 @@ jf @ZAME_SPEC_INF_CREATE_MENU3_CLOSE_CHECK
 
 08D7: 26@ = panel $PANEL active_row 
 08DA: remove_panel $PANEL  
-
-:ZAME_SPEC_INF_CREATE_HAZMAT_JUMP
  
 Text.RemoveTextBox
 0581: enable_radar 1 
@@ -1108,6 +1609,13 @@ Player.CanMove(PLAYER_CHAR) = True
 
 :zame_menu_specinf_25161
 wait 0 
+
+if
+8A2A: not  text_box 'SE67' displayed
+then
+0512: show_permanent_text_box 'SE67'
+end
+
 if 
 00E1:   player 0 pressed_key 15 
 jf @zame_menu_specinf_25523 
@@ -1177,6 +1685,36 @@ if
 if
 0E3E: is_button_just_pressed 0 button 10
     then
+    
+    //////////////////////////////
+
+    text.ClearAll()
+    text.RemoveTextBox()
+    
+    while true
+    wait 0
+    text.ShowH('SE214B',100,1)
+        
+    if
+    0E3E: is_button_just_pressed 0 button 11
+        then
+        text.ClearAll()    
+        0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "WITCH_AGRED_FLAG"
+        ZAME_TEMP_FUCKEEE = 1
+        break
+        end
+        
+    if
+    0E3E: is_button_just_pressed 0 button 10
+        then
+        text.ClearAll()        
+        break
+        end
+        
+    end
+        
+//////////////////////////////
+    
     text.ClearAll()        
     break
     end
@@ -1435,6 +1973,13 @@ Player.CanMove(PLAYER_CHAR) = True
 
 :zame_menu_infcord_25161
 wait 0 
+
+if
+8A2A: not  text_box 'SE74' displayed
+then
+0512: show_permanent_text_box 'SE74'
+end
+
 if 
 00E1:   player 0 pressed_key 15 
 jf @zame_menu_infcord_25523 
@@ -1477,6 +2022,35 @@ ZAME_OBJECT_HANLDE = Object.Init(ZAME_ZOMBIE_OBJECT_ID, 2@, 3@, 4@)
 
 0AF1: write_int ZAME_OBJECTIVES_COUNT to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "OBJECTIVES_COUNT"
 0AF1: write_int ZAME_CURRENT_OBJECTIVE_INDEX to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "OBJECTIVE_INDEX"
+
+//////////////////////////////
+
+text.ClearAll()
+text.RemoveTextBox()
+        
+while true
+wait 0
+text.ShowH('SE650',100,1)
+            
+if
+0E3E: is_button_just_pressed 0 button 11
+    then
+    text.ClearAll()
+    0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "SPECINF_CHANGE"        
+    break
+    end
+            
+if
+0E3E: is_button_just_pressed 0 button 10
+    then
+    text.ClearAll()  
+    0AF1: write_int 0 to_ini_file "me\temp.dat" section v$RACE_FILE key "SPECINF_CHANGE"      
+    break
+    end
+            
+end
+            
+//////////////////////////////
 
 if and
 ZAME_RECREATE_OBJECTIVE_FLAG == 0
@@ -1707,6 +2281,35 @@ ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG = 0
 0AF1: write_int ZAME_OBJECTIVES_COUNT to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "OBJECTIVES_COUNT"
 0AF1: write_int ZAME_CURRENT_OBJECTIVE_INDEX to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "OBJECTIVE_INDEX"
 
+//////////////////////////////
+
+text.ClearAll()
+text.RemoveTextBox()
+        
+while true
+wait 0
+text.ShowH('SE650',100,1)
+            
+if
+0E3E: is_button_just_pressed 0 button 11
+    then
+    text.ClearAll()
+    0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "SPECINF_CHANGE"        
+    break
+    end
+            
+if
+0E3E: is_button_just_pressed 0 button 10
+    then
+    text.ClearAll() 
+    0AF1: write_int 0 to_ini_file "me\temp.dat" section v$RACE_FILE key "SPECINF_CHANGE"       
+    break
+    end
+            
+end
+            
+//////////////////////////////
+
 gosub @zame_menu_infcord_25351
 
 if
@@ -1734,6 +2337,13 @@ wait 100
 
 :zame_menu_26800
 wait 0
+
+if
+8A2A: not  text_box 'SE77' displayed
+then
+0512: show_permanent_text_box 'SE77'
+end
+
 if
 4@ == 0
 then
@@ -1877,6 +2487,13 @@ wait 100
 
 :zame_menu_27238
 wait 0 
+
+if
+8A2A: not  text_box 'SE82' displayed
+then
+0512: show_permanent_text_box 'SE82'
+end
+
 01E5: show_text_1number_highpriority GXT 'se78' number 5@ time 300 flag 1  
 if and
 80E1:   not player 0 pressed_key 11
@@ -2064,6 +2681,13 @@ wait 100
 
 :zame_menu_28087
 wait 0 
+
+if
+8A2A: not  text_box 'SE96' displayed
+then
+0512: show_permanent_text_box 'SE96'
+end
+
 if 
 00E1:   player 0 pressed_key 15 
 jf @zame_menu_28137 
@@ -2091,6 +2715,13 @@ wait 100
 
 :zame_menu_28200
 wait 0 
+
+if
+8A2A: not  text_box 'SE102' displayed
+then
+0512: show_permanent_text_box 'SE102'
+end
+
 if 
 00E1:   player 0 pressed_key 15 
 jf @zame_menu_28307 
@@ -2185,6 +2816,13 @@ wait 100
 
 :zame_menu_object_move_25161
 wait 0
+
+if
+8A2A: not  text_box 'SE60' displayed
+then
+0512: show_permanent_text_box 'SE60'
+end
+
 actor.StorePos(PLAYER_ACTOR,0@,1@,2@) 
 if
 00E1:   player 0 pressed_key 15 
@@ -2420,6 +3058,13 @@ ZAME_TEMP_FUCKEEE = 0.1
         
 while true
 wait 0
+
+if
+8A2A: not  text_box 'SE271' displayed
+then
+0512: show_permanent_text_box 'SE271'
+end
+
 0AD1: show_formatted_text_highpriority "move speed: %f" time 2000 ZAME_TEMP_FUCKEEE
 
 if
@@ -2937,6 +3582,13 @@ wait 100
 
 :zame_menu_explode_trigger_27238
 wait 0
+
+if
+8A2A: not  text_box 'SE224' displayed
+then
+0512: show_permanent_text_box 'SE224'
+end
+
 0980: extinguish_all_fires_at 2@ 3@ 4@ radius 20.0 
 0395: clear_area 1 at 2@ 3@ 4@ radius 20.0          
 01E5: show_text_1number_highpriority GXT 'SE225' number 5@ time 300 flag 1 
@@ -3129,6 +3781,13 @@ wait 100
 
 :zame_menu_object_destroy_25161
 wait 0
+
+if
+8A2A: not  text_box 'SE60' displayed
+then
+0512: show_permanent_text_box 'SE60'
+end
+
 actor.StorePos(PLAYER_ACTOR,0@,1@,2@) 
 if
 00E1:   player 0 pressed_key 15 
@@ -3263,6 +3922,13 @@ wait 100
 
 :zame_menu_object_destroy_sec_27238
 wait 0 
+
+if
+8A2A: not  text_box 'SE194' displayed
+then
+0512: show_permanent_text_box 'SE194'
+end
+
 01E5: show_text_1number_highpriority GXT 'SE195' number 5@ time 300 flag 1 
 if and
 80E1:   not player 0 pressed_key 11
@@ -3478,6 +4144,13 @@ end
 
 :zame_menu_weather_change_21743
 wait 0 
+
+if
+8A2A: not  text_box 'SE36' displayed
+then
+0512: show_permanent_text_box 'SE36'
+end
+
 01E5: show_text_1number_highpriority GXT 'se37' number 0@ time 100 flag 1 
 if and
 80E1:   not player 0 pressed_key 10
@@ -3785,6 +4458,35 @@ if
     then
     text.ClearAll()    
     0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "NEED_TO_DESTROY"
+    
+    /////////////////////////////////////////////////////////////////////////////////////
+
+    text.ClearAll()
+    text.RemoveTextBox()
+    
+    while true
+    wait 0
+    text.ShowH('SE652',100,1)
+        
+    if
+    0E3E: is_button_just_pressed 0 button 11
+        then
+        text.ClearAll()    
+        0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "HIDE_MARKER"
+        break
+        end  
+        
+    if
+    0E3E: is_button_just_pressed 0 button 10
+        then
+        text.ClearAll()     
+        break
+        end      
+        
+    end  
+    
+    /////////////////////////////////////////////////////////////////////////////////////
+    
     break
     end  
     
@@ -3832,6 +4534,42 @@ end
 end  
 
 /////////////////////////////////////////////////////////////////////////////////////
+
+if or
+9@ == 0
+9@ == 1
+then
+
+//////////////////////////////
+
+text.ClearAll()
+text.RemoveTextBox()
+        
+while true
+wait 0
+text.ShowH('SE651',100,1)
+            
+if
+0E3E: is_button_just_pressed 0 button 11
+    then
+    text.ClearAll()
+    0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "ONFOOT_SPAWN"        
+    break
+    end
+            
+if
+0E3E: is_button_just_pressed 0 button 10
+    then
+    text.ClearAll()  
+    0AF1: write_int 0 to_ini_file "me\temp.dat" section v$RACE_FILE key "ONFOOT_SPAWN"      
+    break
+    end
+            
+end
+            
+//////////////////////////////
+
+end
 
 ZAME_OBJECT_HANLDE = 0        
 ZAME_OBJECT_HANLDE = marker.CreateIconAndSphere2(ZAME_HUENEMY_TRIGGER_ICON_ID, 2@, 3@, 4@) 
@@ -3884,6 +4622,12 @@ wait 100
 repeat
 wait 0
 
+if
+8A2A: not  text_box 'SE393' displayed
+then
+0512: show_permanent_text_box 'SE393'
+end
+
 if 
 00E1:   player 0 pressed_key 11 
 then
@@ -3903,6 +4647,12 @@ wait 100
 
 repeat
 wait 0
+
+if
+8A2A: not  text_box 'SE393B' displayed
+then
+0512: show_permanent_text_box 'SE393B'
+end
 
 if 
 00E1:   player 0 pressed_key 11 
@@ -3929,6 +4679,12 @@ wait 100
 repeat
 wait 0
 
+if
+8A2A: not  text_box 'SE391' displayed
+then
+0512: show_permanent_text_box 'SE391'
+end
+
 if 
 00E1:   player 0 pressed_key 11 
 then
@@ -3948,6 +4704,12 @@ wait 100
 
 repeat
 wait 0
+
+if
+8A2A: not  text_box 'SE392' displayed
+then
+0512: show_permanent_text_box 'SE392'
+end
 
 if 
 00E1:   player 0 pressed_key 11 
@@ -3991,6 +4753,12 @@ end
 
 while true
 wait 0
+
+if
+8A2A: not  text_box 'SE80' displayed
+then
+0512: show_permanent_text_box 'SE80'
+end
 
 015D: set_gamespeed 1.0
 CURRENT_LAYOUT = 1
@@ -5392,6 +6160,12 @@ wait 100
 repeat
 wait 0
 
+if
+8A2A: not  text_box 'SE6' displayed
+then
+0512: show_permanent_text_box 'SE6'
+end
+
 if 
 00E1:   player 0 pressed_key 11 
 then
@@ -5407,6 +6181,13 @@ until 0E3E:   player 0 pressed_key 15
 
 repeat
 wait 0 
+
+if
+8A2A: not  text_box 'SE9' displayed
+then
+0512: show_permanent_text_box 'SE9'
+end
+
 until 0E3E:   player 0 pressed_key 15
 
 068D: get_camera_position_to 20@ 30@ 40@
@@ -5585,6 +6366,12 @@ repeat
 wait 0
 
 if
+8A2A: not  text_box 'SE146' displayed
+then
+0512: show_permanent_text_box 'SE146'
+end
+
+if
 0E3E:   player 0 pressed_key 14
     then
     0581: enable_radar 1 
@@ -5711,6 +6498,12 @@ wait 100
 
 while true
 wait 0
+
+if
+8A2A: not  text_box 'SE315' displayed
+then
+0512: show_permanent_text_box 'SE315'
+end
 
 01E5: show_text_1number_highpriority GXT 'se37' number 271@ time 300 flag 1
 
@@ -6198,6 +6991,12 @@ ZAME_NAME_AUD_TYPING_FLAG = 1
 while true
 wait 0
 
+if
+8A2A: not  text_box 'SE230' displayed
+then
+0512: show_permanent_text_box 'SE230'
+end
+
 CURRENT_LAYOUT = 1
 gosub @FXT_NAME_SELECT_KEYS_CHECK
 
@@ -6397,6 +7196,12 @@ ZAME_NAME_AUD_TYPING_FLAG = 1
 
 while true
 wait 0
+
+if
+8A2A: not  text_box 'SE230' displayed
+then
+0512: show_permanent_text_box 'SE230'
+end
 
 CURRENT_LAYOUT = 1
 gosub @FXT_NAME_SELECT_KEYS_CHECK
@@ -6607,7 +7412,174 @@ end
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+:anim_ID_SELECT
+
+5@ = -1
+//271@ = 1
+if
+ZAME_LATEST_ANIM_SELECTED < 1
+then
+ZAME_LATEST_ANIM_SELECTED = 1
+end
+0085: 271@ = ZAME_LATEST_ANIM_SELECTED // (int)
+gosub @zame_anim_id_get
+
+0512: show_permanent_text_box 'SE654'
+wait 100
+
+while true
+wait 0
+
+if
+8A2A: not  text_box 'SE654' displayed
+then
+0512: show_permanent_text_box 'SE654'
+end
+
+0AD1: show_formatted_text_highpriority "%d ~n~~r~%s~w~ ~n~~y~%s~w~" time 200 271@ v$TEAM1_NAME v$SNAME3
+0085: ZAME_LATEST_ANIM_SELECTED = 271@ // (int)
+
+gosub @zame_anim_id_get
+
+while not animation.Available(v$TEAM1_NAME)
+wait 0
+animation.Load(v$TEAM1_NAME)
+end
+
+0812: AS_actor PLAYER_ACTOR perform_animation v$SNAME3 IFP v$TEAM1_NAME framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 100  // versionB
+0085: 271@ = ZAME_LATEST_ANIM_SELECTED // (int)
+
+if or
+00E1:   player 0 pressed_key 10
+0E11:  is_mouse_wheel_down 
+    then
+    271@ -= 1 
+    gosub @zame_anim_id_get
+    0792: disembark_instantly_actor PLAYER_ACTOR
+    wait 0
+    if
+    00E1:   player 0 pressed_key 10
+        then
+        wait 100
+        end
+    end
+
+if or
+00E1:   player 0 pressed_key 11
+0E10:   is_mouse_wheel_up 
+    then
+    271@ += 1  
+    gosub @zame_anim_id_get
+    0792: disembark_instantly_actor PLAYER_ACTOR
+    wait 0
+    if
+    00E1:   player 0 pressed_key 11
+        then
+        wait 100
+        end
+    end
+
+if
+0E3E: is_button_just_pressed 0 button 15
+    then
+    5@ = -1
+    text.ClearAll()        
+    return
+    end
+
+if
+0E3E: is_button_just_pressed 0 button 16
+    then
+    5@ = 1            
+    text.ClearAll()        
+    return
+    end
+
+end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:zame_anim_id_get
+
+0AF0: 1@ = get_int_from_ini_file "data\animslist.ini" section "ANIMLIST2" key "MAX"
+if
+001D:   271@ > 1@  // (int)
+then
+271@ = 1
+end
+
+if
+271@ < 1
+then
+0085: 271@ = 1@ // (int)
+end
+
+0085: 1@ = 271@ // (int)
+0AD3: v$RACE_FILE = format "%d_IFP" 1@
+0AF4: v$TEAM1_NAME = read_string_from_ini_file "data\animslist.ini" section "ANIMLIST2" key v$RACE_FILE
+0AD3: v$RACE_FILE = format "%d_ANIM" 1@
+0AF4: v$SNAME3 = read_string_from_ini_file "data\animslist.ini" section "ANIMLIST2" key v$RACE_FILE
+
+return
+
 :IFP_NAME_SELECT
+
+//////////////////////////////
+
+text.ClearAll()
+text.RemoveTextBox()
+    
+while true
+wait 0
+text.ShowH('SE653',100,1)
+        
+if
+0E3E: is_button_just_pressed 0 button 11
+    then
+    text.ClearAll()
+    gosub @ANIM_ID_SELECT 
+    if
+    5@ == -1
+        then
+        33@ = 0
+        text.RemoveTextBox()
+        text.ClearAll()
+        wait 5
+        ZAME_NAME_AUD_TYPING_FLAG = 0                
+        jump @TARGETS_SETTINGS2
+        end             
+        
+    if
+    ZAME_RECREATE_OBJECTIVE_FLAG == 0
+    then
+    0AD3: v$RACE_FILE = format "OBJ%d" ZAME_CURRENT_OBJECTIVE_INDEX
+    else
+    0AD3: v$RACE_FILE = format "OBJ%d" ZAME_RECREATE_INDEX
+    end
+        
+    if or
+    ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG == 1
+    ZAME_RECREATE_OBJECTIVE_FLAG == 2
+    then
+    0AD3: v$RACE_FILE = format "%s" v$RACB_FILE
+    end
+    
+    0AF5: write_string v$TEAM1_NAME to_ini_file "me\temp.dat" section v$RACE_FILE key "IFP_NAME"
+    0AF5: write_string v$SNAME3 to_ini_file "me\temp.dat" section v$RACE_FILE key "ANIM_NAME"    
+                                   
+    jump to @SKIP_TYPING_IFP
+    end
+        
+if
+0E3E: is_button_just_pressed 0 button 10
+    then
+    text.ClearAll()        
+    break
+    end
+        
+end
+        
+//////////////////////////////
 
 06D1: v$SNAME3 = "" // v$ // Sunday
 06D1: v$SNAME2 = "" // v$ // Sunday
@@ -6625,6 +7597,14 @@ ZAME_NAME_AUD_TYPING_FLAG = 2
 
 while true
 wait 0
+
+if
+8A2A: not  text_box 'SE76' displayed
+then
+0512: show_permanent_text_box 'SE76'
+end
+
+:IFP_INCORRECT2
 
 CURRENT_LAYOUT = 1
 gosub @FXT_NAME_SELECT_KEYS_CHECK
@@ -6653,10 +7633,20 @@ if and
 0E3E: is_button_just_pressed 0 button 16
 33@ > 500
 8846: not  string v$SNAME3 empty // v$
-    then
-    33@ = 0
+    then    
     text.RemoveTextBox()
-    text.ClearAll()
+    text.ClearAll()    
+    
+    gosub @CHECK_FOR_IFP_EXISTING    
+    if
+    12@ == 0
+    then
+    text.ShowH('SE237',1000,1)
+    wait 1000
+    jump to @IFP_INCORRECT2    
+    end
+    
+    33@ = 0
     0@ = 0
     
     while not animation.Available(v$SNAME3)
@@ -6689,6 +7679,8 @@ if and
         jump @TARGETS_SETTINGS2
         end    
         
+        :SKIP_TYPING_IFP  
+        
         if
         ZAME_RECREATE_OBJECTIVE_FLAG == 0
         then
@@ -6702,7 +7694,7 @@ if and
         ZAME_RECREATE_OBJECTIVE_FLAG == 2
         then
         0AD3: v$RACE_FILE = format "%s" v$RACB_FILE
-        end
+        end        
         
         //////////////////////////////
     
@@ -6810,6 +7802,7 @@ if and
         jump @TARGETS_SETTINGS2
         
         else
+        :IFP_INCORRECT
         text.ShowH('SE235',1000,1)
         wait 1000
         end
@@ -6817,6 +7810,29 @@ if and
     end        
 
 end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:CHECK_FOR_IFP_EXISTING
+
+12@ = 0
+0AF0: get_int 11@ from_ini_file "data\animslist.ini" section "INFO" key "MAX"
+
+for 10@ = 0 to 11@
+0AD3: v$FUCK_CHRI = format "%d" 10@
+if
+0AF4: 0@v = read_string_from_ini_file "data\animslist.ini" section "ANIMLIST" key v$FUCK_CHRI
+    then
+    if
+    0D49: 9@ = compare_strings v$SNAME3 0@v // IF and SET
+        then
+        12@ = 1
+        return
+        end
+    end
+end
+
+return
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -7084,7 +8100,12 @@ if and
         ZAME_RECREATE_OBJECTIVE_FLAG == 2
         then
         0AD3: v$RACE_FILE = format "%s" v$RACB_FILE
-        end
+        end                
+        
+        0AF1: write_int 17 to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_TYPE"
+        0AF1: write_int $ACTIVE_INTERIOR to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_INT"    
+        
+        0AF5: write_string v$SNAME3 to_ini_file "me\temp.dat" section v$RACE_FILE key "TEXTURE_NAME"
         
         //////////////////////////////
     
@@ -7116,11 +8137,7 @@ if and
         end
             
         //////////////////////////////
-        
-        0AF1: write_int 17 to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_TYPE"
-        0AF1: write_int $ACTIVE_INTERIOR to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_INT"    
-        
-        0AF5: write_string v$SNAME3 to_ini_file "me\temp.dat" section v$RACE_FILE key "TEXTURE_NAME"        
+                
         actor.StorePos(PLAYER_ACTOR,2@,3@,4@)
         0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_X"
         0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_Y"
@@ -7707,6 +8724,33 @@ if and
     0E3E: is_button_just_pressed 0 button 11
         then
         0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "DONT_ASK"
+        
+        text.ClearAll()
+        text.RemoveTextBox()
+        
+        //////////////////////////////
+    
+        while true
+        wait 0
+        text.ShowH('SE649',100,1)
+                
+        if
+        0E3E: is_button_just_pressed 0 button 11
+            then
+            0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "RANDOM"
+            break
+            end
+                
+        if
+        0E3E: is_button_just_pressed 0 button 10
+            then
+            break
+            end
+                
+        end
+                
+        //////////////////////////////
+        
         break
         end
         
@@ -7974,7 +9018,7 @@ while true
 wait 0
 
 CURRENT_LAYOUT = 1
-gosub @OBJECT_ID_SELECT_KEYS_CHECK
+gosub @OBJECT_ID_SELECT_KEYS_CHECK 
 
 if
 8846: not  string v$SNAME3 empty // v$
@@ -7985,7 +9029,7 @@ else
 end
 
 if and
-0E3E: is_button_just_pressed 0 button 5
+0E3E: is_button_just_pressed 0 button 15
 33@ > 500
     then
     33@ = 0
@@ -8474,6 +9518,827 @@ jump @TARGETS_SETTINGS3
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+:ZAME_CODENUMBER_OBJECTIVE
+0581: enable_radar 1 
+Player.CanMove(PLAYER_CHAR) = True
+0512: show_permanent_text_box 'SE559' 
+
+:ZAME_CODENUMBER_OBJECTIVE_25161
+wait 0 
+if 
+00E1:   player 0 pressed_key 16 
+jf @ZAME_CODENUMBER_OBJECTIVE_25523 
+03E6: remove_text_box
+  
+Actor.StorePos(PLAYER_ACTOR, 2@, 3@, 4@)
+0@ = 0
+0@ = Marker.CreateIconAndSphere2(ZAME_CODENUMBER_TRIGGER_ICON_ID, 2@, 3@, 4@)
+ZAME_OBJECT_HANLDE = Object.Init(ZAME_CODENUMBER_OBJECT_ID, 2@, 3@, 4@)
+0566: link_object ZAME_OBJECT_HANLDE to_interior $ACTIVE_INTERIOR
+077E: get_active_interior_to 6@
+
+if
+ZAME_RECREATE_OBJECTIVE_FLAG == 0
+then
+0AD3: v$RACE_FILE = format "OBJ%d" ZAME_CURRENT_OBJECTIVE_INDEX
+else
+0AD3: v$RACE_FILE = format "OBJ%d" ZAME_RECREATE_INDEX
+end
+
+if or
+ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG == 1
+ZAME_RECREATE_OBJECTIVE_FLAG == 2
+then
+0AD3: v$RACE_FILE = format "%s" v$RACB_FILE
+end
+
+Player.CanMove(PLAYER_CHAR) = false
+gosub @CODENUMBER_NUMBER_SELECT
+if
+ZAME_NAME_AUD_TYPING_FLAG == -669966
+then
+ZAME_NAME_AUD_TYPING_FLAG = 0
+Player.CanMove(PLAYER_CHAR) = False
+0581: enable_radar 0 
+jump @TARGETS_SETTINGS3
+end
+
+0AF1: write_int 28 to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_TYPE"
+0AF1: write_int $ACTIVE_INTERIOR to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_INT"
+0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "CODEPANEL_X"
+0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "CODEPANEL_Y"
+0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "CODEPANEL_Z"
+0AF1: write_int 6@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TELEPORT_INT"
+0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_X"
+0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_Y"
+0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_Z"
+128@ = actor.Angle(PLAYER_ACTOR)
+0AF3: write_float 128@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_A"
+
+0AF1: write_int ZAME_OBJECTIVES_COUNT to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "OBJECTIVES_COUNT"
+0AF1: write_int ZAME_CURRENT_OBJECTIVE_INDEX to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "OBJECTIVE_INDEX"
+
+if and
+ZAME_RECREATE_OBJECTIVE_FLAG == 0
+not ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG == 1
+then
+ZAME_CURRENT_OBJECTIVE_INDEX += 1 
+ZAME_OBJECTIVES_COUNT += 1
+end
+
+ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG = 0
+
+gosub @zame_menu_25351
+
+if
+ZAME_RECREATE_OBJECTIVE_FLAG == 0
+then 
+00BC: show_text_highpriority GXT 'SE560' time 2000 flag 1
+gosub @zame_created_trigger_sound
+else
+00BC: show_text_highpriority GXT 'SE561' time 2000 flag 1
+gosub @zame_recreated_trigger_sound
+gosub @MISSION_SAVE_INITIALIZATION
+end    
+ 
+Player.CanMove(PLAYER_CHAR) = False
+0581: enable_radar 0 
+jump @TARGETS_SETTINGS3
+
+:ZAME_CODENUMBER_OBJECTIVE_25523
+if 
+00E1:   player 0 pressed_key 11 
+jf @ZAME_CODENUMBER_OBJECTIVE_25161 
+Player.CanMove(PLAYER_CHAR) = False
+0581: enable_radar 0 
+03E6: remove_text_box 
+jump @TARGETS_SETTINGS3
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:ZAME_REMOVE_WEPS_OBJECTIVE
+
+text.RemoveTextBox()
+text.ClearAll()
+
+if
+ZAME_RECREATE_OBJECTIVE_FLAG == 0
+then
+0AD3: v$RACE_FILE = format "OBJ%d" ZAME_CURRENT_OBJECTIVE_INDEX
+else
+0AD3: v$RACE_FILE = format "OBJ%d" ZAME_RECREATE_INDEX
+end
+
+if or
+ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG == 1
+ZAME_RECREATE_OBJECTIVE_FLAG == 2
+then
+0AD3: v$RACE_FILE = format "%s" v$RACB_FILE
+end
+
+0AF1: write_int 29 to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_TYPE"
+0AF1: write_int $ACTIVE_INTERIOR to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_INT"
+
+actor.StorePos(PLAYER_ACTOR,2@,3@,4@)
+0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_X"
+0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_Y"
+0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_Z"
+128@ = actor.Angle(PLAYER_ACTOR)
+0AF3: write_float 128@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_A"
+
+0@ = 0
+0@ = Marker.CreateIconAndSphere2(ZAME_REMOVEWEPS_TRIGGER_ICON_ID, 2@,3@,4@)
+1@ = Object.Init(ZAME_REMOVEWEPS_OBJECT_ID, 2@, 3@, 4@)
+0566: link_object 1@ to_interior $ACTIVE_INTERIOR
+0581: enable_radar 1 
+03E6: remove_text_box
+Player.CanMove(PLAYER_CHAR) = true
+
+0AF1: write_int ZAME_OBJECTIVES_COUNT to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "OBJECTIVES_COUNT"
+0AF1: write_int ZAME_CURRENT_OBJECTIVE_INDEX to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "OBJECTIVE_INDEX"
+
+if and
+ZAME_RECREATE_OBJECTIVE_FLAG == 0
+not ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG == 1
+then
+ZAME_CURRENT_OBJECTIVE_INDEX += 1 
+ZAME_OBJECTIVES_COUNT += 1
+end
+
+ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG = 0
+
+wait 100
+
+if
+ZAME_RECREATE_OBJECTIVE_FLAG == 0
+then
+00BC: show_text_highpriority GXT 'SE568' time 2000 flag 1
+gosub @zame_created_trigger_sound
+else
+00BC: show_text_highpriority GXT 'SE569' time 2000 flag 1
+gosub @zame_recreated_trigger_sound
+gosub @MISSION_SAVE_INITIALIZATION
+end
+ 
+jump @TARGETS_SETTINGS3 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:zame_menu_object_grab
+0581: enable_radar 1 
+Player.CanMove(PLAYER_CHAR) = True
+0512: show_permanent_text_box 'SE555'
+wait 100 
+
+:zame_menu_object_grab_25161
+wait 0
+actor.StorePos(PLAYER_ACTOR,0@,1@,2@) 
+if
+0E3E:   player 0 pressed_key 16 
+jf @zame_menu_object_grab_255232
+0AE3: ZAME_OBJECT_HANLDE = random_object_near_point 0@ 1@ 2@ in_radius 5.0 find_next 1 //IF and SET
+if
+03CA:   object ZAME_OBJECT_HANLDE exists
+jf @zame_menu_object_grab_255232
+
+0984: 1@ = object ZAME_OBJECT_HANLDE model
+if and
+not 1@ == #GUN_PARA
+not 1@ == 18161
+jf @zame_menu_object_grab_255232
+071E: get_object ZAME_OBJECT_HANLDE health_to 1@
+if
+1@ > 10000
+jf @zame_menu_object_grab_255232
+object.StorePos(ZAME_OBJECT_HANLDE,25@,26@,27@)
+0984: 1@ = object ZAME_OBJECT_HANLDE model
+
+Player.CanMove(PLAYER_CHAR) = false
+08D2: object ZAME_OBJECT_HANLDE scale_model 1.25
+
+while true
+wait 0
+
+0AD1: show_formatted_text_highpriority "object id %d, pos %f %f %f, ~n~~r~GRAB?~n~~w~Y - YES, N - NO!" time 10 1@ 25@ 26@ 27@
+if
+00E1:   player 0 pressed_key 11 
+    then 
+    08D2: object ZAME_OBJECT_HANLDE scale_model 0.99
+    break
+    end
+if
+00E1:   player 0 pressed_key 10 
+    then   
+    08D2: object ZAME_OBJECT_HANLDE scale_model 0.99
+    jump to @zame_menu_object_grab
+    end    
+    
+end
+
+object.StorePos(ZAME_OBJECT_HANLDE,$X,$Y,$Z)
+04C4: store_coords_to $X2 $Y2 $Z2 from_actor PLAYER_ACTOR with_offset 1.0 -2.0 0.0
+0984: 45@ = object ZAME_OBJECT_HANLDE model
+
+//////////////////////////////
+
+0581: enable_radar 1 
+Player.CanMove(PLAYER_CHAR) = True
+0512: show_permanent_text_box 'SE556' 
+
+:zame_menu_object_grab_25161B
+wait 0 
+if 
+00E1:   player 0 pressed_key 16 
+jf @zame_menu_object_grab_25523B 
+03E6: remove_text_box
+  
+Actor.StorePos(PLAYER_ACTOR, 2@, 3@, 4@)
+0@ = 0
+0@ = Marker.CreateIconAndSphere2(ZAME_OBJECTGRAB_TRIGGER_ICON_ID, 2@, 3@, 4@)
+ZAME_OBJECT_HANLDE = Object.Init(ZAME_OBJECTGRAB_OBJECT_ID, 2@, 3@, 4@)
+0566: link_object ZAME_OBJECT_HANLDE to_interior $ACTIVE_INTERIOR
+077E: get_active_interior_to 6@
+
+if
+ZAME_RECREATE_OBJECTIVE_FLAG == 0
+then
+0AD3: v$RACE_FILE = format "OBJ%d" ZAME_CURRENT_OBJECTIVE_INDEX
+else
+0AD3: v$RACE_FILE = format "OBJ%d" ZAME_RECREATE_INDEX
+end
+
+if or
+ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG == 1
+ZAME_RECREATE_OBJECTIVE_FLAG == 2
+then
+0AD3: v$RACE_FILE = format "%s" v$RACB_FILE
+end
+
+Player.CanMove(PLAYER_CHAR) = false
+
+0AF1: write_int 30 to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_TYPE"
+0AF1: write_int $ACTIVE_INTERIOR to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_INT"
+0AF3: write_float 25@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJ_X"
+0AF3: write_float 26@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJ_Y"
+0AF3: write_float 27@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJ_Z"
+Actor.StorePos(PLAYER_ACTOR, 2@, 3@, 4@)
+0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJ_MOV_X"
+0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJ_MOV_Y"
+0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJ_MOV_Z"
+0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_X"
+0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_Y"
+0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_Z"
+0AF1: write_int 45@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJ_MOV_MODEL"
+
+0AF1: write_int ZAME_OBJECTIVES_COUNT to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "OBJECTIVES_COUNT"
+0AF1: write_int ZAME_CURRENT_OBJECTIVE_INDEX to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "OBJECTIVE_INDEX"
+
+if
+ZAME_SPEC_MOD_FREE_CAM == 1 
+then
+gosub @ZAME_FREECAMS_CHECK
+end
+0930: (unknown) 0
+Camera.SetBehindPlayer
+Camera.Restore_WithJumpCut
+Player.CanMove(PLAYER_CHAR) = true
+Actor.LockInCurrentPosition(PLAYER_ACTOR) = false
+0E68: set_player_control_pad 1 1 
+0E69: set_player_control_pad_movement 0 1
+0581: enable_radar 1 
+03E6: remove_text_box
+
+if and
+ZAME_RECREATE_OBJECTIVE_FLAG == 0
+not ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG == 1
+then
+ZAME_CURRENT_OBJECTIVE_INDEX += 1 
+ZAME_OBJECTIVES_COUNT += 1
+end
+
+ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG = 0
+
+wait 100
+
+if
+ZAME_RECREATE_OBJECTIVE_FLAG == 0
+then
+00BC: show_text_highpriority GXT 'SE572' time 2000 flag 1
+gosub @zame_created_trigger_sound
+else
+00BC: show_text_highpriority GXT 'SE572B' time 2000 flag 1
+gosub @zame_recreated_trigger_sound
+gosub @MISSION_SAVE_INITIALIZATION
+end
+ 
+jump @TARGETS_SETTINGS
+
+:zame_menu_object_grab_255232
+if 
+00E1:   player 0 pressed_key 15 
+jf @zame_menu_object_grab_25161 
+Player.CanMove(PLAYER_CHAR) = False
+0581: enable_radar 0 
+03E6: remove_text_box 
+jump @TARGETS_SETTINGS3
+
+:zame_menu_object_grab_25523B
+if 
+00E1:   player 0 pressed_key 15 
+jf @zame_menu_object_grab_25161B 
+Player.CanMove(PLAYER_CHAR) = False
+0581: enable_radar 0 
+03E6: remove_text_box 
+jump @TARGETS_SETTINGS3
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:zame_menu_lookphoto_point
+0581: enable_radar 1 
+Player.CanMove(PLAYER_CHAR) = True
+0512: show_permanent_text_box 'SE553B' 
+
+:zame_menu_lookphoto_point_25161
+wait 0 
+if 
+0E3E:   player 0 pressed_key 16 
+jf @zame_menu_lookphoto_point_25523 
+03E6: remove_text_box
+  
+Actor.StorePos(PLAYER_ACTOR, 2@, 3@, 4@)
+0@ = 0
+0@ = Marker.CreateIconAndSphere2(ZAME_LOOKONPOINT_TRIGGER_ICON_ID, 2@, 3@, 4@)
+ZAME_OBJECT_HANLDE = Object.Init(ZAME_LOOKONPOINT_OBJECT_ID, 2@, 3@, 4@)
+0566: link_object ZAME_OBJECT_HANLDE to_interior $ACTIVE_INTERIOR
+077E: get_active_interior_to 6@
+
+if
+ZAME_RECREATE_OBJECTIVE_FLAG == 0
+then
+0AD3: v$RACE_FILE = format "OBJ%d" ZAME_CURRENT_OBJECTIVE_INDEX
+else
+0AD3: v$RACE_FILE = format "OBJ%d" ZAME_RECREATE_INDEX
+end
+
+if or
+ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG == 1
+ZAME_RECREATE_OBJECTIVE_FLAG == 2
+then
+0AD3: v$RACE_FILE = format "%s" v$RACB_FILE
+end
+
+Player.CanMove(PLAYER_CHAR) = false
+//gosub @CODENUMBER_NUMBER_SELECT
+
+0AF1: write_int 31 to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_TYPE"
+0AF1: write_int $ACTIVE_INTERIOR to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_INT"
+0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_X"
+0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_Y"
+0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_Z"
+128@ = actor.Angle(PLAYER_ACTOR)
+0AF3: write_float 128@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_A"
+
+//////////////////////////////
+
+text.ClearAll()
+text.RemoveTextBox()
+
+while true
+wait 0
+text.ShowH('SE553',100,1)
+    
+if
+0E3E: is_button_just_pressed 0 button 11
+    then
+    text.ClearAll()    
+    0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "PHOTO_FLAG"            
+    break
+    end
+    
+if
+0E3E: is_button_just_pressed 0 button 10
+    then
+    text.ClearAll() 
+    
+    //////////////////////////////
+
+    text.ClearAll()
+    text.RemoveTextBox()
+    
+    while true
+    wait 0
+    text.ShowH('SE554',100,1)
+        
+    if
+    0E3E: is_button_just_pressed 0 button 11
+        then
+        text.ClearAll()    
+        0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "BINO_FLAG"
+        break
+        end
+        
+    if
+    0E3E: is_button_just_pressed 0 button 10
+        then
+        text.ClearAll()        
+        break
+        end
+        
+    end
+        
+    //////////////////////////////
+           
+    break
+    end
+    
+end
+    
+//////////////////////////////
+
+0AF1: write_int ZAME_OBJECTIVES_COUNT to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "OBJECTIVES_COUNT"
+0AF1: write_int ZAME_CURRENT_OBJECTIVE_INDEX to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "OBJECTIVE_INDEX"
+
+if and
+ZAME_RECREATE_OBJECTIVE_FLAG == 0
+not ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG == 1
+then
+ZAME_CURRENT_OBJECTIVE_INDEX += 1 
+ZAME_OBJECTIVES_COUNT += 1
+end
+
+ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG = 0
+
+gosub @zame_menu_25351
+
+if
+ZAME_RECREATE_OBJECTIVE_FLAG == 0
+then 
+00BC: show_text_highpriority GXT 'SE574' time 2000 flag 1
+gosub @zame_created_trigger_sound
+else
+00BC: show_text_highpriority GXT 'SE574B' time 2000 flag 1
+gosub @zame_recreated_trigger_sound
+gosub @MISSION_SAVE_INITIALIZATION
+end    
+ 
+Player.CanMove(PLAYER_CHAR) = False
+0581: enable_radar 0 
+jump @TARGETS_SETTINGS3
+
+:zame_menu_lookphoto_point_25523
+if 
+00E1:   player 0 pressed_key 15 
+jf @zame_menu_lookphoto_point_25161 
+Player.CanMove(PLAYER_CHAR) = False
+0581: enable_radar 0 
+03E6: remove_text_box 
+jump @TARGETS_SETTINGS3
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:zame_menu_protect_teammate
+0581: enable_radar 1 
+Player.CanMove(PLAYER_CHAR) = True
+0512: show_permanent_text_box 'SE546' 
+
+:zame_menu_protect_teammate_25161
+wait 0 
+if 
+0E3E:   player 0 pressed_key 16 
+jf @zame_menu_protect_teammate_25523 
+03E6: remove_text_box
+  
+Actor.StorePos(PLAYER_ACTOR, 2@, 3@, 4@)
+0@ = 0
+0@ = Marker.CreateIconAndSphere2(ZAME_TEAMMATEPROTECT_TRIGGER_ICON_ID, 2@, 3@, 4@)
+ZAME_OBJECT_HANLDE = Object.Init(ZAME_TEAMMATEPROTECT_OBJECT_ID, 2@, 3@, 4@)
+0566: link_object ZAME_OBJECT_HANLDE to_interior $ACTIVE_INTERIOR
+077E: get_active_interior_to 6@
+
+if
+ZAME_RECREATE_OBJECTIVE_FLAG == 0
+then
+0AD3: v$RACE_FILE = format "OBJ%d" ZAME_CURRENT_OBJECTIVE_INDEX
+else
+0AD3: v$RACE_FILE = format "OBJ%d" ZAME_RECREATE_INDEX
+end
+
+if or
+ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG == 1
+ZAME_RECREATE_OBJECTIVE_FLAG == 2
+then
+0AD3: v$RACE_FILE = format "%s" v$RACB_FILE
+end
+
+Player.CanMove(PLAYER_CHAR) = false
+gosub @ALLY_PROTECT_ID_NUMBER_SELECT
+if
+ZAME_NAME_AUD_TYPING_FLAG == -669966
+then
+ZAME_NAME_AUD_TYPING_FLAG = 0
+Player.CanMove(PLAYER_CHAR) = False
+0581: enable_radar 0 
+jump @TARGETS_SETTINGS3
+end
+
+:zame_menu_protect_teammate_time_select_27207
+0581: enable_radar 1 
+0512: show_permanent_text_box 'SE577' 
+5@ = 1
+wait 100 
+
+:zame_menu_protect_teammate_time_select_27238
+wait 0 
+01E5: show_text_1number_highpriority GXT 'se78' number 5@ time 300 flag 1  
+if and
+80E1:   not player 0 pressed_key 11
+8E10: not is_mouse_wheel_up 
+jf @zame_menu_protect_teammate_time_select_27519 
+if and
+80E1:   not player 0 pressed_key 10
+8E11: not is_mouse_wheel_down 
+jf @zame_menu_protect_teammate_time_select_27555 
+if 
+0E3E:   player 0 pressed_key 16 
+jf @zame_menu_protect_teammate_time_select_27238
+
+//////////////////////////////
+
+text.ClearAll()
+text.RemoveTextBox()
+
+while true
+wait 0
+text.ShowH('SE227',100,1)
+    
+if
+0E3E: is_button_just_pressed 0 button 11
+    then
+    text.ClearAll()
+    0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "HIDDEN_TIMER_FLAG"        
+    break
+    end
+    
+if
+0E3E: is_button_just_pressed 0 button 10
+    then
+    text.ClearAll()        
+    break
+    end
+    
+end
+    
+//////////////////////////////
+
+0AF1: write_int 32 to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_TYPE"
+0AF1: write_int $ACTIVE_INTERIOR to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_INT"
+0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_X"
+0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_Y"
+0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_Z"
+0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "PROTECT_GOTO_POINT_X"
+0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "PROTECT_GOTO_POINT_Y"
+0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "PROTECT_GOTO_POINT_Z"
+0AF1: write_int 5@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TIMER_SECONDS"
+128@ = actor.Angle(PLAYER_ACTOR)
+0AF3: write_float 128@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_A"
+0AF3: write_float 128@ to_ini_file "me\temp.dat" section v$RACE_FILE key "PROTECT_GOTO_POINT_A"
+//0AF5: write_string "BOMBER" to_ini_file "me\temp.dat" section v$RACE_FILE key "IFP"
+//0AF5: write_string "BOM_Plant_Loop" to_ini_file "me\temp.dat" section v$RACE_FILE key "ANIM_NAME"
+
+0AF1: write_int ZAME_OBJECTIVES_COUNT to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "OBJECTIVES_COUNT"
+0AF1: write_int ZAME_CURRENT_OBJECTIVE_INDEX to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "OBJECTIVE_INDEX"
+
+if and
+ZAME_RECREATE_OBJECTIVE_FLAG == 0
+not ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG == 1
+then
+ZAME_CURRENT_OBJECTIVE_INDEX += 1 
+ZAME_OBJECTIVES_COUNT += 1
+end
+
+ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG = 0
+
+gosub @zame_menu_25351
+
+if
+ZAME_RECREATE_OBJECTIVE_FLAG == 0
+then 
+00BC: show_text_highpriority GXT 'SE576' time 2000 flag 1
+gosub @zame_created_trigger_sound
+else
+00BC: show_text_highpriority GXT 'SE576B' time 2000 flag 1
+gosub @zame_recreated_trigger_sound
+gosub @MISSION_SAVE_INITIALIZATION
+end    
+ 
+Player.CanMove(PLAYER_CHAR) = False
+0581: enable_radar 0 
+jump @TARGETS_SETTINGS3
+
+:zame_menu_protect_teammate_25523
+if 
+00E1:   player 0 pressed_key 15 
+jf @zame_menu_protect_teammate_25161 
+Player.CanMove(PLAYER_CHAR) = False
+0581: enable_radar 0 
+03E6: remove_text_box 
+jump @TARGETS_SETTINGS3
+
+:zame_menu_protect_teammate_time_select_27519
+
+if
+80E1:   not player 0 pressed_key 14
+then 
+5@ += 1
+else
+5@ += 10
+end
+ 
+if and
+8E10: not is_mouse_wheel_up
+8E11: not is_mouse_wheel_down
+then 
+wait 100
+end
+ 
+jump @zame_menu_protect_teammate_time_select_27238 
+
+:zame_menu_protect_teammate_time_select_27555
+
+if
+80E1:   not player 0 pressed_key 14
+then 
+5@ -= 1
+else
+5@ -= 10
+end
+ 
+if 
+5@ < 1 
+then
+5@ = 1
+end
+ 
+if and
+8E10: not is_mouse_wheel_up
+8E11: not is_mouse_wheel_down
+then 
+wait 100
+end
+ 
+jump @zame_menu_protect_teammate_time_select_27238 
+
+:zame_change_skin_weapon
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM = 6
+jump to @ZAME_MENU_PLAYER_SETTINGS_18973  
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:TARGETS_SETTINGS4
+    
+Player.CanMove(PLAYER_CHAR) = False
+Cinema.Radar(0)
+0512: show_permanent_text_box 'SE117'
+08D4: $PANEL = create_panel_with_title 'SE10' position 72.0 160.0 width 150.0 columns 1 interactive 1 background 1 alignment 1
+if
+8A4B: not  controls_set_to_joystick
+then
+08DB: set_panel $PANEL column 0 header 'dummy' data 'SE552' 'SE596' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 
+else 
+//08DB: set_panel $PANEL column 0 header 'dummy' data 'SE51' 'dummy' 'dummy' 'SE300' 'SE303' 'SE316' 'SE333' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy'
+end
+
+if
+not ZAME_OBJECTS_COUNT > 0
+then
+08D9: set_panel $PANEL row 8 enable 0
+end
+
+//if
+//not ZAME_OBJECTS_COUNT > 0
+//then
+//08D9: set_panel $PANEL row 1 enable 0
+//end
+//
+//if
+//not ZAME_OBJECTIVES_COUNT > 0
+//then
+//08D9: set_panel $PANEL row 10 enable 0
+//end
+ 
+wait 100     
+
+:TARGETS_SETTINGS4_CLOSE_CHECK
+wait 0 
+if 
+00E1:   player 0 pressed_key 15 
+jf @TARGETS_SETTINGS4_SELECTED_CHECK    
+08DA: remove_panel $PANEL 
+Text.RemoveTextBox
+wait 100 
+jump @TARGETS_SETTINGS3
+
+:TARGETS_SETTINGS4_SELECTED_CHECK
+wait 0 
+if 
+00E1:   player 0 pressed_key 16 
+jf @TARGETS_SETTINGS4_CLOSE_CHECK
+
+08D7: 0@ = panel $PANEL active_row 
+08DA: remove_panel $PANEL 
+Text.RemoveTextBox
+if
+8A4B: not  controls_set_to_joystick
+then
+0871: init_jump_table 0@ total_jumps 12 default_jump 0 @ZAME_OPEN_CHECK jumps 0 @zame_change_skin_weapon 1 @zame_car_search_objective 2 @ZAME_OPEN_CHECK 3 @ZAME_OPEN_CHECK 4 @ZAME_OPEN_CHECK 5 @ZAME_OPEN_CHECK 6 @ZAME_OPEN_CHECK 
+0872: jump_table_jumps 7 @ZAME_OPEN_CHECK 8 @ZAME_OPEN_CHECK 9 @ZAME_OPEN_CHECK 10 @ZAME_OPEN_CHECK 11 @ZAME_OPEN_CHECK 12 @ZAME_OPEN_CHECK 13 @ZAME_OPEN_CHECK 14 @ZAME_OPEN_CHECK 15 @ZAME_OPEN_CHECK
+else
+//0871: init_jump_table 0@ total_jumps 11 default_jump 0 @ZAME_OPEN_CHECK jumps 0 @zame_menu_explode_trigger_27207 1 @zame_menu_object_destroy 2 @zame_menu_weather_change_21732 3 @FADE_IN_OUT_SELECT 4 @SAVESTATUS_ON_OFF_SELECT 5 @BOMBARDING_SELECT 6 @ZAME_HUMAN_ENEMY_CREATE_MENU 
+//0872: jump_table_jumps 7 @ZAME_OPEN_CHECK 8 @ZAME_OPEN_CHECK 9 @ZAME_OPEN_CHECK 10 @ZAME_OPEN_CHECK 11 @ZAME_OPEN_CHECK 12 @ZAME_OPEN_CHECK 13 @ZAME_OPEN_CHECK 14 @ZAME_OPEN_CHECK 15 @ZAME_OPEN_CHECK
+end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:zame_car_search_objective
+0581: enable_radar 1 
+Player.CanMove(PLAYER_CHAR) = True
+0512: show_permanent_text_box 'SE597' 
+  
+if
+ZAME_RECREATE_OBJECTIVE_FLAG == 0
+then
+0AD3: v$RACE_FILE = format "OBJ%d" ZAME_CURRENT_OBJECTIVE_INDEX
+else
+0AD3: v$RACE_FILE = format "OBJ%d" ZAME_RECREATE_INDEX
+end
+
+if or
+ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG == 1
+ZAME_RECREATE_OBJECTIVE_FLAG == 2
+then
+0AD3: v$RACE_FILE = format "%s" v$RACB_FILE
+end            
+
+Player.CanMove(PLAYER_CHAR) = false
+gosub @ALLY_CARSEARCH_NUMBER_SELECT
+if
+ZAME_NAME_AUD_TYPING_FLAG == -669966
+then
+ZAME_NAME_AUD_TYPING_FLAG = 0
+Player.CanMove(PLAYER_CHAR) = False
+0581: enable_radar 0 
+jump @TARGETS_SETTINGS4
+end
+
+Actor.StorePos(PLAYER_ACTOR, 2@, 3@, 4@)
+0@ = 0
+0@ = Marker.CreateIconAndSphere2(ZAME_CARSEARCH_TRIGGER_ICON_ID, 2@, 3@, 4@)
+ZAME_OBJECT_HANLDE = Object.Init(ZAME_CARSEARCH_OBJECT_ID, 2@, 3@, 4@)
+0566: link_object ZAME_OBJECT_HANLDE to_interior $ACTIVE_INTERIOR
+077E: get_active_interior_to 6@
+
+//////////////////////////////
+
+0AF1: write_int 34 to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_TYPE"
+0AF1: write_int $ACTIVE_INTERIOR to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_INT"
+0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_X"
+0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_Y"
+0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_Z"
+128@ = actor.Angle(PLAYER_ACTOR)
+0AF3: write_float 128@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_A"
+
+0AF1: write_int ZAME_OBJECTIVES_COUNT to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "OBJECTIVES_COUNT"
+0AF1: write_int ZAME_CURRENT_OBJECTIVE_INDEX to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "OBJECTIVE_INDEX"
+
+if and
+ZAME_RECREATE_OBJECTIVE_FLAG == 0
+not ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG == 1
+then
+ZAME_CURRENT_OBJECTIVE_INDEX += 1 
+ZAME_OBJECTIVES_COUNT += 1
+end
+
+ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG = 0
+
+gosub @zame_menu_25351
+
+if
+ZAME_RECREATE_OBJECTIVE_FLAG == 0
+then 
+00BC: show_text_highpriority GXT 'SE599' time 2000 flag 1
+gosub @zame_created_trigger_sound
+else
+00BC: show_text_highpriority GXT 'SE599B' time 2000 flag 1
+gosub @zame_recreated_trigger_sound
+gosub @MISSION_SAVE_INITIALIZATION
+end    
+ 
+Player.CanMove(PLAYER_CHAR) = False
+0581: enable_radar 0 
+jump @TARGETS_SETTINGS4
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 :CAM_SHAKE_TIME_SELECT
 
 06D1: v$SNAME3 = "" // v$ // Sunday
@@ -8737,6 +10602,18 @@ else
 end
 
 if and
+0E3E: is_button_just_pressed 0 button 15
+33@ > 500
+    then
+    3@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5
+    ZAME_NAME_AUD_TYPING_FLAG = -669966 
+    return
+    end
+
+if and
 0E3E: is_button_just_pressed 0 button 16
 33@ > 500
 8846: not  string v$SNAME3 empty // v$
@@ -8754,6 +10631,628 @@ if and
     end
 
 end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:CODENUMBER_NUMBER_SELECT
+
+06D1: v$SNAME3 = "" // v$ // Sunday
+06D1: v$SNAME2 = "" // v$ // Sunday
+
+29@ = 0
+33@ = 0
+KEYS_TYPED_NUM = 0
+
+ZAME_NAME_AUD_TYPING_FLAG = 2
+    
+0AE0: remove_dynamic_GXT_entry "F_NAME"
+0ADF: add_dynamic_GXT_entry "F_NAME" text ""
+
+0512: show_permanent_text_box 'SE557'
+
+while true
+wait 0
+
+if
+8A2A: not  text_box 'SE557' displayed
+    then
+    0512: show_permanent_text_box 'SE557'
+    end
+
+CURRENT_LAYOUT = 1
+ZAME_TEMP_FUCKEEE = 9996669991
+gosub @OBJECT_ID_SELECT_KEYS_CHECK
+ZAME_TEMP_FUCKEEE = 0
+
+if
+8846: not  string v$SNAME3 empty // v$
+then
+0384: show_text_1string GXT "SE558" string "F_NAME" time 99999999 1
+else
+0384: show_text_1string GXT "SE558" string v$NAME3 time 99999999 1
+end
+
+if and
+0E3E: is_button_just_pressed 0 button 15
+33@ > 500
+    then
+    3@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5
+    ZAME_NAME_AUD_TYPING_FLAG = -669966 
+    return
+    end
+
+if and
+0E3E: is_button_just_pressed 0 button 16
+33@ > 500
+8846: not  string v$SNAME3 empty // v$
+    then
+    
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5
+    ZAME_NAME_AUD_TYPING_FLAG = 0        
+    
+    0AF5: write_string v$SNAME3 to_ini_file "me\temp.dat" section v$RACE_FILE key "CODE"    
+    return
+    
+    end
+
+end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:ALLY_PROTECT_ID_NUMBER_SELECT
+
+06D1: v$SNAME3 = "" // v$ // Sunday
+06D1: v$SNAME2 = "" // v$ // Sunday
+
+29@ = 0
+33@ = 0
+KEYS_TYPED_NUM = 0
+
+ZAME_NAME_AUD_TYPING_FLAG = 2
+    
+0AE0: remove_dynamic_GXT_entry "F_NAME"
+0ADF: add_dynamic_GXT_entry "F_NAME" text ""
+
+0512: show_permanent_text_box 'SE510'
+
+while true
+wait 0
+
+if
+8A2A: not  text_box 'SE510' displayed
+    then
+    0512: show_permanent_text_box 'SE510'
+    end
+
+CURRENT_LAYOUT = 1
+gosub @OBJECT_ID_SELECT_KEYS_CHECK
+
+if
+8846: not  string v$SNAME3 empty // v$
+then
+0384: show_text_1string GXT "SE511" string "F_NAME" time 99999999 1
+else
+0384: show_text_1string GXT "SE511" string v$NAME3 time 99999999 1
+end
+
+if and
+0E3E: is_button_just_pressed 0 button 15
+33@ > 500
+    then
+    3@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5
+    ZAME_NAME_AUD_TYPING_FLAG = -669966 
+    return
+    end
+
+if and
+0E3E: is_button_just_pressed 0 button 16
+33@ > 500
+8846: not  string v$SNAME3 empty // v$
+    then
+    
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5
+    ZAME_NAME_AUD_TYPING_FLAG = 0        
+    
+    0AF5: write_string v$SNAME3 to_ini_file "me\temp.dat" section v$RACE_FILE key "SKIN_TO_PROTECT"    
+    return
+    
+    end
+
+end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:SCRIPTED_DRIVE_ID_ALLY_FOR_DRIVER_NUMBER_SELECT
+
+06D1: v$SNAME3 = "" // v$ // Sunday
+06D1: v$SNAME2 = "" // v$ // Sunday
+
+29@ = 0
+33@ = 0
+KEYS_TYPED_NUM = 0
+
+ZAME_NAME_AUD_TYPING_FLAG = 2
+    
+0AE0: remove_dynamic_GXT_entry "F_NAME"
+0ADF: add_dynamic_GXT_entry "F_NAME" text ""
+
+0512: show_permanent_text_box 'SE593'
+
+while true
+wait 0
+
+if
+8A2A: not  text_box 'SE593' displayed
+    then
+    0512: show_permanent_text_box 'SE593'
+    end
+
+CURRENT_LAYOUT = 1
+gosub @OBJECT_ID_SELECT_KEYS_CHECK
+
+if
+8846: not  string v$SNAME3 empty // v$
+then
+0384: show_text_1string GXT "SE511" string "F_NAME" time 99999999 1
+else
+0384: show_text_1string GXT "SE511" string v$NAME3 time 99999999 1
+end        
+
+if and
+0E3E: is_button_just_pressed 0 button 16
+33@ > 500
+8846: not  string v$SNAME3 empty // v$
+    then
+    
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5
+    ZAME_NAME_AUD_TYPING_FLAG = 0        
+    
+    0AF5: write_string v$SNAME3 to_ini_file "me\temp.dat" section v$RACE_FILE key "SKIN_FOR_DRIVER"    
+    return
+    
+    end
+
+end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:ALLY_CARSEARCH_NUMBER_SELECT
+
+06D1: v$SNAME3 = "" // v$ // Sunday
+06D1: v$SNAME2 = "" // v$ // Sunday
+
+29@ = 0
+33@ = 0
+KEYS_TYPED_NUM = 0
+
+ZAME_NAME_AUD_TYPING_FLAG = 2
+    
+0AE0: remove_dynamic_GXT_entry "F_NAME"
+0ADF: add_dynamic_GXT_entry "F_NAME" text ""
+
+0512: show_permanent_text_box 'SE597'
+
+while true
+wait 0
+
+if
+8A2A: not  text_box 'SE597' displayed
+    then
+    0512: show_permanent_text_box 'SE597'
+    end
+
+CURRENT_LAYOUT = 1
+gosub @OBJECT_ID_SELECT_KEYS_CHECK
+
+if
+8846: not  string v$SNAME3 empty // v$
+then
+0384: show_text_1string GXT "SE598" string "F_NAME" time 99999999 1
+else
+0384: show_text_1string GXT "SE598" string v$NAME3 time 99999999 1
+end
+
+if and
+0E3E: is_button_just_pressed 0 button 15
+33@ > 500
+    then
+    3@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5
+    ZAME_NAME_AUD_TYPING_FLAG = -669966 
+    return
+    end
+
+if and
+0E3E: is_button_just_pressed 0 button 16
+33@ > 500
+8846: not  string v$SNAME3 empty // v$
+    then
+    
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5
+    ZAME_NAME_AUD_TYPING_FLAG = 0        
+    
+    0AF5: write_string v$SNAME3 to_ini_file "me\temp.dat" section v$RACE_FILE key "COUNT_TO_SEARCH"    
+    return
+    
+    end
+
+end
+
+:ZAME_DRIVEBY_SCRIPTED_WEP_SELECT
+0581: enable_radar 1 
+0512: show_permanent_text_box 'SE592'
+018C: play_sound 1057 at 0.0 0.0 0.0 
+wait 100 
+0089: 1@ = ZAME_PLAYER_START_WEAPON_ID // (float) 
+gosub @ZAME_DRIVEBY_SCRIPTED_WEP_SELECT_20350 
+
+0713: actor PLAYER_ACTOR driveby_actor -1 car -1 point 0.0 0.0 0.0 radius 3000.0 4 0 firing_rate 100
+
+:ZAME_DRIVEBY_SCRIPTED_WEP_SELECT_20037
+wait 0 
+
+//0A96: 3@ = actor PLAYER_ACTOR struct
+//0AA6: call_method 0x5E6280 struct 3@ params 1 pop 0 ZAME_PLAYER_START_WEAPON_ID
+
+/////////////////////FUCK, GET BACK!!!/////////////////////
+//if and
+//00E1:   player 0 pressed_key 15  
+//not ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 5
+//then
+//Player.CanMove(PLAYER_CHAR) = False
+//048F: actor PLAYER_ACTOR remove_weapons
+//03E6: remove_text_box 
+//0581: enable_radar 0 
+//ZAME_PLAYER_DUMMY_MARKER = Marker.CreateAboveActor(ZAME_PLAYER_DUMMY)
+//Marker.SetColor(ZAME_PLAYER_DUMMY_MARKER, 2)
+//0337: set_actor ZAME_PLAYER_DUMMY visibility 1 
+//
+//while not model.Available(ZAME_START_PLAYER_MODEL)
+//wait 0
+//model.Load(ZAME_START_PLAYER_MODEL)
+//mload
+//end
+//
+//09C7: change_player PLAYER_CHAR model_to ZAME_START_PLAYER_MODEL
+//
+//if or
+//ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 4
+//ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 6
+//ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 7
+//then                   
+//jump @TARGETS_SETTINGS3   
+//else 
+//jump @MISSION_SETTINGS 
+//end
+//
+//end
+/////////////////////FUCK, GET BACK!!!/////////////////////
+
+if and
+8E3E: not is_button_just_pressed 0 button 11
+8E10: not is_mouse_wheel_up 
+jf @ZAME_DRIVEBY_SCRIPTED_WEP_SELECT_20190 
+if and
+8E3E: not is_button_just_pressed 0 button 10 
+8E11: not is_mouse_wheel_down
+jf @ZAME_DRIVEBY_SCRIPTED_WEP_SELECT_20552 
+
+ZAME_TEMP_FUCKEEE = 0
+if
+270@ < 16
+    then
+    ZAME_TEMP_FUCKEEE = 1
+    end
+    
+if or
+270@ == 106
+270@ == 108
+270@ == 110
+270@ == 115
+270@ == 118
+270@ == 44
+270@ == 45
+    then
+    ZAME_TEMP_FUCKEEE = 1
+    end
+    
+if or
+270@ == 121
+270@ == 122
+270@ == 123
+270@ == 124
+270@ == 125
+270@ == 126
+270@ == 127
+270@ == 128
+    then
+    ZAME_TEMP_FUCKEEE = 1
+    end
+    
+if or
+270@ == 129
+270@ == 130
+270@ == 131
+270@ == 132
+270@ == 133
+270@ == 134
+    then
+    ZAME_TEMP_FUCKEEE = 1
+    end
+    
+if or
+270@ == 154
+270@ == 155
+270@ == 156
+270@ == 157
+270@ == 158
+270@ == 159
+270@ == 160
+270@ == 161
+    then  
+    ZAME_TEMP_FUCKEEE = 1
+    end
+    
+if or    
+270@ == 162
+270@ == 163
+270@ == 164
+270@ == 92
+270@ == 107
+    then
+    ZAME_TEMP_FUCKEEE = 1
+    end
+    
+if or
+270@ == 184
+270@ == 185
+270@ == 186
+270@ == 187
+270@ == 188
+270@ == 189
+270@ == 190
+270@ == 191
+    then  
+    ZAME_TEMP_FUCKEEE = 1
+    end
+    
+if or    
+270@ == 192
+270@ == 193
+270@ == 194
+    then
+    ZAME_TEMP_FUCKEEE = 1
+    end
+    
+if or    
+270@ == 175
+270@ == 176
+270@ == 183
+270@ == 205
+270@ == 206
+270@ == 213
+    then
+    ZAME_TEMP_FUCKEEE = 1
+    end
+    
+if or    
+270@ == 177
+270@ == 178
+270@ == 179
+270@ == 207
+270@ == 208
+270@ == 209
+    then
+    ZAME_TEMP_FUCKEEE = 1
+    end
+
+if and
+//00E1:   player 0 pressed_key 16
+not ZAME_TEMP_FUCKEEE == 1
+0E3E: is_button_just_pressed 0 button 16 
+jf @ZAME_DRIVEBY_SCRIPTED_WEP_SELECT_20116 
+03E6: remove_text_box
+    
+if
+ZAME_TEMP_FUCKEEE == 1
+then
+ZAME_TEMP_FUCKEEE = 0
+end
+ 
+048F: actor PLAYER_ACTOR remove_weapons
+
+if
+ZAME_RECREATE_OBJECTIVE_FLAG == 0
+then
+0AD3: v$RACE_FILE = format "OBJ%d" ZAME_CURRENT_OBJECTIVE_INDEX
+else
+0AD3: v$RACE_FILE = format "OBJ%d" ZAME_RECREATE_INDEX
+end
+    
+if or
+ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG == 1
+ZAME_RECREATE_OBJECTIVE_FLAG == 2
+then
+0AD3: v$RACE_FILE = format "%s" v$RACB_FILE
+end
+
+0AF1: write_int 270@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TURRET_WEP_ID" 
+return
+
+:ZAME_DRIVEBY_SCRIPTED_WEP_SELECT_20116
+if 
+//00E1:   player 0 pressed_key 16
+0E3E: is_button_just_pressed 0 button 16 
+jf @ZAME_DRIVEBY_SCRIPTED_WEP_SELECT_20037 
+048F: actor PLAYER_ACTOR remove_weapons 
+03E6: remove_text_box 
+0581: enable_radar 0 
+return  
+
+:ZAME_DRIVEBY_SCRIPTED_WEP_SELECT_20190
+
+if
+80E1:   not player 0 pressed_key 14
+then
+1@ += 1
+else
+1@ += 10
+end
+ 
+gosub @zame_weap_id_get2 
+0781: get_weapon_with_ID 270@ model_to 10@ 
+if 
+07DE:   model 10@ exists // versionB 
+jf @ZAME_DRIVEBY_SCRIPTED_WEP_SELECT_20190 
+Model.Load(10@)
+038B: load_requested_models 
+if 
+   Model.Available(10@)
+jf @ZAME_DRIVEBY_SCRIPTED_WEP_SELECT_20190 
+11@ = 99999 
+Actor.GiveWeaponAndAmmo(PLAYER_ACTOR, 270@, 11@) 
+0A96: 3@ = actor PLAYER_ACTOR struct
+0AA6: call_method 0x5E6280 struct 3@ params 1 pop 0 270@
+jump @ZAME_DRIVEBY_SCRIPTED_WEP_SELECT_20037 
+
+:ZAME_DRIVEBY_SCRIPTED_WEP_SELECT_20350
+0781: get_weapon_with_ID ZAME_PLAYER_START_WEAPON_ID model_to 10@ 
+if 
+07DE:   model 10@ exists // versionB 
+jf @ZAME_DRIVEBY_SCRIPTED_WEP_SELECT_20350 
+Model.Load(10@)
+038B: load_requested_models 
+if 
+   Model.Available(10@)
+jf @ZAME_DRIVEBY_SCRIPTED_WEP_SELECT_20350 
+11@ = 99999  
+Actor.GiveWeaponAndAmmo(PLAYER_ACTOR, ZAME_PLAYER_START_WEAPON_ID, 11@)
+01B9: set_actor PLAYER_ACTOR armed_weapon_to ZAME_PLAYER_START_WEAPON_ID 
+return 
+
+:ZAME_DRIVEBY_SCRIPTED_WEP_SELECT_20552
+
+if
+80E1:   not player 0 pressed_key 14
+then
+1@ -= 1
+else
+1@ -= 10
+end
+ 
+gosub @zame_weap_id_get2 
+0781: get_weapon_with_ID 270@ model_to 10@ 
+if 
+07DE:   model 10@ exists // versionB 
+jf @ZAME_DRIVEBY_SCRIPTED_WEP_SELECT_20552 
+Model.Load(10@)
+038B: load_requested_models 
+if 
+   Model.Available(10@)
+jf @ZAME_DRIVEBY_SCRIPTED_WEP_SELECT_20552 
+11@ = 99999  
+Actor.GiveWeaponAndAmmo(PLAYER_ACTOR, 270@, 11@) 
+0A96: 3@ = actor PLAYER_ACTOR struct
+0AA6: call_method 0x5E6280 struct 3@ params 1 pop 0 270@
+jump @ZAME_DRIVEBY_SCRIPTED_WEP_SELECT_20037
+
+:ZAME_CARREC_RECORD
+
+car.LockInCurrentPosition(ZAME_CAR_ADVENTURE_CAR,true)
+car.StorePos(ZAME_CAR_ADVENTURE_CAR,2@,3@,4@)
+5@ = car.Angle(ZAME_CAR_ADVENTURE_CAR)
+    
+/////////////////////////////////////////////////////////////////////////////////////
+
+text.ClearAll()
+text.RemoveTextBox()
+    
+while true
+wait 0
+text.ShowH('SE590',100,1)
+        
+if
+0E3E: is_button_just_pressed 0 button 11
+    then
+    
+    CLASSIC_MUSIC = 0
+    car.LockInCurrentPosition(ZAME_CAR_ADVENTURE_CAR,false)
+    :DO_SHIT_AGAIN_PLEASE
+    if
+    0AF0: 5@ = get_int_from_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "CARREC_NUM"
+    then
+    5@ += 1
+    0AF1: write_int 5@ to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "CARREC_NUM"
+    0AF1: write_int 5@ to_ini_file "me\temp.dat" section v$RACE_FILE key "CARREC_NUM"
+    //ass
+    else
+    5@ = 73
+    0AF1: write_int 73 to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "CARREC_NUM" 
+    0AF1: write_int 73 to_ini_file "me\temp.dat" section v$RACE_FILE key "CARREC_NUM"   
+    jump to @DO_SHIT_AGAIN_PLEASE
+    end
+    create_thread @ZAM_REC 0 0 0 0 0 0 0 0 PLAYER_ACTOR 5@ 0 0 0 0 ZAME_MISSION_LOAD_NUMBER
+    
+    while true
+    wait 0
+    text.ShowH('SE591',100,1)
+    
+    if
+    0E3E: is_button_just_pressed 0 button 18
+        then
+        CLASSIC_MUSIC = 2  
+        car.StorePos(ZAME_CAR_ADVENTURE_CAR,2@,3@,4@)
+        5@ = car.Angle(ZAME_CAR_ADVENTURE_CAR)    
+        0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "DEST_X0"
+        0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "DEST_Y0"
+        0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "DEST_Z0"
+        0AF3: write_float 5@ to_ini_file "me\temp.dat" section v$RACE_FILE key "DEST_A0"          
+        ZAME_OBJECT_HANLDE = Object.Init(ZAME_CAR_ADVENTURE_POINT2_ID, 2@, 3@, 4@)
+        0E0D: mark_object_as_needed ZAME_OBJECT_HANLDE
+        0566: link_object ZAME_OBJECT_HANLDE to_interior $ACTIVE_INTERIOR 
+        0@ = 0
+        018A: 0@ = create_checkpoint_at 2@ 3@ 4@
+        marker.SetIconSize(0@,2)  
+        text.ClearAll()        
+        0AF2: get_float 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "DEST_X0"
+        0AF2: get_float 3@ from_ini_file "me\temp.dat" section v$RACE_FILE key "DEST_Y0"
+        0AF2: get_float 4@ from_ini_file "me\temp.dat" section v$RACE_FILE key "DEST_Z0"
+        0AF2: get_float 5@ from_ini_file "me\temp.dat" section v$RACE_FILE key "DEST_A0" 
+        0AF0: get_int 6@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CAR_ID"  
+        0AF0: get_int 7@ from_ini_file "me\temp.dat" section v$RACE_FILE key "COLOR1" 
+        0AF0: get_int 8@ from_ini_file "me\temp.dat" section v$RACE_FILE key "COLOR2"
+        gosub @CAR_CREATE_ZAME_KUKLA3                                
+        return
+        end
+    
+    end
+    
+    break  
+    end
+        
+end     
+
+return 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

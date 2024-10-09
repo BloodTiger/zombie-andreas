@@ -95,6 +95,7 @@ if
 0@ < 1
 then
 SINGLE_SPAWN_FLAG = 1
+0AF1: write_int 1 to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "SINGLE_START"
 03E6: remove_text_box 
 00BC: show_text_highpriority GXT 'SE136' time 4000 flag 1 
 Player.CanMove(PLAYER_CHAR) = False
@@ -102,6 +103,7 @@ Player.CanMove(PLAYER_CHAR) = False
 jump @MISSION_SETTINGS
 else
 SINGLE_SPAWN_FLAG = 0
+0AF1: write_int 0 to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "SINGLE_START"
 03E6: remove_text_box 
 00BC: show_text_highpriority GXT 'SE137' time 4000 flag 1 
 Player.CanMove(PLAYER_CHAR) = False
@@ -414,9 +416,14 @@ if
 then
 
 0AF0: get_int 0@ from_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "FRIENDLY_FIRE"
+if
+0@ < 0
+then
+0@ = 2
+end
 
 if
-0@ < 1
+0@ == 2
 then
 0AF1: write_int 1 to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "FRIENDLY_FIRE"
 03E6: remove_text_box 
@@ -820,6 +827,25 @@ if
 then
 08DA: remove_panel $PANEL
 Text.RemoveTextBox
+
+if
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 4
+then
+jump @TARGETS_SETTINGS3 
+end
+
+if
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 6
+then
+jump @TARGETS_SETTINGS4
+end
+
+if
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 7
+then
+jump @TRIGGERS_SETTINGS 
+end
+
 jump @MISSION_SETTINGS 
 end
 
@@ -945,7 +971,7 @@ ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 3
     if
     TEAM3_SKIN > 0
     then
-    008B: 0@ = TEAM1_SKIN // (int)
+    008B: 0@ = TEAM3_SKIN // (int)
     else
     0085: 0@ = ZAME_START_PLAYER_MODEL // (int)
     end
@@ -955,8 +981,15 @@ ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 3
 if
 ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 4
     then
-    0085: 0@ = ZAME_START_PLAYER_MODEL // (int)
-    end           
+    0085: 0@ = ZAME_LATEST_SKIN_SELECTED // (int)
+    end
+    
+if or
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 6
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 7
+    then
+    0085: 0@ = ZAME_LATEST_SKIN_SELECTED // (int)
+    end               
 
 end 
 
@@ -972,12 +1005,49 @@ if
     end
     
     09C7: change_player PLAYER_CHAR model_to 0@
-    
+    else
+    if
+    001D:   0@ > ZAME_SKINS_COUNT_MAX  // (int)
+        then
+        008B: 0@ = ZAME_SKINS_COUNT_MAX // (int)
+        
+        while not model.Available(0@)
+        wait 0
+        model.Load(0@)
+        mload
+        end
+        
+        09C7: change_player PLAYER_CHAR model_to 0@
+        else
+        if or
+        ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 4
+        ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 6
+        ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 7
+            then
+            
+            while not model.Available(ZAME_LATEST_SKIN_SELECTED)
+            wait 0
+            model.Load(ZAME_LATEST_SKIN_SELECTED)
+            mload
+            end
+            
+            09C7: change_player PLAYER_CHAR model_to ZAME_LATEST_SKIN_SELECTED
+            
+            end
+        end    
     end
 
 :ZAME_MENU_PLAYER_SETTINGS_19020
 wait 0 
-01E5: show_text_1number_highpriority GXT 'se37' number 0@ time 300 flag 1 
+01E5: show_text_1number_highpriority GXT 'se37' number 0@ time 300 flag 1
+if or
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 4
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 6
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 7
+then
+0085: ZAME_LATEST_SKIN_SELECTED = 0@ // (int) 
+end
+
 if and
 80E1:   not player 0 pressed_key 11
 8E10: not is_mouse_wheel_up 
@@ -1009,7 +1079,26 @@ end
 09C7: change_player PLAYER_CHAR model_to ZAME_START_PLAYER_MODEL 
 ZAME_PLAYER_DUMMY_MARKER = Marker.CreateAboveActor(ZAME_PLAYER_DUMMY)
 Marker.SetColor(ZAME_PLAYER_DUMMY_MARKER, 2)
-0337: set_actor ZAME_PLAYER_DUMMY visibility 1 
+0337: set_actor ZAME_PLAYER_DUMMY visibility 1
+
+if
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 4
+then
+jump @TARGETS_SETTINGS3 
+end
+
+if
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 6
+then
+jump @TARGETS_SETTINGS4
+end
+
+if
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 7
+then
+jump @TRIGGERS_SETTINGS 
+end
+ 
 jump @MISSION_SETTINGS  
 
 :ZAME_MENU_PLAYER_SETTINGS_19165
@@ -1116,14 +1205,44 @@ jump @ZAME_MENU_PLAYER_SETTINGS_19020
 
 :ZAME_MENU_PLAYER_SETTINGS_20003
 0581: enable_radar 1 
+
+if
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 5
+then
+0512: show_permanent_text_box 'se65b'
+else
 0512: show_permanent_text_box 'se65'
+end
+
 018C: play_sound 1057 at 0.0 0.0 0.0 
-wait 100 
-0089: 1@ = ZAME_PLAYER_START_WEAPON_ID // (float) 
-gosub @ZAME_MENU_PLAYER_SETTINGS_20350 
+wait 100  
+
+if or
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 4
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 6
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 7
+then
+0089: 1@ = ZAME_LATEST_WEP_SELECTED // (float)
+gosub @zame_weap_id_get2
+gosub @ZAME_MENU_PLAYER_SETTINGS_20350B
+else
+0089: 1@ = ZAME_PLAYER_START_WEAPON_ID2 // (float)
+gosub @zame_weap_id_get2
+gosub @ZAME_MENU_PLAYER_SETTINGS_20350
+end 
 
 :ZAME_MENU_PLAYER_SETTINGS_20037
 wait 0 
+
+if or
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 4
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 6
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 7
+then                                        
+0089: ZAME_LATEST_WEP_SELECTED = 1@ // (float)
+else
+0089: ZAME_PLAYER_START_WEAPON_ID2 = 1@ // (float)
+end
 
 /////////////////////FUCK, GET BACK!!!/////////////////////
 if and
@@ -1146,10 +1265,20 @@ end
 
 09C7: change_player PLAYER_CHAR model_to ZAME_START_PLAYER_MODEL
 
-if
+if or
 ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 4
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 6
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 7
 then                   
-jump @TARGETS_SETTINGS3   
+
+if
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 6
+then
+jump @TARGETS_SETTINGS4
+else
+jump @TARGETS_SETTINGS3
+end
+   
 else 
 jump @MISSION_SETTINGS 
 end
@@ -1279,6 +1408,12 @@ if or
     then
     ZAME_TEMP_FUCKEEE = 1
     end
+    
+if
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 6
+then
+gosub @ZAME_MENU_PLAYER_SETTINGS_29619
+end    
 
 if and
 ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 0
@@ -1342,7 +1477,7 @@ Actor.GiveWeaponAndAmmo(PLAYER_ACTOR, 270@, 11@)
 jump @ZAME_MENU_PLAYER_SETTINGS_20037 
 
 :ZAME_MENU_PLAYER_SETTINGS_20350
-0781: get_weapon_with_ID ZAME_PLAYER_START_WEAPON_ID model_to 10@ 
+0781: get_weapon_with_ID 270@ model_to 10@ 
 if 
 07DE:   model 10@ exists // versionB 
 jf @ZAME_MENU_PLAYER_SETTINGS_20350 
@@ -1352,8 +1487,23 @@ if
    Model.Available(10@)
 jf @ZAME_MENU_PLAYER_SETTINGS_20350 
 11@ = 99999  
-Actor.GiveWeaponAndAmmo(PLAYER_ACTOR, ZAME_PLAYER_START_WEAPON_ID, 11@)
-01B9: set_actor PLAYER_ACTOR armed_weapon_to ZAME_PLAYER_START_WEAPON_ID 
+Actor.GiveWeaponAndAmmo(PLAYER_ACTOR, 270@, 11@)
+01B9: set_actor PLAYER_ACTOR armed_weapon_to 270@ 
+return 
+
+:ZAME_MENU_PLAYER_SETTINGS_20350B
+0781: get_weapon_with_ID 270@ model_to 10@ 
+if 
+07DE:   model 10@ exists // versionB 
+jf @ZAME_MENU_PLAYER_SETTINGS_20350B 
+Model.Load(10@)
+038B: load_requested_models 
+if 
+   Model.Available(10@)
+jf @ZAME_MENU_PLAYER_SETTINGS_20350B 
+11@ = 99999  
+Actor.GiveWeaponAndAmmo(PLAYER_ACTOR, 270@, 11@)
+01B9: set_actor PLAYER_ACTOR armed_weapon_to 270@ 
 return 
 
 :ZAME_MENU_PLAYER_SETTINGS_20552
@@ -1561,7 +1711,134 @@ ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 5
     0AF1: write_int 0@ to_ini_file "me\temp.dat" section v$RACE_FILE key "MARODER_MODEL"
     0AF1: write_int 270@ to_ini_file "me\temp.dat" section v$RACE_FILE key "MARODER_WEP_ID"    
     jump to @CUM_BACK_FROM_MARODER_SKINWEP_SELECT    
-    end          
+    end   
+    
+if
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 6
+    then
+    
+    0581: enable_radar 1 
+    Player.CanMove(PLAYER_CHAR) = True
+    0512: show_permanent_text_box 'SE581'
+    018C: play_sound 1057 at 0.0 0.0 0.0 
+    wait 100 
+    
+    repeat
+    wait 0 
+    
+    if 
+    00E1:   player 0 pressed_key 15 
+    then
+    Player.CanMove(PLAYER_CHAR) = False
+    03E6: remove_text_box 
+    0581: enable_radar 0 
+    ZAME_PLAYER_DUMMY_MARKER = Marker.CreateAboveActor(ZAME_PLAYER_DUMMY)
+    Marker.SetColor(ZAME_PLAYER_DUMMY_MARKER, 2)
+    0337: set_actor ZAME_PLAYER_DUMMY visibility 1
+    
+    while not model.Available(ZAME_START_PLAYER_MODEL)
+    wait 0
+    model.Load(ZAME_START_PLAYER_MODEL)
+    mload
+    end
+     
+    09C7: change_player PLAYER_CHAR model_to ZAME_START_PLAYER_MODEL
+    jump to @TARGETS_SETTINGS3
+    end 
+    
+    if 
+//    00E1:   player 0 pressed_key 16
+    0E3E: is_button_just_pressed 0 button 16
+        then          
+        break
+        end 
+        
+    until false
+        
+    while not model.Available(ZAME_START_PLAYER_MODEL)
+    wait 0
+    model.Load(ZAME_START_PLAYER_MODEL)
+    mload
+    end
+    
+    09C7: change_player PLAYER_CHAR model_to ZAME_START_PLAYER_MODEL 
+    
+    if
+    ZAME_RECREATE_OBJECTIVE_FLAG == 0
+    then
+    0AD3: v$RACE_FILE = format "OBJ%d" ZAME_CURRENT_OBJECTIVE_INDEX
+    else
+    0AD3: v$RACE_FILE = format "OBJ%d" ZAME_RECREATE_INDEX
+    end
+    
+    if or
+    ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG == 1
+    ZAME_RECREATE_OBJECTIVE_FLAG == 2
+    then
+    0AD3: v$RACE_FILE = format "%s" v$RACB_FILE
+    end
+    
+    0AF1: write_int 0@ to_ini_file "me\temp.dat" section v$RACE_FILE key "REBORN_MODEL"
+    0AF1: write_int 270@ to_ini_file "me\temp.dat" section v$RACE_FILE key "REBORN_WEP_ID"
+    0AF1: write_int 9@ to_ini_file "me\temp.dat" section v$RACE_FILE key "REBORN_WEP_AMMO"    
+    
+    Actor.StorePos(PLAYER_ACTOR, 2@, 3@, 4@)
+    0@ = Marker.CreateIconAndSphere2(ZAME_CHANGESKIN_TRIGGER_ICON_ID, 2@, 3@, 4@)
+    
+    ZAME_OBJECT_HANLDE = Object.Init(ZAME_CHANGESKIN_OBJECT_ID, 2@, 3@, 4@)
+    0E0D: mark_object_as_needed ZAME_OBJECT_HANLDE
+    0566: link_object ZAME_OBJECT_HANLDE to_interior $ACTIVE_INTERIOR
+    
+    0AF1: write_int 33 to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_TYPE"
+    0AF1: write_int $ACTIVE_INTERIOR to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_INT"
+    0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_X"
+    0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_Y"
+    0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_Z"
+    128@ = actor.Angle(PLAYER_ACTOR)
+    0AF3: write_float 128@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_A"
+    
+    0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "REBORN_X"
+    0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "REBORN_Y"
+    0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "REBORN_Z"
+    0AF3: write_float 128@ to_ini_file "me\temp.dat" section v$RACE_FILE key "REBORN_A"
+    
+    0AF1: write_int ZAME_OBJECTIVES_COUNT to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "OBJECTIVES_COUNT"
+    0AF1: write_int ZAME_CURRENT_OBJECTIVE_INDEX to_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "OBJECTIVE_INDEX"
+    
+    if and
+    ZAME_RECREATE_OBJECTIVE_FLAG == 0
+    not ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG == 1
+    then
+    ZAME_CURRENT_OBJECTIVE_INDEX += 1 
+    ZAME_OBJECTIVES_COUNT += 1
+    end
+    
+    ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG = 0
+    
+    gosub @zame_menu_25351
+    
+    if
+    ZAME_RECREATE_OBJECTIVE_FLAG == 0
+    then 
+    00BC: show_text_highpriority GXT 'SE579' time 2000 flag 1
+    gosub @zame_created_trigger_sound
+    else
+    00BC: show_text_highpriority GXT 'SE579B' time 2000 flag 1
+    gosub @zame_recreated_trigger_sound        
+    gosub @MISSION_SAVE_INITIALIZATION
+    end 
+     
+    Player.CanMove(PLAYER_CHAR) = False
+    0581: enable_radar 0 
+    jump @TARGETS_SETTINGS3
+    
+    end  
+    
+if
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 7
+    then 
+    jump to @ZAME_TRIGGER_DUMMYPED_RETURNED
+    end            
      
 Player.CanMove(PLAYER_CHAR) = False
 0581: enable_radar 0
@@ -1733,14 +2010,63 @@ jump @MISSION_SETTINGS
 end
 
 :ZAME_MENU_PLAYER_SETTINGS_29619
+if
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 5
+then
+0512: show_permanent_text_box 'se113b'
+else
 0512: show_permanent_text_box 'se113'
+end
 018C: play_sound 1057 at 0.0 0.0 0.0 
 wait 100 
 gosub @ZAME_MENU_PLAYER_SETTINGS_29769
-9@ = 1 
+0085: 9@ = ZAME_PLAYER_START_WEAPON_AMMO // (int) 
 
 :ZAME_MENU_PLAYER_SETTINGS_29641
 wait 0 
+
+/////////////////////FUCK, GET BACK!!!/////////////////////
+if and
+00E1:   player 0 pressed_key 15  
+not ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 5
+then
+Player.CanMove(PLAYER_CHAR) = False
+048F: actor PLAYER_ACTOR remove_weapons
+03E6: remove_text_box 
+0581: enable_radar 0 
+ZAME_PLAYER_DUMMY_MARKER = Marker.CreateAboveActor(ZAME_PLAYER_DUMMY)
+Marker.SetColor(ZAME_PLAYER_DUMMY_MARKER, 2)
+0337: set_actor ZAME_PLAYER_DUMMY visibility 1 
+
+while not model.Available(ZAME_START_PLAYER_MODEL)
+wait 0
+model.Load(ZAME_START_PLAYER_MODEL)
+mload
+end
+
+09C7: change_player PLAYER_CHAR model_to ZAME_START_PLAYER_MODEL
+
+if or
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 4
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 6
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 7
+then                   
+
+if
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 6
+then
+jump @TARGETS_SETTINGS4
+else
+jump @TARGETS_SETTINGS3
+end
+   
+else 
+jump @MISSION_SETTINGS 
+end
+
+end
+/////////////////////FUCK, GET BACK!!!/////////////////////
+
 01E5: show_text_1number_highpriority GXT 'se114' number 9@ time 200 flag 1 
 if and
 80E1:   not player 0 pressed_key 11

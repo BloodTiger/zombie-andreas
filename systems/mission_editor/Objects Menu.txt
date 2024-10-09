@@ -154,8 +154,9 @@ then
 end
 
 ZAME_OBJECT_HANLDE = 1024
-if
+if and
 ZAME_RECREATE_OBJECT_FLAG == 0
+not ZAME_DUBLICATE_OBJ_MODE == 1
 then
 gosub @zame_object_get_id_by_category
 end
@@ -179,10 +180,16 @@ not ZAME_DUBLICATE_OBJ_MODE == 1
     then                      
     0453: set_object ZAME_OBJECT_HANLDE XYZ_rotation 15@ 14@ 13@
     else
-    0087: 13@ = ZAME_DUBLICATE_OBJ_A // (float)
-    14@ = 0.0
-    15@ = 0.0
-    0453: set_object ZAME_OBJECT_HANLDE XYZ_rotation 15@ 14@ 13@
+    if
+    not ZAME_OBJ_DUBLICATE_NOANGLE == 1
+        then
+        0453: set_object ZAME_OBJECT_HANLDE XYZ_rotation 15@ 14@ 13@
+        else
+        ZAME_OBJ_DUBLICATE_NOANGLE = 0
+        14@ = 0.0 
+        15@ = 0.0
+        0453: set_object ZAME_OBJECT_HANLDE XYZ_rotation 0.0 0.0 ZAME_DUBLICATE_OBJ_A        
+        end
     end 
 end
 
@@ -589,6 +596,13 @@ end
 if
 8A4B: not  controls_set_to_joystick
 then
+
+if
+0E3D: is_key_just_pressed 4
+    then
+    random_float 13@ 0.0 360.0
+    0453: set_object ZAME_OBJECT_HANLDE XYZ_rotation 15@ 14@ 13@
+    end
 
 if and
 ZAME_SPEC_MOD_FREE_CAM == 0 
@@ -1218,6 +1232,39 @@ object.Indestructibility(ZAME_OBJECT_HANLDE,1)
 071F: set_object ZAME_OBJECT_HANLDE health_to 28000
 0392: make_object ZAME_OBJECT_HANLDE moveable 0
 0550: keep_object ZAME_OBJECT_HANLDE in_memory 1
+
+0907: get_object ZAME_OBJECT_HANLDE mass_to 0@ // float
+if
+0@ < 99999.0
+    then
+        
+    text.ClearAll()
+    text.RemoveTextBox()
+        
+    while true
+    wait 0
+    text.ShowH('SE655',100,1)
+                        
+    if
+    00E1:  player 0 pressed_key 11
+        then
+        text.ClearAll()
+        0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "INDESTRUCTABLE"
+        break
+        end    
+            
+    if
+    00E1:  player 0 pressed_key 10
+        then
+        text.ClearAll()
+        0AF1: write_int 0 to_ini_file "me\temp.dat" section v$RACE_FILE key "INDESTRUCTABLE"
+        break
+        end    
+            
+    end
+        
+    end
+
 else
 0AD3: v$RACE_FILE = format "OBE%d" ZAME_RECREATE_INDEX
 0AF1: write_int 29@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJ_ID"
@@ -2277,12 +2324,29 @@ return
 KEYS_TYPED_NUM += 1
 
 if
+ZAME_TEMP_FUCKEEE == 9996669991
+then
+
+if
+KEYS_TYPED_NUM >= 15
+then
+Audiostream.Volume($MENU_INVALID_SOUND) = $SOUNDS_VOLUME 
+Audiostream.Loop($MENU_INVALID_SOUND, 0)
+Audiostream.PerformAction($MENU_INVALID_SOUND, PLAY)
+return
+end
+
+else
+
+if
 KEYS_TYPED_NUM >= 6
 then
 Audiostream.Volume($MENU_INVALID_SOUND) = $SOUNDS_VOLUME 
 Audiostream.Loop($MENU_INVALID_SOUND, 0)
 Audiostream.PerformAction($MENU_INVALID_SOUND, PLAY)
 return
+end
+
 end
 
 Audiostream.Volume($MENU_FOCUS_SOUND) = $SOUNDS_VOLUME 
@@ -2319,6 +2383,18 @@ else
 end
 
 end
+
+if and
+ZAME_TEMP_FUCKEEE == 9996669991
+ZAME_TEMP_FUCKEEE8 == 9996669991
+    then
+    Audiostream.Volume($CASE_BUTTON_SOUND) = $SOUNDS_VOLUME 
+    Audiostream.Loop($CASE_BUTTON_SOUND, 0)
+    Audiostream.PerformAction($CASE_BUTTON_SOUND, PLAY)
+    gosub @DISEMB_JETP_CHECK
+    0792: disembark_instantly_actor PLAYER_ACTOR
+    0812: AS_actor PLAYER_ACTOR perform_animation "bomber" IFP "PED" framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF 0 time -1  // versionB
+    end
 
 return
 
@@ -2643,6 +2719,8 @@ actor.GiveWeaponAndAmmo(PLAYER_ACTOR,1@,99999)
 while true
 wait 0
 
+:SHIIIETB22222
+
 if
 0E3E: is_button_just_pressed 0 button 15
     then   
@@ -2674,35 +2752,94 @@ if and
             0EEF: get_entity_heading 11@ store_to 18@
             18@ *= 57.2958643845                  
             11@ += 0x22
-            0A8D: 14@ = read_memory 11@ size 2 virtual_protect 0 
+            0A8D: 14@ = read_memory 11@ size 2 virtual_protect 0
+            11@ -= 0x22 
             if
             14@ > 0
                 then
                 0E7F: get_model_type 14@ store_to 1@
+                0E13: get_entity 11@ type_to 2@
 //                0AD1: show_formatted_text_highpriority "model type: %d" time 100 1@
-                if
+                if and
                 not 1@ == 7
+                2@ == 2
                     then
+                    0AEC: 11@ = object_struct 11@ handle
                     0F17: get_model_name_pointer 14@ to 1@             
                     0AD1: show_formatted_text_highpriority "id: %d, name: %s~n~ X: %.4f, Y: %.4f, Z: %.4f, A: %.2f" time 100 14@ 1@ 15@ 16@ 17@ 18@
                     if
                     00E1:   player 0 pressed_key 17
                         then
+                        
+                        0AF0: 24@ = get_int_from_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "OBJECTS_COUNT"
+                        for ZAME_RECREATE_INDEX = 0 to 24@
+                        0AD3: v$RACE_FILE = format "OBE%d" ZAME_RECREATE_INDEX
+                        0AF2: get_float $X from_ini_file "me\temp.dat" section v$RACE_FILE key "POS_X"
+                        0AF2: get_float $Y from_ini_file "me\temp.dat" section v$RACE_FILE key "POS_Y"
+                        0AF2: get_float $Z from_ini_file "me\temp.dat" section v$RACE_FILE key "POS_Z"                               
+                        0AF0: get_int 29@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJ_ID"                                 
+                                                        
+                        0984: 1@ = object 11@ model
+                        if and
+                        003B:   1@ == 29@  // (int)
+                        0EEC: locate_object_distance_to_coordinates 11@ pos $X $Y $Z radius 0.1                             
+                            then
+                            0085: 31@ = 11@ // (int)                            
+                            ZAME_DUBLICATE_OBJ_MODE = 1
+                            ZAME_OBJ_DUBLICATE_NOANGLE = 0
+                            ZAME_RECREATE_OBJECT_FLAG = 0
+                            0087: ZAME_DUBLICATE_OBJ_X = 15@ // (float)
+                            0087: ZAME_DUBLICATE_OBJ_Y = 16@ // (float)
+                            0087: ZAME_DUBLICATE_OBJ_Z = 17@ // (float)
+                            0085: 29@ = 14@ // (int)
+                            0AF2: get_float 15@ from_ini_file "me\temp.dat" section v$RACE_FILE key "ANGLE_X"
+                            0AF2: get_float 14@ from_ini_file "me\temp.dat" section v$RACE_FILE key "ANGLE_Y"
+                            0AF2: get_float 13@ from_ini_file "me\temp.dat" section v$RACE_FILE key "ANGLE_Z"
+                            100@ = 69                            
+                            jump to @OBJECTS_MENU_32814
+                            end
+                            
+                        end
+                        
                         ZAME_DUBLICATE_OBJ_MODE = 1
+                        ZAME_OBJ_DUBLICATE_NOANGLE = 1
                         ZAME_RECREATE_OBJECT_FLAG = 0
                         0087: ZAME_DUBLICATE_OBJ_X = 15@ // (float)
                         0087: ZAME_DUBLICATE_OBJ_Y = 16@ // (float)
                         0087: ZAME_DUBLICATE_OBJ_Z = 17@ // (float)
                         0087: ZAME_DUBLICATE_OBJ_A = 18@ // (float)
-                        100@ = 69
                         0085: 29@ = 14@ // (int)
+                        100@ = 69                        
                         jump to @OBJECTS_MENU_32814
+                                                                                                
                         end
                     if and
                     0AB0:   key_pressed 17
                     0E3D: is_key_just_pressed 67
                         then                  
                         0B21: write_clipboard_data_from 1@ size 512 
+                        end
+                    else
+                    if and
+                    not 1@ == 7
+                    2@ == 1
+                        then
+                        0F17: get_model_name_pointer 14@ to 1@             
+                        0AD1: show_formatted_text_highpriority "id: %d, name: %s~n~ X: %.4f, Y: %.4f, Z: %.4f, A: %.2f" time 100 14@ 1@ 15@ 16@ 17@ 18@
+                        if
+                        00E1:   player 0 pressed_key 17
+                            then                            
+                            ZAME_DUBLICATE_OBJ_MODE = 1
+                            ZAME_OBJ_DUBLICATE_NOANGLE = 1
+                            ZAME_RECREATE_OBJECT_FLAG = 0
+                            0087: ZAME_DUBLICATE_OBJ_X = 15@ // (float)
+                            0087: ZAME_DUBLICATE_OBJ_Y = 16@ // (float)
+                            0087: ZAME_DUBLICATE_OBJ_Z = 17@ // (float)
+                            0087: ZAME_DUBLICATE_OBJ_A = 18@ // (float)
+                            0085: 29@ = 14@ // (int)
+                            100@ = 69                        
+                            jump to @OBJECTS_MENU_32814
+                            end                        
                         end
                     end
                 end                                              

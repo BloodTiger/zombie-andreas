@@ -14,8 +14,9 @@ thread 'SLOWMO'
 :SLOW_START_CHECK
 wait 0
 
-if
+if or
 REALISM_MODE == 1
+$GAMEMODE_EDITOR == 1
 then
 if and
 actor.Driving(PLAYER_ACTOR)
@@ -34,7 +35,8 @@ not $EATING_STATUS == 1
         gosub @SLOW_REALISM_DRIVEBY_BIKE_MODEL_CHECK
         if or
         01C1:   car 22@ stopped
-        1@ == 1        
+        1@ == 1
+        $GAMEMODE_EDITOR == 1        
             then            
             04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 5 weapon 21@ ammo 2@ model 3@
             if and
@@ -46,8 +48,9 @@ not $EATING_STATUS == 1
                 0713: actor PLAYER_ACTOR driveby_actor -1 car -1 point 0.0 0.0 0.0 radius 3000.0 4 0 firing_rate 100
                 $DRIVEBY_MODE = 1                
                 gosub @SLOW_REALISM_DRIVEBY_BIKE_MODEL_CHECK
-                if
+                if and
                 not 1@ == 1
+                not $GAMEMODE_EDITOR == 1
                     then
                     car.LockInCurrentPosition(22@,true)                    
                     end
@@ -58,8 +61,9 @@ not $EATING_STATUS == 1
     end
 end
 
-if
+if or
 REALISM_MODE == 1
+$GAMEMODE_EDITOR == 1
 then
 
 if and
@@ -71,8 +75,9 @@ $DRIVEBY_MODE == 1
     camera.Restore_WithJumpCut()
     $DRIVEBY_MODE = 0
     gosub @SLOW_REALISM_DRIVEBY_BIKE_MODEL_CHECK    
-    if
+    if and
     not 1@ == 1
+    not $GAMEMODE_EDITOR == 1
         then
         car.LockInCurrentPosition(22@,false)
         end            
@@ -89,8 +94,9 @@ $DRIVEBY_MODE == 1
         camera.Restore_WithJumpCut()
         $DRIVEBY_MODE = 0
         gosub @SLOW_REALISM_DRIVEBY_BIKE_MODEL_CHECK    
-        if
+        if and
         not 1@ == 1
+        not $GAMEMODE_EDITOR == 1
             then
             car.LockInCurrentPosition(22@,false)
             end
@@ -110,8 +116,9 @@ $DRIVEBY_MODE == 1
         camera.Restore_WithJumpCut()
         $DRIVEBY_MODE = 0
         gosub @SLOW_REALISM_DRIVEBY_BIKE_MODEL_CHECK    
-        if
+        if and
         not 1@ == 1
+        not $GAMEMODE_EDITOR == 1
             then
             car.LockInCurrentPosition(22@,false)
             end
@@ -471,12 +478,15 @@ $ALLOW_PLAYER_SLOWMOTION == 1
     
     04B8: get_weapon_data_from_actor PLAYER_ACTOR slot 7 weapon 0@ ammo 1@ model 2@
     
-    if 
+    if and
     0@ == 33
+    8AB0: not  key_pressed 50
+    8AB0: not  key_pressed 52
+    8AB0: not  key_pressed 53
     then
     if and    
     0491:   actor PLAYER_ACTOR has_weapon 0@
-    not 1@ == 0
+    not 1@ == 0    
         then        
         DRIVEBY_WEAPON_FINDED = 1    
         0085: DRIVEBY_WEAPON = 0@ // (int)
@@ -505,6 +515,9 @@ $ALLOW_PLAYER_SLOWMOTION == 1
     
     if and
     0491:   actor PLAYER_ACTOR has_weapon 0@
+    8AB0: not  key_pressed 50
+    8AB0: not  key_pressed 52
+    8AB0: not  key_pressed 54
     not 1@ == 0
     then        
     DRIVEBY_WEAPON_FINDED = 1    
@@ -516,6 +529,8 @@ $ALLOW_PLAYER_SLOWMOTION == 1
     
     if and
     0491:   actor PLAYER_ACTOR has_weapon 0@
+    8AB0: not  key_pressed 50
+    8AB0: not  key_pressed 53
     not 1@ == 0
     then        
     DRIVEBY_WEAPON_FINDED = 1    
@@ -527,6 +542,9 @@ $ALLOW_PLAYER_SLOWMOTION == 1
     
     if and
     0491:   actor PLAYER_ACTOR has_weapon 0@
+    8AB0: not  key_pressed 51
+    8AB0: not  key_pressed 52
+    8AB0: not  key_pressed 53
     not 1@ == 0
     then        
     DRIVEBY_WEAPON_FINDED = 1    
@@ -664,7 +682,8 @@ $ALLOW_PLAYER_SLOWMOTION == 1
         ///////////////////////////////////////////////
         
         WEIGHT_NO_MESSAGE_FLAG = 1                
-        06A7: put_actor PLAYER_ACTOR into_turret_on_car 6@ at_car_offset 23@ 24@ 25@ position 1 shooting_angle 360.0 70.0 with_weapon DRIVEBY_WEAPON
+        06A7: put_actor PLAYER_ACTOR into_turret_on_car 6@ at_car_offset 23@ 24@ 25@ position 1 shooting_angle 360.0 70.0 with_weapon DRIVEBY_WEAPON        
+        008A: DRIVEBY_CAR = 6@ // (int)
         0A8C: write_memory 0@ size 4 value 1@ virtual_protect 0 //SetAmmoClip
         $DRIVEBY_MODE = 1                         
             
@@ -906,7 +925,9 @@ not STORY_DRIVEBY_NO_RETURN_FLAG == 1
     22@ == 1
     then
     car.LockInCurrentPosition(6@,false)
-    end                                                                                                           
+    end
+    
+    DRIVEBY_CAR = -1                                                                                                         
                          
     end
 
@@ -975,6 +996,15 @@ if and
 not LAST_CHANCE_FLAG == 1
 not LAST_CHANCE_FLAG == 2
 then
+
+if and
+0A4B:   controls_set_to_joystick
+0A32:  actor PLAYER_ACTOR on_turret_of_car
+8E45: not frame_mod 2
+then
+jump to @TURRET_FOR_GAYMPADS_MORE_SLOWMO
+end
+
 0061: $SLOW_BAR -= $SLOW_BAR_MINUS // (float)                                                             
 if
 not $SLOW_BAR <= 0.0
@@ -993,6 +1023,8 @@ not 1@ == 0.2
     end
 jump to @SLOW_IDLE_CHECK
 end
+
+:TURRET_FOR_GAYMPADS_MORE_SLOWMO
 
 if
 8A4B: not  controls_set_to_joystick

@@ -43,11 +43,29 @@ const
 
 ///////////////////8 - Coздaниe oгня нa koopдинaтe///////////////////
 //Параметр 1 - размер взрыва.
-//Параметр 2 - скорость распространения
+//Параметр 2 - скорость распространения.
+//Параметр 3 - если есть - смертельно опасен, ваншотит.
 
 ///////////////////9 - Игровая зона///////////////////
 //THING_X2, THING_Y2, THING_Z2, THING_X3, THING_Y3, THING_Z3 - квадрат ограничителя игровой зоны.
 //если THING_X3, THING_Y3, THING_Z3 равны -1, то THING_X2, THING_Y2, THING_Z2 - координата сферы ограничения игровой зоны, THING_A2 - радиус.
+
+///////////////////10 - Пед-декорация///////////////////
+//THING_X, THING_Y, THING_Z, THING_A - координата/угол для спавна.
+//THING_X2, THING_Y2, THING_Z2 - если существует - точка патрулирования.
+//Параметр 1 - Модель педа.
+//Параметр 2 - Оружие педа.
+//Параметр 3 - ХП.
+//Параметр 4 - Флаг неуязвимости (1) ИЛИ флаг провала при убийстве (2) ИЛИ флаг провала при убийстве игроком (3) ИЛИ флаг провала при попадании игроком педу на глаза (4).
+//Параметр 5 - Педтайп педа.
+//Если в .ini триггера есть данные об IFP и имени анимации - проигрывать при спавне педа анимацию в бесконечном лупе (или если указано время - столько, сколько указано времени).
+
+///////////////////11 - Транспорт-декорация///////////////////
+//THING_X, THING_Y, THING_Z, THING_A - координата/угол для спавна.
+//Параметр 1 - Модель транспорта.
+//Параметр 2 - Флаг неуязвимости (1) ИЛИ флаг провала при разрушении транспорта (2).
+//Параметр 3 - Открыт багажник.
+//Параметр 4 - Открыт капот.
 
 ZAME_PARALLEL_THING_TYPE = 0@
 ZAME_PARALLEL_THING_X = 1@
@@ -79,6 +97,8 @@ end
 :ZAM_TRG
 thread 'ZAM_TRG'
 
+//0AD1: show_formatted_text_highpriority "ZAME_PARALLEL_THING_TYPE %d" time 10000 ZAME_PARALLEL_THING_TYPE
+
 if
 ZAME_PARALLEL_THING_TYPE == 0
 then
@@ -97,6 +117,58 @@ ZAME_PARALLEL_THING_TEST_MODE == 1
     end
 
 until 002E:   ZAME_CURRENT_OBJECTIVE_GLOB >= ZAME_PARALLEL_THING_AFTEROBJ_NUM  // (int)
+
+///////////////////11 - Транспорт декорация///////////////////
+
+if
+ZAME_PARALLEL_THING_TYPE == 11
+    then
+                
+    repeat
+    wait 0
+    
+    if or
+    002E:   ZAME_CURRENT_OBJECTIVE_GLOB >= ZAME_PARALLEL_THING_AFTEROBJ_NUM  // (int)
+    ZAME_PARALLEL_THING_TEST_MODE == 1
+    then    
+    break
+    end        
+    
+    until false
+        
+    gosub @CREATE_AND_HANDLE_DUMMY_CAR
+    
+    car.Destroy(31@)
+                
+    end_thread
+                     
+    end
+
+///////////////////10 - Пед декорация///////////////////
+
+if
+ZAME_PARALLEL_THING_TYPE == 10
+    then
+                
+    repeat
+    wait 0
+    
+    if or
+    002E:   ZAME_CURRENT_OBJECTIVE_GLOB >= ZAME_PARALLEL_THING_AFTEROBJ_NUM  // (int)
+    ZAME_PARALLEL_THING_TEST_MODE == 1
+    then    
+    break
+    end        
+    
+    until false
+        
+    gosub @CREATE_AND_HANDLE_DUMMY_PED
+    
+    actor.DestroyInstantly(31@)
+                
+    end_thread
+                     
+    end
 
 ///////////////////9 - Ограничитель игровой зоны///////////////////
 
@@ -278,14 +350,26 @@ ZAME_PARALLEL_THING_TYPE == 8
         end_thread
         end
         
-        02CF: ZAME_PARALLEL_TEMP_VAR = create_fire_at ZAME_PARALLEL_THING_X ZAME_PARALLEL_THING_Y ZAME_PARALLEL_THING_Z propagation ZAME_PARALLEL_THING_PARAM2 size ZAME_PARALLEL_THING_PARAM1
+        repeat
+        wait 0
+        until 09E7:   player PLAYER_CHAR not_frozen
         
-        if or
-        ZAME_PARALLEL_THING_TRIGGER_ONCE == 0  
-        ZAME_PARALLEL_THING_TEST_MODE == 1  
-        then        
+        ZAME_PARALLEL_THING_Z -= 1.0
+        02CF: ZAME_PARALLEL_TEMP_VAR = create_fire_at ZAME_PARALLEL_THING_X ZAME_PARALLEL_THING_Y ZAME_PARALLEL_THING_Z propagation ZAME_PARALLEL_THING_PARAM2 size ZAME_PARALLEL_THING_PARAM1
+        ZAME_PARALLEL_THING_Z += 1.0
+        
+        if
+        ZAME_PARALLEL_THING_PARAM3 == 1 
+        then                
+        gosub @DEADLY_FIRE_CATCH_CHECK
+        0980: extinguish_all_fires_at ZAME_PARALLEL_THING_X ZAME_PARALLEL_THING_Y ZAME_PARALLEL_THING_Z radius ZAME_PARALLEL_THING_PARAM2
+        02D1: remove_fire ZAME_PARALLEL_TEMP_VAR
+        end_thread
+        
         jump to @GO_FUCKING_AGAIN_FIRE_CHECK
         else
+        gosub @FIRE_IDLE_CHECK
+        02D1: remove_fire ZAME_PARALLEL_TEMP_VAR
         end_thread
         end
         
@@ -301,14 +385,25 @@ ZAME_PARALLEL_THING_TYPE == 8
         end_thread
         end
         
-        02CF: ZAME_PARALLEL_TEMP_VAR = create_fire_at ZAME_PARALLEL_THING_X ZAME_PARALLEL_THING_Y ZAME_PARALLEL_THING_Z propagation ZAME_PARALLEL_THING_PARAM2 size ZAME_PARALLEL_THING_PARAM1
+        repeat
+        wait 0
+        until 09E7:   player PLAYER_CHAR not_frozen
         
-        if or
-        ZAME_PARALLEL_THING_TRIGGER_ONCE == 0
-        ZAME_PARALLEL_THING_TEST_MODE == 1  
-        then
+        ZAME_PARALLEL_THING_Z -= 1.0
+        02CF: ZAME_PARALLEL_TEMP_VAR = create_fire_at ZAME_PARALLEL_THING_X ZAME_PARALLEL_THING_Y ZAME_PARALLEL_THING_Z propagation ZAME_PARALLEL_THING_PARAM2 size ZAME_PARALLEL_THING_PARAM1
+        ZAME_PARALLEL_THING_Z += 1.0
+        
+        if
+        ZAME_PARALLEL_THING_PARAM3 == 1 
+        then        
+        gosub @DEADLY_FIRE_CATCH_CHECK
+        02D1: remove_fire ZAME_PARALLEL_TEMP_VAR
+        end_thread        
         jump to @GO_FUCKING_AGAIN_FIRE_CHECK
         else
+        gosub @FIRE_IDLE_CHECK
+        0980: extinguish_all_fires_at ZAME_PARALLEL_THING_X ZAME_PARALLEL_THING_Y ZAME_PARALLEL_THING_Z radius ZAME_PARALLEL_THING_PARAM2
+        02D1: remove_fire ZAME_PARALLEL_TEMP_VAR
         end_thread
         end
         
@@ -1763,3 +1858,976 @@ cinema.Radar(1)
 //$READING_NOTE_FLAG = 0
 
 return
+
+///////////////////10 - Пед-декорация///////////////////
+//THING_X, THING_Y, THING_Z, THING_A - координата/угол для спавна.
+//THING_X2, THING_Y2, THING_Z2 - если существует - точка патрулирования.
+//Параметр 1 - Модель педа.
+//Параметр 2 - Оружие педа.
+//Параметр 3 - ХП.
+//Параметр 4 - Флаг неуязвимости (1) ИЛИ флаг провала при убийстве (2) ИЛИ флаг провала при убийстве игроком (3) ИЛИ флаг провала при попадании игроком педу на глаза (4).
+//Параметр 5 - Педтайп педа.
+//Если в .ini триггера есть данные об IFP и имени анимации - проигрывать при спавне педа анимацию в бесконечном лупе (или если указано время - столько, сколько указано времени).
+
+:CREATE_AND_HANDLE_DUMMY_PED
+
+if
+ZAME_PARALLEL_THING_TEST_MODE == 1
+then
+ZAME_PARALLEL_TEMP_VAR = 0
+018A: ZAME_PARALLEL_TEMP_VAR = create_checkpoint_at ZAME_PARALLEL_THING_X ZAME_PARALLEL_THING_Y ZAME_PARALLEL_THING_Z
+marker.SetColor(ZAME_PARALLEL_TEMP_VAR,1)
+end
+
+repeat
+wait 0
+until 0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos ZAME_PARALLEL_THING_X ZAME_PARALLEL_THING_Y ZAME_PARALLEL_THING_Z radius 180.0
+
+if
+ZAME_PARALLEL_THING_TEST_MODE == 1
+then
+marker.Disable(ZAME_PARALLEL_TEMP_VAR)
+end
+
+while not model.Available(ZAME_PARALLEL_THING_PARAM1)
+wait 0
+model.Load(ZAME_PARALLEL_THING_PARAM1)
+mload
+end
+
+//0AD1: show_formatted_text_highpriority "X %f, Y %f, Z %f, MODEL %d, PEDTYPE %d" time 2000 ZAME_PARALLEL_THING_X ZAME_PARALLEL_THING_Y ZAME_PARALLEL_THING_Z ZAME_PARALLEL_THING_PARAM1 ZAME_PARALLEL_THING_PARAM5
+//wait 2000
+
+31@ = actor.Create(ZAME_PARALLEL_THING_PARAM5,ZAME_PARALLEL_THING_PARAM1,ZAME_PARALLEL_THING_X, ZAME_PARALLEL_THING_Y, ZAME_PARALLEL_THING_Z)
+actor.Angle(31@) = ZAME_PARALLEL_THING_A
+0E32: set_char_coordinates_simple 31@ coord ZAME_PARALLEL_THING_X ZAME_PARALLEL_THING_Y ZAME_PARALLEL_THING_Z
+
+0AD3: 24@v = format "TRG%d" ZAME_PARALLEL_THING_NUM    
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "HEALTH"
+then                                        
+actor.Health(31@) = ZAME_PARALLEL_TEMP_VAR
+else
+actor.Health(31@) = 1000     
+end
+
+0AD3: 24@v = format "TRG%d" ZAME_PARALLEL_THING_NUM    
+if
+0AF4: 24@v = read_string_from_ini_file "me\temp.dat" section 24@v key "WALK_STYLE"
+then                                        
+actor.SetWalkStyle(31@,24@v)
+else
+actor.SetWalkStyle(31@,"GANG1")      
+end
+
+0446: set_actor 31@ dismemberment_possible 0
+060B: set_actor 31@ decision_maker_to $DEC_PEOPLE
+
+0AD3: 24@v = format "TRG%d" ZAME_PARALLEL_THING_NUM    
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "ACCURACY"
+then                                        
+actor.WeaponAccuracy(31@) = ZAME_PARALLEL_TEMP_VAR
+else
+actor.WeaponAccuracy(31@) = 50     
+end
+
+0AD3: 24@v = format "TRG%d" ZAME_PARALLEL_THING_NUM    
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "FIRE_RATE"
+then                   
+0093: ZAME_PARALLEL_TEMP_VAR = integer ZAME_PARALLEL_TEMP_VAR to_float                     
+07DD: set_actor 31@ attack_rate ZAME_PARALLEL_TEMP_VAR // previously known as temper_to
+end
+
+0AD3: 24@v = format "TRG%d" ZAME_PARALLEL_THING_NUM    
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "PATHS_THRESHOLD"
+then                   
+0093: ZAME_PARALLEL_TEMP_VAR = integer ZAME_PARALLEL_TEMP_VAR to_float                     
+0648: unknown_actor 31@ task_set ZAME_PARALLEL_TEMP_VAR // float
+end
+
+0AD3: 24@v = format "TRG%d" ZAME_PARALLEL_THING_NUM    
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "MELEE_ACCURACY"
+then       
+0093: ZAME_PARALLEL_TEMP_VAR = integer ZAME_PARALLEL_TEMP_VAR to_float                                 
+060F: set_actor 31@ melee_accuracy_to ZAME_PARALLEL_TEMP_VAR
+else
+060F: set_actor 31@ melee_accuracy_to 75.0    
+end
+
+0AD3: 24@v = format "TRG%d" ZAME_PARALLEL_THING_NUM    
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "NO_BACKPACK"
+then
+//ass
+else
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "BACKPACK_MODEL"
+    then
+    create_thread @PED_BKP 31@ ZAME_PARALLEL_TEMP_VAR
+    else
+    create_thread @PED_BKP 31@ 371
+    end
+end
+
+if
+ZAME_PARALLEL_THING_TEST_MODE == 1
+then
+077A: set_actor 31@ acquaintance 0 to_actors_pedtype 0 // see ped.dat
+actor.SetImmunities(31@,1,1,1,1,1)
+0ED9: set_char_ignore_damage_anims 31@ 1
+ZAME_PARALLEL_TEMP_VAR = 0
+ZAME_PARALLEL_TEMP_VAR = marker.CreateAboveActor(31@)
+marker.SetIconSize(ZAME_PARALLEL_TEMP_VAR,2)
+07E0: set_marker ZAME_PARALLEL_TEMP_VAR type_to 1
+018B: set_marker ZAME_PARALLEL_TEMP_VAR radar_mode 2
+else
+
+if
+ZAME_PARALLEL_THING_PARAM4 == 1
+then
+actor.SetImmunities(31@,1,1,1,1,1)
+end
+
+077A: set_actor 31@ acquaintance 4 to_actors_pedtype $ZOMBIE_SET_PEDTYPE // see ped.dat
+if or
+ZAME_PARALLEL_THING_PARAM5 == 25
+ZAME_PARALLEL_THING_PARAM5 == 27
+ZAME_PARALLEL_THING_PARAM5 == 29
+    then    
+    077A: set_actor 31@ acquaintance 4 to_actors_pedtype 0 // see ped.dat
+    077A: set_actor 31@ acquaintance 4 to_actors_pedtype 26 // see ped.dat      
+    end
+if
+ZAME_PARALLEL_THING_PARAM5 == 26
+    then
+    077A: set_actor 31@ acquaintance 2 to_actors_pedtype 0 // see ped.dat
+    077A: set_actor 31@ acquaintance 4 to_actors_pedtype 25 // see ped.dat
+    077A: set_actor 31@ acquaintance 4 to_actors_pedtype 27 // see ped.dat
+    077A: set_actor 31@ acquaintance 4 to_actors_pedtype 29 // see ped.dat
+    end 
+if
+ZAME_PARALLEL_THING_PARAM5 == 27
+    then 
+    077A: set_actor 31@ acquaintance 4 to_actors_pedtype 25 // see ped.dat 
+    077A: set_actor 31@ acquaintance 4 to_actors_pedtype 29 // see ped.dat      
+    end
+if
+ZAME_PARALLEL_THING_PARAM5 == 29
+    then
+    077A: set_actor 31@ acquaintance 4 to_actors_pedtype 25 // see ped.dat 
+    077A: set_actor 31@ acquaintance 4 to_actors_pedtype 27 // see ped.dat
+    end    
+end
+
+0781: get_weapon_with_ID ZAME_PARALLEL_THING_PARAM2 model_to ZAME_PARALLEL_TEMP_VAR
+while not model.Available(ZAME_PARALLEL_TEMP_VAR)
+wait 0
+model.Load(ZAME_PARALLEL_TEMP_VAR)
+mload
+end
+    
+actor.GiveWeaponAndAmmo(31@,ZAME_PARALLEL_THING_PARAM2,99999)
+
+0AD3: 24@v = format "TRG%d" ZAME_PARALLEL_THING_NUM
+if
+0AF4: 24@v = read_string_from_ini_file "me\temp.dat" section 24@v key "IFP_NAME"
+    then
+    
+    while not animation.Available(24@v)
+    wait 0
+    animation.Load(24@v)
+    mload
+    end
+    
+    0AD3: 24@v = format "TRG%d" ZAME_PARALLEL_THING_NUM
+    0AF4: 9@v = read_string_from_ini_file "me\temp.dat" section 24@v key "ANIM_NAME"        
+    0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "LOOP_FLAG"     
+    if
+    ZAME_PARALLEL_TEMP_VAR == 1
+        then
+        0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "ANIM_TIME"
+        0AF0: get_int ZAME_PARALLEL_TEMP_VAR2 from_ini_file "me\temp.dat" section 24@v key "LOCK_F"
+        if
+        ZAME_PARALLEL_TEMP_VAR2 < 1
+        then
+        ZAME_PARALLEL_TEMP_VAR2 = 0
+        end
+        
+        0AD3: 24@v = format "TRG%d" ZAME_PARALLEL_THING_NUM
+        0AF4: 24@v = read_string_from_ini_file "me\temp.dat" section 24@v key "IFP_NAME"
+        
+        0812: AS_actor 31@ perform_animation 9@v IFP 24@v framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF ZAME_PARALLEL_TEMP_VAR2 time ZAME_PARALLEL_TEMP_VAR  // versionB
+        else
+        
+        0AF0: get_int ZAME_PARALLEL_TEMP_VAR2 from_ini_file "me\temp.dat" section 24@v key "LOCK_F"
+        if
+        ZAME_PARALLEL_TEMP_VAR2 < 1
+        then
+        ZAME_PARALLEL_TEMP_VAR2 = 0
+        end
+        
+        0AD3: 24@v = format "TRG%d" ZAME_PARALLEL_THING_NUM
+        0AF4: 24@v = read_string_from_ini_file "me\temp.dat" section 24@v key "IFP_NAME"
+        
+        0812: AS_actor 31@ perform_animation 9@v IFP 24@v framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF ZAME_PARALLEL_TEMP_VAR2 time -1  // versionB
+        end   
+    
+    end
+
+0AD3: 24@v = format "TRG%d" ZAME_PARALLEL_THING_NUM    
+if
+0AF2: get_float ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "PATROL_X0"
+    then
+    0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "PARTOL_POINTS_COUNT"    
+    0754: define_new_animation_path                                                   
+    0755: add_animation_path_3D_coord ZAME_PARALLEL_THING_X ZAME_PARALLEL_THING_Y ZAME_PARALLEL_THING_Z animation "none" IFP_file "none"
+    0755: add_animation_path_3D_coord ZAME_PARALLEL_THING_X2 ZAME_PARALLEL_THING_Y2 ZAME_PARALLEL_THING_Z2 animation "none" IFP_file "none"
+    if
+    ZAME_PARALLEL_TEMP_VAR > 1
+    then
+    0AF2: get_float ZAME_PARALLEL_THING_X2 from_ini_file "me\temp.dat" section 24@v key "PATROL_X1"
+    0AF2: get_float ZAME_PARALLEL_THING_Y2 from_ini_file "me\temp.dat" section 24@v key "PATROL_Y1"
+    0AF2: get_float ZAME_PARALLEL_THING_Z2 from_ini_file "me\temp.dat" section 24@v key "PATROL_Z1" 
+    0755: add_animation_path_3D_coord ZAME_PARALLEL_THING_X2 ZAME_PARALLEL_THING_Y2 ZAME_PARALLEL_THING_Z2 animation "none" IFP_file "none"
+    end
+    
+    if
+    ZAME_PARALLEL_TEMP_VAR > 2
+    then
+    0AF2: get_float ZAME_PARALLEL_THING_X2 from_ini_file "me\temp.dat" section 24@v key "PATROL_X2"
+    0AF2: get_float ZAME_PARALLEL_THING_Y2 from_ini_file "me\temp.dat" section 24@v key "PATROL_Y2"
+    0AF2: get_float ZAME_PARALLEL_THING_Z2 from_ini_file "me\temp.dat" section 24@v key "PATROL_Z2" 
+    0755: add_animation_path_3D_coord ZAME_PARALLEL_THING_X2 ZAME_PARALLEL_THING_Y2 ZAME_PARALLEL_THING_Z2 animation "none" IFP_file "none"
+    end
+    
+    if
+    ZAME_PARALLEL_TEMP_VAR > 3
+    then
+    0AF2: get_float ZAME_PARALLEL_THING_X2 from_ini_file "me\temp.dat" section 24@v key "PATROL_X3"
+    0AF2: get_float ZAME_PARALLEL_THING_Y2 from_ini_file "me\temp.dat" section 24@v key "PATROL_Y3"
+    0AF2: get_float ZAME_PARALLEL_THING_Z2 from_ini_file "me\temp.dat" section 24@v key "PATROL_Z3" 
+    0755: add_animation_path_3D_coord ZAME_PARALLEL_THING_X2 ZAME_PARALLEL_THING_Y2 ZAME_PARALLEL_THING_Z2 animation "none" IFP_file "none"
+    end
+    
+    if
+    ZAME_PARALLEL_TEMP_VAR > 4
+    then
+    0AF2: get_float ZAME_PARALLEL_THING_X2 from_ini_file "me\temp.dat" section 24@v key "PATROL_X4"
+    0AF2: get_float ZAME_PARALLEL_THING_Y2 from_ini_file "me\temp.dat" section 24@v key "PATROL_Y4"
+    0AF2: get_float ZAME_PARALLEL_THING_Z2 from_ini_file "me\temp.dat" section 24@v key "PATROL_Z4" 
+    0755: add_animation_path_3D_coord ZAME_PARALLEL_THING_X2 ZAME_PARALLEL_THING_Y2 ZAME_PARALLEL_THING_Z2 animation "none" IFP_file "none"
+    end
+    
+    if
+    ZAME_PARALLEL_TEMP_VAR > 5
+    then
+    0AF2: get_float ZAME_PARALLEL_THING_X2 from_ini_file "me\temp.dat" section 24@v key "PATROL_X5"
+    0AF2: get_float ZAME_PARALLEL_THING_Y2 from_ini_file "me\temp.dat" section 24@v key "PATROL_Y5"
+    0AF2: get_float ZAME_PARALLEL_THING_Z2 from_ini_file "me\temp.dat" section 24@v key "PATROL_Z5" 
+    0755: add_animation_path_3D_coord ZAME_PARALLEL_THING_X2 ZAME_PARALLEL_THING_Y2 ZAME_PARALLEL_THING_Z2 animation "none" IFP_file "none"
+    end
+    
+    0817: assign_actor 31@ to_animation_path_with_walk_mode 4 route_mode 3
+    end    
+            
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "MAINTAIN_POSITION"
+    then                                        
+    0350: set_actor 31@ maintain_position_when_attacked 1   
+    0816: set_actor 31@ dont_chase_victim 1
+    0638: AS_actor 31@ stay_put 1    
+    end       
+      
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "SPAWN_CROUCHED"
+    then                                        
+    04EB: AS_actor 31@ crouch 1      
+    end
+     
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "DISABLE_CROUCH"
+    then                                            
+    0856: set_actor 31@ enable_crouch 0  
+    end
+       
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "MUTED"
+    then                                        
+    0489: set_actor 31@ muted 1     
+    end
+       
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "MUTE_PAIN_AUDIO"
+    then                                        
+    094E: set_actor 31@ mute_pain_audio 1     
+    end
+       
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "NO_DROP"
+    then                    
+    087E: set_actor 31@ weapon_droppable 0                         
+    end
+       
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "DROP_PERSISTS"
+    then                    
+    0A27: set_actor 31@ death_pickups_persist 1                         
+    end
+        
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "CAN_SWIM"
+    then                    
+    04D8: set_actor 31@ drowns_in_water 0                         
+    end
+        
+if
+0AF2: get_float ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "SWIM_SPEED"
+    then                    
+    0A28: set_actor 31@ swimming_speed_to ZAME_PARALLEL_TEMP_VAR                         
+    end
+        
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "IGNORE_WEAPON_RANGE"
+    then                    
+    099F: AS_actor 31@ ignore_weapon_range 1                        
+    end
+        
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "CANT_STUN_BY_WEPS"
+    then                    
+    0946: set_actor 31@ actions_uninterupted_by_weapon_fire 1                        
+    end
+        
+if and
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "FOLLOW_PLAYER"
+not ZAME_PARALLEL_THING_TEST_MODE == 1
+    then                    
+    0850: AS_actor 31@ follow_actor PLAYER_ACTOR                      
+    end
+        
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "BLEEDING"
+    then                    
+    0332: set_actor 31@ bleeding 1                     
+    end
+    
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "DAMAGE_ONLY_FROM_PLAYER"
+    then                    
+    02A9: set_actor 31@ immune_to_nonplayer 1                     
+    end
+
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "CREATE_ENEMY_MARK"
+    then    
+        
+    if
+    0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "MARK_SIZE"
+    then
+    //ass
+    else
+    ZAME_PARALLEL_TEMP_VAR = 3
+    end
+    
+    if
+    0AF0: get_int ZAME_PARALLEL_TEMP_VAR2 from_ini_file "me\temp.dat" section 24@v key "RADAR_TYPE"
+    then
+    //ass
+    else
+    ZAME_PARALLEL_TEMP_VAR2 = 3
+    end
+    
+    create_thread @PED_BKP 31@ 371 0 0 0 1 0 ZAME_PARALLEL_TEMP_VAR 7 ZAME_PARALLEL_TEMP_VAR2 
+    end
+    
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "CREATE_FRIENDLY_MARK"
+    then    
+    
+    if
+    0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "MARK_SIZE"
+    then
+    //ass
+    else
+    ZAME_PARALLEL_TEMP_VAR = 3
+    end
+    
+    if
+    0AF0: get_int ZAME_PARALLEL_TEMP_VAR2 from_ini_file "me\temp.dat" section 24@v key "RADAR_TYPE"
+    then
+    //ass
+    else
+    ZAME_PARALLEL_TEMP_VAR2 = 3
+    end
+    
+    create_thread @PED_BKP 31@ 371 0 0 0 1 1 ZAME_PARALLEL_TEMP_VAR 7 ZAME_PARALLEL_TEMP_VAR2 
+    end  
+    
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "NO_DAMAGE_ANIMS"
+    then                    
+    0ED9: set_char_ignore_damage_anims 31@ 1                        
+    end 
+    
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "PUT_IN_CLOSEST_VEHICLE"
+    then                    
+    
+    repeat
+    wait 0
+//    0AB5: store_actor 31@ closest_vehicle_to ZAME_PARALLEL_TEMP_VAR2 closest_ped_to ZAME_PARALLEL_TEMP_VAR    
+//    0AD1: show_formatted_text_highpriority "1" time 2000
+    if
+    0AE2: ZAME_PARALLEL_TEMP_VAR2 = random_vehicle_near_point ZAME_PARALLEL_THING_X ZAME_PARALLEL_THING_Y ZAME_PARALLEL_THING_Z in_radius 5.0 find_next 0 pass_wrecked 0
+        then        
+        ZAME_PARALLEL_TEMP_VAR = car.Model(ZAME_PARALLEL_TEMP_VAR2)
+        0AF0: get_int ZAME_PARALLEL_THING_X2 from_ini_file "me\temp.dat" section 24@v key "VEHICLE_MODEL"
+//        0AD1: show_formatted_text_highpriority "%d == %d" time 2000 ZAME_PARALLEL_TEMP_VAR ZAME_PARALLEL_THING_X2
+        if
+        003B:   ZAME_PARALLEL_TEMP_VAR == ZAME_PARALLEL_THING_X2  // (int)
+            then
+            break
+            end
+        end
+    
+    until false
+    
+    if
+    0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "PED_IS_DRIVER"
+        then 
+        036A: put_actor 31@ in_car ZAME_PARALLEL_TEMP_VAR2         
+        if
+        not ZAME_PARALLEL_THING_TEST_MODE == 1
+            then                 
+            car.SetMaxSpeed(ZAME_PARALLEL_TEMP_VAR2,100.0)  
+            00AE: set_car ZAME_PARALLEL_TEMP_VAR2 traffic_behaviour_to 2  
+            03AB: set_car ZAME_PARALLEL_TEMP_VAR2 strong 1  
+            0423: set_car ZAME_PARALLEL_TEMP_VAR2 improved_handling_to 1.0 // (float)
+            088B: set_car ZAME_PARALLEL_TEMP_VAR2 form_drag_multiplier_to 0.0 
+            
+            if
+            0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "CHASE_AFTER_NEAR_COME"
+            then
+            
+            if
+            8AF2: not get_float ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "NEAR_COME_RADIUS"
+            then  
+            ZAME_PARALLEL_TEMP_VAR = 10.0
+            else
+            0AF2: get_float ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "NEAR_COME_RADIUS"
+            end
+            
+            repeat
+            wait 0
+            
+            if
+            0EE5: locate_char_distance_to_car PLAYER_ACTOR car ZAME_PARALLEL_TEMP_VAR2 radius ZAME_PARALLEL_TEMP_VAR
+                then
+                break
+                end            
+            
+            until false
+            
+            end
+            
+            if
+            0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "SPEED_INSTANTLY"
+            then
+            0093: ZAME_PARALLEL_TEMP_VAR = integer ZAME_PARALLEL_TEMP_VAR to_float
+            car.SetSpeedInstantly(ZAME_PARALLEL_TEMP_VAR2,ZAME_PARALLEL_TEMP_VAR)
+            end
+            
+//            0AD1: show_formatted_text_highpriority "FUCK GO" time 2000            
+            0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "DRIVER_MISSION"  
+            if
+            ZAME_PARALLEL_TEMP_VAR == 1
+                then
+                car.SetDriverBehaviour(ZAME_PARALLEL_TEMP_VAR2,26)
+                end
+            if
+            ZAME_PARALLEL_TEMP_VAR == 2
+                then
+                car.SetDriverBehaviour(ZAME_PARALLEL_TEMP_VAR2,KillThePlayer)
+                create_thread @PED_BKP 31@ 371 0 0 0 1 0 2 7 3
+                end
+            if
+            ZAME_PARALLEL_TEMP_VAR == 3
+                then
+                0AF2: get_float ZAME_PARALLEL_THING_X2 from_ini_file "me\temp.dat" section 24@v key "DRIVER_GOTO_X"
+                0AF2: get_float ZAME_PARALLEL_THING_Y2 from_ini_file "me\temp.dat" section 24@v key "DRIVER_GOTO_Y"
+                0AF2: get_float ZAME_PARALLEL_THING_Z2 from_ini_file "me\temp.dat" section 24@v key "DRIVER_GOTO_Z" 
+                0704: car ZAME_PARALLEL_TEMP_VAR2 drive_to ZAME_PARALLEL_THING_X2 ZAME_PARALLEL_THING_Y2 ZAME_PARALLEL_THING_Z2
+                end
+            if
+            ZAME_PARALLEL_TEMP_VAR == 4
+                then
+                car.SetDriverBehaviour(ZAME_PARALLEL_TEMP_VAR2,1)
+                end
+            if
+            ZAME_PARALLEL_TEMP_VAR == 5
+                then
+                0AF2: get_float ZAME_PARALLEL_THING_X2 from_ini_file "me\temp.dat" section 24@v key "DRIVER_FOLLOW_CAR_X"
+                0AF2: get_float ZAME_PARALLEL_THING_Y2 from_ini_file "me\temp.dat" section 24@v key "DRIVER_FOLLOW_CAR_Y"
+                0AF2: get_float ZAME_PARALLEL_THING_Z2 from_ini_file "me\temp.dat" section 24@v key "DRIVER_FOLLOW_CAR_Z" 
+                0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "DRIVER_FOLLOW_CAR_MODEL"
+                
+                repeat
+                wait 0
+                
+                if
+                0AE2: ZAME_PARALLEL_THING_X2 = random_vehicle_near_point ZAME_PARALLEL_THING_X2 ZAME_PARALLEL_THING_Y2 ZAME_PARALLEL_THING_Z2 in_radius 5.0 find_next 0 pass_wrecked 0
+                    then
+                    ZAME_PARALLEL_THING_Y2 = car.Model(ZAME_PARALLEL_THING_X2)
+                    if
+                    003B:   ZAME_PARALLEL_THING_Y2 == ZAME_PARALLEL_TEMP_VAR  // (int)
+                        then
+                        07F8: car ZAME_PARALLEL_TEMP_VAR2 follow_car ZAME_PARALLEL_THING_X2 radius 5.0
+                        break
+                        end
+                    end
+                
+                until false
+                
+                end                
+            end
+        else
+        0430: put_actor 31@ into_car ZAME_PARALLEL_TEMP_VAR2 passenger_seat -1
+        if and
+        82D8: not  actor 31@ current_weapon == 0
+        not ZAME_PARALLEL_THING_TEST_MODE == 1
+            then
+            089F: get_actor 31@ pedtype_to ZAME_PARALLEL_TEMP_VAR
+            if or
+            ZAME_PARALLEL_TEMP_VAR == 25
+            ZAME_PARALLEL_TEMP_VAR == 27
+            ZAME_PARALLEL_TEMP_VAR == 29
+                then
+                0713: actor 31@ driveby_actor PLAYER_ACTOR car -1 point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+                end
+            end
+        end                    
+    end
+    
+0AD3: 24@v = format "TRG%d" ZAME_PARALLEL_THING_NUM
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "LOCKED"
+    then     
+    actor.LockInCurrentPosition(31@,true)
+    end    
+    
+0AD3: 24@v = format "TRG%d" ZAME_PARALLEL_THING_NUM
+0AF4: 24@v = read_string_from_ini_file "me\temp.dat" section 24@v key "AUD_NAME"
+if
+0AAB:   file_exists 24@v
+then
+ZAME_PARALLEL_THING_PARAM5 = audiostream.Load3d(24@v)
+audiostream.LinkToActor(ZAME_PARALLEL_THING_PARAM5,31@)
+0AD3: 24@v = format "TRG%d" ZAME_PARALLEL_THING_NUM
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "AUD_LOOP_FLAG"
+then
+audiostream.Loop(ZAME_PARALLEL_THING_PARAM5,1)
+end
+
+audiostream.Volume(ZAME_PARALLEL_THING_PARAM5) = $SOUNDS_VOLUME 
+audiostream.PerformAction(ZAME_PARALLEL_THING_PARAM5,PLAY)
+end   
+    
+32@ = 0
+0688: AS_actor 31@ unknown_toggle_ped_threat_scanner 1 1 1                                                                                                           
+
+repeat
+wait 0 
+
+if
+856D: not  actor 31@ defined
+then
+//0AD1: show_formatted_text_highpriority "TRIGGER %s GONE WRONG - PED IS GONE SOMEHOW. PIZDEC!" time 2000 24@v
+end_thread
+end
+
+if
+not ZAME_PARALLEL_THING_TEST_MODE == 1
+then
+
+if and
+ZAME_CAR_ADV_FLAG == 1
+0E45: frame_mod 60
+    then
+    if
+    not actor.Driving(31@)
+        then
+        0672: AS_actor 31@ attack_car ZAME_CAR_ADEVNTURE_GLOB
+        else
+        0713: actor 31@ driveby_actor -1 car ZAME_CAR_ADEVNTURE_GLOB point 0.0 0.0 0.0 radius 5000.0 8 1 firing_rate 360
+        end
+    end
+
+if
+ZAME_PARALLEL_THING_PARAM4 == 2
+    then
+    if
+    actor.Dead(31@)
+        then
+        GAME_OVER_FLAG = 1
+        ZAME_FAILED_BY_REASON = 5
+        wait 99999999999999
+        end
+    end
+    
+if
+ZAME_PARALLEL_THING_PARAM4 == 3
+    then
+    if
+    actor.Dead(31@)
+        then
+        
+        0A96: ZAME_PARALLEL_TEMP_VAR = actor 31@ struct
+        0A8E: ZAME_PARALLEL_TEMP_VAR = ZAME_PARALLEL_TEMP_VAR + 0x764
+        0A8D: ZAME_PARALLEL_TEMP_VAR2 = read_memory ZAME_PARALLEL_TEMP_VAR size 2 virtual_protect 1
+        0A8D: ZAME_PARALLEL_TEMP_VAR = read_memory 0xB6F5F0 size 2 virtual_protect 1                
+        if
+        003B:   ZAME_PARALLEL_TEMP_VAR2 == ZAME_PARALLEL_TEMP_VAR  // (int)
+            then        
+            GAME_OVER_FLAG = 1
+            ZAME_FAILED_BY_REASON = 6
+            wait 99999999999999
+            end
+        end
+    end
+    
+if
+ZAME_PARALLEL_THING_PARAM4 == 4
+    then
+    077A: set_actor 31@ acquaintance 4 to_actors_pedtype 0 // see ped.dat
+//    0E44: get_char_kill_target_char 31@ store_to ZAME_PARALLEL_TEMP_VAR
+    if and
+//    0364:   actor 31@ spotted_actor PLAYER_ACTOR
+    09ED:   actor 31@ is_within_field_of_view_actor PLAYER_ACTOR
+//    07D6:   ZAME_PARALLEL_TEMP_VAR == PLAYER_ACTOR // @ == $ (int)
+    not actor.Dead(31@)
+        then
+        GAME_OVER_FLAG = 1
+        ZAME_FAILED_BY_REASON = 4
+        wait 99999999999999
+        end
+    end
+    
+else
+
+if
+0EE4: locate_char_distance_to_char 31@ char PLAYER_ACTOR radius 10.0
+    then
+    0E3F: convert_3d_to_screen_2d ZAME_PARALLEL_THING_X ZAME_PARALLEL_THING_Y ZAME_PARALLEL_THING_Z checkNearClip 0 checkFarClip 1 store_2d_to ZAME_PARALLEL_THING_X3 ZAME_PARALLEL_THING_Y3 size_to ZAME_PARALLEL_TEMP_VAR ZAME_PARALLEL_TEMP_VAR2
+    ZAME_PARALLEL_TEMP_VAR *= 0.45
+    ZAME_PARALLEL_TEMP_VAR2 *= 0.45
+                         
+    03F0: enable_text_draw 1 
+    03E0: draw_text_behind_textures 1
+    03E3: set_texture_to_be_drawn_antialiased 1 
+    0342: set_text_draw_centered 1
+    0340: set_text_draw_RGBA 255 255 255 $HUD_ALPHA   
+    081C: draw_text_outline 1 RGBA 0 0 0 $HUD_ALPHA
+                    
+    033F: set_text_draw_letter_size 0.3 0.75
+                
+    if
+    UNITED_MAP == 1
+    then    
+    0349: set_text_draw_font UNITED_HUD_FONT_NUMBER
+    end
+    
+    0AD3: 24@v = format "TRG%d" ZAME_PARALLEL_THING_NUM
+    0AE0: remove_dynamic_GXT_entry 24@v
+    0ADF: add_dynamic_GXT_entry 24@v text 24@v            
+    033E: set_draw_text_position ZAME_PARALLEL_THING_X3 ZAME_PARALLEL_THING_Y3 GXT 24@v
+    end
+
+if or
+//0A1B:   actor 31@ colliding_with_actor PLAYER_ACTOR
+00DF:   actor PLAYER_ACTOR driving
+0EE4: locate_char_distance_to_char 31@ char PLAYER_ACTOR radius 1.0
+    then
+    0619: enable_actor 31@ collision_detection 0
+    {$INCLUDE ZAME Trigger Thing Delete Check.txt}
+    else
+    0619: enable_actor 31@ collision_detection 1
+    end    
+    
+end            
+
+if and
+002E:   ZAME_CURRENT_OBJECTIVE_GLOB >= ZAME_PARALLEL_THING_UNTILOBJ_NUM  // (int)
+not ZAME_PARALLEL_THING_TEST_MODE == 1
+then    
+break
+end
+
+until false
+
+0AD3: 24@v = format "TRG%d" ZAME_PARALLEL_THING_NUM
+0AF4: 24@v = read_string_from_ini_file "me\temp.dat" section 24@v key "AUD_NAME"
+if
+0AAB:   file_exists 24@v
+then
+audiostream.PerformAction(ZAME_PARALLEL_THING_PARAM5,STOP)
+audiostream.Release(ZAME_PARALLEL_THING_PARAM5)
+end
+
+return
+
+:CREATE_AND_HANDLE_DUMMY_CAR
+
+if
+ZAME_PARALLEL_THING_TEST_MODE == 1
+then
+ZAME_PARALLEL_TEMP_VAR = 0
+018A: ZAME_PARALLEL_TEMP_VAR = create_checkpoint_at ZAME_PARALLEL_THING_X ZAME_PARALLEL_THING_Y ZAME_PARALLEL_THING_Z
+marker.SetColor(ZAME_PARALLEL_TEMP_VAR,5)
+end
+
+repeat
+wait 0
+until 0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos ZAME_PARALLEL_THING_X ZAME_PARALLEL_THING_Y ZAME_PARALLEL_THING_Z radius 180.0
+
+if
+ZAME_PARALLEL_THING_TEST_MODE == 1
+then
+marker.Disable(ZAME_PARALLEL_TEMP_VAR)
+end
+
+//0AD1: show_formatted_text_highpriority "X %f, Y %f, Z %f, MODEL %d" time 5000 ZAME_PARALLEL_THING_X ZAME_PARALLEL_THING_Y ZAME_PARALLEL_THING_Z ZAME_PARALLEL_THING_PARAM1
+//wait 5000
+
+while not model.Available(ZAME_PARALLEL_THING_PARAM1)
+wait 0
+model.Load(ZAME_PARALLEL_THING_PARAM1)
+mload
+end
+
+31@ = car.Create(ZAME_PARALLEL_THING_PARAM1,ZAME_PARALLEL_THING_X, ZAME_PARALLEL_THING_Y, ZAME_PARALLEL_THING_Z)
+car.Angle(31@) = ZAME_PARALLEL_THING_A
+
+0AD3: 24@v = format "TRG%d" ZAME_PARALLEL_THING_NUM
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "COLOR1"
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR2 from_ini_file "me\temp.dat" section 24@v key "COLOR2"
+0229: set_car 31@ primary_color_to ZAME_PARALLEL_TEMP_VAR secondary_color_to ZAME_PARALLEL_TEMP_VAR2
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "CAR_INT"
+0840: link_car 31@ to_interior ZAME_PARALLEL_TEMP_VAR
+
+if
+ZAME_PARALLEL_THING_TEST_MODE == 1
+    then
+    099A: set_car 31@ collision_detection 0
+    car.LockInCurrentPosition(31@,true)
+    car.SetImmunities(31@,1,1,1,1,1)
+    ZAME_PARALLEL_TEMP_VAR = 0
+    ZAME_PARALLEL_TEMP_VAR = marker.CreateAboveCar(31@)
+    marker.SetIconSize(ZAME_PARALLEL_TEMP_VAR,2)
+    07E0: set_marker ZAME_PARALLEL_TEMP_VAR type_to 1
+    018B: set_marker ZAME_PARALLEL_TEMP_VAR radar_mode 2
+    end
+    
+0AD3: 24@v = format "TRG%d" ZAME_PARALLEL_THING_NUM
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "IMMUNE"
+    then
+    car.SetImmunities(31@,1,1,1,1,1)
+    end
+    
+0AD3: 24@v = format "TRG%d" ZAME_PARALLEL_THING_NUM
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "OPEN_HOOD"
+    then
+    0657: car 31@ open_door 0
+    end
+    
+0AD3: 24@v = format "TRG%d" ZAME_PARALLEL_THING_NUM
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "OPEN_TRUNK"
+    then
+    0657: car 31@ open_door 1
+    end
+    
+0AD3: 24@v = format "TRG%d" ZAME_PARALLEL_THING_NUM
+if
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "LOCKED"
+    then     
+    wait 1000
+    car.LockInCurrentPosition(31@,true)
+    end                
+
+repeat
+wait 0
+
+if
+not ZAME_PARALLEL_THING_TEST_MODE == 1
+then
+
+if
+056E:   car 31@ defined
+then
+if and
+0E08: is_car_script_controlled 31@
+32@ > 2000
+051C:   car 31@ damaged_by_actor -1
+    then
+    car.RemoveReferences(31@)
+    end
+end
+
+//ass
+else
+
+if
+//0A1B:   actor 31@ colliding_with_actor PLAYER_ACTOR
+0EE5: locate_char_distance_to_car PLAYER_ACTOR car 31@ radius 5.0
+    then
+    {$INCLUDE ZAME Trigger Thing Delete Check.txt}
+    end
+    
+if
+0EE5: locate_char_distance_to_car PLAYER_ACTOR car 31@ radius 10.0
+    then
+    ZAME_PARALLEL_THING_Z += 3.0
+    0E3F: convert_3d_to_screen_2d ZAME_PARALLEL_THING_X ZAME_PARALLEL_THING_Y ZAME_PARALLEL_THING_Z checkNearClip 0 checkFarClip 1 store_2d_to ZAME_PARALLEL_THING_X3 ZAME_PARALLEL_THING_Y3 size_to ZAME_PARALLEL_TEMP_VAR ZAME_PARALLEL_TEMP_VAR2
+    ZAME_PARALLEL_THING_Z -= 3.0
+    ZAME_PARALLEL_TEMP_VAR *= 0.45
+    ZAME_PARALLEL_TEMP_VAR2 *= 0.45
+                         
+    03F0: enable_text_draw 1 
+    03E0: draw_text_behind_textures 1
+    03E3: set_texture_to_be_drawn_antialiased 1 
+    0342: set_text_draw_centered 1
+    0340: set_text_draw_RGBA 255 255 255 $HUD_ALPHA   
+    081C: draw_text_outline 1 RGBA 0 0 0 $HUD_ALPHA
+                    
+    033F: set_text_draw_letter_size 0.3 0.75
+                
+    if
+    UNITED_MAP == 1
+    then    
+    0349: set_text_draw_font UNITED_HUD_FONT_NUMBER
+    end
+    
+    0AD3: 24@v = format "TRG%d" ZAME_PARALLEL_THING_NUM
+    0AE0: remove_dynamic_GXT_entry 24@v
+    0ADF: add_dynamic_GXT_entry 24@v text 24@v            
+    033E: set_draw_text_position ZAME_PARALLEL_THING_X3 ZAME_PARALLEL_THING_Y3 GXT 24@v
+    end    
+
+end
+
+if and
+002E:   ZAME_CURRENT_OBJECTIVE_GLOB >= ZAME_PARALLEL_THING_UNTILOBJ_NUM  // (int)
+not ZAME_PARALLEL_THING_TEST_MODE == 1
+then    
+break
+end
+
+until false
+
+return
+
+:DEADLY_FIRE_CATCH_CHECK
+
+repeat
+wait 0
+
+if
+89E7: not  player PLAYER_CHAR not_frozen
+    then
+    
+    02D1: remove_fire ZAME_PARALLEL_TEMP_VAR
+    
+    repeat
+    wait 0
+    until 09E7:  player PLAYER_CHAR not_frozen
+        
+    ZAME_PARALLEL_THING_Z -= 1.0
+    02CF: ZAME_PARALLEL_TEMP_VAR = create_fire_at ZAME_PARALLEL_THING_X ZAME_PARALLEL_THING_Y ZAME_PARALLEL_THING_Z propagation ZAME_PARALLEL_THING_PARAM2 size ZAME_PARALLEL_THING_PARAM1
+    ZAME_PARALLEL_THING_Z += 1.0
+    end
+    
+0093: ZAME_PARALLEL_TEMP_VAR2 = integer ZAME_PARALLEL_THING_PARAM2 to_float
+if
+ZAME_PARALLEL_TEMP_VAR2 < 1.0
+then
+ZAME_PARALLEL_TEMP_VAR2 = 1.0
+end                                   
+      
+if and
+0EA4: is_char_on_fire PLAYER_ACTOR
+00FE:   actor PLAYER_ACTOR sphere 0 in_sphere ZAME_PARALLEL_THING_X ZAME_PARALLEL_THING_Y ZAME_PARALLEL_THING_Z radius ZAME_PARALLEL_TEMP_VAR2 ZAME_PARALLEL_TEMP_VAR2 2.0
+not actor.Dead(PLAYER_ACTOR)
+not actor.Driving(PLAYER_ACTOR)
+    then
+    if
+    ZAME_PARALLEL_THING_TEST_MODE == 1
+        then
+        0AD1: show_formatted_text_highpriority "CATCHED DEADLY FIRE" time 500
+        else
+        :CATCH_DEADLY_FIRE
+        0326: ZAME_PARALLEL_TEMP_VAR2 = create_actor PLAYER_ACTOR fire
+        
+        repeat
+        wait 0
+        0851: set_actor PLAYER_ACTOR decrease_health_by 3 affect_armour 1
+        until actor.Dead(PLAYER_ACTOR)
+        
+        end
+    else
+    if and
+    00FE:   actor PLAYER_ACTOR sphere 0 in_sphere ZAME_PARALLEL_THING_X ZAME_PARALLEL_THING_Y ZAME_PARALLEL_THING_Z radius 1.0 1.0 2.0
+    not actor.Dead(PLAYER_ACTOR)
+    not actor.Driving(PLAYER_ACTOR)
+        then
+        jump to @CATCH_DEADLY_FIRE
+        end
+    end
+    
+if or
+02D0:   fire ZAME_PARALLEL_TEMP_VAR extinguished  
+002E:   ZAME_CURRENT_OBJECTIVE_GLOB >= ZAME_PARALLEL_THING_UNTILOBJ_NUM  // (int)
+    then  
+    break 
+    end    
+            
+until false
+        
+return  
+
+:FIRE_IDLE_CHECK    
+
+repeat
+wait 0  
+
+if
+89E7: not  player PLAYER_CHAR not_frozen
+    then
+    
+    02D1: remove_fire ZAME_PARALLEL_TEMP_VAR
+    
+    repeat
+    wait 0
+    until 09E7:  player PLAYER_CHAR not_frozen
+        
+    ZAME_PARALLEL_THING_Z -= 1.0
+    02CF: ZAME_PARALLEL_TEMP_VAR = create_fire_at ZAME_PARALLEL_THING_X ZAME_PARALLEL_THING_Y ZAME_PARALLEL_THING_Z propagation ZAME_PARALLEL_THING_PARAM2 size ZAME_PARALLEL_THING_PARAM1
+    ZAME_PARALLEL_THING_Z += 1.0
+    end
+            
+if or
+02D0:   fire ZAME_PARALLEL_TEMP_VAR extinguished
+002E:   ZAME_CURRENT_OBJECTIVE_GLOB >= ZAME_PARALLEL_THING_UNTILOBJ_NUM  // (int)
+    then
+    break
+    end    
+            
+until false
+        
+return    

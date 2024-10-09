@@ -214,7 +214,47 @@ $SAVEPLACE_ON == 0
     end
     
     0@ -= 1
-    random_int TANKS_TO_SPAWN_COUNT 0@ 1@ 
+    if
+    24@ == 0
+    then
+    random_int TANKS_TO_SPAWN_COUNT 0@ 1@
+    
+    //Автоподстройка хуйни
+    0085: 2@ = 0@ // (int) //1
+    0085: 3@ = 1@ // (int) //4
+    0062: 3@ -= 2@  // (int) //3
+    008B: 4@ = TANKS_TO_SPAWN_COUNT // (int)
+    4@ += 1
+    
+//    0ACE: show_formatted_text_box "DRPPDCNT %d > %d (MIN) ~n~MIN %d, MAX %d, DIFF %d" 4@ 2@ 0@ 1@ 3@    
+    if
+    001D:   4@ > 2@  // (int) //если больше чем минимальное (например 1)
+    then
+    3@ *= 10 //берем разницу между максимальным и минимальным (получится 30%)
+    
+    if
+    3@ > 90 //если больше 90 то фиксируем процент деления на два под 90
+    then
+    3@ = 90
+    end
+    
+    if
+    0E4D: random_percent 3@ //если выпало 30%, то сокращаем выданное число на 2 (если 3 то получим 1 если 4 то получим 2 в две трети случаев)
+        then
+        if
+        3@ < 90 //если процент меньше 90, делим на два, если больше - на три
+            then
+            TANKS_TO_SPAWN_COUNT /= 2
+//            0ACE: show_formatted_text_box "SPAWN_COUNT /= 2"
+            else
+            TANKS_TO_SPAWN_COUNT /= 3
+//            0ACE: show_formatted_text_box "SPAWN_COUNT /= 3"
+            end
+        end
+    end
+    
+    end
+     
     jump to @ZOMBIE_TANK_SPAWN_START
     end
     
@@ -1392,7 +1432,42 @@ not ZAME_PROTECT_THE_OBJECT_FLAG == 2
                                 006B: 0@ *= 1@  // (float)  
                                 0092: 0@ = float 0@ to_integer                             
                                 
+                                if or
+                                003A:   $TNK_TARGET[24@] == $SURVIVER[0] // (int)
+                                003A:   $TNK_TARGET[24@] == $SURVIVER[1] // (int)
+                                003A:   $TNK_TARGET[24@] == $SURVIVER[2] // (int)
+                                003A:   $TNK_TARGET[24@] == $SURVIVER[3] // (int)
+                                003A:   $TNK_TARGET[24@] == $SURVIVER[4] // (int)
+                                then
+                                
+                                for 2@ = 0 to 4
+                                if
+                                003A:   $TNK_TARGET[24@] == $SURVIVER[2@] // (int)
+                                    then
+                                    1@ = actor.Health($SURVIVER[2@])
+                                    0062: 1@ -= 0@  // (int)
+                                    
+                                    if and
+                                    $SURVIVOR_HEAL_COUNT[2@] < 1
+                                    $SURVIVOR_BINT_COUNT[2@] < 1
+                                    then
+                                    1@ = 1000
+                                    end
+                                    
+                                    if
+                                    1@ < 1
+                                        then
+                                        actor.Health($SURVIVER[2@]) = 100
+//                                        0AD1: show_formatted_text_highpriority "penis heal" time 2000
+                                        else
+                                        0851: set_actor $TNK_TARGET[24@] decrease_health_by 0@ affect_armour 1
+                                        end
+                                    end
+                                end
+                                
+                                else
                                 0851: set_actor $TNK_TARGET[24@] decrease_health_by 0@ affect_armour 1 
+                                end
                                 
                                 05C1: AS_actor $TNK_TARGET[24@] speak_from_audio_table 346
                                 05BB: AS_actor $TNK_TARGET[24@] fall_down 0 time_on_ground 100
@@ -1540,7 +1615,42 @@ not ZAME_PROTECT_THE_OBJECT_FLAG == 2
                                 006B: 0@ *= 1@  // (float)  
                                 0092: 0@ = float 0@ to_integer                             
                                 
+                                if or
+                                07D6:   TANK_CLOSEST_PED_VAR == $SURVIVER[0] // (int)
+                                07D6:   TANK_CLOSEST_PED_VAR == $SURVIVER[1] // (int)
+                                07D6:   TANK_CLOSEST_PED_VAR == $SURVIVER[2] // (int)
+                                07D6:   TANK_CLOSEST_PED_VAR == $SURVIVER[3] // (int)
+                                07D6:   TANK_CLOSEST_PED_VAR == $SURVIVER[4] // (int)
+                                then
+                                
+                                for 2@ = 0 to 4
+                                if
+                                07D6:   TANK_CLOSEST_PED_VAR == $SURVIVER[2@] // (int)
+                                    then
+                                    1@ = actor.Health($SURVIVER[2@])
+                                    0062: 1@ -= 0@  // (int)
+                                    
+                                    if and
+                                    $SURVIVOR_HEAL_COUNT[2@] < 1
+                                    $SURVIVOR_BINT_COUNT[2@] < 1
+                                    then
+                                    1@ = 1000
+                                    end
+                                    
+                                    if
+                                    1@ < 1
+                                        then
+                                        actor.Health($SURVIVER[2@]) = 100
+//                                        0AD1: show_formatted_text_highpriority "penis heal" time 2000
+                                        else
+                                        0851: set_actor TANK_CLOSEST_PED_VAR decrease_health_by 0@ affect_armour 1
+                                        end
+                                    end
+                                end
+                                
+                                else
                                 0851: set_actor TANK_CLOSEST_PED_VAR decrease_health_by 0@ affect_armour 1 
+                                end
                                 
                                 05C1: AS_actor TANK_CLOSEST_PED_VAR speak_from_audio_table 346
                                 05BB: AS_actor TANK_CLOSEST_PED_VAR fall_down 0 time_on_ground 100
@@ -1665,48 +1775,24 @@ if and
 056D:   $TANK[24@] defined
 not ZAME_PROTECT_THE_OBJECT_FLAG == 2
 $TNK_TARGET_FINDED[24@] == 1
-0E45: frame_mod 5
-    then    
-    
-    ////////////////////////
-        
-    1@ = 0
-    2@ = 50
-        
-    for 0@ = 1 to 19
-        
-    if
-    056D:   actor $TANK[0@] defined
-    then
-    1@ += 50
-    end
-        
-    end
-        
-    ////////////////////////
-    
-    random_int 0@ 0 to 100
-    005A: 0@ += 1@  // (int)
-    005A: 2@ += 1@  // (int)
-//    0AD1: show_formatted_text_highpriority "%d/%d" time 2000 0@ 2@
-    
+001C:   TANK_JUMP_TIMER > TANK_JUMP_TIME2 // (int)
+    then        
     04DD: 1@ = actor $TANK[24@] armour
     if and
     056D:   actor $TNK_TARGET[24@] defined
-//    0@ == 50
-    003B:   0@ == 2@  // (int)
     0184:   actor $TANK[24@] health > 0
     044B:   actor $TANK[24@] on_foot
     8818:  actor $TANK[24@] in_air
     not 1@ == 1
         then
         
-        if
-        04C8:   actor $TNK_TARGET[24@] driving_flying_vehicle
+        if or
+        0A32:  actor $TNK_TARGET[24@] on_turret_of_car
+        actor.Driving($TNK_TARGET[24@])
         then
-        1@ = 65.0
-        else
         1@ = 120.0
+        else
+        1@ = 70.0
         end
         
         if and
@@ -1715,10 +1801,38 @@ $TNK_TARGET_FINDED[24@] == 1
         0364:   actor $TANK[24@] spotted_actor $TNK_TARGET[24@]
         8E48: not is_char_fallen_on_ground $TNK_TARGET[24@]
             then
+            
+            TANK_JUMP_TIMER = 0  
+                
+            0084: TANK_JUMP_TIME2 = $TANK_JUMP_TIME // (int) 
+            008D: TANK_JUMP_TIME2 = integer TANK_JUMP_TIME2 to_float
+            random_int 0@ $TANK_JUMP1_MIN $TANK_JUMP1_MAX
+            
+            //////////////////////
+                            
+            for 1@ = 1 to 19
+                    
+            if
+            056D:   actor $TANK[1@] defined
+            then
+            1@ += 0.5
+            end
+                    
+            end
+                    
+            //////////////////////
+            
+            006D: TANK_JUMP_TIME2 *= 0@ // (float)            
+            008C: TANK_JUMP_TIME2 = float TANK_JUMP_TIME2 to_integer
+            
             audiostream.Volume(TNK_WALK_SOUND) = 0.0
             0812: AS_actor $TANK[24@] perform_animation "tank_throw" IFP "PED" framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF 0 time -1 // versionB
             
             ///////////////////////////////////////////////////////////////////////////////
+
+            if
+            not $PEOPLE_DONT_ATTACK == 1
+            then
 
             092B: 4@ = group PLAYER_GROUP member 0
             092B: 5@ = group PLAYER_GROUP member 1
@@ -1796,6 +1910,61 @@ $TNK_TARGET_FINDED[24@] == 1
             07D6:   27@ == $SURVIVER[0] // @ == $ (int)
             then
             27@ = -69
+            end
+            
+            if and
+            ZAME_PROTECT_TEAMMATE_NUM > -1
+            $GAMEMODE_EDITOR == 1
+            then
+            if
+            07D6:   4@ == $SURVIVER[ZAME_PROTECT_TEAMMATE_NUM] // @ == $ (int)
+                then
+                4@ = -69
+                end
+            end
+                    
+            if and
+            ZAME_PROTECT_TEAMMATE_NUM > -1
+            $GAMEMODE_EDITOR == 1
+            then
+            if
+            07D6:   5@ == $SURVIVER[ZAME_PROTECT_TEAMMATE_NUM] // @ == $ (int)
+                then
+                5@ = -69
+                end
+            end
+                    
+            if and
+            ZAME_PROTECT_TEAMMATE_NUM > -1
+            $GAMEMODE_EDITOR == 1
+            then
+            if
+            07D6:   6@ == $SURVIVER[ZAME_PROTECT_TEAMMATE_NUM] // @ == $ (int)
+                then
+                6@ = -69
+                end
+            end
+                    
+            if and
+            ZAME_PROTECT_TEAMMATE_NUM > -1
+            $GAMEMODE_EDITOR == 1
+            then
+            if
+            07D6:   26@ == $SURVIVER[ZAME_PROTECT_TEAMMATE_NUM] // @ == $ (int)
+                then
+                26@ = -69
+                end
+            end
+                    
+            if and
+            ZAME_PROTECT_TEAMMATE_NUM > -1
+            $GAMEMODE_EDITOR == 1
+            then
+            if
+            07D6:   27@ == $SURVIVER[ZAME_PROTECT_TEAMMATE_NUM] // @ == $ (int)
+                then
+                27@ = -69
+                end
             end
             
             ///////////////////////////////////////////////////////////////////////////////
@@ -1877,9 +2046,9 @@ $TNK_TARGET_FINDED[24@] == 1
             
             ///////////////////////////////////////////////////////////////////////////////
             
-            33@ = 0
+            end
             
-            7@ = 0
+            33@ = 0            
                                 
             repeat
             wait 0
@@ -1909,6 +2078,13 @@ $TNK_TARGET_FINDED[24@] == 1
             jump to @TANK_SKIP_THROW_ROCK
             end
             
+            if or
+            TANK_DELETE_FLAG == 1
+            $TANK_REMOVE_FLAG == 1
+            then
+            jump to @TANK_SKIP_THROW_ROCK
+            end
+            
             if
             056D:  actor $TNK_TARGET[24@] defined
                 then
@@ -1934,6 +2110,7 @@ $TNK_TARGET_FINDED[24@] == 1
             end
             
             035D: set_object TANK_CLOSEST_OBJ_VAR targetable 1
+            08D2: object TANK_CLOSEST_OBJ_VAR scale_model 1.5
             070A: AS_actor $TANK[24@] attach_to_object TANK_CLOSEST_OBJ_VAR offset 0.0 0.0 0.0 on_bone 6 16 perform_animation "NULL" IFP_file "NULL" time 600
             
             33@ = 0
@@ -1951,6 +2128,13 @@ $TNK_TARGET_FINDED[24@] == 1
             jump to @TANK_SKIP_THROW_ROCK 
             end
             
+            if or
+            TANK_DELETE_FLAG == 1
+            $TANK_REMOVE_FLAG == 1
+            then
+            jump to @TANK_SKIP_THROW_ROCK
+            end
+            
             if
             056D:  actor $TNK_TARGET[24@] defined
                 then
@@ -1960,11 +2144,13 @@ $TNK_TARGET_FINDED[24@] == 1
                 actor.Angle($TANK[24@]) = 0@
                 0509: 6@ = distance_between_XY 1@ 2@ and_XY 3@ 4@
                 actor.StorePos($TANK[24@],1@,2@,3@)
-//                050A: 7@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 1@ 2@ 5@
                 0063: 5@ -= 3@  // (float)
-                0087: 7@ = 5@ // (float)
-                6@ *= 3.0
-                7@ *= 3.0
+                0087: 7@ = 5@ // (float)                
+                6@ *= 2.0
+                7@ *= 2.0
+                0087: 8@ = 6@ // (float)
+                8@ /= 35.0
+                005B: 7@ += 8@  // (float)
                 end
                                             
             until 33@ > 500
@@ -1978,8 +2164,17 @@ $TNK_TARGET_FINDED[24@] == 1
                 Object.SetImmunities(TANK_CLOSEST_OBJ_VAR, 0, 1, 1, 1, 1)
                 0906: set_object TANK_CLOSEST_OBJ_VAR mass_to 1000.0 // float
                 Actor.StorePos($TANK[24@], 1@, 2@, 3@)
-                7@ += 1.0
-    //            0AD1: show_formatted_text_highpriority "Y: %f, Z: %f" time 2000 6@ 7@
+                if
+                056D:  actor $TNK_TARGET[24@] defined
+                then
+                if
+                actor.Driving($TNK_TARGET[24@])
+                    then
+                    6@ *= 1.25
+                    7@ *= 0.75
+                    end
+                end
+//                0AD1: show_formatted_text_highpriority "Y: %f, Z: %f" time 2000 6@ 7@
                 04C4: store_coords_to 4@ 5@ 6@ from_actor $TANK[24@] with_offset 0.0 6@ 7@ 
                 0063: 4@ -= 1@ // (float) 
                 0063: 5@ -= 2@ // (float) 
@@ -2001,7 +2196,6 @@ $TNK_TARGET_FINDED[24@] == 1
 if and
 0E45: frame_mod 5
 056D:   $TANK[24@] defined
-not $GAMEMODE_EDITOR == 1
 $ALLOW_TANK_THROW_OBJ == 1
 not ZAME_PROTECT_THE_OBJECT_FLAG == 2
     then
@@ -3191,6 +3385,17 @@ $MISSION14_ACTIVE == 1
     jf @TANK1_ATTACK_PEOPLE_BEGIN
     end
     
+if and
+ZAME_PROTECT_TEAMMATE_NUM > -1
+$GAMEMODE_EDITOR == 1
+then
+if
+07D6:   3@ == $SURVIVER[ZAME_PROTECT_TEAMMATE_NUM] // @ == $ (int)
+    then
+    jump to @TANK1_ATTACK_PEOPLE_BEGIN
+    end
+end    
+    
 if
 $QUEST_TYPE == 9
     then
@@ -3623,6 +3828,15 @@ not 29@ == 16775
 jf @TANK_OBJECT_CHECK_FAIL
 
 end
+
+if
+$GAMEMODE_EDITOR == 1
+    then
+    0907: get_object TANK_CLOSEST_OBJ_VAR mass_to 29@ // float
+    if
+    29@ < 99999.0
+    jf @TANK_OBJECT_CHECK_FAIL
+    end
    
 return
 
@@ -3690,7 +3904,7 @@ $ZOMBIEORGY_MODE_FLAG == 0
 $ZOMBIE_DONT_ATTACK_PLAYER == 0
 not ZAME_PROTECT_THE_OBJECT_FLAG == 2
 84AD: not  actor PLAYER_ACTOR in_water
-84C8: not  actor PLAYER_ACTOR driving_flying_vehicle
+//84C8: not  actor PLAYER_ACTOR driving_flying_vehicle
 then
 0084: $TNK_TARGET[24@] = PLAYER_ACTOR // (int)
 $TNK_TARGET_FINDED[24@] = 1
@@ -3722,7 +3936,7 @@ $SAVESTATUS == 1
     $ZOMBIEORGY_MODE_FLAG == 0
     $ZOMBIE_DONT_ATTACK_PLAYER == 0
     84AD: not  actor PLAYER_ACTOR in_water
-    84C8: not  actor PLAYER_ACTOR driving_flying_vehicle
+//    84C8: not  actor PLAYER_ACTOR driving_flying_vehicle
     $ACTOR_DEAD == 0
     $INF_SIDE == 0
     then
@@ -4742,430 +4956,3 @@ thread 'TANK20'
 end
 
 return
-
-:ROCK
-thread 'ROCK'
-
-20@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\tank_sounds\thrown_missile_loop_1.wav")
-Audiostream.LinkToObject(20@,0@)
-Audiostream.Loop(20@,1)
-audiostream.Volume(20@) = 0.0
-Audiostream.PerformAction(20@, PLAY)
-21@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\tank_sounds\thrown_projectile_hit_01.wav")
-Audiostream.LinkToObject(21@,0@)
-Audiostream.Loop(21@,0)
-audiostream.Volume(21@) = 0.0
-//25@ = marker.CreateAboveObject(0@)
-
-repeat
-wait 0
-
-if
-$GAME_SPEED == 1.0
-    then
-    audiostream.Volume(20@) = $SOUNDS_VOLUME
-    audiostream.Volume(21@) = $SOUNDS_VOLUME
-    else
-    audiostream.Volume(20@) = 0.0
-    audiostream.Volume(21@) = 0.0
-    end
-
-if
-83CA: not  object 0@ exists
-    then
-    end_thread
-    else
-    
-    0ECA: get_object_random_seed 0@ store_to 1@ 
-    0EBD: generate_random_float_in_range_with_seed 1@ min 1.0 max 5.0 store_to 10@ 
-    0EBD: generate_random_float_in_range_with_seed 1@ min -7.0 max -3.0 store_to 11@ 
-    0EBD: generate_random_float_in_range_with_seed 1@ min 1.0 max 5.0 store_to 12@       
-    05A2: set_object 0@ rotation_velocity_about_an_axis 10@ 11@ 12@ through_center_of_mass
-    if
-    0458:   player PLAYER_CHAR aiming_at_object 0@
-        then
-        
-        $TARGET_TEXT_X = 320.0
-        $TARGET_TEXT_Y = 80.0
-        
-        $TARGET_ENEMY_R = 200
-        $TARGET_ENEMY_G = 20
-        $TARGET_ENEMY_B = 20   
-        
-        03F0: enable_text_draw 1 
-        03E0: draw_text_behind_textures 1
-        03E3: set_texture_to_be_drawn_antialiased 1 
-        0342: set_text_draw_centered 1
-        0340: set_text_draw_RGBA $TARGET_ENEMY_R $TARGET_ENEMY_G $TARGET_ENEMY_B $HUD_ALPHA   
-        081C: draw_text_outline 1 RGBA 0 0 0 $HUD_ALPHA
-        
-        0086: $TARGET_TEXT_Y2 = $TARGET_TEXT_Y // (float)    
-        $TARGET_TEXT_Y2 -= 10.0
-
-        033F: set_text_draw_letter_size $TEAM_TEXT_SIZE_X $TEAM_TEXT_SIZE_Y
-        
-        if
-        UNITED_MAP == 1
-        then    
-        0349: set_text_draw_font UNITED_HUD_FONT_NUMBER
-        end
-        
-        033E: set_draw_text_position $TARGET_TEXT_X $TARGET_TEXT_Y2 GXT "GME1575"
-        
-        071E: get_object 0@ health_to 17@
-        0093: 17@ = integer 17@ to_float        
-        24@ = 500.0                                        
-        24@ /= 100.0                     
-        0073: 17@ /= 24@ // (float)
-        0092: 17@ = float 17@ to_integer
-        
-        03F0: enable_text_draw 1 
-        03E0: draw_text_behind_textures 1
-        03E3: set_texture_to_be_drawn_antialiased 1 
-        0342: set_text_draw_centered 1
-        0340: set_text_draw_RGBA 225 225 225 $HUD_ALPHA   
-        081C: draw_text_outline 1 RGBA 0 0 0 $HUD_ALPHA 
-        033F: set_text_draw_letter_size $TEAM_TEXT_SIZE_X $TEAM_TEXT_SIZE_Y     
-        
-        if
-        UNITED_MAP == 1
-        then    
-        0349: set_text_draw_font UNITED_HUD_FONT_NUMBER
-        end
-        
-        if
-        HEALTH_SHOW_STYLE == 1
-        then  
-        045A: draw_text_1number $TARGET_TEXT_X $TARGET_TEXT_Y GXT 'DISP3' number 17@
-        else
-        045B: draw_text_2numbers $TARGET_TEXT_X $TARGET_TEXT_Y GXT 'DISP5' numbers 17@ 24@  // ~1~:~1~
-        end                
-        
-        else
-        if and
-        0E46: is_char_using_gun PLAYER_ACTOR
-        02CC:   object 0@ bounding_sphere_visible
-        00E1:   player 0 pressed_key 6
-            then
-            0400: store_coords_to 6@ 7@ 8@ from_object 0@ with_offset 0.0 0.0 5.0
-            0E3F: convert_3d_to_screen_2d 6@ 7@ 8@ checkNearClip 0 checkFarClip 1 store_2d_to 17@ 18@ size_to 12@ 13@
-            12@ *= 0.45
-            13@ *= 0.45  
-                        
-            $TARGET_ENEMY_R = 200
-            $TARGET_ENEMY_G = 20
-            $TARGET_ENEMY_B = 20   
-            
-            03F0: enable_text_draw 1 
-            03E0: draw_text_behind_textures 1
-            03E3: set_texture_to_be_drawn_antialiased 1 
-            0342: set_text_draw_centered 1
-            0340: set_text_draw_RGBA $TARGET_ENEMY_R $TARGET_ENEMY_G $TARGET_ENEMY_B $HUD_ALPHA   
-            081C: draw_text_outline 1 RGBA 0 0 0 $HUD_ALPHA
-                
-            033F: set_text_draw_letter_size $TEAM_TEXT_SIZE_X $TEAM_TEXT_SIZE_Y
-            
-            if
-            UNITED_MAP == 1
-            then    
-            0349: set_text_draw_font UNITED_HUD_FONT_NUMBER
-            end
-            
-            033E: set_draw_text_position 17@ 18@ GXT "GME1575"
-            
-            18@ -= 10.0
-            
-            071E: get_object 0@ health_to 16@
-            0093: 16@ = integer 16@ to_float        
-            24@ = 500.0                                        
-            24@ /= 100.0                     
-            0073: 16@ /= 24@ // (float)
-            0092: 16@ = float 16@ to_integer
-            
-            03F0: enable_text_draw 1 
-            03E0: draw_text_behind_textures 1
-            03E3: set_texture_to_be_drawn_antialiased 1 
-            0342: set_text_draw_centered 1
-            0340: set_text_draw_RGBA 225 225 225 $HUD_ALPHA   
-            081C: draw_text_outline 1 RGBA 0 0 0 $HUD_ALPHA 
-            033F: set_text_draw_letter_size $TEAM_TEXT_SIZE_X $TEAM_TEXT_SIZE_Y     
-            
-            if
-            UNITED_MAP == 1
-            then    
-            0349: set_text_draw_font UNITED_HUD_FONT_NUMBER
-            end
-            
-            if
-            HEALTH_SHOW_STYLE == 1
-            then  
-            045A: draw_text_1number 17@ 18@ GXT 'DISP3' number 16@
-            else
-            045B: draw_text_2numbers 17@ 18@ GXT 'DISP5' numbers 16@ 24@  // ~1~:~1~
-            end                
-                             
-            end
-        end
-    
-//    object.StorePos(0@,10@,11@,12@)
-//    if
-//    0AE1: 12@ = random_actor_near_point 10@ 11@ 12@ in_radius 5.0 find_next 0 pass_deads 0
-//    then
-//    0382: set_object 0@ collision_detection 0
-//    else
-//    0382: set_object 0@ collision_detection 1
-//    end
-    
-    071E: get_object 0@ health_to 1@
-//    0AD1: show_formatted_text_highpriority "obj health %d" time 2000 1@        
-    if or
-    32@ > 5000
-    $SAVESTATUS == 1
-    1@ < 1
-    then
-    Audiostream.PerformAction(20@, STOP)
-    Audiostream.PerformAction(21@, STOP)
-    audiostream.Release(20@)
-    audiostream.Release(21@)            
-    if
-    1@ < 1
-    then
-    gosub @ROCK_BREAK_EFFECT
-    0723: break_object 0@ intensity 1
-    end
-    
-    object.RemoveReferences(0@)
-    end_thread
-    end
-    
-    for 19@ = 0 to 149
-    if and
-    056D:   actor $CREATURE[19@] defined
-    not $CREATURE[19@] == -69
-        then
-        if and
-        0EE6: locate_char_distance_to_object $CREATURE[19@] object 0@ radius 3.0
-        82F2: not  actor $CREATURE[19@] model == #ZTANK
-        not actor.Driving($CREATURE[19@])
-        8E49: not is_char_entering_any_car $CREATURE[19@]
-        8E4A: not is_char_exiting_any_car $CREATURE[19@]
-            then
-            wait 0
-            if
-            83CA: not  object 0@ exists
-            then
-            end_thread
-            end
-            
-            0382: set_object 0@ collision_detection 0  
-            18@ = 1
-//            0AD1: show_formatted_text_highpriority "scripted collide" time 2000            
-            008B: 30@ = $CREATURE[19@] // (int)
-            gosub @CHECK_PROOFS2            
-            jump to @SHIT_EXPLODE
-            end 
-        end
-    end      
-    
-    if
-    04DA:   has_object 0@ collided
-        then
-        0382: set_object 0@ collision_detection 0
-        18@ = 0
-//        0AD1: show_formatted_text_highpriority "usual collide" time 2000
-        0D36: store_object 0@ collided_entities_to 29@ 28@ -1 -1 -1 -1
-//        0AD1: show_formatted_text_highpriority "collided_entities %d %d" time 2000 29@ 28@
-        0085: 30@ = 29@ // (int)
-        gosub @CHECK_PROOFS
-        0085: 30@ = 28@ // (int)
-        gosub @CHECK_PROOFS
-        break
-        end
-    end    
-
-until false
-
-:SHIT_EXPLODE
-
-Audiostream.PerformAction(20@, STOP)
-Audiostream.PerformAction(21@, PLAY)
-if
-83CA: not  object 0@ exists
-then
-end_thread
-end
-gosub @ROCK_BREAK_EFFECT
-
-if
-$GAMEMODE_CRAZY == 1
-then
-020C: create_explosion_with_radius 0 at 1@ 2@ 3@
-end
-
-0723: break_object 0@ intensity 1
-object.RemoveReferences(0@)
-//marker.Disable(25@)
-
-repeat
-wait 0
-
-0AB9: get_mp3 21@ state_to 1@
-if or
-1@ == -1
-not $GAME_SPEED == 1.0
-    then
-    break
-    end
-
-until false
-
-audiostream.Release(20@)
-audiostream.Release(21@)
-
-end_thread
-
-:ROCK_BREAK_EFFECT
-object.StorePos(0@,1@,2@,3@)
-0E6C: get_day_night_balance 4@
-064B: 5@ = create_particle "prt_cardebris" at 1@ 2@ 3@ type 1
-0EC0: add_fx_system_particle 5@ coord 1@ 2@ 3@ vel 1.0 1.0 1.0 size 200.0 brightness 4@ rgba 0.35 0.35 0.35 0.25 lastFactor 2.0
-0EC0: add_fx_system_particle 5@ coord 1@ 2@ 3@ vel 2.0 2.0 -1.0 size 300.0 brightness 4@ rgba 0.35 0.35 0.35 0.25 lastFactor 2.0
-0EC0: add_fx_system_particle 5@ coord 1@ 2@ 3@ vel 3.0 3.0 1.0 size 400.0 brightness 4@ rgba 0.35 0.35 0.35 0.25 lastFactor 2.0
-0EC0: add_fx_system_particle 5@ coord 1@ 2@ 3@ vel 4.0 4.0 -1.0 size 500.0 brightness 4@ rgba 0.35 0.35 0.35 0.25 lastFactor 2.0
-0EC0: add_fx_system_particle 5@ coord 1@ 2@ 3@ vel 5.0 5.0 1.0 size 600.0 brightness 4@ rgba 0.35 0.35 0.35 0.25 lastFactor 2.0
-return
-              
-:CHECK_PROOFS
-if
-30@ < 1
-then
-return
-end
-0E13: get_entity 30@ type_to 1@
-if
-not 1@ == 3
-then
-return
-end
-0AEA: 30@ = actor_struct 30@ handle
-:CHECK_PROOFS2
-//0AD1: show_formatted_text_highpriority "entity type %d" time 2000 1@
-//0AD1: show_formatted_text_highpriority "handle %d" time 2000 30@
-//wait 2000
-if
-856D: not  actor 30@ defined
-then
-return
-end
-
-if or
-18@ == 0
-18@ == 1
-then
-
-if or
-07D6:   30@ == COOP_ACTOR // @ == $ (int)
-07D6:   30@ == PLAYER_ACTOR // @ == $ (int)
-then
-008B: 24@ = $TANK_DAMAGE // (int)
-else
-008B: 24@ = $TANK_PEOPLE_DAMAGE // (int)
-end
-
-0093: 24@ = integer 24@ to_float
-random_float 1@ 0.85 1.15 
-006B: 24@ *= 1@  // (float)  
-0092: 24@ = float 24@ to_integer
-
-0851: set_actor 30@ decrease_health_by 24@ affect_armour 1
-
-end                                 
-
-//0619: enable_actor 30@ collision_detection 0
-//actor.LockInCurrentPosition(30@,true)
-
-if
-07D6:   30@ == PLAYER_ACTOR // @ == $ (int)
-then
-
-0E68: set_player_control_pad 0 1 
-0E69: set_player_control_pad_movement 0 0
-05BB: AS_actor PLAYER_ACTOR fall_down 0 time_on_ground 100
-wait 1
-
-if
-056D:   actor $VOICE_ACTOR defined
-then
-
-if
-not $RANDOM_MODE_MODEL == 0
-then
-05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 346
-else
-05C1: AS_actor PLAYER_ACTOR speak_from_audio_table 346
-end
-
-end  
-
-0E68: set_player_control_pad 1 1 
-0E69: set_player_control_pad_movement 0 1
-0332: set_actor PLAYER_ACTOR bleeding 0
-//wait 50    
-                            
-if
-8184:   actor PLAYER_ACTOR health < 1
-then
-05BE: AS_actor PLAYER_ACTOR die
-end    
-
-else
-05BB: AS_actor 30@ fall_down 0 time_on_ground 100
-05C1: AS_actor 30@ speak_from_audio_table 346
-end
-
-09F1: play_audio_at_actor 30@ event 1130
-
-if
-$GAMEMODE_CRAZY == 1
-then
-0EAC: get_char_proofs 30@ bullet 2@ fire 3@ explosion 4@ collision 5@ melee 6@
-actor.SetImmunities(30@,2@,3@,0,5@,6@)
-create_thread @ROCK_PR 30@ 2@ 3@ 4@ 5@ 6@
-end
-
-//wait 0
-
-//if
-//856D: not  actor 30@ defined
-//then
-//return
-//end
-
-//0619: enable_actor 30@ collision_detection 1
-//actor.LockInCurrentPosition(30@,false)
-
-return
-
-:ROCK_PR
-thread 'ROCK_PR'
-
-repeat
-wait 0
-if
-056D:   actor 0@ defined
-    then
-    actor.SetImmunities(0@,1@,2@,0,4@,5@)
-    else
-    end_thread
-    end
-
-until 32@ > 500
-
-if
-856D: not  actor 0@ defined
-then
-end_thread
-end
-actor.SetImmunities(0@,1@,2@,3@,4@,5@)
-//0AD1: show_formatted_text_highpriority "restore proofs" time 2000
-end_thread

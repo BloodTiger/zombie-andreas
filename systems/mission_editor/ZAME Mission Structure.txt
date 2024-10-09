@@ -360,6 +360,7 @@ $HELP_INST_FLAG = 1
 $ZOMBIES_COUNT = 20
 $ZOMBIES_PROCENT = 100.0
 $PLAYER_SURVIVOR_SIDE = 1
+ZAME_PROTECT_TEAMMATE_NUM = -1
 
 0AF0: get_int 0@ from_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "PVP_MODE"
 if
@@ -639,6 +640,15 @@ if and
 not 2@ == 1
 then
 
+0AF4: v$SNAME3 = read_string_from_ini_file ZAME_KONTROLT4K_STRING section "CHECKPOINT_PARAMETERS" key "MISSION_NAME"
+0AF4: v$SNAME2 = read_string_from_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "MISSION_NAME"
+if
+8D49: not 2@ = compare_strings v$SNAME3 v$SNAME2 // IF and SET
+then
+gosub @DELETE_ZAME_MISSION_CHECKPOINT
+jump to @SKIP_LOADING_ZAME_CHECKPOINT
+end
+
 repeat
 wait 0   
 03F0: enable_text_draw 1
@@ -699,7 +709,7 @@ $SIMULATING_FLAG = 1
 008A: ZAME_GLOB_OBJECTIVES_COUNT = ZAME_OBJECTIVES_COUNT // (int)
 create_thread @ZAMESKP
 $GODMODE_FLAG = 1         
-end
+end        
 
 if and
 not 0@ == 9
@@ -710,7 +720,14 @@ fade 1 1000
 wait 1000
 else
 ZAME_CUTSCENE_MODE = 1
-end
+end       
+
+0AA7: call_function 0x00403DA0{_getModelPtr} num_params 1 pop 1 iId 18161 pclInfo 7@
+if 7@ > 0
+    then
+    0A8E: 9@ = 7@ + 0x18 // CModel*** - CModelHier - CBaseModelInfo - m_fDrawDistance
+    0A8C: write_memory 9@ size 4 value -100.0 vp 0
+    end
 
 0AF4: v$SNAME3 = read_string_from_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "MISSION_NAME"
 0AE0: remove_dynamic_GXT_entry "ZAME_N"
@@ -1200,8 +1217,8 @@ if
     ZAME_LOADING_CHECKPOINT_FLAG = 2
     gosub @ZAME_LOAD_CHECKPOINT_INFO_END
     end
-        
-    wait 150
+    
+    wait 2000
     ZAME_KONTROLT4K_LOADING_FLAG_GLOB = 0
     $SIMULATING_FLAG = 0    
     0459: end_thread_named 'ZAMESKP'
@@ -1307,6 +1324,12 @@ if
     not 6@ == 2
     then
     03BC: MISSION_SPHERE = create_sphere_at 2@ 3@ 4@ radius 5@
+    end
+    
+    if
+    0AF2: get_float 7@ from_ini_file "me\temp.dat" section v$RACE_FILE key "SPHERE_SIZE"
+    then
+    0087: 5@ = 7@ // (float)   
     end
     
     if or
@@ -1570,8 +1593,14 @@ if
     
     if
     30@ == 1
+    then                                
+    
+    if
+    8AF0: not get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "HIDE_MARKER"
     then
     008A: SPEC_INFECTED_MARKER_FLAG = 28@ // (int)
+    end
+    
     SPEC_INFECTED_MARKER_FLAG += 10
     end    
         
@@ -1589,6 +1618,13 @@ if
     7@ == 1
         then
         WITCH_SPAWN_ON_ROAD = 1
+        else        
+        0AF0: get_int 7@ from_ini_file "me\temp.dat" section v$RACE_FILE key "WITCH_AGRED_FLAG"
+        if
+        7@ == 1
+            then
+            $WITCH_INSTANT_AGR = 1
+            end
         end
     end
     
@@ -1963,12 +1999,20 @@ if
     end                
         
     until false  
-    $SPAWN_WITCH_ON_COORD = 0
+    $SPAWN_WITCH_ON_COORD = 0    
     
     WITCHES_TO_SPAWN_COUNT = 0 
     $WITCH_X = 0.0 
     $WITCH_Y = 0.0 
     $WITCH_Z = 0.0
+    
+    if
+    $WITCH_INSTANT_AGR == 1
+    then
+    wait 500
+    $WITCH_INSTANT_AGR = 0
+    end
+    
     if
     ZAME_TEMP_FUCKEEE7 > 0
         then
@@ -1987,7 +2031,7 @@ if
         
         008A: $WITCH_HEALTH = ZAME_TEMP_FUCKEEE7 // (int)
         ZAME_TEMP_FUCKEEE7 = 0
-        end
+        end                
     
     end
     
@@ -2397,6 +2441,133 @@ if
     0088: $HAZMAT_SPAWN_X = 2@ // (float) 
     0088: $HAZMAT_SPAWN_Y = 3@ // (float) 
     0088: $HAZMAT_SPAWN_Z = 4@ // (float)
+    
+    if
+    30@ == 1
+        then
+        
+        ////////////////////////////////////////////
+        
+        repeat
+        wait 0 
+        
+        if and
+        $DEBUG_MENU_ON == 1
+        0AB0:   key_pressed 81
+        then
+        0AD1: show_formatted_text_highpriority "waiting until hazmat is spawned" time 200
+        end
+        
+        if or
+        actor.Dead(PLAYER_ACTOR)
+        GAME_OVER_FLAG == 1
+        then
+        jump to @KOD_PROVALA_ZAME
+        end
+        
+        if
+        0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+        then
+        
+        gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+        if
+        ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+        then
+        jump to @KOD_PROVALA_ZAME
+        end
+        
+        end
+        
+        1@ = 1    
+        for 0@ = 0 to 19
+        if
+        056D:   actor $ZOMBIE[0@] defined
+            then
+            if or
+            actor.Model($ZOMBIE[0@]) == #ZHAZMAT
+            actor.Model($ZOMBIE[0@]) == #ZHAZMAT2
+                then
+                if
+                not actor.Dead($ZOMBIE[0@])
+                    then
+                    1@ = 0
+                    MISSION_MARKER = marker.CreateAboveActor($ZOMBIE[0@])      
+                    if
+                    0AF0: get_int 20@ from_ini_file "me\temp.dat" section v$RACE_FILE key "HIDE_MARKER"
+                        then
+                        018B: set_marker MISSION_MARKER radar_mode 0
+                        end       
+                    end 
+                end
+            end
+        end
+        
+        until 1@ == 0                
+        
+        ////////////////////////////////////////////
+        
+        repeat
+        wait 0 
+        
+        if and
+        $DEBUG_MENU_ON == 1
+        0AB0:   key_pressed 81
+        then
+        0AD1: show_formatted_text_highpriority "waiting until hazmat is dead" time 200
+        end
+        
+        if or
+        actor.Dead(PLAYER_ACTOR)
+        GAME_OVER_FLAG == 1
+        then
+        jump to @KOD_PROVALA_ZAME
+        end
+        
+        if
+        0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+        then
+        
+        gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+        if
+        ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+        then
+        jump to @KOD_PROVALA_ZAME
+        end
+        
+        end
+        
+        1@ = 1    
+        for 0@ = 0 to 19
+        if
+        056D:   actor $ZOMBIE[0@] defined
+            then
+            if or
+            actor.Model($ZOMBIE[0@]) == #ZHAZMAT
+            actor.Model($ZOMBIE[0@]) == #ZHAZMAT2
+                then
+                if
+                not actor.Dead($ZOMBIE[0@])
+                    then
+                    1@ = 0 
+                    if
+                    ZAME_TARGETSKIP_MODE == 2
+                        then
+                        1@ = 1
+                        0851: set_actor $ZOMBIE[0@] decrease_health_by 1000 affect_armour 1
+                        end          
+                    end 
+                end
+            end
+        end
+        
+        until 1@ == 1
+        
+        marker.Disable(MISSION_MARKER)
+        
+        ////////////////////////////////////////////
+        
+        end
+    
     end
     
     if
@@ -2412,6 +2583,131 @@ if
     0088: $CLOWN_SPAWN_X = 2@ // (float) 
     0088: $CLOWN_SPAWN_Y = 3@ // (float) 
     0088: $CLOWN_SPAWN_Z = 4@ // (float)
+    
+    if
+    30@ == 1
+        then
+        
+        ////////////////////////////////////////////
+        
+        repeat
+        wait 0 
+        
+        if and
+        $DEBUG_MENU_ON == 1
+        0AB0:   key_pressed 81
+        then
+        0AD1: show_formatted_text_highpriority "waiting until clown is spawned" time 200
+        end
+        
+        if or
+        actor.Dead(PLAYER_ACTOR)
+        GAME_OVER_FLAG == 1
+        then
+        jump to @KOD_PROVALA_ZAME
+        end
+        
+        if
+        0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+        then
+        
+        gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+        if
+        ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+        then
+        jump to @KOD_PROVALA_ZAME
+        end
+        
+        end
+        
+        1@ = 1    
+        for 0@ = 0 to 19
+        if
+        056D:   actor $ZOMBIE[0@] defined
+            then
+            if
+            actor.Model($ZOMBIE[0@]) == #ZCLOWN
+                then
+                if
+                not actor.Dead($ZOMBIE[0@])
+                    then
+                    1@ = 0    
+                    MISSION_MARKER = marker.CreateAboveActor($ZOMBIE[0@])      
+                    if
+                    0AF0: get_int 20@ from_ini_file "me\temp.dat" section v$RACE_FILE key "HIDE_MARKER"
+                        then
+                        018B: set_marker MISSION_MARKER radar_mode 0
+                        end   
+                    end 
+                end
+            end
+        end
+        
+        until 1@ == 0
+                        
+        ////////////////////////////////////////////
+        
+        repeat
+        wait 0 
+        
+        if and
+        $DEBUG_MENU_ON == 1
+        0AB0:   key_pressed 81
+        then
+        0AD1: show_formatted_text_highpriority "waiting until clown is dead" time 200
+        end
+        
+        if or
+        actor.Dead(PLAYER_ACTOR)
+        GAME_OVER_FLAG == 1
+        then
+        jump to @KOD_PROVALA_ZAME
+        end
+        
+        if
+        0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+        then
+        
+        gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+        if
+        ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+        then
+        jump to @KOD_PROVALA_ZAME
+        end
+        
+        end
+        
+        1@ = 1    
+        for 0@ = 0 to 19
+        if
+        056D:   actor $ZOMBIE[0@] defined
+            then
+            if
+            actor.Model($ZOMBIE[0@]) == #ZCLOWN
+                then
+                if
+                not actor.Dead($ZOMBIE[0@])
+                    then
+                    1@ = 0 
+                    if
+                    ZAME_TARGETSKIP_MODE == 2
+                        then
+                        1@ = 1
+                        0851: set_actor $ZOMBIE[0@] decrease_health_by 1000 affect_armour 1
+                        end          
+                    end 
+                end
+            end
+        end
+        
+        until 1@ == 1
+        
+        marker.Disable(MISSION_MARKER)
+        
+        ////////////////////////////////////////////
+        
+        end
+    
     end
     
     :ZAME_SKIP_SPECINFSPAWN
@@ -2441,6 +2737,7 @@ if
     then
     $ZOMBIE_SPAWN_ON_COORD = 0
     $ZOMBIES_ALWAYS_VISIBLE = 0
+    $SPECIAL_INFECTED_SPAWN_OZC_FLAG = 0
     {$INCLUDE Zame Objective Plus.txt}    
     return 
     end
@@ -2454,7 +2751,14 @@ if
     0AF2: get_float $ZOMBIE_Y[0] from_ini_file "me\temp.dat" section v$RACE_FILE key "INF_SPAWN_Y"
     0AF2: get_float $ZOMBIE_Z[0] from_ini_file "me\temp.dat" section v$RACE_FILE key "INF_SPAWN_Z"
     $ZOMBIE_SPAWN_ON_COORD = 1
-    $ZOMBIES_ALWAYS_VISIBLE = 1
+    $ZOMBIES_ALWAYS_VISIBLE = 1   
+    0AF0: get_int 0@ from_ini_file "me\temp.dat" section v$RACE_FILE key "SPECINF_CHANGE"
+    if
+    0@ == 1
+    then
+    $SPECIAL_INFECTED_SPAWN_OZC_FLAG = 1
+    end
+       
     {$INCLUDE Zame Objective Plus.txt}    
     return
     else
@@ -2472,6 +2776,13 @@ if
     
     $ZOMBIE_COORD_MAX += 1
     $ZOMBIE_SPAWN_ON_COORD = 1
+    0AF0: get_int 0@ from_ini_file "me\temp.dat" section v$RACE_FILE key "SPECINF_CHANGE"
+    if
+    0@ == 1
+    then
+    $SPECIAL_INFECTED_SPAWN_OZC_FLAG = 1
+    end
+    
     {$INCLUDE Zame Objective Plus.txt}    
     return
     
@@ -3073,9 +3384,17 @@ if and
     $PHRASES_OFF_FLAG = 0
     
     else
-//    text.ShowH(0@v,11@,1)
+    
+    0AF0: get_int 10@ from_ini_file "me\temp.dat" section v$RACE_FILE key "NO_WAIT_FOR_NEXT_OBJECTIVE"
+    if
+    10@ == 2
+    then
+    text.ShowH(0@v,11@,1)
+    else    
     create_thread @ZAMFXT 0@ 1@ 2@ 3@ 11@
-    $PHRASES_OFF_FLAG = 0    
+    $PHRASES_OFF_FLAG = 0
+    end
+        
     end
     
     09BD: allow_other_threads_to_display_text_boxes 0
@@ -3113,13 +3432,13 @@ if
     
     end   
     
-    if
-    8E4B: not is_char_playing_any_script_animation PLAYER_ACTOR include_anims 1
-    then
-    player.CanMove(PLAYER_CHAR,false)
-    else
+//    if
+//    8E4B: not is_char_playing_any_script_animation PLAYER_ACTOR include_anims 1
+//    then
+//    player.CanMove(PLAYER_CHAR,false)
+//    else
     0E69: set_player_control_pad_movement 0 0 
-    end
+//    end
     cinema.Widescreen(1)
     BLACK_POLOSKI_ON = 1
     $HUD_REMOVE = 1
@@ -3182,6 +3501,23 @@ if
         0AF0: get_int 28@ from_ini_file "me\temp.dat" section v$SHITME_FILE key "DO_NOT_EXIST_PLEASE"
         then
         6@ = -1
+        end
+        
+        if and
+        ZAME_CUTSCENE_MODE == 1
+        ZAME_DOING_INTERTARGET_OBJECTIVE_FLAG == 1
+        6@ < 0
+        then
+        0085: 5@ = ZAME_CURRENT_OBJECTIVE_INDEX // (int)
+        5@ += 1
+        0AD3: v$SHITME_FILE = format "OBJ%d" 5@
+        0AF0: get_int 6@ from_ini_file "me\temp.dat" section v$SHITME_FILE key "OBJECTIVE_TYPE"
+        if
+        0AF0: get_int 28@ from_ini_file "me\temp.dat" section v$SHITME_FILE key "DO_NOT_EXIST_PLEASE"
+        then
+        6@ = -1
+        end
+        
         end    
         
         if or
@@ -3217,6 +3553,23 @@ if
     then
     6@ = -1
     end    
+    
+    if and
+    ZAME_CUTSCENE_MODE == 1
+    ZAME_DOING_INTERTARGET_OBJECTIVE_FLAG == 1
+    6@ < 0
+    then
+    0085: 5@ = ZAME_CURRENT_OBJECTIVE_INDEX // (int)
+    5@ += 1
+    0AD3: v$SHITME_FILE = format "OBJ%d" 5@
+    0AF0: get_int 6@ from_ini_file "me\temp.dat" section v$SHITME_FILE key "OBJECTIVE_TYPE"
+    if
+    0AF0: get_int 28@ from_ini_file "me\temp.dat" section v$SHITME_FILE key "DO_NOT_EXIST_PLEASE"
+    then
+    6@ = -1
+    end
+        
+    end
     
     if and
     not 6@ == 8
@@ -3301,6 +3654,12 @@ if
     
     repeat
     wait 0
+    
+    if
+    not 6@ == 1
+    then
+    0D54: draw_corona_with_extra_params_texture 0 color 255 0 0 155 on_entity 0 at 2@ 3@ 4@ size 1.0 far_clip 10.0 near_clip 0.25 flare 0 enable_reflection 1 check_obstacles 0 flash_while_fading 1 fade_speed 15.0 only_from_below 0
+    end
     
     if or
     actor.Dead(PLAYER_ACTOR)
@@ -4014,7 +4373,13 @@ if
         
     until 002D:   32@ >= 8@  // (int)
     
-    end
+    end        
+    
+    ////////////////////////////////////////////////////////////////////////////
+    
+    if
+    not 9@ == 1
+    then
     
     0E68: set_player_control_pad 0 1 
     0E69: set_player_control_pad_movement 0 1
@@ -4023,7 +4388,7 @@ if
     8D49: not 12@ = compare_strings 4@v "phone_in" // IF and SET
     8D49: not 12@ = compare_strings 4@v "phone_talk" // IF and SET
     8D49: not 12@ = compare_strings 4@v "phone_out" // IF and SET
-    then    
+    then                                         
     0992: set_player PLAYER_CHAR weapons_scrollable 1
     06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0    
     01B9: set_actor PLAYER_ACTOR armed_weapon_to 10@        
@@ -4034,6 +4399,26 @@ if
     then
     0992: set_player PLAYER_CHAR weapons_scrollable 1
     end    
+    
+    else  
+    
+    if and
+    8D49: not 12@ = compare_strings 4@v "phone_in" // IF and SET
+    8D49: not 12@ = compare_strings 4@v "phone_talk" // IF and SET
+    8D49: not 12@ = compare_strings 4@v "phone_out" // IF and SET
+    then       
+    create_thread @ZAM_IFP 1 8@ 10@                                       
+    end
+    
+    if
+    0D49:  12@ = compare_strings 4@v "phone_out" // IF and SET
+    then
+    create_thread @ZAM_IFP 2 8@ 10@
+    end  
+    
+    end
+    
+    ////////////////////////////////////////////////////////////////////////////
     
     :ZAME_SKIP_ANIM_PLAY
                 
@@ -4257,7 +4642,13 @@ if
     end
     
     else
-    1@ = 1
+    1@ = 1    
+    if and
+    0AF0: get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "RANDOM"
+    0E4D: random_percent 51
+        then
+        1@ = 0
+        end
     end
     
     if
@@ -4341,6 +4732,27 @@ if
     
     repeat
     wait 0
+    
+    if or
+    actor.Dead(PLAYER_ACTOR)
+    GAME_OVER_FLAG == 1
+    then
+    jump to @KOD_PROVALA_ZAME
+    end
+        
+    if
+    0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+    then
+    
+    gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+    if
+    ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+    then
+    jump to @KOD_PROVALA_ZAME
+    end
+    
+    end
+    
     until $ARMY[1] == -69
     
     wait 250
@@ -4354,8 +4766,17 @@ if
     0086: CAMP_RAID_DEST_X = ZAME_HUENEMY_TARGET_X // (float)
     0086: CAMP_RAID_DEST_Y = ZAME_HUENEMY_TARGET_Y // (float)
     0086: CAMP_RAID_DEST_Z = ZAME_HUENEMY_TARGET_Z // (float)    
-    0AF0: RAID_CAR_PATH_ABADON_RADIUS = get_int_from_ini_file "me\temp.dat" section v$RACE_FILE key "PATH_ABADON_DISTANCE" 
-    create_thread @ARMY_SP 
+    0AF0: RAID_CAR_PATH_ABADON_RADIUS = get_int_from_ini_file "me\temp.dat" section v$RACE_FILE key "PATH_ABADON_DISTANCE"
+    
+    0AF0: 2@ = get_int_from_ini_file "me\temp.dat" section v$RACE_FILE key "ONFOOT_SPAWN"
+    if
+    not 2@ == 1
+    then
+    create_thread @ARMY_SP
+    else
+    create_thread @ARMY_SP 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -666
+    end
+          
     end
     
     if
@@ -4375,6 +4796,27 @@ if
     
     repeat
     wait 0
+    
+    if or
+    actor.Dead(PLAYER_ACTOR)
+    GAME_OVER_FLAG == 1
+    then
+    jump to @KOD_PROVALA_ZAME
+    end
+        
+    if
+    0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+    then
+    
+    gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+    if
+    ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+    then
+    jump to @KOD_PROVALA_ZAME
+    end
+    
+    end
+    
     until $BANDIT[1] == -69
     
     wait 250
@@ -4389,7 +4831,16 @@ if
     0086: CAMP_RAID_DEST_Y = ZAME_HUENEMY_TARGET_Y // (float)
     0086: CAMP_RAID_DEST_Z = ZAME_HUENEMY_TARGET_Z // (float)
     0AF0: RAID_CAR_PATH_ABADON_RADIUS = get_int_from_ini_file "me\temp.dat" section v$RACE_FILE key "PATH_ABADON_DISTANCE"
+    
+    0AF0: 2@ = get_int_from_ini_file "me\temp.dat" section v$RACE_FILE key "ONFOOT_SPAWN"
+    if
+    not 2@ == 1
+    then
     create_thread @BNDT_SP 
+    else
+    create_thread @BNDT_SP 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -666
+    end
+    
     end
     
     if
@@ -4457,9 +4908,9 @@ if
     end
     
     if
-    0AF0: get_int 40@ from_ini_file "me\temp.dat" section v$RACE_FILE key "MARODER_MODEL"
+    0AF0: get_int 40@ from_ini_file "me\temp.dat" section v$RACE_FILE key "MARODER_WEP_ID"
     then
-    0AF0: get_int 22@ from_ini_file "me\temp.dat" section v$RACE_FILE key "MARODER_WEP_ID"
+    0AF0: get_int 22@ from_ini_file "me\temp.dat" section v$RACE_FILE key "MARODER_WEP_ID" 
     end
     
     if
@@ -4478,7 +4929,15 @@ if
     25@ = 0
     end
     
-    create_thread @SURVVER 3@ 23@ ZAME_HUENEMY_POS_X ZAME_HUENEMY_POS_Y ZAME_HUENEMY_POS_Z ZAME_HUENEMY_POS_A 22@ 24@ 25@
+    if
+    0AF0: get_int 40@ from_ini_file "me\temp.dat" section v$RACE_FILE key "REWRITE_PEDTYPE"
+    then
+    0AF0: get_int 26@ from_ini_file "me\temp.dat" section v$RACE_FILE key "REWRITE_PEDTYPE"
+    else
+    26@ = 0
+    end
+    
+    create_thread @SURVVER 3@ 23@ ZAME_HUENEMY_POS_X ZAME_HUENEMY_POS_Y ZAME_HUENEMY_POS_Z ZAME_HUENEMY_POS_A 22@ 24@ 25@ 26@
     
     repeat
     wait 0
@@ -4501,6 +4960,27 @@ if
     
     repeat
     wait 0
+    
+    if or
+    actor.Dead(PLAYER_ACTOR)
+    GAME_OVER_FLAG == 1
+    then
+    jump to @KOD_PROVALA_ZAME
+    end
+        
+    if
+    0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+    then
+    
+    gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+    if
+    ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+    then
+    jump to @KOD_PROVALA_ZAME
+    end
+    
+    end
+    
     until $ARMY[5] == -69
     
     wait 250
@@ -4531,6 +5011,27 @@ if
     
     repeat
     wait 0
+    
+    if or
+    actor.Dead(PLAYER_ACTOR)
+    GAME_OVER_FLAG == 1
+    then
+    jump to @KOD_PROVALA_ZAME
+    end
+        
+    if
+    0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+    then
+    
+    gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+    if
+    ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+    then
+    jump to @KOD_PROVALA_ZAME
+    end
+    
+    end
+    
     until $BANDIT[5] == -69
     
     wait 250
@@ -4565,6 +5066,27 @@ if
     
     repeat
     wait 0
+    
+    if or
+    actor.Dead(PLAYER_ACTOR)
+    GAME_OVER_FLAG == 1
+    then
+    jump to @KOD_PROVALA_ZAME
+    end
+        
+    if
+    0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+    then
+    
+    gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+    if
+    ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+    then
+    jump to @KOD_PROVALA_ZAME
+    end
+    
+    end
+    
     until ARMY_RHINO_ACTOR == -69
     
     wait 250
@@ -4595,6 +5117,26 @@ if
         repeat
         wait 0
         
+        if or
+        actor.Dead(PLAYER_ACTOR)
+        GAME_OVER_FLAG == 1
+        then
+        jump to @KOD_PROVALA_ZAME
+        end
+            
+        if
+        0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+        then
+        
+        gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+        if
+        ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+        then
+        jump to @KOD_PROVALA_ZAME
+        end
+        
+        end
+        
         if and
         056D:   actor $ARMY[1] defined
         056D:   actor $ARMY[2] defined
@@ -4602,9 +5144,15 @@ if
         056D:   actor $ARMY[4] defined
             then
             
-            for 0@ = 1 to 4
-            create_thread @PED_BKP $ARMY[0@] 371 0 0 0 1 0 3 7 3
-            end
+            if
+            8AF0: not get_int 20@ from_ini_file "me\temp.dat" section v$RACE_FILE key "HIDE_MARKER"
+                then
+            
+                for 0@ = 1 to 4
+                create_thread @PED_BKP $ARMY[0@] 371 0 0 0 1 0 3 7 3
+                end
+                
+                end
             
             break
             
@@ -4625,6 +5173,26 @@ if
         repeat
         wait 0
         
+        if or
+        actor.Dead(PLAYER_ACTOR)
+        GAME_OVER_FLAG == 1
+        then
+        jump to @KOD_PROVALA_ZAME
+        end
+            
+        if
+        0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+        then
+        
+        gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+        if
+        ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+        then
+        jump to @KOD_PROVALA_ZAME
+        end
+        
+        end
+        
         if and
         056D:   actor $BANDIT[1] defined
         056D:   actor $BANDIT[2] defined
@@ -4632,9 +5200,15 @@ if
         056D:   actor $BANDIT[4] defined
             then
             
-            for 0@ = 1 to 4
-            create_thread @PED_BKP $BANDIT[0@] 371 0 0 0 1 0 3 7 3
-            end
+            if
+            8AF0: not get_int 20@ from_ini_file "me\temp.dat" section v$RACE_FILE key "HIDE_MARKER"
+                then
+                
+                for 0@ = 1 to 4
+                create_thread @PED_BKP $BANDIT[0@] 371 0 0 0 1 0 3 7 3
+                end
+                
+                end
             
             break
             
@@ -4649,7 +5223,126 @@ if
     if //Отморозок одиночка
     2@ == 2
         then
-        MISSION_MARKER = marker.CreateAboveActor($SURVIVER[18@])
+        MISSION_MARKER = marker.CreateAboveActor($SURVIVER[18@])      
+        if
+        0AF0: get_int 20@ from_ini_file "me\temp.dat" section v$RACE_FILE key "HIDE_MARKER"
+            then
+            018B: set_marker MISSION_MARKER radar_mode 0
+            end
+        end
+        
+    if //Военный вертолёт
+    2@ == 3
+        then
+        
+        repeat
+        wait 0
+        
+        if or
+        actor.Dead(PLAYER_ACTOR)
+        GAME_OVER_FLAG == 1
+        then
+        jump to @KOD_PROVALA_ZAME
+        end
+            
+        if
+        0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+        then
+        
+        gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+        if
+        ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+        then
+        jump to @KOD_PROVALA_ZAME
+        end
+        
+        end
+        
+        until 056D:   actor $ARMY[5] defined
+        
+        MISSION_MARKER = marker.CreateAboveActor($ARMY[5])      
+        if
+        0AF0: get_int 20@ from_ini_file "me\temp.dat" section v$RACE_FILE key "HIDE_MARKER"
+            then
+            018B: set_marker MISSION_MARKER radar_mode 0
+            end
+        
+        end
+        
+    if //Бандитский вертолёт
+    2@ == 4
+        then
+        
+        repeat
+        wait 0
+        
+        if or
+        actor.Dead(PLAYER_ACTOR)
+        GAME_OVER_FLAG == 1
+        then
+        jump to @KOD_PROVALA_ZAME
+        end
+            
+        if
+        0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+        then
+        
+        gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+        if
+        ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+        then
+        jump to @KOD_PROVALA_ZAME
+        end
+        
+        end
+        
+        until 056D:   actor $BANDIT[5] defined
+        
+        MISSION_MARKER = marker.CreateAboveActor($BANDIT[5])      
+        if
+        0AF0: get_int 20@ from_ini_file "me\temp.dat" section v$RACE_FILE key "HIDE_MARKER"
+            then
+            018B: set_marker MISSION_MARKER radar_mode 0
+            end
+        
+        end
+        
+    if //Военный танк
+    2@ == 5
+        then
+        
+        repeat
+        wait 0
+        
+        if or
+        actor.Dead(PLAYER_ACTOR)
+        GAME_OVER_FLAG == 1
+        then
+        jump to @KOD_PROVALA_ZAME
+        end
+            
+        if
+        0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+        then
+        
+        gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+        if
+        ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+        then
+        jump to @KOD_PROVALA_ZAME
+        end
+        
+        end
+        
+        until 056D:   actor $ARMY_RHINO_ACTOR defined
+        
+        MISSION_MARKER = marker.CreateAboveActor($ARMY_RHINO_ACTOR)      
+        if
+        0AF0: get_int 20@ from_ini_file "me\temp.dat" section v$RACE_FILE key "HIDE_MARKER"
+            then
+            018B: set_marker MISSION_MARKER radar_mode 0
+            end
+        
         end
     
     repeat
@@ -4718,7 +5411,41 @@ if
     
     end
     
-    until ZAME_HUENEMY_FLAG == 2  
+//    0AD1: show_formatted_text_highpriority "%d %d" time 2000 1@ 2@
+    if and
+    1@ == 1
+    2@ == 2    
+    then
+    if
+    056D:   actor $SURVIVER[18@] defined
+        then
+        if
+        actor.Dead($SURVIVER[18@])
+            then
+            marker.Disable(MISSION_MARKER)
+            break
+            end
+        else
+        break
+        end
+    else
+    if
+    ZAME_HUENEMY_FLAG == 2
+        then
+        
+        if or
+        2@ == 3
+        2@ == 4
+        2@ == 5
+        then
+        marker.Disable(MISSION_MARKER)
+        end
+        
+        break
+        end
+    end
+    
+    until false  
     
     end 
     
@@ -4871,8 +5598,7 @@ if
     if and
     0AF0: get_int 0@ from_ini_file "me\temp.dat" section v$RACE_FILE key "USE_ALREADY_CREATED_CAR"
     056E:   car ZAME_CAR_ADVENTURE_CAR defined
-    then
-    car.SetImmunities(ZAME_CAR_ADVENTURE_CAR,0,0,0,0,0)   
+    then       
     jump to @DO_ALREADY_CREATED_CAR_ADVENTURE
     end    
     
@@ -4915,9 +5641,291 @@ if
     jump to @CAR_CREATE_ZAME_ADVENTURE
     end
     
-    0229: set_car ZAME_CAR_ADVENTURE_CAR primary_color_to 7@ secondary_color_to 8@
+    0229: set_car ZAME_CAR_ADVENTURE_CAR primary_color_to 7@ secondary_color_to 8@ 
     
     :DO_ALREADY_CREATED_CAR_ADVENTURE
+    
+    if
+    0AF0: get_int 0@ from_ini_file "me\temp.dat" section v$RACE_FILE key "SCRIPTED_ON_RAILS_DRIVE"
+    then
+    if
+    0@ == 2
+    then
+    
+    0AF0: get_int 0@ from_ini_file "me\temp.dat" section v$RACE_FILE key "DRIVER_ID"
+        
+    while not model.Available(0@)
+    wait 0
+    model.Load(0@)
+    end
+            
+    actor.CreateAsDriver(20@,26,0@,ZAME_CAR_ADVENTURE_CAR)
+    actor.Health(20@) = 9999
+    actor.SetImmunities(20@,1,1,1,1,1)
+    21@ = marker.CreateAboveCar(ZAME_CAR_ADVENTURE_CAR)
+    
+    //////////////////////////////////////////////Создаем тачку для нас на которой будем гнаться за педиком//////////////////////////////////////////////
+    
+    0AF2: get_float 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CAR_X_2"
+    0AF2: get_float 3@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CAR_Y_2"
+    0AF2: get_float 4@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CAR_Z_2"
+    0AF2: get_float 5@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CAR_A_2" 
+    0AF0: get_int 6@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CAR_ID_2"  
+    0AF0: get_int 7@ from_ini_file "me\temp.dat" section v$RACE_FILE key "COLOR1_2" 
+    0AF0: get_int 8@ from_ini_file "me\temp.dat" section v$RACE_FILE key "COLOR2_2"
+    
+    :CAR_CREATE_ZAME_ADVENTURE2
+    if
+    model.Available(6@)
+    then
+    
+    if
+    6@ == 15338
+    then
+    0506: set_car_model 15338 next_variation 0 0 // first param is useless
+    end
+    
+//    ZAME_ADVENTURE_CAR_UKAZATEL = car.Create(6@,2@,3@,4@)
+
+    create_thread @ZAM_CAR 6@ 2@ 3@ 4@
+
+    repeat
+    wait 0            
+    until 056E:   car ZAME_GLOB_CAR_ADVENTURE_CAR defined
+    
+    008B: ZAME_ADVENTURE_CAR_UKAZATEL = ZAME_GLOB_CAR_ADVENTURE_CAR // (int)
+
+    0EB4: set_car_coordinates_simple ZAME_ADVENTURE_CAR_UKAZATEL position 2@ 3@ 4@
+    car.Angle(ZAME_ADVENTURE_CAR_UKAZATEL) = 5@
+    
+    else
+    model.Load(6@)
+    mload
+    wait 0
+    jump to @CAR_CREATE_ZAME_ADVENTURE2
+    end
+    
+    0229: set_car ZAME_ADVENTURE_CAR_UKAZATEL primary_color_to 7@ secondary_color_to 8@
+    
+//    22@ = marker.CreateAboveCar(ZAME_CAR_ADVENTURE_CAR)
+//    07E0: set_marker 22@ type_to 1 
+    
+    jump to @ZAME_CAR_ADVENTURE_CHASE_MODE
+    end
+    
+    player.CanMove(0,false)
+    fade 0 250
+    $HUD_REMOVE = 1
+    wait 250
+    0085: 6@ = ZAME_CAR_ADVENTURE_CAR // (int)
+    gosub @OFFSET_CHECK2
+    0AF0: get_int 7@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TURRET_WEP_ID"
+    06A7: put_actor PLAYER_ACTOR into_turret_on_car 6@ at_car_offset 23@ 24@ 25@ position 1 shooting_angle 360.0 70.0 with_weapon 7@
+    16@ = car.Angle(6@)
+    16@ -= 90.0                                     
+    0858: set_player PLAYER_CHAR scan_horizon_to_angle 16@ rotation_speed 16@
+    STORY_DRIVEBY_NO_RETURN_FLAG = 1
+    car.RemoveReferences(6@)
+    
+    //////////////////////////////////////////////////////////////////////////////
+    
+    0AF0: get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "SKIN_FOR_DRIVER"
+    if
+    2@ < 5
+    then
+    //Вычисляем по номеру в команде    
+    0085: 20@ = 2@ // (int)        
+    else
+    //Вычисляем по айди(айпи)
+    
+    for 3@ = 0 to 4
+    if    
+    056D:   actor $SURVIVER[3@] defined
+        then
+        if
+        02F2:   actor $SURVIVER[3@] model == 2@
+            then
+            0085: 20@ = 3@ // (int)            
+            end
+        end
+    end
+    
+    end
+    
+    //////////////////////////////////////////////////////////////////////////////
+    
+    0687: clear_actor $SURVIVER[20@] task
+    actor.AddArmour($SURVIVER[20@],1)
+    $SURVIVOR_HUNTER_TIMER2[20@] = 999999999999
+    06C9: remove_actor $SURVIVER[20@] from_group
+    072A: put_actor $SURVIVER[20@] into_car ZAME_CAR_ADVENTURE_CAR driverseat
+//    marker.CreateAboveActor(0@,$SURVIVER[20@])
+    
+    for 0@ = 0 to 2
+    092B: 1@ = group PLAYER_GROUP member 0@
+    if and
+    056D:   actor 1@ defined
+    87D6: not  1@ == $SURVIVER[20@] // @ == $ (int)
+        then
+//        06C9: remove_actor 1@ from_group
+        0430: put_actor 1@ into_car ZAME_CAR_ADVENTURE_CAR passenger_seat -1
+        end
+    end
+    
+    gosub @ZAME_DELETE_CARRECS        
+    gosub @ZAME_CARREC_GET_NUM
+    gosub @ZAME_CHECK_CARREC        
+    
+    wait 2000
+    
+    0508: car ZAME_CAR_ADVENTURE_CAR close_all_doors
+    0AF0: get_int 9@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CAR_HEALTH"
+    car.Health(ZAME_CAR_ADVENTURE_CAR) = 9@
+    
+    repeat
+    wait 0
+    07C0: load_path 2@
+    until 07C1:   path 2@ available
+    
+    05EB: assign_car ZAME_CAR_ADVENTURE_CAR to_path 2@
+    
+    0AF2: get_float 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "DEST_X0"
+    0AF2: get_float 3@ from_ini_file "me\temp.dat" section v$RACE_FILE key "DEST_Y0"
+    0AF2: get_float 4@ from_ini_file "me\temp.dat" section v$RACE_FILE key "DEST_Z0"    
+    06D5: MISSION_CHECKPOINT = create_racing_checkpoint_at 2@ 3@ 4@ point_to 0.0 0.0 0.0 type 1 radius 6.0           
+    MISSION_MARKER = 0
+    018A: MISSION_MARKER = create_checkpoint_at 2@ 3@ 4@
+    marker.SetIconSize(MISSION_MARKER,2)
+    
+    player.CanMove(0,true)
+    fade 1 250
+    $HUD_REMOVE = 0
+    wait 250
+    
+    actor.SetImmunities(PLAYER_ACTOR,1,0,0,0,0)
+    008A: STATUS_TEXT = 9@ // (int)
+    04F7: vagina_text STATUS_TEXT type 1 line 2 GXT 'SE594' // global_variable  // Score
+    ZAME_CAR_ADV_FLAG = 1    
+    008A: ZAME_CAR_ADEVNTURE_GLOB = ZAME_CAR_ADVENTURE_CAR // (int)
+    
+    if
+    0AF2: get_float 0@ from_ini_file "me\temp.dat" section v$RACE_FILE key "PATH_SPEED"
+    then
+    06FD: set_car ZAME_CAR_ADVENTURE_CAR speed_on_path_to 0@
+    end
+    
+    repeat
+    wait 0
+    
+    car.SetImmunities(ZAME_CAR_ADVENTURE_CAR,0,0,0,0,0)   
+    
+    if or
+    actor.Dead(PLAYER_ACTOR)
+    car.Wrecked(ZAME_CAR_ADVENTURE_CAR)
+    GAME_OVER_FLAG == 1
+    then
+    
+    if
+    car.Wrecked(ZAME_CAR_ADVENTURE_CAR)
+    then
+    ZAME_FAILED_BY_REASON = 2
+    end
+    
+    jump to @KOD_PROVALA_ZAME
+    end
+        
+    if
+    0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+    then
+    
+    gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+    if
+    ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+    then
+    jump to @KOD_PROVALA_ZAME
+    end
+    
+    end
+    
+    if
+    $CHEATS_ON == 1
+    then
+    if
+    0EEB: locate_car_distance_to_coordinates ZAME_CAR_ADVENTURE_CAR pos 2@ 3@ 4@ radius 10.0
+        then
+        06FD: set_car ZAME_CAR_ADVENTURE_CAR speed_on_path_to 1.0
+        else
+        06FD: set_car ZAME_CAR_ADVENTURE_CAR speed_on_path_to 5.0
+        end
+    end
+       
+    0091: DELITEL = integer 9@ to_float
+    DELITEL /= 100.0
+    DELITEL -= 2.5
+//    DELITEL = 47.5                
+    
+    MIKE_CAR = car.Health(ZAME_CAR_ADVENTURE_CAR)
+    if and
+    MIKE_CAR < 251
+    not car.Wrecked(ZAME_CAR_ADVENTURE_CAR)
+    then
+    020B: explode_car ZAME_CAR_ADVENTURE_CAR
+    0465: remove_actor PLAYER_ACTOR from_turret_mode
+    actor.SetImmunities(PLAYER_ACTOR,0,0,0,0,0)
+    0430: put_actor PLAYER_ACTOR into_car ZAME_CAR_ADVENTURE_CAR passenger_seat 0
+    05BE: AS_actor PLAYER_ACTOR die
+    end
+    
+    MIKE_CAR -= 250
+    
+    008D: MIKE_CAR = integer MIKE_CAR to_float
+    0071: MIKE_CAR /= DELITEL // (float)
+    008C: MIKE_CAR = float MIKE_CAR to_integer
+    
+    0084: STATUS_TEXT = MIKE_CAR
+    
+    if
+    not actor.InCar($SURVIVER[20@],ZAME_CAR_ADVENTURE_CAR)
+        then
+        072A: put_actor $SURVIVER[20@] into_car ZAME_CAR_ADVENTURE_CAR driverseat
+        end
+    
+    if and
+    0EEB: locate_car_distance_to_coordinates ZAME_CAR_ADVENTURE_CAR pos 2@ 3@ 4@ radius 5.0
+    01C1:   car ZAME_CAR_ADVENTURE_CAR stopped
+        then
+        0E09: mark_car_as_needed ZAME_CAR_ADVENTURE_CAR
+        ZAME_CAR_ADV_FLAG = 0
+        actor.SetImmunities(PLAYER_ACTOR,0,0,0,0,0)
+        0151: remove_status_text STATUS_TEXT
+        05EC: release_car ZAME_CAR_ADVENTURE_CAR from_path
+        06D6: disable_racing_checkpoint MISSION_CHECKPOINT
+        marker.Disable(MISSION_MARKER)
+        fade 0 250
+        $HUD_REMOVE = 1
+        wait 250
+        0465: remove_actor PLAYER_ACTOR from_turret_mode
+        0430: put_actor PLAYER_ACTOR into_car ZAME_CAR_ADVENTURE_CAR passenger_seat -1
+        wait 250
+        fade 1 250
+        $HUD_REMOVE = 0
+        wait 250
+        actor.AddArmour($SURVIVER[20@],-11)
+        $SURVIVOR_HUNTER_TIMER2[20@] = 400
+        0631: put_actor $SURVIVER[20@] in_group PLAYER_GROUP
+        jump to @DRIVE_END
+        break
+        end
+    
+    until false      
+    
+    end
+    
+    if
+    actor.InCar(PLAYER_ACTOR,ZAME_CAR_ADVENTURE_CAR)
+    then
+    jump to @DO_ALREADY_CREATED_CAR_ADVENTURE_INSIDE
+    end
     
     MISSION_MARKER = marker.CreateAboveCar(ZAME_CAR_ADVENTURE_CAR)
     07E0: set_marker MISSION_MARKER type_to 1        
@@ -4996,6 +6004,18 @@ if
     until actor.InCar(PLAYER_ACTOR,ZAME_CAR_ADVENTURE_CAR)
     
     marker.Disable(MISSION_MARKER)
+    
+    :DO_ALREADY_CREATED_CAR_ADVENTURE_INSIDE
+    
+    car.SetImmunities(ZAME_CAR_ADVENTURE_CAR,0,0,0,0,0)  
+    if or
+    $CHEATS_ON == 1
+    ZAME_TARGETSKIP_MODE > 0
+    then
+    //ass
+    else
+    car.RemoveReferences(ZAME_CAR_ADVENTURE_CAR) 
+    end
     
     0AF0: get_int ZAME_CAR_ADVENTURE_DEST_POINTS_TOTAL from_ini_file "me\temp.dat" section v$RACE_FILE key "DESTS_COUNT"
     
@@ -5236,6 +6256,15 @@ if
     
     :DRIVE_END
     
+    if and
+    0AF0: get_int 0@ from_ini_file "me\temp.dat" section v$RACE_FILE key "DONT_EXIT_AFTER_DRIVE"
+    056E:   car ZAME_CAR_ADVENTURE_CAR defined
+    then
+    jump to @DRIVE_END_BUT_NOT_EXIT
+    end
+    
+    :DRIVE_END222
+    
     player.CanMove(PLAYER_CHAR,false)
     0221: set_player PLAYER_CHAR apply_brakes_to_car 1
     0A8C: write_memory 0x6BE94E size 2 value 33807 virtual_protect 1 //CBike
@@ -5340,6 +6369,8 @@ if
     
     car.SetImmunities(ZAME_CAR_ADVENTURE_CAR,1,1,1,1,1)
     
+    :DRIVE_END_BUT_NOT_EXIT
+    
     /////////////////////////////////////////////////////////////
     
     {$INCLUDE Zame Objective Plus.txt}    
@@ -5393,6 +6424,7 @@ if
 if
 0@ == 26
     then
+    gosub @CHECK_FOR_CP_PONOS
     
 //    0AD1: show_formatted_text_highpriority "eee checkpoint, ZAME_LOADING_CHECKPOINT_FLAG %d, ZAME_TARGETSKIP_MODE %d" time 2000 ZAME_LOADING_CHECKPOINT_FLAG ZAME_TARGETSKIP_MODE
 //    wait 2000
@@ -5453,7 +6485,8 @@ if
 0AF0: get_int 0@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_TYPE"
 if
 0@ == 27
-    then                
+    then
+    gosub @CHECK_FOR_CP_PONOS                
     
     0AF0: get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "HOUR"
     0AF0: get_int 3@ from_ini_file "me\temp.dat" section v$RACE_FILE key "MINUTE"
@@ -5471,7 +6504,864 @@ if
     
     {$INCLUDE Zame Objective Plus.txt}
     return
-    end                                                                                         
+    end
+    
+//Ввод цифрового кода
+
+0AF0: get_int 0@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_TYPE"
+if
+0@ == 28
+    then
+    gosub @CHECK_FOR_CP_PONOS
+    
+    if or
+    $CHEATS_ON == 1
+    ZAME_TARGETSKIP_MODE > 0
+    then
+    jump to @ZAME_SKIP_CODENUMBER_ENTER
+    end
+    
+    :FUCK_AGAIN_CODE_PLEASE
+    
+    0AF2: get_float 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CODEPANEL_X"
+    0AF2: get_float 3@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CODEPANEL_Y"
+    0AF2: get_float 4@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CODEPANEL_Z"
+    
+    018A: MISSION_CHECKPOINT = create_checkpoint_at 2@ 3@ 4@
+    03BC: MISSION_SPHERE = create_sphere_at 2@ 3@ 4@ radius 1.0
+    
+    repeat
+    wait 0
+    
+    if or
+    $CHEATS_ON == 1
+    ZAME_TARGETSKIP_MODE > 0
+    then
+    break
+    end
+                
+    if or
+    actor.Dead(PLAYER_ACTOR)
+    GAME_OVER_FLAG == 1
+    then
+    jump to @KOD_PROVALA_ZAME
+    end
+        
+    if
+    0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+    then
+        
+    gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+    if
+    ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+    then
+    jump to @KOD_PROVALA_ZAME
+    end
+        
+    end
+         
+    until 0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos 2@ 3@ 4@ radius 1.0
+    
+    player.CanMove(0,false)    
+    marker.Disable(MISSION_CHECKPOINT)
+    03BD: destroy_sphere MISSION_SPHERE                
+    
+    0AF4: v$SHITME_FILE = read_string_from_ini_file "me\temp.dat" section v$RACE_FILE key "CODE"
+    
+    06D1: v$SNAME3 = "" // v$ // Sunday
+    06D1: v$SNAME2 = "" // v$ // Sunday
+    
+    29@ = 0
+    33@ = 0
+    KEYS_TYPED_NUM = 0    
+        
+    0AE0: remove_dynamic_GXT_entry "F_NAME"
+    0ADF: add_dynamic_GXT_entry "F_NAME" text ""
+    
+    0512: show_permanent_text_box 'SE562'
+    
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    while true
+    wait 0
+    
+    if or
+    $CHEATS_ON == 1
+    ZAME_TARGETSKIP_MODE > 0
+    then
+    break
+    end
+    
+    if or
+    actor.Dead(PLAYER_ACTOR)
+    GAME_OVER_FLAG == 1
+    then
+    jump to @KOD_PROVALA_ZAME
+    end
+    
+    if
+    0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+    then
+    
+    gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+    if
+    ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+    then
+    jump to @KOD_PROVALA_ZAME
+    end
+    
+    end
+    
+    if 
+    00E1:   player 0 pressed_key 15 
+        then
+        player.CanMove(0,true)
+        text.ClearAll()
+        text.RemoveTextBox()
+        wait 2000
+        jump to @FUCK_AGAIN_CODE_PLEASE
+        end
+    
+    if
+    8A2A: not  text_box 'SE562' displayed
+        then
+        0512: show_permanent_text_box 'SE562'
+        end
+    
+    CURRENT_LAYOUT = 1
+    ZAME_TEMP_FUCKEEE = 9996669991
+    ZAME_TEMP_FUCKEEE8 = 9996669991
+    gosub @OBJECT_ID_SELECT_KEYS_CHECK
+    ZAME_TEMP_FUCKEEE = 0
+    ZAME_TEMP_FUCKEEE8 = 0
+    
+    if
+    8846: not  string v$SNAME3 empty // v$
+    then
+    0384: show_text_1string GXT "SE558" string "F_NAME" time 99999999 1
+    else
+    0384: show_text_1string GXT "SE558" string "F_NAME" time 99999999 1
+    end
+    
+    if
+    0E3E: is_button_just_pressed 0 button 16
+        then
+        if
+        0D49: 10@ = compare_strings v$SHITME_FILE v$SNAME3 // IF and SET
+            then            
+            33@ = 0
+            text.RemoveTextBox()
+            text.ClearAll()
+            player.CanMove(0,true)
+            Audiostream.Volume($SQUEAKING_SOUND) = $SOUNDS_VOLUME 
+            Audiostream.Loop($SQUEAKING_SOUND, 0)
+            Audiostream.PerformAction($SQUEAKING_SOUND, PLAY)
+            wait 1000
+            jump to @ZAME_SKIP_CODENUMBER_ENTER            
+            else
+            text.ClearAll()
+            text.ShowH('SE563',2000,1)
+            wait 2000
+            end
+        end
+        
+    end
+    
+    //////////////////////////////////////////////////////////////////////////////////////////////////       
+    
+    :ZAME_SKIP_CODENUMBER_ENTER
+    
+    {$INCLUDE Zame Objective Plus.txt}
+    return
+    end 
+    
+//Отбирание оружия
+
+0AF0: get_int 0@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_TYPE"
+if
+0@ == 29
+    then
+    gosub @CHECK_FOR_CP_PONOS
+    048F: actor PLAYER_ACTOR remove_weapons
+    {$INCLUDE Zame Objective Plus.txt}
+    return
+    end
+    
+//Перенос объекта
+
+0AF0: get_int 0@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_TYPE"
+if
+0@ == 30
+    then    
+    gosub @CHECK_FOR_CP_PONOS
+    
+    if or
+    $CHEATS_ON == 1
+    ZAME_TARGETSKIP_MODE > 0
+    then
+    jump to @ZAM_GRAB_JUMP
+    end
+    
+    0AF2: get_float 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJ_X"
+    0AF2: get_float 3@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJ_Y"
+    0AF2: get_float 4@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJ_Z"
+    0AF0: get_int 5@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJ_MOV_MODEL"
+    
+    28@ = 0.1
+    29@ = 0
+    
+    repeat
+    wait 0
+    
+    if or
+    $CHEATS_ON == 1
+    ZAME_TARGETSKIP_MODE > 0
+    then
+    break
+    end
+        
+    if or
+    actor.Dead(PLAYER_ACTOR)
+    GAME_OVER_FLAG == 1
+    then
+    jump to @KOD_PROVALA_ZAME
+    end
+    
+    if
+    0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+    then
+    
+    gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+    if
+    ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+    then
+    jump to @KOD_PROVALA_ZAME
+    end
+    
+    end
+    
+//    {$INCLUDE newopcodes\forallobjs}
+    {$INCLUDE newopcodes\forallobjs_cleoplus}
+    
+    if
+    03CA:   object obj exists
+        then  
+        0085: ZAME_OBJECT_HANLDE = obj // (int)
+        0984: 1@ = object ZAME_OBJECT_HANLDE model  
+        if
+        003B:   1@ == 5@  // (int)        
+            then                       
+            if
+            0EEC: locate_object_distance_to_coordinates obj pos 2@ 3@ 4@ radius 0.3
+                then
+                
+                0392: make_object ZAME_OBJECT_HANLDE moveable 1
+                035D: set_object ZAME_OBJECT_HANLDE targetable 1
+                08E9: set_object ZAME_OBJECT_HANLDE liftable 1                
+                
+                :LIFT_THAT_FUCK_AGAIN
+                ZAME_OBJECT_MARKER_HANLDE = Marker.CreateAboveObject(ZAME_OBJECT_HANLDE)                                
+                
+                //////////////////////////////////////////////////////////////////////////////////////
+                                            
+                while 8737: not  actor PLAYER_ACTOR lifting_object ZAME_OBJECT_HANLDE
+                wait 0
+                
+                if
+                0E3E: is_button_just_pressed 0 button 15
+                    then
+                    07C9: AS_actor PLAYER_ACTOR walk_to_object ZAME_OBJECT_HANLDE then_lift_and_hold_in_hands
+                    end
+                
+                if or
+                $CHEATS_ON == 1
+                ZAME_TARGETSKIP_MODE > 0
+                    then
+                    break
+                    end                                                
+                
+                if or
+                actor.Dead(PLAYER_ACTOR)
+                GAME_OVER_FLAG == 1                
+                then
+                jump to @KOD_PROVALA_ZAME
+                end
+                
+                if
+                1@ <= 0
+                then
+                ZAME_FAILED_BY_REASON = 1
+                0723: break_object ZAME_OBJECT_HANLDE intensity 1
+                jump to @KOD_PROVALA_ZAME
+                end
+                
+                if
+                0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+                then
+                
+                gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+                if
+                ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+                then
+                jump to @KOD_PROVALA_ZAME
+                end
+                
+                end                            
+                                
+                end
+                
+                //////////////////////////////////////////////////////////////////////////////////////
+                
+                marker.Disable(ZAME_OBJECT_MARKER_HANLDE)
+                0AF2: get_float 5@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJ_MOV_X"
+                0AF2: get_float 6@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJ_MOV_Y"
+                0AF2: get_float 7@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJ_MOV_Z"
+    
+                018A: MISSION_CHECKPOINT = create_checkpoint_at 5@ 6@ 7@
+                03BC: MISSION_SPHERE = create_sphere_at 5@ 6@ 7@ radius 2.0
+                
+                //////////////////////////////////////////////////////////////////////////////////////
+                
+                while true
+                wait 0                
+                
+                if and
+                0E3E: is_button_just_pressed 0 button 15
+                8737: not  actor PLAYER_ACTOR lifting_object ZAME_OBJECT_HANLDE
+                    then
+                    07C9: AS_actor PLAYER_ACTOR walk_to_object ZAME_OBJECT_HANLDE then_lift_and_hold_in_hands
+                    end
+                
+                if or
+                0E3E: is_button_just_pressed 0 button 15
+                0E3E: is_button_just_pressed 0 button 6
+                    then
+                    070B: set_actor PLAYER_ACTOR onbone_attached_object_operation 0
+                    end
+                
+                0E71: get_object_centre_of_mass_to_base_of_model ZAME_OBJECT_HANLDE 9@
+                8@ = 1.0
+                005B: 8@ += 9@  // (float)
+//                0AD1: show_formatted_text_highpriority "NEAR Z %f" time 2000 8@
+                
+                if and
+                04E6:  object ZAME_OBJECT_HANLDE near_point 5@ 6@ 7@ radius 2.0 2.0 8@ flag 0
+                8737: not  actor PLAYER_ACTOR lifting_object ZAME_OBJECT_HANLDE
+                    then
+                    0392: make_object ZAME_OBJECT_HANLDE moveable 0
+                    035D: set_object ZAME_OBJECT_HANLDE targetable 0
+                    08E9: set_object ZAME_OBJECT_HANLDE liftable 0
+                    break
+                    end                
+                
+                if or
+                $CHEATS_ON == 1
+                ZAME_TARGETSKIP_MODE > 0
+                    then
+                    break
+                    end                                                
+                
+                if or
+                actor.Dead(PLAYER_ACTOR)
+                GAME_OVER_FLAG == 1                
+                then
+                jump to @KOD_PROVALA_ZAME
+                end                
+                
+                if
+                0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+                then
+                
+                gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+                if
+                ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+                then
+                jump to @KOD_PROVALA_ZAME
+                end
+                
+                end                            
+                                
+                end
+                
+                //////////////////////////////////////////////////////////////////////////////////////
+                
+                marker.Disable(MISSION_CHECKPOINT)
+                03BD: destroy_sphere MISSION_SPHERE                                
+                marker.Disable(ZAME_OBJECT_MARKER_HANLDE)
+                object.Destroy(ZAME_OBJECT_HANLDE)
+                
+                jump to @ZAM_GRAB_JUMP
+                
+                end
+            end
+        end
+        
+    {$INCLUDE newopcodes\end}
+//    {$INCLUDE newopcodes\for_end_cleoplus}    
+    
+    until false
+    
+    :ZAM_GRAB_JUMP    
+    
+    {$INCLUDE Zame Objective Plus.txt}    
+    return    
+    
+    end  
+    
+//Рассмотр точки
+
+0AF0: get_int 0@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_TYPE"
+if
+0@ == 31
+    then
+    gosub @CHECK_FOR_CP_PONOS 
+    
+    if or
+    $CHEATS_ON == 1
+    ZAME_TARGETSKIP_MODE > 0
+    then
+    jump to @ZAM_LOOK_SKIP_JUMP
+    end 
+    
+    0AF2: get_float 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_X"
+    0AF2: get_float 3@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_Y"
+    0AF2: get_float 4@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_Z"
+    
+    0AF0: get_int 5@ from_ini_file "me\temp.dat" section v$RACE_FILE key "PHOTO_FLAG"
+    if
+    not 5@ == 1
+    then    
+    0AF0: get_int 5@ from_ini_file "me\temp.dat" section v$RACE_FILE key "BINO_FLAG"
+    if
+    5@ == 1
+        then
+        5@ = 2
+        end
+    end
+    
+    while not model.Available(#MALE01)
+    wait 0
+    model.Load(#MALE01)
+    mload
+    end
+    
+    20@ = actor.Create(26,#MALE01,2@,3@,4@)
+    actor.SetImmunities(20@,1,1,1,1,1)
+    0619: enable_actor 20@ collision_detection 0
+    0337: set_actor 20@ visibility 0
+    actor.LockInCurrentPosition(20@,true)
+    
+    018A: MISSION_CHECKPOINT = create_checkpoint_at 2@ 3@ 4@
+    
+    6@ = 0
+    
+    repeat
+    wait 0
+    
+    if or
+    $CHEATS_ON == 1
+    ZAME_TARGETSKIP_MODE > 0
+        then
+        break
+        end                                                                
+    
+    if and
+    5@ == 1
+    04C5:   actor 20@ photographed
+        then
+        wait 500        
+        break
+        end
+        
+    if and
+    5@ == 2
+    $BINOCULARS_USING_FLAG == 1
+        then
+        6@ += 1
+        if
+        6@ > 120
+            then
+            break
+            end
+        end
+        
+    if and
+    not 5@ == 1
+    not 5@ == 2    
+        then
+        if and
+        0364:   actor PLAYER_ACTOR spotted_actor 20@
+        02CB:   actor 20@ bounding_sphere_visible
+            then
+            6@ += 1
+            if
+            6@ > 60
+                then
+                break
+                end
+            end
+        end
+        
+//    0AD1: show_formatted_text_highpriority "%d / 60" time 2000 6@            
+        
+    if or
+    actor.Dead(PLAYER_ACTOR)
+    GAME_OVER_FLAG == 1
+    then
+    jump to @KOD_PROVALA_ZAME
+    end
+        
+    if
+    0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+    then
+        
+    gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+    if
+    ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+    then
+    jump to @KOD_PROVALA_ZAME
+    end
+        
+    end
+         
+    until false
+    
+    marker.Disable(MISSION_CHECKPOINT)
+    actor.DestroyInstantly(20@)
+    
+    :ZAM_LOOK_SKIP_JUMP
+    
+    {$INCLUDE Zame Objective Plus.txt}
+    return
+    end 
+    
+//Защита союзника
+
+0AF0: get_int 0@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_TYPE"
+if
+0@ == 32
+    then                            
+    gosub @CHECK_FOR_CP_PONOS
+    
+    if or
+    $CHEATS_ON == 1
+    ZAME_TARGETSKIP_MODE > 0
+    then
+    jump to @ZAM_TEAMPROTECT_SKIP_JUMP
+    end
+    
+    0AF0: get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "SKIN_TO_PROTECT"
+    if
+    2@ < 5
+    then
+    //Вычисляем по номеру в команде    
+    0085: 20@ = 2@ // (int)        
+    else
+    //Вычисляем по айди(айпи)
+    
+    for 3@ = 0 to 4
+    if    
+    056D:   actor $SURVIVER[3@] defined
+        then
+        if
+        02F2:   actor $SURVIVER[3@] model == 2@
+            then
+            0085: 20@ = 3@ // (int)            
+            end
+        end
+    end
+    
+    end
+    
+//    $HELP_INST_FLAG = 0
+//    wait 0
+//    06C9: remove_actor $SURVIVER[20@] from_group
+    008A: ZAME_PROTECT_TEAMMATE_NUM = 20@ // (int)
+    0687: clear_actor $SURVIVER[20@] task
+    actor.AddArmour($SURVIVER[20@],1)
+    
+    0AF2: get_float 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "PROTECT_GOTO_POINT_X"
+    0AF2: get_float 3@ from_ini_file "me\temp.dat" section v$RACE_FILE key "PROTECT_GOTO_POINT_Y"
+    0AF2: get_float 4@ from_ini_file "me\temp.dat" section v$RACE_FILE key "PROTECT_GOTO_POINT_Z"
+    0AF2: get_float 5@ from_ini_file "me\temp.dat" section v$RACE_FILE key "PROTECT_GOTO_POINT_A"
+    
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    repeat
+    wait 0
+    
+    if and
+    0E45: frame_mod 15
+    8EEA: not locate_char_distance_to_coordinates $SURVIVER[20@] pos 2@ 3@ 4@ radius 1.0
+        then
+        05D3: AS_actor $SURVIVER[20@] goto_point 2@ 3@ 4@ mode 6 time 99999 ms // versionA
+        else
+        if
+        0EEA: locate_char_distance_to_coordinates $SURVIVER[20@] pos 2@ 3@ 4@ radius 1.0
+            then
+            0792: disembark_instantly_actor $SURVIVER[20@]
+            actor.Angle($SURVIVER[20@]) = 5@
+            0812: AS_actor $SURVIVER[20@] perform_animation "BOM_Plant_Loop" IFP "BOMBER" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 9999999  // versionB
+            break
+            end
+        end
+    
+    04DD: 0@ = actor $SURVIVER[20@] armour
+    if
+    not 0@ == 1
+    then
+    actor.AddArmour($SURVIVER[20@],1)
+    end
+    $SURVIVOR_HUNTER_TIMER[20@] = 0                            
+        
+    if or
+    actor.Dead(PLAYER_ACTOR)
+    GAME_OVER_FLAG == 1
+    then
+    jump to @KOD_PROVALA_ZAME
+    end
+        
+    if
+    0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+    then
+        
+    gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+    if
+    ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+    then
+    jump to @KOD_PROVALA_ZAME
+    end
+        
+    end
+         
+    until false
+    
+    0AF0: get_int $TIMER from_ini_file "me\temp.dat" section v$RACE_FILE key "TIMER_SECONDS"
+    $TIMER *= 1000
+    0AF0: get_int 1@ from_ini_file "me\temp.dat" section v$RACE_FILE key "HIDDEN_TIMER_FLAG"
+    if
+    not 1@ == 1
+    then
+    03C3: set_timer_to $TIMER type 1 GXT 'BB_19' // global_variable  // Time
+    end
+    
+    32@ = 0
+    
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    repeat
+    wait 0
+    
+    if or
+    $CHEATS_ON == 1
+    ZAME_TARGETSKIP_MODE > 0
+    then
+    break
+    end
+    
+    if
+    1@ == 1
+    then
+    if
+    001F:   32@ > $TIMER // (int)
+        then
+        break
+        end
+    else
+    if
+    $TIMER < 1
+        then
+        014F: stop_timer $TIMER
+        break
+        end
+    end
+    
+    if
+    not actor.Animation($SURVIVER[20@]) == "BOM_Plant_Loop"
+    then
+    0812: AS_actor $SURVIVER[20@] perform_animation "BOM_Plant_Loop" IFP "BOMBER" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 9999999  // versionB
+    end       
+    
+    04DD: 0@ = actor $SURVIVER[20@] armour
+    if
+    not 0@ == 1
+    then
+    actor.AddArmour($SURVIVER[20@],1)
+    end
+    $SURVIVOR_HUNTER_TIMER[20@] = 0                            
+        
+    if or
+    actor.Dead(PLAYER_ACTOR)
+    actor.Dead($SURVIVER[20@])
+    GAME_OVER_FLAG == 1
+    then
+    jump to @KOD_PROVALA_ZAME
+    end
+        
+    if
+    0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+    then
+        
+    gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+    if
+    ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+    then
+    jump to @KOD_PROVALA_ZAME
+    end
+        
+    end     
+         
+    until false
+    
+    ZAME_PROTECT_TEAMMATE_NUM = -1
+    actor.AddArmour($SURVIVER[20@],-1)
+    0687: clear_actor $SURVIVER[20@] task
+    0631: put_actor $SURVIVER[20@] in_group PLAYER_GROUP   
+    
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    :ZAM_TEAMPROTECT_SKIP_JUMP
+    
+    {$INCLUDE Zame Objective Plus.txt}
+    return
+    end 
+    
+//Смена скина, оружия
+
+0AF0: get_int 0@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_TYPE"
+if
+0@ == 33
+    then
+    gosub @CHECK_FOR_CP_PONOS   
+    
+    0AF0: get_int 1@ from_ini_file "me\temp.dat" section v$RACE_FILE key "REBORN_MODEL" 
+    0AF0: get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "REBORN_WEP_ID"
+    0AF0: get_int 3@ from_ini_file "me\temp.dat" section v$RACE_FILE key "REBORN_WEP_AMMO"    
+    0AF2: get_float 4@ from_ini_file "me\temp.dat" section v$RACE_FILE key "REBORN_X"
+    0AF2: get_float 5@ from_ini_file "me\temp.dat" section v$RACE_FILE key "REBORN_Y"
+    0AF2: get_float 6@ from_ini_file "me\temp.dat" section v$RACE_FILE key "REBORN_Z"
+    0AF2: get_float 7@ from_ini_file "me\temp.dat" section v$RACE_FILE key "REBORN_A"
+         
+    0E69: set_player_control_pad_movement 0 0
+    fade 0 250
+    $HUD_REMOVE = 1
+    wait 250
+    
+    if and
+    8AF0: not get_int 8@ from_ini_file "me\temp.dat" section v$RACE_FILE key "KEEP_WEAPONS"
+    ZAME_TARGETSKIP_MODE < 1
+    then
+    048F: actor PLAYER_ACTOR remove_weapons
+    end
+    while not model.Available(1@)
+    wait 0
+    model.Load(1@)
+    mload
+    end
+    
+    09C7: change_player PLAYER_CHAR model_to 1@
+    
+    0781: get_weapon_with_ID 2@ model_to 0@
+    while not model.Available(0@)
+    wait 0
+    model.Load(0@)
+    mload
+    end
+    
+    actor.GiveWeaponAndAmmo(PLAYER_ACTOR,2@,3@)
+    
+    actor.PutAtNoOffset(PLAYER_ACTOR,4@,5@,6@)
+    camera.Restore_WithJumpCut()
+    actor.Angle(PLAYER_ACTOR) = 7@
+    create_thread @3D_REFR    
+              
+    wait 1000
+    
+    fade 1 250
+    $HUD_REMOVE = 0
+    wait 250    
+    0E69: set_player_control_pad_movement 0 1
+    
+    {$INCLUDE Zame Objective Plus.txt}
+    return
+    end     
+    
+//Обыск транспорта
+
+0AF0: get_int 0@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_TYPE"
+if
+0@ == 34
+    then
+    gosub @CHECK_FOR_CP_PONOS   
+    
+    if or
+    $CHEATS_ON == 1
+    ZAME_TARGETSKIP_MODE > 0
+    then
+    jump to @ZAM_CARSEARCH_SKIP_JUMP
+    end
+    
+    0AF0: get_int 1@ from_ini_file "me\temp.dat" section v$RACE_FILE key "COUNT_TO_SEARCH" 
+    $QUEST_TYPE = 5
+    CAR_SEARCH_DO_NOT_GIVE = 1
+    RQUEST_TIMER_STOPPED_FLAG = 0
+    
+    008B: CAR_OBISKENO_TEMP = CAR_OBISKENO // (int)
+    CAR_OBISKENO = 0
+    
+    0084: $CAR_OBISKENO2 = CAR_OBISKENO // (int)
+    005E: $CAR_OBISKENO2 += 1@  // (int)
+    
+    04F7: vagina_text CAR_OBISKENO type 0 line 1 GXT 'GAME525' // global_variable
+    
+    create_thread @C_SRCH
+         
+    repeat
+    wait 0
+    
+    if or
+    $CHEATS_ON == 1
+    ZAME_TARGETSKIP_MODE > 0
+    then
+    break
+    end
+    
+    if or
+    actor.Dead(PLAYER_ACTOR)
+    GAME_OVER_FLAG == 1
+    then
+    jump to @KOD_PROVALA_ZAME
+    end
+        
+    if
+    0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+    then
+        
+    gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+    if
+    ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+    then
+    jump to @KOD_PROVALA_ZAME
+    end
+        
+    end
+    
+    until 002C: CAR_OBISKENO >= $CAR_OBISKENO2  // (int)
+    
+    0459: end_thread_named 'C_SRCH'
+    0459: end_thread_named 'C_SRCH2'
+    
+    0151: remove_status_text CAR_OBISKENO
+
+    008B: CAR_OBISKENO_TEMP2 = CAR_OBISKENO // (int)
+    008A: CAR_OBISKENO = CAR_OBISKENO_TEMP // (int)
+    005E: CAR_OBISKENO += CAR_OBISKENO_TEMP2  // (int)
+    
+    :ZAM_CARSEARCH_SKIP_JUMP
+    
+    {$INCLUDE Zame Objective Plus.txt}
+    return
+    end                                                                                                                   
                             
 return
 
@@ -5585,6 +7475,14 @@ if
         create_thread @MIS_CMP
         end
     end
+end
+
+0AF0: get_int 24@ from_ini_file "saves\ZACM.set" section "SCR" key "EDITOR_LAUNCH_FROM_OBJ"
+if
+24@ == 1
+then
+wait 500
+jump @UDACHNO_ZAME
 end
  
 wait 5000  
@@ -5927,12 +7825,13 @@ jf @custom_mission_3788
 0395: clear_area 1 at 2@ 3@ 4@ radius 5.0
 $SAVE_CAR_PLACE = Car.Create($CAR_MODEL, 2@, 3@, 4@)
 car.SetImmunities($SAVE_CAR_PLACE,1,1,1,1,1)
-$SAVER = Actor.Create(26, $SAVER_MODEL, 0.0, 0.0, 0.0)
+//$SAVER = Actor.Create(26, $SAVER_MODEL, 0.0, 0.0, 0.0)
+$SAVER = Actor.CreateAsDriver(26, $SAVER_MODEL,$SAVE_CAR_PLACE)
 //model.Destroy($CAR_MODEL)
 //model.Destroy($SAVER_MODEL)
 0229: set_car $SAVE_CAR_PLACE primary_color_to 1 secondary_color_to 2
 Car.Angle($SAVE_CAR_PLACE) = 5@
-036A: put_actor $SAVER in_car $SAVE_CAR_PLACE 
+//036A: put_actor $SAVER in_car $SAVE_CAR_PLACE 
 0825: set_helicopter $SAVE_CAR_PLACE instant_rotor_start
 0087: 40@ = 4@ // (float) 
 40@ += 10.0
@@ -6038,7 +7937,7 @@ marker.SetIconSize($SAVE_CAR_PLACE_MARK,2)
 018B: set_marker $SAVE_CAR_PLACE_MARK radar_mode 2 
 
 :custom_mission_4065
-wait 0
+wait 0    
 
 if or
 actor.Dead(PLAYER_ACTOR)
@@ -6060,8 +7959,9 @@ end
 
 end  
 
-if
-$CHEATS_ON == 1
+if and
+$CHEATS_ON == 1     
+0E8D: is_any_fire_button_pressed 0
 then 
 0EB4: set_car_coordinates_simple $SAVE_CAR_PLACE position 2@ 3@ 40@
 end
@@ -6080,8 +7980,9 @@ Car.StorePos($SAVE_CAR_PLACE,6@,7@,8@)
 :custom_mission_4156
 wait 0    
 
-if
+if and
 $CHEATS_ON == 1
+0E8D: is_any_fire_button_pressed 0
 then
 jump to @custom_mission_4156BBB
 end
@@ -9908,6 +11809,9 @@ else
 0AD3: ZAME_KONTROLT4K_STRING = format "me\cp%d.set" ZAME_MISSION_LOAD_NUMBER
 end
 
+0AF4: v$SNAME2 = read_string_from_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "MISSION_NAME"
+0AF5: write_string v$SNAME2 to_ini_file ZAME_KONTROLT4K_STRING section "CHECKPOINT_PARAMETERS" key "MISSION_NAME"
+
 if
 $TIME > 0
 then
@@ -10407,3 +12311,1055 @@ if and
     end
 
 return        
+
+:ZAME_CARREC_GET_NUM
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+ZAME_MISSION_LOAD_NUMBER == 1
+then
+
+0AF0: get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CARREC_NUM"
+if
+2@ == 74
+then
+0B04: copy_file "me/1/74.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec074.rrr" //IF and SET
+end
+
+if
+2@ == 75
+then
+0B04: copy_file "me/1/75.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec075.rrr" //IF and SET
+end
+
+if
+2@ == 76
+then
+0B04: copy_file "me/1/76.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec076.rrr" //IF and SET
+end
+
+if
+2@ == 77
+then
+0B04: copy_file "me/1/77.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec077.rrr" //IF and SET
+end
+
+if
+2@ == 78
+then
+0B04: copy_file "me/1/78.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec078.rrr" //IF and SET
+end
+
+if
+2@ == 79
+then
+0B04: copy_file "me/1/79.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec079.rrr" //IF and SET
+end
+
+if
+2@ == 80
+then
+0B04: copy_file "me/1/80.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec080.rrr" //IF and SET
+end
+
+if
+2@ == 81
+then
+0B04: copy_file "me/1/81.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec081.rrr" //IF and SET
+end
+
+if
+2@ == 82
+then
+0B04: copy_file "me/1/82.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec082.rrr" //IF and SET
+end
+
+if
+2@ == 83
+then
+0B04: copy_file "me/1/83.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec083.rrr" //IF and SET
+end
+
+end
+
+if
+ZAME_MISSION_LOAD_NUMBER == 2
+then
+
+0AF0: get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CARREC_NUM"
+if
+2@ == 74
+then
+0B04: copy_file "me/2/74.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec074.rrr" //IF and SET
+end
+
+if
+2@ == 75
+then
+0B04: copy_file "me/2/75.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec075.rrr" //IF and SET
+end
+
+if
+2@ == 76
+then
+0B04: copy_file "me/2/76.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec076.rrr" //IF and SET
+end
+
+if
+2@ == 77
+then
+0B04: copy_file "me/2/77.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec077.rrr" //IF and SET
+end
+
+if
+2@ == 78
+then
+0B04: copy_file "me/2/78.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec078.rrr" //IF and SET
+end
+
+if
+2@ == 79
+then
+0B04: copy_file "me/2/79.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec079.rrr" //IF and SET
+end
+
+if
+2@ == 80
+then
+0B04: copy_file "me/2/80.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec080.rrr" //IF and SET
+end
+
+if
+2@ == 81
+then
+0B04: copy_file "me/2/81.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec081.rrr" //IF and SET
+end
+
+if
+2@ == 82
+then
+0B04: copy_file "me/2/82.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec082.rrr" //IF and SET
+end
+
+if
+2@ == 83
+then
+0B04: copy_file "me/2/83.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec083.rrr" //IF and SET
+end
+
+end
+
+if
+ZAME_MISSION_LOAD_NUMBER == 3
+then
+
+0AF0: get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CARREC_NUM"
+if
+2@ == 74
+then
+0B04: copy_file "me/3/74.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec074.rrr" //IF and SET
+end
+
+if
+2@ == 75
+then
+0B04: copy_file "me/3/75.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec075.rrr" //IF and SET
+end
+
+if
+2@ == 76
+then
+0B04: copy_file "me/3/76.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec076.rrr" //IF and SET
+end
+
+if
+2@ == 77
+then
+0B04: copy_file "me/3/77.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec077.rrr" //IF and SET
+end
+
+if
+2@ == 78
+then
+0B04: copy_file "me/3/78.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec078.rrr" //IF and SET
+end
+
+if
+2@ == 79
+then
+0B04: copy_file "me/1/79.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec079.rrr" //IF and SET
+end
+
+if
+2@ == 80
+then
+0B04: copy_file "me/3/80.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec080.rrr" //IF and SET
+end
+
+if
+2@ == 81
+then
+0B04: copy_file "me/3/81.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec081.rrr" //IF and SET
+end
+
+if
+2@ == 82
+then
+0B04: copy_file "me/3/82.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec082.rrr" //IF and SET
+end
+
+if
+2@ == 83
+then
+0B04: copy_file "me/3/83.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec083.rrr" //IF and SET
+end
+
+end
+
+if
+ZAME_MISSION_LOAD_NUMBER == 4
+then
+
+0AF0: get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CARREC_NUM"
+if
+2@ == 74
+then
+0B04: copy_file "me/4/74.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec074.rrr" //IF and SET
+end
+
+if
+2@ == 75
+then
+0B04: copy_file "me/4/75.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec075.rrr" //IF and SET
+end
+
+if
+2@ == 76
+then
+0B04: copy_file "me/4/76.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec076.rrr" //IF and SET
+end
+
+if
+2@ == 77
+then
+0B04: copy_file "me/4/77.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec077.rrr" //IF and SET
+end
+
+if
+2@ == 78
+then
+0B04: copy_file "me/4/78.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec078.rrr" //IF and SET
+end
+
+if
+2@ == 79
+then
+0B04: copy_file "me/1/79.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec079.rrr" //IF and SET
+end
+
+if
+2@ == 80
+then
+0B04: copy_file "me/4/80.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec080.rrr" //IF and SET
+end
+
+if
+2@ == 81
+then
+0B04: copy_file "me/4/81.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec081.rrr" //IF and SET
+end
+
+if
+2@ == 82
+then
+0B04: copy_file "me/4/82.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec082.rrr" //IF and SET
+end
+
+if
+2@ == 83
+then
+0B04: copy_file "me/4/83.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec083.rrr" //IF and SET
+end
+
+end
+
+if
+ZAME_MISSION_LOAD_NUMBER == 5
+then
+
+0AF0: get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CARREC_NUM"
+if
+2@ == 74
+then
+0B04: copy_file "me/5/74.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec074.rrr" //IF and SET
+end
+
+if
+2@ == 75
+then
+0B04: copy_file "me/5/75.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec075.rrr" //IF and SET
+end
+
+if
+2@ == 76
+then
+0B04: copy_file "me/5/76.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec076.rrr" //IF and SET
+end
+
+if
+2@ == 77
+then
+0B04: copy_file "me/5/77.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec077.rrr" //IF and SET
+end
+
+if
+2@ == 78
+then
+0B04: copy_file "me/5/78.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec078.rrr" //IF and SET
+end
+
+if
+2@ == 79
+then
+0B04: copy_file "me/1/79.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec079.rrr" //IF and SET
+end
+
+if
+2@ == 80
+then
+0B04: copy_file "me/5/80.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec080.rrr" //IF and SET
+end
+
+if
+2@ == 81
+then
+0B04: copy_file "me/5/81.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec081.rrr" //IF and SET
+end
+
+if
+2@ == 82
+then
+0B04: copy_file "me/5/82.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec082.rrr" //IF and SET
+end
+
+if
+2@ == 83
+then
+0B04: copy_file "me/5/83.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec083.rrr" //IF and SET
+end
+
+end
+
+if
+ZAME_MISSION_LOAD_NUMBER == 6
+then
+
+0AF0: get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CARREC_NUM"
+if
+2@ == 74
+then
+0B04: copy_file "me/6/74.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec074.rrr" //IF and SET
+end
+
+if
+2@ == 75
+then
+0B04: copy_file "me/6/75.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec075.rrr" //IF and SET
+end
+
+if
+2@ == 76
+then
+0B04: copy_file "me/6/76.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec076.rrr" //IF and SET
+end
+
+if
+2@ == 77
+then
+0B04: copy_file "me/6/77.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec077.rrr" //IF and SET
+end
+
+if
+2@ == 78
+then
+0B04: copy_file "me/6/78.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec078.rrr" //IF and SET
+end
+
+if
+2@ == 79
+then
+0B04: copy_file "me/6/79.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec079.rrr" //IF and SET
+end
+
+if
+2@ == 80
+then
+0B04: copy_file "me/6/80.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec080.rrr" //IF and SET
+end
+
+if
+2@ == 81
+then
+0B04: copy_file "me/6/81.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec081.rrr" //IF and SET
+end
+
+if
+2@ == 82
+then
+0B04: copy_file "me/6/82.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec082.rrr" //IF and SET
+end
+
+if
+2@ == 83
+then
+0B04: copy_file "me/6/83.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec083.rrr" //IF and SET
+end
+
+end
+
+if
+ZAME_MISSION_LOAD_NUMBER == 7
+then
+
+0AF0: get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CARREC_NUM"
+if
+2@ == 74
+then
+0B04: copy_file "me/7/74.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec074.rrr" //IF and SET
+end
+
+if
+2@ == 75
+then
+0B04: copy_file "me/7/75.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec075.rrr" //IF and SET
+end
+
+if
+2@ == 76
+then
+0B04: copy_file "me/7/76.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec076.rrr" //IF and SET
+end
+
+if
+2@ == 77
+then
+0B04: copy_file "me/7/77.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec077.rrr" //IF and SET
+end
+
+if
+2@ == 78
+then
+0B04: copy_file "me/7/78.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec078.rrr" //IF and SET
+end
+
+if
+2@ == 79
+then
+0B04: copy_file "me/7/79.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec079.rrr" //IF and SET
+end
+
+if
+2@ == 80
+then
+0B04: copy_file "me/7/80.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec080.rrr" //IF and SET
+end
+
+if
+2@ == 81
+then
+0B04: copy_file "me/7/81.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec081.rrr" //IF and SET
+end
+
+if
+2@ == 82
+then
+0B04: copy_file "me/7/82.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec082.rrr" //IF and SET
+end
+
+if
+2@ == 83
+then
+0B04: copy_file "me/7/83.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec083.rrr" //IF and SET
+end
+
+end
+
+if
+ZAME_MISSION_LOAD_NUMBER == 8
+then
+
+0AF0: get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CARREC_NUM"
+if
+2@ == 74
+then
+0B04: copy_file "me/8/74.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec074.rrr" //IF and SET
+end
+
+if
+2@ == 75
+then
+0B04: copy_file "me/8/75.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec075.rrr" //IF and SET
+end
+
+if
+2@ == 76
+then
+0B04: copy_file "me/8/76.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec076.rrr" //IF and SET
+end
+
+if
+2@ == 77
+then
+0B04: copy_file "me/8/77.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec077.rrr" //IF and SET
+end
+
+if
+2@ == 78
+then
+0B04: copy_file "me/8/78.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec078.rrr" //IF and SET
+end
+
+if
+2@ == 79
+then
+0B04: copy_file "me/8/79.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec079.rrr" //IF and SET
+end
+
+if
+2@ == 80
+then
+0B04: copy_file "me/8/80.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec080.rrr" //IF and SET
+end
+
+if
+2@ == 81
+then
+0B04: copy_file "me/8/81.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec081.rrr" //IF and SET
+end
+
+if
+2@ == 82
+then
+0B04: copy_file "me/8/82.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec082.rrr" //IF and SET
+end
+
+if
+2@ == 83
+then
+0B04: copy_file "me/8/83.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec083.rrr" //IF and SET
+end
+
+end
+
+if
+ZAME_MISSION_LOAD_NUMBER == 9
+then
+
+0AF0: get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "CARREC_NUM"
+if
+2@ == 74
+then
+0B04: copy_file "me/9/74.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec074.rrr" //IF and SET
+end
+
+if
+2@ == 75
+then
+0B04: copy_file "me/9/75.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec075.rrr" //IF and SET
+end
+
+if
+2@ == 76
+then
+0B04: copy_file "me/9/76.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec076.rrr" //IF and SET
+end
+
+if
+2@ == 77
+then
+0B04: copy_file "me/9/77.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec077.rrr" //IF and SET
+end
+
+if
+2@ == 78
+then
+0B04: copy_file "me/9/78.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec078.rrr" //IF and SET
+end
+
+if
+2@ == 79
+then
+0B04: copy_file "me/9/79.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec079.rrr" //IF and SET
+end
+
+if
+2@ == 80
+then
+0B04: copy_file "me/9/80.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec080.rrr" //IF and SET
+end
+
+if
+2@ == 81
+then
+0B04: copy_file "me/9/81.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec081.rrr" //IF and SET
+end
+
+if
+2@ == 82
+then
+0B04: copy_file "me/9/82.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec082.rrr" //IF and SET
+end
+
+if
+2@ == 83
+then
+0B04: copy_file "me/9/83.rrr" to "modloader/MODLOADER GLOBAL FILES/ExtraContent/Zombiegeddon Replay/carrec083.rrr" //IF and SET
+end
+
+end
+
+return
+
+:ZAME_CAR_ADVENTURE_CHASE_MODE
+player.CanMove(0,false)
+fade 0 250
+$HUD_REMOVE = 1
+wait 250
+
+036A: put_actor PLAYER_ACTOR in_car ZAME_ADVENTURE_CAR_UKAZATEL
+
+for 0@ = 0 to 2
+092B: 1@ = group PLAYER_GROUP member 0@
+if and
+056D:   actor 1@ defined
+87D6: not  1@ == $SURVIVER[20@] // @ == $ (int)
+    then
+    //06C9: remove_actor 1@ from_group
+    0430: put_actor 1@ into_car ZAME_ADVENTURE_CAR_UKAZATEL passenger_seat -1
+    end
+end
+
+gosub @ZAME_DELETE_CARRECS
+gosub @ZAME_CARREC_GET_NUM
+gosub @ZAME_CHECK_CARREC
+
+wait 2000 
+
+repeat
+wait 0
+07C0: load_path 2@
+until 07C1:   path 2@ available
+
+05EB: assign_car ZAME_CAR_ADVENTURE_CAR to_path 2@ 
+                                                    
+0AF2: get_float 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "DEST_X0"
+0AF2: get_float 3@ from_ini_file "me\temp.dat" section v$RACE_FILE key "DEST_Y0"
+0AF2: get_float 4@ from_ini_file "me\temp.dat" section v$RACE_FILE key "DEST_Z0"
+//06D5: MISSION_CHECKPOINT = create_racing_checkpoint_at 2@ 3@ 4@ point_to 0.0 0.0 0.0 type 1 radius 6.0   
+//MISSION_MARKER = 0
+//018A: MISSION_MARKER = create_checkpoint_at 2@ 3@ 4@
+//marker.SetIconSize(MISSION_MARKER,2)
+
+player.CanMove(0,true)
+fade 1 250
+$HUD_REMOVE = 0
+wait 250
+
+008A: $MISSION_CAR1 = ZAME_CAR_ADVENTURE_CAR // (int)
+$MISSION19_PATH_SPEED = 1.0
+$M19_RADIUS_JAMES_SPEED_UP = 10.0
+create_thread @CAR_SP2 0 ZAME_ADVENTURE_CAR_UKAZATEL
+
+repeat
+wait 0
+
+//if or
+//$CHEATS_ON == 1
+//ZAME_TARGETSKIP_MODE > 0
+//then
+//break
+//end
+
+if or
+actor.Dead(PLAYER_ACTOR)
+car.Wrecked(ZAME_ADVENTURE_CAR_UKAZATEL)
+GAME_OVER_FLAG == 1
+then
+
+if
+car.Wrecked(ZAME_ADVENTURE_CAR_UKAZATEL)
+then
+ZAME_FAILED_BY_REASON = 2
+end
+
+jump to @KOD_PROVALA_ZAME
+end
+
+if
+0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+then
+
+gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+if
+ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+then
+jump to @KOD_PROVALA_ZAME
+end
+
+end
+
+if or
+00F2:   actor 20@ near_actor PLAYER_ACTOR radius 200.0 200.0 sphere 0
+02CB:   actor 20@ bounding_sphere_visible   
+then
+//ass
+else
+ZAME_FAILED_BY_REASON = 7
+jump to @KOD_PROVALA_ZAME
+end
+
+if and
+0EEB: locate_car_distance_to_coordinates ZAME_CAR_ADVENTURE_CAR pos 2@ 3@ 4@ radius 5.0
+0EEB: locate_car_distance_to_coordinates ZAME_ADVENTURE_CAR_UKAZATEL pos 2@ 3@ 4@ radius 10.0
+01C1:   car ZAME_CAR_ADVENTURE_CAR stopped
+    then 
+        
+    0459: end_thread_named 'CAR_SP2'
+    $MISSION_CAR1 = -1
+    
+    ZAME_CAR_ADV_FLAG = 0
+    05EC: release_car ZAME_CAR_ADVENTURE_CAR from_path       
+        
+    player.CanMove(PLAYER_CHAR,false)
+    0221: set_player PLAYER_CHAR apply_brakes_to_car 1
+    0A8C: write_memory 0x6BE94E size 2 value 33807 virtual_protect 1 //CBike
+    0A8C: write_memory 0x6BE950 size 2 value 166 virtual_protect 1 //CBike
+    
+    /////////////////////////////////////////////////////////////
+    
+    repeat
+    wait 0
+    
+//    0AD1: show_formatted_text_highpriority "4" time 2000
+    
+    if or
+    $CHEATS_ON == 1
+    ZAME_TARGETSKIP_MODE > 0
+    then
+    break
+    end
+    
+    if or
+    actor.Dead(PLAYER_ACTOR)
+    car.Wrecked(ZAME_ADVENTURE_CAR_UKAZATEL)
+    GAME_OVER_FLAG == 1
+    then
+    
+    if
+    car.Wrecked(ZAME_ADVENTURE_CAR_UKAZATEL)
+    then
+    ZAME_FAILED_BY_REASON = 2
+    end
+    
+    jump to @KOD_PROVALA_ZAME
+    end
+        
+    if
+    0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+    then
+    
+    gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+    if
+    ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+    then
+    jump to @KOD_PROVALA_ZAME
+    end
+    
+    end
+    
+    until 01C1:   car ZAME_ADVENTURE_CAR_UKAZATEL stopped
+        
+//    06D6: disable_racing_checkpoint MISSION_CHECKPOINT
+//    marker.Disable(MISSION_MARKER)
+    fade 0 250
+    $HUD_REMOVE = 1
+    wait 250
+    actor.DestroyInstantly(20@)
+    marker.Disable(21@)
+//    car.Destroy(ZAME_CAR_ADVENTURE_CAR)    
+    wait 250
+    fade 1 250
+    $HUD_REMOVE = 0
+    wait 250
+    
+    player.CanMove(PLAYER_CHAR,true)
+    0221: set_player PLAYER_CHAR apply_brakes_to_car 0
+    0A8C: write_memory 0x6BE94E size 2 value 42985 virtual_protect 1 //CBike
+    0A8C: write_memory 0x6BE950 size 2 value 0 virtual_protect 1 //CBike
+    
+    068B: set_car ZAME_ADVENTURE_CAR_UKAZATEL all_disembark
+    02D4: car ZAME_ADVENTURE_CAR_UKAZATEL turn_off_engine
+    
+    /////////////////////////////////////////////////////////////
+    
+    repeat
+    wait 0
+    
+//    0AD1: show_formatted_text_highpriority "5" time 2000
+    
+    if or
+    $CHEATS_ON == 1
+    ZAME_TARGETSKIP_MODE > 0
+    then
+    0362: remove_actor PLAYER_ACTOR from_car_and_place_at 2@ 3@ 4@
+    SAVE_PRE_TP_TEAMMATES_FLAG = 1
+    end
+    
+    if or
+    actor.Dead(PLAYER_ACTOR)
+    car.Wrecked(ZAME_ADVENTURE_CAR_UKAZATEL)
+    GAME_OVER_FLAG == 1
+    then
+    
+    if
+    car.Wrecked(ZAME_ADVENTURE_CAR_UKAZATEL)
+    then
+    ZAME_FAILED_BY_REASON = 2
+    end
+    
+    jump to @KOD_PROVALA_ZAME
+    end
+        
+    if
+    0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+    then
+    
+    gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+    if
+    ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+    then
+    jump to @KOD_PROVALA_ZAME
+    end
+    
+    end
+    
+    until not actor.InCar(PLAYER_ACTOR,ZAME_ADVENTURE_CAR_UKAZATEL)
+    
+    car.SetImmunities(ZAME_ADVENTURE_CAR_UKAZATEL,1,1,1,1,1)
+        
+    0085: ZAME_CAR_ADVENTURE_CAR = ZAME_ADVENTURE_CAR_UKAZATEL // (int)
+    
+    jump to @DRIVE_END_BUT_NOT_EXIT
+    
+    end
+
+until false
+
+:ZAME_DELETE_CARRECS
+
+if
+0AAB:   file_exists "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec074.rrr"
+then
+
+repeat
+wait 0
+until 0B00: delete_file "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec074.rrr"  // IF and SET  
+
+end
+
+if
+0AAB:   file_exists "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec075.rrr"
+then
+
+repeat
+wait 0
+until 0B00: delete_file "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec075.rrr"  // IF and SET  
+
+end
+
+if
+0AAB:   file_exists "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec076.rrr"
+then
+
+repeat
+wait 0
+until 0B00: delete_file "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec076.rrr"  // IF and SET  
+
+end
+
+if
+0AAB:   file_exists "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec077.rrr"
+then
+
+repeat
+wait 0
+until 0B00: delete_file "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec077.rrr"  // IF and SET  
+
+end
+
+if
+0AAB:   file_exists "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec078.rrr"
+then
+
+repeat
+wait 0
+until 0B00: delete_file "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec078.rrr"  // IF and SET  
+
+end
+
+if
+0AAB:   file_exists "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec079.rrr"
+then
+
+repeat
+wait 0
+until 0B00: delete_file "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec079.rrr"  // IF and SET  
+
+end
+
+if
+0AAB:   file_exists "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec080.rrr"
+then
+
+repeat
+wait 0
+until 0B00: delete_file "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec080.rrr"  // IF and SET  
+
+end
+
+if
+0AAB:   file_exists "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec081.rrr"
+then
+
+repeat
+wait 0
+until 0B00: delete_file "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec081.rrr"  // IF and SET  
+
+end
+
+if
+0AAB:   file_exists "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec082.rrr"
+then
+
+repeat
+wait 0
+until 0B00: delete_file "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec082.rrr"  // IF and SET  
+
+end
+
+if
+0AAB:   file_exists "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec083.rrr"
+then
+
+repeat
+wait 0
+until 0B00: delete_file "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec083.rrr"  // IF and SET  
+
+end
+
+return
+
+:ZAME_CHECK_CARREC
+
+if
+2@ == 74
+then 
+  
+repeat
+wait 0
+until 0AAB:   file_exists "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec074.rrr"  
+
+end
+
+if
+2@ == 75
+then 
+  
+repeat
+wait 0
+until 0AAB:   file_exists "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec075.rrr"  
+
+end  
+
+if
+2@ == 76
+then 
+  
+repeat
+wait 0
+until 0AAB:   file_exists "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec076.rrr"  
+
+end
+
+if
+2@ == 77
+then 
+  
+repeat
+wait 0
+until 0AAB:   file_exists "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec077.rrr"  
+
+end
+
+if
+2@ == 78
+then 
+  
+repeat
+wait 0
+until 0AAB:   file_exists "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec078.rrr"  
+
+end
+
+if
+2@ == 79
+then 
+  
+repeat
+wait 0
+until 0AAB:   file_exists "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec079.rrr"  
+
+end
+
+if
+2@ == 80
+then 
+  
+repeat
+wait 0
+until 0AAB:   file_exists "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec080.rrr"  
+
+end
+
+if
+2@ == 81
+then 
+  
+repeat
+wait 0
+until 0AAB:   file_exists "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec081.rrr"  
+
+end
+
+if
+2@ == 82
+then 
+  
+repeat
+wait 0
+until 0AAB:   file_exists "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec082.rrr"  
+
+end
+
+if
+2@ == 83
+then 
+  
+repeat
+wait 0
+until 0AAB:   file_exists "modloader/MODLOADER GLOBAL FILES\ExtraContent/Zombiegeddon Replay/carrec083.rrr"  
+
+end
+
+return

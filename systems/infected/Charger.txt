@@ -201,7 +201,47 @@ $SAVEPLACE_ON == 0
     end
     
     0@ -= 1
-    random_int CHARGERS_TO_SPAWN_COUNT 0@ 1@
+    if
+    24@ == 0
+    then
+    random_int CHARGERS_TO_SPAWN_COUNT 0@ 1@    
+    
+    //Автоподстройка хуйни
+    0085: 2@ = 0@ // (int) //1 (минимальное)
+    0085: 3@ = 1@ // (int) //4 (максимальное)
+    0062: 3@ -= 2@  // (int) //3 (разница между минимальным и максимальным)
+    008B: 4@ = CHARGERS_TO_SPAWN_COUNT // (int)
+    4@ += 1
+    
+//    0ACE: show_formatted_text_box "DRPPDCNT %d > %d (MIN) ~n~MIN %d, MAX %d, DIFF %d" 4@ 2@ 0@ 1@ 3@    
+    if
+    001D:   4@ > 2@  // (int) //если больше чем минимальное (например 1)
+    then
+    3@ *= 10 //берем разницу между максимальным и минимальным, умножаем на 10% (получится 30%)
+    
+    if
+    3@ > 90 //если больше 90 то фиксируем процент деления на два под 90
+    then
+    3@ = 90
+    end
+    
+    if
+    0E4D: random_percent 3@ //если выпало 30%, то сокращаем выданное число на 2 (если 3 то получим 1 если 4 то получим 2 в две трети случаев)
+        then
+        if
+        3@ < 90 //если процент меньше 90, делим на два, если больше - на три
+            then
+            CHARGERS_TO_SPAWN_COUNT /= 2
+//            0ACE: show_formatted_text_box "SPAWN_COUNT /= 2"
+            else
+            CHARGERS_TO_SPAWN_COUNT /= 3
+//            0ACE: show_formatted_text_box "SPAWN_COUNT /= 3"
+            end
+        end
+    end
+    
+    end
+    
     jump to @ZOMBIE_CHARGER_SPAWN_START
     end
     
@@ -1329,7 +1369,42 @@ $CRG_TARGET_FINDED[24@] == 1
                                 006B: 0@ *= 1@  // (float)  
                                 0092: 0@ = float 0@ to_integer 
                                 
-                                0851: set_actor $CRG_TARGET[24@] decrease_health_by 0@ affect_armour 1 
+                                if or
+                                003A:   $CRG_TARGET[24@] == $SURVIVER[0] // (int)
+                                003A:   $CRG_TARGET[24@] == $SURVIVER[1] // (int)
+                                003A:   $CRG_TARGET[24@] == $SURVIVER[2] // (int)
+                                003A:   $CRG_TARGET[24@] == $SURVIVER[3] // (int)
+                                003A:   $CRG_TARGET[24@] == $SURVIVER[4] // (int)
+                                then
+                                
+                                for 2@ = 0 to 4
+                                if
+                                003A:   $CRG_TARGET[24@] == $SURVIVER[2@] // (int)
+                                    then
+                                    1@ = actor.Health($SURVIVER[2@])
+                                    0062: 1@ -= 0@  // (int)
+                                    
+                                    if and
+                                    $SURVIVOR_HEAL_COUNT[2@] < 1
+                                    $SURVIVOR_BINT_COUNT[2@] < 1
+                                    then
+                                    1@ = 1000
+                                    end
+                                    
+                                    if
+                                    1@ < 1
+                                        then
+                                        actor.Health($SURVIVER[2@]) = 100
+//                                        0AD1: show_formatted_text_highpriority "penis heal" time 2000
+                                        else
+                                        0851: set_actor $CRG_TARGET[24@] decrease_health_by 0@ affect_armour 1
+                                        end
+                                    end
+                                end
+                                
+                                else
+                                0851: set_actor $CRG_TARGET[24@] decrease_health_by 0@ affect_armour 1
+                                end 
                                 
                                 05C1: AS_actor $CRG_TARGET[24@] speak_from_audio_table 346
                                 
@@ -1477,7 +1552,42 @@ if and
                                 006B: 0@ *= 1@  // (float)  
                                 0092: 0@ = float 0@ to_integer 
                                 
-                                0851: set_actor CHARGER_CLOSEST_PED_VAR decrease_health_by 0@ affect_armour 1 
+                                if or
+                                07D6:   CHARGER_CLOSEST_PED_VAR == $SURVIVER[0] // (int)
+                                07D6:   CHARGER_CLOSEST_PED_VAR == $SURVIVER[1] // (int)
+                                07D6:   CHARGER_CLOSEST_PED_VAR == $SURVIVER[2] // (int)
+                                07D6:   CHARGER_CLOSEST_PED_VAR == $SURVIVER[3] // (int)
+                                07D6:   CHARGER_CLOSEST_PED_VAR == $SURVIVER[4] // (int)
+                                then
+                                
+                                for 2@ = 0 to 4
+                                if
+                                07D6:   CHARGER_CLOSEST_PED_VAR == $SURVIVER[2@] // (int)
+                                    then
+                                    1@ = actor.Health($SURVIVER[2@])
+                                    0062: 1@ -= 0@  // (int)
+                                    
+                                    if and
+                                    $SURVIVOR_HEAL_COUNT[2@] < 1
+                                    $SURVIVOR_BINT_COUNT[2@] < 1
+                                    then
+                                    1@ = 1000
+                                    end
+                                    
+                                    if
+                                    1@ < 1
+                                        then
+                                        actor.Health($SURVIVER[2@]) = 100
+//                                        0AD1: show_formatted_text_highpriority "penis heal" time 2000
+                                        else
+                                        0851: set_actor CHARGER_CLOSEST_PED_VAR decrease_health_by 0@ affect_armour 1
+                                        end
+                                    end
+                                end
+                                
+                                else
+                                0851: set_actor CHARGER_CLOSEST_PED_VAR decrease_health_by 0@ affect_armour 1
+                                end 
                                 
                                 05C1: AS_actor CHARGER_CLOSEST_PED_VAR speak_from_audio_table 346
                                 
@@ -2326,6 +2436,17 @@ $MISSION14_ACTIVE == 1
     not actor.Model(3@) == 250
     jf @CHARGER1_ATTACK_PEOPLE_BEGIN
     end
+    
+if and
+ZAME_PROTECT_TEAMMATE_NUM > -1
+$GAMEMODE_EDITOR == 1
+then
+if
+07D6:   3@ == $SURVIVER[ZAME_PROTECT_TEAMMATE_NUM] // @ == $ (int)
+    then
+    jump to @CHARGER1_ATTACK_PEOPLE_BEGIN
+    end
+end    
     
 if
 $QUEST_TYPE == 9

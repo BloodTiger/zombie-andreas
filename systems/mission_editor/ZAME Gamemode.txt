@@ -11,18 +11,6 @@ thread 'ZAME_GM'
 057E: set_radar_grey 0
 
 if
-UNITED_MAP == 0
-then
-0776: create_objects_in_object_group "gatesC"
-0776: create_objects_in_object_group "metro"
-0776: create_objects_in_object_group "ardna"
-0776: create_objects_in_object_group "quest4_2"
-0776: create_objects_in_object_group "bunker"
-0776: create_objects_in_object_group "oosgate2"
-0776: create_objects_in_object_group "quest4W2"
-end
-
-if
 UNITED_MAP == 1
 then
 0459: end_thread_named 'BOUNDAR'
@@ -154,6 +142,18 @@ wait 100
 $DONT_CHANGE_MONTH_FLAG = 0
 
 0835: get_month_day_to 10@ get_month_to 11@
+
+if
+UNITED_MAP == 0
+then
+0776: create_objects_in_object_group "gatesC"
+0776: create_objects_in_object_group "metro"
+0776: create_objects_in_object_group "ardna"
+0776: create_objects_in_object_group "quest4_2"
+0776: create_objects_in_object_group "bunker"
+0776: create_objects_in_object_group "oosgate2"
+0776: create_objects_in_object_group "quest4W2"
+end
 
 if
 10@ == 18
@@ -685,6 +685,7 @@ wait 750
 end                                      
 
 0089: 2@ = $FATIGUE_LEVEL // (float)
+008B: 20@ = $ALLOW_FATIGUE // (int)
 $ALLOW_FATIGUE = 0
 
 $FATIGUE_LEVEL -= 25.0
@@ -874,7 +875,8 @@ $SPEED_099_FLAG = 0
 
 audiostream.Release(2@)
 
-$ALLOW_FATIGUE = 1
+008A: $ALLOW_FATIGUE = 20@ // (int)
+//$ALLOW_FATIGUE = 1
 
 /////////////////////Плавное затухание/////////////////////
 
@@ -906,21 +908,45 @@ end_thread
 :ZAM_TXD
 thread 'ZAM_TXD'
 
-32@ = 0
+0E68: set_player_control_pad 0 1 
+0E69: set_player_control_pad_movement 0 0
+
+$HUD_REMOVE = 1
+$HUD_OFF_INST = 1
+cinema.Radar(0)
+
+////////////////////////////////////////////////
+
+//32@ = 0
+3@ = 0
 2@ = 0
 
 repeat 
 wait 0
 
+3@ += 33
+
 if
 not 2@ == 255
 then
-2@ += 5
+2@ += 15
+else
+015D: set_gamespeed 0.0
+$SPEED_00_FLAG = 1
+if or
+0E8D: is_any_fire_button_pressed 0
+0E8D: is_any_fire_button_pressed 1
+    then
+    0085: 3@ = 1@ // (int)
+    end
 end
 
 //fade 0 0
-0E1E: draw_texture_plus 0@ event 2 pos 0.0 0.0 size 640.0 440.0 angle 0.0 depth 0.0 fix_aspect_ratio 1 maskTrisCount 0 maskTrisArray 0 rgba 255 255 255 2@
-until 001D:   32@ > 1@  // (int)
+0E1E: draw_texture_plus 0@ event 2 pos 320.0 225.0 size 640.0 450.0 angle 0.0 depth 0.0 fix_aspect_ratio 0 maskTrisCount 0 maskTrisArray 0 rgba 255 255 255 2@
+until 001D:   3@ > 1@  // (int)
+
+$SPEED_00_FLAG = 0   
+015D: set_gamespeed 1.0
 
 repeat 
 wait 0
@@ -928,12 +954,31 @@ wait 0
 if
 not 2@ == 0
 then
-2@ -= 5
+2@ -= 15
 end
 
 //fade 0 0
-0E1E: draw_texture_plus 0@ event 2 pos 0.0 0.0 size 640.0 440.0 angle 0.0 depth 0.0 fix_aspect_ratio 1 maskTrisCount 0 maskTrisArray 0 rgba 255 255 255 2@
-until 2@ == 0 
+0E1E: draw_texture_plus 0@ event event 2 pos 320.0 225.0 size 640.0 450.0 angle 0.0 depth 0.0 fix_aspect_ratio 0 maskTrisCount 0 maskTrisArray 0 rgba 255 255 255 2@
+until 2@ == 0  
+
+////////////////////////////////////////////////
+
+wait 1
+03F0: enable_text_draw 0
+wait 1
+0391: release_textures 
+
+wait 1
+
+0A0E: disable_text_with_style 1 
+
+//player.CanMove(PLAYER_CHAR) = true
+0E68: set_player_control_pad 0 1 
+0E69: set_player_control_pad_movement 0 1
+
+$HUD_REMOVE = 0
+$HUD_ON_INST = 1
+cinema.Radar(1)
  
 end_thread
 
@@ -1519,10 +1564,25 @@ until 002E:   $PACKAGE_PICKED_UP_FLAG[1] >= 8@  // (int)
 Object.PutAt(28@, 1@, 2@, 3@)
 0453: set_object 28@ XYZ_rotation 4@ 5@ 6@
 0566: link_object 28@ to_interior 7@
+
+if
+8@ == 1
+then
+object.Indestructibility(28@,0)
+0906: set_object 28@ mass_to 99999.0 // float
+0392: make_object 28@ moveable 0
+end
+
 end_thread   
 
 :ZAMAPIW
 thread 'ZAMAPIW'
+
+if
+ZAME_OLD_PICKUPS_STYLE == 1
+then
+5@ -= 1
+end
 
 repeat
 
@@ -1534,23 +1594,16 @@ else
 wait 0
 end
 
-until 002E:   $PACKAGE_PICKED_UP_FLAG[1] >= 5@  // (int)
+until 001E:   $PACKAGE_PICKED_UP_FLAG[1] > 5@  // (int)
 
 if
-ZAME_KONTROLT4K_LOADING_FLAG_GLOB == 1
+ZAME_KONTROLT4K_LOADING_FLAG_GLOB == 1   
 then
-wait 0
-wait 0
-wait 0
-wait 0
-wait 0
 
-//Фиксись, говно ебаное, блять!!!
+5@ += 1      
 repeat
 wait 0
-0EC7: get_fade_alpha 31@
-0092: 31@ = float 31@ to_integer
-until 31@ < 200
+until 001E:   $PACKAGE_PICKED_UP_FLAG[1] > 5@  // (int)  
 
 if
 ZAME_KONTROLT4K_LOADING_FLAG_GLOB == 1
@@ -1566,7 +1619,8 @@ then
 4@ *= 2
 end
 
-032B: 28@ = create_weapon_pickup 3@ type 6@ ammo 4@ at 0@ 1@ 2@ 
+032B: 28@ = create_weapon_pickup 3@ type 6@ ammo 4@ at 0@ 1@ 2@
+//0AD1: show_formatted_text_highpriority "created pickup %d %d" time 20000 6@ 4@ 
 if
 7@ == 1
 then
@@ -1574,10 +1628,28 @@ then
 marker.SetIconSize(29@,2)
 end 
 
+if
+8@ > 0
+    then
+    
+    repeat
+    wait 0
+    until 001E:   $PACKAGE_PICKED_UP_FLAG[1] > 8@ // (int)
+    
+    pickup.Destroy(28@)
+    
+    end
+
 end_thread
 
 :ZAMAPIH
 thread 'ZAMAPIH'
+
+if
+ZAME_OLD_PICKUPS_STYLE == 1
+then
+5@ -= 1
+end
 
 repeat
 
@@ -1589,23 +1661,16 @@ else
 wait 0
 end
 
-until 002E:   $PACKAGE_PICKED_UP_FLAG[1] >= 5@  // (int)
+until 001E:   $PACKAGE_PICKED_UP_FLAG[1] > 5@  // (int)
 
 if
-ZAME_KONTROLT4K_LOADING_FLAG_GLOB == 1
+ZAME_KONTROLT4K_LOADING_FLAG_GLOB == 1   
 then
-wait 0
-wait 0
-wait 0
-wait 0
-wait 0
 
-//Фиксись, говно ебаное, блять!!!
+5@ += 1      
 repeat
 wait 0
-0EC7: get_fade_alpha 31@
-0092: 31@ = float 31@ to_integer
-until 31@ < 200
+until 001E:   $PACKAGE_PICKED_UP_FLAG[1] > 5@  // (int)  
 
 if
 ZAME_KONTROLT4K_LOADING_FLAG_GLOB == 1
@@ -1621,10 +1686,25 @@ if
 then
 03DC: 29@ = create_marker_above_pickup 2@
 marker.SetIconSize(29@,2)
-end 
+end     
 
 repeat
 wait 250
+
+if
+8@ > 0
+    then
+    
+    repeat
+    wait 0
+    until 002E:   $PACKAGE_PICKED_UP_FLAG[1] >= 8@  // (int)
+    
+    pickup.Destroy(2@)
+    
+    end_thread
+    
+    end
+
 until pickup.Picked_up(2@)
 
 for 2@ = 0 to 4
@@ -1677,6 +1757,12 @@ end_thread
 :ZAMAPIB
 thread 'ZAMAPIB'
 
+if
+ZAME_OLD_PICKUPS_STYLE == 1
+then
+5@ -= 1
+end
+
 repeat
 
 if
@@ -1687,23 +1773,16 @@ else
 wait 0
 end
 
-until 002E:   $PACKAGE_PICKED_UP_FLAG[1] >= 5@  // (int)
+until 001E:   $PACKAGE_PICKED_UP_FLAG[1] > 5@  // (int)
 
 if
-ZAME_KONTROLT4K_LOADING_FLAG_GLOB == 1
+ZAME_KONTROLT4K_LOADING_FLAG_GLOB == 1   
 then
-wait 0
-wait 0
-wait 0
-wait 0
-wait 0
 
-//Фиксись, говно ебаное, блять!!!
+5@ += 1      
 repeat
 wait 0
-0EC7: get_fade_alpha 31@
-0092: 31@ = float 31@ to_integer
-until 31@ < 200
+until 001E:   $PACKAGE_PICKED_UP_FLAG[1] > 5@  // (int)  
 
 if
 ZAME_KONTROLT4K_LOADING_FLAG_GLOB == 1
@@ -1711,7 +1790,7 @@ then
 end_thread
 end
       
-end     
+end
 
 2@ = Pickup.Create(#BODYARMOUR, 6@, 0@, 1@, 2@)
 if
@@ -1723,6 +1802,21 @@ end
 
 repeat
 wait 250
+
+if
+8@ > 0
+    then
+    
+    repeat
+    wait 0
+    until 002E:   $PACKAGE_PICKED_UP_FLAG[1] >= 8@  // (int)
+    
+    pickup.Destroy(2@)
+    
+    end_thread
+    
+    end
+
 until pickup.Picked_up(2@)     
     
 for 2@ = 0 to 4
@@ -1791,6 +1885,12 @@ end_thread
 :ZAMAPIA
 thread 'ZAMAPIA'
 
+if
+ZAME_OLD_PICKUPS_STYLE == 1
+then
+5@ -= 1
+end
+
 repeat
 
 if
@@ -1801,23 +1901,16 @@ else
 wait 0
 end
 
-until 002E:   $PACKAGE_PICKED_UP_FLAG[1] >= 5@  // (int)
+until 001E:   $PACKAGE_PICKED_UP_FLAG[1] > 5@  // (int)
 
 if
-ZAME_KONTROLT4K_LOADING_FLAG_GLOB == 1
+ZAME_KONTROLT4K_LOADING_FLAG_GLOB == 1   
 then
-wait 0
-wait 0
-wait 0
-wait 0
-wait 0
 
-//Фиксись, говно ебаное, блять!!!
+5@ += 1      
 repeat
 wait 0
-0EC7: get_fade_alpha 31@
-0092: 31@ = float 31@ to_integer
-until 31@ < 200
+until 001E:   $PACKAGE_PICKED_UP_FLAG[1] > 5@  // (int)  
 
 if
 ZAME_KONTROLT4K_LOADING_FLAG_GLOB == 1
@@ -1834,6 +1927,18 @@ then
 03DC: 29@ = create_marker_above_pickup 2@
 marker.SetIconSize(29@,2)
 end 
+
+if
+8@ > 0
+    then
+    
+    repeat
+    wait 0
+    until 002E:   $PACKAGE_PICKED_UP_FLAG[1] >= 8@  // (int)
+    
+    pickup.Destroy(2@)
+    
+    end
 
 end_thread
 
@@ -1931,5 +2036,47 @@ text.ShowH(0@v,10,1)
 end
 
 end_thread      
+
+:ZAM_IFP
+thread 'ZAM_IFP'
+
+//0AD1: show_formatted_text_highpriority "huy 2, %d" time 2000 1@
+
+if
+1@ < 1
+    then
+    
+    while 0E4B: is_char_playing_any_script_animation PLAYER_ACTOR include_anims 1
+    wait 0
+    end
+    
+    end
+
+while 801D:   32@ < 1@  // (int) 
+wait 0
+
+if
+8E4B: not is_char_playing_any_script_animation PLAYER_ACTOR include_anims 1
+    then
+    break
+    end
+               
+end
+
+0E68: set_player_control_pad 0 1 
+0E69: set_player_control_pad_movement 0 1
+
+if
+0@ == 1
+then
+0992: set_player PLAYER_CHAR weapons_scrollable 1
+06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0    
+01B9: set_actor PLAYER_ACTOR armed_weapon_to 2@
+else
+0992: set_player PLAYER_CHAR weapons_scrollable 1
+end
+
+end_thread 
                                                     
 {$INCLUDE ZAME Trigger Thing.txt}
+{$INCLUDE ZAME Carrec Record.txt}

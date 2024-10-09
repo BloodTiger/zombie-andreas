@@ -201,7 +201,47 @@ $SAVEPLACE_ON == 0
     end
     
     0@ -= 1
-    random_int HUNTERS_TO_SPAWN_COUNT 0@ 1@ 
+    if
+    24@ == 0
+    then
+    random_int HUNTERS_TO_SPAWN_COUNT 0@ 1@
+    
+    //Автоподстройка хуйни
+    0085: 2@ = 0@ // (int) //1
+    0085: 3@ = 1@ // (int) //4
+    0062: 3@ -= 2@  // (int) //3
+    008B: 4@ = HUNTERS_TO_SPAWN_COUNT // (int)
+    4@ += 1
+    
+//    0ACE: show_formatted_text_box "DRPPDCNT %d > %d (MIN) ~n~MIN %d, MAX %d, DIFF %d" 4@ 2@ 0@ 1@ 3@    
+    if
+    001D:   4@ > 2@  // (int) //если больше чем минимальное (например 1)
+    then
+    3@ *= 10 //берем разницу между максимальным и минимальным (получится 30%)
+    
+    if
+    3@ > 90 //если больше 90 то фиксируем процент деления на два под 90
+    then
+    3@ = 90
+    end
+    
+    if
+    0E4D: random_percent 3@ //если выпало 30%, то сокращаем выданное число на 2 (если 3 то получим 1 если 4 то получим 2 в две трети случаев)
+        then
+        if
+        3@ < 90 //если процент меньше 90, делим на два, если больше - на три
+            then
+            HUNTERS_TO_SPAWN_COUNT /= 2
+//            0ACE: show_formatted_text_box "SPAWN_COUNT /= 2"
+            else
+            HUNTERS_TO_SPAWN_COUNT /= 3
+//            0ACE: show_formatted_text_box "SPAWN_COUNT /= 3"
+            end
+        end
+    end
+    
+    end
+     
     jump to @ZOMBIE_HUNTER_SPAWN_START 
     end
     
@@ -1318,13 +1358,15 @@ if
                 0104:   actor $HUNTER[24@] near_actor HUNTER_TARGET_ACTOR radius 2.0 2.0 2.0 sphere 0
                     then    
                     089F: get_actor HUNTER_TARGET_ACTOR pedtype_to 0@
+                    04DD: 1@ = actor HUNTER_TARGET_ACTOR armour
                     if and
                     0364:   actor $HUNTER[24@] spotted_actor HUNTER_TARGET_ACTOR            
                     87D6: not  0@ == $VOICE_SET_PEDTYPE // @ == $ (int)
                     84AD: not  actor HUNTER_TARGET_ACTOR in_water 
                     84C8: not  actor HUNTER_TARGET_ACTOR driving_flying_vehicle
                     8A32: not  actor HUNTER_TARGET_ACTOR on_turret_of_car
-                    87D6: not  HUNTER_TARGET_ACTOR == $HUNTER[24@] // @ == $ (int)  
+                    87D6: not  HUNTER_TARGET_ACTOR == $HUNTER[24@] // @ == $ (int)
+                    not 1@ == 1  
                         then  
                         if or
                         87D6: not  0@ == $ZOMBIE_SET_PEDTYPE // @ == $ (int)  
@@ -2283,6 +2325,17 @@ $MISSION14_ACTIVE == 1
     jf @HUNTER1_ATTACK_PEOPLE_BEGIN
     end
     
+if and
+ZAME_PROTECT_TEAMMATE_NUM > -1
+$GAMEMODE_EDITOR == 1
+then
+if
+07D6:   3@ == $SURVIVER[ZAME_PROTECT_TEAMMATE_NUM] // @ == $ (int)
+    then
+    jump to @HUNTER1_ATTACK_PEOPLE_BEGIN
+    end
+end    
+    
 if
 $QUEST_TYPE == 9
     then
@@ -2733,7 +2786,7 @@ if
                     056D:   actor HUNTER_TARGET_ACTOR defined
                     jf @HUNTER2_CANCEL
                     
-                    09F1: play_audio_at_actor HUNTER_TARGET_ACTOR event 1130
+                    09F1: play_audio_at_actor HUNTER_TARGET_ACTOR event 1130 
                     0812: AS_actor HUNTER_TARGET_ACTOR perform_animation "FLOOR_hit" IFP "PED" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 999999  // versionB                                
                     wait 1
                     
@@ -2846,6 +2899,61 @@ if
                     07D6:   27@ == $SURVIVER[0] // @ == $ (int)
                     then
                     27@ = -69
+                    end
+                    
+                    if and
+                    ZAME_PROTECT_TEAMMATE_NUM > -1
+                    $GAMEMODE_EDITOR == 1
+                    then
+                    if
+                    07D6:   4@ == $SURVIVER[ZAME_PROTECT_TEAMMATE_NUM] // @ == $ (int)
+                        then
+                        4@ = -69
+                        end
+                    end
+                    
+                    if and
+                    ZAME_PROTECT_TEAMMATE_NUM > -1
+                    $GAMEMODE_EDITOR == 1
+                    then
+                    if
+                    07D6:   5@ == $SURVIVER[ZAME_PROTECT_TEAMMATE_NUM] // @ == $ (int)
+                        then
+                        5@ = -69
+                        end
+                    end
+                    
+                    if and
+                    ZAME_PROTECT_TEAMMATE_NUM > -1
+                    $GAMEMODE_EDITOR == 1
+                    then
+                    if
+                    07D6:   6@ == $SURVIVER[ZAME_PROTECT_TEAMMATE_NUM] // @ == $ (int)
+                        then
+                        6@ = -69
+                        end
+                    end
+                    
+                    if and
+                    ZAME_PROTECT_TEAMMATE_NUM > -1
+                    $GAMEMODE_EDITOR == 1
+                    then
+                    if
+                    07D6:   26@ == $SURVIVER[ZAME_PROTECT_TEAMMATE_NUM] // @ == $ (int)
+                        then
+                        26@ = -69
+                        end
+                    end
+                    
+                    if and
+                    ZAME_PROTECT_TEAMMATE_NUM > -1
+                    $GAMEMODE_EDITOR == 1
+                    then
+                    if
+                    07D6:   27@ == $SURVIVER[ZAME_PROTECT_TEAMMATE_NUM] // @ == $ (int)
+                        then
+                        27@ = -69
+                        end
                     end
                     
                     ///////////////////////////////////////////////////////////////////////////////
@@ -3422,7 +3530,7 @@ if
                     end
                     
                     wait 1
-                   
+                    
                     09F1: play_audio_at_actor PLAYER_ACTOR event 1130  
                     0605: actor $HUNTER[24@] perform_animation "HUNTER_attack" IFP "PED" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time 999999
                     
