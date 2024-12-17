@@ -151,7 +151,7 @@ ZAME_PARALLEL_THING_TYPE == 10
     then
                 
     repeat
-    wait 0
+    wait 0   
     
     if or
     002E:   ZAME_CURRENT_OBJECTIVE_GLOB >= ZAME_PARALLEL_THING_AFTEROBJ_NUM  // (int)
@@ -1901,6 +1901,14 @@ end
 31@ = actor.Create(ZAME_PARALLEL_THING_PARAM5,ZAME_PARALLEL_THING_PARAM1,ZAME_PARALLEL_THING_X, ZAME_PARALLEL_THING_Y, ZAME_PARALLEL_THING_Z)
 actor.Angle(31@) = ZAME_PARALLEL_THING_A
 0E32: set_char_coordinates_simple 31@ coord ZAME_PARALLEL_THING_X ZAME_PARALLEL_THING_Y ZAME_PARALLEL_THING_Z
+0D10: set_actor 31@ alpha 255 // IF and SET
+
+0A96: ZAME_PARALLEL_TEMP_VAR = actor 31@ struct 
+ZAME_PARALLEL_TEMP_VAR += 9 
+0A8D: ZAME_PARALLEL_TEMP_VAR2 = read_memory ZAME_PARALLEL_TEMP_VAR size 1 virtual_protect 0
+08BD: set ZAME_PARALLEL_TEMP_VAR2 bit 5 
+0A8C: write_memory ZAME_PARALLEL_TEMP_VAR size 1 value ZAME_PARALLEL_TEMP_VAR2 virtual_protect 0 
+08C3: clear ZAME_PARALLEL_TEMP_VAR2 bit 5
 
 0AD3: 24@v = format "TRG%d" ZAME_PARALLEL_THING_NUM    
 if
@@ -1935,8 +1943,7 @@ end
 0AD3: 24@v = format "TRG%d" ZAME_PARALLEL_THING_NUM    
 if
 0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "FIRE_RATE"
-then                   
-0093: ZAME_PARALLEL_TEMP_VAR = integer ZAME_PARALLEL_TEMP_VAR to_float                     
+then                                        
 07DD: set_actor 31@ attack_rate ZAME_PARALLEL_TEMP_VAR // previously known as temper_to
 end
 
@@ -1986,6 +1993,7 @@ marker.SetIconSize(ZAME_PARALLEL_TEMP_VAR,2)
 018B: set_marker ZAME_PARALLEL_TEMP_VAR radar_mode 2
 else
 
+create_thread @ANT_PRE 31@
 if
 ZAME_PARALLEL_THING_PARAM4 == 1
 then
@@ -2138,8 +2146,9 @@ if
 0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "MAINTAIN_POSITION"
     then                                        
     0350: set_actor 31@ maintain_position_when_attacked 1   
-    0816: set_actor 31@ dont_chase_victim 1
-    0638: AS_actor 31@ stay_put 1    
+    0816: set_actor 31@ dont_chase_victim 1 
+    085B: AS_actor 31@ set_kinda_stay_in_same_place 1 
+    ZAME_PARALLEL_THING_A2 = 666999  
     end       
       
 if
@@ -2168,7 +2177,7 @@ if
        
 if
 0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "NO_DROP"
-    then                    
+    then                        
     087E: set_actor 31@ weapon_droppable 0                         
     end
        
@@ -2208,6 +2217,13 @@ not ZAME_PARALLEL_THING_TEST_MODE == 1
     then                    
     0850: AS_actor 31@ follow_actor PLAYER_ACTOR                      
     end
+    
+if and
+0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "PUT_IN_PLAYER_GROUP"
+not ZAME_PARALLEL_THING_TEST_MODE == 1
+    then                    
+    0631: put_actor 31@ in_group PLAYER_GROUP                      
+    end    
         
 if
 0AF0: get_int ZAME_PARALLEL_TEMP_VAR from_ini_file "me\temp.dat" section 24@v key "BLEEDING"
@@ -2438,8 +2454,129 @@ audiostream.PerformAction(ZAME_PARALLEL_THING_PARAM5,PLAY)
 end   
     
 32@ = 0
-0688: AS_actor 31@ unknown_toggle_ped_threat_scanner 1 1 1                                                                                                           
+0688: AS_actor 31@ unknown_toggle_ped_threat_scanner 1 1 1     
 
+0AD3: 24@v = format "TRG%d" ZAME_PARALLEL_THING_NUM
+if 
+0AF4: 24@v = read_string_from_ini_file "me\temp.dat" section 24@v key "TARGET_X"
+    then      
+    
+    0AD3: 24@v = format "TRG%d" ZAME_PARALLEL_THING_NUM
+    0AF4: 9@v = read_string_from_ini_file "me\temp.dat" section 24@v key "ANIM_NAME"
+    
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    if
+    0D49: ZAME_PARALLEL_TEMP_VAR = compare_strings 9@v "die_headshooted" // IF and SET
+        then
+        if
+        not ZAME_PARALLEL_THING_TEST_MODE == 1
+            then
+            0321: AS_actor 31@ die_headshotted
+            end
+        end
+    
+    if
+    0D49: ZAME_PARALLEL_TEMP_VAR = compare_strings 9@v "die" // IF and SET
+        then
+        if
+        not ZAME_PARALLEL_THING_TEST_MODE == 1
+            then
+            05BE: AS_actor 31@ die
+            end
+        end    
+    
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    if or
+    0D49: ZAME_PARALLEL_TEMP_VAR = compare_strings 9@v "walk_to_point" // IF and SET
+    0D49: ZAME_PARALLEL_TEMP_VAR = compare_strings 9@v "run_to_point" // IF and SET
+    0D49: ZAME_PARALLEL_TEMP_VAR = compare_strings 9@v "sprint_to_point" // IF and SET
+    0D49: ZAME_PARALLEL_TEMP_VAR = compare_strings 9@v "climb" // IF and SET
+    0D49: ZAME_PARALLEL_TEMP_VAR = compare_strings 9@v "jump" // IF and SET
+        then
+        
+        if
+        0D49: ZAME_PARALLEL_TEMP_VAR = compare_strings 9@v "walk_to_point" // IF and SET
+            then
+            0AF2: get_float 5@ from_ini_file "me\temp.dat" section 24@v key "TARGET_X"
+            0AF2: get_float 6@ from_ini_file "me\temp.dat" section 24@v key "TARGET_Y"
+            0AF2: get_float 7@ from_ini_file "me\temp.dat" section 24@v key "TARGET_Z"
+            if
+            not ZAME_PARALLEL_THING_TEST_MODE == 1
+                then
+                05D3: AS_actor 31@ goto_point 5@ 6@ 7@ mode 4 time 9999999 ms // versionA
+                else
+                gosub @TRIGG_CREATE_ACTION_PED
+                end
+            end
+        if
+        0D49: ZAME_PARALLEL_TEMP_VAR = compare_strings 9@v "run_to_point" // IF and SET
+            then
+            0AF2: get_float 5@ from_ini_file "me\temp.dat" section 24@v key "TARGET_X"
+            0AF2: get_float 6@ from_ini_file "me\temp.dat" section 24@v key "TARGET_Y"
+            0AF2: get_float 7@ from_ini_file "me\temp.dat" section 24@v key "TARGET_Z" 
+            if
+            not ZAME_PARALLEL_THING_TEST_MODE == 1
+                then
+                05D3: AS_actor 31@ goto_point 5@ 6@ 7@ mode 6 time 9999999 ms // versionA 
+                else
+                gosub @TRIGG_CREATE_ACTION_PED
+                end
+            end
+        if
+        0D49: ZAME_PARALLEL_TEMP_VAR = compare_strings 9@v "sprint_to_point" // IF and SET
+            then  
+            0AF2: get_float 5@ from_ini_file "me\temp.dat" section 24@v key "TARGET_X"
+            0AF2: get_float 6@ from_ini_file "me\temp.dat" section 24@v key "TARGET_Y"
+            0AF2: get_float 7@ from_ini_file "me\temp.dat" section 24@v key "TARGET_Z"
+            if
+            not ZAME_PARALLEL_THING_TEST_MODE == 1
+                then
+                05D3: AS_actor 31@ goto_point 5@ 6@ 7@ mode 7 time 9999999 ms // versionA
+                else
+                gosub @TRIGG_CREATE_ACTION_PED
+                end
+            end
+            
+        if
+        0D49: ZAME_PARALLEL_TEMP_VAR = compare_strings 9@v "jump" // IF and SET
+            then
+            0AF2: get_float 5@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_X"
+            0AF2: get_float 6@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_Y"
+            0AF2: get_float 7@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_Z"
+            05BC: AS_actor 31@ jump 1
+            if
+            not ZAME_PARALLEL_THING_TEST_MODE == 1
+                then
+                05D3: AS_actor 31@ goto_point 5@ 6@ 7@ mode 6 time 9999999 ms // versionA
+                else
+                gosub @TRIGG_CREATE_ACTION_PED
+                end
+            end
+            
+        if
+        0D49: ZAME_PARALLEL_TEMP_VAR = compare_strings 9@v "climb" // IF and SET
+            then
+            0AF2: get_float 5@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_X"
+            0AF2: get_float 6@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_Y"
+            0AF2: get_float 7@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_Z"
+            078F: AS_actor 31@ climb 1
+            if
+            not ZAME_PARALLEL_THING_TEST_MODE == 1
+                then                                                                  
+                05D3: AS_actor 31@ goto_point 5@ 6@ 7@ mode 6 time 9999999 ms // versionA
+                else
+                gosub @TRIGG_CREATE_ACTION_PED
+                end
+            end
+        
+        end
+        
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    end  
+    
 repeat
 wait 0 
 
@@ -2448,7 +2585,89 @@ if
 then
 //0AD1: show_formatted_text_highpriority "TRIGGER %s GONE WRONG - PED IS GONE SOMEHOW. PIZDEC!" time 2000 24@v
 end_thread
-end
+else
+
+if
+0E45: frame_mod 5
+then
+
+if
+not actor.Driving(31@)
+    then
+    if or
+    actor.Animation(31@) == "walk_civi"
+    actor.Animation(31@) == "sprint_civi"
+    actor.Animation(31@) == "GunCrouchBwd"
+    actor.Animation(31@) == "GunCrouchFwd"
+    actor.Animation(31@) == "run_1armed"
+    actor.Animation(31@) == "run_armed"
+        then
+        if
+        ZAME_PARALLEL_THING_A2 == 666999
+            then                                    
+            0792: disembark_instantly_actor 31@
+            085B: AS_actor 31@ set_kinda_stay_in_same_place 1  
+//            0AD1: show_formatted_text_highpriority "fuck you trigger ped, stay here blyad!" time 2000
+            end                          
+        end
+    end
+
+089F: get_actor 31@ pedtype_to ZAME_PARALLEL_TEMP_VAR
+if or
+ZAME_PARALLEL_TEMP_VAR == 29
+ZAME_PARALLEL_TEMP_VAR == 25
+ZAME_PARALLEL_TEMP_VAR == 27
+    then
+    
+    for ZAME_PARALLEL_TEMP_VAR = 0 to 5
+    092B: ZAME_PARALLEL_TEMP_VAR2 = group PLAYER_GROUP member ZAME_PARALLEL_TEMP_VAR
+    if
+    056D:  actor ZAME_PARALLEL_TEMP_VAR2 defined
+        then
+        if
+        051A:   actor 31@ damaged_by_actor ZAME_PARALLEL_TEMP_VAR2
+            then
+            054E: clear_actor 31@ damage
+            05E2: AS_actor 31@ kill_actor ZAME_PARALLEL_TEMP_VAR2
+            end
+        end    
+    end   
+    
+    if
+    051A:   actor 31@ damaged_by_actor PLAYER_ACTOR
+        then
+        054E: clear_actor 31@ damage
+        05E2: AS_actor 31@ kill_actor PLAYER_ACTOR
+        end
+        
+    end
+end        
+    
+if
+8EE4: not locate_char_distance_to_char PLAYER_ACTOR char 31@ radius 180.0
+    then
+    
+    actor.LockInCurrentPosition(31@,true)
+//    0AD1: show_formatted_text_highpriority "TRIGGER %s LOCK PED POS" time 2000 24@v
+    while true
+    wait 0
+    if
+    856D: not  actor 31@ defined
+        then
+        end_thread
+        else
+        if
+        0EE4: locate_char_distance_to_char PLAYER_ACTOR char 31@ radius 180.0
+            then
+            break
+            end
+        end
+    end
+    actor.LockInCurrentPosition(31@,false)
+//    0AD1: show_formatted_text_highpriority "TRIGGER %s UNLOCK PED POS" time 2000 24@v
+    
+    end
+end    
 
 if
 not ZAME_PARALLEL_THING_TEST_MODE == 1
@@ -2470,8 +2689,9 @@ ZAME_CAR_ADV_FLAG == 1
 if
 ZAME_PARALLEL_THING_PARAM4 == 2
     then
-    if
+    if and
     actor.Dead(31@)
+    056D:  actor 31@ defined
         then
         GAME_OVER_FLAG = 1
         ZAME_FAILED_BY_REASON = 5
@@ -2482,8 +2702,9 @@ ZAME_PARALLEL_THING_PARAM4 == 2
 if
 ZAME_PARALLEL_THING_PARAM4 == 3
     then
-    if
+    if and
     actor.Dead(31@)
+    056D:  actor 31@ defined
         then
         
         0A96: ZAME_PARALLEL_TEMP_VAR = actor 31@ struct
@@ -2510,6 +2731,7 @@ ZAME_PARALLEL_THING_PARAM4 == 4
     09ED:   actor 31@ is_within_field_of_view_actor PLAYER_ACTOR
 //    07D6:   ZAME_PARALLEL_TEMP_VAR == PLAYER_ACTOR // @ == $ (int)
     not actor.Dead(31@)
+    056D:  actor 31@ defined
         then
         GAME_OVER_FLAG = 1
         ZAME_FAILED_BY_REASON = 4
@@ -2550,7 +2772,7 @@ if
 if or
 //0A1B:   actor 31@ colliding_with_actor PLAYER_ACTOR
 00DF:   actor PLAYER_ACTOR driving
-0EE4: locate_char_distance_to_char 31@ char PLAYER_ACTOR radius 1.0
+0EE4: locate_char_distance_to_char 31@ char PLAYER_ACTOR radius 1.25
     then
     0619: enable_actor 31@ collision_detection 0
     {$INCLUDE ZAME Trigger Thing Delete Check.txt}
@@ -2563,7 +2785,8 @@ end
 if and
 002E:   ZAME_CURRENT_OBJECTIVE_GLOB >= ZAME_PARALLEL_THING_UNTILOBJ_NUM  // (int)
 not ZAME_PARALLEL_THING_TEST_MODE == 1
-then    
+then         
+//0AD1: show_formatted_text_highpriority "ZAME_CURRENT_OBJECTIVE_GLOB %d >= ZAME_PARALLEL_THING_UNTILOBJ_NUM %d" time 2000 ZAME_CURRENT_OBJECTIVE_GLOB ZAME_PARALLEL_THING_UNTILOBJ_NUM
 break
 end
 
@@ -2831,3 +3054,68 @@ if or
 until false
         
 return    
+
+:TRIGG_CREATE_ACTION_PED
+
+while not model.Available(ZAME_PARALLEL_THING_PARAM1)
+wait 0
+model.Load(ZAME_PARALLEL_THING_PARAM1)
+mload
+end
+
+//0AD1: show_formatted_text_highpriority "X %f, Y %f, Z %f, MODEL %d, PEDTYPE %d" time 2000 ZAME_PARALLEL_THING_X ZAME_PARALLEL_THING_Y ZAME_PARALLEL_THING_Z ZAME_PARALLEL_THING_PARAM1 ZAME_PARALLEL_THING_PARAM5
+//wait 2000
+
+ZAME_PARALLEL_TEMP_VAR2 = actor.Create(ZAME_PARALLEL_THING_PARAM5,ZAME_PARALLEL_THING_PARAM1,5@, 6@, 7@)
+actor.Angle(ZAME_PARALLEL_TEMP_VAR2) = ZAME_PARALLEL_THING_A
+0E32: set_char_coordinates_simple ZAME_PARALLEL_TEMP_VAR2 coord 5@ 6@ 7@
+
+077A: set_actor ZAME_PARALLEL_TEMP_VAR2 acquaintance 0 to_actors_pedtype 0 // see ped.dat
+actor.SetImmunities(ZAME_PARALLEL_TEMP_VAR2,1,1,1,1,1)
+0ED9: set_char_ignore_damage_anims ZAME_PARALLEL_TEMP_VAR2 1
+ZAME_PARALLEL_TEMP_VAR = 0
+ZAME_PARALLEL_TEMP_VAR = marker.CreateAboveActor(ZAME_PARALLEL_TEMP_VAR2)
+marker.SetIconSize(ZAME_PARALLEL_TEMP_VAR,2)
+07E0: set_marker ZAME_PARALLEL_TEMP_VAR type_to 1
+018B: set_marker ZAME_PARALLEL_TEMP_VAR radar_mode 2
+
+if
+0D49: ZAME_PARALLEL_TEMP_VAR = compare_strings 9@v "walk_to_point" // IF and SET
+then
+0605: actor ZAME_PARALLEL_TEMP_VAR2 perform_animation "WALK_civi" IFP "PED" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time -1
+end
+
+if
+0D49: ZAME_PARALLEL_TEMP_VAR = compare_strings 9@v "run_to_point" // IF and SET
+then
+0605: actor ZAME_PARALLEL_TEMP_VAR2 perform_animation "RUN_civi" IFP "PED" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time -1
+end
+
+if
+0D49: ZAME_PARALLEL_TEMP_VAR = compare_strings 9@v "sprint_to_point" // IF and SET
+then
+0605: actor ZAME_PARALLEL_TEMP_VAR2 perform_animation "SPRINT_civi" IFP "PED" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time -1
+end
+
+if
+0D49: ZAME_PARALLEL_TEMP_VAR = compare_strings 9@v "jump" // IF and SET
+then
+0605: actor ZAME_PARALLEL_TEMP_VAR2 perform_animation "JUMP_glide" IFP "PED" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time -1
+end
+
+if
+0D49: ZAME_PARALLEL_TEMP_VAR = compare_strings 9@v "climb" // IF and SET
+then
+0605: actor ZAME_PARALLEL_TEMP_VAR2 perform_animation "CLIMB_Pull" IFP "PED" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time -1
+end
+
+if
+0D49: ZAME_PARALLEL_TEMP_VAR = compare_strings 9@v "sit_car_driver" // IF and SET
+then
+0605: actor ZAME_PARALLEL_TEMP_VAR2 perform_animation "CAR_sit" IFP "PED" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time -1    
+end
+
+wait 0
+0619: enable_actor ZAME_PARALLEL_TEMP_VAR2 collision_detection 0
+
+return

@@ -788,7 +788,16 @@ set_weather ZAME_MISSION_STARTING_WEATHER
 jump @zame_menu_21743 
 
 :zame_menu_21999
-ZAME_MISSION_STARTING_WEATHER = 22 
+
+if and
+$UNITED_III_SPAWN == 0
+UNITED_MAP == 1
+then
+ZAME_MISSION_STARTING_WEATHER = 9
+else
+ZAME_MISSION_STARTING_WEATHER = 22
+end
+ 
 set_weather ZAME_MISSION_STARTING_WEATHER 
 jump @zame_menu_21743 
 
@@ -805,6 +814,8 @@ jump @MISSION_SETTINGS
 
 :ZAME_MENU_PLAYER_SETTINGS_18973
 
+0944: manipulate_weapon_camera PLAYER_ACTOR
+
 const
 ZAME_SKINS_COUNT_MIN = 4@
 ZAME_SKINS_COUNT_MAX = 5@
@@ -816,7 +827,7 @@ then
 
 0512: show_permanent_text_box 'SE223'
 08D4: $PANEL = create_panel_with_title 'SE501' position 72.0 160.0 width 150.0 columns 1 interactive 1 background 1 alignment 1 
-08DB: set_panel $PANEL column 0 header 'SE502' data 'SE498' 'SE499' 'SE500' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 
+08DB: set_panel $PANEL column 0 header 'SE502' data 'SE498' 'SE499' 'SE500' 'SE662' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 'dummy' 
 wait 100
 
 repeat
@@ -853,7 +864,25 @@ until 00E1:   player 0 pressed_key 16
 
 08D7: 24@ = panel $PANEL active_row 
 08DA: remove_panel $PANEL
-Text.RemoveTextBox      
+Text.RemoveTextBox    
+
+if
+24@ == 3
+then
+gosub @ZAME_SELECT_SKIN_BY_ID
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+text.ClearAll()
+09C7: change_player PLAYER_CHAR model_to 0@
+wait 1000
+
+jump to @ZAME_MENU_PLAYER_SETTINGS_20003
+end  
 
 else     
 24@ = 0      
@@ -1221,6 +1250,7 @@ if or
 ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 4
 ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 6
 ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 7
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 8
 then
 0089: 1@ = ZAME_LATEST_WEP_SELECTED // (float)
 gosub @zame_weap_id_get2
@@ -1238,6 +1268,7 @@ if or
 ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 4
 ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 6
 ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 7
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 8
 then                                        
 0089: ZAME_LATEST_WEP_SELECTED = 1@ // (float)
 else
@@ -1269,7 +1300,14 @@ if or
 ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 4
 ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 6
 ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 7
-then                   
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 8 
+then 
+
+if
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 8
+then
+jump @TARGETS_SETTINGS2
+end                  
 
 if
 ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 6
@@ -1531,6 +1569,13 @@ Actor.GiveWeaponAndAmmo(PLAYER_ACTOR, 270@, 11@)
 jump @ZAME_MENU_PLAYER_SETTINGS_20037 
 
 :ZAME_MENU_PLAYER_SETTINGS_20705
+
+if
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 8
+then     
+gosub @ZAME_MENU_PLAYER_SETTINGS_29619
+return
+end
 
 if
 ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM > 0
@@ -1838,7 +1883,7 @@ if
 ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 7
     then 
     jump to @ZAME_TRIGGER_DUMMYPED_RETURNED
-    end            
+    end                    
      
 Player.CanMove(PLAYER_CHAR) = False
 0581: enable_radar 0
@@ -2010,8 +2055,9 @@ jump @MISSION_SETTINGS
 end
 
 :ZAME_MENU_PLAYER_SETTINGS_29619
-if
+if and
 ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 5
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 8
 then
 0512: show_permanent_text_box 'se113b'
 else
@@ -2029,6 +2075,7 @@ wait 0
 if and
 00E1:   player 0 pressed_key 15  
 not ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 5
+not ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM == 8
 then
 Player.CanMove(PLAYER_CHAR) = False
 048F: actor PLAYER_ACTOR remove_weapons
@@ -2499,3 +2546,65 @@ jump @MISSION_SETTINGS
 else
 jump @ZAME_DIFFICULTY_SELECT_IDLE
 end  
+
+:ZAME_SELECT_SKIN_BY_ID
+
+06D1: v$SNAME3 = "" // v$ // Sunday
+06D1: v$SNAME2 = "" // v$ // Sunday
+
+29@ = 0
+33@ = 0
+KEYS_TYPED_NUM = 0
+
+ZAME_NAME_AUD_TYPING_FLAG = 2
+    
+0AE0: remove_dynamic_GXT_entry "F_NAME"
+0ADF: add_dynamic_GXT_entry "F_NAME" text ""
+
+0512: show_permanent_text_box 'SE663'
+
+while true
+wait 0
+
+if
+8A2A: not  text_box 'SE663' displayed
+    then
+    0512: show_permanent_text_box 'SE663'
+    end
+
+CURRENT_LAYOUT = 1
+gosub @OBJECT_ID_SELECT_KEYS_CHECK
+
+if
+8846: not  string v$SNAME3 empty // v$
+then
+0384: show_text_1string GXT "SE664" string "F_NAME" time 99999999 1
+else
+0384: show_text_1string GXT "SE664" string v$NAME3 time 99999999 1
+end
+
+if and
+0E3E: is_button_just_pressed 0 button 16
+33@ > 500
+8846: not  string v$SNAME3 empty // v$
+    then
+    0AF5: write_string v$SNAME3 to_ini_file "me\temp.dat" section v$RACE_FILE key "ID_ID_ID"
+    0AF0: 0@ = get_int_from_ini_file "me\temp.dat" section v$RACE_FILE key "ID_ID_ID"
+    if
+    07DE:   model 0@ exists  // versionB
+        then
+        
+        33@ = 0
+        text.RemoveTextBox()
+        text.ClearAll()
+        wait 5
+        ZAME_NAME_AUD_TYPING_FLAG = 0        
+        
+        return
+        else
+        text.ShowH('SE234',1000,1)
+        wait 1000
+        end
+    end
+
+end

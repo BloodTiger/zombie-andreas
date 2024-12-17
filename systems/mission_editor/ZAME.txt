@@ -227,6 +227,13 @@ ZAME_LATEST_WEP_SELECTED = 697@
 ZAME_PLAYER_START_WEAPON_ID2 = 698@
 ZAME_OBJ_DUBLICATE_NOANGLE = 699@
 ZAME_LATEST_ANIM_SELECTED = 700@
+ZAME_ANIM_PED_HANDLE = 701@
+ZAME_TARGET_PED_HANDLE = 702@
+ZAME_CURRENT_OBJ_TYPE_READED = 703@
+ZAME_CURRENT_OBJ_TYPE_PREV = 704@
+ZAME_TARGET_CAR_HANDLE = 705@
+ZAME_FADE_FROM_OBJ_NUM = 706@
+ZAME_SETTING_UP_TRIIGER = 707@
 end                       
 
 const
@@ -343,8 +350,12 @@ ZAME_CATEGORY4_LATEST_OBJ = 1
 ZAME_CATEGORY5_LATEST_OBJ = 1
 ZAME_CATEGORY6_LATEST_OBJ = 1
 ZAME_CATEGORY7_LATEST_OBJ = 1
+if
+not ZAME_SURV_LAUNCH_FLAG == 1
+then
 $NOTSPAWN_CARS = 1
 0629: change_integer_stat 253 to 69
+end
 
 if
 8AE4: not  directory_exists "me"
@@ -356,14 +367,24 @@ end
 
 0AF0: ZAME_MISSION_LAUNCH_FLAG = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "EDITOR_LAUNCH_MISSION"
 
+if
+not ZAME_SURV_LAUNCH_FLAG == 1
+then
 07FB: set_interior 'CANALS' access 1
 07FB: set_interior 'SKLAD' access 1
+else
+0459: end_thread_named 'ARMY_SP'
+0459: end_thread_named 'BNDT_SP'
+0459: end_thread_named 'FRMR_SP'
+0459: end_thread_named 'SWAT_SP'
+end
 
 //Выключаем то, что боты пытаются объезжать педов
 0E6A: make_nop 0x04328A2 size 5
 
-if
+if and
 UNITED_MAP == 0
+not ZAME_SURV_LAUNCH_FLAG == 1
 then
 0777: delete_objects_in_object_group "police1"
 0777: delete_objects_in_object_group "police2"
@@ -373,6 +394,9 @@ then
 0777: delete_objects_in_object_group "policedep2"
 0777: delete_objects_in_object_group "policedep3"
 0777: delete_objects_in_object_group "meds"
+0776: create_objects_in_object_group "depot_int"
+0776: create_objects_in_object_group "comdist_int"
+0776: create_objects_in_object_group "center_int"
 end
 
 ////////////////////////////////////////////////////////////
@@ -563,7 +587,9 @@ text.ShowTextBox('SE148')
 0459: end_thread_named 'GRND_LN'
 else
 0AA7: call_function 0x00403DA0{_getModelPtr} num_params 1 pop 1 iId 18161 pclInfo 7@
-if 7@ > 0
+if and
+7@ > 0
+not ZAME_SURV_LAUNCH_FLAG == 1
     then
     0A8E: 9@ = 7@ + 0x18 // CModel*** - CModelHier - CBaseModelInfo - m_fDrawDistance
     0A8D: 0@ = read_memory 9@ size 4 virtual_protect 0
@@ -579,6 +605,7 @@ jump to @MISSION_NEW
 
 :ZAME_OPEN_CHECK
 wait 0
+
 008A: ZAME_MISSION_LOAD_NUMBER_GLOB = ZAME_MISSION_LOAD_NUMBER // (int)
 actor.SetImmunities(PLAYER_ACTOR,1,1,1,1,1)
 $GODMODE_FLAG = 1
@@ -728,8 +755,9 @@ gosub @MISSION_SAVE_INITIALIZATION
 wait 9999
 end
 
-if
+if and
 32@ > 300000
+ZAME_GLOB_OBJECTIVES_COUNT > 0
 then
 ZAME_AUTOSAVE_FLAG = 1
 32@ = 0
@@ -879,8 +907,12 @@ jump to @ZAME_OPEN_CHECK
 
 :UDACHNO_ZAME
 gosub @DELETE_ZAME_MISSION_CHECKPOINT
+if
+not ZAME_SURV_LAUNCH_FLAG == 1
+then
 0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "EDITOR_START"
 0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "NO_INIT_TEXT_FLAG"
+end
 
 if
 not ZAME_AUTOSTART_FLAG == 1
@@ -908,18 +940,39 @@ end
 //$SOUND_OFF_1 = 1
 //fade 0 250
 //wait 250
-0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME  
+
+if
+not ZAME_SURV_LAUNCH_FLAG == 1
+then
+0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
+end
+  
 wait 9999999999       
 gosub @PROPUSK_KODA_ZAME
 return 
 
 :KOD_PROVALA_ZAME
+
+if
+not ZAME_SURV_LAUNCH_FLAG == 1
+then
 0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "EDITOR_START"
 0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "NO_INIT_TEXT_FLAG"
+end
+
 if
 not ZAME_AUTOSTART_FLAG == 1
 then
 0AF1: write_int ZAME_MISSION_LOAD_NUMBER to_ini_file "saves/ZACM.set" section "SCR" key "EDITOR_LOAD_MIS_NUM"
+else
+
+if
+not ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG == 2
+then
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ZAME_GET_BACK2"
+0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "EDITOR_LOAD_MIS_NUM"
+end
+
 end
 0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "COMMUN_MISS_FLAG"
 if
@@ -928,8 +981,9 @@ then
 0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "EDITOR_START"
 end
 
-if
+if and
 ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+not ZAME_SURV_LAUNCH_FLAG == 1
 then
 0AF1: write_int ZAME_MISSION_LOAD_NUMBER to_ini_file "saves/ZACM.set" section "SCR" key "EDITOR_LOAD_MIS_NUM"        
 //text.ClearAll()          
@@ -1042,6 +1096,9 @@ if
 not ZAME_AUTOSTART_FLAG == 1
 then
 0AF1: write_int ZAME_MISSION_LOAD_NUMBER to_ini_file "saves/ZACM.set" section "SCR" key "EDITOR_LOAD_MIS_NUM"
+else
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ZAME_GET_BACK2"
+0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "EDITOR_LOAD_MIS_NUM"
 end
 0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "COMMUN_MISS_FLAG"
 if
@@ -1050,8 +1107,9 @@ then
 0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "EDITOR_START"
 end
 
-if
+if and
 not actor.Dead(PLAYER_ACTOR)
+not ZAME_SURV_LAUNCH_FLAG == 1
 then         
 //text.ClearAll()
 //$SOUND_OFF_1 = 1
@@ -1128,19 +1186,67 @@ end
 if
 COMMUNITY_MISSION_NUM == 0
 then
-0B00: delete_file "me\cpB1.set"  // IF and SET
+0B00: delete_file "me\cpB0.set"  // IF and SET
 end
 
 if
 COMMUNITY_MISSION_NUM == 1
 then
-0B00: delete_file "me\cpB2.set"  // IF and SET
+0B00: delete_file "me\cpB1.set"  // IF and SET
 end
 
 if
 COMMUNITY_MISSION_NUM == 2
 then
+0B00: delete_file "me\cpB2.set"  // IF and SET
+end
+
+if
+COMMUNITY_MISSION_NUM == 3
+then
 0B00: delete_file "me\cpB3.set"  // IF and SET
+end
+
+if
+COMMUNITY_MISSION_NUM == 4
+then
+0B00: delete_file "me\cpB4.set"  // IF and SET
+end
+
+if
+COMMUNITY_MISSION_NUM == 5
+then
+0B00: delete_file "me\cpB5.set"  // IF and SET
+end
+
+if
+COMMUNITY_MISSION_NUM == 6
+then
+0B00: delete_file "me\cpB6.set"  // IF and SET
+end
+
+if
+COMMUNITY_MISSION_NUM == 7
+then
+0B00: delete_file "me\cpB7.set"  // IF and SET
+end
+
+if
+COMMUNITY_MISSION_NUM == 8
+then
+0B00: delete_file "me\cpB8.set"  // IF and SET
+end
+
+if
+COMMUNITY_MISSION_NUM == 9
+then
+0B00: delete_file "me\cpB9.set"  // IF and SET
+end
+
+if
+COMMUNITY_MISSION_NUM == 10
+then
+0B00: delete_file "me\cpB10.set"  // IF and SET
 end
 
 ///////////////////////////////////////////////////////////  
@@ -1210,6 +1316,46 @@ COMMUNITY_MISSION_NUM == -11
 then
 0B00: delete_file "me\cpB-11.set"  // IF and SET
 end
+
+if
+COMMUNITY_MISSION_NUM == -12
+then
+0B00: delete_file "me\cpB-12.set"  // IF and SET
+end
+
+///////////////////////////////////////////////////////////
+
+if
+COMMUNITY_MISSION_NUM == -100
+then
+0B00: delete_file "me\cpB-100.set"  // IF and SET
+end
+
+if
+COMMUNITY_MISSION_NUM == -101
+then
+0B00: delete_file "me\cpB-101.set"  // IF and SET
+end
+
+if
+COMMUNITY_MISSION_NUM == -102
+then
+0B00: delete_file "me\cpB-102.set"  // IF and SET
+end
+
+if
+COMMUNITY_MISSION_NUM == -103
+then
+0B00: delete_file "me\cpB-103.set"  // IF and SET
+end
+
+if
+COMMUNITY_MISSION_NUM == -104
+then
+0B00: delete_file "me\cpB-104.set"  // IF and SET
+end
+
+///////////////////////////////////////////////////////////
 
 return
 

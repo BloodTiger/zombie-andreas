@@ -118,6 +118,13 @@ then
 0AF1: write_int 1 to_ini_file "data\survival.set" section "SCR" key "MQ13_CHECKPOINT"
 end
 
+if and
+$CHEATS_ON == 1
+0AB0:   key_pressed 50
+then
+0AF1: write_int 2 to_ini_file "data\survival.set" section "SCR" key "MQ13_CHECKPOINT"
+end
+
 0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MQ13_CHECKPOINT"
 
 if
@@ -127,7 +134,7 @@ then
 end
 
 if
-not 0@ == 1
+not 0@ >= 1
 then
 018A: MISSION_CHECKPOINT = create_checkpoint_at 2838.1292 2605.3342 22.4417
 v$OBJECTIVE = "GAME932"
@@ -392,7 +399,29 @@ $HUD_REMOVE = 0
 wait 500
 end
 
+if
+0@ < 1
+then
 0AF1: write_int 1 to_ini_file "data\survival.set" section "SCR" key "MQ13_CHECKPOINT"
+end
+
+if
+0@ == 2
+then
+$DRUNK_MODE_FLAG = 1
+$ZOMBIE_REMOVE_FLAG = 1
+ZOMBIES_NOTSPAWN = 1
+0777: delete_objects_in_object_group "dns5"
+    
+0459: end_thread_named 'SPRINTH'
+wait 0
+0@ = 0x609A4E 
+0A8C: write_memory 0@ size 4 value -1869574000 virtual_protect 1 
+0@ += 4 
+0A8C: write_memory 0@ size 2 value 37008 virtual_protect 1
+actor.SetWalkStyle(PLAYER_ACTOR,"drunk")    
+jump to @MQ_13_CP_SKIP_SHIT1
+end  
 
 v$OBJECTIVE = "GAME934"
 if
@@ -416,6 +445,8 @@ $SOUND_EFFECT1 = Audiostream.Load("AUDIO\SOUNDS\Radio.mp3")
 Audiostream.PerformAction($SOUND_EFFECT1, PLAY)
 Audiostream.Volume($SOUND_EFFECT1) = 0.0
 Audiostream.Loop($SOUND_EFFECT1, 1)
+
+:MQ_13_CP_SKIP_SHIT1
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -502,6 +533,37 @@ actor.DestroyInstantly(0@)
 //0681: attach_object 101@ to_car MQ13_TRAIN_CARRIAGE5_HANDLE with_offset -0.6907 0.205 -1.0662 rotation 0.0 0.0 179.6863 
 //102@ = Object.Init(#K_CARGO1, $TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
 //0681: attach_object 102@ to_car MQ13_TRAIN_CARRIAGE5_HANDLE with_offset 0.0036 2.2326 -1.0644 rotation 0.0 0.0 267.6086 
+
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MQ13_CHECKPOINT"
+if
+MQ_CHECKPOINT_FUCKNO == 1
+then
+0@ = 0
+end
+
+if
+0@ == 2
+then
+036A: put_actor MQ13_HARZON in_car MQ13_TRAIN_HANDLE
+50@ = 1
+51@ = 1
+52@ = 1
+53@ = 1
+54@ = 1
+55@ = 1
+56@ = 1
+0407: store_coords_to 0@ 1@ 2@ from_car MQ13_TRAIN_CARRIAGE4_HANDLE with_offset 0.0 -4.0 0.45
+actor.PutAtNoOffset(PLAYER_ACTOR,0@,1@,2@) 
+camera.Restore_WithJumpCut()
+create_thread @REFR_3D
+06DC: set_train MQ13_TRAIN_HANDLE acc 5.0 
+06DD: set_train MQ13_TRAIN_HANDLE speed 30.0
+wait 2000
+fade 1 500
+$HUD_REMOVE = 0
+wait 500               
+jump to @ZALEZ_BLYAT_NA_POEZD
+end
 
 repeat
 wait 0
@@ -1195,7 +1257,7 @@ if and
     fade 0 250
     wait 250
     0407: store_coords_to 0@ 1@ 2@ from_car MQ13_TRAIN_CARRIAGE4_HANDLE with_offset 0.0 -4.0 0.45
-    actor.PutAtNoOffset(PLAYER_ACTOR,0@,1@,2@)
+    actor.PutAtNoOffset(PLAYER_ACTOR,0@,1@,2@) 
     wait 250
     fade 1 250
     jump to @ZALEZ_BLYAT_NA_POEZD
@@ -1216,6 +1278,13 @@ if and
         $DIALOG_COUNT = 0
         $DIALOG_NOT_SKIP = 1
         create_thread @DG_SYS2
+        
+        0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "MQ13_CHECKPOINT"
+        if
+        0@ < 2
+        then
+        0AF1: write_int 2 to_ini_file "data\survival.set" section "SCR" key "MQ13_CHECKPOINT"
+        end
         
         v$OBJECTIVE = "GAME939"
         if
@@ -1659,9 +1728,17 @@ if and
     
         03C3: set_timer_to $TIME type 1 GXT 'BB_19' // global_variable  // Time
         
+        32@ = 0
+        
         repeat
         wait 0
         
+        if
+        not PLAYER_STANDING_ON_CAR_FLAG == 0 
+        then
+        32@ = 0
+        end
+                  
         if
         not actor.Dead(PLAYER_ACTOR)
         jf @MAIN_QUEST13_FAILED_PLAYER_DIED
@@ -1684,11 +1761,13 @@ if and
         jf @MAIN_QUEST13_FAILED_DISTANCE
         
         if and
-        8205: not  actor PLAYER_ACTOR near_car MQ13_TRAIN_CARRIAGE1_HANDLE radius 10.0 10.0 1.5 flag 0
-        8205: not  actor PLAYER_ACTOR near_car MQ13_TRAIN_CARRIAGE2_HANDLE radius 10.0 10.0 1.5 flag 0
-        8205: not  actor PLAYER_ACTOR near_car MQ13_TRAIN_CARRIAGE3_HANDLE radius 10.0 10.0 1.5 flag 0
-        8205: not  actor PLAYER_ACTOR near_car MQ13_TRAIN_CARRIAGE4_HANDLE radius 10.0 10.0 1.5 flag 0
-        8205: not  actor PLAYER_ACTOR near_car MQ13_TRAIN_CARRIAGE5_HANDLE radius 10.0 10.0 1.5 flag 0
+//        8205: not  actor PLAYER_ACTOR near_car MQ13_TRAIN_CARRIAGE1_HANDLE radius 10.0 10.0 1.5 flag 0
+//        8205: not  actor PLAYER_ACTOR near_car MQ13_TRAIN_CARRIAGE2_HANDLE radius 10.0 10.0 1.5 flag 0
+//        8205: not  actor PLAYER_ACTOR near_car MQ13_TRAIN_CARRIAGE3_HANDLE radius 10.0 10.0 1.5 flag 0
+//        8205: not  actor PLAYER_ACTOR near_car MQ13_TRAIN_CARRIAGE4_HANDLE radius 10.0 10.0 1.5 flag 0
+//        8205: not  actor PLAYER_ACTOR near_car MQ13_TRAIN_CARRIAGE5_HANDLE radius 10.0 10.0 1.5 flag 0
+        PLAYER_STANDING_ON_CAR_FLAG == 0
+        32@ > 500
             then
             
             014F: stop_timer $TIME
@@ -1782,6 +1861,7 @@ $ONMISSION = 0
 $NOTSPAWN_ETC = 0
 $SPECIAL_INFECTED_NOT_SPAWN_FLAG = 0
 $SURVIVORS_DONT_SPAWN_FLAG = 0
+$ZOMBIE_REMOVE_FLAG = 0
 MAIN_QUEST_TEAMMATES_REMOVE_FLAG = 2
 create_thread @MQTMBK
 0AF1: write_int 0 to_ini_file "data\survival.set" section "SCR" key "MQ13_CHECKPOINT"

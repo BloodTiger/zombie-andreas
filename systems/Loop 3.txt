@@ -169,6 +169,7 @@ $ALLOW_BANDIT_CONVOY == 1
                 $MONTHS_PASSED < 3
                 1@ == 0
                 8E1D: not is_on_mission
+                CAMP_LEADER_MARKER_CREATED == 1
                     then
                     :RAID_CAMPS_SKIP
                     
@@ -918,8 +919,10 @@ if or
     PLAYER_CAR_BONUS_FLAG = 1
     end
     
-if
-0@ == #PICADOR 
+if or
+0@ == #PICADOR
+0@ == #RNCHLURE
+0@ == #SANCHEZ 
     then
     PLAYER_CAR_BONUS_FLAG = 1
     end   
@@ -1098,48 +1101,72 @@ end
 /////////////////////////////////////////////////////////////////////////
 
 if and
-0AB0:   key_pressed 113 
 0AB0:   key_pressed 69
 $DEBUG_MENU_ON == 1  
 then
-$HUD_OFF_INST = 1
-fade 0 50
-wait 50
-
-if and
-00E1:   player 0 pressed_key 6
-not actor.Driving(PLAYER_ACTOR)
-then
-:DO_DEV_RESTART
-0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "GAMEMODE_AUTOSELECT_CRASH"
-
-if or
-$EXPE_FLAG == 1
-$FREEMODE == 1
+if or                  
+0AB0:   key_pressed 112
+0AB0:   key_pressed 113
     then
-    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART"
-    actor.StorePos(PLAYER_ACTOR,1@,2@,3@)
-    4@ = actor.Angle(PLAYER_ACTOR)
-    0AF3: write_float 1@ to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_X"
-    0AF3: write_float 2@ to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_Y"
-    0AF3: write_float 3@ to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_Z"
-    0AF3: write_float 4@ to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_A"
-    0AF1: write_int $ACTIVE_INTERIOR to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_INT"
-    0AF1: write_int $SAVESTATUS to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_SAVESTATUS"
-    0AF1: write_int $GODMODE_FLAG to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_GODMODE"
-    0AF1: write_int $FLASH_FLAG to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_FLASH"
-    end    
-else
-if
-00E1:   player 0 pressed_key 4
+    
+    if
+    0AB0:   key_pressed 112
     then
-    jump to @DO_DEV_RESTART
+    5@ = 1
+    else
+    5@ = 0
     end
-end
-
-0A8C: write_memory 0x0440F73 size 1 value 255 virtual_protect 1
-0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
-end_thread
+    
+    $HUD_OFF_INST = 1
+    fade 0 50
+    wait 50
+    
+    if and
+    00E1:   player 0 pressed_key 6
+    not actor.Driving(PLAYER_ACTOR)
+    then
+    :DO_DEV_RESTART
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "GAMEMODE_AUTOSELECT_CRASH"
+    
+    if or
+    $EXPE_FLAG == 1
+    $FREEMODE == 1
+        then
+        0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART"
+        actor.StorePos(PLAYER_ACTOR,1@,2@,3@)
+        4@ = actor.Angle(PLAYER_ACTOR)
+        0AF3: write_float 1@ to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_X"
+        0AF3: write_float 2@ to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_Y"
+        0AF3: write_float 3@ to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_Z"
+        0AF3: write_float 4@ to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_A"
+        0AF1: write_int $ACTIVE_INTERIOR to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_INT"
+        0AF1: write_int $SAVESTATUS to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_SAVESTATUS"
+        0AF1: write_int $GODMODE_FLAG to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_GODMODE"
+        0AF1: write_int $FLASH_FLAG to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_FLASH"
+        end    
+    else
+    if
+    00E1:   player 0 pressed_key 4
+        then
+        jump to @DO_DEV_RESTART
+        end
+    end
+    
+    0A8C: write_memory 0x0440F73 size 1 value 255 virtual_protect 1
+    
+    if
+    5@ == 1
+    then
+    0AF1: write_int 1 to_ini_file "config.ini" section "LAUNCHER" key "RESTART_GAME"
+    0AA2: 0@ = load_library "kernel32.dll" // IF and SET
+    0AA4: 1@ = get_proc_address "ExitProcess" library 0@ // IF and SET
+    0AA5: call 1@ num_params 1 pop 0 0
+    end_thread
+    end
+    
+    0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
+    end_thread
+    end
 end
 
 /////////////////////////////////////////////////////////////////////////

@@ -23,7 +23,8 @@ then
 08D9: set_panel $PANEL row 7 enable 0
 end
  
-wait 100     
+wait 100
+ZAME_RECREATE_OBJECTIVE_FLAG = 0     
 
 :TARGETS_SETTINGS_CLOSE_CHECK
 wait 0 
@@ -91,7 +92,8 @@ then
 08D9: set_panel $PANEL row 10 enable 0
 end
  
-wait 100     
+wait 100
+ZAME_RECREATE_OBJECTIVE_FLAG = 0     
 
 :TARGETS_SETTINGS2_CLOSE_CHECK
 wait 0 
@@ -156,7 +158,8 @@ end
 //08D9: set_panel $PANEL row 10 enable 0
 //end
  
-wait 100     
+wait 100
+ZAME_RECREATE_OBJECTIVE_FLAG = 0     
 
 :TARGETS_SETTINGS3_CLOSE_CHECK
 wait 0 
@@ -4807,9 +4810,10 @@ if and
 if
 8846: not  string v$SNAME3 empty // v$
     then
-    09FD: get_gxt_string v$SNAME3 width_to 0@  // ~k~~PED_SPRINT~ Select
-    if
+    09FD: get_gxt_string v$SNAME3 width_to 0@  // ~k~~PED_SPRINT~ Select    
+    if and
     0@ > 0
+    0@ <= 2670
         then
         
         03F0: enable_text_draw 1 
@@ -4828,7 +4832,29 @@ if
         end
         
         033E: set_draw_text_position 320.0 15.0 GXT v$SNAME3  // Push
-        
+        else
+        if
+        0@ >= 2670
+            then
+                        
+            03F0: enable_text_draw 1 
+            03E0: draw_text_behind_textures 1
+            03E3: set_texture_to_be_drawn_antialiased 1 
+            0342: set_text_draw_centered 1
+            0344: set_text_draw_linewidth 300.0 for_centered_text
+            033F: set_text_draw_letter_size 0.2 1.1 
+            081C: draw_text_outline 1 RGBA 0 0 0 $HUD_ALPHA 
+            0340: set_text_draw_RGBA 255 255 255 $HUD_ALPHA   
+                
+            if
+            UNITED_MAP == 1
+            then    
+            0349: set_text_draw_font UNITED_HUD_FONT_NUMBER
+            end
+            
+            033E: set_draw_text_position 320.0 15.0 GXT 'SE665'  // Push
+            
+            end
         end
     end    
 
@@ -4842,8 +4868,9 @@ if and
     text.ClearAll()
     wait 5
     09FD: get_gxt_string v$SNAME3 width_to 0@  // ~k~~PED_SPRINT~ Select
-    if
+    if and
     0@ > 0
+    0@ <= 2670
         then
         
         if
@@ -7436,7 +7463,35 @@ then
 0512: show_permanent_text_box 'SE654'
 end
 
-0AD1: show_formatted_text_highpriority "%d ~n~~r~%s~w~ ~n~~y~%s~w~" time 200 271@ v$TEAM1_NAME v$SNAME3
+if
+271@ > 90
+then
+
+if
+ZAME_SETTING_UP_TRIIGER == 1
+then
+
+if or
+0D49: 2@ = compare_strings v$SNAME3 "walk_to_point" // IF and SET
+0D49: 2@ = compare_strings v$SNAME3 "run_to_point" // IF and SET
+0D49: 2@ = compare_strings v$SNAME3 "sprint_to_point" // IF and SET
+0D49: 2@ = compare_strings v$SNAME3 "climb" // IF and SET
+0D49: 2@ = compare_strings v$SNAME3 "jump" // IF and SET
+0D49: 2@ = compare_strings v$SNAME3 "die_headshooted" // IF and SET
+0D49: 2@ = compare_strings v$SNAME3 "die" // IF and SET
+    then
+    0AD1: show_formatted_text_highpriority "%d (~p~ACTION~w~) ~n~~r~%s~w~ ~n~~y~%s~w~" time 200 271@ v$TEAM1_NAME v$SNAME3
+    else
+    0AD1: show_formatted_text_highpriority "%d (~r~CANT APPLY ~y~%s~r~ ACTION FROM PED SPAWN!~w~)" time 200 271@ v$SNAME3
+    end
+
+else
+0AD1: show_formatted_text_highpriority "%d (~p~ACTION~w~) ~n~~r~%s~w~ ~n~~y~%s~w~" time 200 271@ v$TEAM1_NAME v$SNAME3
+end
+
+else
+0AD1: show_formatted_text_highpriority "%d (~b~ANIMATION~w~) ~n~~r~%s~w~ ~n~~y~%s~w~" time 200 271@ v$TEAM1_NAME v$SNAME3
+end
 0085: ZAME_LATEST_ANIM_SELECTED = 271@ // (int)
 
 gosub @zame_anim_id_get
@@ -7490,9 +7545,28 @@ if
 if
 0E3E: is_button_just_pressed 0 button 16
     then
-    5@ = 1            
-    text.ClearAll()        
-    return
+    if
+    ZAME_SETTING_UP_TRIIGER == 1
+        then
+        if or
+        0D49: 2@ = compare_strings v$SNAME3 "walk_to_point" // IF and SET
+        0D49: 2@ = compare_strings v$SNAME3 "run_to_point" // IF and SET
+        0D49: 2@ = compare_strings v$SNAME3 "sprint_to_point" // IF and SET
+        0D49: 2@ = compare_strings v$SNAME3 "climb" // IF and SET
+        0D49: 2@ = compare_strings v$SNAME3 "jump" // IF and SET
+        0D49: 2@ = compare_strings v$SNAME3 "die_headshooted" // IF and SET
+        0D49: 2@ = compare_strings v$SNAME3 "die" // IF and SET
+        271@ < 90
+            then
+            5@ = 1            
+            text.ClearAll()        
+            return
+            end
+        else
+        5@ = 1            
+        text.ClearAll()        
+        return
+        end
     end
 
 end
@@ -7523,6 +7597,115 @@ end
 return
 
 :IFP_NAME_SELECT
+
+if
+ZAME_RECREATE_OBJECTIVE_FLAG == 0
+then
+0AD3: v$RACE_FILE = format "OBJ%d" ZAME_CURRENT_OBJECTIVE_INDEX
+else
+0AD3: v$RACE_FILE = format "OBJ%d" ZAME_RECREATE_INDEX
+end
+        
+if or
+ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG == 1
+ZAME_RECREATE_OBJECTIVE_FLAG == 2
+then
+0AD3: v$RACE_FILE = format "%s" v$RACB_FILE
+end
+
+text.ClearAll()
+
+//////////////////////////////
+    
+while true
+wait 0
+text.ShowH('SE656',100,1)
+
+if
+0E3E: is_button_just_pressed 0 button 11
+    then
+    text.ClearAll()
+    0AF1: write_int 0 to_ini_file "me\temp.dat" section v$RACE_FILE key "FOR_PED"
+    break
+    end
+
+if
+0E3E: is_button_just_pressed 0 button 10
+    then
+    0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "FOR_PED"
+    
+    text.ClearAll()
+    0581: enable_radar 1 
+    Player.CanMove(PLAYER_CHAR) = True
+    0E68: set_player_control_pad 0 1 
+    0E69: set_player_control_pad_movement 0 1
+    0512: show_permanent_text_box 'SE657' 
+    
+    repeat
+    wait 0  
+    
+    if
+    8A2A: not  text_box 'SE657' displayed
+    then
+    0512: show_permanent_text_box 'SE657'
+    end
+    
+    if
+    0E3E: is_button_just_pressed 0 button 11
+    then
+  
+    //////////////////////////////////////////////////
+    
+    {$INCLUDE newopcodes\forallpeds_cleoplus}
+    
+    if and
+    056D:   actor ped defined
+    87D6: not  ped == PLAYER_ACTOR // @ == $ (int)
+    then
+    Actor.StorePos(PLAYER_ACTOR, 2@, 3@, 4@)
+    if
+    0EEA: locate_char_distance_to_coordinates ped pos 2@ 3@ 4@ radius 1.0
+        then
+        0085: 1@ = ped // (int)
+        jump to @FUCKEEEEERS_FUCKS
+        end       
+    end
+    
+    {$INCLUDE newopcodes\end}
+
+    //////////////////////////////////////////////////
+    
+    end
+    
+//    if
+//    00E1:   player 0 pressed_key 11
+    //then
+    //Actor.StorePos(PLAYER_ACTOR, 2@, 3@, 4@)
+    //0AE1: 1@ = random_actor_near_point 2@ 3@ 4@ in_radius 1.0 find_next 1 pass_deads 0
+    //if and
+    //056D:   actor 1@ defined 
+    //87D6: not  1@ == PLAYER_ACTOR // @ == $ (int)  
+    //    then
+    //    break
+    //    end
+    //end
+
+    until false
+    :FUCKEEEEERS_FUCKS
+    03E6: remove_text_box  
+    
+    Actor.StorePos(1@, 2@, 3@, 4@)
+    0665: get_actor 1@ model_to 5@
+    0AF3: write_float 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "PED_X"
+    0AF3: write_float 3@ from_ini_file "me\temp.dat" section v$RACE_FILE key "PED_Y"
+    0AF3: write_float 4@ from_ini_file "me\temp.dat" section v$RACE_FILE key "PED_Z"    
+    0AF1: write_int 5@ to_ini_file "me\temp.dat" section v$RACE_FILE key "PED_MODEL"   
+    
+    text.ClearAll()
+    break
+    end
+
+end
 
 //////////////////////////////
 
@@ -7695,7 +7878,36 @@ if and
         then
         0AD3: v$RACE_FILE = format "%s" v$RACB_FILE
         end        
+                
+        //////////////////////////////
         
+        if or
+        0D49: 12@ = compare_strings v$SNAME3 "look_at_ped" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "aim_at_ped" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "rotate_to_ped" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "climb" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "jump" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "die_headshooted" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "die" // IF and SET
+        then
+        jump to @SKIP_SHIT_EEROIEJRMEWMRPOWEF_PRE_AFTER
+        else
+        if or 
+        0D49: 12@ = compare_strings v$SNAME3 "shoot_at_point" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "look_at_point" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "aim_at_point" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "hands_up" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "clear_task" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "crouch" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "drive_to" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "give_weapon" // IF and SET
+            then
+            jump to @SKIP_SHIT_EEROIEJRMEWMRPOWEF_PRE_AFTER
+            else
+            jump to @SKIP_SHIT_EEROIEJRMEWMRPOWEF_PRE
+            end
+        end
+                        
         //////////////////////////////
     
         text.ClearAll()
@@ -7721,8 +7933,38 @@ if and
             end
             
         end
-            
+        
+        :SKIP_SHIT_EEROIEJRMEWMRPOWEF_PRE
+        
         //////////////////////////////
+    
+        text.ClearAll()
+        text.RemoveTextBox()
+        
+        while true
+        wait 0
+        text.ShowH('SE661',100,1)
+            
+        if
+        0E3E: is_button_just_pressed 0 button 11
+            then
+            text.ClearAll()
+            0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "NO_WAIT_FOR_NEXT_OBJECTIVE"        
+            break
+            end
+            
+        if
+        0E3E: is_button_just_pressed 0 button 10
+            then
+            text.ClearAll()        
+            break
+            end
+            
+        end
+        
+        :SKIP_SHIT_EEROIEJRMEWMRPOWEF_PRE_AFTER
+            
+        //////////////////////////////        
         
         0AF1: write_int 16 to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_TYPE"
         0AF1: write_int $ACTIVE_INTERIOR to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_INT"    
@@ -7734,6 +7976,51 @@ if and
         0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_Z"
         128@ = actor.Angle(PLAYER_ACTOR)
         0AF3: write_float 128@ to_ini_file "me\temp.dat" section v$RACE_FILE key "OBJECTIVE_A"    
+        
+        if or
+        0D49: 12@ = compare_strings v$SNAME3 "walk_to_point" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "run_to_point" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "sprint_to_point" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "jump" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "climb" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "aim_at_point" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "aim_at_ped" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "shoot_at_point" // IF and SET
+        then
+        jump to @SKIP_SHIT_EEROIEJRMEWMRPOWEF
+        end
+        
+        if or
+        0D49: 12@ = compare_strings v$SNAME3 "look_at_point" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "look_at_ped" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "rotate_to_point" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "rotate_to_ped" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "attack_ped" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "attack_car" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "crouch" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "die" // IF and SET
+        then
+        jump to @SKIP_SHIT_EEROIEJRMEWMRPOWEF
+        end
+        
+        if or
+        0D49: 12@ = compare_strings v$SNAME3 "die_headshooted" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "sit_car_driver" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "sit_car_passeng" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "hands_up" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "exit_car" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "say_text" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "clear_task" // IF and SET
+        0D49: 12@ = compare_strings v$SNAME3 "drive_to" // IF and SET
+        then
+        jump to @SKIP_SHIT_EEROIEJRMEWMRPOWEF
+        end
+        
+        if
+        0D49: 12@ = compare_strings v$SNAME3 "give_weapon" // IF and SET
+        then
+        jump to @SKIP_SHIT_EEROIEJRMEWMRPOWEF
+        end
         
         //////////////////////////////
     
@@ -7761,7 +8048,9 @@ if and
         
         end
         
-        //////////////////////////////
+        :SKIP_SHIT_EEROIEJRMEWMRPOWEF
+                        
+        gosub @IFP_CHECK_FOR_ADDITIONAL_PARAMS
         
         0@ = 0
         0@ = Marker.CreateIconAndSphere2(ZAME_ANIM_FOR_PLAYER_TRIGGER_ICON_ID, 2@,3@,4@)
@@ -8778,8 +9067,9 @@ if and
 //        0AD1: show_formatted_text_highpriority "STRING - %s LENGHT - %d" time 2000 v$SNAME3 0@   
             
         09FD: get_gxt_string v$SNAME3 width_to 0@
-        if
+        if and
         0@ > 0
+        0@ <= 2670
             then
             03F0: enable_text_draw 1 
             03E0: draw_text_behind_textures 1
@@ -8802,8 +9092,31 @@ if and
             00E1:   player 0 pressed_key 16
             then
             break
-            end            
-            
+            end
+                        
+            else
+            if
+            0@ >= 2670
+                then
+                            
+                03F0: enable_text_draw 1 
+                03E0: draw_text_behind_textures 1
+                03E3: set_texture_to_be_drawn_antialiased 1 
+                0342: set_text_draw_centered 1
+                0344: set_text_draw_linewidth 300.0 for_centered_text
+                033F: set_text_draw_letter_size 0.2 1.1 
+                081C: draw_text_outline 1 RGBA 0 0 0 $HUD_ALPHA 
+                0340: set_text_draw_RGBA 255 255 255 $HUD_ALPHA   
+                    
+                if
+                UNITED_MAP == 1
+                then    
+                0349: set_text_draw_font UNITED_HUD_FONT_NUMBER
+                end
+                
+                033E: set_draw_text_position 320.0 15.0 GXT 'SE665'  // Push
+                
+                end
             end
             
         end
@@ -10226,7 +10539,8 @@ end
 //08D9: set_panel $PANEL row 10 enable 0
 //end
  
-wait 100     
+wait 100
+ZAME_RECREATE_OBJECTIVE_FLAG = 0     
 
 :TARGETS_SETTINGS4_CLOSE_CHECK
 wait 0 
@@ -11360,10 +11674,11 @@ then
 
 if or
 //VC
-ZAME_MISSION_STARTING_WEATHER == 1 
-ZAME_MISSION_STARTING_WEATHER == 3
+ZAME_MISSION_STARTING_WEATHER == 0 
+ZAME_MISSION_STARTING_WEATHER == 1
 ZAME_MISSION_STARTING_WEATHER == 4
 ZAME_MISSION_STARTING_WEATHER == 8
+ZAME_MISSION_STARTING_WEATHER == 9
     then
     return
     else
@@ -11373,23 +11688,24 @@ ZAME_MISSION_STARTING_WEATHER == 8
     005A: ZAME_MISSION_STARTING_WEATHER += 0@
 //    0AD1: show_formatted_text_highpriority "ZAME_MISSION_STARTING_WEATHER %d" time 2000 ZAME_MISSION_STARTING_WEATHER    
     if
-    ZAME_MISSION_STARTING_WEATHER > 8
+    ZAME_MISSION_STARTING_WEATHER > 9      
     then
-    ZAME_MISSION_STARTING_WEATHER = 1
+    ZAME_MISSION_STARTING_WEATHER = 0
     end
     
-    if
-    ZAME_MISSION_STARTING_WEATHER < 1
-    then
-    ZAME_MISSION_STARTING_WEATHER = 8
-    end
+//    if
+//    ZAME_MISSION_STARTING_WEATHER < 0
+//    then
+//    ZAME_MISSION_STARTING_WEATHER = 9
+//    end
     
     if or
     //VC
+    ZAME_MISSION_STARTING_WEATHER == 0
     ZAME_MISSION_STARTING_WEATHER == 1 
-    ZAME_MISSION_STARTING_WEATHER == 3
     ZAME_MISSION_STARTING_WEATHER == 4
     ZAME_MISSION_STARTING_WEATHER == 8
+    ZAME_MISSION_STARTING_WEATHER == 9
         then
         break
         end
@@ -11406,7 +11722,6 @@ else
 if or
 ZAME_MISSION_STARTING_WEATHER == 5
 ZAME_MISSION_STARTING_WEATHER == 7
-ZAME_MISSION_STARTING_WEATHER == 8
 ZAME_MISSION_STARTING_WEATHER == 9
 ZAME_MISSION_STARTING_WEATHER == 16
     then
@@ -11432,7 +11747,6 @@ ZAME_MISSION_STARTING_WEATHER == 16
     if or
     ZAME_MISSION_STARTING_WEATHER == 5
     ZAME_MISSION_STARTING_WEATHER == 7
-    ZAME_MISSION_STARTING_WEATHER == 8
     ZAME_MISSION_STARTING_WEATHER == 9
     ZAME_MISSION_STARTING_WEATHER == 16
         then
@@ -11463,10 +11777,11 @@ then
 
 if or
 //VC
-0@ == 1 
-0@ == 3
+0@ == 0 
+0@ == 1
 0@ == 4
 0@ == 8
+0@ == 9
     then
     //ass
     else
@@ -11476,23 +11791,24 @@ if or
     005A: 0@ += 1@
 //    0AD1: show_formatted_text_highpriority "0@ %d" time 2000 0@    
     if
-    0@ > 8
+    0@ > 9
     then
-    0@ = 1
+    0@ = 0
     end
     
-    if
-    0@ < 1
-    then
-    0@ = 8
-    end
+//    if
+//    0@ < 0
+//    then
+//    0@ = 9
+//    end
     
     if or
     //VC
+    0@ == 0
     0@ == 1 
-    0@ == 3
     0@ == 4
     0@ == 8
+    0@ == 9
         then
         break
         end
@@ -11509,7 +11825,6 @@ else
 if or
 0@ == 5
 0@ == 7
-0@ == 8
 0@ == 9
 0@ == 16
     then
@@ -11523,11 +11838,11 @@ if or
     if
     0@ > 16
     then
-    0@ = 5
+    0@ = 0
     end
     
     if
-    0@ < 5
+    0@ < 0
     then
     0@ = 16
     end
@@ -11535,7 +11850,6 @@ if or
     if or
     0@ == 5
     0@ == 7
-    0@ == 8
     0@ == 9
     0@ == 16
         then
@@ -11550,7 +11864,7 @@ end
 
 end
 
-return
+return     
 
 :ZAME_OBJC_PICTURES_CHECK
 
@@ -11925,4 +12239,461 @@ if
         end    
     end                            
 
-return                                                            
+return               
+
+:IFP_CHECK_FOR_ADDITIONAL_PARAMS
+
+//0AD1: show_formatted_text_highpriority "compare '%s' to 'shoot_at_point'" time 2000 v$SNAME3
+wait 0
+
+if or
+0D49: 12@ = compare_strings v$SNAME3 "look_at_ped" // IF and SET
+0D49: 12@ = compare_strings v$SNAME3 "attack_ped" // IF and SET
+0D49: 12@ = compare_strings v$SNAME3 "aim_at_ped" // IF and SET
+0D49: 12@ = compare_strings v$SNAME3 "rotate_to_ped" // IF and SET
+then
+
+//////////////////////////////
+
+repeat
+wait 0  
+        
+if
+8A2A: not  text_box 'SE659' displayed
+then
+0512: show_permanent_text_box 'SE659'
+end
+
+if
+0E3E: is_button_just_pressed 0 button 10
+    then                
+    008B: 1@ = PLAYER_ACTOR // (int)
+    0AF1: write_int 1 to_ini_file "me\temp.dat" section v$RACE_FILE key "ITS_PLAYER"
+    jump to @FUCKEEEEERS_FUCKS2BBB
+    end
+
+if
+0E3E: is_button_just_pressed 0 button 11
+    then
+    
+    //////////////////////////////////////////////////
+        
+    {$INCLUDE newopcodes\forallpeds_cleoplus}
+            
+    if and
+    056D:   actor ped defined
+    87D6: not  ped == PLAYER_ACTOR // @ == $ (int)
+        then
+        Actor.StorePos(PLAYER_ACTOR, 2@, 3@, 4@)
+        if
+        0EEA: locate_char_distance_to_coordinates ped pos 2@ 3@ 4@ radius 1.0
+            then
+            0085: 1@ = ped // (int)
+            0AF1: write_int 0 to_ini_file "me\temp.dat" section v$RACE_FILE key "ITS_PLAYER"
+            jump to @FUCKEEEEERS_FUCKS2BBB
+            end   
+        end
+            
+    {$INCLUDE newopcodes\end}
+    
+    end
+    
+//////////////////////////////////////////////////
+    
+until false
+:FUCKEEEEERS_FUCKS2BBB
+03E6: remove_text_box  
+
+Actor.StorePos(1@, 2@, 3@, 4@)
+0665: get_actor 1@ model_to 5@
+0AF3: write_float 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_PED_X"
+0AF3: write_float 3@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_PED_Y"
+0AF3: write_float 4@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_PED_Z"                    
+0AF1: write_int 5@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_PED_MODEL"   
+
+end
+
+if or
+0D49: 12@ = compare_strings v$SNAME3 "jump" // IF and SET  
+0D49: 12@ = compare_strings v$SNAME3 "exit_car" // IF and SET  
+then
+jump to @IFP_CHECK_FOR_ADDITIONAL_PARAMS_SET_POINT
+end
+
+if or
+0D49: 12@ = compare_strings v$SNAME3 "walk_to_point" // IF and SET
+0D49: 12@ = compare_strings v$SNAME3 "run_to_point" // IF and SET
+0D49: 12@ = compare_strings v$SNAME3 "sprint_to_point" // IF and SET
+0D49: 12@ = compare_strings v$SNAME3 "shoot_at_point" // IF and SET
+0D49: 12@ = compare_strings v$SNAME3 "look_at_point" // IF and SET
+0D49: 12@ = compare_strings v$SNAME3 "aim_at_point" // IF and SET
+0D49: 12@ = compare_strings v$SNAME3 "rotate_to_point" // IF and SET
+0D49: 12@ = compare_strings v$SNAME3 "climb" // IF and SET
+then
+
+:IFP_CHECK_FOR_ADDITIONAL_PARAMS_SET_POINT
+
+0581: enable_radar 1 
+Player.CanMove(PLAYER_CHAR) = True
+0512: show_permanent_text_box 'SE658' 
+
+repeat
+wait 0  
+
+if
+8A2A: not  text_box 'SE658' displayed
+then
+0512: show_permanent_text_box 'SE658'
+end
+
+//if
+//0E3E: is_button_just_pressed 0 button 15
+//    then
+//    gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS
+//    text.ClearAll()
+//    jump to @TRIGGERS_SETTINGS
+//end 
+
+until 0E3E:   player 0 pressed_key 11
+03E6: remove_text_box  
+
+:PENIS_MUSIC_JUMP
+if
+0D49: 12@ = compare_strings v$SNAME3 "sit_car_driver" // IF and SET
+then
+Actor.StorePos(PLAYER_ACTOR, 2@, 3@, 4@)
+5@ = actor.Angle(PLAYER_ACTOR)
+036A: put_actor PLAYER_ACTOR in_car ZAME_TARGET_CAR_HANDLE
+wait 0
+Actor.StorePos(PLAYER_ACTOR, 5@, 6@, 7@)
+8@ = actor.Angle(PLAYER_ACTOR)
+0AF3: write_float 5@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_X"
+0AF3: write_float 6@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_Y"
+0AF3: write_float 7@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_Z"  
+0AF3: write_float 8@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_A"    
+0362: remove_actor PLAYER_ACTOR from_car_and_place_at 2@ 3@ 4@
+else
+Actor.StorePos(PLAYER_ACTOR, 2@, 3@, 4@)
+5@ = actor.Angle(PLAYER_ACTOR)
+0AF3: write_float 2@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_X"
+0AF3: write_float 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_Y"
+0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_Z"  
+0AF3: write_float 5@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_A"
+end
+
+if or
+0D49: 12@ = compare_strings v$SNAME3 "walk_to_point" // IF and SET
+0D49: 12@ = compare_strings v$SNAME3 "run_to_point" // IF and SET
+0D49: 12@ = compare_strings v$SNAME3 "sprint_to_point" // IF and SET
+0D49: 12@ = compare_strings v$SNAME3 "climb" // IF and SET
+0D49: 12@ = compare_strings v$SNAME3 "jump" // IF and SET
+0D49: 12@ = compare_strings v$SNAME3 "sit_car_driver" // IF and SET
+    then 
+    0AF0: get_int 6@ from_ini_file "me\temp.dat" section v$RACE_FILE key "DUMMYPED_MODEL"
+            
+    while not model.Available(6@)
+    wait 0
+    model.Load(6@)
+    mload
+    end 
+            
+    5@ = Actor.Create(26, 6@, 2@,3@,4@)
+    0860: link_actor 5@ to_interior $ACTIVE_INTERIOR
+    Actor.PutAtNoOffset(5@, 2@,3@,4@)
+    6@ = actor.Angle(PLAYER_ACTOR)
+    Actor.Angle(5@) = 6@    
+    Actor.SetImmunities(5@, 1, 1, 1, 1, 1)
+    
+    if
+    0D49: 12@ = compare_strings v$SNAME3 "walk_to_point" // IF and SET
+    then
+    0605: actor 5@ perform_animation "WALK_civi" IFP "PED" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time -1
+    end
+    
+    if
+    0D49: 12@ = compare_strings v$SNAME3 "run_to_point" // IF and SET
+    then
+    0605: actor 5@ perform_animation "RUN_civi" IFP "PED" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time -1
+    end
+    
+    if
+    0D49: 12@ = compare_strings v$SNAME3 "sprint_to_point" // IF and SET
+    then
+    0605: actor 5@ perform_animation "SPRINT_civi" IFP "PED" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time -1
+    end
+    
+    if
+    0D49: 12@ = compare_strings v$SNAME3 "jump" // IF and SET
+    then
+    0605: actor 5@ perform_animation "JUMP_glide" IFP "PED" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time -1
+    end
+    
+    if
+    0D49: 12@ = compare_strings v$SNAME3 "climb" // IF and SET
+    then
+    0605: actor 5@ perform_animation "CLIMB_Pull" IFP "PED" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time -1
+    end
+    
+    if
+    0D49: 12@ = compare_strings v$SNAME3 "sit_car_driver" // IF and SET
+    then
+    0605: actor 5@ perform_animation "CAR_sit" IFP "PED" framedelta 4.0 loop 1 lockX 0 lockY 0 lockF 0 time -1    
+    end
+    
+    wait 0
+    0619: enable_actor 5@ collision_detection 0
+    return
+    
+    end
+return
+end
+
+if
+0D49: 12@ = compare_strings v$SNAME3 "say_text" // IF and SET
+then
+gosub @FXT_NAME_SELECT_DIALOGE    
+end
+
+if
+0D49: 12@ = compare_strings v$SNAME3 "give_weapon" // IF and SET
+then
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM = 8
+gosub @ZAME_MENU_PLAYER_SETTINGS_20003
+ZAME_MISSION_PLAYER_TEAMMATE_SET_NUM = 0
+
+if
+ZAME_RECREATE_OBJECTIVE_FLAG == 0
+then
+0AD3: v$RACE_FILE = format "OBJ%d" ZAME_CURRENT_OBJECTIVE_INDEX
+else
+0AD3: v$RACE_FILE = format "OBJ%d" ZAME_RECREATE_INDEX
+end
+        
+if or
+ZAME_CREATE_OBJ_BETWEEN_OBJS_FLAG == 1
+ZAME_RECREATE_OBJECTIVE_FLAG == 2
+then
+0AD3: v$RACE_FILE = format "%s" v$RACB_FILE
+end       
+
+0AF1: write_int 270@ to_ini_file "me\temp.dat" section v$RACE_FILE key "WEP_ID"
+0AF1: write_int 9@ to_ini_file "me\temp.dat" section v$RACE_FILE key "WEP_AMMO"
+
+end
+
+if or
+0D49: 12@ = compare_strings v$SNAME3 "sit_car_driver" // IF and SET
+0D49: 12@ = compare_strings v$SNAME3 "sit_car_passeng" // IF and SET
+0D49: 12@ = compare_strings v$SNAME3 "attack_car" // IF and SET
+0D49: 12@ = compare_strings v$SNAME3 "drive_to" // IF and SET 
+then
+
+//////////////////////////////
+
+repeat
+wait 0  
+        
+if
+8A2A: not  text_box 'SE660' displayed
+then
+0512: show_permanent_text_box 'SE660'
+end
+
+if
+0E3E: is_button_just_pressed 0 button 11
+    then    
+    actor.StorePos(PLAYER_ACTOR,2@,3@,4@)
+    if
+    0AE2: 1@ = random_vehicle_near_point 2@ 3@ 4@ in_radius 5.0 find_next 0 pass_wrecked 0
+        then
+        jump to @FUCKEEEEERS_FUCKS2BBBC
+        end 
+    end
+    
+//////////////////////////////////////////////////
+    
+until false
+:FUCKEEEEERS_FUCKS2BBBC
+03E6: remove_text_box  
+
+Car.StorePos(1@, 2@, 3@, 4@)
+5@ = car.Model(1@)
+0AF3: write_float 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_CAR_X"
+0AF3: write_float 3@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_CAR_Y"
+0AF3: write_float 4@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_CAR_Z"                    
+0AF1: write_int 5@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_CAR_MODEL"  
+
+if
+0D49: 12@ = compare_strings v$SNAME3 "sit_car_driver" // IF and SET
+    then
+    0085: ZAME_TARGET_CAR_HANDLE = 1@ // (int)
+    jump to @PENIS_MUSIC_JUMP
+    end
+
+if
+0D49: 12@ = compare_strings v$SNAME3 "drive_to" // IF and SET
+    then
+    wait 0
+    0085: ZAME_TARGET_CAR_HANDLE = 1@ // (int)
+    jump to @IFP_CHECK_FOR_ADDITIONAL_PARAMS_SET_POINT
+    end 
+
+end
+
+return     
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:FXT_NAME_SELECT_DIALOGE
+
+06D1: v$SNAME3 = "" // v$ // Sunday
+06D1: v$SNAME2 = "" // v$ // Sunday
+
+29@ = 0
+33@ = 0
+KEYS_TYPED_NUM = 0
+    
+0AE0: remove_dynamic_GXT_entry "F_NAME"
+0ADF: add_dynamic_GXT_entry "F_NAME" text ""
+
+if
+0A4B:   controls_set_to_joystick
+then
+0512: show_permanent_text_box 'SE80B'
+ACTIVATE_KBRD_PANEL = 1
+KBRD_PANEL_CHRTC = 1
+CAPSLOCK_ON_FLAG = 1
+$PANEL_OPEN2 = 1
+else
+0512: show_permanent_text_box 'SE80'
+end
+
+while true
+wait 0
+
+if
+8A2A: not  text_box 'SE80' displayed
+then
+0512: show_permanent_text_box 'SE80'
+end
+
+015D: set_gamespeed 1.0
+CURRENT_LAYOUT = 1
+gosub @FXT_NAME_SELECT_KEYS_CHECK
+
+if
+8846: not  string v$SNAME3 empty // v$
+then
+0384: show_text_1string GXT "GAME898" string "F_NAME" time 99999999 1
+else
+0384: show_text_1string GXT "GAME898" string v$NAME3 time 99999999 1
+end
+
+//if
+//0A4B:   controls_set_to_joystick
+//then
+//if and
+//0E3E: is_button_just_pressed 0 button 15
+//33@ > 500
+//    then
+//    jump to @FXT_VVOD_EXIT_JOY_JUMP
+//    end
+//end
+
+//if and
+//0E3D: is_key_just_pressed 17
+//33@ > 500
+//    then
+//    :FXT_VVOD_EXIT_JOY_JUMP
+//    33@ = 0
+//    text.RemoveTextBox()
+//    text.ClearAll()
+//    0581: enable_radar 1 
+//    03E6: remove_text_box
+//    
+//    if
+//    ACTIVATE_KBRD_PANEL == 1
+//    then
+//    ACTIVATE_KBRD_PANEL = 0
+//    $PANEL_OPEN2 = 0
+//    end
+//    
+//    jump @TARGETS_SETTINGS
+//    end
+    
+if
+8846: not  string v$SNAME3 empty // v$
+    then
+    09FD: get_gxt_string v$SNAME3 width_to 0@  // ~k~~PED_SPRINT~ Select
+    if and
+    0@ > 0
+    0@ <= 2670
+        then
+        
+        03F0: enable_text_draw 1 
+        03E0: draw_text_behind_textures 1
+        03E3: set_texture_to_be_drawn_antialiased 1 
+        0342: set_text_draw_centered 1
+        0344: set_text_draw_linewidth 300.0 for_centered_text
+        033F: set_text_draw_letter_size 0.2 1.1 
+        081C: draw_text_outline 1 RGBA 0 0 0 $HUD_ALPHA 
+        0340: set_text_draw_RGBA 255 255 255 $HUD_ALPHA   
+            
+        if
+        UNITED_MAP == 1
+        then    
+        0349: set_text_draw_font UNITED_HUD_FONT_NUMBER
+        end
+        
+        033E: set_draw_text_position 320.0 15.0 GXT v$SNAME3  // Push
+        else
+        if
+        0@ >= 2670
+            then
+                        
+            03F0: enable_text_draw 1 
+            03E0: draw_text_behind_textures 1
+            03E3: set_texture_to_be_drawn_antialiased 1 
+            0342: set_text_draw_centered 1
+            0344: set_text_draw_linewidth 300.0 for_centered_text
+            033F: set_text_draw_letter_size 0.2 1.1 
+            081C: draw_text_outline 1 RGBA 0 0 0 $HUD_ALPHA 
+            0340: set_text_draw_RGBA 255 255 255 $HUD_ALPHA   
+                
+            if
+            UNITED_MAP == 1
+            then    
+            0349: set_text_draw_font UNITED_HUD_FONT_NUMBER
+            end
+            
+            033E: set_draw_text_position 320.0 15.0 GXT 'SE665'  // Push
+            
+            end
+        end
+    end    
+
+if and
+0E3E: is_button_just_pressed 0 button 16
+33@ > 500
+8846: not  string v$SNAME3 empty // v$
+    then
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5
+    09FD: get_gxt_string v$SNAME3 width_to 0@  // ~k~~PED_SPRINT~ Select
+    if and
+    0@ > 0
+    0@ <= 2670
+        then  
+        0AF5: write_string v$SNAME3 to_ini_file "me\temp.dat" section v$RACE_FILE key "FXT_ID"      
+        return        
+        else
+        text.ShowH('SE236',1000,1)
+        wait 1000
+        0512: show_permanent_text_box 'SE80'        
+        end
+        
+        end
+
+end

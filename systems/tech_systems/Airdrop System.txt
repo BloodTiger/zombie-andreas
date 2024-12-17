@@ -13,10 +13,17 @@ HABAR_POINT_X = 15@
 HABAR_POINT_Y = 17@
 HABAR_POINT_Z = 18@
 HABAR_PLANE_MARKER = 24@
+HABAR_TIMER_WAS = 31@
 end
 
 :HAB_DRP
 thread 'HAB_DRP'
+
+if
+ALLOW_AIRDROPS == 0
+then
+end_thread
+end
 
 if
 CURRENT_USHER_TUTORIAL_NUM == 7
@@ -211,6 +218,17 @@ if
     end
 end
 
+if 
+$CHEATS_ON == 1
+    then
+    if
+    0ADC:   test_cheat "LATE"
+        then
+        $CHEAT_CODE_ACTIVATED = 1
+        32@ = 210000                        
+        end
+    end
+
 if and
 32@ > 210000
 SAVESTATUS_MEGA_TRUE == 0
@@ -330,6 +348,7 @@ then
 $AIRDROP_QUEST = 3
 end
 
+0085: HABAR_TIMER_WAS = 32@ // (int)
 32@ = 0
 
 jump to @CAR_CREATE_HABAR_PLANE
@@ -381,7 +400,14 @@ end
 0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "AIRDROP_NOTRANDOM_WAITING_TIMER"
 
 repeat
-wait 0          
+wait 0  
+
+if
+$CHEATS_ON == 1
+then
+break
+end
+        
 until 001D:   32@ > 0@  // (int)
 
 0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "AIRDROP_NOTRANDOM_WAITING_TIMER"
@@ -891,7 +917,7 @@ end
 end
 
 if
-0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos 2@ 3@ 4@ radius 500.0
+0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos 2@ 3@ 4@ radius 1000.0
 then
 wait 0
 jump to @CAR_CREATE_HABAR_PLANE
@@ -938,8 +964,9 @@ actor.Health(HABAR_PLANE_ACTOR) = 5000
 077A: set_actor HABAR_PLANE_ACTOR acquaintance 0 to_actors_pedtype $ZOMBIE_SET_PEDTYPE // see ped.dat
 060B: set_actor HABAR_PLANE_ACTOR decision_maker_to $DEC_PEOPLE
 
-if
+if or
 $AIRDROP_RANDOM == 0
+$CHEATS_ON == 1
 then
 HABAR_PLANE_MARKER = marker.CreateAboveCar(HABAR_PLANE)
 07E0: set_marker HABAR_PLANE_MARKER type_to 1
@@ -967,6 +994,112 @@ CURRENT_USHER_TUTORIAL_NUM = 9
 end
 
 04D2: set_plane HABAR_PLANE fly_autopilot_around_point 2@ 3@ 4@ altitude_between 300.0 and 560.0
+if and
+HABAR_TIMER_WAS > 210000
+$AIRDROP_RANDOM == 1
+then
+
+0338: set_car HABAR_PLANE visibility 0
+
+repeat
+wait 0
+
+car.StorePos(HABAR_PLANE,5@,6@,7@)
+0E27: get_angle_from_two_coords 5@ 6@ and 2@ 3@ to 7@
+car.Angle(HABAR_PLANE) = 7@
+0407: store_coords_to 5@ 6@ 7@ from_car HABAR_PLANE with_offset 0.0 100.0 0.0
+car.PutAt(HABAR_PLANE,5@,6@,7@)
+
+if
+056E:   car HABAR_PLANE defined
+    then
+    if or
+    car.Wrecked(HABAR_PLANE)
+    $SAVESTATUS == 1
+        then
+        
+        if
+        075C:   marker HABAR_MARKER_ON_MAP enabled
+        then
+        marker.Disable(HABAR_MARKER_ON_MAP)
+        end
+        
+        if and
+        REALISM_MODE == 1
+        $AIRDROP_RANDOM == 1
+        then
+        $CARMA_GLOB_CARREC_X = 0.0
+        $CARMA_GLOB_CARREC_Y = 0.0
+        $CARMA_GLOB_CARREC_Z = 0.0 
+        end
+        
+        if
+        $AIRDROP_RANDOM == 0
+            then
+            if
+            075C:   marker AIRDROP_FLARE_MARKER enabled
+                then
+                marker.Disable(AIRDROP_FLARE_MARKER)
+                end
+            end
+        
+        if
+        $AIRDROP_RANDOM == 0
+            then    
+            if
+            075C:   marker HABAR_PLANE_MARKER enabled
+                then
+                marker.Disable(HABAR_PLANE_MARKER)
+                end
+            end    
+        
+        if
+        056E:   car HABAR_PLANE defined
+        then
+        car.RemoveReferences(HABAR_PLANE)        
+        end
+        
+        if
+        056D:   actor HABAR_PLANE_ACTOR defined
+        then
+        actor.RemoveReferences(HABAR_PLANE_ACTOR)
+        end
+        
+        if and
+        $ZOMBIES_HORDE == 1
+        $AIRDROP_RANDOM == 0
+        then
+        $ZOMBIES_HORDE = 0
+        end
+        
+        if
+        $AIRDROP_RANDOM == 0
+        then
+        $AIRDROP_TIMER = 0
+        end        
+        $AIRDROP_FLAG = 0        
+        $NOTSAVE_MODE = 0
+        $AIRDROP_RANDOM = 0
+        $AIRDROP_QUEST = -2            
+        AIRDROP_PLAYER_AT_POINT_FLAG = 0
+        
+        if
+        $SAVESTATUS == 0
+        then
+        0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "AIRDROP_PLANE_DESTROYED"
+        else
+        0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "AIRDROP_PLANE_SAVESTATUS_DELETE"
+        end
+        
+        end_thread        
+        end
+    end
+
+until 01AD:   car HABAR_PLANE sphere 0 near_point 2@ 3@ radius 300.0 300.0
+
+0338: set_car HABAR_PLANE visibility 1
+
+end
 
 0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "AIRDROP_CREATING_PLANE_FLAG"
 

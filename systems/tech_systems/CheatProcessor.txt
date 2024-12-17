@@ -53,6 +53,8 @@ end
 
 /////////////////////////////////////////////
 
+:CHEAT_PROCESSOR_LOOP_JUMP
+
 while true
 wait 0
 
@@ -76,7 +78,7 @@ ZAME_CREATE_CAR_ADVETNURE_OBJ_CALL == 1
 ZAME_CREATE_CAR_ADVETNURE_OBJ_CALL == 2
     then
     jump to @CARSPAWN_CHEATCODE
-    end    
+    end       
     
 if
 $EXPE_FLAG == 1
@@ -3300,8 +3302,11 @@ if and
 $CHEAT_TYPE_FLAG == 1
 $DEBUG_MENU_ON == 1
 0ADC:   test_cheat "EXTRASKINS"
-0AAB:   file_exists "modloader/MODLOADER GLOBAL FILES/ExtraContent/New Selectable Skins/EXTRASKINS2.dat"
-    then   
+    then
+    
+    if
+    0AAB:   file_exists "modloader/MODLOADER GLOBAL FILES/ExtraContent/New Selectable Skins/EXTRASKINS2.dat"
+    jf @SKIP_CHEAT   
     
     const
     EXTRA_SKINS_COUNT_MIN = 29@
@@ -3592,8 +3597,11 @@ if and
 $CHEAT_TYPE_FLAG == 1
 $DEBUG_MENU_ON == 1
 0ADC:   test_cheat "NEWSKINS"
-0AAB:   file_exists "modloader\MODLOADER GLOBAL FILES\ExtraContent\New Survivors\CONFIG\NEWSKINS.ini"
-    then   
+    then 
+    
+    if
+    0AAB:   file_exists "modloader\MODLOADER GLOBAL FILES\ExtraContent\New Survivors\CONFIG\NEWSKINS.ini"
+    jf @SKIP_CHEAT  
     
     const
     EXTRA_SKINS_COUNT_MIN = 29@
@@ -3878,7 +3886,9 @@ $DEBUG_MENU_ON == 1
     
     008B: 28@ = $RANDOM_MODE_MODEL // (int)                                             
     
-    end        
+    end  
+    
+:SKIP_CHEAT          
     
 if and
 $CHEAT_TYPE_FLAG == 1
@@ -4329,12 +4339,14 @@ $CHEAT_TYPE_FLAG == 1
     $HITMAN_FLAG == 0
         then
         $HITMAN_FLAG = 1
+        0459: end_thread_named 'WEPCAMS'
         0AF3: write_float 0.0 to_ini_file "moonloader/Weapon Recoil.ini" section "Other_Settings" key "nGlobalRecoilMultiplier"
         text.ClearAll()     
         text.RemoveTextBox()   
         text.ShowTextBox('GAME270')  
         else
         $HITMAN_FLAG = 0
+        0A92: create_custom_thread "script3.dat"
         
         if and
         not 0@ == 1.65
@@ -5003,6 +5015,16 @@ $CHEAT_TYPE_FLAG == 1
     $WEATHER_SYNC_FLAG = 1                                          
     end
     
+    
+if and
+$CHEAT_TYPE_FLAG == 1
+0ADC:   test_cheat "NEWPOGODA"
+    then        
+    $CHEAT_CODE_ACTIVATED = 1    
+    wait 1
+    WEATHER_CYCLE_CHANGE_WEATHER_SMOOTH_NOW = 1                                          
+    end   
+    
 if and
 $CHEAT_TYPE_FLAG == 1
 0ADC:   test_cheat "POGODA"
@@ -5185,6 +5207,8 @@ not actor.Driving(PLAYER_ACTOR)
     $CHEAT_CODE_ACTIVATED = 1
     
     wait 10
+    
+    $CAR_SP_NUM2 = -1
     
     repeat
     wait 0
@@ -5506,7 +5530,20 @@ not actor.Driving(PLAYER_ACTOR)
     
 //    player.CanMove(PLAYER_CHAR,true)
     0E68: set_player_control_pad 1 1 
-    0E69: set_player_control_pad_movement 0 1        
+    0E69: set_player_control_pad_movement 0 1
+    
+    if
+    856E: not  car 25@ defined
+    then
+    player.CanMove(PLAYER_CHAR) = true
+    text.RemoveTextBox()
+    $SPEED_08_FLAG = 0
+    015D: set_gamespeed 1.0    
+    
+    wait 10
+    07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 1
+    jump to @CHEAT_PROCESSOR_LOOP_JUMP
+    end        
     
     if
     00E1:   player 0 pressed_key 14
@@ -5545,6 +5582,7 @@ not actor.Driving(PLAYER_ACTOR)
     not CAR_SP_NUM_TO_SPAWN == #RCTIGER
     then
     036A: put_actor PLAYER_ACTOR in_car 25@
+    camera.Restore_WithJumpCut()
     else
     :RC_MODE_ON_1
     0715: put_player PLAYER_CHAR in_RC_mode_in_car 25@ // on foot version

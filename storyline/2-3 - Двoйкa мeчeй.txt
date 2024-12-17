@@ -1,0 +1,1605 @@
+const
+TERRY_THREAD_CURRENT_DIALOG_INDEX = 31@
+TERRY_THREAD_VICTORIA = 30@
+TERRY_THREAD_QUEST_MARKER = 29@
+TERRY_THREAD_STAY_IN_CAR_COMMAND_TUT_FLAG = 28@ 
+TERRY_THREAD_SIT_IN_CAR_COMMAND_TUT_FLAG = 27@ 
+TERRY_THREAD_TELEPORT_COMMAND_TUT_FLAG = 26@
+TERRY_THREAD_CAR_SHIT_FLAG = 20@         
+end
+
+:TERRY_T
+thread 'TERRY_T' 
+
+0629: change_integer_stat 258 to -2 
+$SAVESTATUS = 1
+$SAVESTATUS_TRUE = 1  
+$SAVE_MISSION_START_FLAG = 1  
+
+repeat
+wait 0    
+fade 0 0 
+until $ONMISSION == 0   
+
+Actor.PutAtNoOffset(PLAYER_ACTOR, 2680.3191, -640.857, 88.3581)
+Actor.Angle(PLAYER_ACTOR) = 180.9381
+camera.Restore_WithJumpCut()
+create_thread @3D_REFR
+
+create_thread @PTL_TXT
+wait $GAME_SAVE_WAIT_TIME 
+$PREPARING_TEXT_OFF = 1 
+wait 10  
+$PLAYER_HEALTH = actor.Health(PLAYER_ACTOR)
+
+0A8D: 0@ = read_memory 6393978 size 4 virtual_protect 1 
+0A8D: 1@ = read_memory 6393982 size 1 virtual_protect 1 
+
+wait 1 
+
+0A8C: write_memory 6393978 size 4 value -1869574000 virtual_protect 1 
+0A8C: write_memory 6393982 size 1 value 144 virtual_protect 1 
+
+065C: release_decision_maker $DEC_PEOPLE 
+wait 10
+03D8: show_save_screen 
+
+wait 2 
+0A8C: write_memory 6393978 size 4 value 0@ virtual_protect 1 
+0A8C: write_memory 6393982 size 1 value 1@ virtual_protect 1 
+   
+repeat
+wait 0
+fade 0 0 
+$SAVESTATUS = 1
+$SAVESTATUS_TRUE = 1
+until 03D9:   save_done
+
+player.CanMove(PLAYER_CHAR) = false
+fade 0 0
+
+repeat
+wait 0
+$SPECIAL_INFECTED_NOT_SPAWN_FLAG = 1
+until $SAVESTATUS == 0
+
+camera.Restore_WithJumpCut()       
+fade 0 0              
+
+while $SAVING_DELAY == 1
+wait 0
+$SPECIAL_INFECTED_NOT_SPAWN_FLAG = 1
+fade 0 0 
+end
+
+MAIN_QUEST_MUSIC_FLAG = 1
+wait 1000
+
+if 
+2@ == 1
+then
+create_thread @NO_WAY 1
+CANT_CAPTURE_SHIT = 2
+end
+
+while true
+wait 0
+$SPECIAL_INFECTED_NOT_SPAWN_FLAG = 1
+$END_FADING_MUSIC_FAST = 1
+
+if and
+$MUSIC_FADE_ENDED[0] == 1
+$MUSIC_FADE_ENDED[1] == 1
+$MUSIC_FADE_ENDED[2] == 1
+$MUSIC_FADE_ENDED[3] == 1
+$MUSIC_FADE_ENDED[4] == 1
+then
+$END_FADING_MUSIC_FAST = 0
+break
+end
+
+end
+
+$MUSIC_MISSION = Audiostream.Load("audio\sounds\music\usher_music\freeplay1.wav")
+Audiostream.PerformAction($MUSIC_MISSION, PLAY)
+Audiostream.Loop($MUSIC_MISSION, 1)
+Audiostream.Volume($MUSIC_MISSION) = 0.0
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1 
+
+////////////////////////////////////////////////////////
+
+$PREPARING_TEXT_OFF = 0
+PLAYER_NO_ITEMS_FLAG = 0
+create_thread @PED_BKP PLAYER_ACTOR 371
+
+if
+8491: not  actor PLAYER_ACTOR has_weapon 151
+then
+
+0781: get_weapon_with_ID 151 model_to 0@
+
+while not model.Available(0@)
+wait 0
+model.Load(0@)
+mload
+end
+
+actor.GiveWeaponAndAmmo(PLAYER_ACTOR,151,1)
+01B9: set_actor PLAYER_ACTOR armed_weapon_to 0
+
+end
+
+USHER_STORY_CREATE_NICOLS_FLAG = 1
+USHER_STORY_FEATRUES_LOCKED = -2
+
+0459: end_thread_named 'ARMY_SP'
+0459: end_thread_named 'BNDT_SP'
+0459: end_thread_named 'FRMR_SP'
+0459: end_thread_named 'SWAT_SP'
+0459: end_thread_named 'C_MENU'
+
+TERRY_THREAD_QUEST_MARKER = Marker.CreateIconWithoutSphere(43, 2132.073, -2278.9604, 20.6719)
+
+if
+SHOW_HINTS_FLAG == 1
+then
+0AF1: write_int 3 to_ini_file "saves/ZACM.set" section "SCR" key "FS3"
+end
+
+$SAVESTATUS = 0
+$SPECIAL_INFECTED_NOT_SPAWN_FLAG = 1
+Actor.PutAtNoOffset(PLAYER_ACTOR, 2231.4966, -2284.3164, 14.3751)
+Actor.Angle(PLAYER_ACTOR) = 46.2027
+camera.Restore_WithJumpCut()
+create_thread @3D_REFR
+
+if
+LATEST_CAR_SLOT_USED == -1
+then
+gosub @TERRY_THREAD_CREATE_VICTORIA
+create_thread @C_MENU 1
+SUPPLY_QUEST_TRUCK = -1
+
+$CAR_SAVE_BANKA_COUNT[LATEST_CAR_SLOT_USED] = 5
+$CAR_SAVE_HEAL_COUNT[LATEST_CAR_SLOT_USED] = 4
+$CAR_SAVE_BINT_COUNT[LATEST_CAR_SLOT_USED] = 4
+0AD3: 4@s = format "CR%d" LATEST_CAR_SLOT_USED
+0AF1: write_int 88 to_ini_file "data\survival.set" section 4@s key "WEP_SLOT1_ID"
+0AF1: write_int 240 to_ini_file "data\survival.set" section 4@s key "WEP_SLOT1_AMMO"
+0AF1: write_int 18 to_ini_file "data\survival.set" section 4@s key "WEP_SLOT2_ID"
+0AF1: write_int 5 to_ini_file "data\survival.set" section 4@s key "WEP_SLOT2_AMMO"
+$RADIO = 1
+
+repeat
+wait 0
+until 056E:   car $USED_CAR[LATEST_CAR_SLOT_USED] defined
+
+end
+
+$ALLOW_RANDOM_SURVIVERS = 1
+$RANDOM_PEOPLE_SPAWN_FLAG = 1
+CARL_SPAWN_FLAG = 0
+MIKE_SPAWN_FLAG = 2
+$FREND_NUMBER = 0
+$SURVIVOR_ALLOW_SPAWN[0] = 1
+$DELETE_TEAMMATES = 0
+0459: end_thread_named 'SURVVER'
+create_thread @SURVVER
+$HELP_INST_FLAG = 1
+CUSTOM_MODE_NO_TEAMMATES_DEATHS = 1
+  
+$PEOPLE_SPAWN_ON_COORD = 1  
+$PEOPLE_X = 2227.1326  
+$PEOPLE_Y = -2280.175
+$PEOPLE_Z = 14.7647 
+
+repeat
+wait 0
+until 056D:   actor $SURVIVER[0] defined
+
+repeat
+wait 0                                                
+until 06EE:   actor $SURVIVER[0] in_group PLAYER_GROUP
+
+TEAM1_SKIN = 1
+06D1: v$SURVIVOR_PROLOUGE[0] = "STRB63" // v$ = string
+$SURV1_TEAM_TIME = 13200
+ZAME_SKIN1_CUSTOM_NAME = 1
+0ADE: 0@ = text_by_GXT_entry "N_9199"
+0AD3: TEAM1_NAME = format "%s" 0@
+
+0AE0: remove_dynamic_GXT_entry "F_NAME1"
+0ADF: add_dynamic_GXT_entry "F_NAME1" text TEAM1_NAME
+
+$RANDOM_PEOPLE_SPAWN_FLAG = 0
+//create_thread @TERRY_D
+
+$QUEST_READY_FLAG = -111
+
+$CAMP_SPOTTED_FLAG = 1
+$CAMP_SPOTTED_FLAG_SAVE = 0 
+
+0318: set_latest_mission_passed 'STRB69'
+Text.ShowStyled('STRB69', 3000, 2)
+
+fade 1 2000
+create_thread @3D_REFR
+$HUD_REMOVE = 0
+player.CanMove(PLAYER_CHAR,true)
+
+0AF0: 0@ = get_int_from_ini_file "config.ini" section "EXTRA_GRAPHICS" key "POTATO_MODE"
+if
+0@ == 1
+    then            
+    
+    while true
+    wait 0
+    $PHRASES_OFF_FLAG = 1
+    text.ShowH('GME1559',100,1)
+    end
+    
+    end
+
+v$ST_DIALOG[0] = "STRY218"
+v$ST_DIALOG[1] = "STRY219"
+v$ST_DIALOG[2] = "STRY220"
+v$ST_DIALOG[3] = "STR221"
+v$ST_DIALOG[4] = "STRY221"
+v$ST_DIALOG[5] = "STRY222"
+v$ST_DIALOG[6] = "STRY223"
+v$ST_DIALOG[7] = "STRY224"
+$DIALOG_COUNT = 7
+$DIALOG_NOT_SKIP = 1
+create_thread @DG_SYS2
+PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 1
+CAMP_DONT_SAY_HELLO_FLAG = 1
+$PHRASES_OFF_FLAG = 1
+
+repeat
+wait 0
+        
+gosub @FREEPLAY_DIALOG_DANGER_CHECK
+
+if
+056D:   actor $SURVIVER[0] defined
+then
+if or
+8EE4: not locate_char_distance_to_char $SURVIVER[0] char PLAYER_ACTOR radius 30.0
+$SAVESTATUS_TRUE == 1
+$SAVING_DELAY == 1
+    then
+    0@ = 1
+    end
+end        
+    
+if and
+0@ == 1 
+$DIALOG_PAUSE == 0
+    then
+    $DIALOG_PAUSE = 1
+    end
+    
+if and
+0@ == 0 
+$DIALOG_PAUSE == 1
+    then
+    $DIALOG_PAUSE = 0
+    end
+    
+gosub @INFECTED_AREA_TERRY_TALK_CHECK    
+gosub @FREEPLAY_SAVE_CHECK
+
+if
+not $CAMP_NUMBER == 8
+then
+if
+not BASE_TEAMMATE_AGRED == 1
+jf @TERRY_THREAD_FAILED_AGRO   
+end
+     
+if or
+803A: not  LEADER_DIED_FLAG == $ENTERED_CAMP_NUMBER // (int)
+$ENTERED_CAMP_NUMBER == -1
+jf @TERRY_THREAD_FAILED_LDEAD
+if
+$SAVE_CAR_CREATED[LATEST_CAR_SLOT_USED] == 1
+jf @TERRY_THREAD_FAILED_KETER_WRECKED
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @TERRY_THREAD_FAILED_PLAYER_DEAD
+if
+056D:   actor $SURVIVER[0] defined
+then                 
+if 
+not actor.Dead($SURVIVER[0]) 
+jf @TERRY_THREAD_FAILED_TERRY_DEAD
+end           
+
+until $DIALOG_END == 1
+
+PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 0 
+CAMP_DONT_SAY_HELLO_FLAG = 0
+$PHRASES_OFF_FLAG = 0
+v$OBJECTIVE = "STRB64"
+32@ = 0
+
+while true
+wait 0
+
+gosub @FREEPLAY_DIALOG_DANGER_CHECK
+
+if
+056D:   actor $SURVIVER[0] defined
+then
+if or
+8EE4: not locate_char_distance_to_char $SURVIVER[0] char PLAYER_ACTOR radius 30.0
+$SAVESTATUS_TRUE == 1
+$SAVING_DELAY == 1
+    then
+    0@ = 1
+    end
+end        
+    
+if and
+0@ == 1 
+$DIALOG_PAUSE == 0
+    then
+    $DIALOG_PAUSE = 1
+    end
+    
+if and
+0@ == 0 
+$DIALOG_PAUSE == 1
+    then
+    $DIALOG_PAUSE = 0
+    end
+
+gosub @INFECTED_AREA_TERRY_TALK_CHECK
+gosub @FREEPLAY_SAVE_CHECK
+
+if
+not $CAMP_NUMBER == 8
+then
+if
+not BASE_TEAMMATE_AGRED == 1
+jf @TERRY_THREAD_FAILED_AGRO
+end
+        
+if or
+803A: not  LEADER_DIED_FLAG == $ENTERED_CAMP_NUMBER // (int)
+$ENTERED_CAMP_NUMBER == -1
+jf @TERRY_THREAD_FAILED_LDEAD 
+if
+$SAVE_CAR_CREATED[LATEST_CAR_SLOT_USED] == 1
+jf @TERRY_THREAD_FAILED_KETER_WRECKED   
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @TERRY_THREAD_FAILED_PLAYER_DEAD  
+if
+056D:   actor $SURVIVER[0] defined
+then               
+if 
+not actor.Dead($SURVIVER[0]) 
+jf @TERRY_THREAD_FAILED_TERRY_DEAD
+end
+
+if and
+0E49: is_char_entering_any_car PLAYER_ACTOR
+TERRY_THREAD_STAY_IN_CAR_COMMAND_TUT_FLAG == 0
+SHOW_HINTS_FLAG == 1
+    then
+    TERRY_THREAD_STAY_IN_CAR_COMMAND_TUT_FLAG = 1
+    
+    if
+    0A4B:   controls_set_to_joystick
+    then
+    text.ShowTextBox('HINT43B')
+    else
+    text.ShowTextBox('HINT43')
+    end
+    
+    end
+    
+if and
+0E4A: is_char_exiting_any_car PLAYER_ACTOR
+TERRY_THREAD_SIT_IN_CAR_COMMAND_TUT_FLAG == 0 
+056E:   car $USED_CAR[LATEST_CAR_SLOT_USED] defined
+SHOW_HINTS_FLAG == 1
+    then
+    if
+    actor.InCar($SURVIVER[0],$USED_CAR[LATEST_CAR_SLOT_USED])
+        then         
+        TERRY_THREAD_SIT_IN_CAR_COMMAND_TUT_FLAG = 1
+        
+        if
+        0A4B:   controls_set_to_joystick
+        then
+        text.ShowTextBox('HINT44B')
+        else
+        text.ShowTextBox('HINT44')
+        end
+        
+        end    
+    end
+        
+if and
+$CHEATS_ON == 1
+$DIALOG_END == 1
+0E3D: is_key_just_pressed 81
+    then
+    32@ = 99999999
+    0AD1: show_formatted_text_highpriority "TERRY_THREAD_CURRENT_DIALOG_INDEX is ~n~%d" time 1000 TERRY_THREAD_CURRENT_DIALOG_INDEX
+    wait 1000
+    end
+    
+if
+$CHEATS_ON == 1
+    then
+    if
+    0ADC:   test_cheat "SKIP"
+        then
+        $CHEAT_CODE_ACTIVATED = 1
+        $END_DIALOG_INST = 1
+        wait 0
+        TERRY_THREAD_CURRENT_DIALOG_INDEX = 14
+        32@ = 99999999
+        end
+    end    
+
+if
+056D:   actor $SURVIVER[0] defined
+then
+if and
+80F2: not  actor $SURVIVER[0] near_actor PLAYER_ACTOR radius 100.0 100.0 0  
+not $INT_ENTERING_FLAG == 1
+    then
+    
+    if and
+    TERRY_THREAD_TELEPORT_COMMAND_TUT_FLAG == 0
+    SHOW_HINTS_FLAG == 1
+    then
+    TERRY_THREAD_TELEPORT_COMMAND_TUT_FLAG = 1
+    
+    if
+    0A4B:   controls_set_to_joystick
+    then
+    text.ShowTextBox('HINT45B')
+    else
+    text.ShowTextBox('HINT45')
+    end
+    
+    end 
+    
+    if
+    TERRY_THREAD_CURRENT_DIALOG_INDEX == 4
+    then   
+    marker.Disable(MISSION_CHECKPOINT)
+    end
+    
+    if
+    TERRY_THREAD_CURRENT_DIALOG_INDEX == 15
+    then   
+    marker.Disable(TERRY_THREAD_QUEST_MARKER)
+    end
+    
+    $DIALOG_PAUSE = 1
+    
+    MISSION_MARKER = marker.CreateAboveActor($SURVIVER[0])
+    07E0: set_marker MISSION_MARKER type_to 1
+    
+    v$OBJECTIVE = "STRB65"
+    
+    while 80F2: not  actor $SURVIVER[0] near_actor PLAYER_ACTOR radius 100.0 100.0 0  
+    wait 0    
+    
+    if
+    not $CAMP_NUMBER == 8
+    then
+    if
+    not BASE_TEAMMATE_AGRED == 1
+    jf @TERRY_THREAD_FAILED_AGRO 
+    end
+       
+    if or
+    803A: not  LEADER_DIED_FLAG == $ENTERED_CAMP_NUMBER // (int)
+    $ENTERED_CAMP_NUMBER == -1
+    jf @TERRY_THREAD_FAILED_LDEAD
+    if
+    $SAVE_CAR_CREATED[LATEST_CAR_SLOT_USED] == 1
+    jf @TERRY_THREAD_FAILED_KETER_WRECKED    
+    if
+    not actor.Dead(PLAYER_ACTOR)
+    jf @TERRY_THREAD_FAILED_PLAYER_DEAD
+    if
+    056D:   actor $SURVIVER[0] defined
+    then                 
+    if 
+    not actor.Dead($SURVIVER[0]) 
+    jf @TERRY_THREAD_FAILED_TERRY_DEAD  
+    end    
+        
+    end
+    
+    marker.Disable(MISSION_MARKER)
+    if
+    TERRY_THREAD_CURRENT_DIALOG_INDEX == 4
+    then
+    MISSION_CHECKPOINT = marker.CreateIconAndSphere2(52, $TRADER_X[0],$TRADER_Y[0],$TRADER_Z[0])
+    end
+    
+    if
+    TERRY_THREAD_CURRENT_DIALOG_INDEX == 15
+    then
+    TERRY_THREAD_QUEST_MARKER = marker.CreateIconAndSphere2(95, 2123.7444, -2275.5356, 20.6719)
+    end 
+    
+    if
+    TERRY_THREAD_CURRENT_DIALOG_INDEX == 4
+    then       
+    v$OBJECTIVE = "STRB61" 
+    else
+    if
+    TERRY_THREAD_CURRENT_DIALOG_INDEX == 7
+        then
+        v$OBJECTIVE = "STRB62"
+        else
+        if
+        TERRY_THREAD_CURRENT_DIALOG_INDEX == 15
+            then                   
+            v$OBJECTIVE = "STRB66"
+            else
+            v$OBJECTIVE = "STRB64"
+            end
+        end
+    end
+    
+    $DIALOG_PAUSE = 0     
+       
+    end
+end    
+
+////////////////////////Первый диалог (двенадцать вольт)////////////////////////
+
+if and
+TERRY_THREAD_CURRENT_DIALOG_INDEX == 0
+32@ > 10000
+0@ == 0
+    then
+    TERRY_THREAD_CURRENT_DIALOG_INDEX = 1
+    $END_DIALOG_INST = 1
+    wait 0
+    v$ST_DIALOG[0] = "STRY225"
+    v$ST_DIALOG[1] = "STRY226"
+    v$ST_DIALOG[2] = "STRY227"
+    v$ST_DIALOG[3] = "STRY228"
+    v$ST_DIALOG[4] = "STRY229"
+    v$ST_DIALOG[5] = "STRY230"
+    v$ST_DIALOG[6] = "STRY231"
+    v$ST_DIALOG[7] = "STRY232"
+    v$ST_DIALOG[8] = "STRY233"
+    v$ST_DIALOG[9] = "STRY234"
+    $DIALOG_COUNT = 9
+    $DIALOG_NOT_SKIP = 1
+    create_thread @DG_SYS2
+    PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 1
+    CAMP_DONT_SAY_HELLO_FLAG = 1
+    $PHRASES_OFF_FLAG = 1
+    wait 0
+    end
+    
+if and
+TERRY_THREAD_CURRENT_DIALOG_INDEX == 1
+$DIALOG_END == 1
+    then
+    TERRY_THREAD_CURRENT_DIALOG_INDEX = 2
+    32@ = 0
+    PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 0
+    CAMP_DONT_SAY_HELLO_FLAG = 0
+    $PHRASES_OFF_FLAG = 0
+    else
+    if and
+    TERRY_THREAD_CURRENT_DIALOG_INDEX == 1
+    $DIALOG_END == 0
+        then
+        PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 1
+        CAMP_DONT_SAY_HELLO_FLAG = 1
+        $PHRASES_OFF_FLAG = 1
+        end
+    end
+    
+////////////////////////Второй диалог (про торговца)////////////////////////
+
+if and
+TERRY_THREAD_CURRENT_DIALOG_INDEX == 2
+32@ > 30000
+0@ == 0
+    then
+    TERRY_THREAD_CURRENT_DIALOG_INDEX = 3
+    $END_DIALOG_INST = 1
+    wait 0
+    v$ST_DIALOG[0] = "STR234"
+    v$ST_DIALOG[1] = "STR235"
+    v$ST_DIALOG[2] = "STR236"
+    $DIALOG_COUNT = 2
+    $DIALOG_NOT_SKIP = 1
+    create_thread @DG_SYS2
+    PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 1
+    CAMP_DONT_SAY_HELLO_FLAG = 1
+    $PHRASES_OFF_FLAG = 1
+    wait 0
+    end
+    
+if and
+TERRY_THREAD_CURRENT_DIALOG_INDEX == 3
+$DIALOG_END == 1
+    then
+    TERRY_THREAD_CURRENT_DIALOG_INDEX = 4
+    32@ = 0
+    PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 0
+    CAMP_DONT_SAY_HELLO_FLAG = 0
+    $PHRASES_OFF_FLAG = 0
+    v$OBJECTIVE = "STRB61"
+    MISSION_CHECKPOINT = marker.CreateIconAndSphere2(52, $TRADER_X[0],$TRADER_Y[0],$TRADER_Z[0])
+    CURRENT_USHER_TUTORIAL_NUM = 12
+    else
+    if and
+    TERRY_THREAD_CURRENT_DIALOG_INDEX == 3
+    $DIALOG_END == 0
+        then
+        PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 1
+        CAMP_DONT_SAY_HELLO_FLAG = 1
+        $PHRASES_OFF_FLAG = 1
+        end
+    end
+    
+if and
+056D:   actor $VERSUS_PEOPLE[0] defined
+TERRY_THREAD_CURRENT_DIALOG_INDEX == 4
+    then                
+        
+    if and
+    8A2A: not  text_box 'GAME331' displayed
+    8A2A: not  text_box 'TRDR120' displayed
+    8A2A: not  text_box 'TRDR60' displayed
+    8A2A: not  text_box 'TRDR94' displayed
+    SHOW_HINTS_FLAG == 1
+    then
+    text.ShowH('HINT39',10,1)
+    end
+    
+    if
+    CURRENT_USHER_TUTORIAL_NUM == 0
+        then
+        marker.Disable(MISSION_CHECKPOINT)
+        TERRY_THREAD_CURRENT_DIALOG_INDEX = 5
+        32@ = 0
+        end 
+        
+    else
+    
+    if and
+    0E3E: is_button_just_pressed 0 button 17
+    $CHEATS_ON == 1
+    TERRY_THREAD_CURRENT_DIALOG_INDEX == 4
+        then
+        actor.PutAtNoOffset(PLAYER_ACTOR,1873.3619, -1319.313, 19.4922)
+        actor.Angle(PLAYER_ACTOR) = 89.5947
+        camera.Restore_WithJumpCut()
+        create_thread @3D_REFR
+        $END_DIALOG_INST = 1
+             
+        0781: get_weapon_with_ID 76 model_to 1@
+    
+        while not model.Available(1@)
+        wait 0
+        model.Load(1@)
+        mload
+        end
+         
+        Actor.GiveWeaponAndAmmo(PLAYER_ACTOR, 76, 60)
+        
+        end     
+    
+    end  
+    
+////////////////////////Третий диалог (про "дай пожрать")////////////////////////
+
+if and
+TERRY_THREAD_CURRENT_DIALOG_INDEX == 5
+32@ > 15000
+not $FIST_HUD_ALWAYS == 1
+not $HUD_REMOVE == 1
+0@ == 0
+    then
+    $SURVIVOR_BANKA_COUNT[0] = 0
+    $SURVIVOR_BANKA_COUNT[1] = 0
+    $SURVIVOR_BANKA_COUNT[2] = 0
+    $SURVIVOR_BANKA_COUNT[3] = 0
+    $SURVIVOR_BANKA_COUNT[4] = 0
+    TERRY_THREAD_CURRENT_DIALOG_INDEX = 6
+    $END_DIALOG_INST = 1
+    wait 0
+    v$ST_DIALOG[0] = "STY236"    
+    $DIALOG_COUNT = 0
+    $DIALOG_NOT_SKIP = 1
+    create_thread @DG_SYS2
+    PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 1
+    CAMP_DONT_SAY_HELLO_FLAG = 1
+    $PHRASES_OFF_FLAG = 1
+    wait 0
+    end
+    
+if and
+TERRY_THREAD_CURRENT_DIALOG_INDEX == 6
+$DIALOG_END == 1
+    then    
+    TERRY_THREAD_CURRENT_DIALOG_INDEX = 7
+    32@ = 0
+    v$OBJECTIVE = "STRB62"
+    CURRENT_USHER_TUTORIAL_NUM = 13
+    PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 0
+    CAMP_DONT_SAY_HELLO_FLAG = 0 
+    $PHRASES_OFF_FLAG = 0
+    else
+    if and
+    TERRY_THREAD_CURRENT_DIALOG_INDEX == 6
+    $DIALOG_END == 0
+        then
+        PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 1
+        CAMP_DONT_SAY_HELLO_FLAG = 1
+        $PHRASES_OFF_FLAG = 1
+        end
+    end    
+    
+if and
+056D:   actor $SURVIVER[0] defined
+TERRY_THREAD_CURRENT_DIALOG_INDEX == 7
+    then        
+        
+    if and
+    8A2A: not  text_box 'INV8D' displayed
+    8A2A: not  text_box 'INV70B' displayed
+    8A2A: not  text_box 'INV70' displayed
+    SHOW_HINTS_FLAG == 1
+    then
+    text.ShowH('HINT40',10,1)
+    end
+    
+    if
+    CURRENT_USHER_TUTORIAL_NUM == 0    
+        then
+        v$OBJECTIVE = "DUMMY"
+        TERRY_THREAD_CURRENT_DIALOG_INDEX = 8
+        $END_DIALOG_INST = 1
+        wait 0
+        v$ST_DIALOG[0] = "STZ236"
+        v$ST_DIALOG[1] = "STX236"
+        $DIALOG_COUNT = 1
+        $DIALOG_NOT_SKIP = 1
+        create_thread @DG_SYS2
+        PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 1
+        CAMP_DONT_SAY_HELLO_FLAG = 1
+        $PHRASES_OFF_FLAG = 1
+        wait 0
+        end  
+    
+    end  
+    
+if and
+TERRY_THREAD_CURRENT_DIALOG_INDEX == 8
+$DIALOG_END == 1
+    then
+    TERRY_THREAD_CURRENT_DIALOG_INDEX = 9
+    32@ = 0
+    PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 0
+    CAMP_DONT_SAY_HELLO_FLAG = 0
+    $PHRASES_OFF_FLAG = 0
+    v$OBJECTIVE = "STRB64"   
+    else
+    if and
+    TERRY_THREAD_CURRENT_DIALOG_INDEX == 8
+    $DIALOG_END == 0
+        then
+        PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 1
+        CAMP_DONT_SAY_HELLO_FLAG = 1
+        $PHRASES_OFF_FLAG = 1
+        end
+    end 
+    
+////////////////////////Четвертый диалог (брошь, родители)////////////////////////
+
+if and
+TERRY_THREAD_CURRENT_DIALOG_INDEX == 9
+32@ > 180000
+0@ == 0
+    then
+    TERRY_THREAD_CURRENT_DIALOG_INDEX = 10
+    $END_DIALOG_INST = 1
+    wait 0
+    v$ST_DIALOG[0] = "STRY235"
+    v$ST_DIALOG[1] = "STRY236"
+    v$ST_DIALOG[2] = "STRY237"
+    v$ST_DIALOG[3] = "STRY238"
+    v$ST_DIALOG[4] = "STRY239"
+    v$ST_DIALOG[5] = "STRY240"
+    v$ST_DIALOG[6] = "DUMMY"
+    v$ST_DIALOG[7] = "DUMMY"
+    v$ST_DIALOG[8] = "DUMMY"
+    v$ST_DIALOG[9] = "STRY244"
+    v$ST_DIALOG[10] = "STRY245"
+    v$ST_DIALOG[11] = "STRY246"
+    v$ST_DIALOG[12] = "STRY247"
+    v$ST_DIALOG[13] = "STRY248"
+    v$ST_DIALOG[14] = "STRY249"
+    v$ST_DIALOG[15] = "STRY250"
+    v$ST_DIALOG[16] = "DUMMY"
+    v$ST_DIALOG[17] = "DUMMY"
+    v$ST_DIALOG[18] = "DUMMY"
+    v$ST_DIALOG[19] = "STRY254"
+    v$ST_DIALOG[20] = "STRY255"
+    $DIALOG_COUNT = 20
+    $DIALOG_NOT_SKIP = 1
+    create_thread @DG_SYS2
+    PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 1 
+    CAMP_DONT_SAY_HELLO_FLAG = 1
+    $PHRASES_OFF_FLAG = 1
+    wait 0                                 
+    end
+    
+if and
+TERRY_THREAD_CURRENT_DIALOG_INDEX == 10
+$DIALOG_END == 1
+    then
+    TERRY_THREAD_CURRENT_DIALOG_INDEX = 11
+    32@ = 0                     
+    PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 0
+    CAMP_DONT_SAY_HELLO_FLAG = 0
+    $PHRASES_OFF_FLAG = 0
+    else
+    if and
+    TERRY_THREAD_CURRENT_DIALOG_INDEX == 10
+    $DIALOG_END == 0
+        then
+        PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 1
+        CAMP_DONT_SAY_HELLO_FLAG = 1
+        $PHRASES_OFF_FLAG = 1
+        end
+    end 
+    
+////////////////////////Пятый диалог (Наталина Санти)////////////////////////
+
+if and
+TERRY_THREAD_CURRENT_DIALOG_INDEX == 11
+32@ > 120000
+0@ == 0
+    then
+    TERRY_THREAD_CURRENT_DIALOG_INDEX = 12
+    $END_DIALOG_INST = 1
+    wait 0
+    v$ST_DIALOG[0] = "STRY256"
+    v$ST_DIALOG[1] = "STRY257"
+    v$ST_DIALOG[2] = "STRY258"
+    v$ST_DIALOG[3] = "STRY259"
+    v$ST_DIALOG[4] = "STRY260"
+    v$ST_DIALOG[5] = "STRY261"
+    v$ST_DIALOG[6] = "STRY262"
+    v$ST_DIALOG[7] = "STRY263"
+    v$ST_DIALOG[8] = "STRY264"
+    v$ST_DIALOG[9] = "STRY265"
+    v$ST_DIALOG[10] = "STRY266"
+    v$ST_DIALOG[11] = "STRY267"
+    v$ST_DIALOG[12] = "STRY268"
+    v$ST_DIALOG[13] = "STRY269"
+    v$ST_DIALOG[14] = "STRY270"
+    v$ST_DIALOG[15] = "STRY271"
+    v$ST_DIALOG[16] = "STRY272"
+    v$ST_DIALOG[17] = "STRY273"
+    v$ST_DIALOG[18] = "STRY274"
+    v$ST_DIALOG[19] = "STRY275"
+    v$ST_DIALOG[20] = "STRY276"
+    v$ST_DIALOG[21] = "STRY277"
+    v$ST_DIALOG[22] = "STRY278"
+    v$ST_DIALOG[23] = "STRY279"
+    $DIALOG_COUNT = 23
+    $DIALOG_NOT_SKIP = 1
+    create_thread @DG_SYS2
+    PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 1
+    CAMP_DONT_SAY_HELLO_FLAG = 1
+    $PHRASES_OFF_FLAG = 1
+    wait 0
+    end
+    
+if and
+TERRY_THREAD_CURRENT_DIALOG_INDEX == 12
+$DIALOG_END == 1
+    then
+    TERRY_THREAD_CURRENT_DIALOG_INDEX = 13
+    32@ = 0
+    PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 0
+    CAMP_DONT_SAY_HELLO_FLAG = 0
+    $PHRASES_OFF_FLAG = 0
+    else
+    if and
+    TERRY_THREAD_CURRENT_DIALOG_INDEX == 12
+    $DIALOG_END == 0
+        then
+        PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 1
+        CAMP_DONT_SAY_HELLO_FLAG = 1
+        $PHRASES_OFF_FLAG = 1
+        end
+    end   
+    
+////////////////////////Шестой диалог (Возвращение на родину)////////////////////////
+
+if and
+TERRY_THREAD_CURRENT_DIALOG_INDEX == 13
+32@ > 200000
+0@ == 0       
+    then
+    TERRY_THREAD_CURRENT_DIALOG_INDEX = 14
+    $END_DIALOG_INST = 1
+    wait 0
+    v$ST_DIALOG[0] = "STRY293"
+    v$ST_DIALOG[1] = "STRY294"
+    v$ST_DIALOG[2] = "STRY295"
+    $DIALOG_COUNT = 2
+    $DIALOG_NOT_SKIP = 1
+    create_thread @DG_SYS2
+    PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 1
+    CAMP_DONT_SAY_HELLO_FLAG = 1
+    $PHRASES_OFF_FLAG = 1
+    wait 0
+    end
+    
+if and
+TERRY_THREAD_CURRENT_DIALOG_INDEX == 14
+$DIALOG_END == 1
+    then
+    TERRY_THREAD_CURRENT_DIALOG_INDEX = 15
+    v$OBJECTIVE = "STRB66"    
+    marker.Disable(TERRY_THREAD_QUEST_MARKER)
+    TERRY_THREAD_QUEST_MARKER = marker.CreateIconAndSphere2(95, 2123.7444, -2275.5356, 20.6719)
+    $QUEST_READY_FLAG = -113
+    32@ = 0
+    PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 0
+    CAMP_DONT_SAY_HELLO_FLAG = 0
+    $PHRASES_OFF_FLAG = 0
+    else
+    if and
+    TERRY_THREAD_CURRENT_DIALOG_INDEX == 14
+    $DIALOG_END == 0
+        then
+        PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 1
+        CAMP_DONT_SAY_HELLO_FLAG = 1
+        $PHRASES_OFF_FLAG = 1
+        end
+    end 
+    
+if and
+TERRY_THREAD_CURRENT_DIALOG_INDEX == 15
+PLAY_TALK_ACTOR < 1
+    then
+    if and
+    0E3E: is_button_just_pressed 0 button 17
+    $CHEATS_ON == 1
+        then
+        actor.PutAtNoOffset(PLAYER_ACTOR,2124.1841, -2275.676, 20.6719)
+        actor.Angle(PLAYER_ACTOR) = 71.8286
+        camera.Restore_WithJumpCut()
+        create_thread @3D_REFR
+        $END_DIALOG_INST = 1
+        end
+    else
+    if and
+    TERRY_THREAD_CURRENT_DIALOG_INDEX == 15
+    PLAY_TALK_ACTOR > 0
+    075C:   marker TERRY_THREAD_QUEST_MARKER enabled
+        then
+        marker.Disable(TERRY_THREAD_QUEST_MARKER)
+        end
+    end                                     
+
+end
+
+end_thread
+
+{$INCLUDE 3-4 - Двoйкa чаш.txt}
+{$INCLUDE 4-5 - Двойка жезлов.txt}
+
+:TERRY_THREAD_FAILED_LDEAD
+text.ClearAll()
+v$FAILED_TEXT = "MSFL105"
+$DELETE_SOUND = 1
+GAME_OVER_FLAG = 1
+create_thread @GMV_OVR
+end_thread
+
+:TERRY_THREAD_FAILED_AGRO
+text.ClearAll()
+v$FAILED_TEXT = "MS_FL5"
+$DELETE_SOUND = 1
+GAME_OVER_FLAG = 1
+create_thread @GMV_OVR
+end_thread
+
+:TERRY_THREAD_FAILED_PLAYER_DEAD
+text.ClearAll()
+v$FAILED_TEXT = "MS_FL80"
+$DELETE_SOUND = 1
+GAME_OVER_FLAG = 1
+create_thread @GMV_OVR
+end_thread
+
+:TERRY_THREAD_FAILED_TERRY_DEAD
+text.ClearAll()
+v$FAILED_TEXT = "MS_FL99"
+$DELETE_SOUND = 1
+GAME_OVER_FLAG = 1
+create_thread @GMV_OVR
+end_thread
+
+:TERRY_THREAD_FAILED_KETER_WRECKED
+text.ClearAll()
+v$FAILED_TEXT = "MS_FL98"
+$DELETE_SOUND = 1
+GAME_OVER_FLAG = 1
+create_thread @GMV_OVR
+end_thread
+
+:TERRY_THREAD_FAILED_WALK
+text.ClearAll()
+v$FAILED_TEXT = "MS_FL7"
+$DELETE_SOUND = 1
+GAME_OVER_FLAG = 1
+create_thread @GMV_OVR
+end_thread
+
+:TERRY_THREAD_CREATE_VICTORIA
+if
+model.Available(15590)
+then
+
+0674: set_car_model 15590 numberplate "MT2WH0L3"    
+TERRY_THREAD_VICTORIA = Car.Create(15590, 2174.415527, -2265.320313, 13.308066)
+car.Angle(TERRY_THREAD_VICTORIA) = 45.0
+    
+if
+model.Available(15590)
+then
+//model.Destroy(15590)
+end
+    
+else
+model.Load(15590)
+mload
+wait 0
+jump to @TERRY_THREAD_CREATE_VICTORIA
+end    
+    
+/////////////////////////////////////////
+
+008A: $USED_CAR[0] = TERRY_THREAD_VICTORIA // (int)
+$CAR_ENTERED[0] = 1
+$CAR_MARKER_CREATED[0] = 0
+$CAR_HINT_FLAG[0] = 0
+$SAVE_CAR_CREATED[0] = 1
+$SAVE_CAR_MODEL[0] = car.Model(TERRY_THREAD_VICTORIA)
+CAR_AUTOSAVED_EVER_FLAG = 1
+LATEST_CAR_SLOT_USED = 0
+
+03ED: set_car TERRY_THREAD_VICTORIA disable_flipped_explosion_when_empty 1              
+            
+////////////////////////////////////////////////////////////////
+0A97: 11@ = car TERRY_THREAD_VICTORIA struct 
+11@ += 9 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+08BD: set 12@ bit 2 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+0A97: 11@ = car TERRY_THREAD_VICTORIA struct 
+11@ += 4 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+08BD: set 12@ bit 1 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+24@ = 25.0 
+0A97: 22@ = car TERRY_THREAD_VICTORIA struct 
+0A8E: 23@ = 22@ + 5 // int 
+0A8C: write_memory 23@ size 4 value 24@ virtual_protect 0 
+08C3: clear 12@ bit 1 
+08C3: clear 12@ bit 2 
+0A97: 11@ = car TERRY_THREAD_VICTORIA struct 
+11@ += 18 
+0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0 
+08BD: set 12@ bit 2 
+0A8C: write_memory 11@ size 1 value 12@ virtual_protect 0 
+08C3: clear 12@ bit 2
+//////////////////////////////////////////////////////////////// 
+
+car.LockInCurrentPosition(TERRY_THREAD_VICTORIA,false) 
+
+if
+0E08: is_car_script_controlled TERRY_THREAD_VICTORIA
+then
+car.RemoveReferences(TERRY_THREAD_VICTORIA)
+end          
+
+return
+
+//////////////////////////////////////////////////////// 
+
+:FREEPLAY_DIALOG_DANGER_CHECK
+      
+0@ = 0
+
+if and
+$ARMY1_SPOTTED_FLAG == 1
+not $ARMY_DONT_ATTACK_PLAYER_FLAG == 1
+    then
+    
+    ///////////////////////////////////////////////
+    
+    for 1@ = 1 to 4
+    
+    if
+    056D:   actor $ARMY[1@] defined
+    then
+    if or
+    0364:   actor $ARMY[1@] spotted_actor PLAYER_ACTOR
+    0EE4: locate_char_distance_to_char $ARMY[1@] char PLAYER_ACTOR radius 30.0
+        then
+        0@ = 1
+        end
+    end
+    
+    end
+    
+    ///////////////////////////////////////////////
+    
+    end
+    
+if and
+$BANDITS1_SPOTTED_FLAG == 1
+not $BANDITS_DONT_ATTACK_PLAYER_FLAG == 1
+    then
+    
+    ///////////////////////////////////////////////
+    
+    for 1@ = 1 to 4
+    
+    if
+    056D:   actor $BANDIT[1@] defined
+    then
+    if or
+    0364:   actor $BANDIT[1@] spotted_actor PLAYER_ACTOR
+    0EE4: locate_char_distance_to_char $BANDIT[1@] char PLAYER_ACTOR radius 30.0
+        then
+        0@ = 1
+        end
+    end
+    
+    end
+    
+    ///////////////////////////////////////////////
+    
+    end
+    
+if
+$FERMERS1_DAMAGE_FLAG == 1
+    then
+    
+    ///////////////////////////////////////////////
+    
+    for 1@ = 1 to 4
+    
+    if
+    056D:   actor $FERMER[1@] defined
+    then
+    if or
+    0364:   actor $FERMER[1@] spotted_actor PLAYER_ACTOR
+    0EE4: locate_char_distance_to_char $FERMER[1@] char PLAYER_ACTOR radius 30.0
+        then
+        0@ = 1
+        end
+    end
+    
+    end
+    
+    ///////////////////////////////////////////////
+    
+    end
+    
+if
+$SWATS1_DAMAGE_FLAG == 1
+    then
+    
+    ///////////////////////////////////////////////
+    
+    for 1@ = 1 to 4
+    
+    if
+    056D:   actor $SWAT[1@] defined
+    then
+    if or
+    0364:   actor $SWAT[1@] spotted_actor PLAYER_ACTOR
+    0EE4: locate_char_distance_to_char $SWAT[1@] char PLAYER_ACTOR radius 30.0
+        then
+        0@ = 1
+        end
+    end
+    
+    end
+    
+    ///////////////////////////////////////////////
+    
+    end
+    
+if
+$HUNTER_SPAWNED == 1
+    then
+    
+    for 1@ = 0 to 19
+    if
+    056D:   actor $HUNTER[1@] defined
+        then
+        if or
+        0364:   actor $HUNTER[1@] spotted_actor PLAYER_ACTOR
+        0EE4: locate_char_distance_to_char $HUNTER[1@] char PLAYER_ACTOR radius 120.0
+            then
+            0@ = 1
+            end
+        end
+    end
+    
+    end
+    
+if
+$TANK_SPAWNED == 1
+    then
+    
+    for 1@ = 0 to 19
+    if
+    056D:   actor $TANK[1@] defined
+        then
+        if or
+        0364:   actor $TANK[1@] spotted_actor PLAYER_ACTOR
+        0EE4: locate_char_distance_to_char $TANK[1@] char PLAYER_ACTOR radius 150.0
+            then
+            0@ = 1
+            end
+        end
+    end
+    
+    end
+    
+if
+$WITCH_SPAWNED == 1
+    then
+    
+    for 1@ = 0 to 19
+    if
+    056D:   actor $WITCH[1@] defined
+        then
+        
+        if
+        $WTH_AGRED_FLAG[1@] == 0
+        then
+        
+        if
+        $WITCH_NEAR == 1
+            then
+            0@ = 1
+            end
+            
+        else
+        
+        if or
+        0364:   actor $WITCH[1@] spotted_actor PLAYER_ACTOR
+        0EE4: locate_char_distance_to_char $WITCH[1@] char PLAYER_ACTOR radius 150.0
+            then
+            0@ = 1
+            end
+        
+        end    
+            
+        end
+    end
+    
+    end
+    
+if
+$CHARGER_SPAWNED == 1
+    then
+    
+    for 1@ = 0 to 19
+    if
+    056D:   actor $CHARGER[1@] defined
+        then
+        if or
+        0364:   actor $CHARGER[1@] spotted_actor PLAYER_ACTOR
+        0EE4: locate_char_distance_to_char $CHARGER[1@] char PLAYER_ACTOR radius 30.0
+            then
+            0@ = 1
+            end
+        end
+    end
+    
+    end
+    
+if
+$SURV_IN_CAR_FLAG1 == 1
+    then
+    if
+    056D:   actor $SURV_IN_CAR defined
+        then
+        if or
+        0364:   actor $SURV_IN_CAR spotted_actor PLAYER_ACTOR
+        0EE4: locate_char_distance_to_char $SURV_IN_CAR char PLAYER_ACTOR radius 60.0
+            then
+            0@ = 1
+            end
+        end
+    end                                
+
+if or
+$ZOMBIES_HORDE == 1
+PLAYER_IN_NEST_FLAG == 1
+$ENEMY_ZONE_IN == 1
+$CAMP_AGRED_FLAG2 == 1
+PLAYER_IN_CANALS_FLAG == 1
+BASE_TEAMMATE_AGRED == 1
+not BCAMP_AGRED_FLAG == 0
+CAMP_RAID_FLAG == 1
+    then
+    0@ = 1
+    end
+    
+if or
+PLAYER_LCVC_DROWNING_FLAG == 1
+HUNGER_DAMAGE_COUNTER > 3
+$FATIGUE_STATUS == 1
+PLAYER_FALLING_FLAG == 1
+$PLAYER_BLEEDING == 1
+$ACTOR_BURNING_FLAG == 1
+HARDCORE_DANGER_FLAG_SCRIPTED == 1
+    then
+    0@ = 1
+    end    
+    
+///////////////////////////////////////////    
+
+if
+$SAVEPLACE_ON == 0
+then
+    
+2@ = 0
+
+for 3@ = 0 to 19
+
+if and
+$ZOMBIE_NEAR[3@] == 1
+$ZMB_SPOTTED_FLAG[3@] == 1
+then
+2@ += 1
+end
+
+end
+
+if
+2@ > 0
+    then
+    0@ = 1
+    end
+    
+if
+$CLOWN_SPANWED == 1
+    then
+    0@ = 1
+    end    
+    
+end    
+    
+///////////////////////////////////////////        
+    
+if or
+ARMY_HELI_CHASE_FLAG == 1
+BANDIT_HELI_CHASE_FLAG == 1
+    then
+    0@ = 1
+    end
+    
+if or
+ARMY_RHINO_CHASE_FLAG == 1
+$PLAYER_DYING == 1
+    then
+    0@ = 1
+    end        
+
+return
+
+:FREEPLAY_SAVE_CHECK
+
+if or
+$KANISTRA_USING == 1
+$JIMMY_USING == 1
+then
+if and
+not TERRY_THREAD_CAR_SHIT_FLAG == 1
+SHOW_HINTS_FLAG == 1 
+    then
+    if
+    actor.Animation(PLAYER_ACTOR) == "car_check"
+        then 
+        wait 1500 
+        text.RemoveTextBox()
+        text.ShowTextBox('HINT52')
+        TERRY_THREAD_CAR_SHIT_FLAG = 1
+        end
+    end
+end
+
+while $SOUND_OFF_1 == 1
+wait 0
+
+$DIALOG_PAUSE = 1
+
+/////////////////////Плавное затухание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int)
+$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1
+
+while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+wait 0
+end
+
+repeat
+wait 0
+until $SAVING_DELAY == 1
+
+repeat
+wait 0
+until $SAVING_DELAY == 0
+
+0776: create_objects_in_object_group "usher_h"
+
+0652: 0@ = integer_stat 258
+if
+0@ == -2
+then
+$MUSIC_MISSION = Audiostream.Load("audio\sounds\music\usher_music\freeplay1.wav")
+end
+
+if
+0@ == -3
+then
+$MUSIC_MISSION = Audiostream.Load("audio\sounds\music\usher_music\freeplay2.wav")
+end
+
+if
+0@ == -4
+then
+$MUSIC_MISSION = Audiostream.Load("audio\sounds\music\usher_music\freeplay3.wav")
+
+if
+TERRY_THREAD_CURRENT_DIALOG_INDEX == 9
+then
+0776: create_objects_in_object_group "melsang"
+end
+
+end
+
+Audiostream.PerformAction($MUSIC_MISSION, PLAY)
+Audiostream.Loop($MUSIC_MISSION, 1)
+Audiostream.Volume($MUSIC_MISSION) = 0.0
+
+/////////////////////Плавное нарастание/////////////////////
+
+$MUSIC_FADE_NUMBER += 1
+if
+$MUSIC_FADE_NUMBER > 4
+    then
+    $MUSIC_FADE_NUMBER = 0 
+    end    
+
+0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int) 
+0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+
+$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+create_thread @MUS_FAD
+
+wait 1 
+
+////////////////////////////////////////////////////////
+
+$DIALOG_PAUSE = 0
+
+end
+
+return
+
+:INFECTED_AREA_TERRY_TALK_CHECK
+
+if and
+0@ == 1
+PLAYER_IN_NEST_FLAG == 1
+    then
+    if
+    0E45: frame_mod 90    
+        then        
+        random_int 2@ 1 12       
+        0AD3: v$CPHRASE3 = format "SHITH%d" 2@
+        09FD: get_gxt_string v$CPHRASE3 width_to 2@
+        0093: 2@ = integer 2@ to_float
+        2@ *= 8.0
+        0092: 2@ = float 2@ to_integer 
+        00BC: show_text_highpriority GXT v$CPHRASE3 time 2@ flag 1
+        
+        ////////////////////////////////////////////////////////////////////
+        
+        32@ = 0
+    
+        $PHRASES_OFF_FLAG = 1                               
+                        
+        repeat
+        wait 0                                  
+                                     
+        00BC: show_text_highpriority GXT v$CPHRASE3 time 1500 flag 1        
+                        
+        if or
+        $SAVESTATUS_TRUE == 1
+        $SAVESTATUS == 1
+        $PANEL_OPEN == 1
+        GAME_OVER_FLAG == 1
+            then
+            $PHRASES_OFF_FLAG = 0
+            break
+            end            
+                        
+        until 002D:   32@ >= 2@  // (int)
+        
+        if and
+        $FIST_HUD_ALWAYS == 1
+        $PANEL_OPEN == 1
+        then
+        else                
+        $PHRASES_OFF_FLAG = 0
+        end
+        
+        ////////////////////////////////////////////////////////////////////
+               
+        end
+    end
+    
+return    

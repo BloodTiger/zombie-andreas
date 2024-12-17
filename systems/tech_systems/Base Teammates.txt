@@ -50,6 +50,8 @@ end
 008B: BASE_TEAMMATES_NUMBER = BASE_TEAMMATES_NUMBER_GIVE // (int)
 008B: BASE_TEMMATE_CAMP_FLAG = BASE_TEMMATE_CAMP_FLAG_GIVE // (int)
 008B: BASE_TEMMATE_CREATE_WITH_FADE = BASE_TEMMATE_CREATE_WITH_FADE_GIVE // (int)
+//0AD1: show_formatted_text_highpriority "ENTERING BASE NUMBER %d" time 2000 BASE_TEAMMATES_NUMBER_GIVE
+//wait 2000
 
 if and
 MCS_FLAG == 1
@@ -66,7 +68,8 @@ $HUD_REMOVE = 1
 wait 500
 
 actor.StorePos(PLAYER_ACTOR,1@,2@,3@)
-0980: extinguish_all_fires_at 1@ 2@ 3@ radius 200.0
+0980: extinguish_all_fires_at 1@ 2@ 3@ radius 300.0
+0395: clear_area 1 at 1@ 2@ 3@ radius 300.0
 00BF: 0@ = current_time_hours, 1@ = current_time_minutes
 0@ += 2
 
@@ -184,9 +187,7 @@ Actor.WeaponAccuracy($ARMY69_2[0@]) = 95
 07DD: set_actor $ARMY69_2[0@] attack_rate 80 // previously known as temper_to
 0350: set_actor $ARMY69_2[0@] maintain_position_when_attacked 1
 0816: set_actor $ARMY69_2[0@] dont_chase_victim 1
-0856: set_actor $ARMY69_2[0@] enable_crouch 0
-0E24: fix_char $ARMY69_2[0@] ground 1 brightness DO_ACTORS_BRIGHT_CORR and_fade_in 1
-0D10: set_actor $ARMY69_2[0@] alpha 255 // IF and SET  
+0856: set_actor $ARMY69_2[0@] enable_crouch 0  
 
 create_thread @PED_BKP $ARMY69_2[0@] 371
 
@@ -222,74 +223,6 @@ end
 
 087E: set_actor $ARMY69_2[0@] weapon_droppable 0
 
-2@ = 30
-3@ = 40
-
-if
-$MONTHS_PASSED > 0
-    then
-    008B: 1@ = $MONTHS_PASSED // (int)
-    1@ *= 5
-    
-    if
-    $MONTHS_PASSED >= 2
-    then
-    1@ -= 20
-    end
-    
-    0062: 2@ -= 1@  // (int)
-    0062: 3@ -= 1@  // (int)
-    
-    if
-    2@ < 5
-    then
-    2@ = 5
-    end
-    
-    if
-    3@ < 5
-    then
-    3@ = 5
-    end
-                   
-    end
-
-if
-BASE_TEMMATE_CAMP_FLAG == 0
-then
-
-if and
-0E4D: random_percent 2@
-not $GAMEMODE_WAR == 1
-not MCS_FLAG == 1
-not USHER_STORY_FLAG == 1
-    then
-    0337: set_actor $ARMY69_2[0@] visibility 0
-    0619: enable_actor $ARMY69_2[0@] collision_detection 0
-    04C4: store_coords_to 1@ 2@ 3@ from_actor $ARMY69_2[0@] with_offset 0.0 0.0 1000.0
-    actor.PutAtNoOffset($ARMY69_2[0@],1@,2@,3@)
-    actor.LockInCurrentPosition($ARMY69_2[0@],true)
-    018B: set_marker $ARMY69_2_MARKER[0@] radar_mode 0
-    end
-
-else
-
-if and
-0E4D: random_percent 3@
-not $GAMEMODE_WAR == 1
-not MCS_FLAG == 1
-not USHER_STORY_FLAG == 1
-    then
-    0337: set_actor $ARMY69_2[0@] visibility 0
-    0619: enable_actor $ARMY69_2[0@] collision_detection 0
-    04C4: store_coords_to 1@ 2@ 3@ from_actor $ARMY69_2[0@] with_offset 0.0 0.0 1000.0
-    actor.PutAtNoOffset($ARMY69_2[0@],1@,2@,3@)
-    actor.LockInCurrentPosition($ARMY69_2[0@],true)
-    018B: set_marker $ARMY69_2_MARKER[0@] radar_mode 0
-    end
-
-end 
-
 end
 
 ///////////////////////////////////////
@@ -319,7 +252,13 @@ random_int $ZONE_CHARGER_TIMER2 ZONE_CHARGER_TIMER_MIN ZONE_CHARGER_TIMER_MAX
 if
 BASE_TEMMATE_CREATE_WITH_FADE == 1
 then
+actor.StorePos(PLAYER_ACTOR,1@,2@,3@)
+0980: extinguish_all_fires_at 1@ 2@ 3@ radius 300.0
+0395: clear_area 1 at 1@ 2@ 3@ radius 300.0
 wait 500
+actor.StorePos(PLAYER_ACTOR,1@,2@,3@)
+0980: extinguish_all_fires_at 1@ 2@ 3@ radius 300.0
+0395: clear_area 1 at 1@ 2@ 3@ radius 300.0
 fade 1 500
 $HUD_REMOVE = 0
 wait 500
@@ -431,21 +370,23 @@ if and
 $FREEMODE == 1
 BASE_TEAMMATE_AGRED == 0
 $GAMEMODE_WAR == 0
-not $GAMEMODE_VERSUS == 1   
+not $GAMEMODE_STORYLINE == 1   
 $PANEL_OPEN == 0
 not actor.Driving(PLAYER_ACTOR)
-not LADDER_ON_MARKER_FLAG == 1    
+not LADDER_ON_MARKER_FLAG == 1
+TBASE_CREATED_FLAG == 1    
     then
     
     1@ = 0
     
     for 0@ = 0 to BASE_TEAMMATES_ACTOR_COUNT    
     
-    if
+    if and
     075C:   marker $ARMY69_2_MARKER[0@] enabled
+    056D:   actor $ARMY69_2[0@] defined
         then
         if and
-        0104:   actor PLAYER_ACTOR near_actor $ARMY69_2[0@] radius 3.0 3.0 1.0 sphere 0
+        0104:   actor PLAYER_ACTOR near_actor $ARMY69_2[0@] radius 1.5 1.5 1.0 sphere 0
         0364:   actor $ARMY69_2[0@] spotted_actor PLAYER_ACTOR
         89DE: not  actor PLAYER_ACTOR entering_car
         PLAYER_CANT_SPEAK_WITH_LEADER_FLAG == 0
@@ -514,10 +455,29 @@ not LADDER_ON_MARKER_FLAG == 1
             
             gosub @BARTER_CHECK
             
+            if or
+            actor.Dead(PLAYER_ACTOR)
+            actor.Dead($ARMY69_2[0@])
+            $SAVESTATUS_TRUE == 1
+            $HUNTER_ON_PLAYER == 1
+            then
+            4@ = 2
+            end
+            
+            if
+            not 4@ == 2
+            then
             $FIST_HUD_ALWAYS = 0
             fade 0 400
             $HUD_REMOVE = 1
-            wait 400 
+            wait 400
+            else
+            $FIST_HUD_ALWAYS = 0
+            fade 0 100
+            $HUD_REMOVE = 1
+            wait 100
+            end  
+             
             text.ClearAll()
             cinema.Widescreen(0) 
             05BF: AS_actor PLAYER_ACTOR look_at_actor $ARMY69_2[0@] 1 ms
@@ -551,9 +511,13 @@ not LADDER_ON_MARKER_FLAG == 1
             05D4: AS_actor $ARMY69_2[0@] rotate_angle 6@
             end
             
+            if
+            not $SAVESTATUS_TRUE == 1
+            then
             fade 1 400
             $HUD_REMOVE = 0  
-            wait 400
+            wait 400            
+            end
             
             actor.SetImmunities($ARMY69_2[0@],0,0,0,0,0)
             cinema.Radar(1)
@@ -735,6 +699,10 @@ if
     if or
     0E3E: is_button_just_pressed 0 button 10
     0E3E: is_button_just_pressed 0 button 15
+    actor.Dead(PLAYER_ACTOR)
+    actor.Dead($ARMY69_2[0@])
+    $SAVESTATUS_TRUE == 1
+    $HUNTER_ON_PLAYER == 1
         then
         text.ClearAll()        
         break
@@ -782,6 +750,10 @@ if
     if or
     0E3E: is_button_just_pressed 0 button 10
     0E3E: is_button_just_pressed 0 button 15
+    actor.Dead(PLAYER_ACTOR)
+    actor.Dead($ARMY69_2[0@])
+    $SAVESTATUS_TRUE == 1
+    $HUNTER_ON_PLAYER == 1
         then
         text.ClearAll()        
         break
@@ -829,6 +801,10 @@ if
     if or
     0E3E: is_button_just_pressed 0 button 10
     0E3E: is_button_just_pressed 0 button 15
+    actor.Dead(PLAYER_ACTOR)
+    actor.Dead($ARMY69_2[0@])
+    $SAVESTATUS_TRUE == 1
+    $HUNTER_ON_PLAYER == 1
         then
         text.ClearAll()        
         break
@@ -876,6 +852,10 @@ if
     if or
     0E3E: is_button_just_pressed 0 button 10
     0E3E: is_button_just_pressed 0 button 15
+    actor.Dead(PLAYER_ACTOR)
+    actor.Dead($ARMY69_2[0@])
+    $SAVESTATUS_TRUE == 1
+    $HUNTER_ON_PLAYER == 1
         then
         text.ClearAll()        
         break
@@ -923,6 +903,10 @@ if
     if or
     0E3E: is_button_just_pressed 0 button 10
     0E3E: is_button_just_pressed 0 button 15
+    actor.Dead(PLAYER_ACTOR)
+    actor.Dead($ARMY69_2[0@])
+    $SAVESTATUS_TRUE == 1
+    $HUNTER_ON_PLAYER == 1
         then
         text.ClearAll()        
         break
@@ -970,6 +954,10 @@ if
     if or
     0E3E: is_button_just_pressed 0 button 10
     0E3E: is_button_just_pressed 0 button 15
+    actor.Dead(PLAYER_ACTOR)
+    actor.Dead($ARMY69_2[0@])
+    $SAVESTATUS_TRUE == 1
+    $HUNTER_ON_PLAYER == 1
         then
         text.ClearAll()        
         break
@@ -1058,8 +1046,11 @@ return
 
 :BASE_TEAMMATES_CREATE
 
-if
+28@ = -1
+
+if or
 USHER_STORY_FLAG == 1
+$GAMEMODE_EDITOR == 1
 then
 
 if
@@ -1213,6 +1204,8 @@ return
 ///////////////////////////////////////////////////////////////////////
 
 :BASE_TEAMMATES_CREATE_CAMP
+
+28@ = -1
 
 0084: $CAMP_ACTOR_TOTAL2 = $CAMP_ACTOR_TOTAL[BASE_TEAMMATES_NUMBER] // (int)
 $CAMP_ACTOR_TOTAL2 -= 1
@@ -3740,7 +3733,7 @@ model.Load(0@)
 mload
 end
   
-$ARMY69_2[2] = actor.Create(BASE_TEMMATE_PEDTYPE,0@,1058.0928, 1282.2505, 9.8203)
+$ARMY69_2[2] = actor.Create(BASE_TEMMATE_PEDTYPE,0@,1058.0928, 1284.2505, 9.8203)
 actor.Angle($ARMY69_2[2]) = 270.8017
 
 gosub @RANDOM_BASE_TEAMMATE_CHECKING_MODEL
@@ -11110,7 +11103,7 @@ BASE_TEAMMATES_TYPE == 0
     then
     
     while true
-    wait 0
+//    wait 0
     
     if
     0E4D: random_percent NEWSKINS2_GEN_PERCENT
@@ -11120,11 +11113,11 @@ BASE_TEAMMATES_TYPE == 0
     random_int 0@ $MIN_SKIN $MAX_SKIN
     end
     
-    if
-    not model.Available(0@)
-    then
-    model.Load(0@)
-    end
+//    if
+//    not model.Available(0@)
+//    then
+//    model.Load(0@)
+//    end
     
     if or
     003C:   $RANDOM_MODE_MODEL == 0@  // (int)
@@ -11140,6 +11133,13 @@ BASE_TEAMMATES_TYPE == 0
         end
     
     end
+    
+    if
+    056D:   actor $ARMY69_2[28@] defined
+    then
+    gosub @RANDOM_BASE_REMOVE_ONE_NOMAD_CHECK
+    end
+    28@ += 1
     
     return
     end
@@ -11338,7 +11338,94 @@ if
 not 1@ == 1
 jf @RANDOM_BASE_TEAMMATE_CHECKING_MODEL
 end   
+
+if
+056D:   actor $ARMY69_2[28@] defined
+then
+gosub @RANDOM_BASE_REMOVE_ONE_NOMAD_CHECK
+end
+28@ += 1
   
+return   
+
+:RANDOM_BASE_REMOVE_ONE_NOMAD_CHECK
+
+2@ = 30
+3@ = 40
+
+if
+$MONTHS_PASSED > 0
+    then
+    008B: 1@ = $MONTHS_PASSED // (int)
+    1@ *= 5
+    
+    if
+    $MONTHS_PASSED >= 2
+    then
+    1@ -= 20
+    end
+    
+    0062: 2@ -= 1@  // (int)
+    0062: 3@ -= 1@  // (int)
+    
+    if
+    2@ < 5
+    then
+    2@ = 5
+    end
+    
+    if
+    3@ < 5
+    then
+    3@ = 5
+    end
+                   
+    end
+
+if
+BASE_TEMMATE_CAMP_FLAG == 0
+then
+
+if and
+0E4D: random_percent 2@
+not $GAMEMODE_WAR == 1
+not MCS_FLAG == 1
+not USHER_STORY_FLAG == 1
+not $GAMEMODE_EDITOR == 1
+    then
+    0337: set_actor $ARMY69_2[28@] visibility 0
+    0619: enable_actor $ARMY69_2[28@] collision_detection 0
+    04C4: store_coords_to 1@ 2@ 3@ from_actor $ARMY69_2[28@] with_offset 0.0 0.0 1000.0
+    actor.PutAtNoOffset($ARMY69_2[28@],1@,2@,3@)
+    actor.LockInCurrentPosition($ARMY69_2[28@],true)
+    018B: set_marker $ARMY69_2_MARKER[28@] radar_mode 0
+    else
+    0E24: fix_char $ARMY69_2[28@] ground 1 brightness DO_ACTORS_BRIGHT_CORR and_fade_in 1
+    0D10: set_actor $ARMY69_2[28@] alpha 255 // IF and SET
+    end
+
+else
+
+if and
+0E4D: random_percent 3@
+not $GAMEMODE_WAR == 1
+not MCS_FLAG == 1
+not USHER_STORY_FLAG == 1
+not $GAMEMODE_EDITOR == 1
+    then
+    0337: set_actor $ARMY69_2[28@] visibility 0
+    0619: enable_actor $ARMY69_2[28@] collision_detection 0
+    04C4: store_coords_to 1@ 2@ 3@ from_actor $ARMY69_2[28@] with_offset 0.0 0.0 1000.0
+    actor.PutAtNoOffset($ARMY69_2[28@],1@,2@,3@)
+    actor.LockInCurrentPosition($ARMY69_2[28@],true)
+    018B: set_marker $ARMY69_2_MARKER[28@] radar_mode 0
+    else
+    0E24: fix_char $ARMY69_2[28@] ground 1 brightness DO_ACTORS_BRIGHT_CORR and_fade_in 1
+    0D10: set_actor $ARMY69_2[28@] alpha 255 // IF and SET
+    end
+
+end 
+
 return
 
 ////////////////////////Вычисление оружия////////////////////////
@@ -13241,6 +13328,11 @@ else
 
 0AB9: get_mp3 CAMP_RD_SND state_to 1@
 random_int 2@ 0 20000
+if
+0E46: is_char_using_gun $ARMY69_2[0@]
+then
+2@ = 10000
+end
 
 if or
 1@ == -1
@@ -13276,6 +13368,7 @@ not actor.Dead($ARMY69_2[0@])
 CAMP_RD_NUM == -1
 87D6: not  0@ == CAMP_RD_NUM // @ == $ (int)
 82D8: not  actor $ARMY69_2[0@] current_weapon == 34
+8E46: not is_char_using_gun $ARMY69_2[0@]
 then
 
 while not model.Available(#CELLPHONE)
@@ -13297,6 +13390,13 @@ end
 random_int 1@ 0 2000
 if and
 BASE_TEAMMATE_AGRED == 1
+not CAMP_RD_NUM == -1
+then
+1@ = 500
+end
+
+if and
+0E46: is_char_using_gun $ARMY69_2[0@]
 not CAMP_RD_NUM == -1
 then
 1@ = 500

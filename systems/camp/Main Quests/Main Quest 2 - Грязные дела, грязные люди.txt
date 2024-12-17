@@ -3108,7 +3108,7 @@ MISSION_MARKER = marker.CreateAboveCar(SUPPLY_QUEST_TRUCK)
 //////////////////////////////////////////////////////////////////
 
 repeat
-wait 0
+wait 0    
 
 if
 not actor.Dead(PLAYER_ACTOR)
@@ -3161,19 +3161,20 @@ $END_DIALOG_INST = 1
 
 //////////////////////////////////////////////////////////////////
 
-if and
-89DE: not  actor PLAYER_ACTOR entering_car
-not actor.InCar(MAIN_QUEST2_ACTOR,SUPPLY_QUEST_TRUCK)
-then
-$HUD_REMOVE = 1
-fade 0 500
-wait 500
-0430: put_actor MAIN_QUEST2_ACTOR into_car SUPPLY_QUEST_TRUCK passenger_seat 0
-wait 100
-$HUD_REMOVE = 0
-fade 1 500
-wait 500
-end
+//if and
+//89DE: not  actor PLAYER_ACTOR entering_car
+//89DE: not  actor MAIN_QUEST2_ACTOR entering_car
+//not actor.InCar(MAIN_QUEST2_ACTOR,SUPPLY_QUEST_TRUCK)
+//then
+//$HUD_REMOVE = 1
+//fade 0 500
+//wait 500
+//0430: put_actor MAIN_QUEST2_ACTOR into_car SUPPLY_QUEST_TRUCK passenger_seat 0
+//wait 100
+//$HUD_REMOVE = 0
+//fade 1 500
+//wait 500
+//end
 
 v$OBJECTIVE = "GAME617"
 0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
@@ -3187,23 +3188,26 @@ marker.SetIconSize(MISSION_MARKER,2)
 //////////////////////////////////////////////////////////////////
 
 32@ = 0
+0713: actor MAIN_QUEST2_ACTOR driveby_actor $RNDM_HOUSE_WEAPON[42] car -1 point 0.0 0.0 0.0 radius 3000.0 8 1 firing_rate 100
 
 repeat
 wait 0
 
+$PEOPLE_DONT_ATTACK = 2
+
 if
 $CHEATS_ON == 1
 then
-0683: attach_car SUPPLY_QUEST_TRUCK to_car $MISSION_CAR1 with_offset 0.0 -10.0 0.0 rotation 0.0 0.0 0.0
-end
-
-if and
-32@ > 1000
-100@ == 1
+08C6: set_actor PLAYER_ACTOR stay_on_bike 1
+08C6: set_actor MAIN_QUEST2_ACTOR stay_on_bike 1
+0683: attach_car SUPPLY_QUEST_TRUCK to_car $MISSION_CAR1 with_offset 0.0 -10.0 1.0 rotation 0.0 0.0 0.0
+else
+if
+0686:   car SUPPLY_QUEST_TRUCK attached
     then
-    32@ = 0
-    0713: actor MAIN_QUEST2_ACTOR driveby_actor $RNDM_HOUSE_WEAPON[42] car -1 point 0.0 0.0 0.0 radius 3000.0 8 1 firing_rate 100
+    0684: detach_car SUPPLY_QUEST_TRUCK 0.0 0.0 0.0 collision_detection 1
     end
+end
     
 if and
 100@ == 0
@@ -3220,6 +3224,76 @@ if and
     06FD: set_car $MISSION_CAR1 speed_on_path_to $MISSION19_PATH_SPEED
     create_thread @CAR_SP2 0 SUPPLY_QUEST_TRUCK
     end
+
+if
+056E:   car SUPPLY_QUEST_TRUCK defined
+then    
+if or
+not actor.InCar(PLAYER_ACTOR,SUPPLY_QUEST_TRUCK)
+not actor.InCar(MAIN_QUEST2_ACTOR,SUPPLY_QUEST_TRUCK)
+    then
+    $DIALOG_PAUSE = 1
+    v$OBJECTIVE = "GAME666"
+    0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+    $SOUNDS_VOLUME3 *= 0.5
+    Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+    Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+    Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+    
+    MISSION_CHECKPOINT = marker.CreateAboveCar(SUPPLY_QUEST_TRUCK)
+    07E0: set_marker MISSION_CHECKPOINT type_to 1
+    $PEOPLE_DONT_ATTACK = 0
+    
+    ///////////////////////////////////////////////////////////////////
+    
+    while true
+    wait 0
+    
+    if
+    not actor.Dead(PLAYER_ACTOR)
+    jf @MAIN_QUEST2_FAILED_PLAYER_DIED
+    if
+    $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+    jf @MAIN_QUEST2_FAILED_AGRO
+    if
+    803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+    jf @MAIN_QUEST2_FAILED_LDEAD
+    
+    if
+    0184:   actor MAIN_QUEST2_ACTOR health > 0
+    jf @MAIN_QUEST2_FAILED_DEAD2
+    
+    if
+    056E:   car SUPPLY_QUEST_TRUCK defined
+        then
+        if and
+        actor.InCar(PLAYER_ACTOR,SUPPLY_QUEST_TRUCK)   
+        actor.InCar(MAIN_QUEST2_ACTOR,SUPPLY_QUEST_TRUCK)
+            then
+            marker.Disable(MISSION_CHECKPOINT)
+            v$OBJECTIVE = "GAME617"
+            0086: $SOUNDS_VOLUME3 = $SOUNDS_VOLUME // (float)
+            $SOUNDS_VOLUME3 *= 0.5
+            Audiostream.Volume($MENU_SCIFI_SOUND) = $SOUNDS_VOLUME3 
+            Audiostream.Loop($MENU_SCIFI_SOUND, 0)
+            Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
+            $PEOPLE_DONT_ATTACK = 2
+            0713: actor MAIN_QUEST2_ACTOR driveby_actor $RNDM_HOUSE_WEAPON[42] car -1 point 0.0 0.0 0.0 radius 3000.0 8 1 firing_rate 100
+            $DIALOG_PAUSE = 0
+            break
+            end
+        else
+        jump to @MAIN_QUEST2_FAILED_BIKE
+        end
+    
+    end
+    
+    ///////////////////////////////////////////////////////////////////
+    
+    end
+else
+jump to @MAIN_QUEST2_FAILED_BIKE
+end    
 
 if
 not actor.Dead(PLAYER_ACTOR)
@@ -3249,6 +3323,7 @@ end
 
 until 0@ < 2.0
 
+$PEOPLE_DONT_ATTACK = 0
 05EC: release_car $MISSION_CAR1 from_path
 020B: explode_car $MISSION_CAR1
 //05BE: AS_actor $RNDM_HOUSE_WEAPON[42] die
@@ -3508,8 +3583,9 @@ if
     if
     not car.Wrecked(SUPPLY_QUEST_TRUCK)
     jf @MAIN_QUEST2_FAILED_BIKE
-    if
+    if and
     actor.InCar(PLAYER_ACTOR,SUPPLY_QUEST_TRUCK)
+    actor.InCar(MAIN_QUEST2_ACTOR,SUPPLY_QUEST_TRUCK)
         then
         marker.Disable(MISSION_MARKER)
         break
@@ -3573,8 +3649,9 @@ if
 not car.Wrecked(SUPPLY_QUEST_TRUCK)
 jf @MAIN_QUEST2_FAILED_BIKE
 
-if
+if or
 not actor.InCar(PLAYER_ACTOR,SUPPLY_QUEST_TRUCK)
+not actor.InCar(MAIN_QUEST2_ACTOR,SUPPLY_QUEST_TRUCK)
     then
     
     $DIALOG_PAUSE = 1
@@ -3612,8 +3689,9 @@ not actor.InCar(PLAYER_ACTOR,SUPPLY_QUEST_TRUCK)
     if
     056E:   car SUPPLY_QUEST_TRUCK defined
         then
-        if
+        if and
         actor.InCar(PLAYER_ACTOR,SUPPLY_QUEST_TRUCK)   
+        actor.InCar(MAIN_QUEST2_ACTOR,SUPPLY_QUEST_TRUCK)
             then
             $DIALOG_PAUSE = 0    
             marker.Disable(MISSION_CHECKPOINT)    

@@ -360,17 +360,17 @@ if
 NEW_YEAR_BONUS_FLAG == 0
     then
     0D2D: get_local_time_year_to 0@ month_to 1@ day_of_week_to 2@ day_to 3@ hour_to 4@ minute_to 5@ second_to 6@ milliseconds_to 7@
-    0AF0: 4@ = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "2024_CAME_FLAG"    
+    0AF0: 4@ = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "2025_CAME_FLAG"    
     if and    
-    0@ >= 2024
+    0@ >= 2025
     1@ == 1
     3@ == 1
     4@ == 0
         then
         NEW_YEAR_BONUS_FLAG = 1
-        0ACE: show_formatted_text_box "MUXAN500 PRESENTS! HAPPY 2024! TAKE 28000$!"
+        0ACE: show_formatted_text_box "MUXAN500 PRESENTS! HAPPY 2025! TAKE 28000$!"
         0109: player PLAYER_CHAR money += 28000
-        0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "2024_CAME_FLAG"
+        0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "2025_CAME_FLAG"
         if
         $FREEMODE == 1
             then
@@ -438,7 +438,8 @@ SNOW_ON_FLAG = 1
 WEATHER_CYCLE_CHANGE_WEATHER_SMOOTH_ID = 9
 WEATHER_CYCLE_CHANGE_WEATHER_SMOOTH_NOW = 1
 
-0A8C: write_memory 0x0072BE25 size 4 value 0.5 virtual_protect 0
+21@ = 1
+//0A8C: write_memory 0x0072BE25 size 4 value 0.5 virtual_protect 0
 //0AC6: 0@ = label @SNOW_FOG_EHE offset
 //0A8C: write_memory 0@ size 4 value 1.5 virtual_protect 0
 //0A8C: write_memory 0x0072BDEB size 4 value 0@ virtual_protect 0
@@ -448,6 +449,8 @@ create_thread @WND_ST2
 
 while true
 wait 0  
+
+gosub @SNOW_EFFECT_ADJUST_TARGET_FOG
 
 if and
 SNOW_CREATED == 1
@@ -514,3 +517,33 @@ SNOW_CREATED == 1
 end
 
 end_thread
+
+:SNOW_EFFECT_ADJUST_TARGET_FOG
+
+0A8D: 0@ = read_memory 0x0C812FC size 4 virtual_protect 0
+if and
+0@ < 0.5
+21@ == 0
+    then
+    0A8C: write_memory 0x0072BE25 size 4 value 0@ virtual_protect 0
+    if
+    0@ <= 0.01
+        then        
+        21@ = 1        
+        end
+    else
+    if
+    21@ == 1
+        then
+        0A8D: 0@ = read_memory 0x0072BE25 size 4 virtual_protect 0
+        0@ += 0.001
+        0A8C: write_memory 0x0072BE25 size 4 value 0@ virtual_protect 0
+        if
+        0@ >= 0.5
+            then
+            21@ = 0
+            end
+        end
+    end
+    
+return    

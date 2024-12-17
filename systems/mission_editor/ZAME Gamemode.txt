@@ -6,6 +6,14 @@ end
 :ZAME_GM
 thread 'ZAME_GM'
 
+0AF0: 27@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ZAME_SPAWN_EXTRACAMPS"
+if
+27@ == 1
+then
+create_thread @EXTRCMP
+$ENTERED_CAMP = 0
+end
+
 0629: change_integer_stat 252 to 12
 0AF1: write_int 13 to_ini_file "saves/ZACM.set" section "SCR" key "GAMEMODE_AUTOSELECT_NUMBER"
 057E: set_radar_grey 0
@@ -153,6 +161,7 @@ then
 0776: create_objects_in_object_group "bunker"
 0776: create_objects_in_object_group "oosgate2"
 0776: create_objects_in_object_group "quest4W2"
+0776: create_objects_in_object_group "basement"
 end
 
 if
@@ -270,6 +279,32 @@ end
 repeat
 wait 0
 random_int ZAME_RETURN_OR_RESTART_KEY 121 123 
+
+if
+$CHEATS_ON == 1
+then
+
+if
+0E3D: is_key_just_pressed 81
+then
+$CHEATS_ON = 2
+wait 0 
+$CHEATS_ON = 1
+end
+    
+if
+0AB0:   key_pressed 51
+    then
+            
+    while 0AB0:   key_pressed 51
+    $CHEATS_ON = 2
+    wait 0    
+    end
+    $CHEATS_ON = 0
+                      
+    end
+            
+end
 
 if 
 02D8:   actor PLAYER_ACTOR current_weapon == 73
@@ -432,7 +467,7 @@ Audiostream.Volume(0@) = $SOUNDS_VOLUME
 //0AD1: show_formatted_text_highpriority "PLAYING AUDIO FROM %s, status is %d" time 2000 v$NOTES_FILE 1@
 0AB9: get_mp3 0@ state_to 1@
 if
-$CHEATS_ON == 1
+$CHEATS_ON == 2
     then
     break
     end
@@ -455,7 +490,7 @@ then
 end
 
 if
-$CASETTE_PLAYING_FLAG == 0
+$CASETTE_PLAYING_FLAG == 0 
 then
 $CASETTE_PLAYING_FLAG = 1
 wait 1000
@@ -483,6 +518,7 @@ end
 ///////////////////////////////////////////
 
 0@ = Audiostream.Load(v$NOTES_FILE)
+//0AD3: 20@v = format "%s" v$NOTES_FILE
 if and
 1@ == 0
 not $SIMULATING_FLAG == 1
@@ -505,7 +541,7 @@ end
 if and
 1@ == 1
 not 28@ == 1
-then
+then        
 
 /////////////////////Плавное нарастание/////////////////////
 
@@ -547,12 +583,13 @@ if and
 28@ == 1
 $SIMULATING_FLAG == 0
     then
+//    0AD1: show_formatted_text_highpriority "FADING IN %d MUSIC FROM %s" time 2000 0@ 20@v
     28@ = 0
     jump to @HUY_ON_AGAIN
     end
-end
+end 
 
-//0AD1: show_formatted_text_highpriority "PLAYING MUSIC FROM %s" time 2000 v$NOTES_FILE
+//0AD1: show_formatted_text_highpriority "PLAYING %d MUSIC FROM %s, $OTKZ_NGRDA_FLG %d" time 2000 0@ 20@v $OTKZ_NGRDA_FLG
 until $OTKZ_NGRDA_FLG == 1
 
 if and
@@ -592,8 +629,13 @@ wait 0
 end
 
 else
+//0AD1: show_formatted_text_highpriority "ending shit %d, %s" time 2000 0@ 20@v
 audiostream.PerformAction(0@,STOP)
 audiostream.Release(0@)
+wait 0
+//Audiostream.Volume($MENU_ACCEPT_SOUND) = $SOUNDS_VOLUME 
+//Audiostream.Loop($MENU_ACCEPT_SOUND, 0)
+//Audiostream.PerformAction($MENU_ACCEPT_SOUND, PLAY)
 end
 
 $OTKZ_NGRDA_FLG = -1
@@ -1335,7 +1377,15 @@ end_thread
 
 :ZAM_OB2
 thread 'ZAM_OB2'  
+
+if
+not ZAME_SURV_LAUNCH_FLAG == 1
+then
 28@ = Object.Create(0@, 1@, 2@, 3@)
+else
+0E01: create_object_no_save 0@ at 1@ 2@ 3@ offset 0 ground 0 to 28@
+end
+
 Object.PutAt(28@, 1@, 2@, 3@)
 0453: set_object 28@ XYZ_rotation 4@ 5@ 6@
 0566: link_object 28@ to_interior 7@
@@ -1560,7 +1610,14 @@ repeat
 wait 500
 until 002E:   $PACKAGE_PICKED_UP_FLAG[1] >= 8@  // (int)
 
+if
+not ZAME_SURV_LAUNCH_FLAG == 1
+then
 28@ = Object.Create(0@, 1@, 2@, 3@)
+else
+0E01: create_object_no_save 0@ at 1@ 2@ 3@ offset 0 ground 0 to 28@
+end
+
 Object.PutAt(28@, 1@, 2@, 3@)
 0453: set_object 28@ XYZ_rotation 4@ 5@ 6@
 0566: link_object 28@ to_interior 7@
@@ -1945,10 +2002,39 @@ end_thread
 :ZAMTIME
 thread 'ZAMTIME'
 
+if
+4@ == -1
+    then
+    
+    repeat
+    wait 1000
+    00BF: 5@ = current_time_hours, 6@ = current_time_minutes 
+    if and
+    003B:   5@ == 2@  // (int)
+    003B:   6@ == 3@  // (int)
+    then
+    end_thread
+    end
+    
+    6@ += 1
+    00C0: set_current_time 5@ 6@
+    until false
+    
+    end
+
 repeat
 wait 0
 
-00BF: 5@ = current_time_hours, 6@ = current_time_minutes
+//0AD1: show_formatted_text_highpriority "%d:%d == %d:%d" time 2000 5@ 6@ 2@ 3@
+
+00BF: 5@ = current_time_hours, 6@ = current_time_minutes 
+if and
+003B:   5@ == 2@  // (int)
+003B:   6@ == 3@  // (int)
+then
+end_thread
+end
+
 6@ += 1
 00C0: set_current_time 5@ 6@
 
@@ -1956,13 +2042,20 @@ if and
 003B:   5@ == 2@  // (int)
 003B:   6@ == 3@  // (int)
 then
-break
+end_thread
 end
 
 if
 4@ > 1
+then     
+00BF: 5@ = current_time_hours, 6@ = current_time_minutes   
+if and
+003B:   5@ == 2@  // (int)
+003B:   6@ == 3@  // (int)
 then
-00BF: 5@ = current_time_hours, 6@ = current_time_minutes
+end_thread
+end
+
 6@ += 1
 00C0: set_current_time 5@ 6@
 
@@ -1970,15 +2063,22 @@ if and
 003B:   5@ == 2@  // (int)
 003B:   6@ == 3@  // (int)
 then
-break
+end_thread
 end
 
 end
 
 if
 4@ > 2
+then           
+00BF: 5@ = current_time_hours, 6@ = current_time_minutes 
+if and
+003B:   5@ == 2@  // (int)
+003B:   6@ == 3@  // (int)
 then
-00BF: 5@ = current_time_hours, 6@ = current_time_minutes
+end_thread
+end
+
 6@ += 1
 00C0: set_current_time 5@ 6@
 
@@ -1986,15 +2086,22 @@ if and
 003B:   5@ == 2@  // (int)
 003B:   6@ == 3@  // (int)
 then
-break
+end_thread
 end
 
 end
 
 if
 4@ > 3
-then
+then          
 00BF: 5@ = current_time_hours, 6@ = current_time_minutes
+if and
+003B:   5@ == 2@  // (int)
+003B:   6@ == 3@  // (int)
+then
+end_thread
+end
+
 6@ += 1
 00C0: set_current_time 5@ 6@
 
@@ -2002,15 +2109,22 @@ if and
 003B:   5@ == 2@  // (int)
 003B:   6@ == 3@  // (int)
 then
-break
+end_thread
 end
 
 end
 
 if
 4@ > 4
+then          
+00BF: 5@ = current_time_hours, 6@ = current_time_minutes 
+if and
+003B:   5@ == 2@  // (int)
+003B:   6@ == 3@  // (int)
 then
-00BF: 5@ = current_time_hours, 6@ = current_time_minutes
+end_thread
+end
+
 6@ += 1
 00C0: set_current_time 5@ 6@
 
@@ -2018,7 +2132,7 @@ if and
 003B:   5@ == 2@  // (int)
 003B:   6@ == 3@  // (int)
 then
-break
+end_thread
 end
 
 end
@@ -2040,13 +2154,19 @@ end_thread
 :ZAM_IFP
 thread 'ZAM_IFP'
 
+if
+856D: not  actor 3@ defined
+then
+end_thread
+end
+
 //0AD1: show_formatted_text_highpriority "huy 2, %d" time 2000 1@
 
 if
 1@ < 1
     then
     
-    while 0E4B: is_char_playing_any_script_animation PLAYER_ACTOR include_anims 1
+    while 0E4B: is_char_playing_any_script_animation 3@ include_anims 1
     wait 0
     end
     
@@ -2056,7 +2176,13 @@ while 801D:   32@ < 1@  // (int)
 wait 0
 
 if
-8E4B: not is_char_playing_any_script_animation PLAYER_ACTOR include_anims 1
+856D: not  actor 3@ defined
+then
+end_thread
+end
+
+if
+8E4B: not is_char_playing_any_script_animation 3@ include_anims 1
     then
     break
     end
@@ -2069,11 +2195,23 @@ end
 if
 0@ == 1
 then
+
+if    
+07D6:   3@ == PLAYER_ACTOR // @ == $ (int)
+then
 0992: set_player PLAYER_CHAR weapons_scrollable 1
-06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0    
-01B9: set_actor PLAYER_ACTOR armed_weapon_to 2@
+end
+
+06AB: set_actor 3@ all_weapons_hidden 0    
+01B9: set_actor 3@ armed_weapon_to 2@
 else
+
+if    
+07D6:   3@ == PLAYER_ACTOR // @ == $ (int)
+then
 0992: set_player PLAYER_CHAR weapons_scrollable 1
+end
+
 end
 
 end_thread 

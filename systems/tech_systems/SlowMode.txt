@@ -3,6 +3,7 @@ DRIVEBY_WEAPON_FINDED = 20@
 DRIVEBY_WEAPON = 15@
 DRIVEBY_TIMER = 28@
 DRIVEBY_ENGINE_FLAG = 21@
+SLOWMODE_ENDED_IN_TAB = 29@
 end       
 
 :SLOWMO
@@ -14,10 +15,24 @@ thread 'SLOWMO'
 :SLOW_START_CHECK
 wait 0
 
+if
+0024:   $SLOW_BAR > $SLOW_BAR_MAX // (float) 
+then
+0086: $SLOW_BAR = $SLOW_BAR_MAX // (float)
+end
+
 if or
 REALISM_MODE == 1
 $GAMEMODE_EDITOR == 1
 then
+
+0A8D: 1@ = read_memory 0xB7CB64 size 4 virtual_protect 0
+if
+$SPEED_099_FLAG == 1
+then
+1@ = 1.0
+end
+
 if and
 actor.Driving(PLAYER_ACTOR)
 0E3E: is_button_just_pressed 0 button 4
@@ -25,6 +40,7 @@ $DRIVEBY_MODE == 0
 not $FP_ACTIVATED == 1
 not $EATING_STATUS == 1
 8800: not  in_two_players_mode
+1@ == 1.0
     then
     22@ = actor.CurrentCar(PLAYER_ACTOR)
     if and
@@ -66,10 +82,18 @@ REALISM_MODE == 1
 $GAMEMODE_EDITOR == 1
 then
 
+0A8D: 1@ = read_memory 0xB7CB64 size 4 virtual_protect 0
+if
+$SPEED_099_FLAG == 1
+then
+1@ = 1.0
+end
+
 if and
 actor.Driving(PLAYER_ACTOR)
 0E3E: is_button_just_pressed 0 button 4
 $DRIVEBY_MODE == 1
+1@ == 1.0
     then
     0687: clear_actor PLAYER_ACTOR task
     camera.Restore_WithJumpCut()
@@ -722,7 +746,10 @@ wait 0
 if
 $GAMEMODE_CRAZY == 0
 then
-$SLOW_BAR += 0.065
+0089: 0@ = $SLOW_BAR_MINUS // (float)
+0@ *= 0.21666666666
+//$SLOW_BAR += 0.01625
+005F: $SLOW_BAR += 0@  // (float)
 else
 $SLOW_BAR += 0.125
 end
@@ -791,7 +818,138 @@ not COOP_ACTOR == -69
 gosub @SLOW_EFFECT_ON
 32@ = 0
 
-jump @SLOW_IDLE_CHECK  
+jump @SLOW_IDLE_CHECK
+
+:SLOW_ON_CHECK8_PRE
+
+if and
+0A32:  actor PLAYER_ACTOR on_turret_of_car
+$SLOW_BAR <= 0.0
+then
+$SLOWMODE_ACTIVE = 0
+if and
+$GAMEMODE_VERSUS == 0
+USER_TAPE_TURNED_ON_FLAG == 0
+then
+$MUTE_MUSIC_FLAG = 0
+end
+
+015D: set_gamespeed 1.0
+SLOWMODE_ENDED_IN_TAB = 1
+
+if
+$GODMODE_FLAG == 0
+then
+Actor.SetImmunities(PLAYER_ACTOR, 0, 0, 0, 0, 0)
+end
+    
+car.SetImmunities(6@,$CIM_BUL,$CIM_FIR,$CIM_EXP,$CIM_COL,$CIM_MEL)
+
+gosub @SLOWMODE_ANIMS
+////////////////////////////////////////////////////
+Audiostream.PerformAction($SLOWMODE_SOUND1, STOP)
+Audiostream.Volume($SLOWMODE_SOUND2) = $SOUNDS_VOLUME
+Audiostream.Loop($SLOWMODE_SOUND2, 0)
+Audiostream.PerformAction($SLOWMODE_SOUND2, PLAY)                                                                                                                                                                        
+gosub @SLOW_EFFECT_OFF 
+
+else
+jump to @SLOW_ON_CHECK8
+end
+
+repeat
+wait 0
+
+if
+0024:   $SLOW_BAR > $SLOW_BAR_MAX // (float) 
+then
+0086: $SLOW_BAR = $SLOW_BAR_MAX // (float)
+end  
+
+if and
+$SLOW_BAR > 0.0
+0E3E: is_button_just_pressed 0 button 6
+    then
+    
+    015D: set_gamespeed 0.2 
+    $SLOWMODE_ACTIVE = 1
+    if and
+    $GAMEMODE_VERSUS == 0
+    USER_TAPE_TURNED_ON_FLAG == 0
+    then
+    $MUTE_MUSIC_FLAG = 1
+    end
+    
+    0EAD: get_car_proofs 6@ bullet $CIM_BUL fire $CIM_FIR explosion $CIM_EXP collision $CIM_COL melee $CIM_MEL                              
+    car.SetImmunities(6@,1,1,1,0,1)
+        
+    if
+    $GODMODE_FLAG == 0
+    then
+    Actor.SetImmunities(PLAYER_ACTOR, 0, 1, 0, 0, 0)
+    end
+    
+    0AB9: get_mp3 $SLOWMODE_SOUND2 state_to 0@
+    if
+    not 0@ == -1
+    then
+    Audiostream.PerformAction($SLOWMODE_SOUND2, STOP)
+    end
+    Audiostream.Volume($SLOWMODE_SOUND1) = $SOUNDS_VOLUME
+    Audiostream.Loop($SLOWMODE_SOUND1, 1)
+    Audiostream.PerformAction($SLOWMODE_SOUND1, PLAY) 
+    
+    gosub @SLOW_EFFECT_ON
+    jump to @SLOW_IDLE_CHECK
+    
+    end
+
+if
+$GAMEMODE_CRAZY == 0
+then
+0089: 0@ = $SLOW_BAR_MINUS // (float)
+0@ *= 0.21666666666
+//$SLOW_BAR += 0.01625
+005F: $SLOW_BAR += 0@  // (float)
+else
+$SLOW_BAR += 0.125
+end  
+
+if or
+$HUD_REMOVE == 1
+$PLAYER_DYING == 1
+$HUNTER_ON_PLAYER == 1 
+0AB0:   key_pressed $KEY_SLOWMOTION
+    then
+    break
+    end
+    
+if or
+Actor.Dead(PLAYER_ACTOR)     
+$HUD_REMOVE == 1
+$PLAYER_DYING == 1
+PLAYER_IN_WATER_FULL_FLAG == 1
+016B:   fading
+    then
+    break
+    end
+
+if
+0A4B:   controls_set_to_joystick
+then    
+if or
+00E1:   player 0 pressed_key 16
+00E1:   player 0 pressed_key 17
+    then
+    if
+    0E3E: is_button_just_pressed 0 button 4
+        then
+        break
+        end
+    end
+end
+
+until false 
 
 :SLOW_ON_CHECK8
 //0AD1: show_formatted_text_highpriority "turn off 5" time 2000   
@@ -868,11 +1026,18 @@ end
 
 ////////////////////////////////////////////////////
 
+if
+SLOWMODE_ENDED_IN_TAB == 0
+then
 Audiostream.PerformAction($SLOWMODE_SOUND1, STOP)
 Audiostream.Volume($SLOWMODE_SOUND2) = $SOUNDS_VOLUME
 Audiostream.Loop($SLOWMODE_SOUND2, 0)
 Audiostream.PerformAction($SLOWMODE_SOUND2, PLAY)                                                                                                                                                                        
 gosub @SLOW_EFFECT_OFF    
+else
+SLOWMODE_ENDED_IN_TAB = 0
+end
+
 jump @SLOW_ON_CHECK
 
 :DRIVEBY_OFF_CHECK 
@@ -1008,7 +1173,7 @@ end
 0061: $SLOW_BAR -= $SLOW_BAR_MINUS // (float)                                                             
 if
 not $SLOW_BAR <= 0.0
-jf @SLOW_ON_CHECK8
+jf @SLOW_ON_CHECK8_PRE
 else
 if or
 Actor.Dead(PLAYER_ACTOR)     

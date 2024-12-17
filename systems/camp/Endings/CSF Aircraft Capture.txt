@@ -132,11 +132,12 @@ Actor.GiveWeaponAndAmmo(CSF_PRE_BASE_STALKER, 101, 99999)
 
 0631: put_actor CSF_PRE_BASE_STALKER in_group PLAYER_GROUP
 
+$ONMISSION = 1
+
 repeat
 wait 0
 until $PHRASES_OFF_FLAG == 0
 
-$ONMISSION = 1
 RANDOM_QUEST_CANCEL_FLAG = 0
 $QUEST_TYPE = 4
 QUEST5_DONE_RECENTLY = 1
@@ -180,9 +181,6 @@ jf @CSF_PRE_BASE_QUEST_FAILED_AGRO
 if
 803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
 jf @CSF_PRE_BASE_QUEST_FAILED_LDEAD
-if
-RANDOM_QUEST_CANCEL_FLAG == 0
-jf @CSF_PRE_BASE_QUEST_FAILED_CANCEL
 if
 not actor.Dead(PLAYER_ACTOR)
 jf @CSF_PRE_BASE_QUEST_PLAYER_DIED
@@ -281,6 +279,16 @@ not BASE_READY_FLAG == 1
 then
 jump to @CSF_PRE_BASE_ZAHVAT_START
 end
+
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @CSF_PRE_BASE_QUEST_FAILED_AGRO
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @CSF_PRE_BASE_QUEST_FAILED_LDEAD
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @CSF_PRE_BASE_QUEST_PLAYER_DIED
  
 until BASE_READY_FLAG == 1
 
@@ -374,8 +382,8 @@ if
 803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
 jf @CSF_PRE_BASE_QUEST_FAILED_LDEAD
 if
-RANDOM_QUEST_CANCEL_FLAG == 0
-jf @CSF_PRE_BASE_QUEST_FAILED_CANCEL
+not actor.Dead(PLAYER_ACTOR)
+jf @CSF_PRE_BASE_QUEST_PLAYER_DIED
 
 until 00FE:   actor PLAYER_ACTOR sphere 0 in_sphere 100@ 101@ 102@ radius 5.0 5.0 10.0
 
@@ -396,8 +404,8 @@ if
 803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
 jf @CSF_PRE_BASE_QUEST_FAILED_LDEAD
 if
-RANDOM_QUEST_CANCEL_FLAG == 0
-jf @CSF_PRE_BASE_QUEST_FAILED_CANCEL
+not actor.Dead(PLAYER_ACTOR)
+jf @CSF_PRE_BASE_QUEST_PLAYER_DIED
 
 until $QUEST_TYPE == -1
 
@@ -518,7 +526,9 @@ BLACK_POLOSKI_ON = 1
 $MUSIC_TURN_OFF_FLAG = 1
 v$FAILED_TEXT = "MS_FL80"
 create_thread @GMV_OVR
-mission_cleanup    
+mission_cleanup   
+
+return 
 
 :CSF_PRE_BASE_QUEST_FAILED_AGRO
 
@@ -551,7 +561,7 @@ text.ClearAll()
 BLACK_POLOSKI_ON = 1
 $MUSIC_TURN_OFF_FLAG = 1
 v$FAILED_TEXT = "MS_FL5" 
-create_thread @GM_2OVR
+create_thread @GMV_OVR
 mission_cleanup    
 return
 
@@ -586,43 +596,7 @@ text.ClearAll()
 BLACK_POLOSKI_ON = 1
 $MUSIC_TURN_OFF_FLAG = 1
 v$FAILED_TEXT = "MS_FL43" 
-create_thread @GM_2OVR
-mission_cleanup    
-return
-
-:CSF_PRE_BASE_QUEST_FAILED_CANCEL
-
-/////////////////////Плавное затухание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-        
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
-$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-        
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 2000
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-        
-wait 1
-        
-while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
-wait 0
-end
-    
-MAIN_QUEST_MUSIC_FLAG = 0
-
-text.ClearAll()
-BLACK_POLOSKI_ON = 1
-$MUSIC_TURN_OFF_FLAG = 1
-$ONMISSION = 0
-v$FAILED_TEXT = "MS_FL44"
-v$OBJECTIVE = "DUMMY" 
+create_thread @GMV_OVR
 mission_cleanup    
 return
 

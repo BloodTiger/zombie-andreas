@@ -34,12 +34,12 @@ PLAYER_NO_ITEMS_FLAG = 0
 DELETE_RAN_RUVS = 1
 $SURVIVORS_DONT_SPAWN_FLAG = 1
 OTKAZ_FROM_NAGRADA_FLAG = 0
+$ONMISSION = 1
 
 repeat
 wait 0
 until $PHRASES_OFF_FLAG == 0
 
-$ONMISSION = 1
 RANDOM_QUEST_CANCEL_FLAG = 0
 $QUEST_TYPE = 8
 QUEST8_DONE_RECENTLY = 1
@@ -228,6 +228,8 @@ gosub @KILLH_MISSION_CAMP_NEAR_STATUS
 repeat
 wait 0
 
+//0AD1: show_formatted_text_highpriority "DEBIL_1 %d, DEBIL_2 %d, DEBIL_3 %d, DEBIL_4 %d, ~n~ %d, %d, %d, %d, %d," time 10000 KILLH_DEBIL_1 KILLH_DEBIL_2 KILLH_DEBIL_3 KILLH_DEBIL_4 $SURVIVER[0] $SURVIVER[1] $SURVIVER[2] $SURVIVER[3] $SURVIVER[4]
+
 gosub @KILLH_MISSION_CAMP_NEAR_STATUS
 
 if
@@ -242,32 +244,45 @@ jf @KILLH_QUEST_FAILED_CANCEL
 
 1@ = 1
 for 0@ = 0 to 4
-    
-if and
-$SURVIVOR_IN_PLAYER_TEAM[0@] == 0
-075C:   marker $SURVIVOR_STAY_MARK[0@] enabled
-856D: not  actor $SURVIVER[0@] defined
-    then
-    jump to @KILLH_QUEST_FAILED_AWAY
-    end    
-
+   
 if and
 056D:   actor $SURVIVER[0@] defined
 $SURVIVOR_IN_PLAYER_TEAM[0@] == 0
-075C:   marker $SURVIVOR_STAY_MARK[0@] enabled
+not $SURVIVOR_STAY_MARK[0@] == -69
     then
-    
     if
-    00EC:   actor $SURVIVER[0@] sphere 0 near_point $CAMP_X[$QUEST_CAMP_NUMBER] $CAMP_Y[$QUEST_CAMP_NUMBER] radius 150.0 150.0
+    075C:   marker $SURVIVOR_STAY_MARK[0@] enabled
         then
-        jump to @KILLH_QUEST_FAILED_CAMP
+              
+        if
+        00EC:   actor $SURVIVER[0@] sphere 0 near_point $CAMP_X[$QUEST_CAMP_NUMBER] $CAMP_Y[$QUEST_CAMP_NUMBER] radius 150.0 150.0
+            then
+            jump to @KILLH_QUEST_FAILED_CAMP
+            end
+        
+        1@ = 0
         end
-    
-    1@ = 0
     end
-end
 
-until 1@ == 1
+if and
+$SURVIVOR_STAY_MARK[0@] == -69
+$SURVIVER[0@] == -69
+$SURVIVOR_ATTACKED_BY_PLAYER_FLAG[0@] == 0   
+    then     
+    $SURVIVOR_STAY_MARK[0@] = 0
+    jump to @KILLH_QUEST_FAILED_AWAY  
+    end    
+        
+end   
+
+if and
+32@ > 2500
+1@ == 1
+    then
+    break
+    end
+
+until false
 
 car.SetImmunities(KILLH_QUEST_CAR,0,0,0,0,0)
 
@@ -390,6 +405,21 @@ mission_cleanup
 return
 
 :KILLH_QUEST_FAILED_CAMP
+
+for 0@ = 0 to 4
+if and
+056D:   actor $SURVIVER[0@] defined
+$SURVIVOR_IN_PLAYER_TEAM[0@] == 0
+not $SURVIVOR_STAY_MARK[0@] == -69
+    then
+    if
+    075C:   marker $SURVIVOR_STAY_MARK[0@] enabled
+        then
+        marker.Disable($SURVIVOR_STAY_MARK[0@])
+        end
+    end           
+end    
+
 text.ClearAll()
 $ONMISSION = 0
 $QUEST_READY_FLAG = 0
@@ -400,6 +430,21 @@ mission_cleanup
 return
 
 :KILLH_QUEST_FAILED_AWAY
+
+for 0@ = 0 to 4
+if and
+056D:   actor $SURVIVER[0@] defined
+$SURVIVOR_IN_PLAYER_TEAM[0@] == 0
+not $SURVIVOR_STAY_MARK[0@] == -69
+    then
+    if
+    075C:   marker $SURVIVOR_STAY_MARK[0@] enabled
+        then
+        marker.Disable($SURVIVOR_STAY_MARK[0@])
+        end
+    end           
+end   
+
 text.ClearAll()
 $ONMISSION = 0
 $QUEST_READY_FLAG = 0

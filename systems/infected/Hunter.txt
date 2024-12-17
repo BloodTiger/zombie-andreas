@@ -179,7 +179,28 @@ $SAVEPLACE_ON == 0
     0@ == 4
     then
     HUNTERS_TO_SPAWN_COUNT = 2
-    end            
+    end     
+    
+    if and
+    $MONTHS_PASSED >= 1
+    0E4D: random_percent 30
+    then
+    HUNTERS_TO_SPAWN_COUNT += 1
+    end
+    
+    if and
+    $MONTHS_PASSED >= 2
+    0E4D: random_percent 45
+    then
+    HUNTERS_TO_SPAWN_COUNT += 1
+    end    
+    
+    if and
+    $MONTHS_PASSED >= 3
+    0E4D: random_percent 55
+    then
+    HUNTERS_TO_SPAWN_COUNT += 1
+    end         
     
     end        
     
@@ -1041,6 +1062,7 @@ actor.Dead($HUNTER[24@])
     
     $HUNTER_KILLED += 1
     $TEMP_XP = HUNTER_XP_PLUS
+    $SLOW_BAR += HUNTER_SLOWMODE_PLUS
 //    0068: $TEMP_XP *= $PLAYER_LEVEL // (int)
     008D: $TEMP_XP = integer $TEMP_XP to_float
     0069: $TEMP_XP *= $XP_COEFF // (float)
@@ -3561,6 +3583,8 @@ if
                     :HUNTER_ATTACK_PLAYER_CHECK   
                     wait 0
                     
+                    gosub @HUNTER_DRAW_OTBITIE_BAR
+                    
                     gosub @POUNCE_SOUND_CHECK                
                     random_int 0@ 0 5    
         
@@ -3609,7 +3633,8 @@ if
                     0812: AS_actor PLAYER_ACTOR perform_animation "FLOOR_hit" IFP "PED" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 999999  // versionB
                     0612: set_actor PLAYER_ACTOR animation "FLOOR_hit" paused 0
                     0612: set_actor PLAYER_ACTOR animation "FLOOR_hit" paused 1
-                    wait 1
+                    wait 0
+                    gosub @HUNTER_DRAW_OTBITIE_BAR
                     0612: set_actor PLAYER_ACTOR animation "FLOOR_hit" paused 0
                     
                     if or
@@ -3626,7 +3651,11 @@ if
                     $POLOSA += 0.7            
                     end      
                     
-                    $POLOSA -= 0.1                                       
+                    if
+                    $POLOSA > 0.1
+                    then
+                    $POLOSA -= 0.1      
+                    end                                 
                                                                                       
                     if
                     056D:   actor PLAYER_ACTOR defined
@@ -4895,6 +4924,53 @@ end
 v$PHRASE1 = "HN10_"
 0AD3: v$PHRASE2 = format "%d" 30@
 098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
+
+return
+
+:HUNTER_DRAW_OTBITIE_BAR
+//ааа, блять, помогите, я не могу отбиться от охотника, это невозможно!!!
+0086: $TEMP_HEALTH = $POLOSA // (float)
+$TEMP_HEALTH *= 2.0
+$TEMP_HEALTH *= 0.381
+//0AD1: show_formatted_text_highpriority "%f" time 2000 $TEMP_HEALTH
+
+if
+$TEMP_HEALTH > 38.1
+then
+$TEMP_HEALTH = 38.1
+end 
+
+03E0: draw_text_behind_textures 1
+03E3: set_texture_to_be_drawn_antialiased 1 
+//0AF2: $TEMPVAR_FLOAT_1 = get_float_from_ini_file "debug\hunter.ini" section "COORDS" key "X"
+//0AF2: $TEMPVAR_FLOAT_2 = get_float_from_ini_file "debug\hunter.ini" section "COORDS" key "Y"
+$TEMPVAR_FLOAT_1 = 83.5
+$TEMPVAR_FLOAT_2 = 55.0
+
+/////////////////////////////////////////////////
+
+$BREATH_R1 = 100
+$BREATH_G1 = 0
+$BREATH_B1 = 0
+
+$BREATH_R2 = 170
+$BREATH_G2 = 0
+$BREATH_B2 = 0
+
+/////////////////////////////////////////////////
+
+$SLOW_MODE_SIZE1_X *= 2.0
+$SLOW_MODE_SIZE2_X *= 2.0
+$TEMP_HEALTH *= 2.0
+
+038E: draw_box_position $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 size $SLOW_MODE_SIZE1_X $SLOW_MODE_SIZE1_Y RGBA 0 0 0 $HUD_ALPHA 
+038E: draw_box_position $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 size $SLOW_MODE_SIZE2_X $SLOW_MODE_SIZE2_Y RGBA $BREATH_R1 $BREATH_G1 $BREATH_B1 $HUD_ALPHA
+038E: draw_box_position $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 size $TEMP_HEALTH $SLOW_MODE_SIZE2_Y RGBA $BREATH_R2 $BREATH_G2 $BREATH_B2 $HUD_ALPHA
+
+$SLOW_MODE_SIZE1_X = 40.9
+$SLOW_MODE_SIZE1_Y = 5.2
+$SLOW_MODE_SIZE2_X = 36.9
+$SLOW_MODE_SIZE2_Y = 2.9
 
 return
 

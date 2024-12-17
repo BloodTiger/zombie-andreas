@@ -184,7 +184,7 @@ SURVIVOR_WEAPON_HAS_GIVEN_FLAG = 0
 gosub @SURV_ERAZE_SET_INFO_ABOUT_GIVEN_WEP    
 SURVIVOR_TEAMFIRE_LEAVE = 0    
 SURVIVOR_PLAYER_DAMAGE_COUNT = 0    
-SURVIVOR_SAW_SHIT = 0
+SURVIVOR_SAW_SHIT = 0 
 end     
 
 if
@@ -312,7 +312,42 @@ then
 $SURV5_TEAM_TIME = 13200
 $SURV5_TEAM_TIME += 2
 06D1: v$SURVIVOR_PROLOUGE[4] = "SN1_0B" // v$ = string
-end           
+end
+
+///////////////////////////////
+
+$TEMP_XP = SURVIVOR_FOUND_XP
+008D: $TEMP_XP = integer $TEMP_XP to_float
+0069: $TEMP_XP *= $XP_COEFF // (float)
+008C: $TEMP_XP = float $TEMP_XP to_integer
+0058: $PLAYER_XP += $TEMP_XP // (int)
+
+/////////////////////////////// 
+            
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_TEAMMATES_GOT"        
+        
+$STATS_TEAMMATES_GOT += 1        
+
+if
+$CHEATED_FLAG == 0 
+then   
+0@ += 1
+end            
+             
+0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_TEAMMATES_GOT"    
+0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT60_GOT"
+            
+if and
+1@ == 0
+0@ >= 200
+$CHEATED_FLAG == 0
+    then
+    v$ACHIEVEMNT = "ACH60"
+    $ACHIEVEMENT_GOT_FLAG = 1
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT60_GOT"
+    end    
+            
+///////////////////////////////           
 
 jump to @SURVIVER_SPAWN_START
 end    
@@ -2349,8 +2384,9 @@ SURVIVOR_IN_PLAYER_TEAM == 1
 not SURVIVOR_WEP_AMMO == -1
     then   
     041A: SURVIVOR_WEP_AMMO = actor SURVIVER weapon SURVIVOR_WEP_ID ammo
-    if
+    if and
     SURVIVOR_WEP_AMMO == 0
+    not SURVIVOR_WEP_ID == 0
         then
         SURVIVOR_WEP_AMMO = -1
         
@@ -2372,7 +2408,7 @@ not SURVIVOR_WEP_AMMO == -1
         gosub @SURV_NAME_CHECK 
                         
         if
-        00F2:   actor SURVIVER near_actor PLAYER_ACTOR radius 5.0 5.0 0
+        80F2: not  actor SURVIVER near_actor PLAYER_ACTOR radius 1.0 1.0 0
         then    
         0384: show_text_1string GXT v$BPHRASE3 string v$2NAME3 time 9@ 1
         else
@@ -3019,6 +3055,7 @@ FRIENDLY_FIRE_ON == 1
     051A:   actor SURVIVER damaged_by_actor PLAYER_ACTOR
         then
         054E: clear_actor SURVIVER damage
+        0467: clear_actor SURVIVER last_weapon_damage
         end
     end
 end       
@@ -3045,8 +3082,8 @@ if
         
         if
         051A:   actor SURVIVER damaged_by_actor PLAYER_ACTOR 
-        then
-        jump to @ASSWOOPIN
+        then                 
+        jump to @ASSWOOPIN  
         end
         
         end   
@@ -3693,13 +3730,17 @@ if
         then
         3@ = actor.CurrentCar(PLAYER_ACTOR)
         if
-        056E:   car 3@ defined
+        056E:   car 3@ defined 
             then
             if or
             051B:   actor SURVIVER damaged_by_car 3@
             0547:   actor SURVIVER colliding_with_car 3@ 
                 then
-                0085: 1@ = 2@ // (int)
+                if
+                not actor.InCar(SURVIVER,3@)
+                    then
+                    0085: 1@ = 2@ // (int)
+                    end
                 end            
             end
         else
@@ -3710,7 +3751,11 @@ if
             051B:   actor SURVIVER damaged_by_car PLAYER_LAST_DEFINED_CAR
             0547:   actor SURVIVER colliding_with_car PLAYER_LAST_DEFINED_CAR
                 then
-                0085: 1@ = 2@ // (int)
+                if
+                not actor.InCar(SURVIVER,PLAYER_LAST_DEFINED_CAR)
+                    then
+                    0085: 1@ = 2@ // (int)
+                    end
                 end
             end
         end
@@ -3746,6 +3791,7 @@ if
                 0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_SURVIVORS_KILLED"                  
                 $SURVIVORS_KILLED += 1
                 $TEMP_XP = USUAL_SURVIVOR_XP_PLUS
+                $SLOW_BAR += USUAL_SURVIVOR_SLOWMODE_PLUS
                 008D: $TEMP_XP = integer $TEMP_XP to_float
                 0069: $TEMP_XP *= $XP_COEFF // (float)
                 008C: $TEMP_XP = float $TEMP_XP to_integer
@@ -3794,6 +3840,7 @@ if
                 
                 $MARODERS_KILLED += 1
                 $TEMP_XP = MARODERS_XP_PLUS
+                $SLOW_BAR += MARODERS_SLOWMODE_PLUS
                 008D: $TEMP_XP = integer $TEMP_XP to_float
                 0069: $TEMP_XP *= $XP_COEFF // (float)
                 008C: $TEMP_XP = float $TEMP_XP to_integer
@@ -4265,7 +4312,7 @@ not $CARL_STORY == 1
                 then
                 marker.Disable($FREND_MARKER[SURVIVOR_NUMBER])
                 $FREND_MARKER[SURVIVOR_NUMBER] = 0
-                end
+                end      
                 
                 if
                 18@ == 0
@@ -4331,7 +4378,7 @@ not $CARL_STORY == 1
                 COOP_ACTOR = -69
                 else
                 actor.DestroyWithFade(SURVIVER)
-                end
+                end     
                 
                 if and
                 $GAMEMODE_HOLD == 0
@@ -4589,6 +4636,17 @@ not ZAME_HUENEMY_FLAG == 1
         then
         marker.Disable($FREND_MARKER[SURVIVOR_NUMBER])
         $FREND_MARKER[SURVIVOR_NUMBER] = 0
+        end
+        
+        if
+        $QUEST_TYPE == 8
+        then
+        if
+        075C:   marker SURVIVOR_STAY_MARK enabled
+            then
+            marker.Disable(SURVIVOR_STAY_MARK)
+            SURVIVOR_STAY_MARK = -69               
+            end
         end
         
         if
@@ -4882,7 +4940,7 @@ if
             if
             CUSTOM_MODE_TEAMMATES_NO_INF_AMMOS == 1
             then
-            text.ShowTextBox('GME1479') 
+            text.ShowTextBox('GME1480') 
             end               
                                         
             repeat
@@ -4891,7 +4949,7 @@ if
             gosub @SURV_NAME_CHECK 
                                     
             if
-            00F2:   actor SURVIVER near_actor PLAYER_ACTOR radius 5.0 5.0 0
+            80F2: not  actor SURVIVER near_actor PLAYER_ACTOR radius 1.0 1.0 0
             then    
             0384: show_text_1string GXT v$BPHRASE3 string v$2NAME3 time 9@ 1
             else
@@ -5522,7 +5580,7 @@ SURVIVOR_IN_PLAYER_TEAM == 1
     if
     075C:   marker SURVIVOR_STAY_MARK enabled
     then
-    marker.Disable(SURVIVOR_STAY_MARK)
+    marker.Disable(SURVIVOR_STAY_MARK)     
     end
     
     if and
@@ -6693,6 +6751,8 @@ $IGNOREALL_FLAG == 0
 if and
 056D:   actor SURVIVER defined
 not $CHEAT_TYPE_FLAG == 1
+not $PANEL_OPEN == 1
+not BLACK_MENU_OPENED_FLAG == 1
     then    
     04DD: 0@ = actor SURVIVER armour           
     if and                      
@@ -6773,6 +6833,8 @@ not $CHEAT_TYPE_FLAG == 1
 if and
 056D:   actor SURVIVER defined
 not $CHEAT_TYPE_FLAG == 1
+not $PANEL_OPEN == 1
+not BLACK_MENU_OPENED_FLAG == 1
     then    
     04DD: 0@ = actor SURVIVER armour        
     if and
@@ -6800,6 +6862,7 @@ not $CHEAT_TYPE_FLAG == 1
                 if and
                 $GAMEMODE_HOLD == 0
                 $DEFENSE_CHALLENGE_FLAG == 0
+                not CUSTOM_MODE_TEAMMATES_NO_INF_AMMOS == 1
                 then
                 1@ /= 20
                 else
@@ -6853,6 +6916,8 @@ then
 if and
 056D:   actor SURVIVER defined
 not $CHEAT_TYPE_FLAG == 1
+not $PANEL_OPEN == 1
+not BLACK_MENU_OPENED_FLAG == 1
     then    
     04DD: 0@ = actor PLAYER_ACTOR armour           
     if and                      
@@ -6932,6 +6997,8 @@ not $CHEAT_TYPE_FLAG == 1
 if and
 056D:   actor SURVIVER defined
 not $CHEAT_TYPE_FLAG == 1
+not $PANEL_OPEN == 1
+not BLACK_MENU_OPENED_FLAG == 1
     then    
     04DD: 0@ = actor SURVIVER armour        
     if and
@@ -6959,6 +7026,7 @@ not $CHEAT_TYPE_FLAG == 1
                 if and
                 $GAMEMODE_HOLD == 0
                 $DEFENSE_CHALLENGE_FLAG == 0
+                not CUSTOM_MODE_TEAMMATES_NO_INF_AMMOS == 1
                 then
                 1@ /= 20
                 else
@@ -7003,6 +7071,7 @@ if and
 056D:   actor SURVIVER defined
 not $CHEAT_TYPE_FLAG == 1
 not $PANEL_OPEN == 1
+not BLACK_MENU_OPENED_FLAG == 1
     then    
     04DD: 0@ = actor SURVIVER armour        
     if and
@@ -7020,6 +7089,8 @@ not $PANEL_OPEN == 1
         2@ <= 1000
         0104:   actor PLAYER_ACTOR near_actor SURVIVER radius 1.0 1.0 1.0 sphere 0
         not actor.Driving(PLAYER_ACTOR)
+        player.Controllable(PLAYER_CHAR)
+        09E7:   player PLAYER_CHAR not_frozen
             then
             
             if
@@ -7072,7 +7143,7 @@ SURVIVOR_IN_PLAYER_TEAM == 1
             if
             075C:   marker SURVIVOR_STAY_MARK enabled
             then
-            marker.Disable(SURVIVOR_STAY_MARK)
+            marker.Disable(SURVIVOR_STAY_MARK)   
             end
             
             if
@@ -8011,7 +8082,7 @@ SURVIVOR_IN_PLAYER_TEAM == 1
         if
         075C:   marker SURVIVOR_STAY_MARK enabled
         then
-        marker.Disable(SURVIVOR_STAY_MARK)
+        marker.Disable(SURVIVOR_STAY_MARK)   
         end
                 
         if
@@ -8297,7 +8368,7 @@ not $MUTATION_ACTIVE == 0
                 if
                 075C:   marker SURVIVOR_STAY_MARK enabled
                 then
-                marker.Disable(SURVIVOR_STAY_MARK)
+                marker.Disable(SURVIVOR_STAY_MARK) 
                 end
                 
                 if
@@ -8441,7 +8512,7 @@ SURVIVOR_IN_PLAYER_TEAM == 1
             if
             075C:   marker SURVIVOR_STAY_MARK enabled
             then
-            marker.Disable(SURVIVOR_STAY_MARK)
+            marker.Disable(SURVIVOR_STAY_MARK)     
             end
             
             if
@@ -8496,7 +8567,7 @@ SURVIVOR_IN_PLAYER_TEAM == 1
             if
             075C:   marker SURVIVOR_STAY_MARK enabled
             then
-            marker.Disable(SURVIVOR_STAY_MARK)
+            marker.Disable(SURVIVOR_STAY_MARK)   
             end                                              
             
             SURVIVOR_IN_PLAYER_TEAM = 0
@@ -12557,8 +12628,14 @@ end
 
 0@ = Actor.Health(SURVIVER)
 0D39: 1@ = actor SURVIVER max_health
+
+if
+87D6: not  18@ == COOP_ACTOR_SURV_NUM // @ == $ (int)
+then
 1@ *= 0.25
 0092: 1@ = float 1@ to_integer
+end
+//0AD1: show_formatted_text_highpriority "%d > %d" time 2000 0@ 1@
 
 if and
 COOP_ACTIVE_FLAG == 1
@@ -13790,7 +13867,7 @@ SURVIVOR_IN_PLAYER_TEAM == 1
             if
             075C:   marker SURVIVOR_STAY_MARK enabled
             then
-            marker.Disable(SURVIVOR_STAY_MARK)
+            marker.Disable(SURVIVOR_STAY_MARK)  
             end
             
             if
@@ -14276,6 +14353,7 @@ if and
             if and
             $GAMEMODE_HOLD == 0
             $DEFENSE_CHALLENGE_FLAG == 0
+            not CUSTOM_MODE_TEAMMATES_NO_INF_AMMOS == 1
             then
             1@ /= 20
             else
@@ -14577,7 +14655,7 @@ not $ENEMY_ZONE_IN == 1
                 if
                 075C:   marker SURVIVOR_STAY_MARK enabled
                 then
-                marker.Disable(SURVIVOR_STAY_MARK)
+                marker.Disable(SURVIVOR_STAY_MARK)  
                 end
                 
                 if

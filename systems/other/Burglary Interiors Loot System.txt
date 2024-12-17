@@ -12,6 +12,11 @@ HOUSE_CORPSE_MODEL = 12@
 HOUSE_CORPSE_HANDLE = 7@
 BURG_PREV_WEP = $RNDM_HOUSE_BANKA[123]
 BURG_TIME_TO_ENTER_OTMOROZOK = $THR_GMMDS_IN
+BURG_TOTAL_LOOT_POINTS = 27@
+BURG_FOOD_FOUND = $HAZMAT_SPAWN_X
+BURG_BINT_FOUND = $HAZMAT_SPAWN_Y
+BURG_HEAL_FOUND = $HAZMAT_SPAWN_Z
+BURG_JIMMY_FOUND = $CLOWN_SPAWN_X
 end
 
 :HOUSE_L
@@ -221,6 +226,7 @@ if
             if or
             ZOMBIES_NOTSPAWN == 1
             $ALLOW_ZOMBIES == 0
+            ALLOW_ZOMB_ENTER_INT == 0
             then
             jump to @HOUSE_PRIKOL_EMPTY_SET
             end
@@ -233,6 +239,7 @@ if
         if or
         ZOMBIES_NOTSPAWN == 1
         $ALLOW_ZOMBIES == 0
+        ALLOW_ZOMB_ENTER_INT == 0
         then
         jump to @HOUSE_PRIKOL_EMPTY_SET
         end
@@ -245,6 +252,7 @@ if
     if or
     ZOMBIES_NOTSPAWN == 1
     $ALLOW_ZOMBIES == 0
+    ALLOW_ZOMB_ENTER_INT == 0
     then
     jump to @HOUSE_PRIKOL_EMPTY_SET
     end
@@ -969,9 +977,17 @@ if
                 jump to @HOUSE_SEARCH_CHECK_IDLE
                 end                                
                 
-            if
+            if or
             32@ > 2839
+            $CHEATS_ON == 1
             jf @HOUSE_SEACRH_CHECK_3
+            
+            if
+            $CHEATS_ON == 1
+            then
+            0792: disembark_instantly_actor PLAYER_ACTOR
+            end
+            
             Audiostream.PerformAction($HOUSE_SEARCH_SOUND, STOP) 
             04EF: release_animation "CAR_CHECKS"
             
@@ -1126,7 +1142,29 @@ $TIME_LOCK_MINUTES = 12
 create_thread @TIM_LCK
 end
 
+if
+SPEC_INF_ONLY_ONE_INSTANSE_SPAWN_FLAG == 1
+then
+SPEC_INF_ONLY_ONE_INSTANSE_SPAWN_FLAG = 0
+end
+
 HOUSE_AMBIENT_TYPE = 0
+if and
+QUEST_CARSEARCH_HOUSESEARCH_MODE == 1
+$QUEST_TYPE == 5
+$ONMISSION == 1
+then
+//ass
+else
+if or
+BURG_FOOD_FOUND > 0
+BURG_BINT_FOUND > 0
+BURG_HEAL_FOUND > 0
+BURG_JIMMY_FOUND > 0 
+    then
+    text.Show4Number('INV392',BURG_FOOD_FOUND,BURG_BINT_FOUND,BURG_HEAL_FOUND,BURG_JIMMY_FOUND,7500,1)
+    end
+end
 
 end_thread
 
@@ -1151,17 +1189,26 @@ $MONTHS_PASSED > 0
     end
     
     if and
+    QUEST_CARSEARCH_HOUSESEARCH_MODE == 1
+    $QUEST_TYPE == 5
+    $ONMISSION == 1
+    then
+    //ass
+    
+    if
+    0@ > 65
+    then
+    0@ = 65
+    end 
+    
+    else
+    
+    if
     0@ > 85
-    not $QUEST_TYPE == 5
     then
     0@ = 85
     end
-    
-    if and
-    0@ > 65
-    $QUEST_TYPE == 5
-    then
-    0@ = 65
+        
     end
     
     if
@@ -1180,8 +1227,9 @@ $MONTHS_PASSED > 0
     0@ < 0
     then
     0@ = 10
-    end
-        
+    end            
+            
+    gosub @ADJUST_NO_FOUND_PERCENTAGE_FOR_LITTLE_LEFT             
     if
     0E4D: random_percent 0@
         then
@@ -1189,8 +1237,9 @@ $MONTHS_PASSED > 0
         return
         else
         
-        if
+        if and
         0E4D: random_percent 5
+        not $QUEST_TYPE == 5
         then
         
         :GIVE_AMMO_FOR_SOMETHING_PRE
@@ -1351,8 +1400,9 @@ $MONTHS_PASSED > 0
         
         :GIVE_AMMO_FOR_SOMETHING_FAILED
         
-        if
+        if and
         0E4D: random_percent 5
+        not $QUEST_TYPE == 5
             then
             
             if
@@ -1390,20 +1440,21 @@ $MONTHS_PASSED > 0
         end
     else
     
-    0@ = 50
+    0@ = 35
     
     if
     PERK_FINDGOODS == 1
     then
-    0@ -= 18
+    0@ -= 9
     end
     
     if
     PERK_FINDGOODS == 2
     then
-    0@ -= 28
-    end  
+    0@ -= 14
+    end      
     
+    gosub @ADJUST_NO_FOUND_PERCENTAGE_FOR_LITTLE_LEFT
     if
     0E4D: random_percent 0@
     then
@@ -1411,14 +1462,16 @@ $MONTHS_PASSED > 0
     return
     end
     
-    if
+    if and
     0E4D: random_percent 5
+    not $QUEST_TYPE == 5
     then
     jump to @GIVE_AMMO_FOR_SOMETHING_PRE
     end
     
-    if
+    if and
     0E4D: random_percent 5
+    not $QUEST_TYPE == 5
         then
         
         if
@@ -1461,6 +1514,12 @@ if
 0E4D: random_percent 20
     then
     
+    if
+    QUEST_CARSEARCH_HOUSESEARCH_MODE == 1
+    then
+    jump to @NOT_FUCK_YOU_PIDOR
+    end
+    
     if and
     PLAYER_FOOD_ZAPAS >= 35
     8E4D: not random_percent 10
@@ -1483,9 +1542,13 @@ if
     jump to @FUCK_YOU_PIDOR
     end
     
-    :NOT_FUCK_YOU_PIDOR
+    :NOT_FUCK_YOU_PIDOR    
     
+    if
+    not CAR_SEARCH_DO_NOT_GIVE == 2
+    then
     $BANKA_FIND += 1
+    BURG_FOOD_FOUND += 1
     $TEMP_XP = BANKA_FIND_XP
     008D: $TEMP_XP = integer $TEMP_XP to_float
     0069: $TEMP_XP *= $XP_COEFF // (float)
@@ -1514,10 +1577,7 @@ if
         $ACHIEVEMENT_GOT_FLAG = 1            
         0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT83_GOT"            
         end    
-    
-    if
-    not CAR_SEARCH_DO_NOT_GIVE == 2
-    then 
+         
     $BANKA += 1
     if and
     PERK_FINDGOODS == 1
@@ -1525,6 +1585,7 @@ if
         then
         $BANKA += 1
         $BANKA_FIND += 1
+        BURG_FOOD_FOUND += 1
         $TEMP_XP = BANKA_FIND_XP
         008D: $TEMP_XP = integer $TEMP_XP to_float
         0069: $TEMP_XP *= $XP_COEFF // (float)
@@ -1537,6 +1598,7 @@ if
         then
         $BANKA += 1
         $BANKA_FIND += 1
+        BURG_FOOD_FOUND += 1
         $TEMP_XP = BANKA_FIND_XP
         008D: $TEMP_XP = integer $TEMP_XP to_float
         0069: $TEMP_XP *= $XP_COEFF // (float)
@@ -1544,8 +1606,38 @@ if
         0058: $PLAYER_XP += $TEMP_XP // (int) 
         end    
     end
-     
+    
+    if and
+    QUEST_CARSEARCH_HOUSESEARCH_MODE == 1
+    $QUEST_TYPE == 5
+    $ONMISSION == 1
+    then
+    
+    if and
+    $QUEST_TYPE == 5
+    RQUEST_TIMER_STOPPED_FLAG == 0
+        then
+        
+        if
+        CAR_SEARCH_DO_NOT_GIVE == 2
+        then
+        03E5: show_text_box 'INV300'
+        else
+        03E5: show_text_box 'INV300A'
+        end
+        
+        random_float 0@ 0.25 0.45
+        HOUSESEARCH_QUEST_FINDED_COUNT += 1
+        005F: EXTRA_WEIGHT += 0@  // (float)
+            
+        else 
+        03E5: show_text_box 'INV109'
+        end
+    
+    else
     03E5: show_text_box 'INV109'
+    end
+    
     return 
     end
     
@@ -1554,16 +1646,21 @@ if
 if and
 0E4D: random_percent 10
 PLAYER_HEAL_ZAPAS < 65
-    then
+    then     
     
     if and
     PLAYER_HEAL_ZAPAS >= 20
     8E4D: not random_percent 5
+    not QUEST_CARSEARCH_HOUSESEARCH_MODE == 1
     then
     jump to @FUCK_YOU_PIDOR
     end
     
+    if
+    not CAR_SEARCH_DO_NOT_GIVE == 2
+    then
     $HEAL_FIND += 1
+    BURG_HEAL_FOUND += 1
     $TEMP_XP = HEAL_FIND_XP
     008D: $TEMP_XP = integer $TEMP_XP to_float
     0069: $TEMP_XP *= $XP_COEFF // (float)
@@ -1592,10 +1689,7 @@ PLAYER_HEAL_ZAPAS < 65
         $ACHIEVEMENT_GOT_FLAG = 1            
         0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT84_GOT"            
         end    
-    
-    if
-    not CAR_SEARCH_DO_NOT_GIVE == 2
-    then
+        
     $HEAL += 1
     if and
     PERK_FINDGOODS == 1
@@ -1603,6 +1697,7 @@ PLAYER_HEAL_ZAPAS < 65
         then
         $HEAL += 1
         $HEAL_FIND += 1
+        BURG_HEAL_FOUND += 1
         $TEMP_XP = HEAL_FIND_XP
         008D: $TEMP_XP = integer $TEMP_XP to_float
         0069: $TEMP_XP *= $XP_COEFF // (float)
@@ -1615,6 +1710,7 @@ PLAYER_HEAL_ZAPAS < 65
         then
         $HEAL += 1
         $HEAL_FIND += 1
+        BURG_HEAL_FOUND += 1
         $TEMP_XP = HEAL_FIND_XP
         008D: $TEMP_XP = integer $TEMP_XP to_float
         0069: $TEMP_XP *= $XP_COEFF // (float)
@@ -1622,8 +1718,38 @@ PLAYER_HEAL_ZAPAS < 65
         0058: $PLAYER_XP += $TEMP_XP // (int)
         end
     end
+    
+    if and
+    QUEST_CARSEARCH_HOUSESEARCH_MODE == 1
+    $QUEST_TYPE == 5
+    $ONMISSION == 1
+    then
+    
+    if and
+    $QUEST_TYPE == 5
+    RQUEST_TIMER_STOPPED_FLAG == 0
+        then
+        
+        if
+        CAR_SEARCH_DO_NOT_GIVE == 2
+        then
+        03E5: show_text_box 'INV300'
+        else
+        03E5: show_text_box 'INV300A'
+        end
+        
+        random_float 0@ 0.25 0.45
+        HOUSESEARCH_QUEST_FINDED_COUNT += 1
+        005F: EXTRA_WEIGHT += 0@  // (float)
+            
+        else  
+        03E5: show_text_box 'INV108'
+        end
+            
+    else
+    03E5: show_text_box 'INV108'
+    end
      
-    03E5: show_text_box 'INV108' 
     return
     end
     
@@ -1636,11 +1762,16 @@ if
     if and
     PLAYER_BINT_ZAPAS >= 30
     8E4D: not random_percent 5
+    not QUEST_CARSEARCH_HOUSESEARCH_MODE == 1
     then
     jump to @FUCK_YOU_PIDOR
     end
     
+    if
+    not CAR_SEARCH_DO_NOT_GIVE == 2
+    then
     $BINT_FIND += 1
+    BURG_BINT_FOUND += 1
     $TEMP_XP = BINT_FIND_XP
     008D: $TEMP_XP = integer $TEMP_XP to_float
     0069: $TEMP_XP *= $XP_COEFF // (float)
@@ -1669,10 +1800,7 @@ if
         $ACHIEVEMENT_GOT_FLAG = 1            
         0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT85_GOT"            
         end    
-    
-    if
-    not CAR_SEARCH_DO_NOT_GIVE == 2
-    then
+        
     $BINT += 1
     if and
     PERK_FINDGOODS == 1
@@ -1680,6 +1808,7 @@ if
         then
         $BINT += 1
         $BINT_FIND += 1
+        BURG_BINT_FOUND += 1
         $TEMP_XP = BINT_FIND_XP
         008D: $TEMP_XP = integer $TEMP_XP to_float
         0069: $TEMP_XP *= $XP_COEFF // (float)
@@ -1692,6 +1821,7 @@ if
         then
         $BINT += 1
         $BINT_FIND += 1
+        BURG_BINT_FOUND += 1
         $TEMP_XP = BINT_FIND_XP
         008D: $TEMP_XP = integer $TEMP_XP to_float
         0069: $TEMP_XP *= $XP_COEFF // (float)
@@ -1699,8 +1829,38 @@ if
         0058: $PLAYER_XP += $TEMP_XP // (int) 
         end
     end
+    
+    if and
+    QUEST_CARSEARCH_HOUSESEARCH_MODE == 1
+    $QUEST_TYPE == 5
+    $ONMISSION == 1
+    then
+    
+    if and
+    $QUEST_TYPE == 5
+    RQUEST_TIMER_STOPPED_FLAG == 0
+        then
+        
+        if
+        CAR_SEARCH_DO_NOT_GIVE == 2
+        then
+        03E5: show_text_box 'INV300'
+        else
+        03E5: show_text_box 'INV300A'
+        end
+        
+        random_float 0@ 0.25 0.45
+        HOUSESEARCH_QUEST_FINDED_COUNT += 1
+        005F: EXTRA_WEIGHT += 0@  // (float)
+            
+        else  
+        03E5: show_text_box 'INV16'
+        end
+    
+    else
+    03E5: show_text_box 'INV16'
+    end
      
-    03E5: show_text_box 'INV16' 
     return 
     end
     
@@ -1709,7 +1869,12 @@ if
 if
 0E4D: random_percent 10
     then    
+    
+    if
+    not CAR_SEARCH_DO_NOT_GIVE == 2
+    then
     $JIMMY_FIND += 1
+    BURG_JIMMY_FOUND += 1
     $TEMP_XP = JIMMY_FIND_XP
     008D: $TEMP_XP = integer $TEMP_XP to_float
     0069: $TEMP_XP *= $XP_COEFF // (float)
@@ -1738,10 +1903,7 @@ if
         $ACHIEVEMENT_GOT_FLAG = 1            
         0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT87_GOT"            
         end    
-    
-    if
-    not CAR_SEARCH_DO_NOT_GIVE == 2
-    then
+        
     $JIMMY += 1
     if and
     PERK_FINDGOODS == 1
@@ -1749,6 +1911,7 @@ if
         then
         $JIMMY += 1
         $JIMMY_FIND += 1
+        BURG_JIMMY_FOUND += 1
         $TEMP_XP = JIMMY_FIND_XP
         008D: $TEMP_XP = integer $TEMP_XP to_float
         0069: $TEMP_XP *= $XP_COEFF // (float)
@@ -1761,6 +1924,7 @@ if
         then
         $JIMMY += 1
         $JIMMY_FIND += 1
+        BURG_JIMMY_FOUND += 1
         $TEMP_XP = JIMMY_FIND_XP
         008D: $TEMP_XP = integer $TEMP_XP to_float
         0069: $TEMP_XP *= $XP_COEFF // (float)
@@ -1768,8 +1932,38 @@ if
         0058: $PLAYER_XP += $TEMP_XP // (int)
         end
     end
-     
+    
+    if and
+    QUEST_CARSEARCH_HOUSESEARCH_MODE == 1
+    $QUEST_TYPE == 5
+    $ONMISSION == 1
+    then
+    
+    if and
+    $QUEST_TYPE == 5
+    RQUEST_TIMER_STOPPED_FLAG == 0
+        then
+        
+        if
+        CAR_SEARCH_DO_NOT_GIVE == 2
+        then
+        03E5: show_text_box 'INV300'
+        else
+        03E5: show_text_box 'INV300A'
+        end
+        
+        random_float 0@ 0.25 0.45
+        HOUSESEARCH_QUEST_FINDED_COUNT += 1
+        005F: EXTRA_WEIGHT += 0@  // (float)
+            
+        else  
+        03E5: show_text_box 'INV91'
+        end
+    
+    else
     03E5: show_text_box 'INV91'
+    end
+    
     return
     end
     
@@ -1882,6 +2076,23 @@ file.Close(HOUSE_PRIKOL_HUMAN_HANDLE)
 HOUSE_PRIKOL_HUMAN_HANDLE = 0
 end    
 
+BURG_TOTAL_LOOT_POINTS = 0
+
+for 0@ = 0 to 39    
+
+if
+03CA:   object $BANDIT_MARKER_FLAG[0@] exists
+    then
+    BURG_TOTAL_LOOT_POINTS += 1
+    end
+    
+end
+
+BURG_FOOD_FOUND = 0
+BURG_BINT_FOUND = 0
+BURG_HEAL_FOUND = 0
+BURG_JIMMY_FOUND = 0
+
 return
 
 :HOUSE_LOOT_SHOW_PRIKOL_POINTS
@@ -1982,6 +2193,7 @@ else
 $WITCH_INTERIOR_SPAWN = 1
 $SPAWN_WITCH_FLAG = 1
 $SPAWN_WITCH_ON_COORD = 1
+SPEC_INF_ONLY_ONE_INSTANSE_SPAWN_FLAG = 1
 0088: $WITCH_X = 1@ // (float)
 0088: $WITCH_Y = 2@ // (float)
 0088: $WITCH_Z = 3@ // (float)
@@ -3375,7 +3587,68 @@ then
 10@ = Audiostream.Load3D("audio\sounds\features\skrip5.mp3")
 end
 
-return        
+return   
+
+:ADJUST_NO_FOUND_PERCENTAGE_FOR_LITTLE_LEFT
+
+////////////////////////////////////////////////////////////
+    
+1@ = 0
+
+for 2@ = 0 to 39    
+    
+if
+03CA:   object $BANDIT_MARKER_FLAG[2@] exists
+    then
+    1@ += 1
+    end
+        
+end
+    
+////////////////////////////////////////////////////////////
+    
+0085: 20@ = BURG_TOTAL_LOOT_POINTS // (int)
+0062: 20@ -= 1@  // (int)
+0093: 20@ = integer 20@ to_float        
+0085: 24@ = BURG_TOTAL_LOOT_POINTS // (int)
+0093: 24@ = integer 24@ to_float                                        
+24@ /= 100.0                     
+0073: 20@ /= 24@ // (float)
+0092: 20@ = float 20@ to_integer
+if
+20@ >= 80
+then
+0093: 0@ = integer 0@ to_float
+0@ *= 0.65
+0092: 0@ = float 0@ to_integer
+end
+
+if
+QUEST_CARSEARCH_HOUSESEARCH_MODE == 1
+then
+0093: 0@ = integer 0@ to_float
+0@ *= 0.9
+0092: 0@ = float 0@ to_integer
+end
+
+if and
+0@ < 20
+$QUEST_TYPE == 5
+$ONMISSION == 1
+QUEST_CARSEARCH_HOUSESEARCH_MODE == 1
+then
+0@ = 20
+end
+
+if
+$CHEATS_ON == 1
+then
+0AD1: show_formatted_text_highpriority "PERCENTAGE LOOTED %d, LEFT POINTS %d/%d, NO FOUND PERCENTAGE %d" time 2000 20@ 1@ BURG_TOTAL_LOOT_POINTS 0@
+end
+    
+////////////////////////////////////////////////////////////     
+    
+return     
 
 :BRG_INF
 thread 'BRG_INF'
