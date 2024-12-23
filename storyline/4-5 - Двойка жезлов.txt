@@ -3251,6 +3251,8 @@ TERRY_THREAD_CURRENT_DIALOG_INDEX == 9
     018A: MISSION_CHECKPOINT = create_checkpoint_at 1131.02392 -1174.754395 31.96392
     03BC: MISSION_SPHERE = create_sphere_at 1131.02392 -1174.754395 31.96392 radius 1.0
     
+    0221: set_player PLAYER_CHAR apply_brakes_to_car 0
+    
     repeat
     wait 0
     
@@ -3282,6 +3284,8 @@ TERRY_THREAD_CURRENT_DIALOG_INDEX == 9
     not actor.Dead($SURVIVER[0]) 
     jf @TERRY_THREAD_FAILED_TERRY_DEAD  
     end
+    
+    gosub @FREEPLAY4_CHECK_TERRY_DEBIL_ON_ROOF
     
     until 00EC:   actor PLAYER_ACTOR sphere 0 near_point 1131.02392 -1174.754395 radius 1.0 1.0  
     
@@ -3332,6 +3336,8 @@ TERRY_THREAD_CURRENT_DIALOG_INDEX == 9
     jf @TERRY_THREAD_FAILED_TERRY_DEAD  
     end
     
+    gosub @FREEPLAY4_CHECK_TERRY_DEBIL_ON_ROOF
+    
     until $DIALOG_END == 1
     
     PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 0
@@ -3376,6 +3382,8 @@ TERRY_THREAD_CURRENT_DIALOG_INDEX == 9
     jf @TERRY_THREAD_FAILED_TERRY_DEAD  
     end
     
+    gosub @FREEPLAY4_CHECK_TERRY_DEBIL_ON_ROOF
+    
     until 00EC:   actor PLAYER_ACTOR sphere 0 near_point 1099.118164 -1159.930908 radius 1.0 1.0  
     
     v$OBJECTIVE = "DUMMY"
@@ -3393,7 +3401,7 @@ TERRY_THREAD_CURRENT_DIALOG_INDEX == 9
     actor.PutAtNoOffset($SURVIVER[0],1132.7639, -1170.2377, 31.9482)
     actor.Angle($SURVIVER[0]) = 68.9431
     0687: clear_actor $SURVIVER[0] task
-    $PEOPLE_DONT_ATTACK = 1
+    $PEOPLE_DONT_ATTACK = 1    
     
     repeat
     wait 0  
@@ -3434,7 +3442,7 @@ TERRY_THREAD_CURRENT_DIALOG_INDEX == 9
     v$ST_DIALOG[1] = "STR777"
     v$ST_DIALOG[2] = "STR778" 
     $DIALOG_COUNT = 2
-    $DIALOG_NOT_SKIP = 1
+    $DIALOG_NOT_SKIP = 0
     create_thread @DG_SYS2
     PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 1
     CAMP_DONT_SAY_HELLO_FLAG = 1
@@ -3563,8 +3571,7 @@ TERRY_THREAD_CURRENT_DIALOG_INDEX == 9
     fade 0 500
     wait 500
     
-    $PEOPLE_DONT_ATTACK = 0    
-    0631: put_actor $SURVIVER[0] in_group PLAYER_GROUP
+    $PEOPLE_DONT_ATTACK = 0        
     
     BLACK_POLOSKI_ON = 0
     cinema.Widescreen(0)
@@ -3690,7 +3697,70 @@ TERRY_THREAD_CURRENT_DIALOG_INDEX == 9
     jf @TERRY_THREAD_FAILED_TERRY_DEAD  
     end
     
+    gosub @FREEPLAY4_CHECK_TERRY_DEBIL_ON_ROOF
+    
+    if
+    $NOT_ALLOW_COMMANDS == 1
+    then
+    if or
+    0EE4: locate_char_distance_to_char $SURVIVER[0] char PLAYER_ACTOR radius 3.0
+    00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA 1123.4196 -1159.8757 30.0326 cornerB 1132.6436 -1180.5701 40.8979
+        then
+        0631: put_actor $SURVIVER[0] in_group PLAYER_GROUP
+        break
+        end    
+    else      
+    gosub @FREEPLAY4_CHECK_TERRY_DEBIL_ON_ROOF
+    end
+    
     until $DIALOG_END == 1
+    
+    repeat
+    wait 0
+    
+    if
+    not $CAMP_NUMBER == 8
+    then
+    if
+    not BASE_TEAMMATE_AGRED == 1
+    jf @TERRY_THREAD_FAILED_AGRO 
+    end
+       
+    if or
+    803A: not  LEADER_DIED_FLAG == $ENTERED_CAMP_NUMBER // (int)
+    $ENTERED_CAMP_NUMBER == -1
+    jf @TERRY_THREAD_FAILED_LDEAD
+    if
+    $SAVE_CAR_CREATED[LATEST_CAR_SLOT_USED] == 1
+    jf @TERRY_THREAD_FAILED_KETER_WRECKED    
+    if
+    not actor.Dead(PLAYER_ACTOR)
+    jf @TERRY_THREAD_FAILED_PLAYER_DEAD
+    if
+    056D:   actor $SURVIVER[0] defined
+    then                 
+    if 
+    not actor.Dead($SURVIVER[0]) 
+    jf @TERRY_THREAD_FAILED_TERRY_DEAD  
+    end
+    
+    if
+    $NOT_ALLOW_COMMANDS == 1
+    then
+    if or
+    0EE4: locate_char_distance_to_char $SURVIVER[0] char PLAYER_ACTOR radius 3.0
+    00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA 1123.4196 -1159.8757 30.0326 cornerB 1132.6436 -1180.5701 40.8979
+        then
+        0631: put_actor $SURVIVER[0] in_group PLAYER_GROUP
+        break
+        end    
+    else      
+    gosub @FREEPLAY4_CHECK_TERRY_DEBIL_ON_ROOF
+    end
+    
+    until false
+    
+    $NOT_ALLOW_COMMANDS = 0
     
     PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 0
     CAMP_DONT_SAY_HELLO_FLAG = 0
@@ -4253,3 +4323,22 @@ Audiostream.PerformAction(14@, PLAY)
 Audiostream.Volume(14@) = $SOUNDS_VOLUME
 
 return
+
+:FREEPLAY4_CHECK_TERRY_DEBIL_ON_ROOF
+
+if
+$NOT_ALLOW_COMMANDS == 0
+    then
+    if
+    00A4:   actor $SURVIVER[0] sphere 0 in_cube_cornerA 1123.4196 -1159.8757 30.0326 cornerB 1132.6436 -1180.5701 40.8979
+        then
+        if
+        8D49: not 0@ = compare_strings v$COMMAND "GAME106" // IF and SET
+            then
+            $NOT_ALLOW_COMMANDS = 1
+            0687: clear_actor $SURVIVER[0] task
+            end
+        end
+    end
+    
+return    
