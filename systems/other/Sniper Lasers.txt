@@ -1,3 +1,7 @@
+const
+CROUCHED_LOCAL_FLAG = 31@
+end
+
 :LASER
 thread 'LASER'
 
@@ -5,10 +9,267 @@ if
 UNITED_MAP == 1
 then
 create_thread @STRAFE
-end     
+end    
 
-while true
+while true 
 wait 0
+
+//0AD1: show_formatted_text_highpriority "CROUCHED_LOCAL_FLAG %d" time 2000 CROUCHED_LOCAL_FLAG
+
+//Показываем ХП объектов которые мы пытаемся дамажить
+if and
+0E47: is_char_fighting PLAYER_ACTOR  
+0E45: frame_mod 5
+00E1:   player 0 pressed_key 6
+not REALISM_MODE == 1
+then
+actor.StorePos(PLAYER_ACTOR,0@,1@,2@)
+if
+0AE3: 5@ = random_object_near_point 0@ 1@ 2@ in_radius 4.0 find_next 0 //IF and SET
+    then
+    if
+    03CA:   object 5@ exists
+    jf @SCAN_OBJECT_ID_CHECK_FAIL
+    0984: 0@ = object 5@ model 
+    if and
+    not 0@ == 342
+    not 0@ == 344
+    not 0@ == 345
+    not 0@ == 1212
+    not 0@ == 1277
+    not 0@ == 1240
+    not 0@ == 1242
+    jf @SCAN_OBJECT_ID_CHECK_FAIL   
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////
+    32@ = 0
+    
+    while 32@ < 1000
+    wait 0
+    
+    if
+    03CA:   object 5@ exists
+    then
+    071E: get_object 5@ health_to 6@
+    
+    if
+    HEALTH_SHOW_STYLE == 1
+    then
+    6@ /= 10
+    end
+    
+    if or
+    6@ < 1
+    80E1: not  player 0 pressed_key 6
+        then
+        break
+        end
+    end
+    
+    $TARGET_TEXT_X = 320.0
+    
+    if
+    0AD2: 0@ = player PLAYER_CHAR targeted_actor //IF and SET
+    then 
+    1@ = actor.Health(0@)
+    if and
+    1@ > 0
+    00F2:   actor PLAYER_ACTOR near_actor 0@ radius 230.0 230.0 sphere 0
+    0364:   actor PLAYER_ACTOR spotted_actor 0@
+        then  
+        $TARGET_TEXT_Y = 60.0
+        else
+        $TARGET_TEXT_Y = 80.0
+        end
+    else  
+    $TARGET_TEXT_Y = 80.0
+    end
+        
+    $TARGET_ENEMY_R = 200
+    $TARGET_ENEMY_G = 20
+    $TARGET_ENEMY_B = 20   
+        
+    03F0: enable_text_draw 1 
+    03E0: draw_text_behind_textures 1
+    03E3: set_texture_to_be_drawn_antialiased 1 
+    0342: set_text_draw_centered 1
+    0340: set_text_draw_RGBA $TARGET_FRIEND_R $TARGET_FRIEND_G $TARGET_FRIEND_B $HUD_ALPHA   
+    081C: draw_text_outline 1 RGBA 0 0 0 $HUD_ALPHA
+        
+    0086: $TARGET_TEXT_Y2 = $TARGET_TEXT_Y // (float)    
+    $TARGET_TEXT_Y2 -= 10.0
+
+    033F: set_text_draw_letter_size $TEAM_TEXT_SIZE_X $TEAM_TEXT_SIZE_Y
+        
+    if
+    UNITED_MAP == 1
+    then    
+    0349: set_text_draw_font 1
+    end
+        
+    033E: set_draw_text_position $TARGET_TEXT_X $TARGET_TEXT_Y2 GXT "GME1607"
+            
+    03F0: enable_text_draw 1 
+    03E0: draw_text_behind_textures 1
+    03E3: set_texture_to_be_drawn_antialiased 1 
+    0342: set_text_draw_centered 1
+    0340: set_text_draw_RGBA 225 225 225 $HUD_ALPHA   
+    081C: draw_text_outline 1 RGBA 0 0 0 $HUD_ALPHA 
+    033F: set_text_draw_letter_size $TEAM_TEXT_SIZE_X $TEAM_TEXT_SIZE_Y     
+        
+    if
+    UNITED_MAP == 1
+    then    
+    0349: set_text_draw_font 1
+    end
+    
+    if
+    HEALTH_SHOW_STYLE == 1
+    then      
+    045A: draw_text_1number $TARGET_TEXT_X $TARGET_TEXT_Y GXT 'DISP3' number 6@   
+    else  
+    045B: draw_text_2numbers $TARGET_TEXT_X $TARGET_TEXT_Y GXT 'DISP5' numbers 6@ 1000
+    end             
+    
+    end
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    end 
+end
+
+:SCAN_OBJECT_ID_CHECK_FAIL
+
+//Скриптовый присяд для гибридного управления
+if
+HYBRID_CONTORLS == 1
+then
+
+gosub @SCRIPTED_CROUCH_CHECK1 
+0E64: get_camera_mode 1@  
+if and                                                     
+09E7:  player PLAYER_CHAR not_frozen
+044B:   actor PLAYER_ACTOR on_foot
+not actor.Animation(PLAYER_ACTOR) == "gas_cwr"
+not actor.Animation(PLAYER_ACTOR) == "GUN_BUTT_crouch"
+not $EXTRA_BORING_PLUS == 1
+not 1@ == 34
+not 1@ == 7
+then
+if
+0E3E: is_button_just_pressed 0 button 18
+    then
+    gosub @CHECK_FOR_ANTI_CROUCH_WEAPONS
+    if
+    0@ == 0
+        then
+        if
+        CROUCHED_LOCAL_FLAG == 0
+            then         
+            CROUCHED_LOCAL_FLAG = 1
+            0687: clear_actor PLAYER_ACTOR task
+            04EB: AS_actor PLAYER_ACTOR crouch 1
+            wait 0             
+            else
+            CROUCHED_LOCAL_FLAG = 0
+            0687: clear_actor PLAYER_ACTOR task
+            04EB: AS_actor PLAYER_ACTOR crouch 0
+            wait 0
+            end
+        else
+        if
+        CROUCHED_LOCAL_FLAG == 1
+            then
+            CROUCHED_LOCAL_FLAG = 0
+            0687: clear_actor PLAYER_ACTOR task
+            04EB: AS_actor PLAYER_ACTOR crouch 0
+            wait 0
+            end
+        end
+    else
+    if
+    CROUCHED_LOCAL_FLAG == 1
+        then
+        gosub @CHECK_FOR_ANTI_CROUCH_WEAPONS
+        if or
+        0E3E: is_button_just_pressed 0 button 16
+        0E3E: is_button_just_pressed 0 button 14
+        0@ == 1
+            then
+            CROUCHED_LOCAL_FLAG = 0
+            0687: clear_actor PLAYER_ACTOR task
+            04EB: AS_actor PLAYER_ACTOR crouch 0
+            wait 0
+            end
+        end
+    end
+end
+
+0E64: get_camera_mode 1@
+if and                                                     
+09E7:  player PLAYER_CHAR not_frozen
+044B:   actor PLAYER_ACTOR on_foot
+not actor.Animation(PLAYER_ACTOR) == "gas_cwr"
+not actor.Animation(PLAYER_ACTOR) == "GUN_BUTT_crouch"
+not $EXTRA_BORING_PLUS == 1
+not 1@ == 34
+not 1@ == 7
+then
+if and
+CROUCHED_LOCAL_FLAG == 1
+8597: not  actor PLAYER_ACTOR crouching
+    then
+    0687: clear_actor PLAYER_ACTOR task
+    04EB: AS_actor PLAYER_ACTOR crouch 1
+    else
+    if and
+    CROUCHED_LOCAL_FLAG == 0
+    0597:  actor PLAYER_ACTOR crouching
+        then
+        0687: clear_actor PLAYER_ACTOR task
+        04EB: AS_actor PLAYER_ACTOR crouch 0
+        end
+    end
+end
+
+end
+
+////////////////////////////////////
+
+if
+HYBRID_CONTORLS == 1
+then
+0E64: get_camera_mode 1@ 
+if and
+1@ == 34
+not 1@ == 7
+not 1@ == 8
+8A32: not  actor PLAYER_ACTOR on_turret_of_car
+8A0C: not  player PLAYER_CHAR on_jetpack
+8E48: not is_char_fallen_on_ground PLAYER_ACTOR
+//8E92: not is_char_really_in_air PLAYER_ACTOR
+    then    
+    gosub @SNIPER_GO_TUDA_CHECK
+    03F0: enable_text_draw 1    
+    03E3: set_texture_to_be_drawn_antialiased 1
+    038D: draw_texture CROSS_TEXTURE_NUMBER position 320.8 222.0 size 40.0 40.0 RGBA 255 255 255 $HUD_ALPHA
+    else    
+    06AC: 1@ = actor PLAYER_ACTOR movement_speed        
+    if and
+    02E0:   actor PLAYER_ACTOR firing_weapon
+    80E1: not  player 0 pressed_key 17
+    1@ < 1.0
+        then     
+//        0AD1: show_formatted_text_highpriority "benis 3" time 500
+        0687: clear_actor PLAYER_ACTOR task
+        if
+        0597:   actor PLAYER_ACTOR crouching
+            then    
+            04EB: AS_actor PLAYER_ACTOR crouch 1
+            0647: AS_actor PLAYER_ACTOR clear_look_task
+            end    
+        end    
+    end         
+end 
 
 ////////////////////////////////////
 
@@ -67,10 +328,66 @@ PLAYER_USING_MELEE_FLAG == 1
 ////////////////////////////////////
 
 if and
+HYBRID_CONTORLS == 1
+PLAYER_USING_MELEE_FLAG == 0
+09E7:  player PLAYER_CHAR not_frozen
+044B:   actor PLAYER_ACTOR on_foot
+82D8: not  actor PLAYER_ACTOR current_weapon == 0
+    then 
+        
+    if
+    $FP_ACTIVATED == 1
+    then
+    04C4: store_coords_to 18@ 19@ 20@ from_actor PLAYER_ACTOR with_offset 0.0 1.0 0.0
+    else
+    Actor.StorePos(PLAYER_ACTOR, 18@, 19@, 20@)
+    end
+    
+    0AC7: get_var_pointer 2@ = var 24@ 
+    0AC7: get_var_pointer 3@ = var 21@ 
+    0AA6: call_method 0x514970 struct 0xB6F028 num_params 6 pop 0 2@ 3@ 20@ 19@ 18@ 200.0 
+    if
+    not 2@ == -1
+        then        
+        0A96: 10@ = actor PLAYER_ACTOR struct
+        0D3A: get_collision_between_points 21@ 22@ 23@ and 24@ 25@ 26@ flags 1 1 1 1 0 1 0 0 ignore_entity 10@ store_point_to 7@ 8@ 9@ entity_to 11@ colpoint_data_to 1 // IF and SET     
+//        0D54: draw_corona_with_extra_params_texture 0 color 128 0 0 255 on_entity 0 at 7@ 8@ 9@ size 1.2 far_clip 2000.0 near_clip 1.5 flare 0 enable_reflection 1 check_obstacles 0 flash_while_fading 0 fade_speed 15.0 only_from_below 0
+        
+        0E64: get_camera_mode 0@ 
+        if
+        not 0@ == 34        
+        then
+        if or
+        00E1:   player 0 pressed_key 6   
+        0E46: is_char_using_gun PLAYER_ACTOR
+            then
+            0A96: 0@ = ped PLAYER_ACTOR struct
+            0@ += 0x79C //0x71C for autoaim lulz
+            0A8C: write_memory 0@ size 4 value 11@ virtual_protect 0    
+            else
+            0A96: 0@ = ped PLAYER_ACTOR struct
+            0@ += 0x79C //0x71C for autoaim lulz
+            0A8C: write_memory 0@ size 4 value 0 virtual_protect 0    
+            end
+        end
+        
+        end
+    end
+
+if and
 UNITED_MAP == 1
 00E1:   player 0 pressed_key 17
 then
 jump to @SKIP_SHIT_VCLC
+end
+
+if and
+0E3E: is_button_just_pressed 0 button 15
+00E1:   player 0 pressed_key 6
+HYBRID_CONTORLS == 1
+not PLAYER_USING_MELEE_FLAG == 1
+then
+jump to @HYBRID_GO_TUDA_JUMP
 end
 
 if and
@@ -93,10 +410,10 @@ end
 
 0AC7: get_var_pointer 2@ = var 24@ 
 0AC7: get_var_pointer 3@ = var 21@ 
-0AA6: call_method 0x514970 struct 0xB6F028 num_params 6 pop 0 2@ 3@ 20@ 19@ 18@ 200.0 
+0AA6: call_method 0x514970 struct 0xB6F028 num_params 6 pop 0 2@ 3@ 20@ 19@ 18@ 5000.0 
 if
 not 2@ == -1
-    then
+    then        
     
     0470: 0@ = actor PLAYER_ACTOR current_weapon
     041A: 0@ = actor PLAYER_ACTOR weapon 0@ ammo
@@ -139,34 +456,71 @@ not 2@ == -1
         then
         0@ = 0
         end
+    
+//    0A96: 10@ = actor PLAYER_ACTOR struct
+//    if
+//    0D3A: get_collision_between_points 21@ 22@ 23@ and 24@ 25@ 26@ flags 1 1 1 1 0 1 0 0 ignore_entity 10@ store_point_to 7@ 8@ 9@ entity_to 11@ colpoint_data_to 1 // IF and SET
+//    then    
+//    0D54: draw_corona_with_extra_params_texture 0 color 128 0 0 255 on_entity 0 at 7@ 8@ 9@ size 1.2 far_clip 2000.0 near_clip 1.5 flare 0 enable_reflection 1 check_obstacles 0 flash_while_fading 0 fade_speed 15.0 only_from_below 0
+//    end 
+
+//    actor.StorePos(PLAYER_ACTOR,$TEMPVAR_FLOAT_1,$TEMPVAR_FLOAT_2,$TEMPVAR_FLOAT_3)
+//    04C4: store_coords_to $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3 from_actor PLAYER_ACTOR with_offset 0.0 2.0 2.0
+//    0F0E: get_third_person_camera_target PLAYER_ACTOR from $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3 start_to $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3 end_to 7@ 8@ 9@       
+//    0D54: draw_corona_with_extra_params_texture 0 color 128 0 0 255 on_entity 0 at 7@ 8@ 9@ size 1.2 far_clip 2000.0 near_clip 1.5 flare 0 enable_reflection 1 check_obstacles 0 flash_while_fading 0 fade_speed 15.0 only_from_below 0       
         
     if and
     UNITED_MAP == 1
     00E1:   player 0 pressed_key 17
-    80E1: not  player 0 pressed_key 6
+//    80E1: not  player 0 pressed_key 6
     8E92: not is_char_really_in_air PLAYER_ACTOR
     not actor.Driving(PLAYER_ACTOR)
     09E7:   player PLAYER_CHAR not_frozen
     8A32: not actor PLAYER_ACTOR on_turret_of_car
     0@ == 0
-    then
-    0A96: 10@ = actor PLAYER_ACTOR struct     
+    then               
+    0E64: get_camera_mode 0@
     if and
-    8A0C: not  player PLAYER_CHAR on_jetpack
-    0D3A: get_collision_between_points 21@ 22@ 23@ and 24@ 25@ 26@ flags 1 1 1 1 0 1 0 0 ignore_entity 10@ store_point_to 7@ 8@ 9@ entity_to 11@ colpoint_data_to 1 // IF and SET
-        then                                                                            
-        0668: AS_actor PLAYER_ACTOR rotate_and_shoot_at 7@ 8@ 9@ 250 ms 
+    8A0C: not  player PLAYER_CHAR on_jetpack 
+    8E48: not is_char_fallen_on_ground PLAYER_ACTOR
+    8E92: not is_char_really_in_air PLAYER_ACTOR
+    not $PANEL_OPEN == 1       
+    not 0@ == 34
+    not 0@ == 7 
+    not $PLAYER_RELOADING == 1
+        then    
+        gosub @CHECK_FOR_SPRINT_WEAPON_RUNNING 
+        if
+        0@ == 0 
+            then
+            
+            11@ = 0
+            0A96: 10@ = actor PLAYER_ACTOR struct
+            0D3A: get_collision_between_points 21@ 22@ 23@ and 24@ 25@ 26@ flags 1 1 1 1 0 1 0 0 ignore_entity 10@ store_point_to 7@ 8@ 9@ entity_to 11@ colpoint_data_to 1 // IF and SET    
+            if
+            11@ > 0  
+            then
+            //ass
+            else
+            04C4: store_coords_to $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3 from_actor PLAYER_ACTOR with_offset 0.0 10.0 0.0
+            0F0E: get_third_person_camera_target PLAYER_ACTOR from $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3 start_to $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3 end_to 7@ 8@ 9@  
+            end
+                                                                                 
+            0668: AS_actor PLAYER_ACTOR rotate_and_shoot_at 7@ 8@ 9@ 150 ms  
+//            0D54: draw_corona_with_extra_params_texture 0 color 128 0 0 255 on_entity 0 at 7@ 8@ 9@ size 1.2 far_clip 2000.0 near_clip 1.5 flare 0 enable_reflection 1 check_obstacles 0 flash_while_fading 0 fade_speed 15.0 only_from_below 0  
+            end   
         end
     else
     if and
     02E0:   actor PLAYER_ACTOR firing_weapon
     80E1: not  player 0 pressed_key 17
-    80E1: not  player 0 pressed_key 6
+//    80E1: not  player 0 pressed_key 6
     80E1: not  player 0 pressed_key 16
         then
         if
         0597:   actor PLAYER_ACTOR crouching
             then    
+            0687: clear_actor PLAYER_ACTOR task
             04EB: AS_actor PLAYER_ACTOR crouch 1
             0647: AS_actor PLAYER_ACTOR clear_look_task
             else
@@ -180,7 +534,7 @@ not 2@ == -1
             02D8:   actor PLAYER_ACTOR current_weapon == 167
             02D8:   actor PLAYER_ACTOR current_weapon == 195
             02D8:   actor PLAYER_ACTOR current_weapon == 197
-            then   
+            then                  
             jump to @SKIP_CLEAR_TASK_COLT              
             else
             if
@@ -190,14 +544,24 @@ not 2@ == -1
                 end  
             end
             
-            0687: clear_actor PLAYER_ACTOR task
-            0647: AS_actor PLAYER_ACTOR clear_look_task    
+//            06AC: 11@ = actor PLAYER_ACTOR movement_speed
+//            if
+//            11@ < 0.5 
+//            02E0:   actor PLAYER_ACTOR firing_weapon
+//            then
+//            0AD1: show_formatted_text_highpriority "benis 1" time 500
+//            0687: clear_actor PLAYER_ACTOR task
+//            0E96: clear_char_primary_tasks PLAYER_ACTOR 
+//            0E96: clear_char_primary_tasks PLAYER_ACTOR
+//            end
+//            
+//            0647: AS_actor PLAYER_ACTOR clear_look_task    
             end
         else
         if and
         82E0: not  actor PLAYER_ACTOR firing_weapon
         80E1: not  player 0 pressed_key 17
-        80E1: not  player 0 pressed_key 6
+//        80E1: not  player 0 pressed_key 6
         80E1: not  player 0 pressed_key 16
         8597: not  actor PLAYER_ACTOR crouching
             then
@@ -208,11 +572,22 @@ not 2@ == -1
                 if or
                 00E1:   player 0 pressed_key 0
                 00E1:   player 0 pressed_key 1
-                    then                    
-                    0687: clear_actor PLAYER_ACTOR task
-                    0647: AS_actor PLAYER_ACTOR clear_look_task 
+                    then              
+                    
+//                    06AC: 11@ = actor PLAYER_ACTOR movement_speed
+//                    if
+//                    11@ < 0.5 
+//                    02E0:   actor PLAYER_ACTOR firing_weapon
+//                    then     
+//                    0AD1: show_formatted_text_highpriority "benis 2" time 500
+//                    0687: clear_actor PLAYER_ACTOR task
+//                    0E96: clear_char_primary_tasks PLAYER_ACTOR  
+//                    0E96: clear_char_primary_tasks PLAYER_ACTOR
+//                    end
+//                    
+//                    0647: AS_actor PLAYER_ACTOR clear_look_task 
                     end
-                end
+                end 
             end
         end 
     end
@@ -225,6 +600,7 @@ not 2@ == -1
     0E3E: is_button_just_pressed 0 button 15
     00E1:   player 0 pressed_key 6
         then
+        :HYBRID_GO_TUDA_JUMP
         046D: 4@ = actor PLAYER_ACTOR members_in_group
         if
         4@ > 0
@@ -236,9 +612,9 @@ not 2@ == -1
 //                0D54: draw_corona_with_extra_params_texture 0 color 128 0 0 255 on_entity 0 at 7@ 8@ 9@ size 1.2 far_clip 2000.0 near_clip 1.5 flare 0 enable_reflection 1 check_obstacles 0 flash_while_fading 0 fade_speed 15.0 only_from_below 0
                 create_thread @EBASUDA 7@ 8@ 9@
                 end
-            end
+            end   
         end
-    end                                  
+    end                                          
 
 0D0B: get_actor PLAYER_ACTOR bone 8 matrix_pointer_to 0@ // IF and SET
 10@ = actor.Angle(PLAYER_ACTOR)
@@ -246,8 +622,9 @@ not 2@ == -1
 0087: 6@ = 3@ // (float)
 0EF0: get_coord_from_angled_distance 1@ 2@ angle 10@ dist 3.5 store_to 4@ 5@
 0A96: 10@ = actor PLAYER_ACTOR struct
-if
+if and
 0D3A: get_collision_between_points 1@ 2@ 3@ and 4@ 5@ 6@ flags 1 1 1 1 0 1 0 0 ignore_entity 10@ store_point_to 7@ 8@ 9@ entity_to 11@ colpoint_data_to 1 // IF and SET
+not HYBRID_CONTORLS == 1
     then
 //    0D54: draw_corona_with_extra_params_texture 0 color 128 0 0 255 on_entity 0 at 7@ 8@ 9@ size 1.2 far_clip 2000.0 near_clip 1.5 flare 0 enable_reflection 1 check_obstacles 0 flash_while_fading 0 fade_speed 15.0 only_from_below 0
     050A: 10@ = distance_between_XYZ 1@ 2@ 3@ and_XYZ 4@ 5@ 6@        
@@ -291,15 +668,17 @@ if
         end    
     else
     ANTI_LEFT_STENKA_FLAG = 0    
-    if
+    if and
     $GAMEMODE_STORYLINE == 1
+    not HYBRID_CONTORLS == 1
         then
         0881: set_player PLAYER_CHAR able_to_shoot_weapons 1
         end    
     end
 else
-if
+if and
 ANTI_LEFT_STENKA_FLAG == 1
+not HYBRID_CONTORLS == 1
     then
     ANTI_LEFT_STENKA_FLAG = 0    
     if
@@ -323,7 +702,8 @@ if
     0470: 11@ = actor PLAYER_ACTOR current_weapon
     
     while true
-    wait 0   
+    wait 0
+    gosub @SCRIPTED_CROUCH_CHECK1   
     gosub @SNIPER_GO_TUDA_CHECK
     0E64: get_camera_mode 0@    
     
@@ -400,6 +780,134 @@ if
         end
     end
         
+return
+
+:CHECK_FOR_ANTI_CROUCH_WEAPONS
+
+0@ = 0
+
+if or
+02D8:   actor PLAYER_ACTOR current_weapon == 114
+02D8:   actor PLAYER_ACTOR current_weapon == 119
+02D8:   actor PLAYER_ACTOR current_weapon == 135
+02D8:   actor PLAYER_ACTOR current_weapon == 148
+02D8:   actor PLAYER_ACTOR current_weapon == 150
+02D8:   actor PLAYER_ACTOR current_weapon == 180
+02D8:   actor PLAYER_ACTOR current_weapon == 182
+02D8:   actor PLAYER_ACTOR current_weapon == 183
+    then
+    0@ = 1
+    end
+
+if or
+02D8:   actor PLAYER_ACTOR current_weapon == 210
+02D8:   actor PLAYER_ACTOR current_weapon == 212
+02D8:   actor PLAYER_ACTOR current_weapon == 213
+02D8:   actor PLAYER_ACTOR current_weapon == 92
+    then
+    0@ = 1
+    end
+
+return
+
+:CHECK_AIM_FOR_FP_WEAPS
+
+0@ = 0
+
+if or
+02D8:  actor PLAYER_ACTOR current_weapon == 119
+02D8:  actor PLAYER_ACTOR current_weapon == 120
+02D8:  actor PLAYER_ACTOR current_weapon == 146
+02D8:  actor PLAYER_ACTOR current_weapon == 147
+02D8:  actor PLAYER_ACTOR current_weapon == 151
+02D8:  actor PLAYER_ACTOR current_weapon == 149
+02D8:  actor PLAYER_ACTOR current_weapon == 181
+02D8:  actor PLAYER_ACTOR current_weapon == 211  
+    then
+    0@ = 1
+    end
+    
+if or    
+02D8:  actor PLAYER_ACTOR current_weapon == 135
+02D8:  actor PLAYER_ACTOR current_weapon == 96
+02D8:  actor PLAYER_ACTOR current_weapon == 97
+02D8:  actor PLAYER_ACTOR current_weapon == 175
+02D8:  actor PLAYER_ACTOR current_weapon == 176
+02D8:  actor PLAYER_ACTOR current_weapon == 205
+02D8:  actor PLAYER_ACTOR current_weapon == 206
+    then
+    0@ = 1
+    end
+        
+if or
+02D8:   actor PLAYER_ACTOR current_weapon == 144
+02D8:   actor PLAYER_ACTOR current_weapon == 145
+02D8:   actor PLAYER_ACTOR current_weapon == 116
+02D8:   actor PLAYER_ACTOR current_weapon == 149
+02D8:   actor PLAYER_ACTOR current_weapon == 170
+02D8:   actor PLAYER_ACTOR current_weapon == 171
+02D8:   actor PLAYER_ACTOR current_weapon == 200
+02D8:   actor PLAYER_ACTOR current_weapon == 201
+    then
+    0@ = 1
+    end
+
+if or    
+02D8:   actor PLAYER_ACTOR current_weapon == 181
+02D8:   actor PLAYER_ACTOR current_weapon == 211
+02D8:   actor PLAYER_ACTOR current_weapon == 92
+    then
+    0@ = 1
+    end 
+    
+return    
+
+:CHECK_FOR_SPRINT_WEAPON_RUNNING
+
+0@ = 0
+
+0A96: 0@ = actor PLAYER_ACTOR struct
+0A8E: 0@ = 0@ + 0x534 //RUN STATE
+0A8D: 0@ = read_memory 0@ size 4 virtual_protect 1
+if
+not 0@ == 7
+    then
+    0@ = 0
+    else
+    0@ = 1
+    end   
+    
+return    
+
+:SCRIPTED_CROUCH_CHECK1
+
+0E64: get_camera_mode 1@ 
+if and
+not 1@ == 34
+not 1@ == 7
+then
+082A: set_player PLAYER_CHAR able_to_use_crouch_button 0
+0881: set_player PLAYER_CHAR able_to_shoot_weapons 0 
+else
+082A: set_player PLAYER_CHAR able_to_use_crouch_button 1
+0881: set_player PLAYER_CHAR able_to_shoot_weapons 1 
+if and                                                     
+09E7:  player PLAYER_CHAR not_frozen
+044B:   actor PLAYER_ACTOR on_foot
+not actor.Animation(PLAYER_ACTOR) == "gas_cwr"
+not actor.Animation(PLAYER_ACTOR) == "GUN_BUTT_crouch"
+not $EXTRA_BORING_PLUS == 1
+    then
+    if
+    0597:   actor PLAYER_ACTOR crouching
+        then         
+        CROUCHED_LOCAL_FLAG = 1             
+        else
+        CROUCHED_LOCAL_FLAG = 0
+        end
+    end
+end
+
 return
 
 :EBASUDA
@@ -502,27 +1010,27 @@ end
 0AD3: v$COMMAND2 = format "%d" 9@
 098B: v$COMMAND3 = v$COMMAND1 + v$COMMAND2 // all string variables
 
-09FD: get_gxt_string v$COMMAND3 width_to 31@  // ~k~~PED_SPRINT~ Select
+09FD: get_gxt_string v$COMMAND3 width_to 8@  // ~k~~PED_SPRINT~ Select
 
 if
-not 31@ == 0
+not 8@ == 0
     then   
     9@ += 1 
-    random_int 8@ 0 9@
+    random_int 11@ 0 9@
     end
 
 end  
 
-046D: 10@ = actor PLAYER_ACTOR members_in_group
+046D: 8@ = actor PLAYER_ACTOR members_in_group
 if
-10@ > 1
+8@ > 1
 then
 v$COMMAND1 = "PH198_" // v$ // Sunday
 else
 v$COMMAND1 = "PH199_" // v$ // Sunday
 end
 
-0AD3: v$COMMAND2 = format "%d" 8@
+0AD3: v$COMMAND2 = format "%d" 11@
 098B: v$COMMAND3 = v$COMMAND1 + v$COMMAND2 // all string variables
 
 return

@@ -1561,6 +1561,80 @@ end
 
 end_thread  
 
+:ZAM_TXB
+thread 'ZAM_TXB'
+
+if
+0846:   string v$ST_DIALOG[18] empty // v$
+then
+end_thread
+end
+
+0ADF: add_dynamic_GXT_entry "ZALUPB" text v$ST_DIALOG[18]
+
+repeat
+wait 0
+
+03F0: enable_text_draw 1 
+03E0: draw_text_behind_textures 1
+03E3: set_texture_to_be_drawn_antialiased 1 
+0342: set_text_draw_centered 1
+0344: set_text_draw_linewidth 640.0 for_centered_text
+033F: set_text_draw_letter_size 0.2 1.1 
+081C: draw_text_outline 1 RGBA 0 0 0 $HUD_ALPHA 
+0340: set_text_draw_RGBA 255 255 255 $HUD_ALPHA   
+    
+if
+UNITED_MAP == 1
+then    
+0349: set_text_draw_font UNITED_HUD_FONT_NUMBER
+end
+
+033E: set_draw_text_position 320.0 5.0 GXT "ZALUPB"  // Push
+
+until 002D:   32@ >= 0@  // (int)
+
+0AE0: remove_dynamic_GXT_entry "ZALUPB"
+
+end_thread  
+
+:ZAM_TB2
+thread 'ZAM_TB2'
+
+if
+0846:   string v$ST_DIALOG[19] empty // v$
+then
+end_thread
+end
+
+0ADF: add_dynamic_GXT_entry "ZALUPT" text v$ST_DIALOG[19]
+
+repeat
+wait 0
+
+03F0: enable_text_draw 1 
+03E0: draw_text_behind_textures 1
+03E3: set_texture_to_be_drawn_antialiased 1 
+0342: set_text_draw_centered 1
+0344: set_text_draw_linewidth 640.0 for_centered_text
+033F: set_text_draw_letter_size 0.2 1.1 
+081C: draw_text_outline 1 RGBA 0 0 0 $HUD_ALPHA 
+0340: set_text_draw_RGBA 255 255 255 $HUD_ALPHA   
+    
+if
+UNITED_MAP == 1
+then    
+0349: set_text_draw_font UNITED_HUD_FONT_NUMBER
+end
+
+033E: set_draw_text_position 320.0 25.0 GXT "ZALUPT"  // Push
+
+until 002D:   32@ >= 0@  // (int)
+
+0AE0: remove_dynamic_GXT_entry "ZALUPT"
+
+end_thread  
+
 :ZAMESKP
 thread 'ZAMESKP'
 
@@ -1624,10 +1698,12 @@ Object.PutAt(28@, 1@, 2@, 3@)
 
 if
 8@ == 1
-then
+then                          
 object.Indestructibility(28@,0)
+071F: set_object 28@ health_to 28000
 0906: set_object 28@ mass_to 99999.0 // float
 0392: make_object 28@ moveable 0
+0550: keep_object 28@ in_memory 1
 end
 
 end_thread   
@@ -1998,6 +2074,160 @@ if
     end
 
 end_thread
+
+:ZAMAPIE
+thread 'ZAMAPIE'
+
+if
+ZAME_OLD_PICKUPS_STYLE == 1
+then
+5@ -= 1
+end
+
+repeat
+
+if
+not ZAME_KONTROLT4K_LOADING_FLAG_GLOB == 1
+then
+wait 500
+else
+wait 0
+end
+
+until 001E:   $PACKAGE_PICKED_UP_FLAG[1] > 5@  // (int)
+
+if
+ZAME_KONTROLT4K_LOADING_FLAG_GLOB == 1   
+then
+
+5@ += 1      
+repeat
+wait 0
+until 001E:   $PACKAGE_PICKED_UP_FLAG[1] > 5@  // (int)  
+
+if
+ZAME_KONTROLT4K_LOADING_FLAG_GLOB == 1
+then
+end_thread
+end
+      
+end
+
+2@ = Pickup.Create(9@, 6@, 0@, 1@, 2@)
+if
+7@ == 1
+then
+03DC: 29@ = create_marker_above_pickup 2@
+marker.SetIconSize(29@,2)
+end 
+
+if
+8@ > 0
+    then
+    
+    repeat
+    wait 0
+    
+    if
+    pickup.Picked_up(2@)
+        then
+        
+        if
+        9@ == 2663 //Еда
+            then
+            $BANKA += 1
+            $BANKA_FIND += 1
+            end
+            
+        if
+        9@ == 1275 //Аптечка
+            then
+            $HEAL += 1
+            $HEAL_FIND += 1
+            end    
+            
+        if
+        9@ == 2709 //Бинт
+            then
+            $BINT += 1
+            $BINT_FIND += 1
+            end 
+            
+        if
+        9@ == 1650 //Канистра
+            then
+            
+            if
+            $KANISTRA == 0
+            then
+            $KANISTRA = 1 
+            end
+            
+            random_float $KANISTRA_RANDOM_COUNT $GASOLINE_MIN $GASOLINE_MAX
+        
+            if
+            $KANISTRA_RANDOM_COUNT < 1.75
+            then
+            $KANISTRA_RANDOM_COUNT = 1.75
+            end
+            
+            if
+            $KANISTRA_RANDOM_COUNT > 5.0
+            then
+            $KANISTRA_RANDOM_COUNT = 5.0
+            end
+              
+            $KANISTRA_RANDOM_COUNT *= 1.95   
+            0059: $KANISTRA_FUEL += $KANISTRA_RANDOM_COUNT // (float)
+            
+            if
+            $KANISTRA_FUEL > 25.1
+            then
+            wait 100
+            text.ShowTextBox('GAME17')  
+            $KANISTRA_FUEL = 25.0
+            end
+            
+            Audiostream.Volume($GASCAN_PICKUP_SOUND) = $SOUNDS_VOLUME 
+            Audiostream.Loop($GASCAN_PICKUP_SOUND, 0)
+            Audiostream.PerformAction($GASCAN_PICKUP_SOUND, PLAY)
+            
+            end    
+            
+        if
+        9@ == 330 //Рация
+            then
+            $RADIO += 1
+            $RADIO_FIND += 1
+            ALLOW_PICKUP_ANIM = 0
+            end
+            
+        if
+        9@ == 1580 //Отмычка
+            then
+            $JIMMY += 1
+            $JIMMY_FIND += 1
+            ALLOW_PICKUP_ANIM = 0
+            end
+            
+        if
+        9@ == 1273 //Инструменты
+            then
+            $REPAIR_KIT += 1
+            end        
+        
+        gosub @PICKUP_ANIMATION2
+        ALLOW_PICKUP_ANIM = 1
+        break
+        end
+    
+    until 002E:   $PACKAGE_PICKED_UP_FLAG[1] >= 8@  // (int)
+    
+    pickup.Destroy(2@)
+    
+    end
+
+end_thread   
 
 :ZAMTIME
 thread 'ZAMTIME'

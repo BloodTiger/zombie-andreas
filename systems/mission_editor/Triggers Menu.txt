@@ -2574,6 +2574,19 @@ Actor.StorePos(PLAYER_ACTOR,2@,3@,4@)
 0AF3: write_float 4@ to_ini_file "me\temp.dat" section v$RACE_FILE key "DUMMYPED_Z"
 0AF3: write_float 5@ to_ini_file "me\temp.dat" section v$RACE_FILE key "DUMMYPED_A"
 
+///////////////Имя переменной педа.///////////////////
+gosub @TRIGGER_DUMMYPED_IDNAME_SELECT
+if
+ZAME_NAME_AUD_TYPING_FLAG == -669966
+then
+ZAME_NAME_AUD_TYPING_FLAG = 0
+Player.CanMove(PLAYER_CHAR) = False
+0581: enable_radar 0 
+gosub @ZAME_DESTROY_NOT_FULLY_CREATED_TRIGGER_OBJECTS
+text.ClearAll()
+jump to @TRIGGERS_SETTINGS
+end    
+
 ///////////////Педтайп педа.///////////////////
 
 text.ClearAll()
@@ -4610,6 +4623,182 @@ if
     end
 
 end            
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:TRIGGER_DUMMYPED_IDNAME_SELECT
+
+06D1: v$SNAME3 = "" // v$ // Sunday
+06D1: v$SNAME2 = "" // v$ // Sunday
+
+29@ = 0
+33@ = 0
+KEYS_TYPED_NUM = 0
+
+ZAME_NAME_AUD_TYPING_FLAG = 2
+    
+0AE0: remove_dynamic_GXT_entry "F_NAME"
+0ADF: add_dynamic_GXT_entry "F_NAME" text ""
+
+0512: show_permanent_text_box 'SE668'
+
+while true
+wait 0
+
+if
+8A2A: not  text_box 'SE668' displayed
+    then
+    0512: show_permanent_text_box 'SE668'
+    end
+
+CURRENT_LAYOUT = 1
+gosub @FXT_NAME_SELECT_KEYS_CHECK
+
+if
+8846: not  string v$SNAME3 empty // v$
+then
+0384: show_text_1string GXT "SE669" string "F_NAME" time 99999999 1
+else
+0384: show_text_1string GXT "SE669" string v$NAME3 time 99999999 1
+end
+
+if and
+0E3E: is_button_just_pressed 0 button 15
+33@ > 500
+    then
+    3@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5
+    ZAME_NAME_AUD_TYPING_FLAG = -669966 
+    return
+    end
+
+if
+0E3E: is_button_just_pressed 0 button 16
+    then
+        
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5
+    ZAME_NAME_AUD_TYPING_FLAG = 0        
+    
+    if
+    8846: not string v$SNAME3 empty // v$
+    then 
+    0AF5: write_string v$SNAME3 to_ini_file "me\temp.dat" section v$RACE_FILE key "IDNAME"
+    end  
+      
+    return
+    
+    end
+
+end     
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+:TRIGGER_DUMMYPED_IDNAME_GET
+
+06D1: v$SNAME3 = "" // v$ // Sunday
+06D1: v$SNAME2 = "" // v$ // Sunday
+
+29@ = 0
+33@ = 0
+KEYS_TYPED_NUM = 0
+
+ZAME_NAME_AUD_TYPING_FLAG = 2
+    
+0AE0: remove_dynamic_GXT_entry "F_NAME"
+0ADF: add_dynamic_GXT_entry "F_NAME" text ""
+
+0512: show_permanent_text_box 'SE668'
+
+while true
+wait 0
+
+if
+8A2A: not  text_box 'SE668' displayed
+    then
+    0512: show_permanent_text_box 'SE668'
+    end
+
+CURRENT_LAYOUT = 1
+gosub @FXT_NAME_SELECT_KEYS_CHECK
+
+if
+8846: not  string v$SNAME3 empty // v$
+then
+0384: show_text_1string GXT "SE669" string "F_NAME" time 99999999 1
+else
+0384: show_text_1string GXT "SE669" string v$NAME3 time 99999999 1
+end
+
+if and
+0E3E: is_button_just_pressed 0 button 15
+33@ > 500
+    then
+    3@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5
+    ZAME_NAME_AUD_TYPING_FLAG = -669966 
+    return
+    end
+
+if
+0E3E: is_button_just_pressed 0 button 16
+    then
+    
+    //////////////////////////////////////////////////
+        
+    {$INCLUDE newopcodes\forallpeds_cleoplus}
+                
+    if and
+    056D:   actor ped defined
+    87D6: not  ped == PLAYER_ACTOR // @ == $ (int)
+        then
+//        0AC7: 5@ = var 6@ offset 
+        0AC6: ZAME_TEMPVAR_STRING3 = label @SUNUDKS_POSITIONS_ARRAY offset          
+        if  
+        0E16: get_extended_char_var ped id "IDNAME" var 1 to ZAME_TEMPVAR_STRING3
+            then
+//            0D4D: copy_string ZAME_TEMPVAR_STRING3 to ZAME_TEMPVAR_STRING2
+//            0D4D: copy_string "yes" to 0@
+            0AD3: ZAME_TEMPVAR_STRING2 = format "%s" ZAME_TEMPVAR_STRING3
+            if
+            0D49: 12@ = compare_strings ZAME_TEMPVAR_STRING2 v$SNAME3 // IF and SET
+                then
+                0085: ZAME_ANIM_PED_HANDLE = ped // (int)
+//                0944: manipulate_weapon_camera ped
+//                wait 2000
+//                camera.Restore_WithJumpCut()
+                jump to @SUCC_FINDED_IDNAME_PED 
+                end
+            end               
+        end
+                
+    {$INCLUDE newopcodes\end}
+    
+    text.ClearAll()
+    text.ShowH('SE670',2000,1)
+    wait 2000
+    jump to @TRIGGER_DUMMYPED_IDNAME_GET
+            
+    //////////////////////////////////////////////////
+    
+    :SUCC_FINDED_IDNAME_PED    
+    33@ = 0
+    text.RemoveTextBox()
+    text.ClearAll()
+    wait 5
+    ZAME_NAME_AUD_TYPING_FLAG = 0              
+    return
+    
+    end
+
+end            
+       
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

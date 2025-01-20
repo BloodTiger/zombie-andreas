@@ -377,7 +377,25 @@ STALKE2_SPOTTED_FLAG == 1
     then
     if
     8184:   actor STALKE2_QUEST_ACTOR health < 1
-        then        
+        then 
+        
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        gosub @STALKE2_CHECK_FOR_ITEMS_DESTROY
+        if
+        7@ == 1
+        then
+        
+        if
+        075C:  marker STALKE2_QUEST_ACTOR_MARKER enabled
+        then
+        marker.Disable(STALKE2_QUEST_ACTOR_MARKER)
+        end
+        
+        jump to @RANDOM_STALKE2_QUEST_GET_BACK
+        end 
+        
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////       
         
         if and
         0104:   actor STALKE2_QUEST_ACTOR near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0
@@ -429,6 +447,20 @@ STALKE2_SPOTTED_FLAG == 1
         while true
         wait 0
         
+        gosub @STALKE2_CHECK_FOR_ITEMS_DESTROY
+        if
+        7@ == 1
+        then
+        
+        if
+        075C:  marker STALKE2_QUEST_ACTOR_MARKER enabled
+        then
+        marker.Disable(STALKE2_QUEST_ACTOR_MARKER)
+        end
+        
+        jump to @RANDOM_STALKE2_QUEST_GET_BACK
+        end
+        
         if
         803A: not  BCAMP_AGRED_FLAG == $QUEST_CAMP_NUMBER // (int)
         jf @STALKE2_QUEST_FAILED_AGRED
@@ -453,7 +485,7 @@ STALKE2_SPOTTED_FLAG == 1
             end
             
             if
-            0AB0:   key_pressed 69
+            0AB0:   key_pressed $KEY_USE
                 then
                 break
                 end
@@ -529,6 +561,13 @@ STALKE2_SPOTTED_FLAG == 1
         06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0
         0992: set_player PLAYER_CHAR weapons_scrollable 1
         04EF: release_animation "BOMBER"
+        
+        gosub @STALKE2_CHECK_FOR_ITEMS_DESTROY
+        if
+        7@ == 1
+        then
+        jump to @RANDOM_STALKE2_QUEST_GET_BACK
+        end
         
         if
         0E4D: random_percent 55
@@ -618,7 +657,7 @@ STALKE2_AMEBA_FLAG == 0
     
 if and
 $CHEATS_ON == 1
-0AB0:   key_pressed 69
+0AB0:   key_pressed $KEY_USE
     then
     32@ = 120000
     0AD1: show_formatted_text_highpriority "HIGHLIGHT STALKER" time 2000
@@ -764,7 +803,7 @@ STALKE2_SPOTTED_FLAG == 1
 STALKE2_AMEBA_FLAG == 1
 STALKE2_DIED_FLAG == 0
     then
-    0@ = actor.Health(STALKER_QUEST_ACTOR)
+    0@ = actor.Health(STALKE2_QUEST_ACTOR)
     if
     0@ > 300
         then
@@ -773,9 +812,9 @@ STALKE2_DIED_FLAG == 0
             
         wait 3000
             
-        0792: disembark_instantly_actor STALKER_QUEST_ACTOR
-        0332: set_actor STALKER_QUEST_ACTOR bleeding 0
-        0687: clear_actor STALKER_QUEST_ACTOR task
+        0792: disembark_instantly_actor STALKE2_QUEST_ACTOR
+        0332: set_actor STALKE2_QUEST_ACTOR bleeding 0
+        0687: clear_actor STALKE2_QUEST_ACTOR task
             
         STALKE2_SPOTTED_FLAG = 0
         STALKE2_AMEBA_FLAG = 0
@@ -1255,6 +1294,8 @@ if or
 04EA:  object DUMMY_OBJECT in_cube_cornerA -1339.89 925.35 -179.62 -1499.89 696.44 200.0 flag 0 //GARV3
 04EA:  object DUMMY_OBJECT in_cube_cornerA 1016.933 1199.3302 0.0 1096.097 1222.7902 200.0 flag 0 //BANDIT BASE LV
 04EA:  object DUMMY_OBJECT in_cube_cornerA -173.72 48.6644 0.0 106.1629 -136.1308 200.0 flag 0 //BLUEBERRY FARM
+04EA:  object DUMMY_OBJECT in_cube_cornerA 1894.0 -954.2563 0.0 2650.0 -118.2563 200.0 flag 0 //NORTHSTAR CLIFF
+04EA:  object DUMMY_OBJECT in_cube_cornerA -2580.0 2082.7437 0.0 -1867.3125 1522.2437 200.0 flag 0 //SF WATER CUBE 1
     then
     6@ = 0
     end
@@ -4543,3 +4584,29 @@ return
 
 :STALKE2_ATTACK_PEOPLE_BEGIN
 return         
+
+:STALKE2_CHECK_FOR_ITEMS_DESTROY
+
+7@ = 0
+actor.StorePos(STALKE2_QUEST_ACTOR,1@,2@,3@) 
+000F: 1@ -= 5.0
+000F: 2@ -= 5.0
+000F: 3@ -= 5.0
+actor.StorePos(STALKE2_QUEST_ACTOR,4@,5@,6@) 
+000F: 4@ -= -5.0
+000F: 5@ -= -5.0
+000F: 6@ -= -5.0
+
+if or
+0EA4: is_char_on_fire STALKE2_QUEST_ACTOR
+0356:   explosion_type -1 in_cube_cornerA 1@ 2@ 3@ cornerB 4@ 5@ 6@
+then
+text.ShowTextBox('GME1606')   
+STALKER_BACKPACK_EMPTY_FLAG = 1
+STALKE2_DIED_FLAG = 1        
+$QUEST_READY_FLAG = 1
+$STALKER_QUEST_FLAG = 1
+7@ = 1
+end
+
+return

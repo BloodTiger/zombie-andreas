@@ -282,7 +282,16 @@ SNIPER_OTHER_AIM == 1
             0B00: delete_file "modloader\MODLOADER GLOBAL FILES\ZA Some Files\ZA New Weapon\coop_snipers.txt"  // IF and SET
             end
         end            
-    end        
+    end
+    
+//Врубаем гибрид прицеливание со если это нужно
+if and
+$GAMEMODE_SELECTED == 1
+COOP_ACTIVE_FLAG == 0
+HYBRID_CONTORLS == 1
+    then 
+    0B04: copy_file "modloader\MODLOADER GLOBAL FILES\ZA Some Files\ZA New Weapon\hybrid.coop" to "modloader\MODLOADER GLOBAL FILES\ZA Some Files\ZA New Weapon\hybrid.txt" //IF and SET  
+    end         
     
 //Подстройка шизы если это нужно    
     
@@ -1334,7 +1343,7 @@ end
 0A8C: write_memory 0x0588581 size 2 value 36950 virtual_protect 1
 
 //Разрешаем стрельбу из двуручных пушек на джетпаке
-0E6A: make_nop 0x067E7FA size 2
+0E6A: make_nop 0x067E7FA size 2     
 
 //Увеличиваем немного скорость джетпака
 0A8C: write_memory 0x08D2F4C size 4 value 0.0 virtual_protect 1
@@ -1744,6 +1753,27 @@ then
 0A8C: write_memory 0x50CFD4 size 4 value 67108864 virtual_protect 0
 end
 
+//Возвращаем возможность целится с ПКМ
+if
+UNITED_MAP == 1
+then
+0A8C: write_memory 0x06868A0 size 4 value 102138895 virtual_protect 0
+0A8C: write_memory 0x06868A4 size 1 value 0 virtual_protect 0
+0A8C: write_memory 0x048A477 size 2 value 37008 virtual_protect 0
+0A8C: write_memory 0x060BA50 size 2 value 2675 virtual_protect 0
+0A8C: write_memory 0x0609EDB size 2 value 3188 virtual_protect 0    
+end       
+
+//Возвращаем то что бот отходит целясь/стреляя если рядом стена или противник  
+if
+UNITED_MAP == 1
+then
+0A8C: write_memory 0x061E0CA size 4 value -1935143464 virtual_protect 0
+0A8C: write_memory 0x061E0CE size 4 value 1121517701 virtual_protect 0
+0A8C: write_memory 0x061E0D2 size 4 value 409065476 virtual_protect 0
+0A8C: write_memory 0x061E0DC size 4 value -586386111 virtual_protect 0
+end
+
 //Возвращаем телепорт сущностей на карту обратно при Z меньше -100.0
 0A8C: write_memory 0x0565CB0 size 2 value 60547 virtual_protect 0
 
@@ -1759,7 +1789,21 @@ end
 0A8C: write_memory 1@ size 4 value 2048.0 virtual_protect 0
 0E28: write_struct 0x73ABEE offset 2 size 4 value 1@ 
 0E28: write_struct 0x73AC0A offset 2 size 4 value 1@ 
-0E28: write_struct 0x73AC1F offset 2 size 4 value 1@ 
+0E28: write_struct 0x73AC1F offset 2 size 4 value 1@
+
+//Выключаем 10x множитель дамага динамическим объектам
+0E6A: make_nop 0x061D55A size 6
+
+//Выключаем мускульно-жирный множитель
+0E6A: make_nop 0x061C780 size 2 
+0A8C: write_memory 0x061C784 size 4 value 0x0858A28 virtual_protect 0     
+
+//Меняем множитель рукопашного дамага для тачек
+0A8C: write_memory 0x06A8315 size 4 value 0x0858CA8 virtual_protect 0
+
+//Что является сотовым телефоном... рацией... магнитофоном блять!
+0A8C: write_memory 0x0634DE2 size 4 value 330 virtual_protect 0
+0A8C: write_memory 0x06348F6 size 4 value 330 virtual_protect 0 
 
 //Вырубаем создание злоебучих паров воды после дождя в VCParticle
 //0EFE: get_loaded_library "CParticleVC.SA.asi" store_to 0@   
@@ -1876,7 +1920,7 @@ then
 if
 $UNITED_III_SPAWN == 1
 then
-0B04: copy_file "data\timecyc_24h_United_bl.dat" to "data\timecyc_24h.dat" //IF and SET
+0B04: copy_file "data\timecyc_24h_United.dat" to "data\timecyc_24h.dat" //IF and SET
 else
 0B04: copy_file "data\timecyc_24h_United2_bl.dat" to "data\timecyc_24h.dat" //IF and SET
 end
@@ -1908,8 +1952,60 @@ if
 then
 0A8C: write_memory 0xC402CC size 1 value 1 virtual_protect 1
 else
-0A8C: write_memory 0xC402CC size 1 value 0 virtual_protect 1
+0A8C: write_memory 0xC402CC size 1 value 1 virtual_protect 1
 end
+
+//Changing between PSP/PS2 timecycle
+0B00: delete_file "data\timecyc_24h.dat"  // IF and SET
+        
+if
+0@ == 1 //PS2
+then
+//31@ = 0
+0A8C: write_memory 0xBA678C size 1 value 1 virtual_protect 1
+0A8C: write_memory 0xC402CC size 1 value 1 virtual_protect 1
+0EFE: get_loaded_library "GraphicsTweaker.SA.asi" store_to 0@
+0@ += 0x0041BCC    
+if             
+0@ == -111222333
+    then
+    0B04: copy_file "data\timecyc_24h_Stories.dat" to "data\timecyc_24h.dat" //IF and SET
+    0A8C: write_memory 0@ size 4 value 0.5 virtual_protect 0
+    0@ -= 0xC
+    0A8C: write_memory 0@ size 4 value 0.5 virtual_protect 0
+//    0AD1: show_formatted_text_highpriority "PS2 CYCLE" time 2000
+    else
+    0B04: copy_file "data\timecyc_24h_Stories_bl.dat" to "data\timecyc_24h.dat" //IF and SET
+    0A8C: write_memory 0@ size 4 value 1.25 virtual_protect 0
+    0@ -= 0xC
+    0A8C: write_memory 0@ size 4 value 1.25 virtual_protect 0
+//    0AD1: show_formatted_text_highpriority "PS2_bl CYCLE" time 2000
+    end
+else
+//31@ = 1
+0A8C: write_memory 0xBA678C size 1 value 0 virtual_protect 1
+0A8C: write_memory 0xC402CC size 1 value 1 virtual_protect 1
+0EFE: get_loaded_library "GraphicsTweaker.SA.asi" store_to 0@
+0@ += 0x0041BCC
+if
+0@ == -111222333
+    then
+    0B04: copy_file "data\timecyc_24h_Stories_PSP.dat" to "data\timecyc_24h.dat" //IF and SET
+    0A8C: write_memory 0@ size 4 value 0.5 virtual_protect 0
+    0@ -= 0xC
+    0A8C: write_memory 0@ size 4 value 0.5 virtual_protect 0
+//    0AD1: show_formatted_text_highpriority "PSP CYCLE" time 2000
+    else
+    0B04: copy_file "data\timecyc_24h_Stories_PSP_bl.dat" to "data\timecyc_24h.dat" //IF and SET
+    0A8C: write_memory 0@ size 4 value 1.0 virtual_protect 0
+    0@ -= 0xC
+    0A8C: write_memory 0@ size 4 value 1.0 virtual_protect 0
+//    0AD1: show_formatted_text_highpriority "PSP_bl CYCLE" time 2000
+    end
+end
+        
+0AA5: call 0x5BBAC0 num_params 0 pop 0
+//end 
     
 end
 
@@ -1926,9 +2022,9 @@ then
 if
 0@ == 0
 then
-0ADF: add_dynamic_GXT_entry "FED_SUB" text "“ek¦ cўe¤e®њ¬"
+0ADF: add_dynamic_GXT_entry "FED_SUB" text "PS2 ¦aќЇ њkћ"
 else
-0ADF: add_dynamic_GXT_entry "FED_SUB" text "Glow Effect"
+0ADF: add_dynamic_GXT_entry "FED_SUB" text "PS2 Timecycle"
 end
 
 end

@@ -1,3 +1,78 @@
+if and
+0E3D: is_key_just_pressed 46
+STORIES_MAP == 1
+then
+
+//Changing between PSP/PS2 timecycle
+0B00: delete_file "data\timecyc_24h.dat"  // IF and SET
+        
+0A8D: 0@ = read_memory 0xBA678C size 1 virtual_protect 0    
+if
+0@ == 0 //PS2
+then
+//31@ = 0
+0A8C: write_memory 0xBA678C size 1 value 1 virtual_protect 1
+0A8C: write_memory 0xC402CC size 1 value 1 virtual_protect 1
+0EFE: get_loaded_library "GraphicsTweaker.SA.asi" store_to 0@
+0@ += 0x0041BCC    
+if             
+0@ == -111222333
+    then
+    0B04: copy_file "data\timecyc_24h_Stories.dat" to "data\timecyc_24h.dat" //IF and SET
+    0A8C: write_memory 0@ size 4 value 0.5 virtual_protect 0
+    0@ -= 0xC
+    0A8C: write_memory 0@ size 4 value 0.5 virtual_protect 0
+    0AD1: show_formatted_text_highpriority "PS2 CYCLE" time 2000
+    else
+    0B04: copy_file "data\timecyc_24h_Stories_bl.dat" to "data\timecyc_24h.dat" //IF and SET
+    0A8C: write_memory 0@ size 4 value 1.25 virtual_protect 0
+    0@ -= 0xC
+    0A8C: write_memory 0@ size 4 value 1.25 virtual_protect 0
+    0AD1: show_formatted_text_highpriority "PS2_bl CYCLE" time 2000
+    end
+else
+//31@ = 1
+0A8C: write_memory 0xBA678C size 1 value 0 virtual_protect 1
+0A8C: write_memory 0xC402CC size 1 value 1 virtual_protect 1
+0EFE: get_loaded_library "GraphicsTweaker.SA.asi" store_to 0@
+0@ += 0x0041BCC
+if
+0@ == -111222333
+    then
+    0B04: copy_file "data\timecyc_24h_Stories_PSP.dat" to "data\timecyc_24h.dat" //IF and SET
+    0A8C: write_memory 0@ size 4 value 0.5 virtual_protect 0
+    0@ -= 0xC
+    0A8C: write_memory 0@ size 4 value 0.5 virtual_protect 0
+    0AD1: show_formatted_text_highpriority "PSP CYCLE" time 2000
+    else
+    0B04: copy_file "data\timecyc_24h_Stories_PSP_bl.dat" to "data\timecyc_24h.dat" //IF and SET
+    0A8C: write_memory 0@ size 4 value 1.0 virtual_protect 0
+    0@ -= 0xC
+    0A8C: write_memory 0@ size 4 value 1.0 virtual_protect 0
+    0AD1: show_formatted_text_highpriority "PSP_bl CYCLE" time 2000
+    end
+end
+        
+0AA5: call 0x5BBAC0 num_params 0 pop 0
+//end 
+
+end
+
+//if
+//actor.Driving(PLAYER_ACTOR)
+//then
+//0@ = actor.CurrentCar(PLAYER_ACTOR)
+//1@ = car.Health(0@)
+//0AD1: show_formatted_text_highpriority "car health %d" time 500 1@
+//
+//if
+//0E3D: is_key_just_pressed 81
+//then
+//car.Health(0@) = 99666
+//end
+//
+//end
+
 //if
 //0E3D: is_key_just_pressed 69
 //then
@@ -226,6 +301,184 @@
 //end
 
 if
+0AB0:   key_pressed 111
+    then
+    if and
+    actor.Driving(PLAYER_ACTOR)
+    not actor.DrivingVehicleType(PLAYER_ACTOR,RHINO_MODEL_NUMBER)
+        then
+        1@ = Actor.CurrentCar(PLAYER_ACTOR)
+        0@ = car.Model(1@)
+        if and
+        0A01:   model 0@ car
+        8D0C: not get_car 1@ component "wheel_lm_dummy" matrix_pointer_to 2@ // IF and SET
+            then
+            096D: get_car 1@ component_on_slot 12 model_to 0@
+            if and
+            not 0@ == OFFROAD_WHEEL_ID_SA
+            not 0@ == OFFROAD_WHEEL_ID_UNITED
+                then
+        
+                1@ = Actor.CurrentCar(PLAYER_ACTOR)
+                
+                32@ = 0
+                12@ = OFFROAD_WHEEL_ID_SA                                                                                                                
+                                
+                repeat
+                                
+                if
+                UNITED_MAP == 1
+                then
+                12@ = OFFROAD_WHEEL_ID_UNITED
+                else
+                12@ = OFFROAD_WHEEL_ID_SA
+                end
+                                
+                06E9: load_car_component 12@
+                mload
+                wait 1                                                
+                                
+                if
+                32@ > 5000
+                then
+                jump to @WHEEL_SKIP_PLACE2
+                end
+                                                                                                        
+                until 06EA:   car_component 12@ available                        
+                                                                        
+                06E7: 0@ = add_car_component 12@ to_car 1@
+                06EB: release_car_component 12@
+                                
+                text.ShowH('INV273',2000,1)
+                actor.StorePos(PLAYER_ACTOR,0@,1@,2@)
+                097A: play_audio_at 0@ 1@ 2@ event 1133
+                                
+                :WHEEL_SKIP_PLACE2
+                                                             
+                end
+            else                
+            if and
+            8A01: not  model 0@ car
+            8D0C: not get_car 1@ component "wheel_lm_dummy" matrix_pointer_to 2@ // IF and SET 
+            not 0@ == 406
+            not 0@ == 444
+            not 0@ == 556
+            not 0@ == 557
+            not 0@ == 573
+            $CAR_WHEEL_INSTALLED[LATEST_CAR_SLOT_USED] == 0
+                then                    
+                $CAR_WHEEL_INSTALLED[LATEST_CAR_SLOT_USED] = 2
+                text.ShowH('INV273',2000,1)
+                actor.StorePos(PLAYER_ACTOR,0@,1@,2@)
+                097A: play_audio_at 0@ 1@ 2@ event 1133                    
+                end
+            end       
+        end
+    end
+
+if
+0AB0:   key_pressed 107
+    then
+    if and
+    actor.Driving(PLAYER_ACTOR)
+    not actor.DrivingVehicleType(PLAYER_ACTOR,RHINO_MODEL_NUMBER)
+    not actor.DrivingVehicleType(PLAYER_ACTOR,#BMX)
+    not actor.DrivingVehicleType(PLAYER_ACTOR,#MTBIKE)
+    not actor.DrivingVehicleType(PLAYER_ACTOR,#BIKE)
+    not actor.DrivingPlane(PLAYER_ACTOR)
+        then
+        
+        1@ = Actor.CurrentCar(PLAYER_ACTOR)
+        0A97: 22@ = car 1@ struct 
+        0A8E: 23@ = 22@ + CAR_ENGINE_POWER_PLUS_STRUCT // int
+        0A8D: 0@ = read_memory 23@ size 4 virtual_protect 1    
+        0@ += 0.325                
+        
+        if
+        0@ > 1.3
+        then
+        0@ = 0.0
+        088B: set_car 1@ form_drag_multiplier_to 1.0
+        0423: set_car 1@ improved_handling_to 0.0 // (float)
+        end
+         
+        0A8C: write_memory 23@ size 4 value 0@ virtual_protect 1                
+        
+        if
+        0@ < 0.325
+        then
+        0AD1: show_formatted_text_highpriority "Engine Upgrade 0" time 2000
+        end
+        
+        if and
+        0@ < 0.65
+        0@ > 0.324
+        then
+        0AD1: show_formatted_text_highpriority "Engine Upgrade 1" time 2000
+        end
+            
+        if and
+        0@ < 0.975
+        0@ > 0.64
+        then
+        0AD1: show_formatted_text_highpriority "Engine Upgrade 2" time 2000
+        end
+            
+        if and
+        0@ < 1.3
+        0@ > 0.974
+        then
+        0AD1: show_formatted_text_highpriority "Engine Upgrade 3" time 2000
+        end
+            
+        if
+        0@ > 1.29
+        then
+        0AD1: show_formatted_text_highpriority "Engine Upgrade 4" time 2000
+        end
+        
+        actor.StorePos(PLAYER_ACTOR,0@,1@,2@)
+        097A: play_audio_at 0@ 1@ 2@ event 1133
+        
+        wait 250
+        
+        0@ = actor.CurrentCar(PLAYER_ACTOR)    
+        0A97: 1@ = car 0@ struct 
+        0A8E: 2@ = 1@ + CAR_ENGINE_POWER_PLUS_STRUCT // int 
+        0A8D: 1@ = read_memory 2@ size 4 virtual_protect 1
+        0088: PL_CAR_ENGINE_POWER = 1@ // (float)
+        
+        if and
+        PL_CAR_ENGINE_POWER < 0.65
+        PL_CAR_ENGINE_POWER > 0.324
+        then
+        PL_CAR_MAX_SPEED = 58.10
+        end
+                
+        if and
+        PL_CAR_ENGINE_POWER < 0.975
+        PL_CAR_ENGINE_POWER > 0.64
+        then
+        PL_CAR_MAX_SPEED = 66.94
+        end
+                
+        if and
+        PL_CAR_ENGINE_POWER < 1.3
+        PL_CAR_ENGINE_POWER > 0.974
+        then
+        PL_CAR_MAX_SPEED = 75.79
+        end
+                
+        if
+        PL_CAR_ENGINE_POWER > 1.29
+        then
+        PL_CAR_MAX_SPEED = 88.42
+        end        
+        
+        end
+    end
+
+if
 0ADC:   test_cheat "AUDIOE"
     then
     
@@ -256,7 +509,7 @@ if
     end 
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //
 //for 1@ = 0 to 5
@@ -273,7 +526,7 @@ if
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //
 //0459: end_thread_named 'LASER'
@@ -1205,7 +1458,7 @@ end
 //wait 0
 //
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //0AF2: PLAYER_RESIST_MULT = get_float_from_ini_file "debug\percent.ini" section "SectionName" key "floatKey"
 //0AD1: show_formatted_text_highpriority "resist is %f" time 2000 PLAYER_RESIST_MULT
@@ -1222,7 +1475,7 @@ end
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //Возвращаем хуйню в 0465:
 //
@@ -1278,13 +1531,13 @@ file.Close(28@)
 end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //0792: disembark_instantly_actor PLAYER_ACTOR
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //0AC6: 1@ = label @FRIENDLY_FIRE_SHIT offset
 //0A8C: write_memory 1@ size 4 value 0.01 virtual_protect 0 
@@ -1292,7 +1545,7 @@ end
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //0@ = 0
 //0D4D: copy_string "Test 1" to 0@ 
@@ -1341,7 +1594,7 @@ end
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //0E83: get_current_char_weaponinfo PLAYER_ACTOR store_to 2@
 //0E8A: get_weaponinfo_slot 2@ store_to 3@
@@ -1349,7 +1602,7 @@ end
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //0AB5: store_actor PLAYER_ACTOR closest_vehicle_to 0@ closest_ped_to 1@
 //if
@@ -1616,7 +1869,7 @@ end
 //0E8E: get_char_collision_surface PLAYER_ACTOR store_to 1@
 //0AD1: show_formatted_text_highpriority "%d" time 2000 1@
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //0AA5: call 0x045D760 num_params 0 pop 0
 //end
@@ -1638,7 +1891,7 @@ end
 //end
 //0A96: 1@ = ped PLAYER_ACTOR struct
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //1@ = 0xB7CD98
 //1@ += 0x4
@@ -1740,7 +1993,7 @@ end
 //0AD1: show_formatted_text_highpriority "LOOK BACK PRESSED" time 2000
 //end
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //if
 //0@ = file.Open("saves\gta_za.set","rb")
@@ -1754,7 +2007,7 @@ end
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //0376: 3@ = create_random_actor_at 0.0 0.0 0.0
 //0E0B: mark_char_as_needed 3@
@@ -1784,7 +2037,7 @@ end
 //actor.StorePos(PLAYER_ACTOR,0@,1@,2@)
 //02C0: store_to 26@ 27@ 28@ ped_path_coords_closest_to 0@ 1@ 2@
 //if and
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //actor.Driving(PLAYER_ACTOR)
 //then
 //
@@ -1799,7 +2052,7 @@ end
 //end
 
 //if and
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //actor.Driving(PLAYER_ACTOR)
 //then
 //2@ = actor.CurrentCar(PLAYER_ACTOR)
@@ -1849,13 +2102,13 @@ end
 //    end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //    then
 //    00A8: set_car 0@ to_psycho_driver
 //    end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //    then
 //    0A8C: write_memory 0x0469FB0 size 2 value 20107 virtual_protect 0
 //    0A8C: write_memory 0x0469FB2 size 2 value 12564 virtual_protect 0
@@ -1885,7 +2138,7 @@ end
 //    end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //    then
 //    
 //    while not model.Available(#PCJ600)
@@ -2299,7 +2552,7 @@ end
 //    then
 //    
 //    if
-//    0AB0:   key_pressed 69
+//    0AB0:   key_pressed $KEY_USE
 //    then
 //    0EFF: get_char_simplest_active_task 0@ id_to 1@ pointer_to 2@
 //    0AD1: show_formatted_text_highpriority "ID %d, POINTER %d" time 100 1@ 2@
@@ -2404,13 +2657,13 @@ end
 //    end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //    then
 //    0A96: 15@ = actor $ARMY[$ARMY_THROW_MOLOTOV_ACTOR] struct
 //    end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //    then
 //    0AD1: show_formatted_text_highpriority "%d" time 2000 $SKYBOX_CHANGE_INST_FLAG
 //    end
@@ -2914,7 +3167,7 @@ end
 //0D54: draw_corona_with_extra_params_texture 0 color 255 0 0 155 on_entity 0 at 25@ 26@ 27@ size 0.5 far_clip 1000.0 near_clip 1.5 flare 0 enable_reflection 0 check_obstacles 0 flash_while_fading 1 fade_speed 15.0 only_from_below 0
  
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //actor.StorePos(PLAYER_ACTOR,4@,5@,6@)
 //0063: 4@ -= 1@  // (float)
@@ -3301,7 +3554,7 @@ if
 //////////////////////////////////////        
     
 if
-0AB0:   key_pressed 69 //ROT_Z+
+0AB0:   key_pressed $KEY_USE //ROT_Z+
     then
     TREASURE_ROT_Z += 0.25
     0AD3: v$TREA_FILE = format "ts%d" 0@
@@ -3406,7 +3659,7 @@ end
 //    end
 
 //if
-//0E3D:   key_pressed 69
+//0E3D:   key_pressed $KEY_USE
 //then
 //
 //$HUD_REMOVE = 1
@@ -3422,7 +3675,7 @@ end
 //end
 
 //if
-//0E3D:   key_pressed 69
+//0E3D:   key_pressed $KEY_USE
 //then
 //0@ = File.Open("data\debug.e", "rb")
 //0A9C: 1@ = file 0@ size
@@ -3431,8 +3684,8 @@ end
 //end
 
 if and
-0E3D:   key_pressed 69
-8E3D:   key_pressed 69
+0E3D:   key_pressed $KEY_USE
+8E3D:   key_pressed $KEY_USE
     then
     
     ////////////////////////////////////////////
@@ -3475,7 +3728,7 @@ if and
     repeat
     wait 0
     0AD1: show_formatted_text_highpriority "PLEASE SETUP POSITION 1 AND PRESS E" time 500 29@
-    until 0AB0:   key_pressed 69
+    until 0AB0:   key_pressed $KEY_USE
     
     actor.StorePos(PLAYER_ACTOR,1@,2@,3@)
     
@@ -3491,7 +3744,7 @@ if and
     repeat
     wait 0
     0AD1: show_formatted_text_highpriority "PLEASE SETUP POSITION 2 AND PRESS E" time 500 29@
-    until 0AB0:   key_pressed 69
+    until 0AB0:   key_pressed $KEY_USE
     
     actor.StorePos(PLAYER_ACTOR,1@,2@,3@)
     
@@ -3507,7 +3760,7 @@ if and
     end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //0A8D: 0@ = read_memory 0x54F96580 size 4 virtual_protect 0
 //0AD1: show_formatted_text_highpriority "fuckass: %f" time 2000 0@
@@ -3515,7 +3768,7 @@ if and
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //
 //repeat
@@ -3528,7 +3781,7 @@ if and
 //
 //repeat
 //wait 0
-//until 0AB0:   key_pressed 69
+//until 0AB0:   key_pressed $KEY_USE
 //
 //0AA3: free_library 1@
 //
@@ -3537,7 +3790,7 @@ if and
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //
 //if
@@ -3579,7 +3832,7 @@ if and
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //0AB5: store_actor PLAYER_ACTOR closest_vehicle_to 0@ closest_ped_to 1@
 //0657: car 0@ open_door 0
@@ -3591,7 +3844,7 @@ if and
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //
 //32@ = 0
@@ -3749,13 +4002,13 @@ until false
 end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //0376: 0@ = create_random_actor_at -1300.4448 -126.6342 14.1484
 //05DE: AS_actor 0@ walk_around_ped_path
@@ -3821,7 +4074,7 @@ end
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //0E7F: get_model_type #COLT45 store_to 2@
 //0AD1: show_formatted_text_highpriority "model type: %d" time 2000 2@
@@ -3829,14 +4082,14 @@ end
 
 //$ALLOW_ZOMBIES = 0
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //0E6F: stream_custom_script_from_label @TESTFUCK123
 //wait 500
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //0@ = 3000 
 //0ACD: show_text_highpriority "Pad control off (doesn't make player safe)" time 0@ 
@@ -3904,7 +4157,7 @@ end
 //    end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //
 //0AD1: show_formatted_text_highpriority "TASK CHECK STARTED" time 2000
@@ -3936,7 +4189,7 @@ end
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //text.ShowH('DBG46',5000,1)
 //end
@@ -3953,7 +4206,7 @@ end
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //    then
 //    00A0: store_actor 18@ position_to $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3 //0x004677FD
 //    0@ = actor.CurrentCar(PLAYER_ACTOR)
@@ -4417,7 +4670,7 @@ end
 //end
 
 //if
-//0AB0:   key_pressed 69 
+//0AB0:   key_pressed $KEY_USE 
 //    then
 //    0@ = actor.CurrentCar(PLAYER_ACTOR)
 //    02D4: car 0@ turn_off_engine
@@ -4425,7 +4678,7 @@ end
 //    end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //    then
 //    0AD1: show_formatted_text_highpriority "TRYING TO PLAY ass.mod" time 2000
 //     
@@ -4885,184 +5138,6 @@ if
     
     end
 
-if
-0AB0:   key_pressed 111
-    then
-    if and
-    actor.Driving(PLAYER_ACTOR)
-    not actor.DrivingVehicleType(PLAYER_ACTOR,RHINO_MODEL_NUMBER)
-        then
-        1@ = Actor.CurrentCar(PLAYER_ACTOR)
-        0@ = car.Model(1@)
-        if and
-        0A01:   model 0@ car
-        8D0C: not get_car 1@ component "wheel_lm_dummy" matrix_pointer_to 2@ // IF and SET
-            then
-            096D: get_car 1@ component_on_slot 12 model_to 0@
-            if and
-            not 0@ == OFFROAD_WHEEL_ID_SA
-            not 0@ == OFFROAD_WHEEL_ID_UNITED
-                then
-        
-                1@ = Actor.CurrentCar(PLAYER_ACTOR)
-                
-                32@ = 0
-                12@ = OFFROAD_WHEEL_ID_SA                                                                                                                
-                                
-                repeat
-                                
-                if
-                UNITED_MAP == 1
-                then
-                12@ = OFFROAD_WHEEL_ID_UNITED
-                else
-                12@ = OFFROAD_WHEEL_ID_SA
-                end
-                                
-                06E9: load_car_component 12@
-                mload
-                wait 1                                                
-                                
-                if
-                32@ > 5000
-                then
-                jump to @WHEEL_SKIP_PLACE2
-                end
-                                                                                                        
-                until 06EA:   car_component 12@ available                        
-                                                                        
-                06E7: 0@ = add_car_component 12@ to_car 1@
-                06EB: release_car_component 12@
-                                
-                text.ShowH('INV273',2000,1)
-                actor.StorePos(PLAYER_ACTOR,0@,1@,2@)
-                097A: play_audio_at 0@ 1@ 2@ event 1133
-                                
-                :WHEEL_SKIP_PLACE2
-                                                             
-                end
-            else                
-            if and
-            8A01: not  model 0@ car
-            8D0C: not get_car 1@ component "wheel_lm_dummy" matrix_pointer_to 2@ // IF and SET 
-            not 0@ == 406
-            not 0@ == 444
-            not 0@ == 556
-            not 0@ == 557
-            not 0@ == 573
-            $CAR_WHEEL_INSTALLED[LATEST_CAR_SLOT_USED] == 0
-                then                    
-                $CAR_WHEEL_INSTALLED[LATEST_CAR_SLOT_USED] = 2
-                text.ShowH('INV273',2000,1)
-                actor.StorePos(PLAYER_ACTOR,0@,1@,2@)
-                097A: play_audio_at 0@ 1@ 2@ event 1133                    
-                end
-            end       
-        end
-    end
-
-if
-0AB0:   key_pressed 107
-    then
-    if and
-    actor.Driving(PLAYER_ACTOR)
-    not actor.DrivingVehicleType(PLAYER_ACTOR,RHINO_MODEL_NUMBER)
-    not actor.DrivingVehicleType(PLAYER_ACTOR,#BMX)
-    not actor.DrivingVehicleType(PLAYER_ACTOR,#MTBIKE)
-    not actor.DrivingVehicleType(PLAYER_ACTOR,#BIKE)
-    not actor.DrivingPlane(PLAYER_ACTOR)
-        then
-        
-        1@ = Actor.CurrentCar(PLAYER_ACTOR)
-        0A97: 22@ = car 1@ struct 
-        0A8E: 23@ = 22@ + CAR_ENGINE_POWER_PLUS_STRUCT // int
-        0A8D: 0@ = read_memory 23@ size 4 virtual_protect 1    
-        0@ += 0.325                
-        
-        if
-        0@ > 1.3
-        then
-        0@ = 0.0
-        088B: set_car 1@ form_drag_multiplier_to 1.0
-        0423: set_car 1@ improved_handling_to 0.0 // (float)
-        end
-         
-        0A8C: write_memory 23@ size 4 value 0@ virtual_protect 1                
-        
-        if
-        0@ < 0.325
-        then
-        0AD1: show_formatted_text_highpriority "Engine Upgrade 0" time 2000
-        end
-        
-        if and
-        0@ < 0.65
-        0@ > 0.324
-        then
-        0AD1: show_formatted_text_highpriority "Engine Upgrade 1" time 2000
-        end
-            
-        if and
-        0@ < 0.975
-        0@ > 0.64
-        then
-        0AD1: show_formatted_text_highpriority "Engine Upgrade 2" time 2000
-        end
-            
-        if and
-        0@ < 1.3
-        0@ > 0.974
-        then
-        0AD1: show_formatted_text_highpriority "Engine Upgrade 3" time 2000
-        end
-            
-        if
-        0@ > 1.29
-        then
-        0AD1: show_formatted_text_highpriority "Engine Upgrade 4" time 2000
-        end
-        
-        actor.StorePos(PLAYER_ACTOR,0@,1@,2@)
-        097A: play_audio_at 0@ 1@ 2@ event 1133
-        
-        wait 250
-        
-        0@ = actor.CurrentCar(PLAYER_ACTOR)    
-        0A97: 1@ = car 0@ struct 
-        0A8E: 2@ = 1@ + CAR_ENGINE_POWER_PLUS_STRUCT // int 
-        0A8D: 1@ = read_memory 2@ size 4 virtual_protect 1
-        0088: PL_CAR_ENGINE_POWER = 1@ // (float)
-        
-        if and
-        PL_CAR_ENGINE_POWER < 0.65
-        PL_CAR_ENGINE_POWER > 0.324
-        then
-        PL_CAR_MAX_SPEED = 58.10
-        end
-                
-        if and
-        PL_CAR_ENGINE_POWER < 0.975
-        PL_CAR_ENGINE_POWER > 0.64
-        then
-        PL_CAR_MAX_SPEED = 66.94
-        end
-                
-        if and
-        PL_CAR_ENGINE_POWER < 1.3
-        PL_CAR_ENGINE_POWER > 0.974
-        then
-        PL_CAR_MAX_SPEED = 75.79
-        end
-                
-        if
-        PL_CAR_ENGINE_POWER > 1.29
-        then
-        PL_CAR_MAX_SPEED = 88.42
-        end        
-        
-        end
-    end
-
 //if
 //Actor.Driving(PLAYER_ACTOR)
 //then
@@ -5320,7 +5395,7 @@ if
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //
 //0555: remove_weapon 46 from_actor PLAYER_ACTOR
@@ -5333,7 +5408,7 @@ if
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //0AC6: 1@ = label @COL_RENDER_DIST offset
 //0AF2: 0@ = get_float_from_ini_file "saves\ZACM.SET" section "SCR" key "COL_RENDER_DIST" 
@@ -5343,7 +5418,7 @@ if
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //actor.StorePos(PLAYER_ACTOR,1@,2@,3@)
 //0E27: get_angle_from_two_coords 1@ 2@ and -1278.1349 50.0979 to 4@
@@ -5360,7 +5435,7 @@ if
 //0A8D: 24@ = read_memory 21@ size 4 virtual_protect 1
 //
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //24@ *= 1.5
 //0A8C: write_memory 21@ size 4 value 24@ virtual_protect 1
@@ -5528,7 +5603,7 @@ if
     repeat
     wait 0
     0AD1: show_formatted_text_highpriority "SET UP AN DOWN POSITION AND PRESS E" time 2000
-    until 0AB0:   key_pressed 69
+    until 0AB0:   key_pressed $KEY_USE
     
     actor.StorePos(PLAYER_ACTOR,25@,26@,27@)
     5@ = actor.Angle(PLAYER_ACTOR)
@@ -5545,7 +5620,7 @@ if
     repeat
     wait 0
     0AD1: show_formatted_text_highpriority "SET UP AN UP POSITION AND PRESS E" time 2000
-    until 0AB0:   key_pressed 69
+    until 0AB0:   key_pressed $KEY_USE
     
     actor.StorePos(PLAYER_ACTOR,25@,26@,27@)
     5@ = actor.Angle(PLAYER_ACTOR)
@@ -5629,7 +5704,7 @@ if
 //0A8C: write_memory 0x6FC6EA size 4 value 1@ virtual_protect 0
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //actor.Create(28@,26,#MALE01,-1051.8055, 440.5748, 14.5469)
 //0AA5: call 0x5A87F0 num_params 0 pop 0
@@ -5662,7 +5737,7 @@ if
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //
 //repeat
@@ -5675,7 +5750,7 @@ if
 //repeat
 //wait 0
 //0AD1: show_formatted_text_highpriority "SET UP 1 WATER BLOCK POINT" time 1000
-//until 0AB0:   key_pressed 69
+//until 0AB0:   key_pressed $KEY_USE
 //actor.StorePos(PLAYER_ACTOR,1@,2@,0@)
 //0AD1: show_formatted_text_highpriority "POINT 1 READY" time 1000
 //06D5: 9@ = create_racing_checkpoint_at 1@ 2@ 0@ point_to 1@ 2@ 0@ type 0 radius 6.0
@@ -5685,7 +5760,7 @@ if
 //repeat
 //wait 0
 //0AD1: show_formatted_text_highpriority "SET UP 3 WATER BLOCK POINT" time 1000
-//until 0AB0:   key_pressed 69
+//until 0AB0:   key_pressed $KEY_USE
 //actor.StorePos(PLAYER_ACTOR,5@,6@,0@)
 //0AD1: show_formatted_text_highpriority "POINT 3 READY" time 1000
 //06D5: 9@ = create_racing_checkpoint_at 5@ 6@ 0@ point_to 5@ 6@ 0@ type 0 radius 6.0
@@ -5695,7 +5770,7 @@ if
 //repeat
 //wait 0
 //0AD1: show_formatted_text_highpriority "SET UP 2 WATER BLOCK POINT" time 1000
-//until 0AB0:   key_pressed 69
+//until 0AB0:   key_pressed $KEY_USE
 //actor.StorePos(PLAYER_ACTOR,3@,4@,0@)
 //0AD1: show_formatted_text_highpriority "POINT 2 READY" time 1000
 //06D5: 9@ = create_racing_checkpoint_at 3@ 4@ 0@ point_to 3@ 4@ 0@ type 0 radius 6.0
@@ -5705,7 +5780,7 @@ if
 //repeat
 //wait 0
 //0AD1: show_formatted_text_highpriority "SET UP 4 WATER BLOCK POINT" time 1000
-//until 0AB0:   key_pressed 69
+//until 0AB0:   key_pressed $KEY_USE
 //actor.StorePos(PLAYER_ACTOR,7@,8@,0@)
 //0AD1: show_formatted_text_highpriority "POINT 4 READY" time 1000
 //06D5: 9@ = create_racing_checkpoint_at 7@ 8@ 0@ point_to 7@ 8@ 0@ type 0 radius 6.0
@@ -5878,14 +5953,14 @@ create_thread @FIN_TIT
 end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //    then
 //    0@ = 28
 //    0650: destroy_particle 0@
 //    end
 
 //if and
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //actor.Driving(PLAYER_ACTOR)
 //    then
 //    0@ = actor.CurrentCar(PLAYER_ACTOR)
@@ -5912,7 +5987,7 @@ end
 
 //if and
 //actor.Driving(PLAYER_ACTOR)
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //end
 
@@ -5943,7 +6018,7 @@ end
 //end
 
 //if and
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //29@ == 0
 //then
 //29@ = 1
@@ -5995,7 +6070,7 @@ end
 //end
 //
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //
 //066E: create_particle "gunflash" attached_to_object 20@ with_offset 1.35 -0.03 0.5283 rotation 43.0 -4.0 25.0 flag 1 store_to 15@
@@ -6132,7 +6207,7 @@ if
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //0434: show_credits
 //32@ = 0
@@ -6142,7 +6217,7 @@ if
 //repeat
 //wait 0
 //0AD1: show_formatted_text_highpriority "TITLES TIME: %d" time 5000 32@
-//until 0AB0:   key_pressed 69
+//until 0AB0:   key_pressed $KEY_USE
 //
 //0435: end_credits
 //
@@ -6154,7 +6229,7 @@ if
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //
 //for 0@ = 0 to 630
@@ -6188,7 +6263,7 @@ if
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //0665: get_actor PLAYER_ACTOR model_to 0@
 //0AD3: v$EDITOR_FILE = format "%d" 0@
@@ -6196,13 +6271,13 @@ if
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //0@ = car.Create(0,0.0,0.0,0.0)
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //
 //1@ = 0
@@ -6274,14 +6349,14 @@ if
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //0AF2: 25@ = get_float_from_ini_file "saves\ZACM.set" section "SCR" key "DRAG_MULT"
 //083C: set_actor PLAYER_ACTOR velocity_in_direction_XYZ 0.0 0.0 25@
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //actor.StorePos(PLAYER_ACTOR,0@,1@,2@)
 //0AF2: 25@ = get_float_from_ini_file "saves\ZACM.set" section "SCR" key "DRAG_MULT"
@@ -6388,7 +6463,7 @@ if
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //04C4: store_coords_to 0@ 1@ 2@ from_actor PLAYER_ACTOR with_offset 0.0 3.0 0.0
 //3@ = actor.Create(26,#MALE01,0@,1@,2@)
@@ -6409,7 +6484,7 @@ if
 //end
 //
 //if and
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //28@ < 110
 //then
 //28@ += 1
@@ -6423,7 +6498,7 @@ if
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //0470: 0@ = actor PLAYER_ACTOR current_weapon
 //0782: get_weapon_with_ID 0@ weapon_group_to 1@
@@ -7192,7 +7267,7 @@ wait 2000
 repeat
 wait 0
 0AD1: show_formatted_text_highpriority "SET UP AN START POSITION AND PRESS E" time 2000
-until 0AB0:   key_pressed 69
+until 0AB0:   key_pressed $KEY_USE
 
 actor.StorePos(PLAYER_ACTOR,25@,26@,27@)
 5@ = actor.Angle(PLAYER_ACTOR)
@@ -7483,7 +7558,7 @@ wait 0
 0AD1: show_formatted_text_highpriority "CURRENT CHECKPOINT NUMBER: %d, PRESS E TO SET UP AND CHECKPOINT, Q TO FINISH" time 2000 11@
 
 if
-0AB0:   key_pressed 69
+0AB0:   key_pressed $KEY_USE
 then
 10@ += 1
 actor.StorePos(PLAYER_ACTOR,2@,3@,4@)
@@ -7620,7 +7695,7 @@ $HUD_REMOVE = 1
 end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //0679: put_camera_on_car $ASSTEST_CAR with_offset 0.0 -2.0 0.0 rotation 0.0 0.0 0.0 tilt 0.0 switchstyle 2
 //wait 1000
@@ -7642,7 +7717,7 @@ end
 //end
 
 //if and
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //$ZOMBIE_DERBY_FLAG == 0
 //then
 //create_thread @DRB_ZOM
@@ -7655,7 +7730,7 @@ end
 //0A8C: write_memory 0x6E0A3B size 4 value 0 virtual_protect 1
 
 //if and
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //056E:   car 0@ defined
 //then
 //0A97: 10@ = car 0@ struct
@@ -7703,7 +7778,7 @@ end
 //end
 
 //if and
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //$AIRDROP_FLAG == 0
 //then
 //$AIRDROP_RANDOM = 1
@@ -7719,14 +7794,14 @@ end
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //00BF: 1@ = current_time_hours, 2@ = current_time_minutes
 //0AD1: show_formatted_text_highpriority "H: %d M: %d" time 2000 1@ 2@
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //0@ = 161.4
 //0AF4: 1@v = read_string_from_ini_file "saves\ZACM.set" section "SCR" key "STRING"
@@ -7742,7 +7817,7 @@ end
 //end
 
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //28@ += 1.0
 //0177: set_object $SKYBOX_OBJECT_SF_SUNNY Z_angle_to 28@
@@ -7808,7 +7883,7 @@ end
 //0@ = car.Create(#PEREN,0.0,0.0,0.0)
 
 //if and
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //0AB0:   key_pressed 50
 //then
 //
@@ -7830,7 +7905,7 @@ end
 //end
 
 //if and
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //0AB0:   key_pressed 50
 //then
 //
@@ -7849,7 +7924,7 @@ end
 //end
 
 //if and
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //0AB0:   key_pressed 49
 //then
 //
@@ -7916,7 +7991,7 @@ end
 //end
 
 //if and
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //actor.Driving(PLAYER_ACTOR)
 //then
 //5@ = actor.CurrentCar(PLAYER_ACTOR)
@@ -7985,7 +8060,7 @@ end
 
 //if and
 //actor.Driving(PLAYER_ACTOR)
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //0@ = actor.CurrentCar(PLAYER_ACTOR)
 //01EA: 1@ = car 0@ max_passengers
@@ -7993,7 +8068,7 @@ end
 //end
 
 //if and
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //856E: not  car $SAVE_CAR_PLACE defined
 //actor.Driving(PLAYER_ACTOR)
 //then
@@ -8129,7 +8204,7 @@ end
 //end
 //
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //then
 //0619: enable_actor PLAYER_ACTOR collision_detection 0
 //0605: actor PLAYER_ACTOR perform_animation "BED_Out_L" IFP "INT_HOUSE" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1
@@ -8198,7 +8273,7 @@ end
 //    end
 //
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //    then
 //    0709: set_decision_maker $DEC_PEOPLE on_event 54 taskID 212 chance_if_acquaintance respect 0.0 hate 0.0 unk 0.0 unk 0.0 in_car 1 on_foot 1 // see *.ped files
 //    074A: set_group_decision_maker PLAYER_GROUP on_event 15 taskID 212 respect 0.0 hate 0.0 like 0.0 dislike 0.0 in_car 1 on_foot 1 // see *.ped files
@@ -8827,10 +8902,11 @@ end
 //069B: attach_object 5@ to_actor PLAYER_ACTOR with_offset 0.0 -0.23 0.37 rotation 0.0 0.0 0.0 
 
 //actor.StorePos(PLAYER_ACTOR,0@,1@,2@)
-
 //if
-//0AE3: 5@ = random_object_near_point 0@ 1@ 2@ in_radius 4.0 find_next 1 //IF and SET  
+//0AE3: 5@ = random_object_near_point 0@ 1@ 2@ in_radius 4.0 find_next 0 //IF and SET  
 //    then
+//    071E: get_object 5@ health_to 6@
+//    0AD1: show_formatted_text_highpriority "obj health %d" time 500 6@
 //    marker.CreateAboveObject(3@,5@)
 //    wait 500
 //    marker.Disable(3@)
@@ -8913,7 +8989,7 @@ actor.Driving(PLAYER_ACTOR)
         wait 50
         end
         
-        until 0AB0:   key_pressed 69
+        until 0AB0:   key_pressed $KEY_USE
         
 //        player.CanMove(PLAYER_CHAR) = true
         0E68: set_player_control_pad 1 1 
@@ -8923,7 +8999,7 @@ actor.Driving(PLAYER_ACTOR)
     end    
     
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //    then
 //    0AF0: 15@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "TEST_VOICE"
 //    
@@ -8938,7 +9014,7 @@ actor.Driving(PLAYER_ACTOR)
 //    end    
     
 //if
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //    then
 //    04C4: store_coords_to 1@ 2@ 3@ from_actor PLAYER_ACTOR with_offset 0.0 2.0 1.0
 //    04C4: store_coords_to 4@ 5@ 6@ from_actor PLAYER_ACTOR with_offset 0.0 90.0 5.0
@@ -8952,7 +9028,7 @@ actor.Driving(PLAYER_ACTOR)
 
 //if and
 //20@ == 0
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //056E:   car 21@ defined
 //0AE2: 21@ = random_vehicle_near_point 1@ 2@ 3@ in_radius 5.0 find_next 0 pass_wrecked 0 //IF and SET
 //32@ > 500
@@ -8966,7 +9042,7 @@ actor.Driving(PLAYER_ACTOR)
 //if and
 //20@ == 1
 //32@ > 500
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //    then
 //    20@ = 0
 //    32@ = 0
@@ -9046,7 +9122,7 @@ actor.Driving(PLAYER_ACTOR)
 //end
 
 //if and
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //not 10@ == 19
 //then
 //10@ += 1
@@ -9083,7 +9159,7 @@ actor.Driving(PLAYER_ACTOR)
 //end
 //
 //if and
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //not 11@ == 19
 //then
 //11@ += 1
@@ -9354,7 +9430,7 @@ actor.Driving(PLAYER_ACTOR)
 //    end
 //    
 //if and
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //0AB0:   key_pressed 49
 //$CHEATS_ON == 1
 //    then
@@ -9362,7 +9438,7 @@ actor.Driving(PLAYER_ACTOR)
 //    end
 //    
 //if and
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //0AB0:   key_pressed 50
 //$CHEATS_ON == 1
 //    then
@@ -9370,7 +9446,7 @@ actor.Driving(PLAYER_ACTOR)
 //    end
 //    
 //if and
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //0AB0:   key_pressed 51
 //$CHEATS_ON == 1
 //    then
@@ -9378,7 +9454,7 @@ actor.Driving(PLAYER_ACTOR)
 //    end
 //    
 //if and
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //0AB0:   key_pressed 52
 //$CHEATS_ON == 1
 //    then
@@ -9386,7 +9462,7 @@ actor.Driving(PLAYER_ACTOR)
 //    end
 //    
 //if and
-//0AB0:   key_pressed 69
+//0AB0:   key_pressed $KEY_USE
 //0AB0:   key_pressed 53
 //$CHEATS_ON == 1
 //    then
