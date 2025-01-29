@@ -1,4 +1,6 @@
-:ZAME_MISSION_START    
+:ZAME_MISSION_START
+
+$ONMISSION = 1    
 
 if
 not ZAME_SURV_LAUNCH_FLAG == 1
@@ -6,6 +8,139 @@ then
 //Убираем проверку на макс хп-брони при подборе пикапа ХП-брони
 0E6A: make_nop 0x0457C33 size 6
 0E6A: make_nop 0x0457C70 size 6
+else
+$WEATHER_SYS_IDLE_FLAG = 1 //Ставим тред погоды на паузу
+$QUEST_TYPE = 655778 //Ставим флаг того, что мы на мейнквесте
+CAMP_DONT_SAY_HELLO_FLAG = 1 //Делаем так, чтобы лагеря не говорили нам привет
+
+0AF0: 0@ = get_int_from_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "ALLOW_TEAMMATES" //оставляем союзников если это одиночный мейнквест
+if and
+8800: not  in_two_players_mode
+not 0@ == 1
+then
+MAIN_QUEST_TEAMMATES_REMOVE_FLAG = 1
+create_thread @MQ_GRP
+end
+
+///////////////////////////////////////////////////
+
+if
+056D:   actor $ARMY[1] defined
+    then
+    
+    05BE: AS_actor $ARMY[1] die
+    05BE: AS_actor $ARMY[2] die
+    05BE: AS_actor $ARMY[3] die
+    05BE: AS_actor $ARMY[4] die
+    
+    repeat
+    wait 0
+    until $ARMY[1] == -69
+    
+    wait 250
+    
+    end
+
+///////////////////////////////////////////////////
+
+0459: end_thread_named 'ARMY_SP'
+
+///////////////////////////////////////////////////
+
+if
+056D:   actor $BANDIT[1] defined
+    then
+    
+    05BE: AS_actor $BANDIT[1] die
+    05BE: AS_actor $BANDIT[2] die
+    05BE: AS_actor $BANDIT[3] die
+    05BE: AS_actor $BANDIT[4] die
+    
+    repeat
+    wait 0
+    until $BANDIT[1] == -69
+    
+    wait 250
+    
+    end
+
+///////////////////////////////////////////////////
+
+0459: end_thread_named 'BNDT_SP'
+
+///////////////////////////////////////////////////
+
+if
+056D:   actor $ARMY[5] defined
+    then
+    
+    05BE: AS_actor $ARMY[5] die
+    0362: remove_actor $ARMY[5] from_car_and_place_at 0.0 3000.0 0.0   
+    
+    repeat
+    wait 0
+    until $ARMY[5] == -69
+    
+    wait 250    
+    
+    end
+
+///////////////////////////////////////////////////
+
+0459: end_thread_named 'A_HUNT'
+
+///////////////////////////////////////////////////
+
+if
+056D:   actor $BANDIT[5] defined
+    then
+    
+    05BE: AS_actor $BANDIT[5] die
+    05BE: AS_actor $BANDIT[6] die
+    05BE: AS_actor $BANDIT[7] die
+    05BE: AS_actor $BANDIT[8] die
+    
+    repeat
+    wait 0
+    until $BANDIT[5] == -69
+    
+    wait 250
+    
+    end
+    
+///////////////////////////////////////////////////    
+
+0459: end_thread_named 'BD_HELI'
+
+///////////////////////////////////////////////////
+
+if
+056D:   actor ARMY_RHINO_ACTOR defined
+    then
+    
+    05BE: AS_actor ARMY_RHINO_ACTOR die
+    
+    if
+    056E:   car $ARMY_RHINO defined
+    then
+    0338: set_car $ARMY_RHINO visibility 0
+    car.PutAt($ARMY_RHINO,0.0,3000.0,0.0)
+    end
+    
+    repeat
+    wait 0
+    until ARMY_RHINO_ACTOR == -69
+    
+    wait 250    
+    
+    end
+
+///////////////////////////////////////////////////
+
+0459: end_thread_named 'A_RHINO'
+
+///////////////////////////////////////////////////
+
 end
 
 0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "COMMUN_MISS_FLAG"
@@ -440,7 +575,8 @@ create_thread @BRK_CAR
 create_thread @PED_BKP PLAYER_ACTOR 371
 end
 
-actor.PutAtNoOffset(PLAYER_ACTOR,ZAME_START_POINT_X,ZAME_START_POINT_Y,ZAME_START_POINT_Z)
+//actor.PutAtNoOffset(PLAYER_ACTOR,ZAME_START_POINT_X,ZAME_START_POINT_Y,ZAME_START_POINT_Z)
+09BC: put_actor PLAYER_ACTOR at ZAME_START_POINT_X ZAME_START_POINT_Y ZAME_START_POINT_Z no_offset_and_dont_warp_gang
 actor.Angle(PLAYER_ACTOR) = ZAME_START_POINT_ANGLE
 select_interior ZAME_START_POINT_INTERIOR
 0860: link_actor PLAYER_ACTOR to_interior ZAME_START_POINT_INTERIOR
@@ -450,6 +586,7 @@ select_interior ZAME_START_POINT_INTERIOR
 Actor.GiveWeaponAndAmmo(PLAYER_ACTOR, ZAME_PLAYER_START_WEAPON_ID, ZAME_PLAYER_START_WEAPON_AMMO)
 
 0AF1: write_int 0 to_ini_file "saves\ZACM.set" section "SCR" key "EDITOR_LAUNCH_MISSION"
+0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "EDITOR_MISSION_COMPLETED_LOADING"
 
 $GODMODE_FLAG = 0
 Actor.SetImmunities(PLAYER_ACTOR, 0, 0, 0, 0, 0)
@@ -557,8 +694,9 @@ end
 end 
 
 0AF0: get_int 0@ from_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "NO_START_CINEMA"
-if
+if or
 $CHEATS_ON == 1
+ZAME_SURV_LAUNCH_FLAG == 1
 then
 0@ = 1
 end
@@ -586,7 +724,11 @@ end
 092B: 4@ = group PLAYER_GROUP member 4
 092B: 5@ = group PLAYER_GROUP member 5
 092B: 6@ = group PLAYER_GROUP member 6
+if
+not ZAME_SURV_LAUNCH_FLAG == 1
+then
 gosub @FRNDS_INT_CHECK_TP
+end
   
 wait 1000
 
@@ -899,8 +1041,9 @@ not PVP_MODE_ON == 1
 then
 
 0AF0: get_int 0@ from_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "NO_START_CINEMA"
-if
+if or
 $CHEATS_ON == 1
+ZAME_SURV_LAUNCH_FLAG == 1
 then
 0@ = 1
 end
@@ -1102,7 +1245,12 @@ else
 $NOTSPAWN_ETC = 1
 $SPECIAL_INFECTED_NOT_SPAWN_FLAG = 1
 $SURVIVORS_DONT_SPAWN_FLAG = 1
-end 
+$SURVIVOR_ALLOW_SPAWN[0] = 0
+$SURVIVOR_ALLOW_SPAWN[1] = 0
+$SURVIVOR_ALLOW_SPAWN[2] = 0
+$SURVIVOR_ALLOW_SPAWN[3] = 0
+$SURVIVOR_ALLOW_SPAWN[4] = 0
+end                              
 
 repeat
 
@@ -2232,6 +2380,14 @@ ZAME_CURRENT_OBJ_TYPE_READED == 0
     repeat
     wait 0 
     
+    if and
+    $CHEATS_ON == 1
+    0E3D: is_key_just_pressed 81
+    then
+    actor.PutAtNoOffset(PLAYER_ACTOR,2@,3@,4@)
+    create_thread @REFR_3D
+    end
+    
     if or
     $CHEATS_ON == 2
     ZAME_TARGETSKIP_MODE > 0
@@ -2280,6 +2436,7 @@ ZAME_CURRENT_OBJ_TYPE_READED == 1
     0AF2: get_float 5@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TELEPORT_A"
     0AF0: get_int 6@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TELEPORT_INT"
     0AF0: get_int 7@ from_ini_file "me\temp.dat" section v$RACE_FILE key "NO_TP_TEAMMATES"
+    0AF0: get_int 10@ from_ini_file "me\temp.dat" section v$RACE_FILE key "NO_UNFADE_AFTERTP"    
     
     player.CanMove(PLAYER_CHAR,false)
     text.RemoveTextBox()
@@ -2312,7 +2469,7 @@ ZAME_CURRENT_OBJ_TYPE_READED == 1
     
     if and
     not 8@ == 9
-//    not 8@ == 5 //пошел нахуй
+    not 10@ == 1
     not ZAME_CUTSCENE_MODE == 1       
         then    
         ZAME_TELEPORT_OUTFADED = 1
@@ -2348,14 +2505,14 @@ ZAME_CURRENT_OBJ_TYPE_READED == 1
     
     if and
     not 5@ == 9
-//    not 5@ == 5 //пошел нахуй
+    not 10@ == 1
     not ZAME_CUTSCENE_MODE == 1       
     then
     camera.Restore_WithJumpCut()        
     player.CanMove(PLAYER_CHAR,true)   
     else
     if and
-    5@ == -55555 //пошел нахуй (5)
+    10@ == 1
     ZAME_CUTSCENE_MODE == 0
         then
         camera.Restore_WithJumpCut()        
@@ -2416,7 +2573,7 @@ ZAME_CURRENT_OBJ_TYPE_READED == 1
     end
     
     if and
-//    not 5@ == 5 //пошел нахуй
+    not 10@ == 1
     not 5@ == 9
     not 5@ == 1
     not ZAME_CUTSCENE_MODE == 1 
@@ -2428,7 +2585,7 @@ ZAME_CURRENT_OBJ_TYPE_READED == 1
     not ZAME_CUTSCENE_MODE == 2
         then
         if and
-        5@ == -55555 //пошел нахуй
+        10@ == 1 //пошел нахуй
         ZAME_CUTSCENE_MODE == 0
             then 
             $HUD_REMOVE = 0   
@@ -2451,7 +2608,7 @@ ZAME_CURRENT_OBJ_TYPE_READED == 1
     not ZAME_CUTSCENE_MODE == 2
     not ZAME_CUTSCENE_MODE == 1
     not 5@ == 8
-//    not 5@ == 5 //пошел нахуй
+    not 10@ == 1
     then
     fade 1 250
 //    0AD1: show_formatted_text_highpriority "3" time 2000
@@ -2462,7 +2619,7 @@ ZAME_CURRENT_OBJ_TYPE_READED == 1
     if and
     ZAME_CUTSCENE_MODE == 1
     not 5@ == 8
-//    not 5@ == 5 //пошел нахуй
+    not 10@ == 1
     then                
     ZAME_CUTSCENE_MODE = 0
     ZAME_TELEPORT_OUTFADED = 1        
@@ -4329,7 +4486,14 @@ ZAME_CURRENT_OBJ_TYPE_READED == 8
     
     end
     
+    if or
+    not $QUEST_TYPE > 9
+    $QUEST_TYPE == -1
+    then
     text.ShowH(0@v,10,1)
+    else
+    0384: show_text_1string GXT 0@v string v$NAME3 time 10 1
+    end
     
     if
     0EB7: is_on_scripted_cutscene
@@ -4373,7 +4537,16 @@ ZAME_CURRENT_OBJ_TYPE_READED == 8
     if
     10@ == 2
     then
+    
+    if or
+    not $QUEST_TYPE > 9
+    $QUEST_TYPE == -1
+    then
     text.ShowH(0@v,11@,1)
+    else
+    0384: show_text_1string GXT 0@v string v$NAME3 time 11@ 1
+    end
+    
     else    
     create_thread @ZAMFXT 0@ 1@ 2@ 3@ 11@
     $PHRASES_OFF_FLAG = 0
@@ -4400,6 +4573,14 @@ ZAME_CURRENT_OBJ_TYPE_READED == 9
     $CHEATS_ON == 2 
     ZAME_TARGETSKIP_MODE > 0
     then
+    
+    if
+    ZAME_CUTSCENE_MODE == 2
+    then
+    ZAME_CUTSCENE_MODE = 0
+    $HUD_REMOVE = 0
+    end
+    
     jump to @ZAME_SKIP_CUM_ACTION
     end
     
@@ -7185,6 +7366,7 @@ ZAME_CURRENT_OBJ_TYPE_READED == 22
     0AAA: 2@ = thread 'SURVVER' pointer
     if and
     2@ == 0
+    $RANDOM_PEOPLE_SKIN[0] < 1
     856D: not  actor $SURVIVER[0] defined
         then 
         3@ = 1       
@@ -7192,6 +7374,7 @@ ZAME_CURRENT_OBJ_TYPE_READED == 22
         0AAA: 2@ = thread 'SURVVE1' pointer
         if and
         2@ == 0
+        $RANDOM_PEOPLE_SKIN[1] < 1
         856D: not  actor $SURVIVER[1] defined
             then
             3@ = 2
@@ -7199,6 +7382,7 @@ ZAME_CURRENT_OBJ_TYPE_READED == 22
             0AAA: 2@ = thread 'SURVVE2' pointer
             if and
             2@ == 0
+            $RANDOM_PEOPLE_SKIN[2] < 1
             856D: not  actor $SURVIVER[2] defined
                 then
                 3@ = 3
@@ -7206,6 +7390,7 @@ ZAME_CURRENT_OBJ_TYPE_READED == 22
                 0AAA: 2@ = thread 'SURVVE3' pointer
                 if and
                 2@ == 0
+                $RANDOM_PEOPLE_SKIN[3] < 1
                 856D: not  actor $SURVIVER[3] defined
                     then
                     3@ = 4
@@ -7213,6 +7398,7 @@ ZAME_CURRENT_OBJ_TYPE_READED == 22
                     0AAA: 2@ = thread 'SURVVE4' pointer
                     if and
                     2@ == 0
+                    $RANDOM_PEOPLE_SKIN[4] < 1
                     856D: not  actor $SURVIVER[4] defined
                         then
                         3@ = 5
@@ -7270,6 +7456,48 @@ ZAME_CURRENT_OBJ_TYPE_READED == 22
     0AF0: get_int 26@ from_ini_file "me\temp.dat" section v$RACE_FILE key "REWRITE_PEDTYPE"
     else
     26@ = 0
+    end
+    
+    if or
+    $RANDOM_PEOPLE_SKIN[18@] == -1 //тред создан
+    $RANDOM_PEOPLE_SKIN[18@] > 0
+    then
+    $RANDOM_PEOPLE_SKIN[18@] = -2 //пишем то, что мы над ним колдавали
+    
+    if
+    18@ == 0
+    then
+    0459: end_thread_named 'SURVVER'    
+    end
+    
+    if
+    18@ == 1
+    then
+    0459: end_thread_named 'SURVVE1'
+    end
+    
+    if
+    18@ == 2
+    then
+    0459: end_thread_named 'SURVVE2'
+    end
+    
+    if
+    18@ == 3
+    then
+    0459: end_thread_named 'SURVVE3'
+    end
+    
+    if
+    18@ == 4
+    then
+    0459: end_thread_named 'SURVVE4'
+    end
+    
+    wait 0
+    wait 0
+    wait 0
+    
     end
     
     create_thread @SURVVER 3@ 23@ ZAME_HUENEMY_POS_X ZAME_HUENEMY_POS_Y ZAME_HUENEMY_POS_Z ZAME_HUENEMY_POS_A 22@ 24@ 25@ 26@
@@ -7808,11 +8036,20 @@ if and
 ZAME_CURRENT_OBJ_TYPE_READED == 23
 not 2@ == 1
     then
+    
+    //Если мы заспавнили союзника, то сбрасываем флаг "оставайся в лагере"
+    if
+    ZAME_SURV_LAUNCH_FLAG == 1
+    then
+    MAIN_QUEST_TEAMMATES_REMOVE_FLAG = 0
+    end
+    
     gosub @CHECK_FOR_CP_PONOS
     
     0AAA: 2@ = thread 'SURVVER' pointer
     if and
     2@ == 0
+    $RANDOM_PEOPLE_SKIN[0] < 1
     856D: not  actor $SURVIVER[0] defined
         then 
         3@ = 1       
@@ -7820,6 +8057,7 @@ not 2@ == 1
         0AAA: 2@ = thread 'SURVVE1' pointer
         if and
         2@ == 0
+        $RANDOM_PEOPLE_SKIN[1] < 1
         856D: not  actor $SURVIVER[1] defined
             then
             3@ = 2
@@ -7827,6 +8065,7 @@ not 2@ == 1
             0AAA: 2@ = thread 'SURVVE2' pointer
             if and
             2@ == 0
+            $RANDOM_PEOPLE_SKIN[2] < 1
             856D: not  actor $SURVIVER[2] defined
                 then
                 3@ = 3
@@ -7834,6 +8073,7 @@ not 2@ == 1
                 0AAA: 2@ = thread 'SURVVE3' pointer
                 if and
                 2@ == 0
+                $RANDOM_PEOPLE_SKIN[3] < 1
                 856D: not  actor $SURVIVER[3] defined
                     then
                     3@ = 4
@@ -7841,6 +8081,7 @@ not 2@ == 1
                     0AAA: 2@ = thread 'SURVVE4' pointer
                     if and
                     2@ == 0
+                    $RANDOM_PEOPLE_SKIN[4] < 1
                     856D: not  actor $SURVIVER[4] defined
                         then
                         3@ = 5
@@ -7867,7 +8108,49 @@ not 2@ == 1
 //    0AD1: show_formatted_text_highpriority "surv number %d, model %d, ~n~melee id: %d, wep id: %d, ~n~X: %f Y: %f Z: %f A: %f" time 2000 3@ 23@ $SURVIVOR_MELEE_ID[18@] 22@ ZAME_HUENEMY_POS_X ZAME_HUENEMY_POS_Y ZAME_HUENEMY_POS_Z ZAME_HUENEMY_POS_A
 //    wait 2000
 //    $SURVIVOR_ALLOW_SPAWN[18@] = 1
-//    $DELETE_TEAMMATES = 0  
+//    $DELETE_TEAMMATES = 0
+
+    if
+    $RANDOM_PEOPLE_SKIN[18@] == -1 //тред создан
+    then
+    $RANDOM_PEOPLE_SKIN[18@] = 0
+    
+    if
+    18@ == 0
+    then
+    0459: end_thread_named 'SURVVER'    
+    end
+    
+    if
+    18@ == 1
+    then
+    0459: end_thread_named 'SURVVE1'
+    end
+    
+    if
+    18@ == 2
+    then
+    0459: end_thread_named 'SURVVE2'
+    end
+    
+    if
+    18@ == 3
+    then
+    0459: end_thread_named 'SURVVE3'
+    end
+    
+    if
+    18@ == 4
+    then
+    0459: end_thread_named 'SURVVE4'
+    end
+    
+    wait 0
+    wait 0
+    wait 0
+    
+    end
+  
     create_thread @SURVVER 3@ 23@ 40@ 41@ 42@ 43@ 22@
     
     repeat

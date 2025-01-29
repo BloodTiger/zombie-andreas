@@ -238,7 +238,7 @@ ZAME_PIC_CRT_AFTER_OBJ_NUM_TEMP = 708@
 ZAME_PIC_DEL_AFTER_OBJ_NUM_TEMP = 709@
 ZAME_TEMPVAR_STRING = 710@v
 ZAME_TEMPVAR_STRING2 = 715@v
-ZAME_TEMPVAR_STRING3 = 720@
+ZAME_TEMPVAR_STRING3 = 720@    
 end                       
 
 const
@@ -403,6 +403,7 @@ then
 0777: delete_objects_in_object_group "policedep"
 0777: delete_objects_in_object_group "policedep2"
 0777: delete_objects_in_object_group "policedep3"
+0777: delete_objects_in_object_group "policedep4"
 0777: delete_objects_in_object_group "meds"
 0776: create_objects_in_object_group "depot_int"
 0776: create_objects_in_object_group "comdist_int"
@@ -991,8 +992,14 @@ else
 
 if
 not ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG == 2
-then              
-0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ZAME_GET_BACK2"  
+then     
+
+if
+not ZAME_SURV_LAUNCH_FLAG == 1
+then         
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ZAME_GET_BACK2" 
+end
+ 
 0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "EDITOR_LOAD_MIS_NUM"
 end
 
@@ -1120,7 +1127,13 @@ not ZAME_AUTOSTART_FLAG == 1
 then
 0AF1: write_int ZAME_MISSION_LOAD_NUMBER to_ini_file "saves/ZACM.set" section "SCR" key "EDITOR_LOAD_MIS_NUM"
 else
+
+if
+not ZAME_SURV_LAUNCH_FLAG == 1
+then
 0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ZAME_GET_BACK2"
+end
+
 0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "EDITOR_LOAD_MIS_NUM"
 end
 0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "COMMUN_MISS_FLAG"
@@ -1140,6 +1153,96 @@ then
 //wait 250
 0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
 wait 9999999999
+end
+
+if
+ZAME_SURV_LAUNCH_FLAG == 1 //Делаем всякие штуки по завершении миссии
+then
+0ADE: v$SNAME3 = text_by_GXT_entry "F_NAME" //возвращаем имя для ГГ, ибо этот стринг юзается во время зейм миссии  
+$QUEST_TYPE = -1
+CAMP_DONT_SAY_HELLO_FLAG = 0 //возвращаем то, что лагеря нас приветствуют
+
+0AF0: 0@ = get_int_from_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "ALLOW_TEAMMATES"
+if
+not 0@ == 1 //возвращаем союзников, если мейнквест был без них
+then
+MAIN_QUEST_TEAMMATES_REMOVE_FLAG = 2
+create_thread @MQTMBK
+end
+
+//Пересоздаем треды выживших, которые выключились во время миссии
+
+for 0@ = 0 to 4
+if
+$RANDOM_PEOPLE_SKIN[0@] == -2 //под этим слотом миссия спавнила либо союзника либо человека врага
+    then
+                          
+    if
+    0@ == 0
+    then
+    $FREND_NUMBER = 0 
+    create_thread @SURVVER
+    wait 1   
+    end
+    
+    if
+    0@ == 1
+    then
+    $FREND_NUMBER = 1
+    create_thread @SURVVER
+    wait 1
+    end
+    
+    if
+    0@ == 2
+    then
+    $FREND_NUMBER = 2
+    create_thread @SURVVER
+    wait 1
+    end
+    
+    if
+    0@ == 3
+    then
+    $FREND_NUMBER = 3
+    create_thread @SURVVER
+    wait 1
+    end
+    
+    if
+    0@ == 4
+    then
+    $FREND_NUMBER = 4
+    create_thread @SURVVER
+    end    
+    
+    end
+end   
+
+//Возвращаем случайный спавн выживших
+for 0@ = 0 to 4
+$SURVIVOR_ALLOW_SPAWN[0@] = 1
+end
+
+//Возвращаем управление
+0E68: set_player_control_pad 0 1 
+0E69: set_player_control_pad_movement 0 1
+
+//Возвращаем худ
+$HUD_REMOVE = 0
+
+//Возвращаем треды военных, бандитов и прочую хуйню
+create_thread @ARMY_SP
+create_thread @BNDT_SP 
+create_thread @A_HUNT
+create_thread @BD_HELI
+create_thread @A_RHINO
+
+//Сбрасываем различные флаги
+$NOTSPAWN_ETC = 0
+$SPECIAL_INFECTED_NOT_SPAWN_FLAG = 0
+$SURVIVORS_DONT_SPAWN_FLAG = 0
+
 end
     
 $ONMISSION = 0 

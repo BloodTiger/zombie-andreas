@@ -866,6 +866,23 @@ gosub @RELEASE_MISSION_FILES_AND_RESTART
 0AF1: write_int 2 to_ini_file "saves/ZACM.set" section "SCR" key "COMMUN_MISS_FLAG"
 end
 
+///////////////Удаляем файлы кастомного слота миссии (2)///////////////
+
+0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "EDITOR_ZAMESRUV_LAUNCHED"
+if
+1@ == 1 
+then
+0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "EDITOR_ZAMESRUV_LAUNCHED"
+0B01: delete_directory "me\9" include_subdirs 1
+0B01: delete_directory "modloader\ZAME MISSION 9 FILES FOLDER" include_subdirs 1
+0AE5: create_directory "me\9" //IF and SET
+0AE5: create_directory "modloader\ZAME MISSION 9 FILES FOLDER" //IF and SET
+0B00: delete_file "me\ms9.dat"  // IF and SET
+0B00: delete_file "me\ms9.txd"  // IF and SET
+0B00: delete_file "me\ms9.ini"  // IF and SET
+gosub @RELEASE_MISSION_FILES_AND_RESTART2
+end
+
 ///////////////Сбрасываем приоритеты файлов миссий///////////////
 
 0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "EDITOR_START"
@@ -1795,8 +1812,10 @@ end
 0E6A: make_nop 0x061D55A size 6
 
 //Выключаем мускульно-жирный множитель
-0E6A: make_nop 0x061C780 size 2 
-0A8C: write_memory 0x061C784 size 4 value 0x0858A28 virtual_protect 0     
+0A8C: write_memory 0x061C78D size 4 value 69485785 virtual_protect 0
+0A8C: write_memory 0x061C791 size 4 value -1945104936 virtual_protect 0
+0A8C: write_memory 0x061C795 size 4 value -1869610875 virtual_protect 0 
+0A8C: write_memory 0x061C799 size 2 value -28528 virtual_protect 0      
 
 //Меняем множитель рукопашного дамага для тачек
 0A8C: write_memory 0x06A8315 size 4 value 0x0858CA8 virtual_protect 0
@@ -3584,5 +3603,38 @@ end
 0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "EDITOR_LOAD_MIS_NUM"
 end
 0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
+
+return
+
+:RELEASE_MISSION_FILES_AND_RESTART2
+
+0B01: delete_directory "me\9" include_subdirs 1
+0B01: delete_directory "modloader\ZAME MISSION 9 FILES FOLDER" include_subdirs 1
+0AE5: create_directory "me\9" //IF and SET
+0AE5: create_directory "modloader\ZAME MISSION 9 FILES FOLDER" //IF and SET
+
+32@ = 0
+
+repeat
+wait 0
+fade 0 0
+$MUSIC_VOLUME = 0.0
+$SOUNDS_VOLUME = 0.0
+$SELECT_MUSIC_END = 1
+09FD: get_gxt_string 'ZGATMFE' width_to 1@ 
+
+if
+32@ > 5000
+    then
+    return
+    end
+
+until 1@ < 1
+
+if
+$GAMEMODE_SELECTED == 0
+then
+0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
+end
 
 return
