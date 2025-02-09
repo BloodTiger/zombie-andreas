@@ -27,6 +27,8 @@ end
 
 32@ = 0
 
+PLAYER_CAR_BONUS_FLAG = 0 //почему он всегда единица сразу?
+
 :LOOP_IDLE        
 wait 0
 
@@ -724,7 +726,18 @@ actor.DrivingVehicleType(PLAYER_ACTOR,#BIKE)
 end
 
 $PLAYER_OUT_CAR_TIMER = 0
-0@ = actor.CurrentCar(PLAYER_ACTOR)    
+0@ = actor.CurrentCar(PLAYER_ACTOR)
+
+//ƒаем тачке нитро если у игрока разблокирваны все достижени€.
+0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ALL_ACH_UNLOCKED"
+if
+1@ == 1
+then
+0A8C: write_memory 0x047B18F size 1 value 100 virtual_protect 0 //setBoosts
+09E9: car 0@ add_single_nitro
+0A8C: write_memory 0x047B18F size 1 value 1 virtual_protect 0 //setBoosts
+end
+    
 0A97: 1@ = car 0@ struct 
 0A8E: 2@ = 1@ + CAR_ENGINE_POWER_PLUS_STRUCT // int 
 0A8D: 1@ = read_memory 2@ size 4 virtual_protect 1
@@ -764,6 +777,32 @@ jump to @CAR_DRIVING_ENGINE_PLUS_POWER_JUMP2
 else
 PL_CAR_MAX_SPEED = 0.0
 PL_CAR_ENGINE_POWER = 0.0
+
+if
+PLAYER_CAR_BONUS_FLAG == 1
+then
+PL_CAR_MAX_SPEED = 48.10
+PL_CAR_ENGINE_POWER += 0.1625
+end
+
+//0A97: 1@ = car 0@ struct 
+//1@ += 0x8A4 //m_fTireTemperature
+//0A8D: 1@ = read_memory 1@ size 4 virtual_protect 0
+//if
+//1@ < 0.0 //Ќитро включено.
+//then
+//
+//if    
+//not PL_CAR_MAX_SPEED == 0.0
+//then
+//PL_CAR_MAX_SPEED += 5.0
+//else
+//PL_CAR_MAX_SPEED = 48.10
+//end
+//PL_CAR_ENGINE_POWER += 0.1625
+//
+//end 
+
 end
 
 :CAR_DRIVING_ENGINE_PLUS_POWER_JUMP2
@@ -1511,6 +1550,7 @@ not ANTI_LEFT_STENKA_FLAG == 1
 if and
 $ALLOW_ZOMBIE_HORDES == 0
 not $SALVATION_FLAG == 1
+not MAIN_QUEST_MUSIC_FLAG == 1
     then
     $ZOMBIES_HORDE = 0
     end   

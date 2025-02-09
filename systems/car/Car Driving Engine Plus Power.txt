@@ -122,6 +122,7 @@ if and
 not MIKE_SHIZA_FLAG == 1
 not $FREEMODE == 0
 then
+:ZOMBIEGEDDON_GAS_BOOST_JUMP
 if and
 actor.Driving(PLAYER_ACTOR)
 $SPECTATING_FLAG == 0
@@ -143,7 +144,7 @@ not actor.DrivingVehicleType(PLAYER_ACTOR,#BIKE)
         0A97: 22@ = car 6@ struct 
         0A8E: 23@ = 22@ + CAR_ENGINE_POWER_PLUS_STRUCT // int 
         0A8D: 25@ = read_memory 23@ size 4 virtual_protect 1    
-        
+                
         if
         PL_CAR_ENGINE_FLAG == 0
         then
@@ -185,14 +186,80 @@ not actor.DrivingVehicleType(PLAYER_ACTOR,#BIKE)
         if
         PLAYER_CAR_BONUS_FLAG == 1
         then
-        2@ = 58.10
+        2@ = 48.10
         25@ = 0.1625
+        PL_CAR_MAX_SPEED = 48.10
+        PL_CAR_ENGINE_POWER = 0.1625
         end
+        
+        0A97: 22@ = car 6@ struct 
+        22@ += 0x8A4 //m_fTireTemperature
+        0A8D: 22@ = read_memory 22@ size 4 virtual_protect 0
+        if
+        22@ < 0.0 //Нитро включено
+        then
+        
+        if
+        $ZOMBIE_DERBY_FLAG == 1
+        then
+        2@ += 58.10
+        else           
+        if    
+        not 25@ == 0.0
+            then
+            2@ += 5.0 
+            else
+            2@ = 48.10
+            end        
+        end
+        
+        if
+        $ZOMBIE_DERBY_FLAG == 1
+            then
+            25@ += 0.325 
+            if
+            PL_CAR_MAX_SPEED == 0.0
+                then
+                PL_CAR_MAX_SPEED = 58.10
+                PL_CAR_ENGINE_POWER = 0.325
+                end  
+            else
+            25@ += 0.1625
+            if
+            PL_CAR_MAX_SPEED == 0.0
+                then
+                PL_CAR_MAX_SPEED = 48.10
+                PL_CAR_ENGINE_POWER = 0.1625
+                end            
+            end
+        
+        end 
+        
+        if
+        25@ == 0.0
+        then
+        
+        if
+        847A: not  actor PLAYER_ACTOR driving_bike
+        then
+        0423: set_car 6@ improved_handling_to 0.0 // (float)
+        end
+        
+        088B: set_car 6@ form_drag_multiplier_to 1.0
+        
+        if
+        $ZOMBIE_DERBY_FLAG == 1
+        then
+        PL_CAR_MAX_SPEED = 0.0
+        PL_CAR_ENGINE_POWER = 0.0
+        end
+        
+        end                
             
         end
         
         else
-        0089: 2@ = PL_CAR_MAX_SPEED // (float)
+        0089: 2@ = PL_CAR_MAX_SPEED // (float) 
         end
         
         :CAR_DRIVING_ENGINE_PLUS_POWER_JUMP
@@ -201,7 +268,17 @@ not actor.DrivingVehicleType(PLAYER_ACTOR,#BIKE)
         PLAYER_CAR_BONUS_FLAG == 1
         then
         2@ *= 1.15
-        end
+        end     
+        
+        0A97: 22@ = car 6@ struct 
+        22@ += 0x8A4 //m_fTireTemperature
+        0A8D: 22@ = read_memory 22@ size 4 virtual_protect 0
+//        0AD1: show_formatted_text_highpriority "m_fTireTemperature %f" time 2000 22@
+        if
+        22@ < 0.0 //Нитро включено
+        then
+        2@ *= 1.15
+        end        
         
         2@ *= 0.85
         
@@ -252,14 +329,32 @@ not actor.DrivingVehicleType(PLAYER_ACTOR,#BIKE)
         22@ == 65535
         then
         2@ *= 1.10
-        end         
+        end 
+        
+        0A97: 22@ = car 6@ struct 
+        22@ += 0x8A4 //m_fTireTemperature
+        0A8D: 22@ = read_memory 22@ size 4 virtual_protect 0
+        if
+        22@ < 0.0
+        then
+        2@ *= 1.10
+        end        
         
         02E3: 1@ = car 6@ speed                 
-            
+        
+//        0AD1: show_formatted_text_highpriority "%f, PL_CAR_ENGINE_FLAG %d" time 2000 25@ PL_CAR_ENGINE_FLAG    
         if and
         25@ > 0.0
         0ABE:   vehicle 6@ engine_on        
             then
+            
+            if
+            $ZOMBIE_DERBY_FLAG == 1
+            then
+            2@ = 110.0
+            end
+            
+//            0AD1: show_formatted_text_highpriority "%f < %f, PL_CAR_ENGINE_FLAG %d, PL_CAR_MAX_SPEED %f, PL_CAR_ENGINE_POWER %f" time 2000 1@ 2@ PL_CAR_ENGINE_FLAG PL_CAR_MAX_SPEED PL_CAR_ENGINE_POWER
             if
             8025: not  1@ > 2@  // (float)
                 then
@@ -281,6 +376,7 @@ not actor.DrivingVehicleType(PLAYER_ACTOR,#BIKE)
                         then
                         
                         27@ *= 2.0
+//                        0AD1: show_formatted_text_highpriority "%f > %f, PL_CAR_ENGINE_FLAG %d" time 2000 27@ PL_CAR_ENGINE_POWER PL_CAR_ENGINE_FLAG
                         if
                         0027:   27@ > PL_CAR_ENGINE_POWER // (float)
                         then
@@ -298,7 +394,7 @@ not actor.DrivingVehicleType(PLAYER_ACTOR,#BIKE)
                         25@ *= 3.0
                         25@ /= -1.0                                                                    
                         088B: set_car 6@ form_drag_multiplier_to 25@
-    //                    0AD1: show_formatted_text_highpriority "DRAG MULT: %f" time 2000 25@                    
+//                        0AD1: show_formatted_text_highpriority "DRAG MULT: %f" time 2000 25@                    
                         
                         if
                         847A: not  actor PLAYER_ACTOR driving_bike
@@ -365,7 +461,7 @@ not actor.DrivingVehicleType(PLAYER_ACTOR,#BIKE)
                 25@ *= 3.0
                 25@ /= -1.0                                                                    
                 088B: set_car 6@ form_drag_multiplier_to 25@
-    //            0AD1: show_formatted_text_highpriority "DRAG MULT: %f" time 2000 25@
+//                0AD1: show_formatted_text_highpriority "DRAG MULT: %f" time 2000 25@
                 end
                 
                 if
@@ -386,9 +482,30 @@ not actor.DrivingVehicleType(PLAYER_ACTOR,#BIKE)
                 0A8E: 23@ = 22@ + CAR_ENGINE_POWER_PLUS_STRUCT // int 
                 0A8C: write_memory 23@ size 4 value 27@ virtual_protect 1                        
                     
-                end                                
+                end
+            else
+            088B: set_car 6@ form_drag_multiplier_to 1.0   
+            if
+            847A: not  actor PLAYER_ACTOR driving_bike
+            then
+            0423: set_car 6@ improved_handling_to 0.0 // (float)
+            end
+            
+            if
+            $ZOMBIE_DERBY_FLAG == 1
+            then 
+            PL_CAR_MAX_SPEED = 0.0
+            PL_CAR_ENGINE_POWER = 0.0
+            end
+                                         
             end
         end
+    end
+else
+if
+$ZOMBIE_DERBY_FLAG == 1
+    then
+    jump to @ZOMBIEGEDDON_GAS_BOOST_JUMP
     end
 end
     

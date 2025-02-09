@@ -872,12 +872,15 @@ not MCS_FLAG == 1
                 end
             end
         end
-    end
+    end  
     
 if and
 $FREEMODE == 1
 not $CARL_STORY == 1
 not $MIKE_STORY == 1
+$CASETTE_PLAYING_FLAG == 0
+USER_TAPE_TURNED_ON_FLAG == 0
+RADIO_TEXTURE_RENDER_NUMBER == 0
     then
     if or
     0E3D:   key_pressed 221
@@ -903,66 +906,198 @@ not $MIKE_STORY == 1
             not Actor.Driving(PLAYER_ACTOR)
             player.Controllable(PLAYER_CHAR) 
             044B:   actor PLAYER_ACTOR on_foot 
-            09E7:   player PLAYER_CHAR not_frozen
-            02A0:   actor PLAYER_ACTOR stopped
+            09E7:   player PLAYER_CHAR not_frozen            
             8597:   actor PLAYER_ACTOR crouching
                 then
-                
-                $SPEED_08_FLAG = 1
-                $MUTE_MUSIC_FLAG = 1
-                BLACK_MENU_OPENED_FLAG = 1
-                
-    //            player.CanMove(PLAYER_CHAR) = false
-                0E68: set_player_control_pad 0 1 
-                0E69: set_player_control_pad_movement 0 0
-                
-                $HUD_REMOVE = 1
-                fade 0 50
-                wait 50  
-                
-                cinema.Widescreen(1)
-                0A48: enable_menu_access_in_widescreen_mode 0
-                if and
-                not MAIN_QUEST_MUSIC_FLAG == 1
-                not USER_TAPE_TURNED_ON_FLAG == 1
-                not $CASETTE_PLAYING_FLAG == 1
-                then
-                Audiostream.Volume(PERK_THEME_AUDIOSTREAM) = $MUSIC_VOLUME
-                end
-                32@ = 0            
-                
-                $ACHIV_TOTAL_SHOW_LIST_FLAG = 1
-                create_thread @CAS_SHW
-                
-                repeat
-                wait 0
-                until 00E1: player 0 pressed_key 15
-                
-                Audiostream.PerformAction($MENU_BACK_SOUND, PLAY)
-                Audiostream.Loop($MENU_BACK_SOUND, 0)
-                Audiostream.Volume($MENU_BACK_SOUND) = $SOUNDS_VOLUME   
-                $ACHIV_TOTAL_SHOW_OFF_FLAG = 1
-                wait 1  
-                
-                cinema.Widescreen(0)
-                0A48: enable_menu_access_in_widescreen_mode 1            
-                
-    //            player.CanMove(PLAYER_CHAR) = true
-                0E68: set_player_control_pad 1 1 
-                0E69: set_player_control_pad_movement 0 1
-                
-                $MUTE_MUSIC_FLAG = 0    
-                $SPEED_08_FLAG = 0
-                BLACK_MENU_OPENED_FLAG = 0
-                015D: set_gamespeed 1.0
-                Audiostream.Volume(PERK_THEME_AUDIOSTREAM) = 0.0
-                
-                fade 1 500
-                $HUD_REMOVE = 0    
-                wait 500  
-                
+                if or
+                02A0:   actor PLAYER_ACTOR stopped
+                $CASETTE_PLAYING_FLAG == 2
+                    then 
+                                                            
+                    $SPEED_08_FLAG = 1
+                    $MUTE_MUSIC_FLAG = 1
+                    BLACK_MENU_OPENED_FLAG = 1
+                    
+        //            player.CanMove(PLAYER_CHAR) = false
+                    0E68: set_player_control_pad 0 1 
+                    0E69: set_player_control_pad_movement 0 0
+                    
+                    $HUD_REMOVE = 1
+                    fade 0 50
+                    wait 50  
+                    
+                    cinema.Widescreen(1)
+                    0A48: enable_menu_access_in_widescreen_mode 0
+                    if and
+                    not MAIN_QUEST_MUSIC_FLAG == 1
+                    not USER_TAPE_TURNED_ON_FLAG == 1
+                    not $CASETTE_PLAYING_FLAG == 1
+                    then
+                    Audiostream.Volume(PERK_THEME_AUDIOSTREAM) = $MUSIC_VOLUME
+                    end
+                    32@ = 0            
+                    
+                    $ACHIV_TOTAL_SHOW_LIST_FLAG = 1
+                    create_thread @CAS_SHW
+                    
+                    repeat
+                    wait 0
+                    
+                    if
+                    OPEN_NOTES_MENU_FLAG == -111
+                    then             
+                    OPEN_NOTES_MENU_FLAG = 0 
+                    jump to @SKIP_CASSETTE_SHIT
+                    end
+                    
+                    until 00E1: player 0 pressed_key 15
+                    
+                    Audiostream.PerformAction($MENU_BACK_SOUND, PLAY)
+                    Audiostream.Loop($MENU_BACK_SOUND, 0)
+                    Audiostream.Volume($MENU_BACK_SOUND) = $SOUNDS_VOLUME   
+                    $ACHIV_TOTAL_SHOW_OFF_FLAG = 1
+                    wait 1  
+                    
+                    cinema.Widescreen(0)
+                    0A48: enable_menu_access_in_widescreen_mode 1            
+                    
+        //            player.CanMove(PLAYER_CHAR) = true
+                    0E68: set_player_control_pad 1 1 
+                    0E69: set_player_control_pad_movement 0 1
+                    
+                    $MUTE_MUSIC_FLAG = 0    
+                    $SPEED_08_FLAG = 0
+                    BLACK_MENU_OPENED_FLAG = 0
+                    015D: set_gamespeed 1.0
+                    Audiostream.Volume(PERK_THEME_AUDIOSTREAM) = 0.0
+                    
+                    fade 1 500
+                    $HUD_REMOVE = 0    
+                    wait 500  
+                    
+                    :SKIP_CASSETTE_SHIT
+                    
+                    end
                 end
             end
+        end
+    else
+    if
+    $CASETTE_PLAYING_FLAG == 1
+        then
+        
+        0A8D: 0@ = read_memory 0xB7CB64 size 4 virtual_protect 0
+        if
+        $SPEED_099_FLAG == 1
+        then
+        0@ = 1.0
+        end
+             
+        if and
+        $HUD_REMOVE == 0
+        $GAMEMODE_HOLD == 0
+        $CHEAT_TYPE_FLAG == 0
+        0@ == 1.0
+            then        
+            if and
+            not Actor.Dead(PLAYER_ACTOR)
+            not Actor.Driving(PLAYER_ACTOR)
+            player.Controllable(PLAYER_CHAR) 
+            044B:   actor PLAYER_ACTOR on_foot 
+            09E7:   player PLAYER_CHAR not_frozen            
+                then
+        
+                if or
+                0E3D:   key_pressed 221
+                OPEN_NOTES_MENU_FLAG == 2
+                    then            
+                                                                        
+                    $SPEED_08_FLAG = 1
+                    $MUTE_MUSIC_FLAG = 1
+                    BLACK_MENU_OPENED_FLAG = 1
+                    OPEN_NOTES_MENU_FLAG = 0
+                                
+//                    player.CanMove(PLAYER_CHAR) = false
+                    0E68: set_player_control_pad 0 1 
+                    0E69: set_player_control_pad_movement 0 0
+                                
+                    $HUD_REMOVE = 1
+                    fade 0 50
+                    wait 50  
+                                
+                    cinema.Widescreen(1)
+                    0A48: enable_menu_access_in_widescreen_mode 0
+                    if and
+                    not MAIN_QUEST_MUSIC_FLAG == 1
+                    not USER_TAPE_TURNED_ON_FLAG == 1
+                    not $CASETTE_PLAYING_FLAG == 1
+                    then
+                    Audiostream.Volume(PERK_THEME_AUDIOSTREAM) = $MUSIC_VOLUME
+                    end
+                    32@ = 0            
+                                
+                    $ACHIV_TOTAL_SHOW_LIST_FLAG = 1
+                    create_thread @CAS_SHW
+                                
+                    repeat
+                    wait 0
+                                
+                    if
+                    OPEN_NOTES_MENU_FLAG == -111
+                    then             
+                    OPEN_NOTES_MENU_FLAG = 0 
+                    jump to @2SKIP_CASSETTE_SHIT
+                    end
+                                
+                    until 00E1: player 0 pressed_key 15
+                                
+                    Audiostream.PerformAction($MENU_BACK_SOUND, PLAY)
+                    Audiostream.Loop($MENU_BACK_SOUND, 0)
+                    Audiostream.Volume($MENU_BACK_SOUND) = $SOUNDS_VOLUME   
+                    $ACHIV_TOTAL_SHOW_OFF_FLAG = 1
+                    wait 1  
+                                
+                    cinema.Widescreen(0)
+                    0A48: enable_menu_access_in_widescreen_mode 1            
+                                
+//                    player.CanMove(PLAYER_CHAR) = true
+                    0E68: set_player_control_pad 1 1 
+                    0E69: set_player_control_pad_movement 0 1
+                                
+                    $MUTE_MUSIC_FLAG = 0    
+                    $SPEED_08_FLAG = 0
+                    BLACK_MENU_OPENED_FLAG = 0
+                    015D: set_gamespeed 1.0
+                    Audiostream.Volume(PERK_THEME_AUDIOSTREAM) = 0.0
+                                
+                    fade 1 500
+                    $HUD_REMOVE = 0    
+                    wait 500  
+                                
+                    :2SKIP_CASSETTE_SHIT
+                                
+                    end                
+                if or
+                0E3D: is_key_just_pressed 190
+                0E3D: is_key_just_pressed 188
+                    then
+                    $CASETTE_PLAYING_FLAG = 2
+                    create_thread @CAS_SHW
+                    wait 3000
+                    end
+                if or
+                0E3D: is_key_just_pressed 191
+                $SAVESTATUS_TRUE == 1  
+                MAIN_QUEST_MUSIC_FLAG == 1
+                actor.Dead(PLAYER_ACTOR)
+                    then
+                    audiostream.PerformAction($CASETTE_AUDIO,STOP)
+                    audiostream.Release($CASETTE_AUDIO)
+                    gosub @TAPES_AUD_OFF
+                    $CASETTE_PLAYING_FLAG = 0
+                    end                    
+                end
+            end            
         end
     end
     
