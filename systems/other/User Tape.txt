@@ -439,7 +439,8 @@ $PANEL_OPEN == 0
     :UT_JOY_ON_BUTT2
     if and
     not MAIN_QUEST_MUSIC_FLAG == 1
-    not $CASETTE_PLAYING_FLAG == 1
+    not $CASETTE_PLAYING_FLAG == 1 
+    not $MUSIC_TURN_OFF_FLAG == 1
         then                
         Audiostream.Loop($CASETTE_ON_SOUND,0)
         Audiostream.PerformAction($CASETTE_ON_SOUND, PLAY)
@@ -511,14 +512,18 @@ not $PLAYER_DYING == 1
     not MAIN_QUEST_MUSIC_FLAG == 1
     not $CASETTE_PLAYING_FLAG == 1
         then
-        FUNC_MENU_ACTIVE_FLAG = 0
-        $FUNC_MENU_EXIT_FLAG = 0
-        $SLOWMODE_ACTIVE = 0
-        $PANEL_OPEN2 = 0
-        015D: set_gamespeed 1.0
-        0992: set_player PLAYER_CHAR weapons_scrollable 1
-        wait 250
-        jump to @UT_JOY_ON_BUTT
+        if
+        not $MUSIC_TURN_OFF_FLAG == 1
+            then
+            FUNC_MENU_ACTIVE_FLAG = 0
+            $FUNC_MENU_EXIT_FLAG = 0
+            $SLOWMODE_ACTIVE = 0
+            $PANEL_OPEN2 = 0
+            015D: set_gamespeed 1.0
+            0992: set_player PLAYER_CHAR weapons_scrollable 1
+            wait 250
+            jump to @UT_JOY_ON_BUTT
+            end
         end
     end
 end  
@@ -540,6 +545,7 @@ not MAIN_QUEST_MUSIC_FLAG == 1
     if and
     not $PLAYER_DYING == 1
     not $CASETTE_PLAYING_FLAG == 1
+    not $MUSIC_TURN_OFF_FLAG == 1
         then
         :UT_JOY_ON_BUTT
         32@ = 0
@@ -626,6 +632,7 @@ $PANEL_OPEN == 0
     if and
     not MAIN_QUEST_MUSIC_FLAG == 1
     not $CASETTE_PLAYING_FLAG == 1
+    not $MUSIC_TURN_OFF_FLAG == 1
         then    
         32@ = 0
         Audiostream.Loop($CASETTE_ON_SOUND,0)
@@ -719,10 +726,14 @@ USER_TAPE_TURNED_ON_FLAG == 1
     MAIN_QUEST_MUSIC_FLAG == 1
     $PLAYER_DYING == 1
     $CASETTE_PLAYING_FLAG == 1
+    $MUSIC_TURN_OFF_FLAG == 1
         then
         
-        if
+        if or
         MAIN_QUEST_MUSIC_FLAG == 1
+        $MUSIC_TURN_OFF_FLAG == 1
+        $PLAYER_DYING == 1
+        actor.Dead(PLAYER_ACTOR)
         then
         jump to @USER_TAPE_OFF_MQ_MUS
         end
@@ -819,6 +830,7 @@ FUNC_MENU_ACTIVE_FLAG == 1
     32@ > 500
     not MAIN_QUEST_MUSIC_FLAG == 1
     not $CASETTE_PLAYING_FLAG == 1
+    not $MUSIC_TURN_OFF_FLAG == 1
         then
         FUNC_MENU_ACTIVE_FLAG = 0
         $FUNC_MENU_EXIT_FLAG = 0
@@ -843,14 +855,18 @@ $PANEL_OPEN == 0
 not MAIN_QUEST_MUSIC_FLAG == 1
 not $CASETTE_PLAYING_FLAG == 1
     then
-    :UT_JOY_NEXT_TRACK_1
-    32@ = 0
-    Audiostream.Loop($TAPE_ON_SOUND,0)
-    Audiostream.PerformAction($TAPE_ON_SOUND, PLAY)
-    Audiostream.Volume($TAPE_ON_SOUND) = $SOUNDS_VOLUME        
-    wait 1000
-    gosub @USER_TAPE_QUEUE_NEW_CHECK
-    gosub @USER_TAPE_PLAY_RANDOM_TRACK
+    if
+    not $MUSIC_TURN_OFF_FLAG == 1
+        then
+        :UT_JOY_NEXT_TRACK_1
+        32@ = 0
+        Audiostream.Loop($TAPE_ON_SOUND,0)
+        Audiostream.PerformAction($TAPE_ON_SOUND, PLAY)
+        Audiostream.Volume($TAPE_ON_SOUND) = $SOUNDS_VOLUME        
+        wait 1000
+        gosub @USER_TAPE_QUEUE_NEW_CHECK
+        gosub @USER_TAPE_PLAY_RANDOM_TRACK
+        end
     end
     
 ///////////////////////////////////////////////////////////////////////////
@@ -960,6 +976,13 @@ end
 if
 USER_TAPE_TURNED_ON_FLAG == 1
     then
+    
+    if
+    $MUSIC_TURN_OFF_FLAG == 1
+    then
+    jump to @UT_JOY_OFF_1
+    end
+    
     if or
     0E3D:   key_pressed 76
     actor.Dead(PLAYER_ACTOR)

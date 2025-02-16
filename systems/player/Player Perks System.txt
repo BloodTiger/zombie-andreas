@@ -716,8 +716,8 @@ if
 $SAVING_DELAY == 1
 then
 
-while $SAVING_DELAY == 1
-wait 100
+while $SAVING_DELAY == 1  
+wait 100    
 gosub @PERKS_NUMBER_GET
 end
 
@@ -881,6 +881,7 @@ not $MIKE_STORY == 1
 $CASETTE_PLAYING_FLAG == 0
 USER_TAPE_TURNED_ON_FLAG == 0
 RADIO_TEXTURE_RENDER_NUMBER == 0
+not $MUSIC_TURN_OFF_FLAG == 1
     then
     if or
     0E3D:   key_pressed 221
@@ -899,6 +900,8 @@ RADIO_TEXTURE_RENDER_NUMBER == 0
         $HUD_REMOVE == 0
         $GAMEMODE_HOLD == 0
         $CHEAT_TYPE_FLAG == 0
+        $SAVESTATUS_TRUE == 0  
+        MAIN_QUEST_MUSIC_FLAG == 0
         0@ == 1.0
             then        
             if and
@@ -982,9 +985,19 @@ RADIO_TEXTURE_RENDER_NUMBER == 0
             end
         end
     else
-    if
+    if and
     $CASETTE_PLAYING_FLAG == 1
+    PLAYER_IN_CANALS_FLAG == 0
         then
+        
+        if or
+        $SAVESTATUS_TRUE == 1  
+        MAIN_QUEST_MUSIC_FLAG == 1
+        $MUSIC_TURN_OFF_FLAG == 1
+        actor.Dead(PLAYER_ACTOR)
+            then
+            jump to @TAPE_DISABLE
+            end                 
         
         0A8D: 0@ = read_memory 0xB7CB64 size 4 virtual_protect 0
         if
@@ -1001,9 +1014,9 @@ RADIO_TEXTURE_RENDER_NUMBER == 0
             then        
             if and
             not Actor.Dead(PLAYER_ACTOR)
-            not Actor.Driving(PLAYER_ACTOR)
-            player.Controllable(PLAYER_CHAR) 
-            044B:   actor PLAYER_ACTOR on_foot 
+//            not Actor.Driving(PLAYER_ACTOR)
+//            player.Controllable(PLAYER_CHAR) 
+//            044B:   actor PLAYER_ACTOR on_foot 
             09E7:   player PLAYER_CHAR not_frozen            
                 then
         
@@ -1085,12 +1098,10 @@ RADIO_TEXTURE_RENDER_NUMBER == 0
                     create_thread @CAS_SHW
                     wait 3000
                     end
-                if or
+                if
                 0E3D: is_key_just_pressed 191
-                $SAVESTATUS_TRUE == 1  
-                MAIN_QUEST_MUSIC_FLAG == 1
-                actor.Dead(PLAYER_ACTOR)
                     then
+                    :TAPE_DISABLE
                     audiostream.PerformAction($CASETTE_AUDIO,STOP)
                     audiostream.Release($CASETTE_AUDIO)
                     gosub @TAPES_AUD_OFF
