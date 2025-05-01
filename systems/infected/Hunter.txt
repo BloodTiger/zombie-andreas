@@ -461,6 +461,7 @@ actor.SetImmunities($HUNTER[24@], 0, 1, 0, 1, 0)
 end
 
 Actor.SetWalkStyle($HUNTER[24@],"HUNTER2")
+
 0A09: set_actor $HUNTER[24@] muted 1 // versionB
 0967: actor $HUNTER[24@] move_mouth 99999999 ms
 
@@ -661,13 +662,13 @@ if
 0611: actor $HUNTER[24@] performing_animation "HUNTER_walk"
     then
     0393: actor $HUNTER[24@] perform_animation "HUNTER_walk" at 0@ times_normal_rate  
-end   
+    end   
 
 if
 0611: actor $HUNTER[24@] performing_animation "HUNTER_run"
     then
     0393: actor $HUNTER[24@] perform_animation "HUNTER_run" at 0@ times_normal_rate  
-end     
+    end     
 
 /////////////////////Анти-приседание охотника/////////////////////  
 
@@ -1069,6 +1070,14 @@ actor.Dead($HUNTER[24@])
     008C: $TEMP_XP = float $TEMP_XP to_integer
     0058: $PLAYER_XP += $TEMP_XP // (int)
     
+    if
+    $ENTERED_CAMP_NUMBER > -1
+    then
+    008B: 0@ = $ENTERED_CAMP_NUMBER // (int)
+    0@ += 156
+    $RNDM_HOUSE_BANKA[0@] += 5
+    end
+    
     0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_HUNTER_KILLED"    
     
     if and
@@ -1380,7 +1389,17 @@ if
                 0104:   actor $HUNTER[24@] near_actor HUNTER_TARGET_ACTOR radius 2.0 2.0 2.0 sphere 0
                     then    
                     089F: get_actor HUNTER_TARGET_ACTOR pedtype_to 0@
-                    04DD: 1@ = actor HUNTER_TARGET_ACTOR armour
+                    04DD: 1@ = actor HUNTER_TARGET_ACTOR armour                                        
+                    if
+                    $ZOMBIE_RUN_SPEED <= 0.0
+                    then
+                    if
+                    8104: not  actor $HUNTER[24@] near_actor HUNTER_TARGET_ACTOR radius 10.0 10.0 10.0 sphere 0
+                        then
+                        1@ = 1
+                        end
+                    end
+                    
                     if and
                     0364:   actor $HUNTER[24@] spotted_actor HUNTER_TARGET_ACTOR            
                     87D6: not  0@ == $VOICE_SET_PEDTYPE // @ == $ (int)
@@ -1442,6 +1461,16 @@ if
                     84AD: not  actor PLAYER_ACTOR in_water
                         then
                         gosub @HUNTER_ROOF_CHECK
+                        if
+                        $ZOMBIE_RUN_SPEED <= 0.0
+                        then
+                        if
+                        8104: not  actor $HUNTER[24@] near_actor PLAYER_ACTOR radius 10.0 10.0 10.0 sphere 0
+                            then
+                            1@ = 0
+                            end
+                        end
+                        
                         if or
                         1@ == 1
                         0104:   actor $HUNTER[24@] near_actor PLAYER_ACTOR radius 2.0 2.0 2.0 sphere 0
@@ -1606,7 +1635,7 @@ if
     if
     actor.Dead(HUNTER_TARGET_ACTOR)
         then
-        Actor.SetWalkStyle($HUNTER[24@],"HUNTER2")
+        Actor.SetWalkStyle($HUNTER[24@],"HUNTER2")        
         jump to @HUNTER_STALK_CHECK
         end
     end
@@ -1617,7 +1646,7 @@ actor.Dead($HUNTER[24@])
 8184:   actor $HUNTER[24@] health < 1
 $SAVESTATUS == 1
     then
-    Actor.SetWalkStyle($HUNTER[24@],"HUNTER2")
+    Actor.SetWalkStyle($HUNTER[24@],"HUNTER2")    
     jump to @HUNTER_STALK_CHECK
     end
 
@@ -1685,6 +1714,12 @@ if and
                     random_float 1@ 0.75 1.25 
                     006B: 0@ *= 1@  // (float)  
                     0092: 0@ = float 0@ to_integer
+                    gosub @HUNTER_ROOF_CHECK
+                    if
+                    1@ == 0
+                    then
+                    0@ = 0
+                    end
                     
                     if and
                     CANT_CAPTURE_SHIT == 1
@@ -1763,12 +1798,22 @@ if and
                             then                        
                             05BC: AS_actor $HUNTER[24@] jump 1                                                        
                             wait 100        
-                            actor.StorePos($HUNTER[24@], 27@, 28@, 29@) 
-                            04C4: store_coords_to 2@ 3@ 4@ from_actor $HUNTER[24@] with_offset 0.0 0.0 40.0
+                            actor.StorePos($HUNTER[24@], 27@, 28@, 29@)
+                            gosub @HUNTER_ROOF_CHECK
+                            if or
+                            $ZOMBIE_RUN_SPEED <= 0.0
+                            1@ == 0
+                            then
+                            0@ = 3.0
+                            else
+                            0@ = 40.0
+                            end 
+                            04C4: store_coords_to 2@ 3@ 4@ from_actor $HUNTER[24@] with_offset 0.0 0.0 0@
                             0063: 2@ -= 27@  // (float) 
                             0063: 3@ -= 28@  // (float) 
-                            0063: 4@ -= 29@  // (float) 
-                            083C: set_actor $HUNTER[24@] velocity_in_direction_XYZ 2@ 3@ 4@                            
+                            0063: 4@ -= 29@  // (float)                             
+                            083C: set_actor $HUNTER[24@] velocity_in_direction_XYZ 2@ 3@ 4@
+                                                        
                             if
                             not ZOMBIE_KARATIST_CHEAT == 1
                             then
@@ -1784,6 +1829,10 @@ if and
                             Audiostream.LinkToActor(11@, $HUNTER[24@])
                             Audiostream.PerformAction(11@, PLAY)
                             Audiostream.Volume(11@) = $SOUNDS_VOLUME
+                            
+                            Audiostream.LinkToActor(21@, $HUNTER[24@])
+                            Audiostream.Volume(21@) = 0.0
+                            Audiostream.PerformAction(21@, PLAY)
                             HNT_ATTACK_SOUND_FLAG = 1
                                                          
                             32@ = 0                                                        
@@ -1994,6 +2043,12 @@ not 2@ > 5.0
                 random_float 1@ 0.75 1.25 
                 006B: 0@ *= 1@  // (float)  
                 0092: 0@ = float 0@ to_integer
+                gosub @HUNTER_ROOF_CHECK
+                if
+                1@ == 0
+                then
+                0@ = 0
+                end
                 
                 if and
                 CANT_CAPTURE_SHIT == 1
@@ -2075,12 +2130,22 @@ not 2@ > 5.0
                      
                     05BC: AS_actor $HUNTER[24@] jump 1    
                     wait 100
-                    actor.StorePos($HUNTER[24@], 27@, 28@, 29@) 
-                    04C4: store_coords_to 2@ 3@ 4@ from_actor $HUNTER[24@] with_offset 0.0 0.0 40.0
+                    actor.StorePos($HUNTER[24@], 27@, 28@, 29@)
+                    gosub @HUNTER_ROOF_CHECK
+                    if or
+                    $ZOMBIE_RUN_SPEED <= 0.0
+                    1@ == 0
+                    then
+                    0@ = 3.0
+                    else
+                    0@ = 40.0
+                    end 
+                    04C4: store_coords_to 2@ 3@ 4@ from_actor $HUNTER[24@] with_offset 0.0 0.0 0@
                     0063: 2@ -= 27@  // (float) 
                     0063: 3@ -= 28@  // (float) 
-                    0063: 4@ -= 29@  // (float) 
+                    0063: 4@ -= 29@  // (float)                                         
                     083C: set_actor $HUNTER[24@] velocity_in_direction_XYZ 2@ 3@ 4@
+                    
                     if
                     not ZOMBIE_KARATIST_CHEAT == 1
                     then
@@ -3289,7 +3354,7 @@ if
                     end      
                 end
             else
-            Actor.SetWalkStyle($HUNTER[24@],"HUNTER2")
+            Actor.SetWalkStyle($HUNTER[24@],"HUNTER2")            
             jump to @HUNTER_STALK_CHECK
             end             
         end
@@ -3297,7 +3362,8 @@ if
     
 :HUNTER_SKIP_2P_JETPACK      
     
-Actor.SetWalkStyle($HUNTER[24@],"HUNTER2")           
+Actor.SetWalkStyle($HUNTER[24@],"HUNTER2")
+           
 jump to @HUNTER_STALK_CHECK 
 
 :HUNTER2_CANCEL

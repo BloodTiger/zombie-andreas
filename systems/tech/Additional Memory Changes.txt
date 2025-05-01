@@ -180,6 +180,7 @@ end
 
 0AF0: AIM_FOLLOWS_CAM = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "AIM_FOLLOWS_CAM"
 0AF0: ENGLISH_MEASURMENTS = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "ENGLISH_MEASURMENTS"
+0AF0: PEDFUNCS_SUPPORT_ON = get_int_from_ini_file "config.ini" section "EXTRA" key "PEDFUNCS_SUPPORT"
 
 //Делаем коповские quricks если это нужно
 if
@@ -1089,7 +1090,8 @@ end
 
 ///////////////Обнуляем флаги собранных записок///////////////
 
-for 1@ = 0 to 49
+0AF0: 0@ = get_int_from_ini_file "data/notes.ini" section "NOTES" key "COUNT"
+for 1@ = 0 to 0@
 0AD3: v$NOTES_FILE = format "nt%d" 1@    
 0AF1: write_int 1 to_ini_file "data/notes.ini" section v$NOTES_FILE key "PONY"  
 end
@@ -1668,6 +1670,14 @@ end
 0A8C: write_memory 0x08125AA size 4 value 270818440 virtual_protect 1 //mov esi,[eax+edi]
 0A8C: write_memory 0x08125AE size 4 value 1956712683 virtual_protect 1 //mov [esp+10],bl + jmp zombie_andreas.exe+4125C0
 
+//SexTiger 0x00812607 Semi-Fix
+0A8C: write_memory 0x0812607 size 4 value -947189781 virtual_protect 1 //Redirect Jump
+//save check function
+0A8C: write_memory 0x0812610 size 4 value 1913321859 virtual_protect 1 //cmp ecx,0A
+0A8C: write_memory 0x0812614 size 4 value -352220684 virtual_protect 1 //jb 0x0812609
+0A8C: write_memory 0x0812618 size 4 value -1869573904 virtual_protect 1 //mov [ecx],eax
+0A8C: write_memory 0x081261C size 4 value 881580850 virtual_protect 1 //jmp 0x0812609
+
 //SexTiger 0x0074DA25 Semi-Fix
 0A8C: write_memory 0x074DA13 size 4 value 136606859 virtual_protect 1
 0A8C: write_memory 0x074DA17 size 4 value 1930100355 virtual_protect 1
@@ -1822,7 +1832,101 @@ end
 
 //Что является сотовым телефоном... рацией... магнитофоном блять!
 0A8C: write_memory 0x0634DE2 size 4 value 330 virtual_protect 0
-0A8C: write_memory 0x06348F6 size 4 value 330 virtual_protect 0 
+0A8C: write_memory 0x06348F6 size 4 value 330 virtual_protect 0
+
+//Делаем чтобы в 09ED не срабатывало сквозь объекты 
+0A8C: write_memory 0x05E17A5 size 1 value 1 virtual_protect 0
+
+//Делитель выпадаемого аммо из мертвых педов (объединение с пикапами)
+0A8C: write_memory 0x0459266 size 4 value 787170793 virtual_protect 0 //ПРЫЖОК НА ОБЪЕЗД 1
+0A8C: write_memory 0x045926A size 4 value -801402880 virtual_protect 0 //ПРЫЖОК НА ОБЪЕЗД 1
+0A8C: write_memory 0x0747DB0 size 4 value -644814639 virtual_protect 0 //ОБЪЕЗД 1, делитель (-644837232 - 0, -644814639 - 2, -654120767 - 3, -654055231 - 4)
+0A8C: write_memory 0x0747DB4 size 4 value -383769508 virtual_protect 0 //ОБЪЕЗД 1
+0A8C: write_memory 0x0747DB8 size 4 value -3074897 virtual_protect 0 //ОБЪЕЗД 1
+
+//Делитель выпадаемого аммо из мертвых педов (создание нового)
+0A8C: write_memory 0x04592BB size 4 value 787152105 virtual_protect 0 //ПРЫЖОК НА ОБЪЕЗД 2
+0A8C: write_memory 0x04592BF size 4 value -1031041024 virtual_protect 0 //ПРЫЖОК НА ОБЪЕЗД 2
+0A8C: write_memory 0x0747DBC size 4 value 965798097 virtual_protect 0 //ОБЪЕЗД 2, делитель (965775504 - 0, 965798097 - 2, 956491969 - 3, 956557505 - 4)
+0A8C: write_memory 0x0747DC0 size 4 value -57864254 virtual_protect 0 //ОБЪЕЗД 2
+0A8C: write_memory 0x0747DC4 size 4 value -369110764 virtual_protect 0 //ОБЪЕЗД 2
+0A8C: write_memory 0x0747DC8 size 4 value -3074827 virtual_protect 0 //ОБЪЕЗД 2
+
+if
+$EASY_MODE == 1
+then
+0A8C: write_memory 0x0747DB0 size 4 value -644837232 virtual_protect 0
+0A8C: write_memory 0x0747DBC size 4 value 965775504 virtual_protect 0
+end
+
+if
+$NORMAL_MODE == 1
+then
+0A8C: write_memory 0x0747DB0 size 4 value -644814639 virtual_protect 0
+0A8C: write_memory 0x0747DBC size 4 value 965798097 virtual_protect 0
+end
+
+if
+$HARD_MODE == 1
+then
+0A8C: write_memory 0x0747DB0 size 4 value -654120767 virtual_protect 0
+0A8C: write_memory 0x0747DBC size 4 value 956491969 virtual_protect 0
+end
+
+if
+$NIGHTMARE_MODE == 1
+then
+0A8C: write_memory 0x0747DB0 size 4 value -654055231 virtual_protect 0
+0A8C: write_memory 0x0747DBC size 4 value 956557505 virtual_protect 0
+end
+
+if
+$CUSTOM_MODE == 1
+then
+
+0AF0: 0@ = get_int_from_ini_file "saves/owngame/owngame.ini" section "DIFF" key "DROPPED_AMMO_DIVIDER"
+if
+0@ < 0
+then
+0@ = 2
+0AF1: write_int 0@ to_ini_file "saves/owngame/owngame.ini" section "DIFF" key "DROPPED_AMMO_DIVIDER"
+end
+
+//Не делим
+if
+0@ == 0
+then
+0A8C: write_memory 0x0747DB0 size 4 value -644837232 virtual_protect 0
+0A8C: write_memory 0x0747DBC size 4 value 965775504 virtual_protect 0
+end
+
+//Дефолт (делим на 2)
+if or
+0@ == 2
+0@ < 0
+0@ > 4
+then
+0A8C: write_memory 0x0747DB0 size 4 value -644814639 virtual_protect 0
+0A8C: write_memory 0x0747DBC size 4 value 965798097 virtual_protect 0
+end
+
+//Делим на 3
+if
+0@ == 3
+then
+0A8C: write_memory 0x0747DB0 size 4 value -654120767 virtual_protect 0
+0A8C: write_memory 0x0747DBC size 4 value 956491969 virtual_protect 0
+end
+
+//Делим на 4
+if
+0@ == 4
+then
+0A8C: write_memory 0x0747DB0 size 4 value -654055231 virtual_protect 0
+0A8C: write_memory 0x0747DBC size 4 value 956557505 virtual_protect 0
+end
+
+end
 
 //Вырубаем создание злоебучих паров воды после дождя в VCParticle
 //0EFE: get_loaded_library "CParticleVC.SA.asi" store_to 0@   
@@ -2789,10 +2893,10 @@ then
 0EFE: get_loaded_library "PedSkills.SA.asi" store_to 0@  
 0085: 1@ = 0@ // (int)
 1@ += 0x4EB14
-0A8C: write_memory 1@ size 4 value 0.0 virtual_protect 0 //AccuracyVelocityFactor
+0A8C: write_memory 1@ size 4 value AI_ACCURACY_VELOCITY_FACTOR virtual_protect 0 //AccuracyVelocityFactor
 0085: 1@ = 0@ // (int)
 1@ += 0x4EAE8
-0A8C: write_memory 1@ size 4 value 0.0 virtual_protect 0 //AccuracyDistanceFactor
+0A8C: write_memory 1@ size 4 value AI_ACCURACY_DISTANCE_FACTOR virtual_protect 0 //AccuracyDistanceFactor
 0085: 1@ = 0@ // (int)
 1@ += 0x4EAEC
 0A8C: write_memory 1@ size 4 value 1.0 virtual_protect 0 //AccuracyMult
@@ -3579,6 +3683,21 @@ $SOUNDS_VOLUME = 0.0
 $SELECT_MUSIC_END = 1
 09FD: get_gxt_string 'ZGATMFE' width_to 1@ 
 
+03F0: enable_text_draw 1
+0349: set_text_draw_font 2
+0340: set_text_draw_RGBA 180 180 180 255
+if
+DIRECTFONT_INSTALLED == 1
+then    
+0340: set_text_draw_RGBA DIRECTFONT_FONT2_R DIRECTFONT_FONT2_G DIRECTFONT_FONT2_B 255
+end
+ 
+033F: set_text_draw_letter_size 0.5 1.25      
+0343: set_text_draw_linewidth 480.0
+0342: set_text_draw_centered 1
+0344: set_text_draw_linewidth 480.0 for_centered_text
+033E: set_draw_text_position 320.0 200.0 GXT 'SE677'  // Push
+
 if
 32@ > 5000
     then
@@ -3622,6 +3741,21 @@ $MUSIC_VOLUME = 0.0
 $SOUNDS_VOLUME = 0.0
 $SELECT_MUSIC_END = 1
 09FD: get_gxt_string 'ZGATMFE' width_to 1@ 
+
+03F0: enable_text_draw 1
+0349: set_text_draw_font 2
+0340: set_text_draw_RGBA 180 180 180 255
+if
+DIRECTFONT_INSTALLED == 1
+then    
+0340: set_text_draw_RGBA DIRECTFONT_FONT2_R DIRECTFONT_FONT2_G DIRECTFONT_FONT2_B 255
+end
+ 
+033F: set_text_draw_letter_size 0.5 1.25      
+0343: set_text_draw_linewidth 480.0
+0342: set_text_draw_centered 1
+0344: set_text_draw_linewidth 480.0 for_centered_text
+033E: set_draw_text_position 320.0 200.0 GXT 'SE677'  // Push
 
 if
 32@ > 5000

@@ -2,6 +2,13 @@ const
 BRK_CAR_LAST_CREATED_CAR_ID = 31@
 end
 
+const
+BRK_CAR_EXTRA_ENABLED = 30@
+BRK_CAR_EXTRA_GENERATE_MIN = 23@
+BRK_CAR_EXTRA_GENERATE_MAX = 28@
+BRK_CAR_EXTRA_GENERATE_SET = 24@
+end
+
 :BRK_CAR
 thread 'BRK_CAR'
 
@@ -10,6 +17,15 @@ $ALLOW_BROKEN_CARS == 0
 $GAMEMODE_SELECTED == 1
 then
 end_thread
+end
+
+0AF0: BRK_CAR_EXTRA_ENABLED = get_int_from_ini_file "data\SAExtratransport.ini" section "SETTINGS" key "ENABLED"
+if
+BRK_CAR_EXTRA_ENABLED == 1
+then
+0AF0: BRK_CAR_EXTRA_GENERATE_MIN = get_int_from_ini_file "data\SAExtratransport.ini" section "SETTINGS" key "GENERATE_MIN"
+0AF0: BRK_CAR_EXTRA_GENERATE_MAX = get_int_from_ini_file "data\SAExtratransport.ini" section "SETTINGS" key "GENERATE_MAX"
+0AF0: BRK_CAR_EXTRA_GENERATE_SET = get_int_from_ini_file "data\SAExtratransport.ini" section "SETTINGS" key "GENERATE_SET"
 end
 
 :BROKEN_CARS_CHECK
@@ -608,6 +624,21 @@ if
 UNITED_MAP == 0
 then
 
+if and
+STORIES_MAP == 0
+$GAMEMODE_WAR == 0
+$FREEMODE == 1
+not $CARL_STORY == 1
+not $MIKE_STORY == 1
+not CUSTOM_MODE_TURN_OFF_STORY_THINGS == 1
+    then
+    if
+    04EA:  object DUMMY_OBJECT in_cube_cornerA 1761.0518 786.9254 0.0 cornerB 1575.6622 660.9931 200.0 flag 0 //reneg_baseLV 
+        then
+        6@ = 0
+        end 
+    end
+
 if or
 04EA:  object DUMMY_OBJECT in_cube_cornerA 429.69 2156.25 0.0 cornerB -85.94 1632.81 200.0 flag 0 //Army Zone 1
 04EA:  object DUMMY_OBJECT in_cube_cornerA 2864.26 -2296.88 0.0 cornerB 2664.06 -2564.66 200.0 flag 0 //Army Zone 2
@@ -892,6 +923,23 @@ if
 UNITED_MAP == 0
 then
 random_int 18@ 400 605
+
+if
+BRK_CAR_EXTRA_ENABLED == 1
+    then
+    random_int 0@ BRK_CAR_EXTRA_GENERATE_MIN BRK_CAR_EXTRA_GENERATE_MAX
+    if
+    003B:   0@ == BRK_CAR_EXTRA_GENERATE_SET  // (int)
+        then
+        0AF0: 0@ = get_int_from_ini_file "data\SAExtratransport.ini" section "SETTINGS" key "TOTAL_COUNT"
+        0@ += 1
+        random_int 18@ 1 0@        
+        0AD3: 0@v = format "%d" 18@      
+        0AF0: 18@ = get_int_from_ini_file "data\SAExtratransport.ini" section "IDS" key 0@v
+//        0AD1: show_formatted_text_highpriority "yaaay %d" time 2000 18@
+        end
+    end
+
 else
 
 if

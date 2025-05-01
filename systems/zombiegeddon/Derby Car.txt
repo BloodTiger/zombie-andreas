@@ -239,8 +239,8 @@ DERBY_SURVIVOR_NUMBER == 0
     then
     car.Health(DERBY_CAR) = 1000    
     else
-    car.Health(DERBY_CAR) = 1500
-    ZOMBIEGEDDON_MAX_OPPONENT_HP = 1500
+    car.Health(DERBY_CAR) = 825
+    ZOMBIEGEDDON_MAX_OPPONENT_HP = 825
     end
  
 car.DoorStatus(DERBY_CAR) = 2
@@ -560,6 +560,11 @@ end
 
 car.LockInCurrentPosition(DERBY_CAR,false)
 car.SetImmunities(DERBY_CAR,0,0,0,0,0)
+if
+UNITED_MAP == 1
+then
+car.SetImmunities(DERBY_CAR,0,0,1,0,0)
+end
 
 if
 003A:   DERBY_CAR_ACTOR == COOP_ACTOR // (int)
@@ -584,8 +589,8 @@ ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
     CARMA_GLOB_RACE_NUMBER == 41
         then
         04E0: car DERBY_CAR abandon_path_radius 5
-        car.Health(DERBY_CAR) = 4500
-        ZOMBIEGEDDON_MAX_OPPONENT_HP = 4500
+        car.Health(DERBY_CAR) = 1575 //4500
+        ZOMBIEGEDDON_MAX_OPPONENT_HP = 1575
         end
     end
     
@@ -598,8 +603,8 @@ ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
     CARMA_GLOB_RACE_NUMBER == 39
     CARMA_GLOB_RACE_NUMBER == 42
         then
-        car.Health(DERBY_CAR) = 3000
-        ZOMBIEGEDDON_MAX_OPPONENT_HP = 3000
+        car.Health(DERBY_CAR) = 1050 //3000
+        ZOMBIEGEDDON_MAX_OPPONENT_HP = 1050
         end
     end
     
@@ -611,8 +616,8 @@ ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
     CARMA_GLOB_RACE_NUMBER == 75
     CARMA_GLOB_RACE_NUMBER == 76
         then
-        car.Health(DERBY_CAR) = 3000
-        ZOMBIEGEDDON_MAX_OPPONENT_HP = 3000
+        car.Health(DERBY_CAR) = 1050 //3000
+        ZOMBIEGEDDON_MAX_OPPONENT_HP = 1050
         end
     end
     
@@ -624,8 +629,8 @@ ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
     CARMA_GLOB_RACE_NUMBER == 52
     CARMA_GLOB_RACE_NUMBER == 56
         then
-        car.Health(DERBY_CAR) = 3000
-        ZOMBIEGEDDON_MAX_OPPONENT_HP = 3000
+        car.Health(DERBY_CAR) = 1050 //3000
+        ZOMBIEGEDDON_MAX_OPPONENT_HP = 1050
         end
     end            
     
@@ -649,14 +654,26 @@ CARMA_GLOB_RACE_NUMBER == 18
 	then
 	car.Health(DERBY_CAR) = 5000
 	ZOMBIEGEDDON_MAX_OPPONENT_HP = 5000
-	end		
+	end	
+    
+if
+UNITED_MAP == 1
+    then
+    if or
+    CARMA_GLOB_RACE_NUMBER == 5
+    CARMA_GLOB_RACE_NUMBER == 11
+        then
+        car.Health(DERBY_CAR) = 2000
+    	ZOMBIEGEDDON_MAX_OPPONENT_HP = 2000
+        end
+    end    	
     
 if and
 ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
 CARMA_GLOB_RACE_NUMBER == 57
 	then
-	car.Health(DERBY_CAR) = 4500
-	ZOMBIEGEDDON_MAX_OPPONENT_HP = 4500
+	car.Health(DERBY_CAR) = 1575 //4500
+	ZOMBIEGEDDON_MAX_OPPONENT_HP = 1575
 	04E0: car DERBY_CAR abandon_path_radius 60
 	end
 	
@@ -1042,9 +1059,9 @@ end
 005B: 25@ += 26@  // (float)
 005B: 25@ += 27@  // (float)
 if
-25@ == 0.0
+25@ < 5.0
 then
-DERBY_CAR_IDLE_TIMER += 5
+DERBY_CAR_IDLE_TIMER += 1
 end
 
 if or
@@ -1062,24 +1079,33 @@ end
 end
 
 if and
-DERBY_CAR_IDLE_TIMER > 56
+DERBY_CAR_IDLE_TIMER > 200 //56
 not CARMA_TRACK_CHECKPOINT_TEST_MODE == 1
 not DERBY_CAR_STRAIGHT_DRIVE_TIME > 0
 DERBY_CAR_TIME_LEFT > 30000
 not CARMA_GLOB_1VS1_MODE == 1
 then
-0085: DERBY_CAR_CURRENT_ACTION_TIMER = DERBY_CAR_CURRENT_ACTION_TIMER2 // (int)
-DERBY_CAR_IDLE_TIMER = -150
-
-if
-8185: not  car DERBY_CAR health >= 400
-then
-DERBY_CAR_CURRENT_ACTION = 0
-else
-DERBY_CAR_CURRENT_ACTION = 1
-end
-
-DERBY_CAR_TARGET_ACTOR = -1
+if and
+0E4D: random_percent 70
+82CA: not  car DERBY_CAR bounding_sphere_visible
+8EE5: not locate_char_distance_to_car PLAYER_ACTOR car DERBY_CAR radius 10.0
+    then
+//    0AD1: show_formatted_text_highpriority "scripted restore by timer stuck %d" time 2000 DERBY_CAR_IDLE_TIMER
+    jump to @DERBY_CAR_RESTORE
+    else
+    0085: DERBY_CAR_CURRENT_ACTION_TIMER = DERBY_CAR_CURRENT_ACTION_TIMER2 // (int)
+    DERBY_CAR_IDLE_TIMER = -150
+    
+    if
+    8185: not  car DERBY_CAR health >= 400
+    then
+    DERBY_CAR_CURRENT_ACTION = 0
+    else
+    DERBY_CAR_CURRENT_ACTION = 1
+    end
+    
+    DERBY_CAR_TARGET_ACTOR = -1
+    end
 end
 
 if and
@@ -1174,6 +1200,18 @@ $GAME_SPEED == 0.2
         end    
     end
 end
+
+//if and
+//$CHEATS_ON == 1
+//$CHEAT_TYPE_FLAG == 1
+//then
+//if
+//0AB0:   key_pressed 69
+//    then
+//    DERBY_CAR_CURRENT_CHECKPOINT = 5
+//    0AD1: show_formatted_text_highpriority "all bots checkpoint now is %d" time 2000 DERBY_CAR_CURRENT_CHECKPOINT
+//    end
+//end
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2214,14 +2252,22 @@ not ZOMBIEGEDDON_GAME_TYPE == 2
     jump to @DERBY_CAR_RESTORE
     end
     
+    if
+    2@ < 950.0
+    then
     if and
     not CARMA_GLOB_RACE_INTERIOR == 0
     not CARMA_GLOB_RACE_NUMBER == 70
     not CARMA_GLOB_RACE_NUMBER == 71
-    2@ < 950.0
-    then
-    jump to @DERBY_CAR_RESTORE
-    end    
+    not CARMA_GLOB_RACE_NUMBER == 41
+    not CARMA_GLOB_RACE_NUMBER == 38
+    not CARMA_GLOB_RACE_NUMBER == 35
+    not CARMA_GLOB_RACE_NUMBER == 78
+    not CARMA_GLOB_RACE_NUMBER == 31    
+        then
+        jump to @DERBY_CAR_RESTORE
+        end    
+    end
     
     if and
     CARMA_GLOB_RACE_NUMBER == 14
@@ -2247,9 +2293,9 @@ not ZOMBIEGEDDON_GAME_TYPE == 2
         end
     else
     if or
+    CARMA_GLOB_RACE_NUMBER == 12
     CARMA_GLOB_RACE_NUMBER == 13
     CARMA_GLOB_RACE_NUMBER == 14
-    CARMA_GLOB_RACE_NUMBER == 15
         then
         if    
         2@ < 1000.0
@@ -2305,7 +2351,7 @@ not ZOMBIEGEDDON_GAME_TYPE == 2
             
         if and
         UNITED_MAP == 1
-        $UNITED_III_SPAWN == 1
+        not $UNITED_III_SPAWN == 2
         then
         1@ = 1
         end     
@@ -2325,6 +2371,33 @@ not ZOMBIEGEDDON_GAME_TYPE == 2
         then
         008B: 3@ = CARMA_GLOB_RACE_TOTAL_CHECKPOINTS // (int)
         end
+        
+        if and
+        CARMA_GLOB_FREEROAM_DR == 1
+        0E4D: random_percent 75
+        then
+        
+        if and
+        CARMA_GLOB_RACE_NUMBER == 41
+        ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+        DERBY_CAR_CURRENT_CHECKPOINT == 5        
+        then
+        3@ = 5
+//        0AD1: show_formatted_text_highpriority "map41 singlelap cp adjust for bots" time 2000
+        jump to @MAP41_SKIP_CP        
+        end
+        
+        3@ += 1
+        DERBY_CAR_CURRENT_CHECKPOINT += 1
+        if
+        001D:   3@ > CARMA_GLOB_RACE_TOTAL_CHECKPOINTS  // (int)
+            then
+            3@ = 0
+            DERBY_CAR_CURRENT_CHECKPOINT = 0                                    
+            end            
+        end
+        
+        :MAP41_SKIP_CP
         
         if and
         CARMA_GLOB_RACE_NUMBER == 15
@@ -2350,7 +2423,15 @@ not ZOMBIEGEDDON_GAME_TYPE == 2
         DERBY_CAR_CURRENT_CHECKPOINT < 2        
         then
         3@ = 1        
-        end               
+        end 
+        
+        if and
+        CARMA_GLOB_RACE_NUMBER == 5
+        ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+        DERBY_CAR_CURRENT_CHECKPOINT < 2        
+        then
+        3@ = 1        
+        end                              
         
         0089: 0@ = $RNDM_HOUSE_ITEM_X[3@] // (float)
         0089: 1@ = $RNDM_HOUSE_ITEM_Y[3@] // (float)
@@ -2397,6 +2478,14 @@ not ZOMBIEGEDDON_GAME_TYPE == 2
             then
             DERBY_CAR_CURRENT_CHECKPOINT += 1
             end
+            
+            if and 
+            ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+            CARMA_GLOB_RACE_NUMBER == 84
+            DERBY_CAR_CURRENT_CHECKPOINT == 1
+            then
+            car.SetSpeedInstantly(DERBY_CAR,60.0)
+            end                        
             
             end
         end
@@ -2646,8 +2735,10 @@ ZOMBIEGEDDON_GAME_TYPE == 2
             then         
             0@ = Car.Health(DERBY_CAR)
             if or
-            0@ < 1000
-            0@ > 1000
+//            0@ < 1000
+//            0@ > 1000
+            801F:   0@ < ZOMBIEGEDDON_MAX_OPPONENT_HP // (int)
+            001F:   0@ > ZOMBIEGEDDON_MAX_OPPONENT_HP // (int)
                 then
                 DERBY_CAR_CREDITS -= 500
                 
@@ -2663,9 +2754,11 @@ ZOMBIEGEDDON_GAME_TYPE == 2
                 0@ += 90
                 
                 if
-                0@ > 1000
+//                0@ > 1000
+                001F:   0@ > ZOMBIEGEDDON_MAX_OPPONENT_HP // (int)
                 then
-                0@ = 1000
+//                0@ = 1000
+                008B: 0@ = ZOMBIEGEDDON_MAX_OPPONENT_HP // (int)
                 end
                   
                 Car.Health(DERBY_CAR) = 0@
@@ -2764,6 +2857,15 @@ not CARMA_GLOB_1VS1_MODE == 1
     end
     
 ////////////////////////////////////////////////Соперник едет на след. чекпоинт////////////////////////////////////////////////    
+
+if and
+CARMA_GLOB_RACE_NUMBER == 41
+ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
+DERBY_CAR_CURRENT_CHECKPOINT == 5
+ZOMBIEGEDDON_GAME_TYPE == 0        
+    then
+    jump to @BOT_SKIP_LAST_CP_MAP41
+    end
 
 if and
 00EC:   actor DERBY_CAR_ACTOR sphere 0 near_point $RNDM_HOUSE_ITEM_X[DERBY_CAR_CURRENT_CHECKPOINT] $RNDM_HOUSE_ITEM_Y[DERBY_CAR_CURRENT_CHECKPOINT] radius 10.0 10.0
@@ -2914,6 +3016,16 @@ not CARMA_GLOB_1VS1_MODE == 1
     then
     1@ = 2
     DERBY_CAR_STRAIGHT_DRIVE_TIME2 = 28000
+    end
+    
+    if and
+    CARMA_GLOB_RACE_NUMBER == 4
+    ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 0
+    $UNITED_VC_FLAG == 1
+    DERBY_CAR_CURRENT_CHECKPOINT == 12        
+    then
+    1@ = 2
+    DERBY_CAR_STRAIGHT_DRIVE_TIME2 = 28000
     end        
     
     if
@@ -2945,6 +3057,20 @@ not CARMA_GLOB_1VS1_MODE == 1
         car.Angle(DERBY_CAR) = 138.9858
         car.SetSpeedInstantly(DERBY_CAR,1@)
         
+        end
+        
+        if and
+        CARMA_GLOB_RACE_NUMBER == 4
+        DERBY_CAR_STRAIGHT_DRIVE_TIME < 0
+        $UNITED_VC_FLAG == 1
+        then
+        05D6: clear_scmpath
+        05D7: add_point_to_scmpath 1933.2396 -861.8035 12.9042
+        05D7: add_point_to_scmpath 1828.634 -883.0851 20.8177
+        05D7: add_point_to_scmpath 1594.4468 -912.533 20.7765
+        05D7: add_point_to_scmpath 1443.1354 -920.0736 20.7791
+        05D7: add_point_to_scmpath 1256.5397 -918.2778 11.2164
+        06BB: set_actor DERBY_CAR_ACTOR drive_car DERBY_CAR speed 100.0 along_SCM_path
         end
         
         if and
@@ -3101,6 +3227,8 @@ not CARMA_GLOB_1VS1_MODE == 1
     end
          
     end
+    
+:BOT_SKIP_LAST_CP_MAP41    
     
 ////////////////////////////////////////////////Соперник едет на след. чекпоинт (2P)////////////////////////////////////////////////    
 

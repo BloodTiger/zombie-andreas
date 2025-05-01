@@ -28,7 +28,7 @@ if and
 $SALVATION_FLAG == 0
 $SAVESTATUS == 0
 $NEAR_SAVE_POINT == 0
-$SOUND_EFFECT1_FLAG == 0  
+//$SOUND_EFFECT1_FLAG == 0  
 $SAVEPLACE_ON == 0  
 $ZOMBIES_PROCENT > 0.0
 $ACTIVE_INTERIOR == 0
@@ -87,7 +87,7 @@ if and
 $SALVATION_FLAG == 0
 $SAVESTATUS == 0
 $NEAR_SAVE_POINT == 0
-$SOUND_EFFECT1_FLAG == 0  
+//$SOUND_EFFECT1_FLAG == 0  
 $SAVEPLACE_ON == 0  
 $ZOMBIES_PROCENT > 0.0
 $ACTIVE_INTERIOR == 0
@@ -182,6 +182,12 @@ then
 create_thread @HOR_SND
 end
 
+if
+0E4D: random_percent 3
+then
+create_thread @WTH_HRD
+end
+
 $HORDE_ON_TIMER_COUNTER = 0
 
 jump to @RANDOM_ZOMBIE_HORDE_ON_CHECK
@@ -219,7 +225,7 @@ if and
 $SALVATION_FLAG == 0
 $SAVESTATUS == 0
 $NEAR_SAVE_POINT == 0
-$SOUND_EFFECT1_FLAG == 0
+//$SOUND_EFFECT1_FLAG == 0
 $SAVEPLACE_ON == 0
 $ZOMBIES_PROCENT > 0.0
 jf @RANDOM_ZOMBIE_HORDE_OFF
@@ -253,8 +259,9 @@ jump to @RANDOM_ZOMBIE_HORDE_OFF_START
 
 2@ = 0
 
-if
+if or
 MQ_ALLOW_HORDE == 1
+$ALLOW_SAFETY_IN_CAMPS == 0
 then
 return
 end
@@ -364,10 +371,10 @@ v$PHRASE1 = "DO184_"
 09FD: get_gxt_string v$PHRASE3 width_to 31@
 
 if
-not 31@ == 0
-    then    
-    1@ += 1
+31@ == 0
+    then                  
     random_int 30@ 0 1@
+    break
     end
 
 end  
@@ -377,3 +384,89 @@ v$PHRASE1 = "DO184_"
 098B: v$PHRASE3 = v$PHRASE1 + v$PHRASE2
 
 return
+
+:WTH_HRD
+thread 'WTH_HRD'
+
+if or
+$QUEST_TYPE > 0
+$FREEMODE == 0
+PLAYER_IN_NEST_FLAG == 1
+then
+end_thread
+end
+
+gosub @WTH_HRD_COORD_SET
+32@ = 0
+
+while true
+wait 0
+
+if and
+$WITCH_SPAWNED == 1
+32@ > 2000
+    then
+    $SPAWN_WITCH_ON_COORD = 0
+    SPEC_INF_ONLY_ONE_INSTANSE_SPAWN_FLAG = 0
+    end_thread
+    end
+
+end
+
+end_thread
+
+:WTH_HRD_COORD_SET
+wait 0
+
+while $SAVESTATUS == 1
+wait 0
+end
+
+0208: 27@ = random_float_in_ranges 120.0 -120.0 
+0208: 28@ = random_float_in_ranges -120.0 120.0   
+ 
+04C4: store_coords_to 2@ 3@ 4@ from_actor PLAYER_ACTOR with_offset 27@ 28@ 0.0 
+02CE: 4@ = ground_z_at 2@ 3@ 4@
+
+if
+UNITED_MAP == 0
+then
+if or
+4@ > 0.25
+00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA 860.55 1031.71 -100.0 cornerB 337.24 710.84 0.0
+jf @WTH_HRD_COORD_SET
+else
+if
+4@ > 0.25
+jf @WTH_HRD_COORD_SET
+end
+
+Actor.StorePos(PLAYER_ACTOR, 27@, 28@, 29@)
+050A: 30@ = distance_between_XYZ 2@ 3@ 4@ and_XYZ 27@ 28@ 29@ 
+0092: 30@ = float 30@ to_integer
+if and
+30@ > 120 
+not 30@ > 140
+jf @WTH_HRD_COORD_SET
+050A: 30@ = distance_between_XYZ 27@ 28@ 4@ and_XYZ 27@ 28@ 29@
+0092: 30@ = float 30@ to_integer
+
+gosub @WITCH_ZONE_CHECK
+if 
+0@ == 1
+jf @WTH_HRD_COORD_SET  
+
+if and
+8AE2: 30@ = random_vehicle_near_point 2@ 3@ 4@ in_radius 10.0 find_next 0 pass_wrecked 0 //IF and SET
+8AE1: 31@ = random_actor_near_point 2@ 3@ 4@ in_radius 5.0 find_next 0 pass_deads 0 //IF and SET 
+jf @WTH_HRD_COORD_SET
+4@ = -100.0
+
+SPEC_INF_ONLY_ONE_INSTANSE_SPAWN_FLAG = 6
+$SPAWN_WITCH_FLAG = 1
+$SPAWN_WITCH_ON_COORD = 1
+0088: $WITCH_X = 2@ // (float)
+0088: $WITCH_Y = 3@ // (float)
+0088: $WITCH_Z = 4@ // (float)
+
+return  

@@ -38,6 +38,7 @@ end
 
 0@ = marker.CreateIconAndSphere(36,-2184.8276, 1000.2729, 80.0068)
 CSF_CURRENT_PROGRESS_FLAG = 0
+$CHECKPOINT[8] = 20160
 0776: create_objects_in_object_group "myerscorp"
 32@ = 0
 005C: 32@ += $CSF_MYERS_TIMER_PRE // (int) 
@@ -1080,6 +1081,161 @@ not $ENTERED_CAMP_NUMBER == 8
         $GQST_SLCTD_RGIN = 4
         $GQEST_SLCTD_QST = 15
         
+        //Даем возможность игрок узнать про бомбы в ЛЮБОМ случае!
+        if and
+        ARIADNA_FINISHED == 1
+        PLAYER_KNOW_ABOUT_BOMBS == 0
+            then
+            
+            :CSF_FIND_OUT_A_BOMBS_AFTER_CSF_LEFT_STATE
+            
+            if
+            075C:  marker 20@ enabled
+            then
+            marker.Disable(20@)
+            end
+            
+            20@ = marker.CreateIconAndSphere(120,-2200.0625, 983.7865, 80.0)
+            
+            while true
+            wait 0
+            
+            if and
+            $ONMISSION == 0
+            PLAYER_KNOW_ABOUT_BOMBS == 0
+                then    
+            //    0D54: draw_corona_with_extra_params_texture 0 color 255 0 0 155 on_entity 0 at -1372.6031 498.924 11.1953 size 0.5 far_clip 25.0 near_clip 0.01 flare 0 enable_reflection 1 check_obstacles 0 flash_while_fading 0 fade_speed 15.0 only_from_below 0    
+                if and
+                0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos -2200.0625 983.7865 80.0 radius 2.0
+                044B:   actor PLAYER_ACTOR on_foot
+                02A0:   actor PLAYER_ACTOR stopped
+                    then
+                    
+                    if
+                    075C:  marker 20@ enabled
+                    then
+                    marker.Disable(20@)
+                    end
+                    
+                    fade 0 2000
+                    $HUD_REMOVE = 1
+                    wait 2000
+                        
+                    ///////////////////////////////////////////////////////////////////////////////////////
+                    
+                    0470: 9@ = actor PLAYER_ACTOR current_weapon
+                    06AB: set_actor PLAYER_ACTOR all_weapons_hidden 1
+                    0992: set_player PLAYER_CHAR weapons_scrollable 0 
+                        
+                    while not animation.Available("BOMBER")
+                    wait 0
+                    animation.Load("BOMBER")
+                    end
+                        
+                    03CF: load_wav 20802 as 4 
+                        
+                    while 83D0: not  wav 4 loaded 
+                    wait 0
+                    03CF: load_wav 20802 as 4 
+                    end
+                         
+                    0949: link_wav 4 to_actor PLAYER_ACTOR
+                    03D1: play_wav 4
+                        
+                    0605: actor PLAYER_ACTOR perform_animation "BOM_PLANT" IFP "BOMBER" framedelta 4.0 loop 0 lockX 0 lockY 0 lockF 0 time -1     
+                        
+                    32@ = 0
+                    while 83D2:   wav 4 ended 
+                    wait 0
+                    if
+                    32@ > 3500
+                        then
+                        break
+                        end
+                    end
+                        
+                    040D: unload_wav 4 
+                    04EF: release_animation "BOMBER"
+                        
+                    0992: set_player PLAYER_CHAR weapons_scrollable 1
+                    06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0
+                        
+                    01B9: set_actor PLAYER_ACTOR armed_weapon_to 9@
+                        
+                    ///////////////////////////////////////////////////////////////////////////////////////
+                    
+                    PLAYER_KNOW_ABOUT_BOMBS = 1        
+                    actor.PutAtNoOffset(PLAYER_ACTOR,-2197.7524, 983.9693, 80.0)
+                    actor.Angle(PLAYER_ACTOR) = 272.0263
+                    camera.Restore_WithJumpCut()
+                    
+                    fade 1 2000
+                    $HUD_REMOVE = 0
+                    wait 2000
+                    
+                    gosub @MYERS_NOTE                
+                    
+                    v$ST_DIALOG[0] = "ENB97"
+                    $DIALOG_COUNT = 0
+                    $DIALOG_NOT_SKIP = 1
+                    create_thread @DG_SYS2
+                    
+                    repeat
+                    wait 0
+                    until $DIALOG_END == 1
+                    
+                    player.CanMove(0,true) 
+                    
+                    v$ACHIEVEMNT = "SFQ11C"
+                    $GQUEST_GOT_FLAG = 1                             
+                    0AF1: write_int 1 to_ini_file "data\survival.set" section "SRV" key "SFQ11GT"
+                    $GQST_SLCTD_RGIN = 4
+                    $GQEST_SLCTD_QST = 11
+                    
+                    $ONMISSION = 0
+                    $QUEST_TYPE = -1
+                    
+                    repeat
+                    wait 0
+                    until $GQUEST_GOT_FLAG == 0
+                    
+                    $NOTSPAWN_ETC = 0
+                    $SURVIVORS_DONT_SPAWN_FLAG = 0
+            
+                    v$ACHIEVEMNT = "SFQ17B"
+                    $GQUEST_GOT_FLAG = 1                             
+                    0AF1: write_int 0 to_ini_file "data\survival.set" section "SRV" key "SFQ17GT"
+                    0AF1: write_int 0 to_ini_file "data\survival.set" section "SRV" key "SFQ18GT"
+                    0AF1: write_int 0 to_ini_file "data\survival.set" section "SRV" key "SFQ19GT"
+                    0AF1: write_int 0 to_ini_file "data\survival.set" section "SRV" key "SFQ20GT"
+                    $GQST_SLCTD_RGIN = 4
+                    $GQEST_SLCTD_QST = 17                
+                    
+                    player.CanMove(0,true)
+                    
+                    end_thread
+                    
+                    end
+                end
+            
+            end
+            
+            else
+            
+            if
+            PLAYER_KNOW_ABOUT_BOMBS == 1
+            then
+            end_thread
+            end
+            
+            repeat
+            wait 1000
+            until ARIADNA_FINISHED == 1
+            
+            jump to @CSF_FIND_OUT_A_BOMBS_AFTER_CSF_LEFT_STATE
+                            
+            end
+        
         end_thread
         end
         
@@ -1314,7 +1470,7 @@ PLAYER_KNOW_ABOUT_BOMBS == 0
         $GQEST_SLCTD_QST = 17
         
         else
-        
+                
         fade 0 2000
         $HUD_REMOVE = 1
         wait 2000
@@ -1437,11 +1593,13 @@ $ONMISSION == 0
     if
     056E:   car $USED_CAR[LATEST_CAR_SLOT_USED] defined
     then
-    car.Destroy($USED_CAR[LATEST_CAR_SLOT_USED])
-    $SAVE_CAR_X[LATEST_CAR_SLOT_USED] = -2187.8979
-    $SAVE_CAR_Y[LATEST_CAR_SLOT_USED] = 1017.5416
-    $SAVE_CAR_Z[LATEST_CAR_SLOT_USED] = 79.5356
-    $SAVE_CAR_ANGLE[LATEST_CAR_SLOT_USED] = 89.7372
+//    car.Destroy($USED_CAR[LATEST_CAR_SLOT_USED])
+//    $SAVE_CAR_X[LATEST_CAR_SLOT_USED] = -2187.8979
+//    $SAVE_CAR_Y[LATEST_CAR_SLOT_USED] = 1017.5416
+//    $SAVE_CAR_Z[LATEST_CAR_SLOT_USED] = 79.5356
+//    $SAVE_CAR_ANGLE[LATEST_CAR_SLOT_USED] = 89.7372
+    car.PutAt($USED_CAR[LATEST_CAR_SLOT_USED],-2187.8979,1017.5416,79.5356)
+    car.Angle($USED_CAR[LATEST_CAR_SLOT_USED]) = 89.7372 
     end
     
     $SAVESTATUS = 1

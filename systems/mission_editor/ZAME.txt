@@ -231,14 +231,17 @@ ZAME_ANIM_PED_HANDLE = 701@
 ZAME_TARGET_PED_HANDLE = 702@
 ZAME_CURRENT_OBJ_TYPE_READED = 703@
 ZAME_CURRENT_OBJ_TYPE_PREV = 704@
-ZAME_TARGET_CAR_HANDLE = 705@
+ZAME_TARGET_CAR_HANDLE = 721@
 ZAME_FADE_FROM_OBJ_NUM = 706@
 ZAME_SETTING_UP_TRIIGER = 707@
 ZAME_PIC_CRT_AFTER_OBJ_NUM_TEMP = 708@
 ZAME_PIC_DEL_AFTER_OBJ_NUM_TEMP = 709@
 ZAME_TEMPVAR_STRING = 710@v
 ZAME_TEMPVAR_STRING2 = 715@v
-ZAME_TEMPVAR_STRING3 = 720@    
+ZAME_TEMPVAR_STRING3 = 720@   
+ZAME_TEMP_FUCKEEE45 = 800@
+ZAME_TURRET_PREV_WEAP_ID = 801@
+ZAME_TURRET_PREV_WEAP_AMMO = 802@ 
 end                       
 
 const
@@ -317,7 +320,15 @@ thread 'ZAME'
 gosub @ZAME_KOD 
 if 
 wasted_or_busted 
-jf @PROPUSK_KODA_ZAME 
+jf @PROPUSK_KODA_ZAME
+if and
+BLACK_POLOSKI_ON == 1
+not COMMUNITY_MISSION_FLAG == 1
+then
+jump to @FUCKERY_FUCK
+else
+0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
+end 
 gosub @KOD_PROVALA_ZAME 
 
 :PROPUSK_KODA_ZAME        
@@ -327,7 +338,11 @@ end_thread
 :ZAME_KOD
 increment_mission_attempts
 ZAME_MISSION_STARTING_HOUR = 8
+if
+not ZAME_SURV_LAUNCH_FLAG == 1
+then
 0459: end_thread_named 'RND_WTH'
+end
 0459: end_thread_named 'WEATHER3'                                
 
 if
@@ -497,7 +512,7 @@ ZAME_SOUND_PLAY_OBJECT_ID = 14011
 ZAME_MUSIC_PLAY_OBJECT_ID = 14012
 ZAME_ANIM_FOR_PLAYER_OBJECT_ID = 14013
 ZAME_TXD_SHOW_OBJECT_ID = 14014
-ZAME_FADEINOUT_OBJECT_ID = 14015
+ZAME_FADEINOUT_OBJECT_ID = 17334
 ZAME_SAVESTATUS_OBJECT_ID = 17322
 ZAME_BOMBARDING_OBJECT_ID = 17980
 ZAME_GOTO_OBJECT_ID = 19274
@@ -1044,6 +1059,20 @@ create_thread @GMV_OVR
 else
 
 if
+ZAME_FAILED_BY_REASON == -2
+then
+v$FAILED_TEXT = "MS_FL43"
+create_thread @GMV_OVR
+end
+
+if
+ZAME_FAILED_BY_REASON == -1
+then
+v$FAILED_TEXT = "MS_FL5"
+create_thread @GMV_OVR
+end
+
+if
 ZAME_FAILED_BY_REASON == 1
 then
 v$FAILED_TEXT = "MS_FL95"
@@ -1104,6 +1133,117 @@ until $SPEED_08_FLAG == 1
 repeat
 wait 0
 until $SPEED_08_FLAG == 0
+
+if
+COMMUNITY_MISSION_FLAG == 1
+then
+
+0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
+
+repeat
+wait 0
+until false 
+
+end
+
+repeat
+wait 0
+
+:FUCKERY_FUCK
+03F0: enable_text_draw 1
+0349: set_text_draw_font 2
+0340: set_text_draw_RGBA 180 180 180 255
+if
+DIRECTFONT_INSTALLED == 1
+then    
+0340: set_text_draw_RGBA DIRECTFONT_FONT2_R DIRECTFONT_FONT2_G DIRECTFONT_FONT2_B 255
+end
+     
+033F: set_text_draw_letter_size 0.5 1.25      
+0343: set_text_draw_linewidth 480.0
+0342: set_text_draw_centered 1
+0344: set_text_draw_linewidth 480.0 for_centered_text
+033E: set_draw_text_position 335.0 200.0 GXT 'GM1504B'  // Push 
+
+if
+00E1:   player 0 pressed_key 11
+    then
+    ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG = 2
+    
+    if
+    not ZAME_SURV_LAUNCH_FLAG == 1
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "EDITOR_START"
+    0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "NO_INIT_TEXT_FLAG"
+    end
+    
+    0AF0: get_int 0@ from_ini_file "me\temp.dat" section "MISSION_PARAMETERS" key "AUTOSTART_AFTERLOAD"
+    0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "COMMUN_MISS_FLAG"
+    if
+    1@ == 1
+    then
+    0@ = 1
+    end
+    
+    if
+    not 0@ == 1
+    then
+    0AF1: write_int ZAME_MISSION_LOAD_NUMBER to_ini_file "saves/ZACM.set" section "SCR" key "EDITOR_LOAD_MIS_NUM"
+    else
+    
+    if
+    not ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG == 2
+    then     
+    
+    if
+    not ZAME_SURV_LAUNCH_FLAG == 1
+    then         
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ZAME_GET_BACK2" 
+    end
+     
+    0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "EDITOR_LOAD_MIS_NUM"
+    end
+    
+    end
+    0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "COMMUN_MISS_FLAG"
+    if
+    0@ == 1
+    then
+    0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "EDITOR_START"
+    end
+    
+    if and
+    ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+    not ZAME_SURV_LAUNCH_FLAG == 1
+    then
+    0AF1: write_int ZAME_MISSION_LOAD_NUMBER to_ini_file "saves/ZACM.set" section "SCR" key "EDITOR_LOAD_MIS_NUM"        
+    //text.ClearAll()          
+    //$SOUND_OFF_1 = 1
+    //fade 0 250
+    //wait 250
+    
+    if
+    ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG == 2
+    then
+    0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "RESTART_MISS_FLAG"
+    end
+    
+    0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
+    wait 9999999999
+    end
+        
+    end
+    
+if
+00E1:   player 0 pressed_key 10
+    then   
+    0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "NO_INIT_TEXT_FLAG"
+    0A8C: write_memory 0x0440F73 size 1 value 255 virtual_protect 1
+    0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME  
+    wait 9999999999    
+    end    
+   
+until false
 
 repeat
 wait 0
@@ -1237,11 +1377,17 @@ create_thread @BNDT_SP
 create_thread @A_HUNT
 create_thread @BD_HELI
 create_thread @A_RHINO
+create_thread @RND_HRD
 
 //—брасываем различные флаги
 $NOTSPAWN_ETC = 0
 $SPECIAL_INFECTED_NOT_SPAWN_FLAG = 0
 $SURVIVORS_DONT_SPAWN_FLAG = 0
+MAIN_QUEST_MUSIC_FLAG = 0
+$CASETTE_PLAYING_FLAG = 0
+$WEATHER_SYS_IDLE_FLAG = 0
+CAMP_LEADER_DONT_SAY_BYE_FLAG = 0
+INT_ZOMBIE_OFF_FADING_AND_SHIT_FLAG = 0
 
 end
     
@@ -1447,6 +1593,12 @@ if
 COMMUNITY_MISSION_NUM == -12
 then
 0B00: delete_file "me\cpB-12.set"  // IF and SET
+end
+
+if
+COMMUNITY_MISSION_NUM == -13
+then
+0B00: delete_file "me\cpB-13.set"  // IF and SET
 end
 
 ///////////////////////////////////////////////////////////

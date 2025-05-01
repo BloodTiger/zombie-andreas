@@ -147,7 +147,19 @@ else
 :CREATE_OTMOROZOK_TRADER_JUMP
 TRADER_ACTOR = actor.Create(29,$TRADER_MODEL[24@],$TRADER_X[24@],$TRADER_Y[24@],$TRADER_Z[24@])
 0084: $TRADER_ACTOR = TRADER_ACTOR // (int)
-end
+end             
+
+if
+PEDFUNCS_SUPPORT_ON == 1
+    then    
+    0AD3: v$SFUCK = format "TRDR%dRMAP" 24@
+    0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "TRADERS_REMAPS" key v$SFUCK
+    if
+    0@ > -2
+        then
+        create_thread @REMAPSET TRADER_ACTOR 0@
+        end        
+    end
 
 0D10: set_actor TRADER_ACTOR alpha 255 // IF and SET
 0E24: fix_char TRADER_ACTOR ground 0 brightness DO_ACTORS_BRIGHT_CORR and_fade_in 1
@@ -222,6 +234,7 @@ end
 if and
 $TRADER_ANGRY_FLAG[24@] == 0
 $ENTERED_CAMP_NUMBER == -1
+not $ALLOW_SAFETY_IN_CAMPS == 0
 then
 
 gosub @TRADER_ZONE_CHECK
@@ -313,7 +326,13 @@ if or
 80FE: not  actor PLAYER_ACTOR sphere 0 in_sphere $TRADER_X[24@] $TRADER_Y[24@] $TRADER_Z[24@] radius 140.0 140.0 140.0
 $SAVESTATUS == 1
 $SALVATION_FLAG == 1
-    then                                                                                                      
+    then                      
+    
+    if
+    PEDFUNCS_SUPPORT_ON == 1
+    then
+    gosub @TRADER_CHECK_FOR_PEDFUNCS_WRITE_BEFOREDESTROY
+    end                                                                                    
     actor.DestroyWithFade(TRADER_ACTOR)
     TRADER_ACTOR = -69
     $TRADER_ACTOR = -69
@@ -362,7 +381,7 @@ actor.Dead(TRADER_ACTOR)
     0A8D: 1@ = read_memory 3@ size 4 virtual_protect 0
     2@ = 0    
     0ECE: get_time_char_is_dead TRADER_ACTOR store_to 2@
-        
+    wait 0    
     if and
     0104:   actor TRADER_ACTOR near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0
     89A8: not  actor TRADER_ACTOR headshoted
@@ -370,7 +389,7 @@ actor.Dead(TRADER_ACTOR)
     $SCREWHUD_FLAG == 0
     $PHRASES_OFF_FLAG == 0
     not 1@ == 0x02
-    2@ > 500 
+    2@ > -2 //сука, пиздец 
         then
         gosub @RANDOM_DIALOG_DEAD_TRADER                       
         v$2NAME3 = "GAME460"                        
@@ -881,6 +900,12 @@ not actor.Driving(PLAYER_ACTOR)
         TRADER_SAVE_USLUGA == 1            
         then
         TRADER_SAVE_USLUGA = 0
+        
+        if
+        PEDFUNCS_SUPPORT_ON == 1
+        then
+        gosub @TRADER_CHECK_FOR_PEDFUNCS_WRITE_BEFOREDESTROY
+        end
         actor.DestroyWithFade(TRADER_ACTOR)
         TRADER_ACTOR = -69
         $TRADER_ACTOR = -69
@@ -900,32 +925,7 @@ not actor.Driving(PLAYER_ACTOR)
         end
         
         0085: TRADER_PREV_NUM = 24@ // (int)
-        
-        if
-        0E4D: random_percent 3
-        then
-        
-        010B: 14@ = player PLAYER_CHAR money
-        0E5E: change_player_money 0 mode 2 value 14@
-        
-        $TRADER_DEAD_FLAG[24@] = 1
-
-        if
-        075C:   marker $TRADER_ICON[24@] enabled
-        then                                          
-        marker.Disable($TRADER_ICON[24@])
-//        $TRADER_ICON[24@] = 0
-        $TRADER_ICON[24@] = marker.CreateIconWithoutSphere(105,$TRADER_X[24@], $TRADER_Y[24@], $TRADER_Z[24@])
-        end
-        
-        gosub @TRADER_ZONE_CHECK
-        0879: enable_gang_wars 0
-        076C: set_zone v$TFUCK gang 3 density_to 0
-        076C: set_zone v$TFUCK gang 4 density_to 0
-        0879: enable_gang_wars 1
-        
-        end                
-                
+                                                
         gosub @TRADER_SAVE_SET                      
         jump to @TRADER_IDLE_START        
         end
@@ -1023,6 +1023,12 @@ not actor.Driving(COOP_ACTOR)
         TRADER_SAVE_USLUGA == 1            
         then
         TRADER_SAVE_USLUGA = 0
+        
+        if
+        PEDFUNCS_SUPPORT_ON == 1
+        then
+        gosub @TRADER_CHECK_FOR_PEDFUNCS_WRITE_BEFOREDESTROY
+        end
         actor.DestroyWithFade(TRADER_ACTOR)
         TRADER_ACTOR = -69
         $TRADER_ACTOR = -69
@@ -1348,8 +1354,57 @@ $PLAYER_HEALTH = actor.Health(PLAYER_ACTOR)
 
 wait 1
 
+if
+AFTERSAVE_TIME_COUNT < PLAYER_UPTIME_BEFORE_WANNASLEEP
+then
+SKIP_6HOURS_AFTER_SAVE = 1
+SKIP_6HOURS_AFTER_SAVE2 = 1
+0A8D: 25@ = read_memory 0x61907A size 4 virtual_protect 1 
+0A8D: 26@ = read_memory 0x61907E size 1 virtual_protect 1
+0A8C: write_memory 0x61907A size 4 value -1869574000 virtual_protect 1 
+0A8C: write_memory 0x61907E size 1 value 144 virtual_protect 1
+else
+if and
+$GAMEMODE_STORYLINE == 0
+$GAMEMODE_WAR == 0
+    then
+    EXTINCTION_DONE = -1
+    gosub @BEFORE_LONG_SAVE_THINGS_DO
+    end
+    
+if
+0E4D: random_percent 3
+    then
+        
+    010B: 14@ = player PLAYER_CHAR money
+    0E5E: change_player_money 0 mode 2 value 14@
+        
+    $TRADER_DEAD_FLAG[24@] = 1
+
+    if
+    075C:   marker $TRADER_ICON[24@] enabled
+    then                                          
+    marker.Disable($TRADER_ICON[24@])
+//        $TRADER_ICON[24@] = 0
+    $TRADER_ICON[24@] = marker.CreateIconWithoutSphere(105,$TRADER_X[24@], $TRADER_Y[24@], $TRADER_Z[24@])
+    end
+        
+    gosub @TRADER_ZONE_CHECK
+    0879: enable_gang_wars 0
+    076C: set_zone v$TFUCK gang 3 density_to 0
+    076C: set_zone v$TFUCK gang 4 density_to 0
+    0879: enable_gang_wars 1
+        
+    end    
+    
+end
+
 065C: release_decision_maker $DEC_PEOPLE 
 wait 10
+
+repeat
+wait 0
+until EXTINCTION_DONE == 1
 
 if
 UNITED_MAP == 1
@@ -1370,6 +1425,25 @@ jf @CHECKING_SAVE_TRADER
 Actor.Angle(PLAYER_ACTOR) = 14@
 camera.Restore_WithJumpCut()
 //$CAMP_SPOTTED_FLAG_SAVE = 1 //зачем
+
+if
+SKIP_6HOURS_AFTER_SAVE == 0
+then
+
+if
+$FREEMODE == 0
+then
+$MINUTES_PLAYED += 6
+end
+
+else
+
+0A8C: write_memory 0x61907A size 4 value 25@ virtual_protect 1 
+0A8C: write_memory 0x61907E size 1 value 26@ virtual_protect 1
+
+SKIP_6HOURS_AFTER_SAVE = 0
+
+end       
 
 if
 $FREEMODE == 0
@@ -17644,10 +17718,10 @@ v$PHRASE1 = "PH86_"
 09FD: get_gxt_string v$PHRASE3 width_to 31@
 
 if
-not 31@ == 0
+31@ == 0
     then    
-    1@ += 1
-    random_int 0@ 0 1@
+    random_int 0@ 0 1@  
+    break 
     end
 
 end      
@@ -17669,10 +17743,10 @@ v$PHRASE1 = "PH87_"
 09FD: get_gxt_string v$PHRASE3 width_to 31@
 
 if
-not 31@ == 0
+31@ == 0
     then    
-    1@ += 1
-    random_int 0@ 0 1@
+    random_int 0@ 0 1@  
+    break 
     end
 
 end      
@@ -17694,10 +17768,10 @@ v$PHRASE1 = "PH90_"
 09FD: get_gxt_string v$PHRASE3 width_to 31@
 
 if
-not 31@ == 0
+31@ == 0
     then    
-    1@ += 1
-    random_int 0@ 0 1@
+    random_int 0@ 0 1@  
+    break 
     end
 
 end      
@@ -17719,10 +17793,10 @@ v$PHRASE1 = "PH89_"
 09FD: get_gxt_string v$PHRASE3 width_to 31@
 
 if
-not 31@ == 0
+31@ == 0
     then    
-    1@ += 1
-    random_int 0@ 0 1@
+    random_int 0@ 0 1@  
+    break 
     end
 
 end      
@@ -17744,10 +17818,10 @@ v$PHRASE1 = "PH88_"
 09FD: get_gxt_string v$PHRASE3 width_to 31@
 
 if
-not 31@ == 0
-    then   
-    1@ += 1 
-    random_int 0@ 0 1@
+31@ == 0
+    then    
+    random_int 0@ 0 1@  
+    break 
     end
 
 end      
@@ -17769,10 +17843,10 @@ v$PHRASE1 = "PH1_"
 09FD: get_gxt_string v$PHRASE3 width_to 31@
 
 if
-not 31@ == 0
+31@ == 0
     then    
-    1@ += 1
     random_int 30@ 0 1@
+    break
     end
 
 end  
@@ -17794,10 +17868,10 @@ v$PHRASE1 = "PH131_"
 09FD: get_gxt_string v$PHRASE3 width_to 31@
 
 if
-not 31@ == 0
+31@ == 0
     then    
-    1@ += 1
     random_int 30@ 0 1@
+    break
     end
 
 end  
@@ -17819,10 +17893,10 @@ v$PHRASE1 = "PH138_"
 09FD: get_gxt_string v$PHRASE3 width_to 31@
 
 if
-not 31@ == 0
+31@ == 0
     then    
-    1@ += 1
     random_int 30@ 0 1@
+    break
     end
 
 end  
@@ -17844,10 +17918,10 @@ v$PHRASE1 = "PH178_"
 09FD: get_gxt_string v$PHRASE3 width_to 31@
 
 if
-not 31@ == 0
+31@ == 0
     then    
-    1@ += 1
     random_int 30@ 0 1@
+    break
     end
 
 end  
@@ -22397,5 +22471,29 @@ then
 end   
 
 end
+
+return
+
+:TRADER_CHECK_FOR_PEDFUNCS_WRITE_BEFOREDESTROY
+
+0AD3: v$SFUCK = format "TRDR%dRMAP" 24@
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "TRADERS_REMAPS" key v$SFUCK
+if
+0@ < -1
+    then
+    if
+    0AA2: 0@ = load_library "PedFuncs.asi" // IF and SET
+        then
+        if
+        0AA4: 1@ = get_proc_address "Ext_GetPedRemap" library 0@ // IF and SET
+            then
+            0A96: 2@ = actor TRADER_ACTOR struct
+            3@ = 0
+            0AA7: call_function 1@ num_params 2 pop 2 3@ 2@ 4@
+            0AA3: free_library 0@
+            0AF1: write_int 4@ to_ini_file "data\survival.set" section "TRADERS_REMAPS" key v$SFUCK
+            end
+        end
+    end
 
 return

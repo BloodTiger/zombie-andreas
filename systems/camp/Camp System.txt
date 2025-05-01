@@ -22,6 +22,7 @@ CAMP_BIKE_X = 15@
 CAMP_BIKE_Y = 16@
 CAMP_BIKE_Z = 17@
 CAMP_BIKE_A = 18@   
+CAMP_RECORDER_LISTEN_MODE = 23@
 end
 
 const
@@ -533,6 +534,18 @@ end
 $CAMP_ACTOR[$TEMP_NUMBER] = actor.Create($CAMP_PED_TYPE[24@],$CAMP_TEMP1,$CAMP_TEMP2,$CAMP_TEMP3,$CAMP_TEMP4)
 
 if
+PEDFUNCS_SUPPORT_ON == 1
+    then    
+    0AD3: v$SFUCK = format "CMP%dRMAP%d" 24@ $TEMP_NUMBER
+    0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "CAMP_REMAPS" key v$SFUCK
+    if
+    0@ > -2
+        then
+        create_thread @REMAPSET $CAMP_ACTOR[$TEMP_NUMBER] 0@
+        end        
+    end    
+
+if
 model.Available($CAMP_TEMP1)
 then
 //model.Destroy($CAMP_TEMP1)
@@ -683,6 +696,12 @@ CARMA_VERY_BAD_FLAG == 1
     end
 
 $CAMP_AGRED_FLAG2 = 0
+if 
+$CAMP_AGRED_FLAG[24@] == 1                   
+then
+$CAMP_AGRED_FLAG2 = 1
+end
+
 $CAMP_DEAD_FLAG2 = 0
 CAMP_SUSP_TIMES = 0
 CAMP_SAW_SHIT = 0
@@ -748,8 +767,15 @@ if and
 0AB0:   key_pressed 219
 $CHEATS_ON == 1
     then
-    0AD1: show_formatted_text_highpriority "CAMP_SAVE_TIMER: %d, CAMP_AGRED_FLAG: %d, CAMP_DEAD_FLAG: %d" time 100 $CAMP_SAVE_TIMER[24@] $CAMP_AGRED_FLAG[24@] $CAMP_DEAD_FLAG[24@] 
+    0AD1: show_formatted_text_highpriority "CAMP_SUS_RAID_FLAG: %d, CAMP_AGRED_FLAG: %d, CAMP_DEAD_FLAG: %d" time 100 $CAMP_SAVE_TIMER[24@] $CAMP_AGRED_FLAG[24@] $CAMP_DEAD_FLAG[24@] 
     end
+    
+if and
+0AB0:   key_pressed 221
+$CHEATS_ON == 1
+    then
+    0AD1: show_formatted_text_highpriority "PAIN_TIMER: %d\%d, ATTACK_TIMER: %d\%d" time 100 CAMP_PAIN_TIMER CAMP_PAIN_TIMER2 CAMP_ATTACK_TIMER CAMP_ATTACK_TIMER2
+    end    
 
 CAMP_PAIN_TIMER += 1 
 CAMP_ATTACK_TIMER += 1
@@ -1272,70 +1298,62 @@ not $QUEST_TYPE == 15
 not $DEFENSE_CHALLENGE_FLAG == 1
 not CAMP_RAID_FLAG == 1
 not $GAMEMODE_VERSUS == 1 
-    then                  
-    
-    0084: $CAMP_ACTOR_TOTAL2 = $CAMP_ACTOR_TOTAL[24@] // (int)
-    $CAMP_ACTOR_TOTAL2 -= 1 
-         
-    for 0@ = 0 to $CAMP_ACTOR_TOTAL2    
-                 
+    then                      
+    gosub @CAMP_ANY_PED_SPOTTED_PLAYER_CHECK                
     if and
-    0364:   actor $CAMP_ACTOR[0@] spotted_actor PLAYER_ACTOR 
+    1@ == 1
     $CAMP_SPOTTED_FLAG == 0
     33@ > 10000                  
-    then
-    33@ = 0                     
-    $CAMP_SPOTTED_FLAG = 1
-    gosub @RANDOM_DIALOG_HELLO_NEGATIVE1_SURV_CMP
-                
-    09FD: get_gxt_string v$CPHRASE3 width_to 29@
-    0093: 29@ = integer 29@ to_float
-    29@ *= 8.0
-    0092: 29@ = float 29@ to_integer                      
-    
-    ////////////////////////////////////////////////////////////////////
-    
-    32@ = 0
-
-    $PHRASES_OFF_FLAG = 1                               
-                    
-    repeat
-    wait 0  
-                    
-    gosub @2ZONE_MARKERS_CHECK
-    gosub @CAMP_ZONE_RADIUS_CHECK 
-    
-    if and
-    84C8: not  actor PLAYER_ACTOR driving_flying_vehicle
-    8A0C: not  player PLAYER_CHAR on_jetpack
-    then                
-    00BC: show_text_highpriority GXT v$CPHRASE3 time 1500 flag 1
-    end
-                    
-    if or
-    $SAVESTATUS_TRUE == 1
-    $SAVESTATUS == 1
-    $PANEL_OPEN == 1
-    GAME_OVER_FLAG == 1
-    80FE: not  actor PLAYER_ACTOR sphere 0 in_sphere $CAMP_X[24@] $CAMP_Y[24@] $CAMP_Z[24@] radius 1@ 1@ 2@
-    00FE:   actor PLAYER_ACTOR sphere 0 in_sphere $CAMP_SAVE_X[24@] $CAMP_SAVE_Y[24@] $CAMP_SAVE_Z[24@] radius 3.0 3.0 3.0
-    04C8:   actor PLAYER_ACTOR driving_flying_vehicle
-    0A0C:   player PLAYER_CHAR on_jetpack
         then
-        $PHRASES_OFF_FLAG = 0
-        break
+        33@ = 0                     
+        $CAMP_SPOTTED_FLAG = 1
+        gosub @RANDOM_DIALOG_HELLO_NEGATIVE1_SURV_CMP
+                    
+        09FD: get_gxt_string v$CPHRASE3 width_to 29@
+        0093: 29@ = integer 29@ to_float
+        29@ *= 8.0
+        0092: 29@ = float 29@ to_integer                      
+        
+        ////////////////////////////////////////////////////////////////////
+        
+        32@ = 0
+    
+        $PHRASES_OFF_FLAG = 1                               
+                        
+        repeat
+        wait 0  
+                        
+        gosub @2ZONE_MARKERS_CHECK
+        gosub @CAMP_ZONE_RADIUS_CHECK 
+        
+        if and
+        84C8: not  actor PLAYER_ACTOR driving_flying_vehicle
+        8A0C: not  player PLAYER_CHAR on_jetpack
+        then                
+        00BC: show_text_highpriority GXT v$CPHRASE3 time 1500 flag 1
         end
-                    
-    until 002D:   32@ >= 29@  // (int)
-                    
-    $PHRASES_OFF_FLAG = 0
-    
-    ////////////////////////////////////////////////////////////////////
-                                                                                                                                                    
-    end 
-                                                                               
-    end 
-    
+                        
+        if or
+        $SAVESTATUS_TRUE == 1
+        $SAVESTATUS == 1
+        $PANEL_OPEN == 1
+        GAME_OVER_FLAG == 1
+        80FE: not  actor PLAYER_ACTOR sphere 0 in_sphere $CAMP_X[24@] $CAMP_Y[24@] $CAMP_Z[24@] radius 1@ 1@ 2@
+        00FE:   actor PLAYER_ACTOR sphere 0 in_sphere $CAMP_SAVE_X[24@] $CAMP_SAVE_Y[24@] $CAMP_SAVE_Z[24@] radius 3.0 3.0 3.0
+        04C8:   actor PLAYER_ACTOR driving_flying_vehicle
+        0A0C:   player PLAYER_CHAR on_jetpack
+            then
+            $PHRASES_OFF_FLAG = 0
+            break
+            end
+                        
+        until 002D:   32@ >= 29@  // (int)
+                        
+        $PHRASES_OFF_FLAG = 0
+        
+        ////////////////////////////////////////////////////////////////////
+                                                                                                                                                        
+        end                                                                                     
     end
 end
 
@@ -1345,6 +1363,7 @@ if and
 $CAMP_AGRED_FLAG2 == 0
 $CAMP_AGRED_FLAG[24@] == 0
 not $GAMEMODE_VERSUS == 1
+not $ALLOW_SAFETY_IN_CAMPS == 0
     then    
     gosub @CAMP_ZONE_CHECK2
 //    0AD1: show_formatted_text_highpriority "%s" time 2000 v$SFUCK
@@ -1641,11 +1660,25 @@ $SAVESTATUS == 1
     $CAMP_ACTOR_TOTAL2 -= 1
     
     gosub @MARKERS_DISABLE2
+    
+    if
+    PEDFUNCS_SUPPORT_ON == 1
+    then
                                                                                            
     for 1@ = 0 to $CAMP_ACTOR_TOTAL2 
-    actor.DestroyWithFade($CAMP_ACTOR[1@])
+    gosub @CAMP_CHECK_FOR_PEDFUNCS_WRITE_BEFOREDESTROY
+    actor.DestroyWithFade($CAMP_ACTOR[1@])    
     $CAMP_ACTOR[1@] = -69
-    end     
+    end 
+    
+    else
+    
+    for 1@ = 0 to $CAMP_ACTOR_TOTAL2 
+    actor.DestroyWithFade($CAMP_ACTOR[1@])    
+    $CAMP_ACTOR[1@] = -69
+    end 
+    
+    end    
     
     $SAVEPLACE_ON = 0
     ZOMBIES_NOTSPAWN = 0
@@ -1749,10 +1782,24 @@ not $NOTSAVE_MODE == 1
                 $CAMP_ACTOR_TOTAL2 -= 1
                 
                 gosub @MARKERS_DISABLE2
+                
+                if
+                PEDFUNCS_SUPPORT_ON == 1
+                then
                                                                                                        
-                for 1@ = 0 to $CAMP_ACTOR_TOTAL2 
-                actor.DestroyWithFade($CAMP_ACTOR[1@])
+                for 1@ = 0 to $CAMP_ACTOR_TOTAL2
+                gosub @CAMP_CHECK_FOR_PEDFUNCS_WRITE_BEFOREDESTROY 
+                actor.DestroyWithFade($CAMP_ACTOR[1@])                
                 $CAMP_ACTOR[1@] = -69
+                end
+                
+                else
+                
+                for 1@ = 0 to $CAMP_ACTOR_TOTAL2 
+                actor.DestroyWithFade($CAMP_ACTOR[1@])                
+                $CAMP_ACTOR[1@] = -69
+                end
+                
                 end
                 
                 if
@@ -1769,6 +1816,7 @@ not $NOTSAVE_MODE == 1
                 then
                 $SAVEPLACE_ON = 0  
                 ZOMBIES_NOTSPAWN = 0
+                $CAMP_SPOTTED_FLAG_SAVE = 0
                 
                 if
                 HORDE_PREV_STATUS == 1
@@ -1970,12 +2018,6 @@ HORDE_PREV_STATUS == 1
 then
 HORDE_PREV_STATUS = 0
 end
-
-if
-$GAMEMODE_WAR == 1
-    then
-    0084: $CAMP_SAVE_TIMER[24@] = $SAVE_TIMER // (int)
-    end
     
 ZOMBIES_NOTSPAWN = 0
                 
@@ -2857,6 +2899,64 @@ return
 
 :RANDOM_DIALOG_HELLO_SURV_CMP
 
+if or
+NO_MORE_BANDITS_CAMPS == 0
+NO_MORE_ARMY_CAMPS == 0
+then
+if or
+$ALLOW_ARMY_CONVOY == 1
+$ALLOW_BANDIT_CONVOY == 1
+    then
+    if and
+    not $ENTERED_CAMP_NUMBER == -1
+    not $SLAVING_STARTED == 1
+    $DEFENSE_CHALLENGE_FLAG == 0
+    $GAMEMODE_SELECTED == 1
+    $FREEMODE == 1
+    not $FIST_HUD_ALWAYS == 1
+    not $GAMEMODE_STORYLINE == 1
+    AFTER_ON_MISSION_TIMER == -1
+        then              
+        if and
+        $ONMISSION == 0
+        $SAVESTATUS == 0
+        $SAVESTATUS_TRUE == 0        
+        CAMP_RAID_FLAG == 0
+        $HUD_REMOVE == 0
+        not $CAMP_AGRED_FLAG[$ENTERED_CAMP_NUMBER] == 1        
+            then
+            if or
+            RAID_FRACTION_FLAG == 1
+            RAID_FRACTION_FLAG == 2
+                then
+                0652: 1@ = integer_stat 258
+                if and
+                not $CAMP_DEAD_FLAG[$ENTERED_CAMP_NUMBER] == 1
+                $CAMP_SPOTTED_FLAG == 1
+                CARMA_VERY_BAD_FLAG == 0
+                $MONTHS_PASSED < 3
+                1@ == 0
+                8E1D: not is_on_mission
+                CAMP_LEADER_MARKER_CREATED == 1
+                    then  
+                    if
+                    $CAMP_SAVE_TIMER[$ENTERED_CAMP_NUMBER] > 0
+                        then    
+                        v$PHRASE1 = "PH203_"
+                        gosub @RANDOM_DIALOG_GENERATE_ON_VAR
+                        return
+                        else
+                        v$PHRASE1 = "PH204_"
+                        gosub @RANDOM_DIALOG_GENERATE_ON_VAR
+                        return
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
 if and
 003A:   $ENTERED_CAMP_NUMBER == $QUEST_CAMP_NUMBER // (int)
 $ONMISSION == 1
@@ -3289,16 +3389,47 @@ $PLAYER_BANDIT_SIDE == 1
     jump to @RANDOM_DIALOG_HELLO_NEGATIVE3_SURV_CMP
     end
           
-random_int 30@ 0 8
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH80_"
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$CPHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$CPHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 30@ 0 1@
+    end
+
+end      
 
 v$PHRASE1 = "PH80_"
 0AD3: v$PHRASE2 = format "%d" 30@
-098B: v$CPHRASE3 = v$PHRASE1 + v$PHRASE2             
+098B: v$CPHRASE3 = v$PHRASE1 + v$PHRASE2            
           
 return
 
 :RANDOM_DIALOG_HELLO_NEGATIVE2_SURV_CMP
-random_int 30@ 0 5
+
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH81_"
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$CPHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$CPHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 30@ 0 1@
+    end
+
+end      
 
 v$PHRASE1 = "PH81_"
 0AD3: v$PHRASE2 = format "%d" 30@
@@ -3307,11 +3438,27 @@ v$PHRASE1 = "PH81_"
 return   
 
 :RANDOM_DIALOG_HELLO_NEGATIVE3_SURV_CMP
-random_int 30@ 0 5
+
+for 1@ = 0 to 200
+
+v$PHRASE1 = "PH82_"
+0AD3: v$PHRASE2 = format "%d" 1@
+098B: v$CPHRASE3 = v$PHRASE1 + v$PHRASE2
+
+09FD: get_gxt_string v$CPHRASE3 width_to 31@
+
+if
+not 31@ == 0
+    then    
+    1@ += 1
+    random_int 30@ 0 1@
+    end
+
+end      
 
 v$PHRASE1 = "PH82_"
 0AD3: v$PHRASE2 = format "%d" 30@
-098B: v$CPHRASE3 = v$PHRASE1 + v$PHRASE2        
+098B: v$CPHRASE3 = v$PHRASE1 + v$PHRASE2       
 
 return
 
@@ -4012,7 +4159,7 @@ jf @2ZONE_MARKERS_CHECK2
 0A8D: 1@ = read_memory 3@ size 4 virtual_protect 0
 2@ = 0    
 0ECE: get_time_char_is_dead $CAMP_ACTOR[0@] store_to 2@
-
+wait 0
 if and
 0104:   actor $CAMP_ACTOR[0@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0
 89A8: not  actor $CAMP_ACTOR[0@] headshoted
@@ -4020,7 +4167,7 @@ $SPECTATING_FLAG == 0
 $SCREWHUD_FLAG == 0
 $PHRASES_OFF_FLAG == 0
 not 1@ == 0x02
-2@ > 500 
+2@ > -2 //сука, пиздец 
     then
     gosub @RANDOM_DIALOG_DEAD_CAMP                   
     v$2NAME3 = "GAME253"                    
@@ -4231,44 +4378,6 @@ $FREEMODE == 0
 then
 $MINUTES_PLAYED += 6
 end
-
-if
-KARMA_SYS_ON_FLAG == 1
-    then    
-    if
-    0E4D: random_percent CARMA_BAD_POINTS
-        then
-        008B: 0@ = $ENTERED_CAMP_NUMBER // (int)
-        0@ += 156
-        008B: 1@ = CARMA_BAD_POINTS // (int)
-        1@ /= 3
-        0066: $RNDM_HOUSE_BANKA[0@] -= 1@  // (int)
-        end    
-    end
-    
-if and
-KARMA_SYS_ON_FLAG == 1
-CARMA_BAD_POINTS < 1
-CARMA_GOOD_POINTS > 10
-not 24@ == 2
-    then
-    008B: 1@ = CARMA_GOOD_POINTS // (int)
-    1@ /= 2    
-    if
-    0E4D: random_percent 1@
-        then
-        008B: 0@ = $ENTERED_CAMP_NUMBER // (int)
-        0@ += 156
-        008B: 1@ = CARMA_GOOD_POINTS // (int)
-        1@ /= 4
-        005E: $RNDM_HOUSE_BANKA[0@] += 1@  // (int) 
-        if
-        $RNDM_HOUSE_BANKA[0@] < 150
-            then       
-            create_thread @CRMBNSS
-            end
-        end    
-    end
     
 else
 
@@ -4683,8 +4792,8 @@ jf @RANDOM_CAMP_ATTACK_PEOPLE_BEGIN
 if or
 0364:   actor 3@ spotted_actor $CAMP_ACTOR[0@]
 0364:   actor $CAMP_ACTOR[0@] spotted_actor 3@
-GROUP_COMMAND_GO_ATTACK == 1
-CARMA_VERY_BAD_FLAG == 1
+GROUP_COMMAND_GO_ATTACK == 2
+CARMA_VERY_BAD_FLAG == 2
 jf @RANDOM_CAMP_ATTACK_PEOPLE_BEGIN
 05C1: AS_actor 3@ speak_from_audio_table $PEOPLE_ZOMBIE_ATTACK_AUDIO_TABLE
 if
@@ -5162,10 +5271,10 @@ v$PHRASE1 = "PH1_"
 09FD: get_gxt_string v$PHRASE3 width_to 31@
 
 if
-not 31@ == 0
+31@ == 0
     then    
-    1@ += 1
     random_int 30@ 0 1@
+    break
     end
 
 end  
@@ -5187,11 +5296,11 @@ v$PHRASE1 = "PH4_"
 09FD: get_gxt_string v$PHRASE3 width_to 31@
 
 if
-not 31@ == 0
+31@ == 0
     then    
-    1@ += 1
     random_int 30@ 0 1@
-    end  
+    break
+    end 
 
 end
 
@@ -5212,10 +5321,10 @@ v$PHRASE1 = "PH5_"
 09FD: get_gxt_string v$PHRASE3 width_to 31@
 
 if
-not 31@ == 0
+31@ == 0
     then    
-    1@ += 1
     random_int 30@ 0 1@
+    break
     end
 
 end  
@@ -5272,10 +5381,10 @@ end
 09FD: get_gxt_string v$PHRASE3 width_to 31@
 
 if
-not 31@ == 0
+31@ == 0
     then    
-    1@ += 1
     random_int 30@ 0 1@
+    break
     end
 
 end  
@@ -5332,11 +5441,11 @@ v$PHRASE1 = "PH2_"
 09FD: get_gxt_string v$PHRASE3 width_to 31@
 
 if
-not 31@ == 0
+31@ == 0
     then    
-    1@ += 1
     random_int 30@ 0 1@
-    end  
+    break
+    end 
 
 end
 
@@ -5357,10 +5466,10 @@ v$PHRASE1 = "PH6_"
 09FD: get_gxt_string v$PHRASE3 width_to 31@
 
 if
-not 31@ == 0
+31@ == 0
     then    
-    1@ += 1
     random_int 30@ 0 1@
+    break
     end
 
 end  
@@ -5382,10 +5491,10 @@ v$PHRASE1 = "PH8_"
 09FD: get_gxt_string v$PHRASE3 width_to 31@
 
 if
-not 31@ == 0
+31@ == 0
     then    
-    1@ += 1
     random_int 30@ 0 1@
+    break
     end
 
 end  
@@ -5407,10 +5516,10 @@ v$PHRASE1 = "PH9_"
 09FD: get_gxt_string v$PHRASE3 width_to 31@
 
 if
-not 31@ == 0
+31@ == 0
     then    
-    1@ += 1
     random_int 30@ 0 1@
+    break
     end
 
 end  
@@ -5432,10 +5541,10 @@ v$PHRASE1 = "PH10_"
 09FD: get_gxt_string v$PHRASE3 width_to 31@
 
 if
-not 31@ == 0
-    then   
-    1@ += 1 
+31@ == 0
+    then    
     random_int 30@ 0 1@
+    break
     end
 
 end  
@@ -5464,10 +5573,10 @@ end
 09FD: get_gxt_string v$PHRASE3 width_to 31@
 
 if
-not 31@ == 0
+31@ == 0
     then    
-    1@ += 1
     random_int 30@ 0 1@
+    break
     end
 
 end  
@@ -5496,10 +5605,10 @@ v$PHRASE1 = "PH12_"
 09FD: get_gxt_string v$PHRASE3 width_to 31@
 
 if
-not 31@ == 0
+31@ == 0
     then    
-    1@ += 1
     random_int 30@ 0 1@
+    break
     end
 
 end  
@@ -5521,10 +5630,10 @@ v$PHRASE1 = "PH13_"
 09FD: get_gxt_string v$PHRASE3 width_to 31@
 
 if
-not 31@ == 0
+31@ == 0
     then    
-    1@ += 1
     random_int 30@ 0 1@
+    break
     end
 
 end  
@@ -5546,10 +5655,10 @@ v$PHRASE1 = "PH138_"
 09FD: get_gxt_string v$PHRASE3 width_to 31@
 
 if
-not 31@ == 0
+31@ == 0
     then    
-    1@ += 1
     random_int 30@ 0 1@
+    break
     end
 
 end  
@@ -5571,10 +5680,10 @@ v$PHRASE1 = "PH184_"
 09FD: get_gxt_string v$PHRASE3 width_to 31@
 
 if
-not 31@ == 0
+31@ == 0
     then    
-    1@ += 1
     random_int 30@ 0 1@
+    break
     end
 
 end  
@@ -6386,6 +6495,7 @@ if and
 25@ > 0
 not 1@ == 1
 not 1@ == 2
+not $ALLOW_MEDS == 0
     then
     
     28@ = 0
@@ -6448,6 +6558,7 @@ if and
 25@ > 0
 not 1@ == 1
 not 1@ == 2
+not $ALLOW_MEDS == 0
     then   
     
     28@ = 0
@@ -7522,6 +7633,13 @@ not CAMP_RD_NUM == -1
     CAMP_RD_FREQ_FLAG = 0
     CAMP_RD_NUM = -1
     
+    if
+    CAMP_RECORDER_LISTEN_MODE == 1
+    then
+    0A8C: write_memory 0x06348F6 size 4 value 327 virtual_protect 0
+    else
+    0A8C: write_memory 0x06348F6 size 4 value 330 virtual_protect 0
+    end
     0687: clear_actor $CAMP_ACTOR[0@] task
     //06AB: set_actor $CAMP_ACTOR[0@] all_weapons_hidden 1
     //wait 10
@@ -7859,7 +7977,15 @@ if and
 1@ == 2500
 UNITED_MAP == 0
     then
+    
+    if
+    not CAMP_RECORDER_LISTEN_MODE == 1
+    then
     gosub @CAMP_RANDOM_FREQ_PLAY 
+    else
+    gosub @CAMP_RANDOM_REC_PLAY
+    end
+    
     end        
     
 else
@@ -7891,7 +8017,15 @@ $CAMP_AGRED_FLAG2 == 1
     CAMP_RD_FREQ_FLAG = 0
     audiostream.PerformAction(CAMP_RD_SND,STOP)
     audiostream.Release(CAMP_RD_SND)
+    
+    if
+    not CAMP_RECORDER_LISTEN_MODE == 1
+    then
     CAMP_RD_SND = Audiostream.Load3D("AUDIO\SOUNDS\Radio.mp3")
+    else
+    CAMP_RD_SND = Audiostream.Load3D("AUDIO\SOUNDS\recorder\recstatic.mp3")
+    end
+    
     audiostream.LinkToActor(CAMP_RD_SND,$CAMP_ACTOR[CAMP_RD_NUM])
     Audiostream.PerformAction(CAMP_RD_SND, PLAY)
     Audiostream.Volume(CAMP_RD_SND) = $SOUNDS_VOLUME
@@ -7951,6 +8085,16 @@ CAMP_RD_NUM == -1
 87D6: not  0@ == CAMP_RD_NUM // @ == $ (int)
 2@ == 0
     then
+    
+    random_int CAMP_RECORDER_LISTEN_MODE 0 2
+    
+    if
+    CAMP_RECORDER_LISTEN_MODE == 1
+    then
+    0A8C: write_memory 0x0634DE2 size 4 value 327 virtual_protect 0
+    else
+    0A8C: write_memory 0x0634DE2 size 4 value 330 virtual_protect 0
+    end
             
     0A8D: 1@ = read_memory 0x0634DE2 size 4 virtual_protect 0
     while not model.Available(1@)
@@ -7960,7 +8104,14 @@ CAMP_RD_NUM == -1
     end
             
     0729: AS_actor $CAMP_ACTOR[0@] hold_cellphone 1
+    if
+    not CAMP_RECORDER_LISTEN_MODE == 1
+    then
     CAMP_RD_SND = Audiostream.Load3D("AUDIO\SOUNDS\Radio.mp3")
+    else
+    CAMP_RD_SND = Audiostream.Load3D("AUDIO\SOUNDS\recorder\recstatic.mp3")
+    end
+    
     audiostream.LinkToActor(CAMP_RD_SND,$CAMP_ACTOR[0@])
     Audiostream.PerformAction(CAMP_RD_SND, PLAY)
     Audiostream.Volume(CAMP_RD_SND) = $SOUNDS_VOLUME
@@ -8011,6 +8162,13 @@ then
 audiostream.PerformAction(CAMP_RD_SND,STOP)
 audiostream.Release(CAMP_RD_SND)
 
+if
+CAMP_RECORDER_LISTEN_MODE == 1
+then
+0A8C: write_memory 0x06348F6 size 4 value 327 virtual_protect 0
+else
+0A8C: write_memory 0x06348F6 size 4 value 330 virtual_protect 0
+end
 0687: clear_actor $CAMP_ACTOR[0@] task
 //06AB: set_actor $CAMP_ACTOR[0@] all_weapons_hidden 1
 //wait 10
@@ -8079,6 +8237,141 @@ if or
     2@ = 1
     end
     
+return
+
+:CAMP_RANDOM_REC_PLAY
+
+audiostream.PerformAction(CAMP_RD_SND,STOP)
+audiostream.Release(CAMP_RD_SND)
+
+random_int 1@ 0 20
+if
+1@ == 0
+then
+CAMP_RD_SND = Audiostream.Load3D("AUDIO\SOUNDS\recorder\reco01.mp3")
+end
+
+if
+1@ == 1
+then
+CAMP_RD_SND = Audiostream.Load3D("AUDIO\SOUNDS\recorder\reco02.mp3")
+end
+
+if
+1@ == 2
+then
+CAMP_RD_SND = Audiostream.Load3D("AUDIO\SOUNDS\recorder\reco03.mp3")
+end
+
+if
+1@ == 3
+then
+CAMP_RD_SND = Audiostream.Load3D("AUDIO\SOUNDS\recorder\reco04.mp3")
+end
+
+if
+1@ == 4
+then
+CAMP_RD_SND = Audiostream.Load3D("AUDIO\SOUNDS\recorder\reco05.mp3")
+end
+
+if
+1@ == 5
+then
+CAMP_RD_SND = Audiostream.Load3D("AUDIO\SOUNDS\recorder\reco06.mp3")
+end
+
+if
+1@ == 6
+then
+CAMP_RD_SND = Audiostream.Load3D("AUDIO\SOUNDS\recorder\reco07.mp3")
+end
+
+if
+1@ == 7
+then
+CAMP_RD_SND = Audiostream.Load3D("AUDIO\SOUNDS\recorder\reco08.mp3")
+end
+
+if
+1@ == 8
+then
+CAMP_RD_SND = Audiostream.Load3D("AUDIO\SOUNDS\recorder\reco09.mp3")
+end
+
+if
+1@ == 9
+then
+CAMP_RD_SND = Audiostream.Load3D("AUDIO\SOUNDS\recorder\reco10.mp3")
+end
+
+if
+1@ == 10
+then
+CAMP_RD_SND = Audiostream.Load3D("AUDIO\SOUNDS\recorder\reco11.mp3")
+end
+
+if
+1@ == 11
+then
+CAMP_RD_SND = Audiostream.Load3D("AUDIO\SOUNDS\recorder\reco12.mp3")
+end
+
+if
+1@ == 12
+then
+CAMP_RD_SND = Audiostream.Load3D("AUDIO\SOUNDS\recorder\reco13.mp3")
+end
+
+if
+1@ == 13
+then
+CAMP_RD_SND = Audiostream.Load3D("AUDIO\SOUNDS\recorder\reco14.mp3")
+end
+
+if
+1@ == 14
+then
+CAMP_RD_SND = Audiostream.Load3D("AUDIO\SOUNDS\recorder\reco15.mp3") 
+end
+
+if
+1@ == 15
+then
+CAMP_RD_SND = Audiostream.Load3D("AUDIO\SOUNDS\recorder\reco16.mp3")
+end
+
+if
+1@ == 16
+then
+CAMP_RD_SND = Audiostream.Load3D("AUDIO\SOUNDS\recorder\reco17.mp3")
+end
+
+if
+1@ == 17
+then
+CAMP_RD_SND = Audiostream.Load3D("AUDIO\SOUNDS\recorder\reco18.mp3")
+end
+
+if
+1@ == 18
+then
+CAMP_RD_SND = Audiostream.Load3D("AUDIO\SOUNDS\recorder\reco19.mp3")
+end
+
+if
+1@ == 19
+then
+CAMP_RD_SND = Audiostream.Load3D("AUDIO\SOUNDS\recorder\reco20.mp3")
+end
+
+audiostream.LinkToActor(CAMP_RD_SND,$CAMP_ACTOR[CAMP_RD_NUM])
+Audiostream.PerformAction(CAMP_RD_SND, PLAY)
+Audiostream.Volume(CAMP_RD_SND) = $SOUNDS_VOLUME
+Audiostream.Loop(CAMP_RD_SND, 0)
+
+CAMP_RD_FREQ_FLAG = 1
+                                  
 return    
 
 :CAMP_RANDOM_FREQ_PLAY
@@ -8585,6 +8878,30 @@ $CAMP_SPOTTED_FLAG == 1
 
 return  
 
+:CAMP_CHECK_FOR_PEDFUNCS_WRITE_BEFOREDESTROY
+
+0AD3: v$SFUCK = format "CMP%dRMAP%d" 24@ 1@
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "CAMP_REMAPS" key v$SFUCK
+if
+0@ < -1
+    then
+    if
+    0AA2: 0@ = load_library "PedFuncs.asi" // IF and SET
+        then
+        if
+        0AA4: 31@ = get_proc_address "Ext_GetPedRemap" library 0@ // IF and SET
+            then
+            0A96: 2@ = actor $CAMP_ACTOR[1@] struct
+            3@ = 0
+            0AA7: call_function 31@ num_params 2 pop 2 3@ 2@ 4@
+            0AA3: free_library 0@
+            0AF1: write_int 4@ to_ini_file "data\survival.set" section "CAMP_REMAPS" key v$SFUCK
+            end
+        end
+    end
+
+return
+
 :CRMBNSS
 thread 'CRMBNSS'
 
@@ -8593,7 +8910,7 @@ repeat
 wait 0
 
 if and
-32@ >= 5000
+32@ >= 10000
 88FE: not  text_box_displayed
 0E45: frame_mod 30
     then
@@ -8603,4 +8920,4 @@ if and
 
 until false
 
-end_thread
+end_thread       

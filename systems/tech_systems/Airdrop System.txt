@@ -335,6 +335,15 @@ then
 marker.CreateIconAndSphere2(HABAR_MARKER_ON_MAP,5,HABAR_RANDOM_X,HABAR_RANDOM_Y,HABAR_RANDOM_Z)
 end
 
+//Меняем иконку эирдропа, чтобы игрок понял, что надо его ждать и он задел зону
+marker.Disable(HABAR_MARKER_ON_MAP)
+marker.CreateIconAndSphere2(HABAR_MARKER_ON_MAP,122,HABAR_RANDOM_X,HABAR_RANDOM_Y,HABAR_RANDOM_Z)
+if
+SHOW_HINTS_FLAG == 1
+then
+text.ShowTextBox('GME1614')
+end
+
 if and
 $AIRDROP_QUEST == 1
 075C:   marker MISSION_CHECKPOINT enabled
@@ -471,7 +480,7 @@ then
 //////////////////////////////////////////////////////////////////////////////////
 
 if and
-$AIRDROP_TIMER > 40640
+$AIRDROP_TIMER >= 40640
 $MONTHS_PASSED < 2
 then
 
@@ -566,8 +575,8 @@ end_thread
 
 end
 
-actor.StorePos(PLAYER_ACTOR,0@,1@,2@)
-0843: get_zone_at 0@ 1@ 2@ nameA_to s$PLACE_STRING // 8-byte string
+actor.StorePos(PLAYER_ACTOR,19@,20@,8@)
+0843: get_zone_at 19@ 20@ 8@ nameA_to s$PLACE_STRING // 8-byte string
 
 if
 $GAMEMODE_WAR == 0
@@ -683,8 +692,8 @@ end_thread
 
 end
 
-actor.StorePos(PLAYER_ACTOR,0@,1@,2@)
-0843: get_zone_at 0@ 1@ 2@ nameA_to s$PLACE_STRING // 8-byte string
+actor.StorePos(PLAYER_ACTOR,19@,20@,8@)
+0843: get_zone_at 19@ 20@ 8@ nameA_to s$PLACE_STRING // 8-byte string
 
 32@ = 0
 
@@ -720,6 +729,8 @@ end
 
 ///////////////////////////////////////////////////////////////////
 
+:AIRDROP_ROOF_CHECK_AGAIN
+
 32@ = 2801
 
 repeat
@@ -733,6 +744,35 @@ gosub @AIRDROP_ROOF_CHECK
 end
 
 until 0@ == 1
+
+gosub @INV_RANDOM_AIRDROP_SPAWN_ZONE_CHECK
+if
+6@ == 0
+then
+text.ShowTextBox('INV302')
+wait 2000
+jump to @AIRDROP_ROOF_CHECK_AGAIN
+end
+
+gosub @INV_AIRDROP_NEAR_CAMP_CHECK
+if or
+6@ == 1
+PLAYER_IN_NEST_FLAG == 1
+then
+text.ShowTextBox('INV302')
+wait 2000
+jump to @AIRDROP_ROOF_CHECK_AGAIN
+end
+
+if
+8154: not  actor PLAYER_ACTOR in_zone s$PLACE_STRING
+then
+018A: 14@ = create_checkpoint_at 19@ 20@ 8@
+text.ShowTextBox('INV302B')
+wait 2000
+marker.Disable(14@)
+jump to @AIRDROP_ROOF_CHECK_AGAIN
+end
 
 0470: 14@ = actor PLAYER_ACTOR current_weapon
 01B9: set_actor PLAYER_ACTOR armed_weapon_to 0

@@ -16,11 +16,38 @@ $HUNGER_TIMER = 0
 
 if
 $FREEMODE == 0
-then
+then     
 28@ = 1000
 else
 28@ = 800
 end
+
+if
+$EASY_MODE == 1
+then
+28@ *= 0.45
+end
+
+if
+$NORMAL_MODE == 1
+then
+28@ *= 0.60
+end
+
+if
+$HARD_MODE == 1
+then
+28@ *= 0.85
+end
+
+if
+$NIGHTMARE_MODE == 1
+then
+28@ *= 1.0
+end
+
+0093: 28@ = integer 28@ to_float
+0092: 28@ = float 28@ to_integer
 
 :HUNGER_IDLE
 wait 0
@@ -187,15 +214,8 @@ then
 $HUNGER_TIMER += 1
 end
 
-if and
-PERK_REGENHP == 1
-28@ > 600
-    then
-    28@ = 600
-    end 
-
 if
-$SATIETY_LEVEL < 0.3
+$SATIETY_LEVEL <= 1.0
     then
     $SATIETY_LEVEL = 0.0
     end
@@ -252,6 +272,7 @@ if
         $HUNGER_TIMER > 1000   
         $HUD_REMOVE == 0
         $HUNGER_NONE_FLAG == 1
+        $SATIETY_LEVEL <= 1.0
         not $EATING_STATUS == 1
         8A32: not  actor PLAYER_ACTOR on_turret_of_car 
             then
@@ -363,8 +384,7 @@ if or
 02A0:   actor PLAYER_ACTOR stopped
 actor.Driving(PLAYER_ACTOR)
     then
-    if and
-    not $FATIGUE_LEVEL < 3.4
+    if and    
     not actor.DrivingVehicleType(PLAYER_ACTOR,#BMX)
     not actor.DrivingVehicleType(PLAYER_ACTOR,#MTBIKE)
     not actor.DrivingVehicleType(PLAYER_ACTOR,#BIKE)
@@ -373,6 +393,12 @@ actor.Driving(PLAYER_ACTOR)
         then
         $FATIGUE_LEVEL -= 3.4
         if
+        $FATIGUE_LEVEL <= 3.4
+        then
+        $FATIGUE_LEVEL = 0.0
+        end
+        
+        if
         SURVIVAL_CUSTOM_WEAPON_NABOR == 1
         then
         0842: 0@ = player PLAYER_CHAR town_number
@@ -380,6 +406,12 @@ actor.Driving(PLAYER_ACTOR)
         0@ == 0
             then
             $FATIGUE_LEVEL -= 1.02
+            if
+            $FATIGUE_LEVEL <= 1.02
+            then
+            $FATIGUE_LEVEL = 0.0
+            end
+            
             end
         end
         wait 350
@@ -396,8 +428,7 @@ actor.Driving(PLAYER_ACTOR)
     actor.DrivingVehicleType(PLAYER_ACTOR,15489)
         then
         0@ = actor.CurrentCar(PLAYER_ACTOR)
-        if and
-        not $FATIGUE_LEVEL < 1.7
+        if        
         80E1: not  player 0 pressed_key 16
             then
             if or
@@ -411,6 +442,12 @@ actor.Driving(PLAYER_ACTOR)
                 then
                 $FATIGUE_LEVEL -= 1.7
                 if
+                $FATIGUE_LEVEL <= 1.7
+                then
+                $FATIGUE_LEVEL = 0.0
+                end
+                
+                if
                 SURVIVAL_CUSTOM_WEAPON_NABOR == 1
                 then
                 0842: 0@ = player PLAYER_CHAR town_number
@@ -418,6 +455,12 @@ actor.Driving(PLAYER_ACTOR)
                 0@ == 0
                     then
                     $FATIGUE_LEVEL -= 0.51
+                    if
+                    $FATIGUE_LEVEL <= 0.51
+                    then
+                    $FATIGUE_LEVEL = 0.0
+                    end
+                    
                     end
                 end
                 wait 350
@@ -425,70 +468,103 @@ actor.Driving(PLAYER_ACTOR)
             end
         end
     end    
-    
-if or
-actor.Animation(PLAYER_ACTOR) == "run_armed"
-actor.Animation(PLAYER_ACTOR) == "run_1armed"
-actor.Animation(PLAYER_ACTOR) == "walk_csaw_right"
-actor.Animation(PLAYER_ACTOR) == "Mscle_run_Csaw"  
-actor.Animation(PLAYER_ACTOR) == "run_csaw" 
-actor.Animation(PLAYER_ACTOR) == "run_player"  
-actor.Animation(PLAYER_ACTOR) == "walk_civi"  
-actor.Animation(PLAYER_ACTOR) == "Swim_Tread"
+
+if
+$ZOMBIE_RUN_SPEED > 0.0
+then 
+gosub @PLAYER_IS_RUNNING_OR_WALKING_CHECK   
+if 
+0@ == 2 //run
     then
-    if or
-    80E1: not key_pressed 0 16
-    0818:  actor PLAYER_ACTOR in_air
-        then  
+    if
+    $FATIGUE_LEVEL >= 50.0
+        then
+        $FATIGUE_LEVEL -= 1.0        
+        wait 350            
+        else
         if
-        not $FATIGUE_LEVEL < 52.0
+        $FATIGUE_LEVEL >= 25.0
             then
-            $FATIGUE_LEVEL -= 1.0
+            $FATIGUE_LEVEL -= 0.5
+            if
+            $FATIGUE_LEVEL < 25.0
+            then
+            $FATIGUE_LEVEL = 25.0
+            end
+            
             wait 350
+            else                                
+            wait 530
+            $FATIGUE_SET = 0.8        
+            0059: $FATIGUE_LEVEL += $FATIGUE_SET // (float)
+            0069: $FATIGUE_SET *= $FATIGUE_PLUS_EXTRA // (float)
+            0059: $FATIGUE_LEVEL += $FATIGUE_SET // (float)  
+            end            
+        end
+    else
+    if 
+    0@ == 1 //walk
+        then
+        if or
+        80E1: not key_pressed 0 16
+        0818:  actor PLAYER_ACTOR in_air
+            then  
+            if
+            $FATIGUE_LEVEL >= 5.0
+                then
+                $FATIGUE_LEVEL -= 2.0
+                if
+                $FATIGUE_LEVEL < 5.0
+                then
+                $FATIGUE_LEVEL = 5.0
+                end
+                
+                wait 350
+                else
+                wait 530
+                $FATIGUE_SET = 0.4        
+                0059: $FATIGUE_LEVEL += $FATIGUE_SET // (float)
+                0069: $FATIGUE_SET *= $FATIGUE_PLUS_EXTRA // (float)
+                0059: $FATIGUE_LEVEL += $FATIGUE_SET // (float)  
+                end
             end
         end
     end
-    
-if or
-actor.Animation(PLAYER_ACTOR) == "GunCrouchBwd"
-actor.Animation(PLAYER_ACTOR) == "GunCrouchFwd"
+end
+
+if
+$ZOMBIE_RUN_SPEED <= 0.0
     then
-    if or
-    80E1: not key_pressed 0 16
-    0818:  actor PLAYER_ACTOR in_air
-        then  
-        if
-        not $FATIGUE_LEVEL < 52.0
+    gosub @PLAYER_IS_RUNNING_OR_WALKING_CHECK
+    if
+    0@ == 2 //run
+        then
+        wait 530
+        $FATIGUE_SET = 0.8        
+        0059: $FATIGUE_LEVEL += $FATIGUE_SET // (float)
+        0069: $FATIGUE_SET *= $FATIGUE_PLUS_EXTRA // (float)
+        0059: $FATIGUE_LEVEL += $FATIGUE_SET // (float)  
+        $SATIETY_SET = 0.1
+        0061: $SATIETY_LEVEL -= $SATIETY_SET // (float)
+        0069: $SATIETY_SET *= $SATIETY_MINUS_EXTRA // (float)
+        0061: $SATIETY_LEVEL -= $SATIETY_SET // (float)
+        else
+        if and
+        0@ == 1 //walk
+        $FATIGUE_LEVEL >= 25.0                            
             then
-            $FATIGUE_LEVEL -= 1.0
-            wait 350
-            end
-        end
-    end    
-    
-if or
-actor.Animation(PLAYER_ACTOR) == "FatRun"
-actor.Animation(PLAYER_ACTOR) == "FatRun_armed"
-actor.Animation(PLAYER_ACTOR) == "FatRun_Csaw"
-actor.Animation(PLAYER_ACTOR) == "FatRun_Rocket"
-actor.Animation(PLAYER_ACTOR) == "MuscleRun"
-actor.Animation(PLAYER_ACTOR) == "MuscleRun_armed"
-actor.Animation(PLAYER_ACTOR) == "Mscle_run_Csaw"
-actor.Animation(PLAYER_ACTOR) == "Mscle_rckt_run"
-    then
-    if or
-    80E1: not key_pressed 0 16
-    0818:  actor PLAYER_ACTOR in_air
-        then  
-        if
-        not $FATIGUE_LEVEL < 52.0
+            $FATIGUE_LEVEL -= 1.25
+            if
+            $FATIGUE_LEVEL < 25.0
             then
-            $FATIGUE_LEVEL -= 1.0
-            wait 350
+            $FATIGUE_LEVEL = 25.0
             end
+            
+            wait 350
+            end 
         end
-    end            
-    
+    end
+                       
 if and
 $FATIGUE_LEVEL > 89.9
 $FATIGUE_STATUS == 0
@@ -630,11 +706,19 @@ $FATIGUE_STATUS == 1
 
 if
 $FATIGUE_STATUS == 1
+    then    
+    
+    if and
+    actor.Animation(PLAYER_ACTOR) == "Swim_Tread"
+    not actor.Animation(PLAYER_ACTOR) == "Swim_Breast"
+    not actor.Animation(PLAYER_ACTOR) == "SWIM_crawl"
     then
+    jump to @FATIGUE_EXIT
+    end
+    
     if or
     actor.Driving(PLAYER_ACTOR)
-    02A0:   actor PLAYER_ACTOR stopped
-    actor.Animation(PLAYER_ACTOR) == "Swim_Tread"   
+    02A0:   actor PLAYER_ACTOR stopped       
         then
         :FATIGUE_EXIT
         if
@@ -700,39 +784,9 @@ actor.Animation(PLAYER_ACTOR) == "Swim_Under"
     0069: $SATIETY_SET *= $SATIETY_MINUS_EXTRA // (float)
     0061: $SATIETY_LEVEL -= $SATIETY_SET // (float)
     end
-    
+        
 if and
-actor.Animation(PLAYER_ACTOR) == "walkst_csaw_right"
-8818: not  actor PLAYER_ACTOR in_air
-    then
-    wait 770
-    $FATIGUE_SET = 0.8
-    0059: $FATIGUE_LEVEL += $FATIGUE_SET // (float)
-    0069: $FATIGUE_SET *= $FATIGUE_PLUS_EXTRA // (float)
-    0059: $FATIGUE_LEVEL += $FATIGUE_SET // (float)
-    $SATIETY_SET = 0.50
-    0061: $SATIETY_LEVEL -= $SATIETY_SET // (float)
-    0069: $SATIETY_SET *= $SATIETY_MINUS_EXTRA // (float)
-    0061: $SATIETY_LEVEL -= $SATIETY_SET // (float)
-    end
-    
-if and
-actor.Animation(PLAYER_ACTOR) == "run_csaw_right"
-8818: not  actor PLAYER_ACTOR in_air
-    then
-    wait 770
-    $FATIGUE_SET = 1.0
-    0059: $FATIGUE_LEVEL += $FATIGUE_SET // (float)
-    0069: $FATIGUE_SET *= $FATIGUE_PLUS_EXTRA // (float)
-    0059: $FATIGUE_LEVEL += $FATIGUE_SET // (float)
-    $SATIETY_SET = 0.70
-    0061: $SATIETY_LEVEL -= $SATIETY_SET // (float)
-    0069: $SATIETY_SET *= $SATIETY_MINUS_EXTRA // (float)
-    0061: $SATIETY_LEVEL -= $SATIETY_SET // (float)
-    end
-    
-if and
-actor.Animation(PLAYER_ACTOR) == "LIMP"
+actor.Animation(PLAYER_ACTOR) == "LIMP" //бег с ракетницей
 8818: not  actor PLAYER_ACTOR in_air
     then
     wait 770
@@ -744,8 +798,8 @@ actor.Animation(PLAYER_ACTOR) == "LIMP"
     0061: $SATIETY_LEVEL -= $SATIETY_SET // (float)
     0069: $SATIETY_SET *= $SATIETY_MINUS_EXTRA // (float)
     0061: $SATIETY_LEVEL -= $SATIETY_SET // (float)
-    end        
-
+    end
+                
 if
 00E1:   player 0 pressed_key 16
     then
@@ -788,32 +842,23 @@ if
     end                            
 
 if or
-actor.Animation(PLAYER_ACTOR) == "run_csaw"
-actor.Animation(PLAYER_ACTOR) == "FatRun_Csaw"
-actor.Animation(PLAYER_ACTOR) == "Mscle_run_Csaw"  
-    then
-    wait 770
-    $FATIGUE_SET = 0.7
-    0059: $FATIGUE_LEVEL += $FATIGUE_SET // (float) 
-    0069: $FATIGUE_SET *= $FATIGUE_PLUS_EXTRA // (float)
-    0059: $FATIGUE_LEVEL += $FATIGUE_SET // (float) 
-    $SATIETY_SET = 0.6
-    0061: $SATIETY_LEVEL -= $SATIETY_SET // (float)
-    0069: $SATIETY_SET *= $SATIETY_MINUS_EXTRA // (float)
-    0061: $SATIETY_LEVEL -= $SATIETY_SET // (float)
-    end
-
-if or
 actor.Animation(PLAYER_ACTOR) == "sprint_civi"
 actor.Animation(PLAYER_ACTOR) == "MuscleSprint"
 actor.Animation(PLAYER_ACTOR) == "FatSprint"  
-actor.Animation(PLAYER_ACTOR) == "SWIM_crawl"  
+actor.Animation(PLAYER_ACTOR) == "SWIM_crawl"
+actor.Animation(PLAYER_ACTOR) == "walkst_csaw_right"
+actor.Animation(PLAYER_ACTOR) == "run_csaw_right"  
     then
     if
     8818: not  actor PLAYER_ACTOR in_air
         then
         wait 530
         $FATIGUE_SET = 0.8
+        if
+        $ZOMBIE_RUN_SPEED <= 0.0
+        then
+        $FATIGUE_SET *= 2.0
+        end
         
         if and
         $UNITED_VC_FLAG == 1
@@ -1172,3 +1217,102 @@ actor.Animation(PLAYER_ACTOR) == "FightB_4"
     end
     
 jump to @FATIGUE_IDLE
+
+:PLAYER_IS_RUNNING_OR_WALKING_CHECK
+
+0@ = 0
+
+0A96: 1@ = actor PLAYER_ACTOR struct
+0A8E: 1@ = 1@ + 0x534 //RUN STATE
+0A8D: 2@ = read_memory 1@ size 4 virtual_protect 1
+06AC: 3@ = actor PLAYER_ACTOR movement_speed
+//0AD1: show_formatted_text_highpriority "RUN STATE %d, movement speed %f" time 2000 2@ 3@
+if or
+2@ == 6
+actor.Animation(PLAYER_ACTOR) == "GunCrouchBwd"
+actor.Animation(PLAYER_ACTOR) == "GunCrouchFwd"
+then
+0@ = 2 //run
+end
+
+if and
+2@ == 6
+3@ < 3.0
+then
+0@ = 1 //walk
+end
+
+if 
+0E46: is_char_using_gun PLAYER_ACTOR
+then
+0@ = 1 //walk
+end
+
+if and
+actor.Animation(PLAYER_ACTOR) == "Swim_Tread"
+not actor.Animation(PLAYER_ACTOR) == "Swim_Breast"
+not actor.Animation(PLAYER_ACTOR) == "SWIM_crawl"
+then
+0@ = 2 //run
+end
+
+return
+
+0@ = 0
+
+if or
+actor.Animation(PLAYER_ACTOR) == "run_armed"
+actor.Animation(PLAYER_ACTOR) == "run_1armed"  
+actor.Animation(PLAYER_ACTOR) == "run_csaw"
+actor.Animation(PLAYER_ACTOR) == "run_rocket" 
+actor.Animation(PLAYER_ACTOR) == "run_player" 
+actor.Animation(PLAYER_ACTOR) == "Swim_Tread"
+then
+0@ = 2
+end
+
+if or
+actor.Animation(PLAYER_ACTOR) == "MuscleRun_armed"
+actor.Animation(PLAYER_ACTOR) == "Mscle_rckt_run"
+actor.Animation(PLAYER_ACTOR) == "Mscle_run_Csaw" 
+actor.Animation(PLAYER_ACTOR) == "FatRun_armed"
+actor.Animation(PLAYER_ACTOR) == "FatRun_Csaw"
+actor.Animation(PLAYER_ACTOR) == "FatRun_Rocket" 
+then
+0@ = 2
+end
+
+if or
+actor.Animation(PLAYER_ACTOR) == "walk_civi"
+actor.Animation(PLAYER_ACTOR) == "walk_csaw_right"  
+actor.Animation(PLAYER_ACTOR) == "WALK_armed"
+actor.Animation(PLAYER_ACTOR) == "WALK_csaw"
+actor.Animation(PLAYER_ACTOR) == "WALK_player"
+actor.Animation(PLAYER_ACTOR) == "WALK_rocket" 
+actor.Animation(PLAYER_ACTOR) == "AssWalk"
+actor.Animation(PLAYER_ACTOR) == "DckWalk" 
+then
+0@ = 1
+end
+
+if or
+actor.Animation(PLAYER_ACTOR) == "MuscleWalk"
+actor.Animation(PLAYER_ACTOR) == "MuscleWalk_armed"
+actor.Animation(PLAYER_ACTOR) == "Musclewalk_Csaw"
+actor.Animation(PLAYER_ACTOR) == "Musclewalk_rocket"
+then
+0@ = 1
+end
+
+if or
+actor.Animation(PLAYER_ACTOR) == "FatWalk"
+actor.Animation(PLAYER_ACTOR) == "FatWalk_armed"
+actor.Animation(PLAYER_ACTOR) == "FatWalk_Csaw"
+actor.Animation(PLAYER_ACTOR) == "FatWalk_Rocket"
+actor.Animation(PLAYER_ACTOR) == "GunCrouchBwd"
+actor.Animation(PLAYER_ACTOR) == "GunCrouchFwd"
+then
+0@ = 1
+end
+    
+return    
