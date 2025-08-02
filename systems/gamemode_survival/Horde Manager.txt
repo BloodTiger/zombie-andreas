@@ -156,8 +156,9 @@ not $ZOMBIES_HORDE == 1
         end
     end
 
-if
+if or
 001C:   $HORDE_OFF_TIMER_COUNTER > $HORDE_TIME // (int)
+$ZOMBIES_HORDE == 1
 jf @RANDOM_ZOMBIE_HORDE_OFF_CHECK
 
 0842: 0@ = player PLAYER_CHAR town_number
@@ -402,12 +403,29 @@ gosub @WTH_HRD_COORD_SET
 while true
 wait 0
 
+0089: 31@ = $SOUNDS_VOLUME // (float)
+31@ *= 2.0
+Audiostream.Volume(22@) = 31@
+
 if and
 $WITCH_SPAWNED == 1
 32@ > 2000
     then
     $SPAWN_WITCH_ON_COORD = 0
     SPEC_INF_ONLY_ONE_INSTANSE_SPAWN_FLAG = 0
+    
+    repeat
+    wait 0
+    
+    0089: 31@ = $SOUNDS_VOLUME // (float)
+    31@ *= 2.0
+    Audiostream.Volume(22@) = 31@
+    
+    0AB9: get_mp3 22@ state_to 0@
+    until 0@ == -1
+    
+    audiostream.Release(22@)
+    
     end_thread
     end
 
@@ -460,6 +478,15 @@ if and
 8AE2: 30@ = random_vehicle_near_point 2@ 3@ 4@ in_radius 10.0 find_next 0 pass_wrecked 0 //IF and SET
 8AE1: 31@ = random_actor_near_point 2@ 3@ 4@ in_radius 5.0 find_next 0 pass_deads 0 //IF and SET 
 jf @WTH_HRD_COORD_SET
+
+22@ = Audiostream.Load3D("AUDIO\SOUNDS\EXTRA\witch_horde(FoxPoshelNahui).mp3")
+Audiostream.SetPosition(22@,2@, 3@, 4@) //ZXY (old, XYZ new)
+Audiostream.PerformAction(22@,PLAY)
+Audiostream.Loop(22@,0)
+0509: 23@ = distance_between_XY 2@ 3@ and_XY 27@ 28@
+2506: SET_AUDIO_STREAM_SOURCE_SIZE 22@ 23@
+//018A: 1@ = create_checkpoint_at 2@ 3@ 4@
+
 4@ = -100.0
 
 SPEC_INF_ONLY_ONE_INSTANSE_SPAWN_FLAG = 6

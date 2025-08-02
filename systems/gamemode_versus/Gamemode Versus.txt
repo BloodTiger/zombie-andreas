@@ -1,6 +1,8 @@
 :GMD_VRS
 thread 'GMD_VRS'
 
+0AF1: write_int 1 to_ini_file "config.ini" section "LAUNCHER" key "RESTART_INTO_GAMEMODE_IF_CRASHED"
+
 0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "GAMEMODE_AUTOSELECT"
 0AF1: write_int 4 to_ini_file "saves/ZACM.set" section "SCR" key "GAMEMODE_AUTOSELECT_NUMBER"
 
@@ -39,8 +41,9 @@ FRIENDLY_FIRE_ON = 1
 
 0629: change_integer_stat 252 to 5
 
-if
+if and
 UNITED_MAP == 0
+not CUSTOM_MAP_FLAG == 1
 then
 0776: create_objects_in_object_group "gatesC"
 end
@@ -51,6 +54,8 @@ wait 0
 0AF0: get_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "PIT"
 
 random_int $INF_SIDE 0 2
+$INF_SIDE = 1 
+break
 
 if
 803C: not  $INF_SIDE == 1@  // (int)
@@ -107,7 +112,7 @@ $WITCH_INSTANT_AGR = 1
 $INF_MODE_COLOR_R = 255
 $INF_MODE_COLOR_G = 18
 $INF_MODE_COLOR_B = 18
-$INF_MODE_COLOR_A = 50  
+$INF_MODE_COLOR_A = 60  
                 
 $SAVESTATUS = 0 
     
@@ -214,6 +219,18 @@ else
 end
 
 end   
+
+if
+CUSTOM_MAP_SPAWN_PLAYER_ON_CAR_PATHS == 1
+then
+02C1: store_to 20@ 21@ 0.0 car_path_coords_closest_to 20@ 21@ 0.0
+end
+
+if
+CUSTOM_MAP_SPAWN_PLAYER_ON_PED_PATHS == 1 
+then
+02C0: store_to 20@ 21@ 0.0 ped_path_coords_closest_to 20@ 21@ 0.0
+end  
 
 Actor.PutAt(PLAYER_ACTOR, 20@, 21@, 0.0)
 renderer 20@ 21@
@@ -380,7 +397,7 @@ wait 0
 if
 UNITED_MAP == 0
 then
-0209: $RANDOM_MODE_MODEL = random_int_in_ranges 7 285
+0209: $RANDOM_MODE_MODEL = random_int_in_ranges RANDOM_PED_MIN_ID RANDOM_PED_MAX_ID
 else
 
 if
@@ -414,9 +431,8 @@ if
 jf @2CHECKING_MODEL
 
 0AD3: v$FP_FILE = format "%d" $RANDOM_MODE_MODEL
-0AF0: 11@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key v$FP_FILE
 if
-not 11@ == 1
+8AF0: not 11@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key v$FP_FILE
 jf @2CHECKING_MODEL
 
 if or
@@ -424,6 +440,7 @@ $FP_ON == 1
 $MUTATION_ACTIVE == 3
 then
 0AD3: v$FP_FILE = format "%d" $RANDOM_MODE_MODEL
+1@ = 0
 0AF0: 1@ = get_int_from_ini_file "data/skins.ini" section "SKINS" key v$FP_FILE
 if or
 not 1@ == 1
@@ -493,12 +510,18 @@ random_int 11@ MIN_WEAP_GEN to MAX_WEAP_GEN
 end
 
 if and
-not 11@ == WEAP_GEN_SET
+8E4D: not random_percent WEAP_GEN_SET
 UNITED_MAP == 0
 then
 0209: $RANDOM_WEAPON = random_int_in_ranges 22 35 
 else
 0209: $RANDOM_WEAPON = random_int_in_ranges MIN_WEAPON_NUM MAX_WEAPON_NUM
+if and
+EXTRAWEP_FLAG_AND_MAXNUM >= 225
+0E4D: random_percent EXTRAWEP_GENERATE_CHANCE
+    then    
+    0209: $RANDOM_WEAPON = random_int_in_ranges 225 EXTRAWEP_FLAG_AND_MAXNUM
+    end
 end
 
 if
@@ -563,6 +586,32 @@ end
 end
 
 end
+
+////////////////////////////////////////////////////
+
+if
+$RANDOM_WEAPON >= 225
+    then
+    0AD3: v$SND2_FILE = format "%d" $RANDOM_WEAPON
+    0AF0: $TEMPVAR_FLOAT_1 = get_int_from_ini_file "data\SAExtraweps.ini" section v$SND2_FILE key "DO_NOT_GENERATE_AS_START_WEAPON"
+    if    
+    $TEMPVAR_FLOAT_1 == 1    
+        then
+        $RANDOM_WEAPON = 119
+        else
+        if
+        0AF0: $TEMPVAR_FLOAT_1 = get_int_from_ini_file "data\SAExtraweps.ini" section v$SND2_FILE key "GENERATE_DODGE_PERCENT"    
+            then
+            if
+            0E4D: random_percent $TEMPVAR_FLOAT_1
+                then
+                $RANDOM_WEAPON = 119
+                end
+            end
+        end 
+    end
+    
+////////////////////////////////////////////////////
 
 if and
 not $RANDOM_WEAPON == 19 

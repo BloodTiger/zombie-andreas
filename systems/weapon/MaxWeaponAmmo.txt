@@ -1,9 +1,19 @@
 const
 MAX_AMMO_GUN_STRING = 10@v
+MAX_AMMO_EXTRAWEPS_ENABLED = 31@
+MAX_AMMO_EXTRAWEPS_RANGE = 30@
 end
 
 :MAX_AMM
 thread 'MAX_AMM'
+
+0AF0: MAX_AMMO_EXTRAWEPS_ENABLED = get_int_from_ini_file "data\SAExtraweps.ini" section "SETTINGS" key "ENABLED"
+if
+MAX_AMMO_EXTRAWEPS_ENABLED == 1
+    then
+    0AF0: MAX_AMMO_EXTRAWEPS_RANGE = get_int_from_ini_file "data\SAExtraweps.ini" section "SETTINGS" key "TOTAL_COUNT"
+    MAX_AMMO_EXTRAWEPS_RANGE += 224    
+    end
 
 if or
 $ALLOW_AMMO_LIMIT == 0
@@ -18,6 +28,55 @@ create_thread @MAX_AM2
 
 while true
 wait 250
+
+if
+MAX_AMMO_EXTRAWEPS_ENABLED == 1
+    then
+    wait 250
+    
+    for 0@ = 225 to MAX_AMMO_EXTRAWEPS_RANGE
+            
+    0AD3: v$SND2_FILE = format "%d" 0@    
+    041A: 1@ = actor PLAYER_ACTOR weapon 0@ ammo
+                
+    //gosub @MAX_WEAPON_AMMO_CHECK2
+    0AF0: 2@ = get_int_from_ini_file "data\SAExtraweps.ini" section v$SND2_FILE key "MAX_AMMO"        
+    gosub @MAX_WEAPON_AMMO_ADD_CHECK
+    if
+    02D8:   actor PLAYER_ACTOR current_weapon == 0@
+    then    
+    008A: GROUP_COMMAND_GO_ATTACK = 2@ // (int)
+    end
+                                                        
+    if and
+    001D:   1@ > 2@  // (int)    
+    not 0@ == 46 
+    not actor.Driving(PLAYER_ACTOR)
+    8A32: not  actor PLAYER_ACTOR on_turret_of_car
+    $ALLOW_AMMO_LIMIT == 1
+        then
+        0085: 3@ = 1@ // (int)
+        0085: 4@ = 2@ // (int)
+        0062: 3@ -= 4@  // (int)
+        017B: set_actor PLAYER_ACTOR weapon 0@ ammo_to 2@            
+//        gosub @MAX_WEAPON_AMMO_CHECK
+        0AF4: MAX_AMMO_GUN_STRING = read_string_from_ini_file "modloader\ZA COMPLETE USER MODS FOLDER\ExtraWeaponsPack\wepnames.ini" section "WEPNAMES" key v$SND2_FILE
+        if
+        8847: not  string MAX_AMMO_GUN_STRING empty // @v
+            then                    
+            0384: show_text_1string GXT 'GAME207' string MAX_AMMO_GUN_STRING time 2500 1
+            04C4: store_coords_to 25@ 26@ 27@ from_actor PLAYER_ACTOR with_offset 0.0 -1.0 0.0
+            0781: get_weapon_with_ID 0@ model_to 4@
+            if
+            not $SIMULATING_FLAG == 1
+                then
+                032B: 1@ = create_weapon_pickup 4@ group 4 ammo 3@ at 25@ 26@ 27@
+                end
+            end                           
+        end
+    end
+    
+    end
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -437,7 +496,7 @@ end
 if
 0@ == 93 //Quadrocket
 then
-06D2: MAX_AMMO_GUN_STRING = "GAME416"
+06D2: MAX_AMMO_GUN_STRING = "GAME475"
 end
 
 if

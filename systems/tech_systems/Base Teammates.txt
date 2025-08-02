@@ -392,6 +392,7 @@ TBASE_CREATED_FLAG == 1
         PLAYER_CANT_SPEAK_WITH_LEADER_FLAG == 0
         8457: not  player PLAYER_CHAR aiming_at_actor $ARMY69_2[0@]
         RADIO_TEXTURE_RENDER_NUMBER == 0
+        87D6: not  0@ == CAMP_RD_NUM // @ == $ (int)
             then   
             if and
             0364:   actor $ARMY69_2[0@] spotted_actor PLAYER_ACTOR
@@ -11126,6 +11127,7 @@ end
 random_int 0@ = MIN_SKIN_GEN MAX_SKIN_GEN
 if and
 0@ == SKIN_GEN_SET
+not CUSTOM_MAP_FLAG == 1
 UNITED_MAP == 0
 BASE_TEAMMATES_TYPE == 0
     then
@@ -11181,7 +11183,7 @@ then
 if
 BASE_TEAMMATES_TYPE == 0
 then
-0209: 0@ = random_int_in_ranges 7 285
+0209: 0@ = random_int_in_ranges RANDOM_PED_MIN_ID RANDOM_PED_MAX_ID
 else
 
 if
@@ -11361,9 +11363,8 @@ $GAMEMODE_WAR == 0
 not CARMA_VERY_BAD_FLAG == 1
 then
 0AD3: 2@v = format "%d" 0@
-0AF0: 1@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key 2@v
 if
-not 1@ == 1
+8AF0: not 1@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key 2@v
 jf @RANDOM_BASE_TEAMMATE_CHECKING_MODEL
 end   
 
@@ -11467,11 +11468,17 @@ random_int 11@ MIN_WEAP_GEN to MAX_WEAP_GEN
 end
 
 if
-not 11@ == WEAP_GEN_SET
+8E4D: not random_percent WEAP_GEN_SET
 then
 0209: 16@ = random_int_in_ranges 22 35 
 else
 0209: 16@ = random_int_in_ranges MIN_WEAPON_NUM MAX_WEAPON_NUM
+if and
+EXTRAWEP_FLAG_AND_MAXNUM >= 225
+0E4D: random_percent EXTRAWEP_GENERATE_CHANCE
+    then    
+    0209: 16@ = random_int_in_ranges 225 EXTRAWEP_FLAG_AND_MAXNUM
+    end
 end
 
 if
@@ -11671,6 +11678,30 @@ end
 
 ////////////////////////////////////////////////////
 
+if
+16@ >= 225
+    then
+    0AD3: v$SND2_FILE = format "%d" 16@
+    0AF0: $TEMPVAR_FLOAT_1 = get_int_from_ini_file "data\SAExtraweps.ini" section v$SND2_FILE key "DO_NOT_GENERATE_CAMP_SURVS"
+    if    
+    $TEMPVAR_FLOAT_1 == 1    
+        then
+        16@ = 21
+        else
+        if
+        0AF0: $TEMPVAR_FLOAT_1 = get_int_from_ini_file "data\SAExtraweps.ini" section v$SND2_FILE key "GENERATE_DODGE_PERCENT"    
+            then
+            if
+            0E4D: random_percent $TEMPVAR_FLOAT_1
+                then
+                16@ = 21
+                end
+            end
+        end 
+    end
+    
+//////////////////////////////////////////////////// 
+
 if or
 16@ == 22
 16@ == 24
@@ -11792,6 +11823,7 @@ if or
                                             16@ == 103
                                             16@ == 104
                                             16@ == 105
+                                            16@ >= 225
                                                 then       
                                                 else
                                                 jump to @RANDOM_BASE_TEAMMATE_WEAPON_CREATE
@@ -13189,12 +13221,17 @@ then
 06AB: set_actor $ARMY69_2[0@] all_weapons_hidden 1
 else
 
+if
+87D6: not   0@ == CAMP_RD_NUM // @ == $ (int)
+then
 06AB: set_actor $ARMY69_2[0@] all_weapons_hidden 0
+end
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-if
+if and
 803A: not  $ARMY69_2[0@] == PLAY_TALK_ACTOR // (int)
+87D6: not  0@ == CAMP_RD_NUM // @ == $ (int)
 then
 
 if or
@@ -13408,6 +13445,35 @@ not BASE_TEAMMATES_TYPE == 25
     
 else
 
+//if
+//07D6:   0@ == CAMP_RD_NUM // @ == $ (int)
+//then
+//пиздец я даун.
+//0A96: 2@ = actor $ARMY69_2[0@] struct
+//2@ += 0x70C //m_nSavedWeapon
+//0A8D: 1@ = read_memory 2@ size 4 virtual_protect 0
+//if
+//1@ == 55 //WEAPON_UNIDENTIFIED
+//    then
+//    
+//    for 4@ = 3 to 7
+//        
+//    04B8: get_weapon_data_from_actor $ARMY69_2[0@] slot 4@ weapon 2@ ammo 1@ model 19@
+//    if and
+//    1@ > 0
+//    not 19@ == -1
+//        then
+//        0A96: 1@ = actor $ARMY69_2[0@] struct
+//        1@ += 0x70C //m_nSavedWeapon
+//        0A8C: write_memory 1@ size 4 value 2@ virtual_protect 0
+//        end
+//        
+//    end
+//    
+//    0AD1: show_formatted_text_highpriority "dogovornyachok when?! when?!" time 10000
+//    end
+//end
+
 0AB9: get_mp3 CAMP_RD_SND state_to 1@
 random_int 2@ 0 20000
 if
@@ -13469,8 +13535,33 @@ end
 $SOUNDS_VOLUME22 *= 0.25
 Audiostream.Volume(CAMP_RD_SND) = $SOUNDS_VOLUME22
 
+//Adjust Music Volume
+if
+0EE4: locate_char_distance_to_char PLAYER_ACTOR char $ARMY69_2[CAMP_RD_NUM] radius 5.0
+    then
+    0A8D: 3@ = read_memory 0xBA6798 size 1 virtual_protect 0
+    0093: 3@ = integer 3@ to_float
+    3@ /= 64.0
+    $SOUNDS_VOLUME22 *= 5.0    
+    0065: 3@ -= $SOUNDS_VOLUME22  // (float)
+    if
+    3@ > 1.0
+    then
+    3@ = 1.0
+    end
+        
+    if
+    3@ < 0.0
+    then
+    3@ = VERO_TIPA_VOLUME
+    end
+    
+    0088: $MUSIC_VOLUME = 3@ // (float)
+    //0AD1: show_formatted_text_highpriority "ZAPIS VOLUME %f, MUSIC VOLUME %f" time 2000 $SOUNDS_VOLUME22 $MUSIC_VOLUME
+    end
+
 else
-Audiostream.Volume(CAMP_RD_SND) = 0.0
+Audiostream.Volume(CAMP_RD_SND) = VERO_TIPA_VOLUME
 end
 
 end
@@ -13569,30 +13660,30 @@ end
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-if
-803A: not  $ARMY69_2[0@] == PLAY_TALK_ACTOR // (int)
-then
-
-if or
-02D8:   actor $ARMY69_2[0@] current_weapon == 0
-02D8:   actor $ARMY69_2[0@] current_weapon == 46
-then
-
-for 4@ = 2 to 7
-
-04B8: get_weapon_data_from_actor $ARMY69_2[0@] slot 4@ weapon 2@ ammo 1@ model 19@
-if and
-1@ > 0
-not 19@ == -1
-then
-01B9: set_actor $ARMY69_2[0@] armed_weapon_to 2@
-end
-
-end
-                
-end
-
-end
+//if
+//803A: not  $ARMY69_2[0@] == PLAY_TALK_ACTOR // (int)
+//then
+//
+//if or
+//02D8:   actor $ARMY69_2[0@] current_weapon == 0
+//02D8:   actor $ARMY69_2[0@] current_weapon == 46
+//then
+//
+//for 4@ = 2 to 7
+//
+//04B8: get_weapon_data_from_actor $ARMY69_2[0@] slot 4@ weapon 2@ ammo 1@ model 19@
+//if and
+//1@ > 0
+//not 19@ == -1
+//then
+//01B9: set_actor $ARMY69_2[0@] armed_weapon_to 2@
+//end
+//
+//end
+//                
+//end
+//
+//end
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -13730,7 +13821,7 @@ then
 CAMP_RD_SND = Audiostream.Load3D("AUDIO\SOUNDS\recorder\reco20.mp3")
 end
 
-audiostream.LinkToActor(CAMP_RD_SND,$CAMP_ACTOR[CAMP_RD_NUM])
+audiostream.LinkToActor(CAMP_RD_SND,$ARMY69_2[CAMP_RD_NUM])
 Audiostream.PerformAction(CAMP_RD_SND, PLAY)
 Audiostream.Volume(CAMP_RD_SND) = $SOUNDS_VOLUME
 Audiostream.Loop(CAMP_RD_SND, 0)

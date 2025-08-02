@@ -146,7 +146,7 @@ if
     not ANTIKUKLA_STANDING_ON_CAR_FLAG == 1 //игнорируем все нахуй если пед стоит на транспорте
     not 1@ == 241 //ИЛИ находится в воздухе
     not 1@ == 242 //ИЛИ приземляется
-        then
+        then  
         
         if
         1@ == 834 //ИЛИ вываливается из авто
@@ -422,6 +422,20 @@ if
                 end    
             end
         else
+        
+//        if or 
+//        actor.Animation(ANTIKUKLA_ACTOR) == "CAR_dead_LHS"
+//        actor.Animation(ANTIKUKLA_ACTOR) == "CAR_dead_RHS"
+//        then
+//        if
+//        844B: not actor ANTIKUKLA_ACTOR on_foot
+//            then
+//            1@ = actor.CurrentCar(ANTIKUKLA_ACTOR)
+//            create_thread @ANTKUK3 ANTIKUKLA_ACTOR 1@ ANTIKUKLA_DO_POSHEL_NAHUI_FROM_CAR_SEAT_NUM
+//            end_thread
+//            end
+//        end
+        
         if
         04AD:   actor ANTIKUKLA_ACTOR in_water
             then
@@ -647,6 +661,8 @@ end_thread
 :ANTKUK3
 thread 'ANTIKUK3'
 
+//3@ = marker.CreateAboveActor(ANTIKUKLA_ACTOR)
+
 while true
 wait 0
 
@@ -659,15 +675,45 @@ if and
         then
         if
         actor.Dead(ANTIKUKLA_ACTOR)
-            then                     
+            then    
+            
+            while true //Пед сдох в стоячей тачке, он больше особо не нужен, пускай дропается из неё при открывании двери
+            wait 0
+            
+            if
+            actor.Animation(ANTIKUKLA_ACTOR) == "FLOOR_hit"
+            then     
+            09C9: disembark_actor ANTIKUKLA_ACTOR from_car 1@ and_freeze_actor_position
+            0430: put_actor ANTIKUKLA_ACTOR into_car 1@ passenger_seat 2@
+            end                        
+            
+            if and
+            056D:   actor ANTIKUKLA_ACTOR defined
+            056E:   car 1@ defined
+                then
+                0085: 3@ = 2@ // (int)
+                3@ += 3
+                095F: get_car 1@ door 3@ angle_to 4@
+//                0AD1: show_formatted_text_highpriority "waiting for shit, door %d angle is %f" time 2000 3@ 4@
+                if
+                4@ > 0.0
+                    then
+                    break
+                    end
+                else
+                end_thread
+                end
+            
+            end
+                             
             0489: set_actor ANTIKUKLA_ACTOR muted 1
             094E: set_actor ANTIKUKLA_ACTOR mute_pain_audio 1
             0982: set_actor ANTIKUKLA_ACTOR stay_in_car_when_dead 0
             09C9: disembark_actor ANTIKUKLA_ACTOR from_car 1@ and_freeze_actor_position 
             0430: put_actor ANTIKUKLA_ACTOR into_car 1@ passenger_seat 2@
             0687: clear_actor ANTIKUKLA_ACTOR task
-            0762: AS_actor ANTIKUKLA_ACTOR dies        
-            end_thread
+            0762: AS_actor ANTIKUKLA_ACTOR dies
+            end_thread                                
             end
         else
         if

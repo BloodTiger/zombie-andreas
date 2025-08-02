@@ -17,6 +17,38 @@ end
 :SALVAT
 thread 'SALVAT'
 
+if and
+CUSTOM_MAP_FLAG == 1
+$GAMEMODE_WAR == 0
+then
+
+0AF0: 1@ = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\SALVATION_POINTS.ini" section "SETTINGS" key "COUNT"
+
+if
+1@ > -1
+then
+
+for $SAVE_PLACE_NUMBER = 0 to 1@
+0AD3: v$SND2_FILE = format "SLVPT%d" $SAVE_PLACE_NUMBER
+0AF2: $LIMIT_X1 = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\SALVATION_POINTS.ini" section v$SND2_FILE key "POINT_X"
+0AF2: $LIMIT_Y1 = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\SALVATION_POINTS.ini" section v$SND2_FILE key "POINT_Y"
+0AF2: $LIMIT_Z1 = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\SALVATION_POINTS.ini" section v$SND2_FILE key "POINT_Z"
+
+if
+SURV_SECOND_WAVE_EVACUATION_STARTED == 1
+then
+0@ = marker.CreateIconAndSphere2(19, $LIMIT_X1, $LIMIT_Y1, $LIMIT_Z1)
+else
+0570: 0@ = create_asset_radar_marker_with_icon 19 at $LIMIT_X1 $LIMIT_Y1 $LIMIT_Z1
+018B: set_marker 0@ radar_mode 2
+end
+
+end
+
+end
+
+end
+
 if
 SURV_SECOND_WAVE_EVACUATION_STARTED == 1
 then
@@ -56,7 +88,7 @@ SURV_SECOND_WAVE_EVACUATION_ENDING_FLAG = 0
 
 $RADIO_SOUND = Audiostream.Load("AUDIO\SOUNDS\Radio.mp3") 
 Audiostream.Loop($RADIO_SOUND, 1)  
-Audiostream.Volume($RADIO_SOUND) = 0.0
+Audiostream.Volume($RADIO_SOUND) = VERO_TIPA_VOLUME
 Audiostream.PerformAction($RADIO_SOUND, PLAY)
 
 Audiostream.Loop($RADIO_ON_SOUND,0)
@@ -64,23 +96,24 @@ Audiostream.PerformAction($RADIO_ON_SOUND, PLAY)
 Audiostream.Volume($RADIO_ON_SOUND) = $SOUNDS_VOLUME
 
 /////////////////////Плавное нарастание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int) 
-0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $SOUNDS_VOLUME // (float) 
-
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-
-wait 1 
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int) 
+//0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $SOUNDS_VOLUME // (float) 
+//
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+//
+//wait 1 
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $RADIO_SOUND volume $SOUNDS_VOLUME time 500
 
 ////////////////////////////////////////////////////////
 
@@ -113,23 +146,26 @@ $PANEL_OPEN == 1
 until 001D:   32@ > 3@  // (int)
 
 /////////////////////Плавное затухание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int)
-$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 150
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-
-wait 1
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int)
+//$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 150
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+//
+//wait 1
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $RADIO_SOUND volume 0.0 time 500        
+wait 500
+audiostream.Release($RADIO_SOUND)
 
 /////////////////////////////////////////////////////////////////
 
@@ -162,7 +198,28 @@ end
 /////////////////////////////////////////////////////////////////
 
 :RADIO_SAVE_CHECK
+
+if
+$CHEATS_ON == 1
+then
+wait 0
+
+if
+0ADC:   test_cheat "LATE"
+then
+32@ = 210000
+$CHEAT_CODE_ACTIVATED = 1    
+end
+
+else
 wait 250
+end
+
+if
+CUSTOM_MAP_FLAG == 1
+then
+32@ = 2000
+end
 
 /////////////////////////////////////////////////////////////////
 
@@ -339,9 +396,25 @@ end
 
 ///////////////////////////////////////////////////////////////// 
 
+if and
+not actor.Driving(PLAYER_ACTOR)
+CUSTOM_MAP_FLAG == 1
+0ADC:   test_cheat "EDIT"
+    then
+    1@ = 69692828
+    $CHEAT_CODE_ACTIVATED = 1
+    jump to @RADIO_SAVE_CHECK_CUSTOM
+    end
+
 if 
 $RADIO_HELP_FLAG == 1
 jf @RADIO_SAVE_CHECK
+
+if
+CUSTOM_MAP_FLAG == 1
+then    
+jump to @RADIO_SAVE_CHECK_CUSTOM
+end
 
 if
 UNITED_MAP == 0
@@ -1016,57 +1089,67 @@ end
 
 $RADIO_SOUND = Audiostream.Load("AUDIO\SOUNDS\Radio.mp3") 
 Audiostream.Loop($RADIO_SOUND, 1)  
-Audiostream.Volume($RADIO_SOUND) = 0.0
+Audiostream.Volume($RADIO_SOUND) = VERO_TIPA_VOLUME
 Audiostream.PerformAction($RADIO_SOUND, PLAY)
 
 /////////////////////Плавное нарастание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int) 
-0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $SOUNDS_VOLUME // (float) 
-
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-
-wait 1 
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int) 
+//0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $SOUNDS_VOLUME // (float) 
+//
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+//
+//wait 1 
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $RADIO_SOUND volume $SOUNDS_VOLUME time 500
 
 ////////////////////////////////////////////////////////    
  
 03E5: show_text_box 'INV42' 
 
-32@ = 0
+32@ = 0  
+if
+$CHEATS_ON == 1 
+then
+31@ = 0
+else
 random_int 31@ 20000 60000
+end
 
 repeat
 wait 0          
 until 001D:   32@ > 31@  // (int)
 
 /////////////////////Плавное затухание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int)
-$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 150
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-
-wait 1
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int)
+//$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 150
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+//
+//wait 1
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $RADIO_SOUND volume 0.0 time 500        
+wait 500
+audiostream.Release($RADIO_SOUND)
 
 //////////////////////////////////////////////////////////
 
@@ -1407,7 +1490,12 @@ jump @SAVING_PLACE_PLANE
 
 :SAVING_PLACE_HELICOPTER
 wait 0
+
+if
+not CUSTOM_MAP_FLAG == 1
+then
 04C4: store_coords_to $CAR_X $CAR_Y $CAR_Z from_actor PLAYER_ACTOR with_offset 0.0 300.0 100.0
+end
 
 :CAR_CREATE_SAVE_SALVATION
 if
@@ -1449,12 +1537,21 @@ actor.Health($SAVER) = 1000
 actor.SetImmunities($SAVER,1,1,1,1,1,1)
 036A: put_actor $SAVER in_car $SAVE_CAR_PLACE
 
+if
+not CUSTOM_MAP_FLAG == 1
+then
+
 repeat
 wait 0
 07C0: load_path $SAVE_PATH
 until 07C1:   path $SAVE_PATH available
 
 05EB: assign_car $SAVE_CAR_PLACE to_path $SAVE_PATH
+else                                             
+04A2: set_heli $SAVE_CAR_PLACE fly_to $CAR_DES_X $CAR_DES_Y 0.0 altitude_between 0.0 and $CAR_Z
+0825: set_helicopter $SAVE_CAR_PLACE instant_rotor_start
+end
+
 0338: set_car $SAVE_CAR_PLACE visibility 1
 0337: set_actor $SAVER visibility 1
 
@@ -1469,50 +1566,54 @@ gosub @HORDE_CHECKING
 
 $RADIO_SOUND = Audiostream.Load("AUDIO\SOUNDS\Radio.mp3") 
 Audiostream.Loop($RADIO_SOUND, 1)  
-Audiostream.Volume($RADIO_SOUND) = 0.0
+Audiostream.Volume($RADIO_SOUND) = VERO_TIPA_VOLUME
 Audiostream.PerformAction($RADIO_SOUND, PLAY)
 
 /////////////////////Плавное нарастание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int) 
-0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $SOUNDS_VOLUME // (float) 
-
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-
-wait 1 
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int) 
+//0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $SOUNDS_VOLUME // (float) 
+//
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+//
+//wait 1 
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $RADIO_SOUND volume $SOUNDS_VOLUME time 500
 
 ////////////////////////////////////////////////////////
 
 wait 3000
 
 /////////////////////Плавное затухание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int)
-$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 150
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-
-wait 1
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int)
+//$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 150
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+//
+//wait 1
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $RADIO_SOUND volume 0.0 time 500        
+wait 500
+audiostream.Release($RADIO_SOUND)
 
 //////////////////////////////////////////////////////////
 
@@ -1546,10 +1647,54 @@ jf @RADIO_SAVE_FAILED_HELICOPTER_ACTOR
 if   
 not actor.Dead(PLAYER_ACTOR)
 jf @SAVING_PLACE_FAILED2
+
+if
+not CUSTOM_MAP_FLAG == 1
+then
+
 0819: 0@ = actor $SAVER distance_from_ground   
 if 
 0@ < 5.0
 jf @CHECKING_NEAR_HELICOPTER
+
+else
+
+if 
+01AD:   car $SAVE_CAR_PLACE sphere 0 near_point $CAR_DES_X $CAR_DES_Y radius 10.0 10.0 
+jf @CHECKING_NEAR_HELICOPTER
+
+04DF: set_heli $SAVE_CAR_PLACE lean_and_thrust_limiter 1 
+Car.LockInCurrentPosition($SAVE_CAR_PLACE) = True
+Car.SetSpeedInstantly($SAVE_CAR_PLACE, 2.0)
+wait 1000 
+Car.LockInCurrentPosition($SAVE_CAR_PLACE) = False
+Car.StorePos($SAVE_CAR_PLACE,6@,7@,8@)
+
+repeat
+wait 0
+07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 0
+if 
+not car.Wrecked($SAVE_CAR_PLACE) 
+jf @RADIO_SAVE_FAILED_HELICOPTER
+if
+not actor.Dead($SAVER)  
+jf @RADIO_SAVE_FAILED_HELICOPTER_ACTOR
+if   
+not actor.Dead(PLAYER_ACTOR)
+jf @SAVING_PLACE_FAILED2
+
+0819: 9@ = actor $SAVER distance_from_ground
+if
+9@ > 1.5
+then
+8@ -= 0.35
+0EB4: set_car_coordinates_simple $SAVE_CAR_PLACE position 6@ 7@ 8@
+Car.LockInCurrentPosition($SAVE_CAR_PLACE) = True
+end
+
+until 0104:   actor $SAVER near_actor PLAYER_ACTOR radius 40.0 40.0 2.5 sphere 0 
+
+end
 
 $SAVER_GET_IN_START = 1
 $DELETE_SOUND = 1
@@ -1676,7 +1821,14 @@ gosub @FREND_TELEPORT_IN_HELI_CHECK
 $CASETTE_PLAYING_FLAG = 1 
 gosub @RANDOM_WIN_MUSIC
 
+if
+$MUTE_MUSIC_FLAG == 1
+then
+Audiostream.Volume($WIN_MUSIC) = 0.0
+else
 Audiostream.Volume($WIN_MUSIC) = $MUSIC_VOLUME
+end
+
 Audiostream.Loop($WIN_MUSIC, 0)
 Audiostream.PerformAction($WIN_MUSIC, PLAY)
 $ZOMBIE_SPAWN_ON_COORD = 0
@@ -1688,6 +1840,15 @@ $STATS_CAN_BE_SKIPPED = 0
 
 :CHECKING_STATS1
 wait 0
+
+if
+$MUTE_MUSIC_FLAG == 1
+then
+Audiostream.Volume($WIN_MUSIC) = 0.0
+else
+Audiostream.Volume($WIN_MUSIC) = $MUSIC_VOLUME
+end
+
 gosub @FREND_TELEPORT_IN_HELI_CHECK
 if
 $STATS_CAN_BE_SKIPPED == 1
@@ -1709,31 +1870,43 @@ fade 0 3000
 
 while 32@ < 3100
 wait 0
+
+if
+$MUTE_MUSIC_FLAG == 1
+then
+Audiostream.Volume($WIN_MUSIC) = 0.0
+else
+Audiostream.Volume($WIN_MUSIC) = $MUSIC_VOLUME
+end
+
 $STATS_TOTAL_SHOW_OFF_FLAG = 1
 end
 
 /////////////////////Плавное затухание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $WIN_MUSIC // (int)
-$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-
-wait 1
-
-while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
-wait 0
-end
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $WIN_MUSIC // (int)
+//$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+//
+//wait 1
+//
+//while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+//wait 0
+//end
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $WIN_MUSIC volume 0.0 time 1000        
+wait 1000
+audiostream.Release($WIN_MUSIC)
 
 //////////////////////////////////////////////////////////      
 
@@ -1775,27 +1948,30 @@ $MUSIC_SAVER == -1
     end
 
 /////////////////////Плавное затухание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_SAVER // (int)
-$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-
-wait 1
-
-while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
-wait 0
-end
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_SAVER // (int)
+//$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+//
+//wait 1
+//
+//while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+//wait 0
+//end
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $MUSIC_SAVER volume 0.0 time 500        
+wait 500
+audiostream.Release($MUSIC_SAVER)
 
 return
 
@@ -2218,50 +2394,54 @@ gosub @HORDE_CHECKING
 
 $RADIO_SOUND = Audiostream.Load("AUDIO\SOUNDS\Radio.mp3") 
 Audiostream.Loop($RADIO_SOUND, 1)  
-Audiostream.Volume($RADIO_SOUND) = 0.0
+Audiostream.Volume($RADIO_SOUND) = VERO_TIPA_VOLUME
 Audiostream.PerformAction($RADIO_SOUND, PLAY)
 
 /////////////////////Плавное нарастание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int) 
-0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $SOUNDS_VOLUME // (float) 
-
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-
-wait 1 
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int) 
+//0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $SOUNDS_VOLUME // (float) 
+//
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+//
+//wait 1 
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $RADIO_SOUND volume $SOUNDS_VOLUME time 500
 
 ////////////////////////////////////////////////////////
 
 wait 3000
 
 /////////////////////Плавное затухание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int)
-$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 150
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-
-wait 1
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int)
+//$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 150
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+//
+//wait 1
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $RADIO_SOUND volume 0.0 time 500        
+wait 500
+audiostream.Release($RADIO_SOUND)
 
 //////////////////////////////////////////////////////////
 
@@ -2443,7 +2623,14 @@ until 816B: not  fading
 $CASETTE_PLAYING_FLAG = 1 
 gosub @RANDOM_WIN_MUSIC
 
+if
+$MUTE_MUSIC_FLAG == 1
+then
+Audiostream.Volume($WIN_MUSIC) = 0.0
+else
 Audiostream.Volume($WIN_MUSIC) = $MUSIC_VOLUME
+end
+
 Audiostream.Loop($WIN_MUSIC, 0)
 Audiostream.PerformAction($WIN_MUSIC, PLAY)
 
@@ -2473,6 +2660,14 @@ end
 
 :CHECKING_STATS2
 wait 0
+
+if
+$MUTE_MUSIC_FLAG == 1
+then
+Audiostream.Volume($WIN_MUSIC) = 0.0
+else
+Audiostream.Volume($WIN_MUSIC) = $MUSIC_VOLUME
+end
 
 gosub @FREND_TELEPORT_IN_BOAT_CHECK    
 
@@ -2509,32 +2704,44 @@ fade 0 3000
 
 while 32@ < 3100
 wait 0
+
+if
+$MUTE_MUSIC_FLAG == 1
+then
+Audiostream.Volume($WIN_MUSIC) = 0.0
+else
+Audiostream.Volume($WIN_MUSIC) = $MUSIC_VOLUME
+end
+
 gosub @FREND_TELEPORT_IN_BOAT_CHECK
 $STATS_TOTAL_SHOW_OFF_FLAG = 1
 end
 
 /////////////////////Плавное затухание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $WIN_MUSIC // (int)
-$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-
-wait 1
-
-while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
-wait 0
-end
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $WIN_MUSIC // (int)
+//$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+//
+//wait 1
+//
+//while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+//wait 0
+//end
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $WIN_MUSIC volume 0.0 time 500        
+wait 500
+audiostream.Release($WIN_MUSIC)
 
 //////////////////////////////////////////////////////////      
 
@@ -2712,50 +2919,54 @@ gosub @HORDE_CHECKING
 
 $RADIO_SOUND = Audiostream.Load("AUDIO\SOUNDS\Radio.mp3") 
 Audiostream.Loop($RADIO_SOUND, 1)  
-Audiostream.Volume($RADIO_SOUND) = 0.0
+Audiostream.Volume($RADIO_SOUND) = VERO_TIPA_VOLUME
 Audiostream.PerformAction($RADIO_SOUND, PLAY)
 
 /////////////////////Плавное нарастание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int) 
-0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $SOUNDS_VOLUME // (float) 
-
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-
-wait 1 
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int) 
+//0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $SOUNDS_VOLUME // (float) 
+//
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+//
+//wait 1 
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $RADIO_SOUND volume $SOUNDS_VOLUME time 500
 
 ////////////////////////////////////////////////////////
 
 wait 3000
 
 /////////////////////Плавное затухание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int)
-$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 150
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-
-wait 1
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int)
+//$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 150
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+//
+//wait 1
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $RADIO_SOUND volume 0.0 time 500        
+wait 500
+audiostream.Release($RADIO_SOUND)
 
 //////////////////////////////////////////////////////////
 
@@ -2930,7 +3141,14 @@ fade 1 2000
 $CASETTE_PLAYING_FLAG = 1  
 gosub @RANDOM_WIN_MUSIC
 
+if
+$MUTE_MUSIC_FLAG == 1
+then
+Audiostream.Volume($WIN_MUSIC) = 0.0
+else
 Audiostream.Volume($WIN_MUSIC) = $MUSIC_VOLUME
+end
+
 Audiostream.Loop($WIN_MUSIC, 0)
 Audiostream.PerformAction($WIN_MUSIC, PLAY)
 
@@ -2946,6 +3164,15 @@ $STATS_CAN_BE_SKIPPED = 0
 
 :2CHECKING_STATS1
 wait 0
+
+if
+$MUTE_MUSIC_FLAG == 1
+then
+Audiostream.Volume($WIN_MUSIC) = 0.0
+else
+Audiostream.Volume($WIN_MUSIC) = $MUSIC_VOLUME
+end
+
 gosub @FREND_TELEPORT_IN_PLANE_CHECK
 if
 $STATS_CAN_BE_SKIPPED == 1
@@ -2967,32 +3194,44 @@ fade 0 3000
 
 while 32@ < 3100
 wait 0
+
+if
+$MUTE_MUSIC_FLAG == 1
+then
+Audiostream.Volume($WIN_MUSIC) = 0.0
+else
+Audiostream.Volume($WIN_MUSIC) = $MUSIC_VOLUME
+end
+
 gosub @FREND_TELEPORT_IN_PLANE_CHECK
 $STATS_TOTAL_SHOW_OFF_FLAG = 1
 end
 
 /////////////////////Плавное затухание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $WIN_MUSIC // (int)
-$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-
-wait 1
-
-while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
-wait 0
-end
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $WIN_MUSIC // (int)
+//$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+//
+//wait 1
+//
+//while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+//wait 0
+//end
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $WIN_MUSIC volume 0.0 time 1000        
+wait 1000
+audiostream.Release($WIN_MUSIC)
 
 //////////////////////////////////////////////////////////      
 
@@ -3164,6 +3403,12 @@ return
 :SALVATION_SA_CREATED_POINTS_CHECK2
 
 if
+CUSTOM_MAP_FLAG == 1
+then
+return
+end
+
+if
 075C:   marker $SAVE1 enabled
 then
 marker.Disable($SAVE1)
@@ -3236,6 +3481,12 @@ end
 return
 
 :SALVATION_SA_CREATED_POINTS_CHECK
+
+if
+CUSTOM_MAP_FLAG == 1
+then
+return
+end
 
 if
 SAVEPOINT01_CREATED_FLAG == 1

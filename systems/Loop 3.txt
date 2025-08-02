@@ -29,6 +29,13 @@ AFTER_ON_MISSION_TIMER = -1
 while true
 wait 0
 
+//musfadeshit
+$MUSIC_FADE_ENDED[0] = 1
+$MUSIC_FADE_ENDED[1] = 1
+$MUSIC_FADE_ENDED[2] = 1
+$MUSIC_FADE_ENDED[3] = 1
+$MUSIC_FADE_ENDED[4] = 1
+                
 if
 32@ >= 100
 then
@@ -57,6 +64,18 @@ AFTER_ON_MISSION_TIMER > 0
         AFTER_ON_MISSION_TIMER = -1
         end
     end
+    
+if
+ALLOW_RAIDS == 0
+then
+
+RAID_FRACTION_FLAG = 0
+
+for 0@ = 0 to 14
+$CAMP_SAVE_TIMER[0@] = 0
+end
+
+end    
     
 if or
 NO_MORE_BANDITS_CAMPS == 0
@@ -92,13 +111,27 @@ $ALLOW_BANDIT_CONVOY == 1
         $SAVESTATUS_TRUE == 0        
         CAMP_RAID_FLAG == 0
         $HUD_REMOVE == 0
-        not $CAMP_AGRED_FLAG[$ENTERED_CAMP_NUMBER] == 1        
+        not $CAMP_AGRED_FLAG[$ENTERED_CAMP_NUMBER] == 1
+        $PHRASES_OFF_FLAG == 0
+        ALLOW_RAIDS == 1        
             then
             if or
             CAMP_RAID_TIMER > 15080
             RAID_FRACTION_FLAG == 1
             RAID_FRACTION_FLAG == 2
                 then
+                
+                if
+                CUSTOM_MAP_FLAG == 1
+                then
+                0AD3: v$RAID_FILE = format "CM%d" $ENTERED_CAMP_NUMBER
+                if or
+                0AF0: 0@ = get_int_from_ini_file "data/raid.ini" section v$RAID_FILE key "DISABLE"
+                8AF0: not 0@ = get_int_from_ini_file "data/raid.ini" section v$RAID_FILE key "GATE_POINT"
+                    then
+                    jump to @RAID_CAMPS_SKIP
+                    end
+                end
                 
                 if and
                 UNITED_MAP == 1
@@ -227,7 +260,74 @@ then
 //0AD1: show_formatted_text_highpriority "MISSION_CLEANUP WAS DONE, BACKING UP SOME SHIT" time 2000
 06F0: set_group PLAYER_GROUP distance_limit_to 28000.0
 0940: set_group PLAYER_GROUP enters_leaders_vehicle 0
-0912: set_text_priority 1 leftmargin 355 maxwidth 750
+
+0E0E: get_current_resolution_to 0@ 1@
+SUBTITLES_MAXWIDTH = 750
+
+if and
+0@ == 640
+1@ == 480
+then
+SUBTITLES_MAXWIDTH = 600
+end
+
+if and
+0@ == 720
+1@ == 480
+then
+SUBTITLES_MAXWIDTH = 600
+end
+
+if and
+0@ == 720
+1@ == 576
+then
+SUBTITLES_MAXWIDTH = 600
+end
+
+if and
+0@ == 800
+1@ == 600
+then
+SUBTITLES_MAXWIDTH = 600
+end
+
+if and
+0@ == 1024
+1@ == 768
+then
+SUBTITLES_MAXWIDTH = 600
+end
+
+if and
+0@ == 1152
+1@ == 864
+then
+SUBTITLES_MAXWIDTH = 600
+end
+
+if and
+0@ == 1280
+1@ == 960
+then
+SUBTITLES_MAXWIDTH = 600
+end
+
+if and
+0@ == 1280
+1@ == 1024
+then
+SUBTITLES_MAXWIDTH = 600
+end
+
+if and
+0@ == 1440
+1@ == 1080
+then
+SUBTITLES_MAXWIDTH = 600
+end
+
+0912: set_text_priority 1 leftmargin 355 maxwidth SUBTITLES_MAXWIDTH //750
 06AD: set_group PLAYER_GROUP group_decision_maker_to $DEC_GROUP
 if
 $FLAG_COMMAND == 1
@@ -379,8 +479,11 @@ PERK_TITAN == 1
     0ED9: set_char_ignore_damage_anims PLAYER_ACTOR 1
     end
 
-if
+if and
 $FREEMODE == 1
+$SAVING_DELAY == 0
+89BE: not  are_text_boxes_locked_to_any_thread
+88FE: not  text_box_displayed
     then
     
     if and
@@ -1128,10 +1231,18 @@ if or
     :DO_DEV_RESTART
     0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "GAMEMODE_AUTOSELECT_CRASH"
     
+    if and
+    $GAMEMODE_SURVIVAL == 1
+    $FREEMODE == 0
+    then
+    jump to @DO_DEV_RESTART2
+    end
+    
     if or
     $EXPE_FLAG == 1
     $FREEMODE == 1
         then
+        :DO_DEV_RESTART2
         0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART"
         actor.StorePos(PLAYER_ACTOR,1@,2@,3@)
         4@ = actor.Angle(PLAYER_ACTOR)
@@ -1139,6 +1250,9 @@ if or
         0AF3: write_float 2@ to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_Y"
         0AF3: write_float 3@ to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_Z"
         0AF3: write_float 4@ to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_A"
+        0AF1: write_int MCS_FLAG to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_MCS_FLAG"
+        0AF1: write_int MIKE_SHIZA_FLAG to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_MIKE_SHIZA_FLAG"
+        0AF1: write_int $CARL_STORY to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_CARL_STORY"
         0AF1: write_int $ACTIVE_INTERIOR to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_INT"
         0AF1: write_int $SAVESTATUS to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_SAVESTATUS"
         0AF1: write_int $GODMODE_FLAG to_ini_file "saves/ZACM.set" section "SCR" key "DEV_RESTART_GODMODE"
@@ -1719,6 +1833,7 @@ if or
 random_int 17@ = MIN_SKIN_GEN MAX_SKIN_GEN
 if and
 17@ == SKIN_GEN_SET
+not CUSTOM_MAP_FLAG == 1
 UNITED_MAP == 0
     then
     
@@ -1749,7 +1864,7 @@ UNITED_MAP == 0
 if
 UNITED_MAP == 0
 then
-0209: 17@ = random_int_in_ranges 7 285
+0209: 17@ = random_int_in_ranges RANDOM_PED_MIN_ID RANDOM_PED_MAX_ID
 else
 
 if 
@@ -1783,9 +1898,8 @@ if
 jf @RANDOM_MODEL_CAMP_RESPAWN
 
 0AD3: v$FP_FILE = format "%d" 17@
-0AF0: 25@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key v$FP_FILE
 if
-not 25@ == 1
+8AF0: not 25@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key v$FP_FILE
 jf @RANDOM_MODEL_CAMP_RESPAWN
 25@ = -69  
 

@@ -34,10 +34,17 @@ then
 actor.Health(COOP_ACTOR) = 1@
 end
 
+//if
+//$INF_SIDE == 1
+//then
+//gosub @ANIM_SET
+//end
+
 $INF_EFF_END = 0
 SURVIVAL_STARTED_FULLY_FLAG = 1
 wait 0
 create_thread @REFR_3D
+0AF1: write_int 0 to_ini_file "config.ini" section "LAUNCHER" key "RESTART_INTO_GAMEMODE_IF_CRASHED"
 fade 1 1000
 057E: set_radar_grey 0
 
@@ -80,7 +87,7 @@ end
 
 $HUD_REMOVE = 0 
 gosub @INF_EFF_CHECK
-$TIME2 += 150000
+$TIME2 += 120000
 0084: $TIME = $TIME2 // (int)
 $ROUND += 1   
 03C3: set_timer_to $TIME type 1 GXT 'BB_19' // global_variable  // Time
@@ -120,6 +127,14 @@ end
 
 :INF_WVS_CHECK
 wait 0
+
+//if
+//0E3D: is_key_just_pressed 69
+//then         
+//0AD1: show_formatted_text_highpriority "anims set" time 2000
+//gosub @ANIM_SET
+//end
+
 $ZOMBIES_HORDE = 1
 $TANK_SPAWNED = 0
 $CHARGER_SPAWNED = 0
@@ -130,7 +145,7 @@ $TIME < 1
 not actor.Dead(PLAYER_ACTOR)
 816B: not  fading
 jf @INF_WVS_CHECK
-audiostream.Release(1@)
+//audiostream.Release(1@) //зочем
 014F: stop_timer $TIME
 0151: remove_status_text $ROUND
 0151: remove_status_text $INFECTED_SCORE
@@ -363,7 +378,6 @@ jump @INF_WVS_CHECK
 if
 $INF_SIDE == 1
 jf @INF_EFF_CHECK_RETURN     
-$INF_MODE_COLOR_A = 25
 create_thread @INF_EFF
 return
 
@@ -425,6 +439,18 @@ else
 end
 
 end   
+
+if
+CUSTOM_MAP_SPAWN_PLAYER_ON_CAR_PATHS == 1
+then
+02C1: store_to 20@ 21@ 0.0 car_path_coords_closest_to 20@ 21@ 0.0
+end
+
+if
+CUSTOM_MAP_SPAWN_PLAYER_ON_PED_PATHS == 1 
+then
+02C0: store_to 20@ 21@ 0.0 ped_path_coords_closest_to 20@ 21@ 0.0
+end  
 
 Actor.PutAt(PLAYER_ACTOR, 20@, 21@, 0.0)
 renderer 20@ 21@
@@ -834,7 +860,7 @@ wait 0
 if
 UNITED_MAP == 0
 then
-0209: $RANDOM_MODE_MODEL = random_int_in_ranges 7 285
+0209: $RANDOM_MODE_MODEL = random_int_in_ranges RANDOM_PED_MIN_ID RANDOM_PED_MAX_ID
 else
 
 if
@@ -869,6 +895,7 @@ random_int 0@ = MIN_SKIN2_GEN MAX_SKIN2_GEN
 if and
 0@ == SKIN2_GEN_SET    
 UNITED_MAP == 0
+not CUSTOM_MAP_FLAG == 1
     then
                     
     :3CHECKING_MODEL_NEWSKINS
@@ -977,9 +1004,8 @@ if
 jf @3CHECKING_MODEL
 
 0AD3: v$FP_FILE = format "%d" $RANDOM_MODE_MODEL
-0AF0: 1@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key v$FP_FILE
 if
-not 1@ == 1
+8AF0: not 1@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key v$FP_FILE
 jf @3CHECKING_MODEL
 
 if or
@@ -987,6 +1013,7 @@ $FP_ON == 1
 $MUTATION_ACTIVE == 3
 then
 0AD3: v$FP_FILE = format "%d" $RANDOM_MODE_MODEL
+1@ = 0
 0AF0: 1@ = get_int_from_ini_file "data/skins.ini" section "SKINS" key v$FP_FILE
 if or
 not 1@ == 1
@@ -1075,12 +1102,18 @@ random_int 11@ MIN_WEAP_GEN to MAX_WEAP_GEN
 end
 
 if and
-not 11@ == WEAP_GEN_SET
+8E4D: not random_percent WEAP_GEN_SET
 UNITED_MAP == 0
 then
 0209: $RANDOM_WEAPON = random_int_in_ranges 22 35 
 else
 0209: $RANDOM_WEAPON = random_int_in_ranges MIN_WEAPON_NUM MAX_WEAPON_NUM
+if and
+EXTRAWEP_FLAG_AND_MAXNUM >= 225
+0E4D: random_percent EXTRAWEP_GENERATE_CHANCE
+    then    
+    0209: $RANDOM_WEAPON = random_int_in_ranges 225 EXTRAWEP_FLAG_AND_MAXNUM
+    end
 end
 
 if
@@ -1145,6 +1178,32 @@ end
 end
 
 end
+
+////////////////////////////////////////////////////
+
+if
+$RANDOM_WEAPON >= 225
+    then
+    0AD3: v$SND2_FILE = format "%d" $RANDOM_WEAPON
+    0AF0: $TEMPVAR_FLOAT_1 = get_int_from_ini_file "data\SAExtraweps.ini" section v$SND2_FILE key "DO_NOT_GENERATE_AS_START_WEAPON"
+    if    
+    $TEMPVAR_FLOAT_1 == 1    
+        then
+        $RANDOM_WEAPON = 119
+        else
+        if
+        0AF0: $TEMPVAR_FLOAT_1 = get_int_from_ini_file "data\SAExtraweps.ini" section v$SND2_FILE key "GENERATE_DODGE_PERCENT"    
+            then
+            if
+            0E4D: random_percent $TEMPVAR_FLOAT_1
+                then
+                $RANDOM_WEAPON = 119
+                end
+            end
+        end 
+    end
+    
+////////////////////////////////////////////////////
 
 if and
 not $RANDOM_WEAPON == 19 
@@ -1488,7 +1547,15 @@ camera.Restore_WithJumpCut()
 0@ = 0x609A4E 
 0A8C: write_memory 0@ size 4 value 81036937 virtual_protect 1 
 0@ += 4 
-0A8C: write_memory 0@ size 2 value 0 virtual_protect 1
+0A8C: write_memory 0@ size 2 value 0 virtual_protect 1  
+
+0AAA: 0@ = thread 'SPRINTH' pointer
+if
+0@ == 0
+then
+0A92: create_custom_thread "script7.dat"
+end
+
 actor.SetWalkStyle(PLAYER_ACTOR,"player")
 06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0
 0992: set_player PLAYER_CHAR weapons_scrollable 1
@@ -1950,13 +2017,13 @@ if
 $INFECTED_TANK == 1
     then
     
-    while not model.Available(#ZTANK)
+    while not model.Available(TANK_SKIN_ID)
     wait 0
-    model.Load(#ZTANK)
+    model.Load(TANK_SKIN_ID)
     mload
     end
     
-    09C7: change_player 1 model_to #ZTANK
+    09C7: change_player 1 model_to TANK_SKIN_ID
     0A8C: write_memory 0x96916C size 1 value 0 virtual_protect 0
     07FE: set_actor COOP_ACTOR fighting_style_to 5 moves 6
     
@@ -1977,13 +2044,13 @@ if
 $INFECTED_HUNTER == 1
     then
     
-    while not model.Available(#ZHUNTER)
+    while not model.Available(HUNTER_SKIN_ID)
     wait 0
-    model.Load(#ZHUNTER)
+    model.Load(HUNTER_SKIN_ID)
     mload
     end
     
-    09C7: change_player 1 model_to #ZHUNTER
+    09C7: change_player 1 model_to HUNTER_SKIN_ID
     0A8C: write_memory 0x96916C size 1 value 1 virtual_protect 0
     07FE: set_actor COOP_ACTOR fighting_style_to 5 moves 6
     
@@ -2004,13 +2071,13 @@ if
 $INFECTED_CHARGER == 1
     then
     
-    while not model.Available(#ZCHARGER)
+    while not model.Available(CHARGER_SKIN_ID)
     wait 0
-    model.Load(#ZCHARGER)
+    model.Load(CHARGER_SKIN_ID)
     mload
     end
     
-    09C7: change_player 1 model_to #ZCHARGER
+    09C7: change_player 1 model_to CHARGER_SKIN_ID
     0A8C: write_memory 0x96916C size 1 value 0 virtual_protect 0
     07FE: set_actor COOP_ACTOR fighting_style_to 5 moves 6
     
@@ -2031,13 +2098,13 @@ if
 $INFECTED_WITCH == 1
     then
     
-    while not model.Available(#ZWITCH)
+    while not model.Available(WITCH_SKIN_ID)
     wait 0
-    model.Load(#ZWITCH)
+    model.Load(WITCH_SKIN_ID)
     mload
     end
     
-    09C7: change_player 1 model_to #ZWITCH
+    09C7: change_player 1 model_to WITCH_SKIN_ID
     0A8C: write_memory 0x96916C size 1 value 0 virtual_protect 0
     07FE: set_actor COOP_ACTOR fighting_style_to 5 moves 6
     
@@ -2134,6 +2201,7 @@ jf @ANIM_SET4
 0A8C: write_memory 0@ size 4 value -1869574000 virtual_protect 1 
 0@ += 4 
 0A8C: write_memory 0@ size 2 value 37008 virtual_protect 1
+0ABA: end_thread_named 'SPRINTH'
 actor.SetWalkStyle(PLAYER_ACTOR,"tank")
 0A8C: write_memory 0xB793E0 size 4 value 1450.0 virtual_protect 1
 return
@@ -2143,6 +2211,7 @@ return
 0A8C: write_memory 0@ size 4 value -1869574000 virtual_protect 1 
 0@ += 4 
 0A8C: write_memory 0@ size 2 value 37008 virtual_protect 1
+0ABA: end_thread_named 'SPRINTH'
 actor.SetWalkStyle(PLAYER_ACTOR,"hunter2")
 0A8C: write_memory 0xB793E0 size 4 value 800.0 virtual_protect 1
 return   
@@ -2152,6 +2221,7 @@ return
 0A8C: write_memory 0@ size 4 value -1869574000 virtual_protect 1 
 0@ += 4 
 0A8C: write_memory 0@ size 2 value 37008 virtual_protect 1
+0ABA: end_thread_named 'SPRINTH'
 actor.SetWalkStyle(PLAYER_ACTOR,"charger")
 return
 
@@ -2160,6 +2230,7 @@ return
 0A8C: write_memory 0@ size 4 value -1869574000 virtual_protect 1 
 0@ += 4 
 0A8C: write_memory 0@ size 2 value 37008 virtual_protect 1
+0ABA: end_thread_named 'SPRINTH'
 actor.SetWalkStyle(PLAYER_ACTOR,"witch2")
 return   
 

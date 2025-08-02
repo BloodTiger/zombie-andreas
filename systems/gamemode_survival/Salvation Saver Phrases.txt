@@ -14,8 +14,8 @@ if
     then
     $MUSIC_SAVER = audiostream.Load(0@v)
     Audiostream.PerformAction($MUSIC_SAVER, PLAY)
-    Audiostream.Loop($MUSIC_SAVER, 1)
-    Audiostream.Volume($MUSIC_SAVER) = $MUSIC_VOLUME
+    Audiostream.Loop($MUSIC_SAVER, 1)            
+    250A: SET_AUDIO_STREAM_TYPE $MUSIC_SAVER type 2
     else
     0AD3: 0@v = format "me\%d\end.wav" $RNDM_HOUSE_BANKA[122]
     if
@@ -24,7 +24,7 @@ if
         $MUSIC_SAVER = audiostream.Load(0@v)
         Audiostream.PerformAction($MUSIC_SAVER, PLAY)
         Audiostream.Loop($MUSIC_SAVER, 1)
-        Audiostream.Volume($MUSIC_SAVER) = $MUSIC_VOLUME
+        250A: SET_AUDIO_STREAM_TYPE $MUSIC_SAVER type 2
         else
         0AD3: 0@v = format "me\%d\end.ogg" $RNDM_HOUSE_BANKA[122]
         if
@@ -33,7 +33,7 @@ if
             $MUSIC_SAVER = audiostream.Load(0@v)
             Audiostream.PerformAction($MUSIC_SAVER, PLAY)
             Audiostream.Loop($MUSIC_SAVER, 1)
-            Audiostream.Volume($MUSIC_SAVER) = $MUSIC_VOLUME
+            250A: SET_AUDIO_STREAM_TYPE $MUSIC_SAVER type 2
             else
             gosub @RANDOM_MSUIC_SAVING
             end
@@ -43,8 +43,31 @@ else
 gosub @RANDOM_MSUIC_SAVING
 end
 
+if
+$MUTE_MUSIC_FLAG == 0
+then
+Audiostream.Volume($MUSIC_SAVER) = $MUSIC_VOLUME
+else
+Audiostream.Volume($MUSIC_SAVER) = 0.0
+end
+
 :SAVER_GET_IN_START
-wait 0
+wait 0           
+
+if
+$NOT_MUSIC_SAVING == 0
+then
+
+if
+$MUTE_MUSIC_FLAG == 0
+then
+Audiostream.Volume($MUSIC_SAVER) = $MUSIC_VOLUME
+else
+Audiostream.Volume($MUSIC_SAVER) = 0.0
+end
+
+end
+
 if
 $SAVER_GET_IN_START == 1
 jf @SAVER_GET_IN_START
@@ -78,6 +101,21 @@ jump @SAVER_GET_IN_CHECK_IDLE
 
 :SAVER_GET_IN_CHECK_IDLE
 wait 0  
+
+if
+$NOT_MUSIC_SAVING == 0
+then
+
+if
+$MUTE_MUSIC_FLAG == 0
+then
+Audiostream.Volume($MUSIC_SAVER) = $MUSIC_VOLUME
+else
+Audiostream.Volume($MUSIC_SAVER) = 0.0
+end
+
+end
+
 if and 
 not Actor.Dead(PLAYER_ACTOR)
 $END_SAVING == 0 
@@ -92,6 +130,21 @@ jump @SAVER_GET_IN_CHECK_OFF3
 
 :SAVER_GET_IN_CHECK_OFF3
 wait 0
+
+if
+$NOT_MUSIC_SAVING == 0
+then
+
+if
+$MUTE_MUSIC_FLAG == 0
+then
+Audiostream.Volume($MUSIC_SAVER) = $MUSIC_VOLUME
+else
+Audiostream.Volume($MUSIC_SAVER) = 0.0
+end
+
+end
+
 if and
 not actor.Dead(PLAYER_ACTOR)
 $END_SAVING == 0
@@ -105,30 +158,33 @@ jump @SAVER_GET_IN_START
 gosub @SAVER_GET_IN_CHECK_2OFF
 end_thread
 
-:SAVER_GET_IN_CHECK_OFF
+:SAVER_GET_IN_CHECK_OFF 
 
 /////////////////////Плавное затухание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_CRAZY // (int)
-$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-
-wait 1
-
-while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
-wait 0
-end
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_CRAZY // (int)
+//$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+//
+//wait 1
+//
+//while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+//wait 0
+//end
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $MUSIC_CRAZY volume 0.0 time 500        
+wait 500
+audiostream.Release($WIN_MUSIC)
 
 //////////////////////////////////////////////////////////
 
@@ -140,27 +196,30 @@ not $NOT_MUSIC_SAVING == 1
 jf @SAVER_GET_IN_CHECK_2OFF22
 
 /////////////////////Плавное затухание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_SAVER // (int)
-$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-
-wait 1
-
-while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
-wait 0
-end
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_SAVER // (int)
+//$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+//
+//wait 1
+//
+//while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+//wait 0
+//end
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $MUSIC_SAVER volume 0.0 time 500        
+wait 500
+audiostream.Release($MUSIC_SAVER)
 
 //////////////////////////////////////////////////////////
 
@@ -193,6 +252,7 @@ $MUSIC_CRAZY = Audiostream.Load("AUDIO\SOUNDS\voice\pilot\hospital_pilot_finale_
 Audiostream.PerformAction($MUSIC_CRAZY, PLAY)
 Audiostream.Loop($MUSIC_CRAZY, 0)
 Audiostream.Volume($MUSIC_CRAZY) = $SOUNDS_VOLUME
+250A: SET_AUDIO_STREAM_TYPE $MUSIC_CRAZY type 1
 text.ShowH('GMD_S3',3000,1)
 return
 
@@ -201,6 +261,7 @@ $MUSIC_CRAZY = Audiostream.Load("AUDIO\SOUNDS\voice\pilot\hospital_pilot_finale_
 Audiostream.PerformAction($MUSIC_CRAZY, PLAY)
 Audiostream.Loop($MUSIC_CRAZY, 0)
 Audiostream.Volume($MUSIC_CRAZY) = $SOUNDS_VOLUME
+250A: SET_AUDIO_STREAM_TYPE $MUSIC_CRAZY type 1
 text.ShowH('GMD_S4',3000,1)
 return
 
@@ -209,6 +270,7 @@ $MUSIC_CRAZY = Audiostream.Load("AUDIO\SOUNDS\voice\pilot\hospital_pilot_finale_
 Audiostream.PerformAction($MUSIC_CRAZY, PLAY)
 Audiostream.Loop($MUSIC_CRAZY, 0)
 Audiostream.Volume($MUSIC_CRAZY) = $SOUNDS_VOLUME
+250A: SET_AUDIO_STREAM_TYPE $MUSIC_CRAZY type 1
 text.ShowH('GMD_S5',3000,1)
 return
 
@@ -217,6 +279,7 @@ $MUSIC_CRAZY = Audiostream.Load("AUDIO\SOUNDS\voice\pilot\hospital_pilot_finale_
 Audiostream.PerformAction($MUSIC_CRAZY, PLAY)
 Audiostream.Loop($MUSIC_CRAZY, 0)
 Audiostream.Volume($MUSIC_CRAZY) = $SOUNDS_VOLUME
+250A: SET_AUDIO_STREAM_TYPE $MUSIC_CRAZY type 1
 text.ShowH('GMD_S6',3000,1)
 return
 
@@ -225,6 +288,7 @@ $MUSIC_CRAZY = Audiostream.Load("AUDIO\SOUNDS\voice\pilot\hospital_pilot_finale_
 Audiostream.PerformAction($MUSIC_CRAZY, PLAY)
 Audiostream.Loop($MUSIC_CRAZY, 0)
 Audiostream.Volume($MUSIC_CRAZY) = $SOUNDS_VOLUME
+250A: SET_AUDIO_STREAM_TYPE $MUSIC_CRAZY type 1
 text.ShowH('GMD_S7',3000,1)
 return
 
@@ -233,6 +297,7 @@ $MUSIC_CRAZY = Audiostream.Load("AUDIO\SOUNDS\voice\pilot\hospital_pilot_finale_
 Audiostream.PerformAction($MUSIC_CRAZY, PLAY)
 Audiostream.Loop($MUSIC_CRAZY, 0)
 Audiostream.Volume($MUSIC_CRAZY) = $SOUNDS_VOLUME
+250A: SET_AUDIO_STREAM_TYPE $MUSIC_CRAZY type 1
 text.ShowH('GMD_S8',3000,1)
 return
 

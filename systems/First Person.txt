@@ -1,6 +1,8 @@
 const
 KEY_ACTIVATE = 86
-ALPHA_NORMAL = 255  
+MOVEMENT_SPEED_SDVIZHENIE = 0.05 //0.05
+ALPHA_NOT_IN_AIM = 255 //0
+ALPHA_NORMAL = 255 //255 
 PLAYER_ALPHA = 19@
 FP_CAM_NEAR_CLIP = 0.08
 FP_CARL_HEAD_OBJECT = $FP_CARL_HEAD_OBJECT
@@ -8,6 +10,10 @@ FP_STORY_TURNED_OFF_CINEMA = $FP_STORY_TURNED_OFF_CINEMA
 FP_TURNED_OFF_FOR_CUTSCENE = $FP_TURNED_OFF_CUTSCENE
 FP_PREV_STATUS = $REALISM_NRTH_FLAG
 FP_ONLY_IN_CAR = $FP_ONLY_IN_CAR   
+FP_CARL_HEAD_OBJECT_Y_OFFSET = -0.1   
+FP_CARL_HEAD_OBJECT_Y_OFFSET2 = -0.5
+FP_CARL_HEAD_OBJECT_Z_OFFSET = 0.0
+FP_CARL_HEAD_OBJECT_Z2_OFFSET = 0.0
 end
 
 :F_PERS
@@ -17,23 +23,7 @@ repeat
 wait 0
 until $GAMEMODE_SELECTED == 1
 
-if
-$RANDOM_MODE_MODEL == 0
-then
-
-while not model.Available(4227)
-wait 0
-model.Load(4227)
-mload
-end
-
-FP_CARL_HEAD_OBJECT = object.Create(4227,0.0,0.0,0.0)
-08D2: object FP_CARL_HEAD_OBJECT scale_model 0.0
-0750: set_object FP_CARL_HEAD_OBJECT visibility 0 
-Object.CollisionDetection(FP_CARL_HEAD_OBJECT) = False
-object.KeepInMemory(FP_CARL_HEAD_OBJECT) = true
-
-end
+gosub @RECREATE_FP_HEAD_OBJECT
 
 if and
 $FP_ON == 0
@@ -49,6 +39,19 @@ then
 FP_ONLY_IN_CAR = 1
 $FP_ON = 0
 $FP_ACTIVATED = 0
+end
+
+if
+CUSTOM_MAP_FLAG == 1
+then
+0AF0: 0@ = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\$GENCONFIG.ini" section "SETTINGS" key "FP_ENABLED"
+if
+0@ == 0
+    then
+    FP_ONLY_IN_CAR = 1
+    $FP_ON = 0
+    $FP_ACTIVATED = 0
+    end
 end
 
 if
@@ -94,7 +97,7 @@ if and
 not FP_PLAYER_SHOW_FLAG == 1
 8E46: not is_char_using_gun PLAYER_ACTOR
 then
-0D10: set_actor PLAYER_ACTOR alpha 0 // IF and SET 
+0D10: set_actor PLAYER_ACTOR alpha ALPHA_NOT_IN_AIM // IF and SET 
 else
 0D10: set_actor PLAYER_ACTOR alpha 255 // IF and SET
 end
@@ -141,8 +144,17 @@ if and
 not car.Id(3@) == #FREIGHT
 not car.Id(3@) == #STREAK
 not car.Id(3@) == #STREAKC
+84C8: not  actor PLAYER_ACTOR driving_flying_vehicle
+then
+
+if
+047A:   actor PLAYER_ACTOR driving_bike
 then
 02D4: car 3@ turn_off_engine
+else
+0918: set_car 3@ engine_operation 0
+end
+
 end
 
 car.LockInCurrentPosition(3@,true)
@@ -356,6 +368,14 @@ not 0@ == 0x9066
     jump to @FP_ON_SKIP
     end
     
+    0E64: get_camera_mode 1@
+    if or
+    1@ == 34
+    1@ == 7
+    then
+    jump to @FP_ON_SKIP
+    end
+    
     :FP_ON_PRE1
     
     if and
@@ -385,7 +405,7 @@ not 0@ == 0x9066
         not FP_PLAYER_SHOW_FLAG == 1
         8E46: not is_char_using_gun PLAYER_ACTOR
         then
-        0D10: set_actor PLAYER_ACTOR alpha 0 // IF and SET 
+        0D10: set_actor PLAYER_ACTOR alpha ALPHA_NOT_IN_AIM // IF and SET 
         else
         0D10: set_actor PLAYER_ACTOR alpha 255 // IF and SET
         end                    
@@ -438,8 +458,17 @@ not 0@ == 0x9066
         not car.Id(3@) == #FREIGHT
         not car.Id(3@) == #STREAK
         not car.Id(3@) == #STREAKC
+        84C8: not  actor PLAYER_ACTOR driving_flying_vehicle
+        then
+        
+        if
+        047A:   actor PLAYER_ACTOR driving_bike
         then
         02D4: car 3@ turn_off_engine
+        else
+        0918: set_car 3@ engine_operation 0
+        end
+        
         end
         
         car.LockInCurrentPosition(3@,true)
@@ -536,24 +565,42 @@ actor.Angle(PLAYER_ACTOR) = 29@
 gosub @SKIN_OFFSET_SET
 
 06AC: 11@ = actor PLAYER_ACTOR movement_speed
-11@ *= 0.05
+11@ *= MOVEMENT_SPEED_SDVIZHENIE
 005B: 4@ += 11@  // (float) 
 
-0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
-
 0930: (unknown) 1
-                                 
+
+0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
 if
 $RANDOM_MODE_MODEL == 0
 then
-0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
-0D06: get_matrix 0@ position_to 1@ 2@ 3@
+0D0A: store_coords_to 1@ 2@ 3@ from_matrix 0@ with_offsets FP_CARL_HEAD_OBJECT_Z2_OFFSET FP_CARL_HEAD_OBJECT_Y_OFFSET2 0.0   
+else
+0D0A: store_coords_to 1@ 2@ 3@ from_matrix 0@ with_offsets FP_CARL_HEAD_OBJECT_Z_OFFSET FP_CARL_HEAD_OBJECT_Y_OFFSET 0.0   
+end
+
+if
+83CA: not  object FP_CARL_HEAD_OBJECT exists
+then
+gosub @RECREATE_FP_HEAD_OBJECT
+else
+if
+89CC: not  object FP_CARL_HEAD_OBJECT model_is 2703
+    then
+    gosub @RECREATE_FP_HEAD_OBJECT
+    end
+end
+
 01BC: put_object FP_CARL_HEAD_OBJECT at 1@ 2@ 3@
 0@ = actor.Angle(PLAYER_ACTOR)
 0177: set_object FP_CARL_HEAD_OBJECT Z_angle_to 0@
-0400: store_coords_to 1@ 2@ 3@ from_object FP_CARL_HEAD_OBJECT with_offset 0.0 0.1 0.05  
+if
+$RANDOM_MODE_MODEL == 0
+then
+0400: store_coords_to 1@ 2@ 3@ from_object FP_CARL_HEAD_OBJECT with_offset 4@ 5@ 6@  
 0936: set_camera 1@ 2@ 3@ position_to 1@ 2@ 3@ GENERAL_FP_CAM_TIMER ms 1
 else
+0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
 0D0A: store_coords_to 1@ 2@ 3@ from_matrix 0@ with_offsets 4@ 5@ 6@  
 0936: set_camera 1@ 2@ 3@ position_to 1@ 2@ 3@ GENERAL_FP_CAM_TIMER ms 1
 end
@@ -562,19 +609,37 @@ end
 
 06A9: AS_actor PLAYER_ACTOR look_at_point 10@ 11@ 12@ 10 ms
 
-0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET  
-                          
+0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
 if
 $RANDOM_MODE_MODEL == 0
 then
-0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
-0D06: get_matrix 0@ position_to 1@ 2@ 3@
+0D0A: store_coords_to 1@ 2@ 3@ from_matrix 0@ with_offsets FP_CARL_HEAD_OBJECT_Z2_OFFSET FP_CARL_HEAD_OBJECT_Y_OFFSET2 0.0
+else
+0D0A: store_coords_to 1@ 2@ 3@ from_matrix 0@ with_offsets FP_CARL_HEAD_OBJECT_Z_OFFSET FP_CARL_HEAD_OBJECT_Y_OFFSET 0.0
+end
+
+if
+83CA: not  object FP_CARL_HEAD_OBJECT exists
+then
+gosub @RECREATE_FP_HEAD_OBJECT
+else
+if
+89CC: not  object FP_CARL_HEAD_OBJECT model_is 2703
+    then
+    gosub @RECREATE_FP_HEAD_OBJECT
+    end
+end
+
 01BC: put_object FP_CARL_HEAD_OBJECT at 1@ 2@ 3@
 0@ = actor.Angle(PLAYER_ACTOR)
 0177: set_object FP_CARL_HEAD_OBJECT Z_angle_to 0@
-0400: store_coords_to 1@ 2@ 3@ from_object FP_CARL_HEAD_OBJECT with_offset 0.0 0.1 0.05  
+if
+$RANDOM_MODE_MODEL == 0
+then
+0400: store_coords_to 1@ 2@ 3@ from_object FP_CARL_HEAD_OBJECT with_offset 4@ 5@ 6@ 
 0936: set_camera 1@ 2@ 3@ position_to 1@ 2@ 3@ GENERAL_FP_CAM_TIMER ms 1
 else
+0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
 0D0A: store_coords_to 1@ 2@ 3@ from_matrix 0@ with_offsets 4@ 5@ 6@  
 0936: set_camera 1@ 2@ 3@ position_to 1@ 2@ 3@ GENERAL_FP_CAM_TIMER ms 1
 end
@@ -620,22 +685,40 @@ end
 gosub @SKIN_OFFSET_SET
 
 06AC: 11@ = actor PLAYER_ACTOR movement_speed
-11@ *= 0.05
+11@ *= MOVEMENT_SPEED_SDVIZHENIE
 005B: 4@ += 11@  // (float) 
 
 0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
-  
 if
 $RANDOM_MODE_MODEL == 0
 then
-0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
-0D06: get_matrix 0@ position_to 1@ 2@ 3@
+0D0A: store_coords_to 1@ 2@ 3@ from_matrix 0@ with_offsets FP_CARL_HEAD_OBJECT_Z2_OFFSET FP_CARL_HEAD_OBJECT_Y_OFFSET2 0.0
+else
+0D0A: store_coords_to 1@ 2@ 3@ from_matrix 0@ with_offsets FP_CARL_HEAD_OBJECT_Z_OFFSET FP_CARL_HEAD_OBJECT_Y_OFFSET 0.0       
+end
+
+if
+83CA: not  object FP_CARL_HEAD_OBJECT exists
+then
+gosub @RECREATE_FP_HEAD_OBJECT
+else
+if
+89CC: not  object FP_CARL_HEAD_OBJECT model_is 2703
+    then
+    gosub @RECREATE_FP_HEAD_OBJECT
+    end
+end
+
 01BC: put_object FP_CARL_HEAD_OBJECT at 1@ 2@ 3@
 0@ = actor.Angle(PLAYER_ACTOR)
 0177: set_object FP_CARL_HEAD_OBJECT Z_angle_to 0@
-0400: store_coords_to 1@ 2@ 3@ from_object FP_CARL_HEAD_OBJECT with_offset 0.0 0.1 0.05  
+if
+$RANDOM_MODE_MODEL == 0
+then
+0400: store_coords_to 1@ 2@ 3@ from_object FP_CARL_HEAD_OBJECT with_offset 4@ 5@ 6@ 
 0936: set_camera 1@ 2@ 3@ position_to 1@ 2@ 3@ GENERAL_FP_CAM_TIMER ms 1
 else
+0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
 0D0A: store_coords_to 1@ 2@ 3@ from_matrix 0@ with_offsets 4@ 5@ 6@  
 0936: set_camera 1@ 2@ 3@ position_to 1@ 2@ 3@ GENERAL_FP_CAM_TIMER ms 1
 end
@@ -717,7 +800,14 @@ $FP_ON == 1
     not $GAMEMODE_STORYLINE == 2
     $CHEATS_ON == 1
         then
-        jump to @FP_OFF
+        0E64: get_camera_mode 1@
+        if or
+        1@ == 34
+        1@ == 7
+            then
+            else
+            jump to @FP_OFF
+            end
         end
     end
 
@@ -752,8 +842,8 @@ PLAYER_ALPHA == 0
     801F: not  33@ > $FP_CROUCH_TIME1 // (int)
     801D: not  9@ > 8@  // (int)
         then                
-        0D10: set_actor PLAYER_ACTOR alpha 0 // IF and SET
-        PLAYER_ALPHA = 0                             
+        0D10: set_actor PLAYER_ACTOR alpha ALPHA_NOT_IN_AIM // IF and SET
+        PLAYER_ALPHA = ALPHA_NOT_IN_AIM                             
         else 
         21@ = 0  
         0D10: set_actor PLAYER_ACTOR alpha ALPHA_NORMAL // IF and SET
@@ -768,8 +858,8 @@ if
     801F: not  33@ > $FP_CROUCH_TIME2 // (int)
     801D: not  9@ > 8@  // (int)
         then        
-        0D10: set_actor PLAYER_ACTOR alpha 0 // IF and SET
-        PLAYER_ALPHA = 0                     
+        0D10: set_actor PLAYER_ACTOR alpha ALPHA_NOT_IN_AIM // IF and SET
+        PLAYER_ALPHA = ALPHA_NOT_IN_AIM                     
         else
         0D10: set_actor PLAYER_ACTOR alpha ALPHA_NORMAL // IF and SET
         PLAYER_ALPHA = ALPHA_NORMAL    
@@ -824,7 +914,7 @@ actor.Animation(PLAYER_ACTOR) == "GUN_BUTT_crouch"
 $PLAYER_RELOADING == 1  
 then
 06AC: 11@ = actor PLAYER_ACTOR movement_speed
-11@ *= 0.05    
+11@ *= MOVEMENT_SPEED_SDVIZHENIE    
 005B: 4@ += 11@  // (float)  
 end
 
@@ -841,7 +931,7 @@ actor.Animation(PLAYER_ACTOR) == "GUN_BUTT_crouch"
 $PLAYER_RELOADING == 1  
 then
 06AC: 11@ = actor PLAYER_ACTOR movement_speed
-11@ *= 0.05    
+11@ *= MOVEMENT_SPEED_SDVIZHENIE    
 005B: 4@ += 11@  // (float)  
 end
 
@@ -871,21 +961,39 @@ end
 0922: set_camera_zoom_from 80.0 to 80.0 timelimit GENERAL_FOV_TIMER smooth_transition 0
 end    
      
-0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
-
 0930: (unknown) 1   
 
+0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
 if
 $RANDOM_MODE_MODEL == 0
 then
-0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
-0D06: get_matrix 0@ position_to 1@ 2@ 3@
+0D0A: store_coords_to 1@ 2@ 3@ from_matrix 0@ with_offsets FP_CARL_HEAD_OBJECT_Z2_OFFSET FP_CARL_HEAD_OBJECT_Y_OFFSET2 0.0
+else
+0D0A: store_coords_to 1@ 2@ 3@ from_matrix 0@ with_offsets FP_CARL_HEAD_OBJECT_Z_OFFSET FP_CARL_HEAD_OBJECT_Y_OFFSET 0.0      
+end
+
+if
+83CA: not  object FP_CARL_HEAD_OBJECT exists
+then
+gosub @RECREATE_FP_HEAD_OBJECT
+else
+if
+89CC: not  object FP_CARL_HEAD_OBJECT model_is 2703
+    then
+    gosub @RECREATE_FP_HEAD_OBJECT
+    end
+end
+
 01BC: put_object FP_CARL_HEAD_OBJECT at 1@ 2@ 3@
 0@ = actor.Angle(PLAYER_ACTOR)
 0177: set_object FP_CARL_HEAD_OBJECT Z_angle_to 0@
-0400: store_coords_to 1@ 2@ 3@ from_object FP_CARL_HEAD_OBJECT with_offset 0.0 0.1 0.05  
+if
+$RANDOM_MODE_MODEL == 0
+then
+0400: store_coords_to 1@ 2@ 3@ from_object FP_CARL_HEAD_OBJECT with_offset 4@ 5@ 6@ 
 0936: set_camera 1@ 2@ 3@ position_to 1@ 2@ 3@ GENERAL_FP_CAM_TIMER ms 1
 else
+0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
 0D0A: store_coords_to 1@ 2@ 3@ from_matrix 0@ with_offsets 4@ 5@ 6@  
 0936: set_camera 1@ 2@ 3@ position_to 1@ 2@ 3@ GENERAL_FP_CAM_TIMER ms 1
 end
@@ -935,10 +1043,11 @@ end
 
 0A8C: write_memory 1@ size 4 value 147456.0 virtual_protect 1
 
-if
+if or
 not actor.Driving(PLAYER_ACTOR)
+0E4A:   is_char_exiting_any_car PLAYER_ACTOR
 then
-4@ = 0.20
+4@ = 0.30
 5@ = 0.05    
 6@ = -0.06   
 gosub @SKIN_OFFSET_SET
@@ -1131,22 +1240,52 @@ end
 0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
 0D0B: get_actor PLAYER_ACTOR bone 8 matrix_pointer_to 25@ // IF and SET
 
-if
-not actor.Driving(PLAYER_ACTOR)
+if or
+//not actor.Driving(PLAYER_ACTOR)
+8449: not  actor PLAYER_ACTOR in_a_car
+0E4A: is_char_exiting_any_car PLAYER_ACTOR
 then
 
+0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
 if
 $RANDOM_MODE_MODEL == 0
 then
-0D0B: get_actor PLAYER_ACTOR bone 6 matrix_pointer_to 0@ // IF and SET
-0D06: get_matrix 0@ position_to 1@ 2@ 3@
+0D0A: store_coords_to 1@ 2@ 3@ from_matrix 0@ with_offsets FP_CARL_HEAD_OBJECT_Z2_OFFSET FP_CARL_HEAD_OBJECT_Y_OFFSET2 0.0
+else
+0D0A: store_coords_to 1@ 2@ 3@ from_matrix 0@ with_offsets FP_CARL_HEAD_OBJECT_Z_OFFSET FP_CARL_HEAD_OBJECT_Y_OFFSET 0.0   
+end
+
+if
+83CA: not  object FP_CARL_HEAD_OBJECT exists
+then
+gosub @RECREATE_FP_HEAD_OBJECT
+else
+if
+89CC: not  object FP_CARL_HEAD_OBJECT model_is 2703
+    then
+    gosub @RECREATE_FP_HEAD_OBJECT
+    end
+end
+
 01BC: put_object FP_CARL_HEAD_OBJECT at 1@ 2@ 3@
 0@ = actor.Angle(PLAYER_ACTOR)
 0177: set_object FP_CARL_HEAD_OBJECT Z_angle_to 0@
-0400: store_coords_to 1@ 2@ 3@ from_object FP_CARL_HEAD_OBJECT with_offset 0.0 0.1 0.05  
+if
+$RANDOM_MODE_MODEL == 0
+then
+0400: store_coords_to 1@ 2@ 3@ from_object FP_CARL_HEAD_OBJECT with_offset 4@ 5@ 6@ 
 0936: set_camera 1@ 2@ 3@ position_to 1@ 2@ 3@ GENERAL_FP_CAM_TIMER ms 1
 else
-0D0A: store_coords_to 1@ 2@ 3@ from_matrix 0@ with_offsets 4@ 5@ 6@  
+//0AD1: show_formatted_text_highpriority "%f %f %f" time 2000 4@ 5@ 6@
+0D0A: store_coords_to 1@ 2@ 3@ from_matrix 25@ with_offsets 4@ 5@ 6@  
+0936: set_camera 1@ 2@ 3@ position_to 1@ 2@ 3@ GENERAL_FP_CAM_TIMER ms 1
+end
+
+if
+PLAYER_IN_SEX_FLAG == 1
+then
+0D0B: get_actor PLAYER_ACTOR bone 2 matrix_pointer_to 0@ // IF and SET
+0D0A: store_coords_to 1@ 2@ 3@ from_matrix 25@ with_offsets 4@ 5@ 6@  
 0936: set_camera 1@ 2@ 3@ position_to 1@ 2@ 3@ GENERAL_FP_CAM_TIMER ms 1
 end
 
@@ -1183,7 +1322,7 @@ if
     not actor.Driving(PLAYER_ACTOR)
         then
         
-        0D10: set_actor PLAYER_ACTOR alpha 0 // IF and SET  
+        0D10: set_actor PLAYER_ACTOR alpha ALPHA_NOT_IN_AIM // IF and SET  
         
         if
         056E:   car 22@ defined
@@ -1408,6 +1547,50 @@ then
 14@ = 0
 end
 
+00E2: get_player 0 key 1 state_to 0@
+if
+0@ > 0
+then
+object.StorePos(FP_CARL_HEAD_OBJECT,$TEMPVAR_FLOAT_1,$TEMPVAR_FLOAT_2,$TEMPVAR_FLOAT_3)
+$TEMPVAR_FLOAT_3 -= 0.1
+01BC: put_object FP_CARL_HEAD_OBJECT at $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3
+end
+ 
+if and
+82CC: not  object FP_CARL_HEAD_OBJECT bounding_sphere_visible
+80E1: not  player 0 pressed_key 19 //LOOK BACK
+then
+FP_PLAYER_SHOW_FLAG = 1
+else
+FP_PLAYER_SHOW_FLAG = 0
+end
+
+00E2: get_player 0 key 1 state_to $TEMPVAR_FLOAT_1
+00E2: get_player 0 key 0 state_to $TEMPVAR_FLOAT_2
+if and
+$TEMPVAR_FLOAT_1 > 0
+not $TEMPVAR_FLOAT_2 == 0
+then
+FP_PLAYER_SHOW_FLAG = 0
+end      
+
+if
+$INFECTED_HUNTER == 1
+then
+if or
+actor.Animation(PLAYER_ACTOR) == "FALL_skyDive"
+actor.Animation(PLAYER_ACTOR) == "jump_glide" 
+    then
+    FP_PLAYER_SHOW_FLAG = 1
+    end 
+end
+
+if
+PLAYER_IN_SEX_FLAG == 1
+then
+FP_PLAYER_SHOW_FLAG = 1
+end  
+
 if and
 not FP_PLAYER_SHOW_FLAG == 1
 8E46: not is_char_using_gun PLAYER_ACTOR
@@ -1489,8 +1672,17 @@ if and
 not car.Id(3@) == #FREIGHT
 not car.Id(3@) == #STREAK
 not car.Id(3@) == #STREAKC
+84C8: not  actor PLAYER_ACTOR driving_flying_vehicle
+then
+
+if
+047A:   actor PLAYER_ACTOR driving_bike
 then
 02D4: car 3@ turn_off_engine
+else
+0918: set_car 3@ engine_operation 0
+end
+
 end
 
 car.LockInCurrentPosition(3@,true)
@@ -1681,11 +1873,19 @@ end
 :CAR_FUCK
 
 if
+not PLAYER_IN_SEX_FLAG == 1
+then
+
+if
 8A32: not actor PLAYER_ACTOR on_turret_of_car
 then
 0922: set_camera_zoom_from 90.0 to 90.0 timelimit GENERAL_FOV_TIMER smooth_transition 0 
 else
 0922: set_camera_zoom_from 80.0 to 80.0 timelimit GENERAL_FOV_TIMER smooth_transition 0
+end
+
+else
+0922: set_camera_zoom_from 100.0 to 100.0 timelimit GENERAL_FOV_TIMER smooth_transition 0
 end
 
 /////////////////////////////////////////////////////////////////////////////////////    
@@ -1836,7 +2036,7 @@ $FP_ACTIVATED == 1
         else
         jump to @FP_OFF
         end   
-    end
+    end  
     
 if
 0A0C:   player PLAYER_CHAR on_jetpack
@@ -1886,7 +2086,15 @@ $FP_ON == 1
             then
             jump to @FP_CANT_OFF
             end 
-        end    
+        end
+        
+    0E64: get_camera_mode 2@
+    if or
+    2@ == 34
+    2@ == 7
+        then
+        jump to @FP_CANT_OFF
+        end                  
         
     if and
     8A32: not actor PLAYER_ACTOR on_turret_of_car
@@ -2105,7 +2313,7 @@ $FP_ON == 1
             
             end  
         end
-    end
+    end    
 end 
 
 end
@@ -2517,19 +2725,172 @@ if
 $RANDOM_MODE_MODEL > 0
 then
 15@ = -0.145
+15@ *= 0.5
 16@ = -0.035
 17@ = 0.005
 005B: 4@ += 15@  // (float)
 005B: 5@ += 16@  // (float)
 005B: 6@ += 17@  // (float)
 else
-15@ = 0.145
-16@ = 0.035
-17@ = 0.005
-005B: 4@ += 15@  // (float)
-005B: 5@ += 16@  // (float)
-005B: 6@ += 17@  // (float)
+4@ = 0.0
+5@ = 0.3
+6@ = 0.0
+
+if and
+8E46: not is_char_using_gun PLAYER_ACTOR
+8E4A: not is_char_exiting_any_car PLAYER_ACTOR
+not PLAYER_IN_SEX_FLAG == 1
+    then
+    06AC: 11@ = actor PLAYER_ACTOR movement_speed
+    11@ *= -0.037 //высота
+//    005B: 6@ += 11@  // (float)
+    
+    06AC: 11@ = actor PLAYER_ACTOR movement_speed
+    11@ *= 0.040 //вперед    
+    06AC: $TEMPVAR_FLOAT_1 = actor PLAYER_ACTOR movement_speed
+//    0AD1: show_formatted_text_highpriority "carl movement_speed is %f" time 2000 $TEMPVAR_FLOAT_1
+    if and
+    11@ > 8.0
+    00E1:   player 0 pressed_key 16 //бегит джумани
+    then
+    11@ += 0.2 //вперед
+    end
+    
+    005B: 5@ += 11@  // (float)
+    else
+    if
+    PLAYER_IN_SEX_FLAG == 1
+//    0E4A: is_char_exiting_any_car PLAYER_ACTOR
+        then
+        4@ = 0.0
+        5@ = -0.1
+        6@ = 0.0
+//        0AF2: 4@ = get_float_from_ini_file "debug\fp_inf.ini" section "SEX" key "X"
+//        0AF2: 5@ = get_float_from_ini_file "debug\fp_inf.ini" section "SEX" key "Y"
+//        0AF2: 6@ = get_float_from_ini_file "debug\fp_inf.ini" section "SEX" key "Z"
+    //    4@ += 0.5
+    //    5@ -= 0.5
+    //    0AD1: show_formatted_text_highpriority "huy" time 2000
+        end
+    end    
+
+return
 end  
+
+if and
+8E46: not is_char_using_gun PLAYER_ACTOR
+8E4A: not is_char_exiting_any_car PLAYER_ACTOR
+not PLAYER_IN_SEX_FLAG == 1
+    then
+    5@ = -0.1 //Z
+    6@ = -0.025 //X
+    
+    if
+    $INFECTED_TANK == 1
+    then
+    
+    if
+    actor.Animation(PLAYER_ACTOR) == "tank_throw"
+    then
+//    0AF2: 4@ = get_float_from_ini_file "debug\fp_inf.ini" section "TANK" key "X2"
+//    0AF2: 5@ = get_float_from_ini_file "debug\fp_inf.ini" section "TANK" key "Y2"
+//    0AF2: 6@ = get_float_from_ini_file "debug\fp_inf.ini" section "TANK" key "Z2"
+    4@ = -0.2
+    5@ = -0.2
+    6@ = 0.1
+    else
+//    0AF2: 4@ = get_float_from_ini_file "debug\fp_inf.ini" section "TANK" key "X"
+//    0AF2: 5@ = get_float_from_ini_file "debug\fp_inf.ini" section "TANK" key "Y"
+//    0AF2: 6@ = get_float_from_ini_file "debug\fp_inf.ini" section "TANK" key "Z"
+    4@ = 0.2
+    5@ = -0.2
+    6@ = 0.1
+    end
+    
+    return
+    end
+    
+    if
+    $INFECTED_HUNTER == 1
+    then
+    
+    if or
+    actor.Animation(PLAYER_ACTOR) == "FALL_skyDive"
+    actor.Animation(PLAYER_ACTOR) == "jump_glide"
+    then
+//    0AF2: 4@ = get_float_from_ini_file "debug\fp_inf.ini" section "HUNTER" key "X2"
+//    0AF2: 5@ = get_float_from_ini_file "debug\fp_inf.ini" section "HUNTER" key "Y2"
+//    0AF2: 6@ = get_float_from_ini_file "debug\fp_inf.ini" section "HUNTER" key "Z2"
+    4@ = 0.2
+    5@ = -0.85
+    6@ = -0.2
+    else
+//    0AF2: 4@ = get_float_from_ini_file "debug\fp_inf.ini" section "HUNTER" key "X"
+//    0AF2: 5@ = get_float_from_ini_file "debug\fp_inf.ini" section "HUNTER" key "Y"
+//    0AF2: 6@ = get_float_from_ini_file "debug\fp_inf.ini" section "HUNTER" key "Z"
+    4@ = 0.2
+    5@ = -0.35
+    6@ = -0.1
+    end
+    
+    return
+    end
+    
+    if
+    $INFECTED_WITCH == 1
+    then
+//    0AF2: 4@ = get_float_from_ini_file "debug\fp_inf.ini" section "WITCH" key "X"
+//    0AF2: 5@ = get_float_from_ini_file "debug\fp_inf.ini" section "WITCH" key "Y"
+//    0AF2: 6@ = get_float_from_ini_file "debug\fp_inf.ini" section "WITCH" key "Z"
+    4@ = 0.1
+    5@ = -0.3
+    6@ = -0.2
+    return
+    end
+    
+    if
+    $INFECTED_CHARGER == 1
+    then
+//    0AF2: 4@ = get_float_from_ini_file "debug\fp_inf.ini" section "CHARGER" key "X"
+//    0AF2: 5@ = get_float_from_ini_file "debug\fp_inf.ini" section "CHARGER" key "Y"
+//    0AF2: 6@ = get_float_from_ini_file "debug\fp_inf.ini" section "CHARGER" key "Z"
+    4@ = 0.2
+    5@ = -0.4
+    6@ = -0.2
+    return
+    end
+    
+//    06AC: 11@ = actor PLAYER_ACTOR movement_speed
+//    11@ *= -0.037 //высота
+//    005B: 4@ += 11@  // (float)
+    06AC: 11@ = actor PLAYER_ACTOR movement_speed
+    11@ *= 0.040 //вперед
+    
+    06AC: $TEMPVAR_FLOAT_1 = actor PLAYER_ACTOR movement_speed
+//    0AD1: show_formatted_text_highpriority "movement_speed is %f" time 2000 $TEMPVAR_FLOAT_1
+    if and
+    11@ > 8.0
+    00E1:   player 0 pressed_key 16 //бегит джумани
+    then
+    11@ += 0.2 //вперед
+    end
+    
+    0063: 5@ -= 11@  // (float)
+    else
+    if
+    PLAYER_IN_SEX_FLAG == 1
+        then
+    //    4@ += 0.5
+    //    5@ -= 0.5
+    //    0AD1: show_formatted_text_highpriority "huy" time 2000
+        4@ = 0.0
+        5@ = -0.1
+        6@ = 0.0
+//        0AF2: 4@ = get_float_from_ini_file "debug\fp_inf.ini" section "SEX" key "X"
+//        0AF2: 5@ = get_float_from_ini_file "debug\fp_inf.ini" section "SEX" key "Y"
+//        0AF2: 6@ = get_float_from_ini_file "debug\fp_inf.ini" section "SEX" key "Z"
+        end
+    end    
 
 return                
 
@@ -2575,19 +2936,19 @@ if
 not actor.Driving(PLAYER_ACTOR)
 then
 
-while not model.Available(#BANDITWAR_FP)    
-model.Load(#BANDITWAR_FP)
+while not model.Available(BANDITWAR_FP_SKIN_ID)    
+model.Load(BANDITWAR_FP_SKIN_ID)
 mload
 if
-not model.Available(#BANDITWAR_FP)
+not model.Available(BANDITWAR_FP_SKIN_ID)
     then
     wait 0
-    model.Load(#BANDITWAR_FP)
+    model.Load(BANDITWAR_FP_SKIN_ID)
     mload
     end    
 end
 
-09C7: change_player PLAYER_CHAR model_to #BANDITWAR_FP
+09C7: change_player PLAYER_CHAR model_to BANDITWAR_FP_SKIN_ID
 0792: disembark_instantly_actor PLAYER_ACTOR
 else
 28@ = actor.CurrentCar(PLAYER_ACTOR)
@@ -2600,19 +2961,19 @@ gosub @FP_READ_ROTATION_VECTOR2
 04C4: store_coords_to 25@ 26@ 27@ from_actor PLAYER_ACTOR with_offset 0.0 0.0 10.0
 0362: remove_actor PLAYER_ACTOR from_car_and_place_at 25@ 26@ 27@
 
-while not model.Available(#BANDITWAR_FP)    
-model.Load(#BANDITWAR_FP)
+while not model.Available(BANDITWAR_FP_SKIN_ID)    
+model.Load(BANDITWAR_FP_SKIN_ID)
 mload
 if
-not model.Available(#BANDITWAR_FP)
+not model.Available(BANDITWAR_FP_SKIN_ID)
     then
     wait 0
-    model.Load(#BANDITWAR_FP)
+    model.Load(BANDITWAR_FP_SKIN_ID)
     mload
     end    
 end
 
-09C7: change_player PLAYER_CHAR model_to #BANDITWAR_FP
+09C7: change_player PLAYER_CHAR model_to BANDITWAR_FP_SKIN_ID
 036A: put_actor PLAYER_ACTOR in_car 28@
 car.LockInCurrentPosition(28@,true)
 car.SetSpeedInstantly(28@,0.0)
@@ -2632,19 +2993,19 @@ end
 //not actor.Driving(PLAYER_ACTOR)
 //then
 //
-//while not model.Available(#SWATWAR_FP)    
-//model.Load(#SWATWAR_FP)
+//while not model.Available(SWATWAR_FP_SKIN_ID)    
+//model.Load(SWATWAR_FP_SKIN_ID)
 //mload
 //if
-//not model.Available(#SWATWAR_FP)
+//not model.Available(SWATWAR_FP_SKIN_ID)
 //    then
 //    wait 0
-//    model.Load(#SWATWAR_FP)
+//    model.Load(SWATWAR_FP_SKIN_ID)
 //    mload
 //    end    
 //end
 //
-//09C7: change_player PLAYER_CHAR model_to #SWATWAR_FP
+//09C7: change_player PLAYER_CHAR model_to SWATWAR_FP_SKIN_ID
 //0792: disembark_instantly_actor PLAYER_ACTOR
 //else
 //28@ = actor.CurrentCar(PLAYER_ACTOR)
@@ -2657,19 +3018,19 @@ end
 //04C4: store_coords_to 25@ 26@ 27@ from_actor PLAYER_ACTOR with_offset 0.0 0.0 10.0
 //0362: remove_actor PLAYER_ACTOR from_car_and_place_at 25@ 26@ 27@
 //
-//while not model.Available(#SWATWAR_FP)    
-//model.Load(#SWATWAR_FP)
+//while not model.Available(SWATWAR_FP_SKIN_ID)    
+//model.Load(SWATWAR_FP_SKIN_ID)
 //mload
 //if
-//not model.Available(#SWATWAR_FP)
+//not model.Available(SWATWAR_FP_SKIN_ID)
 //    then
 //    wait 0
-//    model.Load(#SWATWAR_FP)
+//    model.Load(SWATWAR_FP_SKIN_ID)
 //    mload
 //    end    
 //end
 //
-//09C7: change_player PLAYER_CHAR model_to #SWATWAR_FP
+//09C7: change_player PLAYER_CHAR model_to SWATWAR_FP_SKIN_ID
 //036A: put_actor PLAYER_ACTOR in_car 28@
 //car.LockInCurrentPosition(28@,true)
 //car.SetSpeedInstantly(28@,0.0)
@@ -2694,19 +3055,19 @@ if
 not actor.Driving(PLAYER_ACTOR)
 then
 
-while not model.Available(#BANDITWAR)    
-model.Load(#BANDITWAR)
+while not model.Available(BANDITWAR_SKIN_ID)    
+model.Load(BANDITWAR_SKIN_ID)
 mload
 if
-not model.Available(#BANDITWAR)
+not model.Available(BANDITWAR_SKIN_ID)
     then
     wait 0
-    model.Load(#BANDITWAR)
+    model.Load(BANDITWAR_SKIN_ID)
     mload
     end    
 end
 
-09C7: change_player PLAYER_CHAR model_to #BANDITWAR
+09C7: change_player PLAYER_CHAR model_to BANDITWAR_SKIN_ID
 0792: disembark_instantly_actor PLAYER_ACTOR
 else
 28@ = actor.CurrentCar(PLAYER_ACTOR)
@@ -2719,19 +3080,19 @@ gosub @FP_READ_ROTATION_VECTOR2
 04C4: store_coords_to 25@ 26@ 27@ from_actor PLAYER_ACTOR with_offset 0.0 0.0 10.0
 0362: remove_actor PLAYER_ACTOR from_car_and_place_at 25@ 26@ 27@
 
-while not model.Available(#BANDITWAR)    
-model.Load(#BANDITWAR)
+while not model.Available(BANDITWAR_SKIN_ID)    
+model.Load(BANDITWAR_SKIN_ID)
 mload
 if
-not model.Available(#BANDITWAR)
+not model.Available(BANDITWAR_SKIN_ID)
     then
     wait 0
-    model.Load(#BANDITWAR)
+    model.Load(BANDITWAR_SKIN_ID)
     mload
     end    
 end
 
-09C7: change_player PLAYER_CHAR model_to #BANDITWAR
+09C7: change_player PLAYER_CHAR model_to BANDITWAR_SKIN_ID
 036A: put_actor PLAYER_ACTOR in_car 28@
 car.LockInCurrentPosition(28@,true)
 car.SetSpeedInstantly(28@,0.0)
@@ -2751,19 +3112,19 @@ end
 //not actor.Driving(PLAYER_ACTOR)
 //then
 //
-//while not model.Available(#SWATWAR)    
-//model.Load(#SWATWAR)
+//while not model.Available(SWATWAR_SKIN_ID)    
+//model.Load(SWATWAR_SKIN_ID)
 //mload
 //if
-//not model.Available(#SWATWAR)
+//not model.Available(SWATWAR_SKIN_ID)
 //    then
 //    wait 0
-//    model.Load(#SWATWAR)
+//    model.Load(SWATWAR_SKIN_ID)
 //    mload
 //    end    
 //end
 //
-//09C7: change_player PLAYER_CHAR model_to #SWATWAR
+//09C7: change_player PLAYER_CHAR model_to SWATWAR_SKIN_ID
 //0792: disembark_instantly_actor PLAYER_ACTOR
 //else
 //28@ = actor.CurrentCar(PLAYER_ACTOR)
@@ -2776,19 +3137,19 @@ end
 //04C4: store_coords_to 25@ 26@ 27@ from_actor PLAYER_ACTOR with_offset 0.0 0.0 10.0
 //0362: remove_actor PLAYER_ACTOR from_car_and_place_at 25@ 26@ 27@
 //
-//while not model.Available(#SWATWAR)    
-//model.Load(#SWATWAR)
+//while not model.Available(SWATWAR_SKIN_ID)    
+//model.Load(SWATWAR_SKIN_ID)
 //mload
 //if
-//not model.Available(#SWATWAR)
+//not model.Available(SWATWAR_SKIN_ID)
 //    then
 //    wait 0
-//    model.Load(#SWATWAR)
+//    model.Load(SWATWAR_SKIN_ID)
 //    mload
 //    end    
 //end
 //
-//09C7: change_player PLAYER_CHAR model_to #SWATWAR
+//09C7: change_player PLAYER_CHAR model_to SWATWAR_SKIN_ID
 //036A: put_actor PLAYER_ACTOR in_car 28@
 //car.LockInCurrentPosition(28@,true)
 //car.SetSpeedInstantly(28@,0.0)
@@ -3076,6 +3437,21 @@ return
 
 :SNIPER_CHECK_FP
 
+0470: 0@ = actor PLAYER_ACTOR current_weapon
+if
+0@ >= 225
+then
+0E83: get_current_char_weaponinfo PLAYER_ACTOR store_to 0@
+0E87: get_weaponinfo_animgroup 0@ store_to 0@
+if or
+0@ == 27
+0@ == 30
+    then
+    0@ = 1
+    return
+    end
+end
+
 0@ = 0
 
 if or
@@ -3335,3 +3711,36 @@ return
 0@ += 0x7F4 //HELI ROTOR POWER
 0A8C: write_memory 0@ size 4 value TURRET_CAR_HEL_ROTOR_P virtual_protect 0
 return    
+
+:RECREATE_FP_HEAD_OBJECT
+
+if and
+0488:   model 2703 exists  // versionA
+not CUSTOM_MAP_FLAG == 1
+then
+
+while not model.Available(2703)
+wait 0
+model.Load(2703)
+mload
+end
+
+FP_CARL_HEAD_OBJECT = object.Create(2703,0.0,0.0,0.0)
+
+else
+
+while not model.Available(321)
+wait 0
+model.Load(321)
+mload
+end
+
+FP_CARL_HEAD_OBJECT = object.Create(321,0.0,0.0,0.0)
+
+end
+
+08D2: object FP_CARL_HEAD_OBJECT scale_model 1.0
+0750: set_object FP_CARL_HEAD_OBJECT visibility 0 
+Object.CollisionDetection(FP_CARL_HEAD_OBJECT) = False
+object.KeepInMemory(FP_CARL_HEAD_OBJECT) = true
+return

@@ -107,6 +107,15 @@ then
 $SAVE_WAIT_TIME = 480000
 end
 
+if
+$CUSTOM_MODE == 1
+then
+008D: $SAVE_WAIT_TIME = integer $SAVE_WAIT_TIME to_float
+0AF2: 0@ = get_float_from_ini_file "saves/owngame/owngame.ini" section "DIFF" key "RANDOM_QUESTS_TIMER_MULT"
+006D: $SAVE_WAIT_TIME *= 0@ // (float)
+008C: $SAVE_WAIT_TIME = float $SAVE_WAIT_TIME to_integer
+end
+
 03C3: set_timer_to $SAVE_WAIT_TIME type 1 GXT 'INV278'
 
 repeat
@@ -1001,7 +1010,10 @@ if and
         car.Destroy(SUPPLY_QUEST_TRUCK)
         car.Destroy(SUPPLY_QUEST_TRUCK_TRAILER)
         
-        if
+        if and
+        881E: not model $SAVE_CAR_MODEL[LATEST_CAR_SLOT_USED] boat
+        881F: not model $SAVE_CAR_MODEL[LATEST_CAR_SLOT_USED] plane
+        8820: not model $SAVE_CAR_MODEL[LATEST_CAR_SLOT_USED] heli
         TEMP_CAR_SAVE_FLAG == 1
         then
         0088: $SAVE_CAR_X[LATEST_CAR_SLOT_USED] = TEMP_CAR_X // (float)
@@ -1148,7 +1160,10 @@ if and
         gosub @SUPPLY2_QUEST_TEAMMATE_TP_CHECK
         car.Destroy(SUPPLY_QUEST_TRUCK)
         
-        if
+        if and
+        881E: not model $SAVE_CAR_MODEL[LATEST_CAR_SLOT_USED] boat
+        881F: not model $SAVE_CAR_MODEL[LATEST_CAR_SLOT_USED] plane
+        8820: not model $SAVE_CAR_MODEL[LATEST_CAR_SLOT_USED] heli
         TEMP_CAR_SAVE_FLAG == 1
         then
         0088: $SAVE_CAR_X[LATEST_CAR_SLOT_USED] = TEMP_CAR_X // (float)
@@ -1759,6 +1774,7 @@ wait 0
 random_int 0@ = MIN_SKIN_GEN MAX_SKIN_GEN
 if and
 0@ == SKIN_GEN_SET
+not CUSTOM_MAP_FLAG == 1
 UNITED_MAP == 0
 $GAMEMODE_WAR == 0
     then
@@ -1808,7 +1824,7 @@ then
 if
 $GAMEMODE_WAR == 0
 then
-0209: 0@ = random_int_in_ranges 7 285
+0209: 0@ = random_int_in_ranges RANDOM_PED_MIN_ID RANDOM_PED_MAX_ID
 else
 
 if
@@ -2040,9 +2056,8 @@ if
 $GAMEMODE_WAR == 0
 then
 0AD3: 2@v = format "%d" 0@
-0AF0: 1@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key 2@v
 if
-not 1@ == 1
+8AF0: not 1@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key 2@v
 jf @SUPPLY_QUEST_CHECKING_MODEL
 end  
 
@@ -2064,11 +2079,17 @@ random_int 11@ MIN_WEAP_GEN to MAX_WEAP_GEN
 end
 
 if
-not 11@ == WEAP_GEN_SET
+8E4D: not random_percent WEAP_GEN_SET
 then
 0209: 10@ = random_int_in_ranges 22 35 
 else
 0209: 10@ = random_int_in_ranges MIN_WEAPON_NUM MAX_WEAPON_NUM
+if and
+EXTRAWEP_FLAG_AND_MAXNUM >= 225
+0E4D: random_percent EXTRAWEP_GENERATE_CHANCE
+    then    
+    0209: 10@ = random_int_in_ranges 225 EXTRAWEP_FLAG_AND_MAXNUM
+    end
 end
 
 if
@@ -2102,6 +2123,30 @@ end
 end    
 
 ////////////////////////////////////////////////////
+
+if
+10@ >= 225
+    then
+    0AD3: v$SND2_FILE = format "%d" 10@
+    0AF0: $TEMPVAR_FLOAT_1 = get_int_from_ini_file "data\SAExtraweps.ini" section v$SND2_FILE key "DO_NOT_GENERATE_RANDOM_SURVS_INCARS"
+    if    
+    $TEMPVAR_FLOAT_1 == 1    
+        then
+        10@ = 21
+        else
+        if
+        0AF0: $TEMPVAR_FLOAT_1 = get_int_from_ini_file "data\SAExtraweps.ini" section v$SND2_FILE key "GENERATE_DODGE_PERCENT"    
+            then
+            if
+            0E4D: random_percent $TEMPVAR_FLOAT_1
+                then
+                10@ = 21
+                end
+            end
+        end 
+    end
+    
+//////////////////////////////////////////////////// 
 
 if or
 10@ == 22
@@ -2205,6 +2250,7 @@ if or
                                             if or
                                             10@ == 104
                                             10@ == 105
+                                            10@ >= 225
                                                 then       
                                                 else
                                                 jump to @SUPPLY_QUEST_ACTOR_WEAPON_CREATE

@@ -573,14 +573,15 @@ end
 
 gosub @PEOPLE_VERSUS_AI
 
-if
+if and
 not $GAME_SPEED == 0.0
+SINGLEFRAME_TIMER_TICK_FLAG == 1
 then
-SURVIVOR_VERSUS_THROW_MOLOTOV_TIMER += 1 
-SURVIVOR_VERSUS_CLIMB_TIMER += 1   
-SURVIVOR_VERSUS_PAIN_TIMER += 1 
-SURVIVOR_VERSUS_ATTACK_TIMER += 1
-SURVIVOR_VERSUS_HUNTER_TIMER += 1
+SURVIVOR_VERSUS_THROW_MOLOTOV_TIMER += 3 
+SURVIVOR_VERSUS_CLIMB_TIMER += 3   
+SURVIVOR_VERSUS_PAIN_TIMER += 3 
+SURVIVOR_VERSUS_ATTACK_TIMER += 3
+SURVIVOR_VERSUS_HUNTER_TIMER += 3
 end
 
 if
@@ -591,7 +592,8 @@ end
 
     if and
     001F:   SURVIVOR_VERSUS_THROW_MOLOTOV_TIMER > $SURVIVOR_VERSUS_THROW_TIME // (int)
-    SURVIVOR_VERSUS_THROW_MOLOTOV_FLAG == 0  
+    SURVIVOR_VERSUS_THROW_MOLOTOV_FLAG == 0
+    not $GAMEMODE_CRAZY == 1  
         then
         if
         not actor.Dead(SURVIVOR_VERSUS)
@@ -1456,7 +1458,7 @@ actor.StorePos(PLAYER_ACTOR, 1@, 2@, 3@)
 083C: set_actor PLAYER_ACTOR velocity_in_direction_XYZ 4@ 5@ 6@
 wait 1
 0812: AS_actor SURVIVOR_VERSUS perform_animation "FLOOR_hit" IFP "PED" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 999999
-audiostream.Release(25@)
+//audiostream.Release(25@)
 gosub @HUNTER_RANDOM_KILLING
 Audiostream.Loop(25@, 1)
 Audiostream.Volume(25@) = $SOUNDS_VOLUME
@@ -1555,7 +1557,7 @@ actor.StorePos(COOP_ACTOR, 1@, 2@, 3@)
 083C: set_actor COOP_ACTOR velocity_in_direction_XYZ 4@ 5@ 6@
 wait 1
 0812: AS_actor SURVIVOR_VERSUS perform_animation "FLOOR_hit" IFP "PED" framedelta 4.0 loopA 1 lockX 0 lockY 0 lockF 0 time 999999
-audiostream.Release(25@)
+//audiostream.Release(25@)
 gosub @HUNTER_RANDOM_KILLING
 Audiostream.Loop(25@, 1)
 Audiostream.Volume(25@) = $SOUNDS_VOLUME
@@ -2353,6 +2355,12 @@ SURVIVOR_VERSUS_FINDED_TARGET == 1
         5@ < 10
         then
         5@ = 10
+        end
+        
+        if
+        $GAMEMODE_CRAZY == 1
+        then
+        5@ = 100
         end                        
                 
         07DD: set_actor SURVIVOR_VERSUS attack_rate 5@                                     
@@ -2633,6 +2641,14 @@ jump @PEOPLE_SPAWN_CHECK
 
 :PEOPLE_COORD_SET
 wait 0
+
+if
+CUSTOM_MAP_SPAWN_INFECTED_ON_CAR_PATHS == 0
+jf @PEOPLE_COORD_SET_CUSTOMMAP_CAR_PATH
+if
+CUSTOM_MAP_SPAWN_INFECTED_ON_PED_PATHS == 0
+jf @PEOPLE_COORD_SET_CUSTOMMAP_PED_PATH
+
 0208: 27@ = random_float_in_ranges 100.0 -100.0 
 0208: 28@ = random_float_in_ranges -100.0 100.0   
 04C4: store_coords_to 2@ 3@ 4@ from_actor PLAYER_ACTOR with_offset 27@ 28@ 0.0 
@@ -2750,11 +2766,17 @@ random_int 11@ MIN_WEAP_GEN to MAX_WEAP_GEN
 end
 
 if
-not 11@ == WEAP_GEN_SET
+8E4D: not random_percent WEAP_GEN_SET
 then
 0209: 10@ = random_int_in_ranges 22 35 
 else
 0209: 10@ = random_int_in_ranges MIN_WEAPON_NUM MAX_WEAPON_NUM
+if and
+EXTRAWEP_FLAG_AND_MAXNUM >= 225
+0E4D: random_percent EXTRAWEP_GENERATE_CHANCE
+    then    
+    0209: 10@ = random_int_in_ranges 225 EXTRAWEP_FLAG_AND_MAXNUM
+    end
 end
 
 if
@@ -2821,6 +2843,30 @@ end
 end    
 
 ////////////////////////////////////////////////////
+
+if
+10@ >= 225
+    then
+    0AD3: v$SND2_FILE = format "%d" 10@
+    0AF0: $TEMPVAR_FLOAT_1 = get_int_from_ini_file "data\SAExtraweps.ini" section v$SND2_FILE key "DO_NOT_GENERATE_VERSUS_SURVS"
+    if    
+    $TEMPVAR_FLOAT_1 == 1    
+        then
+        10@ = 21
+        else
+        if
+        0AF0: $TEMPVAR_FLOAT_1 = get_int_from_ini_file "data\SAExtraweps.ini" section v$SND2_FILE key "GENERATE_DODGE_PERCENT"    
+            then
+            if
+            0E4D: random_percent $TEMPVAR_FLOAT_1
+                then
+                10@ = 21
+                end
+            end
+        end 
+    end
+    
+//////////////////////////////////////////////////// 
 
 if or
 10@ == 22
@@ -2924,6 +2970,7 @@ if or
                                             if or
                                             10@ == 104
                                             10@ == 105
+                                            10@ >= 225
                                                 then       
                                                 else
                                                 jump to @2RANDOM_PEOPLE1_WEAPON_CREATE
@@ -2950,6 +2997,7 @@ jf @2RANDOM_PEOPLE1_WEAPON_CREATE
 while not model.Available(11@)
 wait 0
 model.Load(11@)
+mload
 end
 
 Actor.GiveWeaponAndAmmo(SURVIVOR_VERSUS, 10@, 99999)
@@ -2958,19 +3006,20 @@ return
 :2RANDOM_PEOPLE1_WEAPON_CREATE_CRAZY
 wait 0 
 
-if
-UNITED_MAP == 0
-then
-random_int 11@ MIN_WEAP_GEN to MAX_WEAP_GEN
-end
-
-if
-not 11@ == WEAP_GEN_SET
-then
-0209: 10@ = random_int_in_ranges 35 39 
-else
-0209: 10@ = random_int_in_ranges MIN_WEAPON_NUM MAX_WEAPON_NUM
-end
+//if
+//UNITED_MAP == 0
+//then
+//random_int 11@ MIN_WEAP_GEN to MAX_WEAP_GEN
+//end
+//
+//if
+//8E4D: not random_percent WEAP_GEN_SET
+//then
+//0209: 10@ = random_int_in_ranges 35 39 
+//else
+//0209: 10@ = random_int_in_ranges MIN_WEAPON_NUM MAX_WEAPON_NUM
+//end
+10@ = 38
 
 if
 UNITED_MAP == 1
@@ -2983,9 +3032,11 @@ then
 if
 STORIES_MAP == 0
 then
-0209: 10@ = random_int_in_ranges MINID_VC_WEAP 151
+//0209: 10@ = random_int_in_ranges MINID_VC_WEAP 151
+10@ = 150
 else
-0209: 10@ = random_int_in_ranges MINID_VCS_WEAP 214
+//0209: 10@ = random_int_in_ranges MINID_VCS_WEAP 214
+10@ = 213
 end
 
 else
@@ -2993,9 +3044,11 @@ else
 if
 STORIES_MAP == 0
 then
-0209: 10@ = random_int_in_ranges MINID_III_WEAP 121
+//0209: 10@ = random_int_in_ranges MINID_III_WEAP 121
+10@ = 152
 else
-0209: 10@ = random_int_in_ranges MINID_LCS_WEAP 184
+//0209: 10@ = random_int_in_ranges MINID_LCS_WEAP 184
+10@ = 183
 end
 
 end
@@ -3004,40 +3057,40 @@ end
 
 ////////////////////////////////////////////////////
 
-if or
-10@ == 38
-10@ == 70
-10@ == 80
-10@ == 94
-10@ == 96
-10@ == 97 
-    then
-    else
-    if or
-    10@ == 116
-    10@ == 120
-    10@ == 147
-    10@ == 149
-    10@ == 150 
-        then
-        else
-        if or
-        10@ == 176
-        10@ == 181
-        10@ == 182
-            then     
-            else
-            if or
-            10@ == 206
-            10@ == 211
-            10@ == 212
-                then
-                else
-                jump to @2RANDOM_PEOPLE1_WEAPON_CREATE_CRAZY                
-                end
-            end
-        end
-    end
+//if or
+//10@ == 38
+//10@ == 70
+//10@ == 80
+//10@ == 94
+//10@ == 96
+//10@ == 97 
+//    then
+//    else
+//    if or
+//    10@ == 116
+//    10@ == 120
+//    10@ == 147
+//    10@ == 149
+//    10@ == 150 
+//        then
+//        else
+//        if or
+//        10@ == 176
+//        10@ == 181
+//        10@ == 182
+//            then     
+//            else
+//            if or
+//            10@ == 206
+//            10@ == 211
+//            10@ == 212
+//                then
+//                else
+//                jump to @2RANDOM_PEOPLE1_WEAPON_CREATE_CRAZY                
+//                end
+//            end
+//        end
+//    end
     
 ////////////////////////////////////////////////////    
   
@@ -3064,6 +3117,7 @@ wait 0
 random_int 1@ = MIN_SKIN_GEN MAX_SKIN_GEN
 if and
 1@ == SKIN_GEN_SET
+not CUSTOM_MAP_FLAG == 1
 UNITED_MAP == 0
     then
     
@@ -3102,6 +3156,7 @@ UNITED_MAP == 0
 random_int 1@ = MIN_SKIN_GEN MAX_SKIN_GEN
 if and
 1@ == SKIN_GEN_SET
+not CUSTOM_MAP_FLAG == 1
 $GAMEMODE_CRAZY == 1
     then
     
@@ -3194,7 +3249,7 @@ $GAMEMODE_CRAZY == 1
 if
 UNITED_MAP == 0
 then
-0209: 1@ = random_int_in_ranges 7 285
+0209: 1@ = random_int_in_ranges RANDOM_PED_MIN_ID RANDOM_PED_MAX_ID
 else
 
 if
@@ -3235,9 +3290,8 @@ if
 jf @2RANDOM_PEOPLE1_CHECKING_MODEL
 
 0AD3: 5@v = format "%d" 1@
-0AF0: 6@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key 5@v
 if or
-not 6@ == 1
+8AF0: not 6@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key 5@v
 $GAMEMODE_CRAZY == 1
 jf @2RANDOM_PEOPLE1_CHECKING_MODEL
 

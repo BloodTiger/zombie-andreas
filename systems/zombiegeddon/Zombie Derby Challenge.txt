@@ -134,9 +134,24 @@ else
 ZOMBIEGEDDON_GAMESPEED_MULT = 0.7
 end
 
+if
+CUSTOM_MAP_FLAG == 1
+    then
+    if
+    0AAB:   file_exists "modloader\ZA CUSTOM MAP FOLDER\ac_carma.txt"
+        then
+        CLASSIC_CARMA_MAP_AC_MODE = 2
+        CLASSIC_CARMA_MAP = 2
+        create_thread @DRB_MUS
+        0B00: delete_file "data/derby_ac.ini"  // IF and SET
+        0B04: copy_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\ZOMBIEGEDDON.ini" to "data/derby_ac.ini" //IF and SET
+        end
+    end
+
 if and
 UNITED_MAP == 0
 CLASSIC_CARMA_MAP < 1
+not CUSTOM_MAP_FLAG == 1
 then
 0777: delete_objects_in_object_group "fortpost"
 0777: delete_objects_in_object_group "worldxref"
@@ -197,6 +212,13 @@ then
 0777: delete_objects_in_object_group "trdr2"
 0777: delete_objects_in_object_group "trdr1"
 0777: delete_objects_in_object_group "trdr0"
+end
+
+if
+CUSTOM_MAP_FLAG == 1
+then
+0B00: delete_file "data/derby.ini"  // IF and SET
+0B04: copy_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\ZOMBIEGEDDON.ini" to "data/derby.ini" //IF and SET
 end
 
 if
@@ -272,7 +294,7 @@ then
 end
 
 if
-CLASSIC_CARMA_MAP_AC_MODE == 1
+CLASSIC_CARMA_MAP_AC_MODE >= 1
 then
 CARMA_GLOB_MAP_NABOR = 0
 end
@@ -282,7 +304,7 @@ CARMA_GLOB_MAP_NABOR == 0
 then
 
 if
-not CLASSIC_CARMA_MAP_AC_MODE == 1
+not CLASSIC_CARMA_MAP_AC_MODE >= 1
 then
 CARMA_GLOB_MAP_NABOR_TOTAL_MAPS = 35
 else
@@ -442,6 +464,26 @@ then
 0A8C: write_memory 0@ size 4 value -0.5 virtual_protect 0
 end
 
+0EFE: get_loaded_library "VehDeform.SA.asi" store_to 0@   
+0@ += 0x90AD4
+//Включаем VehDeform
+if and
+not ZOMBIEGEDDON_GAME_TYPE == 2
+not ZOMBIEGEDDON_GAME_TYPE == 3
+not VEH_DEFORM_ACTIVE_OUT_ZOMBIEGEDDON == 2
+then
+0A8C: write_memory 0@ size 4 value 50.0 virtual_protect 0
+else
+0A8C: write_memory 0@ size 4 value 9999.0 virtual_protect 0
+end
+
+//if
+//UNITED_MAP == 1
+//then
+//0A8C: write_memory 0x049F9C7 size 4 value 12100840 virtual_protect 0
+//0A8C: write_memory 0x049F9CB size 4 value 608471808 virtual_protect 0
+//end
+
 if
 ZOMBIEGEDDON_GAME_TYPE == 3
 then
@@ -476,6 +518,7 @@ create_thread @USR_TAP
 if and
 UNITED_MAP == 0
 CLASSIC_CARMA_MAP < 1
+not CUSTOM_MAP_FLAG == 1
 then
 0777: delete_objects_in_object_group "gatesC" 
 end
@@ -548,23 +591,25 @@ end
 if
 ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 0
 then
+31@ = 0     
 0AF0: 31@ = get_int_from_ini_file "data/derby.ini" section v$EDITOR_FILE key "TOTAL_CHECKPOINTS"
 else
 
 if
 CLASSIC_CARMA_MAP_AC_MODE == 0
 then
+31@ = 0
 0AF0: 31@ = get_int_from_ini_file CLASSIC_CARMAGEDDON_RACES_INI_PATH section v$EDITOR_FILE key "TOTAL_CHECKPOINTS"
-else
+else     
+31@ = 0
 0AF0: 31@ = get_int_from_ini_file AC_CARMAGEDDON_RACES_INI_PATH section v$EDITOR_FILE key "TOTAL_CHECKPOINTS"
 end
 
 end
 
 if
-not 31@ < -1
-    then    
-    else
+31@ <= 0
+    then
     29@ -= 1
     break
     end
@@ -583,14 +628,17 @@ end
 if
 ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 0
 then
+2@ = 0
 0AF0: 2@ = get_int_from_ini_file "data/derby.ini" section v$EDITOR_FILE key "LAPS"
 else
 
 if
 CLASSIC_CARMA_MAP_AC_MODE == 0
 then
+2@ = 0
 0AF0: 2@ = get_int_from_ini_file CLASSIC_CARMAGEDDON_RACES_INI_PATH section v$EDITOR_FILE key "LAPS"
 else
+2@ = 0
 0AF0: 2@ = get_int_from_ini_file AC_CARMAGEDDON_RACES_INI_PATH section v$EDITOR_FILE key "LAPS"
 end
 
@@ -601,7 +649,7 @@ UNITED_MAP == 0
 then
 
 if
-2@ < -1
+2@ <= 0
 then
 jump to @RACE_START_SEARCH
 end
@@ -2294,8 +2342,9 @@ if
     
     end
     
-    if
+    if and
     003A:   LAP_NUMBER == CARMA_GLOB_RACE_TOTAL_LAPS // (int)
+    not ZOMBIEGEDDON_GAME_TYPE == 3
     then  
     v$CRM_TXT = "CRM16"
     create_thread @CRM_TEXT
@@ -2356,8 +2405,9 @@ if
     
     marker.Disable(DERBY_CHECKPOINT)
     06D6: disable_racing_checkpoint DERBY_CHECKPOINT_RACING
-    if
+    if and
     001C:  LAP_NUMBER > CARMA_GLOB_RACE_TOTAL_LAPS // (int)
+    not ZOMBIEGEDDON_GAME_TYPE == 3
     then
     //ass
     else
@@ -2676,8 +2726,8 @@ $SPECTATING_FLAG == 0
     9@ = 0
     
     repeat
-    wait 0
-    9@ += 51
+    wait 0 
+    9@ += 51               
     03F0: enable_text_draw 1
     038E: draw_box_position 320.0 224.0 size 640.0 448.0 RGBA 0 0 0 9@
     
@@ -4028,8 +4078,9 @@ then
 03F0: enable_text_draw 1
 0342: set_text_draw_centered 1
 0344: set_text_draw_linewidth 500.0 for_centered_text
-if
+if and
 CLASSIC_CARMA_MAP > 0
+not CLASSIC_CARMA_MAP_AC_MODE == 2
 then
 081C: draw_text_outline 2 RGBA 0 0 0 255
 else
@@ -4061,8 +4112,9 @@ end
 03F0: enable_text_draw 1
 0342: set_text_draw_centered 1
 0344: set_text_draw_linewidth 500.0 for_centered_text
-if
+if and
 CLASSIC_CARMA_MAP > 0
+not CLASSIC_CARMA_MAP_AC_MODE == 2
 then
 081C: draw_text_outline 2 RGBA 0 0 0 255
 else
@@ -4200,7 +4252,7 @@ wait 0
 if
 UNITED_MAP == 0
 then
-0209: $RANDOM_MODE_MODEL = random_int_in_ranges 7 285
+0209: $RANDOM_MODE_MODEL = random_int_in_ranges RANDOM_PED_MIN_ID RANDOM_PED_MAX_ID
 else
 
 if
@@ -4234,9 +4286,8 @@ if
 jf @DERBY_RANDOM_PLAYER_MODEL
 
 0AD3: v$FP_FILE = format "%d" $RANDOM_MODE_MODEL
-0AF0: 1@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key v$FP_FILE
 if
-not 1@ == 1
+8AF0: not 1@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key v$FP_FILE
 jf @DERBY_RANDOM_PLAYER_MODEL
 
 model.Load($RANDOM_MODE_MODEL)
@@ -4386,28 +4437,29 @@ return
 
 $DELETE_SOUND = 1
  
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $SELECT_MUSIC // (int)
-$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-
-wait 1
-
-while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
-wait 0
-cinema.Radar(0)
-cinema.Widescreen(1)
-end
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $SELECT_MUSIC // (int)
+//$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+//
+//wait 1
+//
+//while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+//wait 0
+//cinema.Radar(0)
+//cinema.Widescreen(1)
+//end
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $SELECT_MUSIC volume 0.0 time 250
 
 return
 
@@ -4427,8 +4479,9 @@ actor.LockInCurrentPosition(PLAYER_ACTOR,true)
 0337: set_actor PLAYER_ACTOR visibility 0
 cinema.Widescreen(1)
 
-if
+if and
 CLASSIC_CARMA_MAP >= 1
+not CLASSIC_CARMA_MAP_AC_MODE == 2
 then
 008B: 29@ = CARMA_GLOB_MAP_NABOR_TOTAL_MAPS // (int)
 end
@@ -4939,9 +4992,19 @@ if or
     if
     ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 0
     then
-    0AF1: write_int CARMA_GLOB_OPPONENTS_COUNT to_ini_file "data/derby_Andreas.ini" section v$RACE_FILE key "OPPONENTS_USER_LAST_COUNT"
+    
+    if
+    not CUSTOM_MAP_FLAG == 1
+    then    
+    0AF1: write_int CARMA_GLOB_OPPONENTS_COUNT to_ini_file "data/derby_Andreas.ini" section v$RACE_FILE key "OPPONENTS_USER_LAST_COUNT"        
     0B00: delete_file "data/derby.ini"  // IF and SET
     0B04: copy_file "data/derby_Andreas.ini" to "data/derby.ini" //IF and SET
+    else
+    0AF1: write_int CARMA_GLOB_OPPONENTS_COUNT to_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\ZOMBIEGEDDON.ini" section v$RACE_FILE key "OPPONENTS_USER_LAST_COUNT"        
+    0B00: delete_file "data/derby.ini"  // IF and SET
+    0B04: copy_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\ZOMBIEGEDDON.ini" to "data/derby.ini" //IF and SET
+    end
+    
     else
     
     if
@@ -4992,7 +5055,7 @@ fade 0 150
 wait 150
 
 if
-not CLASSIC_CARMA_MAP_AC_MODE == 1
+not CLASSIC_CARMA_MAP_AC_MODE >= 1
 then
 
 ////////////////////////////////////////////////////////////////
@@ -5000,7 +5063,7 @@ then
 if and
 ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
 not CARMA_CURR_MUSIC_SET == 3
-not CLASSIC_CARMA_MAP_AC_MODE == 1
+not CLASSIC_CARMA_MAP_AC_MODE >= 1
 then
 
 if and
@@ -5025,7 +5088,7 @@ end
 if and
 ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
 not CARMA_CURR_MUSIC_SET == 2
-not CLASSIC_CARMA_MAP_AC_MODE == 1
+not CLASSIC_CARMA_MAP_AC_MODE >= 1
 then
 
 if and
@@ -5055,7 +5118,7 @@ end
 if and
 ZOMBIEGEDDON_CLASSIC_ADDON_FLAG == 1
 not CARMA_CURR_MUSIC_SET == 1
-not CLASSIC_CARMA_MAP_AC_MODE == 1
+not CLASSIC_CARMA_MAP_AC_MODE >= 1
 then
 
 if
@@ -6394,7 +6457,7 @@ end
 gosub @MAP_GET_NUMBER
 
 if
-not CLASSIC_CARMA_MAP_AC_MODE == 1
+not CLASSIC_CARMA_MAP_AC_MODE >= 1
 then
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -6971,8 +7034,9 @@ return
 
 //////////////////////////////////////////////////////
 
-if
+if and
 CLASSIC_CARMA_MAP >= 1
+not CLASSIC_CARMA_MAP_AC_MODE == 2
 then
 
 if
@@ -7540,6 +7604,8 @@ end
 if and
 UNITED_MAP == 0
 CLASSIC_CARMA_MAP < 1
+not CUSTOM_MAP_FLAG == 1
+not CLASSIC_CARMA_MAP_AC_MODE == 2
 then
 
 //////////////////////////////////////////////////////
@@ -7971,7 +8037,7 @@ while true
 wait 0
 
 if
-33@ > 2
+33@ >= 33
 then
 0@ += 10
 33@ = 0
@@ -8020,7 +8086,7 @@ wait 0
 0459: end_thread_named 'CRMTT21'
 
 if and
-33@ > 2
+33@ >= 33
 not 0@ == 250
 then
 0@ += 10
@@ -8067,7 +8133,7 @@ while true
 wait 0
 
 if and
-33@ > 2
+33@ >= 33
 not 0@ == 250
 then
 0@ += 10
@@ -8136,7 +8202,7 @@ while true
 wait 0
 
 if and
-33@ > 2
+33@ >= 33
 not 0@ == 250
 then
 0@ += 10
@@ -8199,7 +8265,7 @@ while true
 wait 0
 
 if and
-33@ > 2
+33@ >= 33
 not 0@ == 250
 then
 0@ += 10
@@ -8268,7 +8334,7 @@ while true
 wait 0
 
 if and
-33@ > 2
+33@ >= 33
 not 0@ == 250
 then
 0@ += 10
@@ -8331,7 +8397,7 @@ while true
 wait 0
 
 if and
-33@ > 2
+33@ >= 33
 not 0@ == 250
 then
 0@ += 10
@@ -8405,7 +8471,7 @@ while true
 wait 0
 
 if and
-33@ > 2
+33@ >= 33
 not 0@ == 250
 then
 0@ += 10
@@ -8512,8 +8578,11 @@ end
 0@ = 0.0
   
 while true
-wait 0
-0@ += 0.05
+wait 0     
+//0@ += 0.05
+1@ = 0.05
+006F: 1@ *= GENERAL_FPS_TIMER_DIVIDER // (float)
+005B: 0@ += 1@  // (float)
 0A25: set_camera_on_players_X_angle -0.55 Z_angle 0@
 end
 
@@ -8527,8 +8596,12 @@ wait 0
 if
 056E:   car CARMA_GLOB_DERBY_PLAYER_CAR defined
 then
-CARMA_FINAL_CAM_X -= 0.1
-CARMA_FINAL_CAM_Y += 0.1
+0@ = 0.1
+006F: 0@ *= GENERAL_FPS_TIMER_DIVIDER // (float)
+0063: CARMA_FINAL_CAM_X -= 0@  // (float)
+005B: CARMA_FINAL_CAM_Y += 0@  // (float)
+//CARMA_FINAL_CAM_X -= 0.1
+//CARMA_FINAL_CAM_Y += 0.1
 0407: store_coords_to 0@ 1@ 2@ from_car CARMA_GLOB_DERBY_PLAYER_CAR with_offset CARMA_FINAL_CAM_X CARMA_FINAL_CAM_Y 3.0      
 camera.SetPosition(0@,1@,2@,0.0,0.0,0.0)
 
@@ -8560,8 +8633,12 @@ wait 0
 if
 056E:   car CARMA_GLOB_DERBY_PLAYER_CAR defined
 then
-CARMA_FINAL_CAM_X += 0.1
-CARMA_FINAL_CAM_Y += 0.1 
+//CARMA_FINAL_CAM_X += 0.1
+//CARMA_FINAL_CAM_Y += 0.1 
+0@ = 0.1
+006F: 0@ *= GENERAL_FPS_TIMER_DIVIDER // (float)
+005B: CARMA_FINAL_CAM_X += 0@  // (float)
+005B: CARMA_FINAL_CAM_Y += 0@  // (float)
 0407: store_coords_to 0@ 1@ 2@ from_car CARMA_GLOB_DERBY_PLAYER_CAR with_offset CARMA_FINAL_CAM_X CARMA_FINAL_CAM_Y 3.0       
 camera.SetPosition(0@,1@,2@,0.0,0.0,0.0)
 
@@ -8593,8 +8670,12 @@ wait 0
 if
 056E:   car CARMA_GLOB_DERBY_PLAYER_CAR defined
 then
-CARMA_FINAL_CAM_X += 0.1
-CARMA_FINAL_CAM_Y -= 0.1  
+//CARMA_FINAL_CAM_X += 0.1
+//CARMA_FINAL_CAM_Y -= 0.1  
+0@ = 0.1
+006F: 0@ *= GENERAL_FPS_TIMER_DIVIDER // (float)
+005B: CARMA_FINAL_CAM_X += 0@  // (float)
+0063: CARMA_FINAL_CAM_Y -= 0@  // (float)
 0407: store_coords_to 0@ 1@ 2@ from_car CARMA_GLOB_DERBY_PLAYER_CAR with_offset CARMA_FINAL_CAM_X CARMA_FINAL_CAM_Y 3.0
 camera.SetPosition(0@,1@,2@,0.0,0.0,0.0)
 
@@ -8626,8 +8707,12 @@ wait 0
 if
 056E:   car CARMA_GLOB_DERBY_PLAYER_CAR defined
 then
-CARMA_FINAL_CAM_X -= 0.1
-CARMA_FINAL_CAM_Y -= 0.1  
+//CARMA_FINAL_CAM_X -= 0.1
+//CARMA_FINAL_CAM_Y -= 0.1  
+0@ = 0.1
+006F: 0@ *= GENERAL_FPS_TIMER_DIVIDER // (float)
+0063: CARMA_FINAL_CAM_X -= 0@  // (float)
+0063: CARMA_FINAL_CAM_Y -= 0@  // (float)
 0407: store_coords_to 0@ 1@ 2@ from_car CARMA_GLOB_DERBY_PLAYER_CAR with_offset CARMA_FINAL_CAM_X CARMA_FINAL_CAM_Y 3.0
 camera.SetPosition(0@,1@,2@,0.0,0.0,0.0)
 
@@ -8659,8 +8744,12 @@ wait 0
 if
 056E:   car CARMA_GLOB_DERBY_PLAYER_CAR defined
 then
-CARMA_FINAL_CAM_X -= 0.1
-CARMA_FINAL_CAM_Y += 0.1
+//CARMA_FINAL_CAM_X -= 0.1
+//CARMA_FINAL_CAM_Y += 0.1
+0@ = 0.1
+006F: 0@ *= GENERAL_FPS_TIMER_DIVIDER // (float)
+0063: CARMA_FINAL_CAM_X -= 0@  // (float)
+005B: CARMA_FINAL_CAM_Y += 0@  // (float)
 0407: store_coords_to 0@ 1@ 2@ from_car CARMA_GLOB_DERBY_PLAYER_CAR with_offset CARMA_FINAL_CAM_X CARMA_FINAL_CAM_Y 3.0 
 camera.SetPosition(0@,1@,2@,0.0,0.0,0.0)
 
@@ -8838,7 +8927,7 @@ repeat
 wait 0
 
 if and
-33@ > 2
+33@ >= 33
 not 4@ == 250
 then
 4@ += 10
@@ -8937,7 +9026,7 @@ repeat
 wait 0
 
 if and
-33@ > 2
+33@ >= 33
 not 4@ == 250
 then
 4@ += 10

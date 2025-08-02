@@ -60,29 +60,31 @@ $ZOMBIE_REMOVE_FLAG = 1
 ///////////////////////////////////////////////////////////
 
 MAIN_QUEST_MUSIC_FLAG = 1
-$MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\QUESTS\Q13\Q13A.wav")
+$MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\QUESTS\Q13\Q13A.mp3")
+250A: SET_AUDIO_STREAM_TYPE $MUSIC_ASSHOLE type 2
 Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
 Audiostream.Loop($MUSIC_ASSHOLE, 1)
-Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+Audiostream.Volume($MUSIC_ASSHOLE) = VERO_TIPA_VOLUME
 
 /////////////////Плавное нарастание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
-0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
-
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-
-wait 1 
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
+//0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+//
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+//
+//wait 1 
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $MUSIC_ASSHOLE volume $MUSIC_VOLUME time 1000
 
 /////////////////////////////////////////////////////////////////////
 
@@ -97,6 +99,7 @@ create_thread @MQ_GRP
 
 repeat
 wait 0
+REMOVE_SAVE_PICKUP_FOR_A_WHILE = 1
 until $PHRASES_OFF_FLAG == 0
 
 //MAIN_QUEST13_COMPLETED_FLAG = 1
@@ -104,6 +107,7 @@ until $PHRASES_OFF_FLAG == 0
 00BA: show_text_styled GXT "GAME931" time 5000 style 2
 
 $ONMISSION = 1
+REMOVE_SAVE_PICKUP_FOR_A_WHILE = 0
 $QUEST_TYPE = 23
 CAMP_DONT_SAY_HELLO_FLAG = 1
 PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 1
@@ -234,27 +238,30 @@ $CHEAT_TYPE_FLAG == 1
         $QUEST_READY_FLAG = 1
         
         /////////////////////Плавное затухание/////////////////////
-
-        $MUSIC_FADE_NUMBER += 1
-        if
-        $MUSIC_FADE_NUMBER > 4
-            then
-            $MUSIC_FADE_NUMBER = 0 
-            end    
-                
-        0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
-        $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-                
-        $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 100
-        $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-        $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-        create_thread @MUS_FAD
-                
-        wait 1
-                
-        while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
-        wait 0
-        end
+//
+//        $MUSIC_FADE_NUMBER += 1
+//        if
+//        $MUSIC_FADE_NUMBER > 4
+//            then
+//            $MUSIC_FADE_NUMBER = 0 
+//            end    
+//                
+//        0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+//        $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//                
+//        $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 100
+//        $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//        $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//        create_thread @MUS_FAD
+//                
+//        wait 1
+//                
+//        while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+//        wait 0
+//        end
+        2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $MUSIC_ASSHOLE volume 0.0 time 500
+        wait 500
+        audiostream.Release($MUSIC_ASSHOLE)
             
         MAIN_QUEST_MUSIC_FLAG = 0
         
@@ -355,8 +362,12 @@ if
 803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
 jf @MAIN_QUEST13_FAILED_LDEAD        
 
+TEMPVAR_INT = 120
+008D: TEMPVAR_INT = integer TEMPVAR_INT to_float
+0069: TEMPVAR_INT *= GENERAL_FPS_TIMER_DIVIDER2 // (float)
+008C: TEMPVAR_INT = float TEMPVAR_INT to_integer
 if
-0E45: frame_mod 120
+0E45: frame_mod TEMPVAR_INT
     then
         
     gosub @RANDOM_DIALOG_MQ13       
@@ -413,7 +424,7 @@ $ZOMBIE_REMOVE_FLAG = 1
 ZOMBIES_NOTSPAWN = 1
 0777: delete_objects_in_object_group "dns5"
     
-0459: end_thread_named 'SPRINTH'
+0ABA: end_thread_named 'SPRINTH'
 wait 0
 0@ = 0x609A4E 
 0A8C: write_memory 0@ size 4 value -1869574000 virtual_protect 1 
@@ -443,7 +454,7 @@ $SIREN_VOLUME_MULTIPER = 60.0
 $SOUND_EFFECT1 = Audiostream.Load("AUDIO\SOUNDS\Radio.mp3")
 
 Audiostream.PerformAction($SOUND_EFFECT1, PLAY)
-Audiostream.Volume($SOUND_EFFECT1) = 0.0
+Audiostream.Volume($SOUND_EFFECT1) = VERO_TIPA_VOLUME
 Audiostream.Loop($SOUND_EFFECT1, 1)
 
 :MQ_13_CP_SKIP_SHIT1
@@ -620,8 +631,12 @@ jf @MAIN_QUEST13_FAILED_HARZON_DEAD
 
 gosub @SIREN_VOLUME_MQ13
 
+TEMPVAR_INT = 120
+008D: TEMPVAR_INT = integer TEMPVAR_INT to_float
+0069: TEMPVAR_INT *= GENERAL_FPS_TIMER_DIVIDER2 // (float)
+008C: TEMPVAR_INT = float TEMPVAR_INT to_integer
 if
-0E45: frame_mod 120
+0E45: frame_mod TEMPVAR_INT
     then
         
     gosub @RANDOM_DIALOG_MQ13       
@@ -641,53 +656,58 @@ until 00FE:   actor PLAYER_ACTOR sphere 0 in_sphere 2772.5852 2465.7346 17.6719 
 v$OBJECTIVE = "DUMMY"
 
 /////////////////////Плавное затухание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-    
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
-$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-    
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 100
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-    
-wait 1
-    
-while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
-wait 0
-end
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//    
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+//$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//    
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 100
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+//    
+//wait 1
+//    
+//while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+//wait 0
+//end
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $MUSIC_ASSHOLE volume 0.0 time 500
+wait 500
+audiostream.Release($MUSIC_ASSHOLE)
     
 ///////////////////////////////////////////////////////////
     
-$MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\QUESTS\Q13\Q13B.wav")
+$MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\QUESTS\Q13\Q13B.mp3")
+250A: SET_AUDIO_STREAM_TYPE $MUSIC_ASSHOLE type 2
 Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
 Audiostream.Loop($MUSIC_ASSHOLE, 1)
-Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+Audiostream.Volume($MUSIC_ASSHOLE) = VERO_TIPA_VOLUME
     
 /////////////////////Плавное нарастание/////////////////////
-    
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-    
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
-0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
-    
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-    
-wait 1
+//    
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//    
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
+//0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+//    
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+//    
+//wait 1
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $MUSIC_ASSHOLE volume $MUSIC_VOLUME time 500
 
 gosub @DISEMB_JETP_CHECK    
 0792: disembark_instantly_actor PLAYER_ACTOR
@@ -859,10 +879,14 @@ not 57@ == 1
 end
 
 0@ = 0
+TEMPVAR_INT = 15
+008D: TEMPVAR_INT = integer TEMPVAR_INT to_float
+0069: TEMPVAR_INT *= GENERAL_FPS_TIMER_DIVIDER2 // (float)
+008C: TEMPVAR_INT = float TEMPVAR_INT to_integer
 if and
 53@ == 1
 8E48: not is_char_fallen_on_ground PLAYER_ACTOR
-0E45: frame_mod 15
+0E45: frame_mod TEMPVAR_INT
 then
 
 if and
@@ -887,7 +911,7 @@ actor.Animation(PLAYER_ACTOR) == "FALL_land"
 0@ == 1
     then
     if
-    0E4D: random_percent 50
+    0E4D: random_percent 40
         then
         0792: disembark_instantly_actor PLAYER_ACTOR
         //Player.CanMove(PLAYER_CHAR) = False
@@ -935,6 +959,7 @@ actor.InCar(PLAYER_ACTOR,SUPPLY_QUEST_TRUCK)
 54@ == 1
     then
     marker.Disable(MISSION_CHECKPOINT)
+    06FD: set_car MQ13_HARZON_BMX speed_on_path_to 0.75
 //    06AF: set_player PLAYER_CHAR sprint_mode 1
     end
     
@@ -956,7 +981,7 @@ if and
     54@ = 1    
     020C: create_explosion_with_radius 12 at 2772.5227 2466.052 17.6719            
     
-    Audiostream.Volume($SOUND_EFFECT1) = 0.0
+    Audiostream.Volume($SOUND_EFFECT1) = VERO_TIPA_VOLUME
     Audiostream.Release($SOUND_EFFECT1)
     
     v$ST_DIALOG[0] = "MQ_678"
@@ -1005,11 +1030,11 @@ if and
     
     32@ = 0
     
-    03CF: load_wav 20802 as 4 
+    03CF: load_wav OLDWAV_WARDROBE_20802 as 4 
     
     while 83D0: not  wav 4 loaded 
     wait 0
-    03CF: load_wav 20802 as 4 
+    03CF: load_wav OLDWAV_WARDROBE_20802 as 4 
     end
      
     0949: link_wav 4 to_actor PLAYER_ACTOR
@@ -1048,7 +1073,7 @@ if and
     ZOMBIES_NOTSPAWN = 1
     0777: delete_objects_in_object_group "dns5"
     
-    0459: end_thread_named 'SPRINTH'
+    0ABA: end_thread_named 'SPRINTH'
     wait 0
     0@ = 0x609A4E 
     0A8C: write_memory 0@ size 4 value -1869574000 virtual_protect 1 
@@ -1082,7 +1107,8 @@ actor.InCar(MQ13_HARZON,MQ13_HARZON_BMX)
         07C0: load_path 58
         until 07C1:   path 58 available
             
-        0705: car MQ13_HARZON_BMX assign_to_path 58 and_drive_normal     
+        0705: car MQ13_HARZON_BMX assign_to_path 58 and_drive_normal
+        06FD: set_car MQ13_HARZON_BMX speed_on_path_to 0.25     
         04E0: car MQ13_HARZON_BMX abandon_path_radius 5
         car.SetSpeedInstantly(MQ13_HARZON_BMX,10.0)
         $ZOMBIE_REMOVE_FLAG = 0
@@ -1307,53 +1333,58 @@ if and
         014F: stop_timer $TIME
         
         /////////////////////Плавное затухание/////////////////////
-
-        $MUSIC_FADE_NUMBER += 1
-        if
-        $MUSIC_FADE_NUMBER > 4
-            then
-            $MUSIC_FADE_NUMBER = 0 
-            end    
-            
-        0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
-        $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-            
-        $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 50
-        $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-        $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-        create_thread @MUS_FAD
-            
-        wait 1
-            
-        while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
-        wait 0
-        end
+//
+//        $MUSIC_FADE_NUMBER += 1
+//        if
+//        $MUSIC_FADE_NUMBER > 4
+//            then
+//            $MUSIC_FADE_NUMBER = 0 
+//            end    
+//            
+//        0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+//        $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//            
+//        $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 50
+//        $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//        $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//        create_thread @MUS_FAD
+//            
+//        wait 1
+//            
+//        while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+//        wait 0
+//        end
+        2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $MUSIC_ASSHOLE volume 0.0 time 500
+        wait 500
+        audiostream.Release($MUSIC_ASSHOLE)
             
         ///////////////////////////////////////////////////////////
             
-        $MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\QUESTS\Q13\Q13C.wav")
+        $MUSIC_ASSHOLE = Audiostream.Load("AUDIO\SOUNDS\QUESTS\Q13\Q13C.mp3")
+        250A: SET_AUDIO_STREAM_TYPE $MUSIC_ASSHOLE type 2
         Audiostream.PerformAction($MUSIC_ASSHOLE, PLAY)
         Audiostream.Loop($MUSIC_ASSHOLE, 1)
-        Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+        Audiostream.Volume($MUSIC_ASSHOLE) = VERO_TIPA_VOLUME
             
         /////////////////////Плавное нарастание/////////////////////
-            
-        $MUSIC_FADE_NUMBER += 1
-        if
-        $MUSIC_FADE_NUMBER > 4
-            then
-            $MUSIC_FADE_NUMBER = 0 
-            end    
-            
-        0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
-        0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
-            
-        $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
-        $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
-        $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-        create_thread @MUS_FAD
-            
-        wait 1
+//            
+//        $MUSIC_FADE_NUMBER += 1
+//        if
+//        $MUSIC_FADE_NUMBER > 4
+//            then
+//            $MUSIC_FADE_NUMBER = 0 
+//            end    
+//            
+//        0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int) 
+//        0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+//            
+//        $MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+//        $MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+//        $MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//        create_thread @MUS_FAD
+//            
+//        wait 1
+        2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $MUSIC_ASSHOLE volume $MUSIC_VOLUME time 500
         
         break
         end
@@ -1695,11 +1726,11 @@ if and
         
         32@ = 0
         
-        03CF: load_wav 20802 as 4 
+        03CF: load_wav OLDWAV_WARDROBE_20802 as 4 
         
         while 83D0: not  wav 4 loaded 
         wait 0
-        03CF: load_wav 20802 as 4 
+        03CF: load_wav OLDWAV_WARDROBE_20802 as 4 
         end
          
         0949: link_wav 4 to_actor PLAYER_ACTOR
@@ -1817,7 +1848,10 @@ $TALK_SIMULATE = 1
 $CAMP_SPOTTED_FLAG = 1
 $CAMP_SPOTTED_FLAG_SAVE = 1
 
-if
+if and
+881E: not model $SAVE_CAR_MODEL[LATEST_CAR_SLOT_USED] boat
+881F: not model $SAVE_CAR_MODEL[LATEST_CAR_SLOT_USED] plane
+8820: not model $SAVE_CAR_MODEL[LATEST_CAR_SLOT_USED] heli
 MQ2_TEMP_CAR_SAVE_FLAG == 1
 then
 0088: $SAVE_CAR_X[LATEST_CAR_SLOT_USED] = MQ13_TEMP_CAR_X // (float)
@@ -1836,27 +1870,30 @@ PLAYER_CANT_SPEAK_WITH_LEADER_FLAG = 0
 $QUEST_READY_FLAG = 1
 
 /////////////////////Плавное затухание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-        
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
-$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-        
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 2000
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-        
-wait 1
-        
-while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
-wait 0
-end
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//        
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+//$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//        
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 2000
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+//        
+//wait 1
+//        
+//while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+//wait 0
+//end
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $MUSIC_ASSHOLE volume 0.0 time 2000
+wait 2000
+audiostream.Release($MUSIC_ASSHOLE)
     
 MAIN_QUEST_MUSIC_FLAG = 0
 
@@ -1882,27 +1919,30 @@ create_thread @MQTMBK
 0777: delete_objects_in_object_group "quest13"
 
 /////////////////////Плавное затухание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-    
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
-$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-    
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-    
-wait 1
-    
-while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
-wait 0
-end
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//    
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+//$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//    
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+//    
+//wait 1
+//    
+//while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+//wait 0
+//end
+//2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $MUSIC_ASSHOLE volume 0.0 time 1000
+//wait 1000
+//audiostream.Release($MUSIC_ASSHOLE)
 
 MAIN_QUEST_MUSIC_FLAG = 0
 
@@ -1919,21 +1959,22 @@ return
 :MAIN_QUEST13_FAILED_AGRO
 
 /////////////////////Плавное затухание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-        
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
-$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-        
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//        
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+//$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//        
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $MUSIC_ASSHOLE volume 0.0 time 250
 
 ///////////////////////////////////////////////////////////
 
@@ -1948,21 +1989,22 @@ return
 :MAIN_QUEST13_FAILED_LDEAD
 
 /////////////////////Плавное затухание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-        
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
-$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-        
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//        
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+//$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//        
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $MUSIC_ASSHOLE volume 0.0 time 250
 
 ///////////////////////////////////////////////////////////
 
@@ -1977,21 +2019,22 @@ return
 :MAIN_QUEST13_FAILED_DISTANCE
 
 /////////////////////Плавное затухание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-        
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
-$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-        
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//        
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+//$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//        
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $MUSIC_ASSHOLE volume 0.0 time 250
 
 ///////////////////////////////////////////////////////////
 
@@ -2006,21 +2049,22 @@ return
 :MAIN_QUEST13_FAILED_DISTANCE2
 
 /////////////////////Плавное затухание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-        
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
-$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-        
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//        
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+//$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//        
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $MUSIC_ASSHOLE volume 0.0 time 250
 
 ///////////////////////////////////////////////////////////
 
@@ -2035,21 +2079,22 @@ return
 :MAIN_QUEST13_FAILED_TIME
 
 /////////////////////Плавное затухание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-        
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
-$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-        
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//        
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+//$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//        
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $MUSIC_ASSHOLE volume 0.0 time 250
 
 ///////////////////////////////////////////////////////////
 
@@ -2064,21 +2109,22 @@ return
 :MAIN_QUEST13_FAILED_HARZON_DEAD
 
 /////////////////////Плавное затухание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-        
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
-$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-        
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//        
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+//$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//        
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $MUSIC_ASSHOLE volume 0.0 time 250
 
 ///////////////////////////////////////////////////////////
 
@@ -2093,21 +2139,22 @@ return
 :MAIN_QUEST13_FAILED_PLAYER_DIED
 
 /////////////////////Плавное затухание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-        
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
-$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-        
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//        
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+//$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//        
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $MUSIC_ASSHOLE volume 0.0 time 250
 
 ///////////////////////////////////////////////////////////
 
@@ -2122,21 +2169,22 @@ return
 :MAIN_QUEST13_FAILED_DONT_VZORVAL
 
 /////////////////////Плавное затухание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-        
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
-$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-        
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//        
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+//$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//        
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $MUSIC_ASSHOLE volume 0.0 time 250
 
 ///////////////////////////////////////////////////////////
 
@@ -2188,7 +2236,7 @@ if
 then
 Audiostream.Volume($SOUND_EFFECT1) = $SOUNDS_VOLUME22
 else
-Audiostream.Volume($SOUND_EFFECT1) = 0.0
+Audiostream.Volume($SOUND_EFFECT1) = VERO_TIPA_VOLUME
 end          
                                                                  
 return

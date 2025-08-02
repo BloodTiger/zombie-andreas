@@ -7,7 +7,8 @@ end
 
 :SNW_EFF
 thread 'SNW_EFF'
-create_thread @LCS_SNW
+//create_thread @LCS_SNW
+create_thread @VCP_SNW
 end_thread
 
 0662: printstring "----------Snow Script by Junior_Djjr----------"
@@ -520,6 +521,217 @@ end
 end_thread
 
 :SNOW_EFFECT_ADJUST_TARGET_FOG
+
+0A8D: 0@ = read_memory 0x0C812FC size 4 virtual_protect 0
+if and
+0@ < 0.5
+21@ == 0
+    then
+    0A8C: write_memory 0x0072BE25 size 4 value 0@ virtual_protect 0
+    if
+    0@ <= 0.01
+        then        
+        21@ = 1        
+        end
+    else
+    if
+    21@ == 1
+        then
+        0A8D: 0@ = read_memory 0x0072BE25 size 4 virtual_protect 0
+        0@ += 0.001
+        0A8C: write_memory 0x0072BE25 size 4 value 0@ virtual_protect 0
+        if
+        0@ >= 0.5
+            then
+            21@ = 0
+            end
+        end
+    end
+    
+return    
+
+const
+VCPARTICLE_SNOW_ENABLED = 0x20028C
+VCPARTICLE_ALLOW_SNOW_WEATHER_ADRESS = 0x2D590
+VCPARTICLE_ALLOW_SNOW_WEATHER_VALUE = 10731
+end
+
+:VCP_SNW
+thread 'VCP_SNW'
+//end_thread
+
+0EFE: get_loaded_library "CParticleVC.SA.asi" store_to 0@
+if
+0@ < 1
+then
+end_thread
+end
+0@ += VCPARTICLE_ALLOW_SNOW_WEATHER_ADRESS //allow snow with any weather
+0A8C: write_memory 0@ size 2 value VCPARTICLE_ALLOW_SNOW_WEATHER_VALUE virtual_protect 1
+0EFE: get_loaded_library "CParticleVC.SA.asi" store_to 0@
+0@ += VCPARTICLE_SNOW_ENABLED //snow enabled
+0A8C: write_memory 0@ size 1 value 0 virtual_protect 1
+if and
+UNITED_MAP == 0
+not CUSTOM_MAP_FLAG == 1
+then
+0EFE: get_loaded_library "GraphicsTweaker.SA.asi" store_to 0@
+0@ += 0x0041BE4 //MultColorFilterB
+0A8C: write_memory 0@ size 4 value 1.25 virtual_protect 1
+0EFE: get_loaded_library "GraphicsTweaker.SA.asi" store_to 0@
+0@ += 0x0041BA8 //MultColorFilterA
+0A8C: write_memory 0@ size 4 value 0.85 virtual_protect 1
+end
+
+:VCP_SNOW_START_CHECK
+
+repeat
+
+if
+SNOW_ADDON_INSTALLED_FLAG == 1
+    then
+    0A8C: write_memory 0x8D5160 size 4 value 0.75 virtual_protect 0
+    0A8C: write_memory 0x8D5164 size 4 value 0.75 virtual_protect 0
+    0A8C: write_memory 0x8D5D80 size 4 value 0xaa736a68 virtual_protect 0 
+    0A8C: write_memory 0x8D5D7C size 4 value 0xaa736a68 virtual_protect 0
+    0A8C: write_memory 0x72A83F size 4 value 1.0 virtual_protect 1  
+    0A8C: write_memory 0x72A83A size 4 value 1.0 virtual_protect 1    
+    0A8C: write_memory 0x72A835 size 4 value 1.0 virtual_protect 1
+    break
+    end
+
+wait 5000
+
+gosub @NewYearPresentCheck
+0A8D: 0@ = read_memory 0x00B70155 size 1 virtual_protect 0 //Month
+if or
+0@ == 12
+0@ == 1
+0@ == 2
+    then
+    break
+    end         
+
+until false
+
+0EFE: get_loaded_library "CParticleVC.SA.asi" store_to 0@
+0@ += VCPARTICLE_ALLOW_SNOW_WEATHER_ADRESS //allow snow with any weather
+0A8C: write_memory 0@ size 2 value VCPARTICLE_ALLOW_SNOW_WEATHER_VALUE virtual_protect 1
+0EFE: get_loaded_library "CParticleVC.SA.asi" store_to 0@
+0@ += VCPARTICLE_SNOW_ENABLED //snow enabled
+0A8C: write_memory 0@ size 1 value 1 virtual_protect 1
+if and
+UNITED_MAP == 0
+not CUSTOM_MAP_FLAG == 1
+then
+0EFE: get_loaded_library "GraphicsTweaker.SA.asi" store_to 0@
+0@ += 0x0041BE4 //MultColorFilterB
+0A8C: write_memory 0@ size 4 value 1.55 virtual_protect 1
+0EFE: get_loaded_library "GraphicsTweaker.SA.asi" store_to 0@
+0@ += 0x0041BA8 //MultColorFilterA
+0A8C: write_memory 0@ size 4 value 0.75 virtual_protect 1
+end
+SNOW_CREATED = 1
+SNOW_ON_FLAG = 1
+
+WEATHER_CYCLE_CHANGE_WEATHER_SMOOTH_ID = 9
+WEATHER_CYCLE_CHANGE_WEATHER_SMOOTH_NOW = 1
+
+21@ = 1
+//0A8C: write_memory 0x0072BE25 size 4 value 0.5 virtual_protect 0
+//0AC6: 0@ = label @SNOW_FOG_EHE offset
+//0A8C: write_memory 0@ size 4 value 1.5 virtual_protect 0
+//0A8C: write_memory 0x0072BDEB size 4 value 0@ virtual_protect 0
+0A8C: write_memory 0x00716E10 size 1 value 180 virtual_protect 0
+
+create_thread @WND_ST2
+
+while true
+wait 0  
+
+gosub @SNOW_EFFECT_ADJUST_TARGET_FOG
+
+//if and
+//SNOW_CREATED == 1
+//$ACTIVE_INTERIOR > 0
+//    then
+//    
+//    0EFE: get_loaded_library "CParticleVC.SA.asi" store_to 0@
+//    0@ += VCPARTICLE_SNOW_ENABLED //snow enabled
+//    0A8C: write_memory 0@ size 1 value 0 virtual_protect 0
+//    
+//    while $ACTIVE_INTERIOR > 0
+//    wait 0
+//    0A8C: write_memory 0@ size 4 value 0.0 virtual_protect 0
+//    end
+//    
+//    0A8C: write_memory 0@ size 4 value 0.3 virtual_protect 0
+//    
+//    end
+    
+if and
+SNOW_CREATED == 1
+$SAVESTATUS_TRUE == 1
+    then
+    
+    0EFE: get_loaded_library "CParticleVC.SA.asi" store_to 0@
+    0@ += VCPARTICLE_SNOW_ENABLED //snow enabled
+    0A8C: write_memory 0@ size 1 value 0 virtual_protect 0
+    
+    while $SAVESTATUS_TRUE == 1
+    wait 0
+    end
+    
+    0EFE: get_loaded_library "CParticleVC.SA.asi" store_to 0@
+    0@ += VCPARTICLE_SNOW_ENABLED //snow enabled
+    0A8C: write_memory 0@ size 1 value 1 virtual_protect 0
+    0EFE: get_loaded_library "CParticleVC.SA.asi" store_to 0@
+    0@ += 0x2CE59 //allow snow with any weather
+    0A8C: write_memory 0@ size 2 value VCPARTICLE_ALLOW_SNOW_WEATHER_VALUE virtual_protect 1
+    if and
+    UNITED_MAP == 0
+    not CUSTOM_MAP_FLAG == 1
+    then
+    0EFE: get_loaded_library "GraphicsTweaker.SA.asi" store_to 0@
+    0@ += 0x0041BE4 //MultColorFilterB
+    0A8C: write_memory 0@ size 4 value 1.55 virtual_protect 1
+    0EFE: get_loaded_library "GraphicsTweaker.SA.asi" store_to 0@
+    0@ += 0x0041BA8 //MultColorFilterA
+    0A8C: write_memory 0@ size 4 value 0.75 virtual_protect 1
+    end
+    
+    end    
+
+if and
+SNOW_CREATED == 1
+33@ > 5000
+    then        
+    gosub @NewYearPresentCheck
+    0A8D: 0@ = read_memory 0x00B70155 size 1 virtual_protect 0 //Month
+    if or
+    0@ == 12
+    0@ == 1
+    0@ == 2
+        then
+        else
+        if
+        SNOW_ADDON_INSTALLED_FLAG == 1
+            then
+            else
+            0EFE: get_loaded_library "CParticleVC.SA.asi" store_to 0@
+            0@ += VCPARTICLE_SNOW_ENABLED //snow enabled
+            0A8C: write_memory 0@ size 1 value 0 virtual_protect 1
+            SNOW_ON_FLAG = 0
+            jump to @VCP_SNOW_START_CHECK
+            end
+        end
+    end
+
+end
+
+end_thread
+
+:VCP_SNOW_EFFECT_ADJUST_TARGET_FOG
 
 0A8D: 0@ = read_memory 0x0C812FC size 4 virtual_protect 0
 if and

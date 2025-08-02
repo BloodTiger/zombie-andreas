@@ -10,8 +10,9 @@ thread 'GMD_HLD'
 0AF1: write_int 3 to_ini_file "saves/ZACM.set" section "SCR" key "GAMEMODE_AUTOSELECT_NUMBER"
 0AF1: write_int $MAP_SELECTED_NUMBER to_ini_file "saves/ZACM.set" section "SCR" key "GAMEMODE_AUTOSELECT_PARAM"
 
-if
+if and
 UNITED_MAP == 0
+not CUSTOM_MAP_FLAG == 1
 then
 0776: create_objects_in_object_group "gatesC"
 end  
@@ -105,6 +106,7 @@ player.CanMove(PLAYER_CHAR) = true
 camera.Restore_WithJumpCut()
 
 actor.StorePos(PLAYER_ACTOR,0@,1@,2@)
+3@ = 0
 3@ = marker.CreateIconWithoutSphere(19,0@,1@,2@)
 
 $SURVIVOR_ALLOW_SPAWN[0] = 0
@@ -711,7 +713,11 @@ $SPECIAL_INFECTED_NOT_SPAWN_FLAG = 1
 
 $ZOMBIES_HORDE_ROUGH_OFF = 1
 
+if
+not $MUTE_MUSIC_FLAG == 1
+then
 $END_SAVING = 1
+end
 
 $PHRASES_OFF_FLAG = 1
 text.ClearAll()
@@ -1606,27 +1612,30 @@ jf @MUSIC_22SAVE_OFF2_RETURN
 :MUSIC_22SAVE_OFF2
 
 /////////////////////Плавное затухание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_SAVER // (int)
-$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-
-wait 1
-
-while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
-wait 0
-end
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_SAVER // (int)
+//$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 1000
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+//
+//wait 1
+//
+//while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+//wait 0
+//end
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $MUSIC_SAVER volume 0.0 time 1000        
+wait 1000
+audiostream.Release($MUSIC_ASSHOLE)
 
 //////////////////////////////////////////////////////////
 
@@ -2954,11 +2963,17 @@ random_int 11@ MIN_WEAP_GEN to MAX_WEAP_GEN
 end
 
 if
-not 11@ == WEAP_GEN_SET
+8E4D: not random_percent WEAP_GEN_SET
 then
 0209: $RANDOM_SECONDARY_WEAPON = random_int_in_ranges 22 35 
 else
 0209: $RANDOM_SECONDARY_WEAPON = random_int_in_ranges MIN_WEAPON_NUM MAX_WEAPON_NUM
+if and
+EXTRAWEP_FLAG_AND_MAXNUM >= 225
+0E4D: random_percent EXTRAWEP_GENERATE_CHANCE
+    then    
+    0209: $RANDOM_SECONDARY_WEAPON = random_int_in_ranges 225 EXTRAWEP_FLAG_AND_MAXNUM
+    end
 end
 
 end
@@ -3025,6 +3040,32 @@ end
 end
 
 end
+
+////////////////////////////////////////////////////
+
+if
+$RANDOM_SECONDARY_WEAPON >= 225
+    then
+    0AD3: v$SND2_FILE = format "%d" $RANDOM_SECONDARY_WEAPON
+    0AF0: $TEMPVAR_FLOAT_1 = get_int_from_ini_file "data\SAExtraweps.ini" section v$SND2_FILE key "DO_NOT_GENERATE_IN_HOLD_MODE"
+    if    
+    $TEMPVAR_FLOAT_1 == 1    
+        then
+        $RANDOM_SECONDARY_WEAPON = 119
+        else
+        if
+        0AF0: $TEMPVAR_FLOAT_1 = get_int_from_ini_file "data\SAExtraweps.ini" section v$SND2_FILE key "GENERATE_DODGE_PERCENT"    
+            then
+            if
+            0E4D: random_percent $TEMPVAR_FLOAT_1
+                then
+                $RANDOM_SECONDARY_WEAPON = 119
+                end
+            end
+        end 
+    end
+    
+////////////////////////////////////////////////////
 
 if and
 not $RANDOM_SECONDARY_WEAPON == 119

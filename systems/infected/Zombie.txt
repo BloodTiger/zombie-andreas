@@ -6,6 +6,8 @@ ZOMBIE_TASK_WAIT_TIME_MAX = 100
 ZOMBIE_PROCENT_MINUS = 0.000
 ZOMBIE_PROCENT_MINUS_WAR = 0.08
 ZOMBIE_PROCENT_MINUS_WAR_UNITED = 0.18
+ZOMBIES_SOUNDS_SIZE = 10.0
+ZOMBIES_SOUNDS_SIZE2 = 14.0
 end
 
 const
@@ -406,9 +408,9 @@ then
 if
 0E4D: random_percent 50
 then
-1@ = #ZHAZMAT
+1@ = HAZMAT_SKIN_ID
 else
-1@ = #ZHAZMAT2
+1@ = HAZMAT_SKIN_ID2
 end
 
 end 
@@ -613,7 +615,7 @@ if or
     end
     
 if
-actor.Model($ZOMBIE[24@]) == #ZCLOWN
+actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
     then
     0209: 0@ = random_int_in_ranges $ZOMBIE_HP_MIN $ZOMBIE_HP_MAX
     0@ *= 3 
@@ -624,8 +626,8 @@ actor.Model($ZOMBIE[24@]) == #ZCLOWN
     end    
     
 if or
-actor.Model($ZOMBIE[24@]) == #ZHAZMAT
-actor.Model($ZOMBIE[24@]) == #ZHAZMAT2
+actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID
+actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID2
 $EXPLODING_ZOMBIES == 1
 $MUTATION_ACTIVE == 10
 CUSTOM_MODE_HAZMATS_HEAVEN == 1
@@ -688,15 +690,21 @@ ZMB_FLAME_SOUND_FLAG = 0
 //Если зомби-клоун
 
 if
-actor.Model($ZOMBIE[24@]) == #ZCLOWN
+actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
     then 
     $CLOWN_SPOTTED_ENEMY = 0
 //    0AD1: show_formatted_text_highpriority "CLOWN SPAWN" time 5000
     18@ = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\zombie_sounds\clown_steeps.mp3")
     Audiostream.LinkToActor(18@, $ZOMBIE[24@])
-    audiostream.Volume(18@) = 0.0
+    audiostream.Volume(18@) = VERO_TIPA_VOLUME
     Audiostream.PerformAction(18@, PLAY)
     Audiostream.Loop(18@, 1)
+    2506: SET_AUDIO_STREAM_SOURCE_SIZE 18@ 24.0
+    0@ = Audiostream.Load("AUDIO\SOUNDS\infected_sounds\zombie_sounds\clown_bacteria.mp3")
+    audiostream.Volume(0@) = $SOUNDS_VOLUME
+    Audiostream.PerformAction(0@, PLAY)
+    Audiostream.Loop(0@, 0)
+    create_thread @RLS_SND 0@
     end
     
 //Если зомби не должны получать урон от падения    
@@ -749,8 +757,8 @@ $INF_SIDE == 0
     
 random_float ZOMBIE_SPEED_MULTIPLIER 0.8 1.2 
 if or
-actor.Model($ZOMBIE[24@]) == #ZHAZMAT
-actor.Model($ZOMBIE[24@]) == #ZHAZMAT2
+actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID
+actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID2
 $EXPLODING_ZOMBIES == 1
 $MUTATION_ACTIVE == 10
 CUSTOM_MODE_HAZMATS_HEAVEN == 1
@@ -848,12 +856,13 @@ wait 0
 random_int 0@ 0 5
 gosub @ZOMBIE1_ATTACK_PEOPLE1 
 
-if
+if and
 not $GAME_SPEED == 0.0
+SINGLEFRAME_TIMER_TICK_FLAG == 1
 then
-ZOMBIE_CAR_WRECK_TIMER += 1
-ZOMBIE_SPOTTED_TIMER += 1 
-ZOMBIE_IDLING_TIMER += 1
+ZOMBIE_CAR_WRECK_TIMER += 3
+ZOMBIE_SPOTTED_TIMER += 3 
+ZOMBIE_IDLING_TIMER += 3
 end
 
 /////////////////////Установка скорости для анимаций/////////////////////  
@@ -1190,8 +1199,8 @@ jump to @ZOMBIE_NOT_DEFINED
 end     
      
 if or
-Actor.Model($ZOMBIE[24@]) == #ZHAZMAT
-Actor.Model($ZOMBIE[24@]) == #ZHAZMAT2 
+Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID
+Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID2 
 $EXPLODING_ZOMBIES == 1
 $MUTATION_ACTIVE == 10
 CUSTOM_MODE_HAZMATS_HEAVEN == 1  
@@ -1477,6 +1486,10 @@ not $CAR_CHECKING_FLAG == 1
 not $ZOMBIE_DERBY_FLAG == 1
 847A: not  actor PLAYER_ACTOR driving_bike
     then
+    TEMPVAR_INT = 90
+    008D: TEMPVAR_INT = integer TEMPVAR_INT to_float
+    0069: TEMPVAR_INT *= GENERAL_FPS_TIMER_DIVIDER2 // (float)
+    008C: TEMPVAR_INT = float TEMPVAR_INT to_integer
     //gosub @ZOMBIE_HP_DEBUG        
     if and
     0184:   actor $ZOMBIE[24@] health > 0
@@ -1484,7 +1497,7 @@ not $ZOMBIE_DERBY_FLAG == 1
     8818: not  actor $ZOMBIE[24@] in_air
     $ALLOW_ZOMBIE_CAR_CLIMB == 1
 //    32@ > 3000
-    0E45: frame_mod 90
+    0E45: frame_mod TEMPVAR_INT
     ZMB_TARGET_FINDED == 1    
         then
         if and
@@ -1558,7 +1571,7 @@ not $ZOMBIE_DERBY_FLAG == 1
 /////////////////////Установка громкости топота у Клоуна/////////////////////                  
 
 if and
-actor.Model($ZOMBIE[24@]) == #ZCLOWN
+actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
 not actor.Animation($ZOMBIE[24@]) == "FLOOR_hit_f"
 not actor.Animation($ZOMBIE[24@]) == "FLOOR_hit"
     then    
@@ -1578,13 +1591,13 @@ not actor.Animation($ZOMBIE[24@]) == "FLOOR_hit"
             $SIMULATING_FLAG == 0
             $GAME_SPEED >= 1.0
             then
-            audiostream.Volume(18@) = $SOUNDS_VOLUME
+            audiostream.Volume(18@) = $SOUNDS_VOLUME            
             else
-            audiostream.Volume(18@) = 0.0
+            audiostream.Volume(18@) = VERO_TIPA_VOLUME
             end
             
             else
-            audiostream.Volume(18@) = 0.0
+            audiostream.Volume(18@) = VERO_TIPA_VOLUME
             end
         end
     end
@@ -1619,9 +1632,9 @@ $ZOMBIE_REMOVE_FLAG == 0
                 0@ == 500
                 ZMB_TARGET_FINDED == 0
                 $ZOMBIES_HORDE == 0
-                not actor.Model($ZOMBIE[24@]) == #ZHAZMAT
-                not actor.Model($ZOMBIE[24@]) == #ZHAZMAT2
-                not actor.Model($ZOMBIE[24@]) == #ZCLOWN
+                not actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID
+                not actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID2
+                not actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
                     then
                     :ZOMBIE_PUKE
                     
@@ -1639,11 +1652,12 @@ $ZOMBIE_REMOVE_FLAG == 0
                     random_int 0@ 0 5
                     gosub @ZOMBIE1_ATTACK_PEOPLE1 
                     
-                    if
+                    if and
                     not $GAME_SPEED == 0.0
+                    SINGLEFRAME_TIMER_TICK_FLAG == 1
                     then
-                    ZOMBIE_CAR_WRECK_TIMER += 1
-                    ZOMBIE_SPOTTED_TIMER += 1
+                    ZOMBIE_CAR_WRECK_TIMER += 3
+                    ZOMBIE_SPOTTED_TIMER += 3
                     end
                     
                     if
@@ -1688,11 +1702,12 @@ $ZOMBIE_REMOVE_FLAG == 0
                     random_int 0@ 0 5
                     gosub @ZOMBIE1_ATTACK_PEOPLE1 
                     
-                    if
+                    if and
                     not $GAME_SPEED == 0.0
+                    SINGLEFRAME_TIMER_TICK_FLAG == 1
                     then
-                    ZOMBIE_CAR_WRECK_TIMER += 1
-                    ZOMBIE_SPOTTED_TIMER += 1
+                    ZOMBIE_CAR_WRECK_TIMER += 3
+                    ZOMBIE_SPOTTED_TIMER += 3
                     end
                     
                     if
@@ -1757,7 +1772,7 @@ $SAVESTATUS == 0
     gosub @ZOMBIE_SHUT_UP  
         
     if
-    Actor.Model($ZOMBIE[24@]) == #ZCLOWN
+    Actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
     then
     $CLOWN_SPANWED = 0
     $CLOWN_SPOTTED_ENEMY = 0
@@ -1828,8 +1843,8 @@ actor.Dead($ZOMBIE[24@])
     then
 
     if or
-    Actor.Model($ZOMBIE[24@]) == #ZHAZMAT
-    Actor.Model($ZOMBIE[24@]) == #ZHAZMAT2 
+    Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID
+    Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID2 
     $EXPLODING_ZOMBIES == 1
     $MUTATION_ACTIVE == 10
     CUSTOM_MODE_HAZMATS_HEAVEN == 1
@@ -1871,7 +1886,7 @@ actor.Dead($ZOMBIE[24@])
     end
 
     if
-    Actor.Model($ZOMBIE[24@]) == #ZCLOWN
+    Actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
     then
     $CLOWN_SPANWED = 0
     $CLOWN_SPOTTED_ENEMY = 0
@@ -2171,7 +2186,7 @@ actor.Dead($ZOMBIE[24@])
     ///////////////////////////////////////////////////
         
     if
-    actor.Model($ZOMBIE[24@]) == #ZCLOWN
+    actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
     then        
         
     0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_ZOMBIE_CLOWN_KILLED"        
@@ -2346,8 +2361,8 @@ actor.Dead($ZOMBIE[24@])
     then
     if and
     SURVIVAL_STARTED_FULLY_FLAG == 1
-    not Actor.Model($ZOMBIE[24@]) == #ZHAZMAT
-    not Actor.Model($ZOMBIE[24@]) == #ZHAZMAT2
+    not Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID
+    not Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID2
         then
         gosub @RANDOM_DIE_SOUND
         end
@@ -2387,7 +2402,7 @@ $INTERIOR_FLAG == 0
     
     if and
     $CLOWN_SPOTTED_ENEMY == 1
-    not actor.Model($ZOMBIE[24@]) == #ZCLOWN
+    not actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
     then
     jump to @ZMB_CLWN_SKIP_SHIT_FOR_NOT_CLOWN
     end
@@ -2404,7 +2419,7 @@ $INTERIOR_FLAG == 0
             then 
             
             if
-            actor.Model($ZOMBIE[24@]) == #ZCLOWN
+            actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
             then
             $CLOWN_SPOTTED_ENEMY = 0
 //            0AD1: show_formatted_text_highpriority "CLOWN FORGET 3" time 5000
@@ -2417,7 +2432,7 @@ $INTERIOR_FLAG == 0
         else
         
         if
-        actor.Model($ZOMBIE[24@]) == #ZCLOWN
+        actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
         then
         $CLOWN_SPOTTED_ENEMY = 0
 //        0AD1: show_formatted_text_highpriority "CLOWN FORGET 4" time 5000
@@ -2445,7 +2460,7 @@ ZMB_TARGET_FINDED == 1
         
         if and
         $CLOWN_SPOTTED_ENEMY == 1
-        not actor.Model($ZOMBIE[24@]) == #ZCLOWN
+        not actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
         then
         jump to @ZMB_CLWN_SKIP_SHIT_FOR_NOT_CLOWN2
         end
@@ -2462,7 +2477,7 @@ ZMB_TARGET_FINDED == 1
                 then 
                 
                 if
-                actor.Model($ZOMBIE[24@]) == #ZCLOWN
+                actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
                 then
                 $CLOWN_SPOTTED_ENEMY = 0
 //                0AD1: show_formatted_text_highpriority "CLOWN FORGET 5" time 5000
@@ -2475,7 +2490,7 @@ ZMB_TARGET_FINDED == 1
             else
             
             if
-            actor.Model($ZOMBIE[24@]) == #ZCLOWN
+            actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
             then
             $CLOWN_SPOTTED_ENEMY = 0
 //            0AD1: show_formatted_text_highpriority "CLOWN FORGET 6" time 5000
@@ -2498,7 +2513,7 @@ $INF_SIDE == 1
     then
     
     if
-    actor.Model($ZOMBIE[24@]) == #ZCLOWN
+    actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
     then
     $CLOWN_SPOTTED_ENEMY = 0
 //    0AD1: show_formatted_text_highpriority "CLOWN FORGET 7" time 5000
@@ -2520,7 +2535,7 @@ $CLOWN_SPANWED == 1
     then    
     if and
     $CLOWN_SPOTTED_ENEMY == 1
-    not actor.Model($ZOMBIE[24@]) == #ZCLOWN
+    not actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
         then
         0084: ZMB_TARGET = $ZMB_TARGET[$CLOWN_NUMBER] // (int)                   
         ZMB_TARGET_FINDED = 1                        
@@ -2541,7 +2556,7 @@ $INTERIOR_FLAG == 0
     
     if and
     $CLOWN_SPOTTED_ENEMY == 1
-    not actor.Model($ZOMBIE[24@]) == #ZCLOWN
+    not actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
     then
     jump to @ZMB_CLWN_SKIP_SHIT_FOR_NOT_CLOWN3
     end
@@ -2558,7 +2573,7 @@ $INTERIOR_FLAG == 0
         0EE4:  locate_char_distance_to_char $ZOMBIE[24@] char PLAYER_ACTOR radius 100.0           
         84AD: not  actor PLAYER_ACTOR in_water  
         84C8: not  actor PLAYER_ACTOR driving_flying_vehicle
-        not actor.Model($ZOMBIE[24@]) == #ZCLOWN
+        not actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
             then
             random_int 0@ 0 $ZOMBIE_AGRO_SHOOT_MAX
             
@@ -2605,8 +2620,8 @@ $INTERIOR_FLAG == 0
                 ZMB_ALERT_SOUND_FLAG == 0
                 $ZOMBIES_HORDE == 0
                 $INTERIOR_FLAG == 0
-                not Actor.Model($ZOMBIE[24@]) == #ZHAZMAT
-                not Actor.Model($ZOMBIE[24@]) == #ZHAZMAT2
+                not Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID
+                not Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID2
                     then
                     0209: 0@ = random_int_in_ranges 1 50
                     wait 0@
@@ -2642,7 +2657,7 @@ $INTERIOR_FLAG == 0
     
     if and
     $CLOWN_SPOTTED_ENEMY == 1
-    not actor.Model($ZOMBIE[24@]) == #ZCLOWN
+    not actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
     then
     jump to @ZMB_CLWN_SKIP_SHIT_FOR_NOT_CLOWN4
     end
@@ -2651,7 +2666,7 @@ $INTERIOR_FLAG == 0
     gosub @ZOMBIE_ATTACK_SYSTEM_TARGET_FIND
     if and
     25@ == 1
-    not actor.Model($ZOMBIE[24@]) == #ZCLOWN
+    not actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
         then        
         if 
         02E0:  actor ZMB_TARGET firing_weapon  
@@ -2707,8 +2722,8 @@ $INTERIOR_FLAG == 0
                     ZMB_ALERT_SOUND_FLAG == 0
                     $ZOMBIES_HORDE == 0
                     $INTERIOR_FLAG == 0
-                    not Actor.Model($ZOMBIE[24@]) == #ZHAZMAT
-                    not Actor.Model($ZOMBIE[24@]) == #ZHAZMAT2
+                    not Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID
+                    not Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID2
                         then
                         0209: 0@ = random_int_in_ranges 1 50
                         wait 0@
@@ -2743,7 +2758,7 @@ ZMB_TARGET_FINDED == 0
     
     if and
     $CLOWN_SPOTTED_ENEMY == 1
-    not actor.Model($ZOMBIE[24@]) == #ZCLOWN
+    not actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
     then
     jump to @ZMB_CLWN_SKIP_SHIT_FOR_NOT_CLOWN5
     end
@@ -2751,7 +2766,7 @@ ZMB_TARGET_FINDED == 0
     if or
     $ZOMBIES_HORDE == 1 
     $INTERIOR_FLAG == 1
-    actor.Model($ZOMBIE[24@]) == #ZCLOWN
+    actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
         then            
         random_int 0@ 0 $ZOMBIE_AGRO_HORDE_MAX 
         if and
@@ -2769,7 +2784,7 @@ ZMB_TARGET_FINDED == 0
             ZOMBIE_LOC_TARGET_TIMER = 0
                 
             if
-            actor.Model($ZOMBIE[24@]) == #ZCLOWN
+            actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
             then
             $CLOWN_SPOTTED_ENEMY = 1
             end                                
@@ -2786,8 +2801,8 @@ ZMB_TARGET_FINDED == 0
             ZMB_ALERT_SOUND_FLAG == 0
             $ZOMBIES_HORDE == 0
             $INTERIOR_FLAG == 0
-            not Actor.Model($ZOMBIE[24@]) == #ZHAZMAT
-            not Actor.Model($ZOMBIE[24@]) == #ZHAZMAT2
+            not Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID
+            not Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID2
                 then
                 0209: 0@ = random_int_in_ranges 1 50
                 wait 0@
@@ -2836,7 +2851,7 @@ ZMB_TARGET_FINDED == 0
                             ZOMBIE_LOC_TARGET_TIMER = 0
                                 
                             if
-                            actor.Model($ZOMBIE[24@]) == #ZCLOWN
+                            actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
                             then
                             $CLOWN_SPOTTED_ENEMY = 1
                             end
@@ -2853,8 +2868,8 @@ ZMB_TARGET_FINDED == 0
                             ZMB_ALERT_SOUND_FLAG == 0
                             $ZOMBIES_HORDE == 0
                             $INTERIOR_FLAG == 0
-                            not Actor.Model($ZOMBIE[24@]) == #ZHAZMAT
-                            not Actor.Model($ZOMBIE[24@]) == #ZHAZMAT2
+                            not Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID
+                            not Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID2
                                 then
                                 0209: 0@ = random_int_in_ranges 1 50
                                 wait 0@
@@ -2893,7 +2908,7 @@ $INTERIOR_FLAG == 0
     
     if and
     $CLOWN_SPOTTED_ENEMY == 1
-    not actor.Model($ZOMBIE[24@]) == #ZCLOWN
+    not actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
     then
     jump to @ZMB_CLWN_SKIP_SHIT_FOR_NOT_CLOWN6
     end
@@ -2903,7 +2918,7 @@ $INTERIOR_FLAG == 0
     2@ == 1
     $ZOMBIE_DONT_ATTACK_PLAYER == 0  
     $ZOMBIEORGY_MODE_FLAG == 0 
-    not actor.Model($ZOMBIE[24@]) == #ZCLOWN
+    not actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
         then
         if and        
         84AD: not  actor PLAYER_ACTOR in_water
@@ -2938,8 +2953,8 @@ $INTERIOR_FLAG == 0
                     ZMB_ALERT_SOUND_FLAG == 0
                     $ZOMBIES_HORDE == 0
                     $INTERIOR_FLAG == 0
-                    not Actor.Model($ZOMBIE[24@]) == #ZHAZMAT
-                    not Actor.Model($ZOMBIE[24@]) == #ZHAZMAT2
+                    not Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID
+                    not Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID2
                         then
                         0209: 0@ = random_int_in_ranges 1 50
                         wait 0@
@@ -2996,8 +3011,8 @@ $INTERIOR_FLAG == 0
                     ZMB_ALERT_SOUND_FLAG == 0
                     $ZOMBIES_HORDE == 0  
                     $INTERIOR_FLAG == 0
-                    not Actor.Model($ZOMBIE[24@]) == #ZHAZMAT
-                    not Actor.Model($ZOMBIE[24@]) == #ZHAZMAT2
+                    not Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID
+                    not Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID2
                         then
                         0209: 0@ = random_int_in_ranges 1 50
                         wait 0@
@@ -3026,7 +3041,7 @@ $INTERIOR_FLAG == 0
     
 if
 ZMB_IDLE_SOUND_FLAG == 1
-    then
+    then      
     0AB9: get_mp3 ZMB_IDLE_SOUND state_to 0@
     if or
     0@ == -1
@@ -3041,7 +3056,7 @@ ZMB_IDLE_SOUND_FLAG == 1
     
 if
 ZMB_PAIN_SOUND_FLAG == 1
-    then
+    then                     
     0AB9: get_mp3 ZMB_PAIN_SOUND state_to 0@
     if or
     0@ == -1
@@ -3056,7 +3071,7 @@ ZMB_PAIN_SOUND_FLAG == 1
     
 if
 ZMB_ALERT_SOUND_FLAG == 1
-    then
+    then           
     0AB9: get_mp3 ZMB_ALERT_SOUND state_to 0@
     if or
     0@ == -1
@@ -3071,7 +3086,7 @@ ZMB_ALERT_SOUND_FLAG == 1
 
 if
 ZMB_RAGE_SOUND_FLAG == 1
-    then
+    then      
     0AB9: get_mp3 ZMB_RAGE_SOUND state_to 0@
     if or
     0@ == -1
@@ -3087,7 +3102,7 @@ ZMB_RAGE_SOUND_FLAG == 1
 
 if
 ZMB_RAGEAT_SOUND_FLAG == 1
-    then
+    then   
     0AB9: get_mp3 ZMB_RAGEAT_SOUND state_to 0@
     if or
     0@ == -1
@@ -3102,7 +3117,7 @@ ZMB_RAGEAT_SOUND_FLAG == 1
 
 if
 ZMB_FLAME_SOUND_FLAG == 1
-    then
+    then        
     0AB9: get_mp3 ZMB_FLAME_SOUND state_to 0@
     if or
     0@ == -1
@@ -3124,8 +3139,8 @@ $INTERIOR_FLAG == 0
     $GAME_SPEED == 1.0
     SURVIVAL_STARTED_FULLY_FLAG == 1
     074F:  actor $ZOMBIE[24@] ped_event == 58
-    not Actor.Model($ZOMBIE[24@]) == #ZHAZMAT
-    not Actor.Model($ZOMBIE[24@]) == #ZHAZMAT2
+    not Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID
+    not Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID2
         then
         gosub @ZOMBIE_SHUT_UP
         gosub @ZOMBIE_RANDOM_FLAME_SOUND
@@ -3149,8 +3164,8 @@ $INTERIOR_FLAG == 0
     $GAME_SPEED == 1.0
     SURVIVAL_STARTED_FULLY_FLAG == 1
     874F: not  actor $ZOMBIE[24@] ped_event == 58 
-    not Actor.Model($ZOMBIE[24@]) == #ZHAZMAT
-    not Actor.Model($ZOMBIE[24@]) == #ZHAZMAT2
+    not Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID
+    not Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID2
         then   
         if or
         actor.Animation($ZOMBIE[24@]) == "FightB_1"
@@ -3183,11 +3198,11 @@ $INTERIOR_FLAG == 0
     $GAME_SPEED == 1.0
     SURVIVAL_STARTED_FULLY_FLAG == 1
     874F: not  actor $ZOMBIE[24@] ped_event == 58
-    not Actor.Model($ZOMBIE[24@]) == #ZHAZMAT
+    not Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID
         then
         if and
         ZMB_TARGET_FINDED == 1
-        not Actor.Model($ZOMBIE[24@]) == #ZHAZMAT2
+        not Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID2
             then
             0209: 0@ = random_int_in_ranges 0 25
             if and
@@ -3225,11 +3240,11 @@ $INTERIOR_FLAG == 0
     $GAME_SPEED == 1.0
     SURVIVAL_STARTED_FULLY_FLAG == 1
     874F: not  actor $ZOMBIE[24@] ped_event == 58
-    Actor.Model($ZOMBIE[24@]) == #ZHAZMAT
+    Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID
         then
         if and
         ZMB_TARGET_FINDED == 1
-        not Actor.Model($ZOMBIE[24@]) == #ZHAZMAT2
+        not Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID2
             then
             if and
 //            00F2:   actor $ZOMBIE[24@] near_actor PLAYER_ACTOR radius 180.0 180.0 0
@@ -3264,11 +3279,11 @@ $INTERIOR_FLAG == 0
     $GAME_SPEED == 1.0
     SURVIVAL_STARTED_FULLY_FLAG == 1 
     874F: not  actor $ZOMBIE[24@] ped_event == 58
-    not Actor.Model($ZOMBIE[24@]) == #ZHAZMAT
+    not Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID
         then
         if and
         ZMB_TARGET_FINDED == 0
-        not Actor.Model($ZOMBIE[24@]) == #ZHAZMAT2
+        not Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID2
             then
             0209: 0@ = random_int_in_ranges 0 25
             if and
@@ -3298,8 +3313,8 @@ $INTERIOR_FLAG == 0
     $GAME_SPEED == 1.0
     SURVIVAL_STARTED_FULLY_FLAG == 1
     874F: not  actor $ZOMBIE[24@] ped_event == 58 
-    not Actor.Model($ZOMBIE[24@]) == #ZHAZMAT
-    not Actor.Model($ZOMBIE[24@]) == #ZHAZMAT2 
+    not Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID
+    not Actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID2 
         then
         28@ = Actor.Health($ZOMBIE[24@])
         wait 10 
@@ -3407,6 +3422,13 @@ then
 008B: 27@ = $CREATURE_RANDOM2 // (int)
 else
 random_int 27@ 41 46
+if
+0E4D: random_percent 10
+    then
+    27@ = 0
+    0084: ZMB_TARGET = $CREATURE[27@] // (int)
+    jump to @ZOMBIE_SYSTE_REDIRECT_TARGET2
+    end
 end
 
 end
@@ -3451,7 +3473,8 @@ end
 if and
 056D:   actor ZMB_TARGET defined
 not 27@ == PLAYER_CREATURE_NUMBER
-    then      
+    then    
+    :ZOMBIE_SYSTE_REDIRECT_TARGET2  
     if
 //    0104:   actor $ZOMBIE[24@] near_actor ZMB_TARGET radius 26@ 26@ 26@ sphere 0
     0EE4:  locate_char_distance_to_char $ZOMBIE[24@] char ZMB_TARGET radius 26@
@@ -3460,7 +3483,7 @@ not 27@ == PLAYER_CREATURE_NUMBER
         else
         
         if
-        actor.Model($ZOMBIE[24@]) == #ZCLOWN
+        actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
         then
         $CLOWN_SPOTTED_ENEMY = 0
 //        0AD1: show_formatted_text_highpriority "CLOWN FORGET 8" time 5000
@@ -3473,7 +3496,7 @@ not 27@ == PLAYER_CREATURE_NUMBER
     else
     
     if
-    actor.Model($ZOMBIE[24@]) == #ZCLOWN
+    actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
     then
     $CLOWN_SPOTTED_ENEMY = 0
 //    0AD1: show_formatted_text_highpriority "CLOWN FORGET 9" time 5000
@@ -3569,10 +3592,26 @@ $RANDOM_CAR_FLAG == 0
 80DF:   actor 3@ in_a_car
 not actor.Dead(3@)
 jf @ZOMBIE1_ATTACK_PEOPLE_BEGIN
-if
+
+if or
+actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID
+actor.Model($ZOMBIE[24@]) == HAZMAT_SKIN_ID2
+then
+0086: $TEMPVAR_FLOAT_1 = $ZMB_ATCK_RD_FR // (float)
+$TEMPVAR_FLOAT_1 *= 2.0
+if and
+//00F2:   actor 3@ near_actor $ZOMBIE[24@] radius $ZMB_ATCK_RD_FR $ZMB_ATCK_RD_FR sphere 0
+0EE4:  locate_char_distance_to_char 3@ char $ZOMBIE[24@] radius $TEMPVAR_FLOAT_1
+8EE4: not locate_char_distance_to_char PLAYER_ACTOR char $ZOMBIE[24@] radius 10.0
+jf @ZOMBIE1_ATTACK_PEOPLE_BEGIN
+else
+if or
 //00F2:   actor 3@ near_actor $ZOMBIE[24@] radius $ZMB_ATCK_RD_FR $ZMB_ATCK_RD_FR sphere 0
 0EE4:  locate_char_distance_to_char 3@ char $ZOMBIE[24@] radius $ZMB_ATCK_RD_FR
+0EE4:  locate_char_distance_to_char PLAYER_ACTOR char $ZOMBIE[24@] radius 7.5
 jf @ZOMBIE1_ATTACK_PEOPLE_BEGIN
+end
+
 if and
 $HUNTER_ON_PLAYER == 0
 $PEOPLE_DONT_ATTACK == 0
@@ -3794,11 +3833,11 @@ return
 gosub @ZOMBIE_SHUT_UP
 gosub @ZOMBIE_RANDOM_DIE_SOUND
 Audiostream.LinkToActor(ZMB_DIE_SOUND, $ZOMBIE[24@])
-Audiostream.Volume(ZMB_DIE_SOUND) = 0.0
+Audiostream.Volume(ZMB_DIE_SOUND) = 0.000000000000001
 Audiostream.PerformAction(ZMB_DIE_SOUND, PLAY)
 
 Audiostream.LinkToActor(ZMB_DIE_SOUND_SLOW, $ZOMBIE[24@])
-Audiostream.Volume(ZMB_DIE_SOUND_SLOW) = 0.0
+Audiostream.Volume(ZMB_DIE_SOUND_SLOW) = 0.000000000000001
 Audiostream.PerformAction(ZMB_DIE_SOUND_SLOW, PLAY)
 
 0AB9: get_mp3 ZMB_DIE_SOUND state_to 0@
@@ -3827,9 +3866,9 @@ if
 $GAME_SPEED == 1.0
 then
 Audiostream.Volume(ZMB_DIE_SOUND) = $SOUNDS_VOLUME
-Audiostream.Volume(ZMB_DIE_SOUND_SLOW) = 0.0
+Audiostream.Volume(ZMB_DIE_SOUND_SLOW) = VERO_TIPA_VOLUME
 else
-Audiostream.Volume(ZMB_DIE_SOUND) = 0.0
+Audiostream.Volume(ZMB_DIE_SOUND) = VERO_TIPA_VOLUME
 Audiostream.Volume(ZMB_DIE_SOUND_SLOW) = $SOUNDS_VOLUME
 end
 
@@ -3953,7 +3992,7 @@ ZMB_TARGET_FINDED == 1
                     else
                     
                     if
-                    actor.Model($ZOMBIE[24@]) == #ZCLOWN
+                    actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
                     then
                     $CLOWN_SPOTTED_ENEMY = 0
 //                    0AD1: show_formatted_text_highpriority "CLOWN FORGET 10" time 5000
@@ -3967,7 +4006,7 @@ ZMB_TARGET_FINDED == 1
                 else
                 
                 if
-                actor.Model($ZOMBIE[24@]) == #ZCLOWN
+                actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
                 then
                 $CLOWN_SPOTTED_ENEMY = 0
 //                0AD1: show_formatted_text_highpriority "CLOWN FORGET 11" time 5000
@@ -3981,7 +4020,7 @@ ZMB_TARGET_FINDED == 1
             else
             
             if
-            actor.Model($ZOMBIE[24@]) == #ZCLOWN
+            actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
             then
             $CLOWN_SPOTTED_ENEMY = 0
 //            0AD1: show_formatted_text_highpriority "CLOWN FORGET 12" time 5000
@@ -3995,7 +4034,7 @@ ZMB_TARGET_FINDED == 1
         else
         
         if
-        actor.Model($ZOMBIE[24@]) == #ZCLOWN
+        actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
         then
         $CLOWN_SPOTTED_ENEMY = 0
 //        0AD1: show_formatted_text_highpriority "CLOWN FORGET 13" time 5000
@@ -4120,7 +4159,7 @@ $ZOMBIES_HORDE == 1
         ZMB_TARGET_FINDED = 1
         
         if
-        actor.Model($ZOMBIE[24@]) == #ZCLOWN
+        actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
         then
         $CLOWN_SPOTTED_ENEMY = 1
         end
@@ -4155,7 +4194,7 @@ $ZOMBIES_HORDE == 1
             ZMB_TARGET_FINDED = 1
             
             if
-            actor.Model($ZOMBIE[24@]) == #ZCLOWN
+            actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
             then
             $CLOWN_SPOTTED_ENEMY = 1
             end
@@ -4174,7 +4213,7 @@ $ZOMBIES_HORDE == 1
             ZMB_TARGET_FINDED = 1
             
             if
-            actor.Model($ZOMBIE[24@]) == #ZCLOWN
+            actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
             then
             $CLOWN_SPOTTED_ENEMY = 1
             end
@@ -4195,7 +4234,7 @@ $ZOMBIES_HORDE == 1
         ZMB_TARGET_FINDED = 1
         
         if
-        actor.Model($ZOMBIE[24@]) == #ZCLOWN
+        actor.Model($ZOMBIE[24@]) == CLOWN_SKIN_ID
         then
         $CLOWN_SPOTTED_ENEMY = 1
         end
@@ -4460,6 +4499,8 @@ then
 ZMB_PAIN_SOUND = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\zombie_sounds\zombie_pain22.wav")
 end 
 
+2506: SET_AUDIO_STREAM_SOURCE_SIZE ZMB_PAIN_SOUND ZOMBIES_SOUNDS_SIZE
+
 return
 
 :ZOMBIE_RANDOM_FLAME_SOUND
@@ -4524,6 +4565,8 @@ if
 then
 ZMB_FLAME_SOUND = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\zombie_sounds\zombie_fire10.wav")
 end 
+
+2506: SET_AUDIO_STREAM_SOURCE_SIZE ZMB_FLAME_SOUND ZOMBIES_SOUNDS_SIZE
 
 return
 
@@ -4740,6 +4783,9 @@ ZMB_DIE_SOUND = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\zombie_sounds\z
 ZMB_DIE_SOUND_SLOW = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\zombie_sounds\zombie_die30_slow.wav")
 end 
 
+2506: SET_AUDIO_STREAM_SOURCE_SIZE ZMB_DIE_SOUND ZOMBIES_SOUNDS_SIZE
+2506: SET_AUDIO_STREAM_SOURCE_SIZE ZMB_DIE_SOUND_SLOW ZOMBIES_SOUNDS_SIZE
+
 return
 
 :HAZMAT_RANDOM_RAGE_SOUND
@@ -4763,6 +4809,8 @@ if
 then
 ZMB_RAGE_SOUND = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\zombie_sounds\hazmat_rage3.wav")
 end 
+
+2506: SET_AUDIO_STREAM_SOURCE_SIZE ZMB_RAGE_SOUND ZOMBIES_SOUNDS_SIZE2
 
 return
 
@@ -4962,6 +5010,8 @@ then
 ZMB_RAGE_SOUND = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\zombie_sounds\zombie_rage32.wav")
 end 
 
+2506: SET_AUDIO_STREAM_SOURCE_SIZE ZMB_RAGE_SOUND ZOMBIES_SOUNDS_SIZE2
+
 return
 
 :ZOMBIE_RANDOM_rageat_SOUND
@@ -5157,7 +5207,9 @@ if
 0@ == 31
 then
 ZMB_RAGEAT_SOUND = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\zombie_sounds\zombie_rageat32.wav")
-end 
+end     
+
+2506: SET_AUDIO_STREAM_SOURCE_SIZE ZMB_RAGEAT_SOUND ZOMBIES_SOUNDS_SIZE2
 
 return
 
@@ -5315,6 +5367,8 @@ then
 ZMB_IDLE_SOUND = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\zombie_sounds\zombie_voice_idle25.WAV")
 end  
 
+2506: SET_AUDIO_STREAM_SOURCE_SIZE ZMB_RAGEAT_SOUND ZOMBIES_SOUNDS_SIZE
+
 return 
 
 :ZOMBIE_RANDOM_ALERT_SOUND
@@ -5470,6 +5524,8 @@ then
 ZMB_ALERT_SOUND = Audiostream.Load3D("AUDIO\SOUNDS\infected_sounds\zombie_sounds\zombie_ALERT25.wav")
 end 
 
+2506: SET_AUDIO_STREAM_SOURCE_SIZE ZMB_RAGEAT_SOUND ZOMBIES_SOUNDS_SIZE2
+
 return
 
 /////////////////////Вычисление координат зомби/////////////////////
@@ -5617,6 +5673,12 @@ jf @ZOMBIE_COORD_SET_BEFOREGAMEMODE
 if
 $ZOMBIE_RUN_SPEED > 0.0
 jf @ZOMBIE_COORD_SET_SLOW_ZIMBAS
+if
+CUSTOM_MAP_SPAWN_INFECTED_ON_CAR_PATHS == 0
+jf @ZOMBIE_COORD_SET_CUSTOMMAP_CAR_PATH
+if
+CUSTOM_MAP_SPAWN_INFECTED_ON_PED_PATHS == 0
+jf @ZOMBIE_COORD_SET_CUSTOMMAP_PED_PATH
 
 :ZOMBIE_COORD_SET_INT_SKIP
 
@@ -5630,8 +5692,9 @@ if
 not QUEST_NEST_NUMBER == 15
 then
 
-if
+if and
 UNITED_MAP == 0
+not CUSTOM_MAP_FLAG == 1
 then
 if or
 4@ > 0.25
@@ -6342,9 +6405,9 @@ then
 if
 0E4D: random_percent 50
 then
-1@ = #ZHAZMAT
+1@ = HAZMAT_SKIN_ID
 else
-1@ = #ZHAZMAT2
+1@ = HAZMAT_SKIN_ID2
 end 
 
 return
@@ -6354,7 +6417,7 @@ if and
 CLOWN_SPAWN_FLAG == 2
 24@ == 18
 then
-1@ = #ZCLOWN
+1@ = CLOWN_SKIN_ID
 $CLOWN_SPANWED = 1
 008A: $CLOWN_NUMBER = 24@ // (int) 
 
@@ -6364,7 +6427,7 @@ end
 if
 UNITED_MAP == 0
 then
-0209: 1@ = random_int_in_ranges #ZMB1 ZOMBIE_LAST_MODEL   
+0209: 1@ = random_int_in_ranges ZMB_SKIN_MIN_ID ZMB_SKIN_MAX_ID   
 else
 
 if
@@ -6750,9 +6813,9 @@ then
 if
 0E4D: random_percent 50
 then
-1@ = #ZHAZMAT
+1@ = HAZMAT_SKIN_ID
 else
-1@ = #ZHAZMAT2
+1@ = HAZMAT_SKIN_ID2
 end
    
 $HAZMAT_TIMER = 0  
@@ -6769,9 +6832,9 @@ then
 if
 0E4D: random_percent 50
 then
-1@ = #ZHAZMAT
+1@ = HAZMAT_SKIN_ID
 else
-1@ = #ZHAZMAT2
+1@ = HAZMAT_SKIN_ID2
 end
    
 $HAZMAT_TIMER = 0  
@@ -6817,7 +6880,7 @@ $GAMEMODE_VERSUS == 0
 $SALVATION_FLAG == 0
 $INTERIOR_FLAG == 0  
 then
-1@ = #ZCLOWN
+1@ = CLOWN_SKIN_ID
 $CLOWN_SPANWED = 1
 008A: $CLOWN_NUMBER = 24@ // (int)  
 end
@@ -6839,9 +6902,9 @@ then
 if
 0E4D: random_percent 50
 then
-1@ = #ZHAZMAT
+1@ = HAZMAT_SKIN_ID
 else
-1@ = #ZHAZMAT2
+1@ = HAZMAT_SKIN_ID2
 end
    
 $HAZMAT_TIMER = 0  
@@ -6865,11 +6928,17 @@ random_int 0@ MIN_WEAP_GEN to MAX_WEAP_GEN
 end
 
 if
-not 0@ == WEAP_GEN_SET
+8E4D: not random_percent WEAP_GEN_SET
 then
 0209: 1@ = random_int_in_ranges 22 35 
 else
 0209: 1@ = random_int_in_ranges MIN_WEAPON_NUM MAX_WEAPON_NUM
+if and
+EXTRAWEP_FLAG_AND_MAXNUM >= 225
+0E4D: random_percent EXTRAWEP_GENERATE_CHANCE
+    then    
+    0209: 1@ = random_int_in_ranges 225 EXTRAWEP_FLAG_AND_MAXNUM
+    end
 end
 
 if
@@ -7025,6 +7094,7 @@ if or
                                             1@ == 103
                                             1@ == 104
                                             1@ == 105
+                                            1@ >= 225
                                                 then       
                                                 else
                                                 jump to @RANDOM_ZOMBIE_WEAPON_CREATE
@@ -7118,7 +7188,7 @@ then
 
 if and
 87D6: not  0@ == $ZOMBIE_SET_PEDTYPE // @ == $ (int)
-not actor.Model(ZMB_TARGET) == #ZCLOWN
+not actor.Model(ZMB_TARGET) == CLOWN_SKIN_ID
     then  
     25@ = 1
     return
@@ -7132,7 +7202,7 @@ then
 
 if and
 07D6:   0@ == $ZOMBIE_SET_PEDTYPE // @ == $ (int)
-not actor.Model(ZMB_TARGET) == #ZCLOWN
+not actor.Model(ZMB_TARGET) == CLOWN_SKIN_ID
     then  
     25@ = 1
     return

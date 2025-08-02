@@ -15,7 +15,7 @@ USER_TAPE_NAME3 = v$UT_NAME3
 USER_TAPE_NAME4 = v$UT_NAME4
 USER_TAPE_NAME_CHECK_TEST = v$UTSNAME
 USER_TAPE_CURRENT_GAIN = 22@
-USER_TAPE_PEREBIVKA_FLAG = 27@  
+USER_TAPE_PEREBIVKA_FLAG = 27@    
 end
 
 :USR_TAP
@@ -258,8 +258,9 @@ end
 end
 
 0AB9: get_mp3 USER_TAPE_TRACK state_to USER_TAPE_TEMP_VAR
-if 
-USER_TAPE_TEMP_VAR == -1 
+if and
+USER_TAPE_TEMP_VAR == -1
+USER_TAPE_TURNED_ON_FLAG == 1 
     then
     
     if and
@@ -268,6 +269,11 @@ USER_TAPE_TEMP_VAR == -1
     then
     0AD1: show_formatted_text_highpriority "TRACK ENDED, PLAYING NEW TRACK" time 2000
     end
+    
+    Audiostream.Loop($TAPE_ON_SOUND,0)
+    Audiostream.PerformAction($TAPE_ON_SOUND, PLAY)
+    Audiostream.Volume($TAPE_ON_SOUND) = $SOUNDS_VOLUME
+    wait 1000
               
     gosub @USER_TAPE_QUEUE_NEW_CHECK
     gosub @USER_TAPE_PLAY_RANDOM_TRACK
@@ -293,7 +299,7 @@ USER_TAPE_TURNED_ON_FLAG == 1
         if
         USER_TAPE_ONFOOT_FLAG2 == 0
         then
-        Audiostream.Volume(USER_TAPE_TRACK) = 0.0
+        Audiostream.Volume(USER_TAPE_TRACK) = VERO_TIPA_VOLUME
         $MUTE_MUSIC_FLAG = 0
         USER_TAPE_TURNED_ON_FLAG = 0
         gosub @UT_CANALS_THEME_UNMUTE
@@ -365,7 +371,9 @@ actor.Driving(PLAYER_ACTOR)
 8E4A: not is_char_exiting_any_car PLAYER_ACTOR
 then
 USER_TAPE_TURNED_ON_FLAG = 1
-Audiostream.Volume(USER_TAPE_TRACK) = $MUSIC_VOLUME
+0089: 0@ = $MUSIC_VOLUME // (float)
+005B: 0@ += USER_TAPE_CURRENT_GAIN  // (float)
+Audiostream.Volume(USER_TAPE_TRACK) = 0@
 end
 
 ///////////////////////////////////////////////////////////////////////////
@@ -463,7 +471,9 @@ $PANEL_OPEN == 0
         32@ = 0        
         wait 500
         USER_TAPE_TURNED_ON_FLAG = 1
-        Audiostream.Volume(USER_TAPE_TRACK) = $MUSIC_VOLUME
+        0089: 0@ = $MUSIC_VOLUME // (float)
+        005B: 0@ += USER_TAPE_CURRENT_GAIN  // (float)
+        Audiostream.Volume(USER_TAPE_TRACK) = 0@
         gosub @UT_CANALS_THEME_MUTE
         USER_TAPE_TURNED_ON_GLOBAL = 1
         end
@@ -555,7 +565,9 @@ not MAIN_QUEST_MUSIC_FLAG == 1
         :USER_TAPE_ONFOOT_ON            
         wait 500
         USER_TAPE_TURNED_ON_FLAG = 1
-        Audiostream.Volume(USER_TAPE_TRACK) = $MUSIC_VOLUME
+        0089: 0@ = $MUSIC_VOLUME // (float)
+        005B: 0@ += USER_TAPE_CURRENT_GAIN  // (float)
+        Audiostream.Volume(USER_TAPE_TRACK) = 0@
         gosub @UT_CANALS_THEME_MUTE
         USER_TAPE_TURNED_ON_GLOBAL = 1
         USER_TAPE_ONFOOT_FLAG = 1
@@ -772,7 +784,7 @@ USER_TAPE_TURNED_ON_FLAG == 1
             0812: AS_actor PLAYER_ACTOR perform_animation "CAR_tune_radio" IFP "ped" framedelta 4.0 loopA 0 lockX 0 lockY 0 lockF 0 time -1
             end
             
-            Audiostream.Volume(USER_TAPE_TRACK) = 0.0
+            Audiostream.Volume(USER_TAPE_TRACK) = VERO_TIPA_VOLUME
             gosub @UT_CANALS_THEME_UNMUTE
             USER_TAPE_TURNED_ON_FLAG = 0
             $MUTE_MUSIC_FLAG = 0
@@ -790,6 +802,62 @@ else
 :USER_TAPE_ONFOOT_CHECKS
 
 ///////////////////////////////////////////////////////////////////////////
+
+if
+USER_TAPE_SCROLL_LOCKED_FOR_GAIN_ONFOOT_FLAG == 0
+then    
+0A8D: 1@ = read_memory 0xB73575 size 1 virtual_protect 0
+if and
+USER_TAPE_TURNED_ON_FLAG == 1
+$END_SAVING == 0
+not actor.Driving(PLAYER_ACTOR)
+8E4A: not is_char_exiting_any_car PLAYER_ACTOR
+00E1:   player 0 pressed_key 4
+1@ == 0
+    then    
+    USER_TAPE_SCROLL_LOCKED_FOR_GAIN_ONFOOT_FLAG = 1 
+    end
+else
+0992: set_player PLAYER_CHAR weapons_scrollable 0    
+if and
+USER_TAPE_TURNED_ON_FLAG == 1
+$END_SAVING == 0
+not actor.Driving(PLAYER_ACTOR)
+8E4A: not is_char_exiting_any_car PLAYER_ACTOR
+00E1:   player 0 pressed_key 4   
+    then
+    //ass    
+    else
+    USER_TAPE_SCROLL_LOCKED_FOR_GAIN_ONFOOT_FLAG = 0
+    0992: set_player PLAYER_CHAR weapons_scrollable 1
+    end    
+end
+
+if and
+USER_TAPE_TURNED_ON_FLAG == 1
+$END_SAVING == 0
+not actor.Driving(PLAYER_ACTOR)
+8E4A: not is_char_exiting_any_car PLAYER_ACTOR
+00E1:   player 0 pressed_key 4
+    then        
+        
+    if
+    0E10: is_mouse_wheel_up    
+    then 
+    USER_TAPE_CURRENT_GAIN += 0.1
+    0AD1: show_formatted_text_highpriority "CURRENT GAIN LEVEL ~b~%.2f~w~" time 2000 USER_TAPE_CURRENT_GAIN
+    end
+        
+    if
+    0E11: is_mouse_wheel_down
+    then
+    USER_TAPE_CURRENT_GAIN -= 0.1
+    0AD1: show_formatted_text_highpriority "CURRENT GAIN LEVEL ~b~%.2f~w~" time 2000 USER_TAPE_CURRENT_GAIN
+    end
+        
+    end
+        
+///////////////////////////////////////////////////////////////////////////        
 
 if and
 0A4B:   controls_set_to_joystick
@@ -863,7 +931,7 @@ not $CASETTE_PLAYING_FLAG == 1
         Audiostream.Loop($TAPE_ON_SOUND,0)
         Audiostream.PerformAction($TAPE_ON_SOUND, PLAY)
         Audiostream.Volume($TAPE_ON_SOUND) = $SOUNDS_VOLUME        
-        wait 1000
+        wait 500
         gosub @USER_TAPE_QUEUE_NEW_CHECK
         gosub @USER_TAPE_PLAY_RANDOM_TRACK
         end
@@ -908,7 +976,9 @@ $END_SAVING == 0
 not actor.Driving(PLAYER_ACTOR)
     then
     $MUTE_MUSIC_FLAG = 1
-    Audiostream.Volume(USER_TAPE_TRACK) = $MUSIC_VOLUME
+    0089: 0@ = $MUSIC_VOLUME // (float)
+    005B: 0@ += USER_TAPE_CURRENT_GAIN  // (float)
+    Audiostream.Volume(USER_TAPE_TRACK) = 0@
     
     if
     0E3D:   key_pressed 189
@@ -993,6 +1063,18 @@ USER_TAPE_TURNED_ON_FLAG == 1
     $CASETTE_PLAYING_FLAG == 1
     $PLAYER_DYING == 1
         then
+        
+        if
+        actor.Dead(PLAYER_ACTOR)
+        then
+        if or
+        $GAMEMODE_VERSUS == 1
+        $GAMEMODE_CRAZY == 1
+            then
+            jump to @SKIP_TURN_OFF_UT
+            end
+        end
+        
         :UT_JOY_OFF_1
         
         if
@@ -1039,7 +1121,7 @@ USER_TAPE_TURNED_ON_FLAG == 1
             if
             USER_TAPE_ONFOOT_FLAG2 == 0
             then        
-            Audiostream.Volume(USER_TAPE_TRACK) = 0.0
+            Audiostream.Volume(USER_TAPE_TRACK) = VERO_TIPA_VOLUME
             gosub @UT_CANALS_THEME_UNMUTE
             $MUTE_MUSIC_FLAG = 0
             end
@@ -1057,7 +1139,9 @@ USER_TAPE_TURNED_ON_FLAG == 1
                 
             end
         end
-    end    
+    end 
+    
+:SKIP_TURN_OFF_UT       
 
 end    
 
@@ -1069,7 +1153,7 @@ end_thread
 
 0B00: delete_file "za\UT\tape_v2.set"  // IF and SET
 
-for USER_TAPE_TRACKS_COUNT = 1 to 999
+for USER_TAPE_TRACKS_COUNT = 1 to 10000
 
 0085: 28@ = USER_TAPE_TRACKS_COUNT // (int)
 gosub @USER_TAPE_SCAN_FORMAT
@@ -1182,6 +1266,7 @@ jump to @USER_TAPE_SCAN_FIRST2
 end
 
 0AD3: 0@v = format "za\UT\%d.%s" USER_TAPE_CURRENT_TRACK_NUMBER USER_TAPE_FORMAT
+//0AD3: 0@v = format "za\UT\%d.lnk" USER_TAPE_CURRENT_TRACK_NUMBER
 0AD3: 5@v = format "%d" USER_TAPE_CURRENT_TRACK_NUMBER
 0AF0: 9@ = get_int_from_ini_file "za\UT\tape_v2.set" section "QUEUE" key 5@v
 
@@ -1204,7 +1289,7 @@ if
 9@ == 0
 then
 if
-0E4D: random_percent 60
+0E4D: random_percent 0 //60
 then
 random_int 31@ 1 11
 0AD3: 4@v = format "za\UT\P%d.mp3" 31@
@@ -1242,10 +1327,30 @@ else
 if
 USER_TAPE_TEMP_VAR == 1
 then
+
+if
+0D49: 31@ = compare_strings USER_TAPE_FORMAT "lnk" // IF and SET
+then
+0AA7: call_function 0x04F30F0 num_params 1 pop 0 0@v UT_LINK_STRING_BUFFER
+USER_TAPE_TRACK = audiostream.Load3d(UT_LINK_STRING_BUFFER)
+else
 USER_TAPE_TRACK = audiostream.Load3d(0@v)
+end
+
 Audiostream.LinkToActor(USER_TAPE_TRACK,PLAYER_ACTOR)
 else
+
+if
+0D49: 31@ = compare_strings USER_TAPE_FORMAT "lnk" // IF and SET
+then
+0AA7: call_function 0x04F30F0 num_params 1 pop 0 0@v UT_LINK_STRING_BUFFER
+//0AD1: show_formatted_text_highpriority "%s" time 500 UT_LINK_STRING_BUFFER
+//wait 500
+USER_TAPE_TRACK = audiostream.Load(UT_LINK_STRING_BUFFER)
+else
 USER_TAPE_TRACK = audiostream.Load(0@v)
+end
+
 end
 
 USER_TAPE_PEREBIVKA_FLAG = 2
@@ -1259,10 +1364,12 @@ USER_TAPE_CURRENT_GAIN = 0.0
 if
 USER_TAPE_TURNED_ON_FLAG == 0
 then
-Audiostream.Volume(USER_TAPE_TRACK) = 0.0
+Audiostream.Volume(USER_TAPE_TRACK) = VERO_TIPA_VOLUME
 gosub @UT_CANALS_THEME_UNMUTE
 else
-Audiostream.Volume(USER_TAPE_TRACK) = $MUSIC_VOLUME
+0089: 0@ = $MUSIC_VOLUME // (float)
+005B: 0@ += USER_TAPE_CURRENT_GAIN  // (float)
+Audiostream.Volume(USER_TAPE_TRACK) = 0@
 gosub @UT_CANALS_THEME_MUTE
 end
 USER_TAPE_TRACK_PLAYING_FLAG = 1
@@ -1419,6 +1526,14 @@ return
 :USER_TAPE_SCAN_FORMAT
 
 29@ = 0
+
+0AD3: 0@v = format "za\UT\%d.lnk" 28@
+if
+0AAB:   file_exists 0@v
+then
+06D1: USER_TAPE_FORMAT = "lnk" // v$ = string
+return
+end
 
 0AD3: 0@v = format "za\UT\%d.mp3" 28@
 if
@@ -1617,7 +1732,7 @@ then
 return
 end
 
-Audiostream.Volume($MUSIC_ASSHOLE) = 0.0
+Audiostream.Volume($MUSIC_ASSHOLE) = VERO_TIPA_VOLUME
 
 return
 

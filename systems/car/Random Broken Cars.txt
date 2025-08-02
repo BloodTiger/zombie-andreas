@@ -3,10 +3,9 @@ BRK_CAR_LAST_CREATED_CAR_ID = 31@
 end
 
 const
-BRK_CAR_EXTRA_ENABLED = 30@
-BRK_CAR_EXTRA_GENERATE_MIN = 23@
-BRK_CAR_EXTRA_GENERATE_MAX = 28@
-BRK_CAR_EXTRA_GENERATE_SET = 24@
+CAR_EXTRA_GENERATE_MIN = 23@
+CAR_EXTRA_GENERATE_MAX = 28@
+CAR_EXTRA_GENERATE_SET = 24@
 end
 
 :BRK_CAR
@@ -19,13 +18,13 @@ then
 end_thread
 end
 
-0AF0: BRK_CAR_EXTRA_ENABLED = get_int_from_ini_file "data\SAExtratransport.ini" section "SETTINGS" key "ENABLED"
+0AF0: CAR_EXTRA_ENABLED = get_int_from_ini_file "data\SAExtratransport.ini" section "SETTINGS" key "ENABLED"
 if
-BRK_CAR_EXTRA_ENABLED == 1
+CAR_EXTRA_ENABLED == 1
 then
-0AF0: BRK_CAR_EXTRA_GENERATE_MIN = get_int_from_ini_file "data\SAExtratransport.ini" section "SETTINGS" key "GENERATE_MIN"
-0AF0: BRK_CAR_EXTRA_GENERATE_MAX = get_int_from_ini_file "data\SAExtratransport.ini" section "SETTINGS" key "GENERATE_MAX"
-0AF0: BRK_CAR_EXTRA_GENERATE_SET = get_int_from_ini_file "data\SAExtratransport.ini" section "SETTINGS" key "GENERATE_SET"
+0AF0: CAR_EXTRA_GENERATE_MIN = get_int_from_ini_file "data\SAExtratransport.ini" section "SETTINGS" key "GENERATE_MIN"
+0AF0: CAR_EXTRA_GENERATE_MAX = get_int_from_ini_file "data\SAExtratransport.ini" section "SETTINGS" key "GENERATE_MAX"
+0AF0: CAR_EXTRA_GENERATE_SET = get_int_from_ini_file "data\SAExtratransport.ini" section "SETTINGS" key "GENERATE_SET"
 end
 
 :BROKEN_CARS_CHECK
@@ -40,6 +39,7 @@ $SALVATION_FLAG == 0
 $NOTSPAWN_CARS == 0
 $ACTIVE_INTERIOR == 0
 $INT_ENTERING_FLAG == 0
+$ALLOW_BROKEN_CARS == 1
 jf @BROKEN_CARS_CHECK
 end   
 
@@ -64,6 +64,7 @@ $SALVATION_FLAG == 0
 $NOTSPAWN_CARS == 0
 $ACTIVE_INTERIOR == 0
 $INT_ENTERING_FLAG == 0
+$ALLOW_BROKEN_CARS == 1
 jf @BROKEN_CARS_CHECK
 end         
 
@@ -214,6 +215,7 @@ UNITED_MAP == 0
 
     end
 
+//0AF1: write_int 18@ to_ini_file "debug\LAST_CREATED_CAR_ID.ini" section "SectionName" key "intKey"
 1@ = car.Create(18@,9@,10@,11@)
 //0AD1: show_formatted_text_highpriority "CAR CREATED BY MODEL %d" time 10 18@
 
@@ -406,8 +408,9 @@ if and
     0594: unknown_car 1@ flag 0
     create_thread @CAR_ALP 1@    
     car.RemoveReferences(1@)                                         
-else  
-car.Destroy(1@)   
+else 
+create_thread @CAR_DST 1@ //what the actuall fuck?!
+//car.Destroy(1@)   
 end
 
 jump @BROKEN_CARS_CHECK   
@@ -619,6 +622,12 @@ return
 
 :CAR_ZONE_CHECK
 6@ = 1
+
+if
+CUSTOM_MAP_FLAG == 1
+then
+return
+end
 
 if
 UNITED_MAP == 0
@@ -922,21 +931,20 @@ return
 if
 UNITED_MAP == 0
 then
-random_int 18@ 400 605
-
+random_int 18@ RANDOM_CAR_MIN_ID RANDOM_CAR_MAX_ID
 if
-BRK_CAR_EXTRA_ENABLED == 1
+CAR_EXTRA_ENABLED == 1
     then
-    random_int 0@ BRK_CAR_EXTRA_GENERATE_MIN BRK_CAR_EXTRA_GENERATE_MAX
+    random_int 18@ CAR_EXTRA_GENERATE_MIN CAR_EXTRA_GENERATE_MAX
     if
-    003B:   0@ == BRK_CAR_EXTRA_GENERATE_SET  // (int)
+    003B:   18@ == CAR_EXTRA_GENERATE_SET  // (int)
         then
-        0AF0: 0@ = get_int_from_ini_file "data\SAExtratransport.ini" section "SETTINGS" key "TOTAL_COUNT"
-        0@ += 1
-        random_int 18@ 1 0@        
-        0AD3: 0@v = format "%d" 18@      
-        0AF0: 18@ = get_int_from_ini_file "data\SAExtratransport.ini" section "IDS" key 0@v
-//        0AD1: show_formatted_text_highpriority "yaaay %d" time 2000 18@
+        0AF0: 18@ = get_int_from_ini_file "data\SAExtratransport.ini" section "SETTINGS" key "TOTAL_COUNT"
+        18@ += 1
+        random_int 18@ 1 18@        
+        0AD3: CUSTOM_MAP_ZONE_CHECK_STRING = format "%d" 18@      
+        0AF0: 18@ = get_int_from_ini_file "data\SAExtratransport.ini" section "IDS" key CUSTOM_MAP_ZONE_CHECK_STRING
+//        0AD1: show_formatted_text_highpriority "extra transport model generated %d" time 2000 18@
         end
     end
 
@@ -974,6 +982,7 @@ random_int 0@ = MIN_SKIN2_GEN MAX_SKIN2_GEN
 if and
 0@ == SKIN2_GEN_SET    
 UNITED_MAP == 0
+not CUSTOM_MAP_FLAG == 1
 $GAMEMODE_CRAZY == 1
     then                        
     
@@ -1241,6 +1250,11 @@ jf @RANDOM_BROKEN_CAR_SET
 /////////////////////////////////////////////////////////////
 
 09E1: get_car_model 18@ price_to 0@
+
+if
+not 0@ == 111
+jf @RANDOM_BROKEN_CAR_SET
+
 0@ /= 1100
 if
 0@ > 96
@@ -1259,12 +1273,13 @@ end
 
 if
 not $GAMEMODE_CRAZY == 1
-then   
-jf @RANDOM_BROKEN_CAR_SET 
+then    
 
 if and
 $ALLOW_BANDITS_CAMPS == 0
+$FREEMODE == 1  
 UNITED_MAP == 0
+not CUSTOM_MAP_FLAG == 1
 then
 random_int 0@ 0 200
 if
@@ -1296,7 +1311,7 @@ jf @RANDOM_BROKEN_CAR_SET
 
 if and
 not NO_MORE_ARMY_CAMPS == 1
-not $ALLOW_ARMY_CAMPS == 0
+not $ALLOW_ARMY_CAMPS == 0     
 then
 if and
 not 18@ == #PATRIOT
@@ -1307,8 +1322,9 @@ if or
 18@ == #PATRIOT
 18@ == #BARRACKS
     then
-    if
+    if and
     0E4D: random_percent 50
+    $FREEMODE == 1
     jf @RANDOM_BROKEN_CAR_SET    
     end
 end
@@ -1565,4 +1581,16 @@ if
 
 end
 
-end_thread    
+end_thread 
+
+:CAR_DST
+thread 'CAR_DST'
+
+wait 250
+if
+056E:   car 0@ defined
+then
+car.Destroy(0@)
+end
+
+end_thread   

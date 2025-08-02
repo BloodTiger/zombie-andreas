@@ -271,38 +271,40 @@ wait 500
 
 CHARACTER_SELECT_MUSIC_STARTED_FLAG = 1
 
-if
+if and
 UNITED_MAP == 0
+not CUSTOM_MAP_FLAG == 1
 then
-$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\CS_OriginMusic.wav")
-Audiostream.Volume($MUSIC_MISSION) = 0.0
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\CS_OriginMusic.mp3")
+Audiostream.Volume($MUSIC_MISSION) = VERO_TIPA_VOLUME
 Audiostream.Loop($MUSIC_MISSION, 1)
 Audiostream.PerformAction($MUSIC_MISSION, PLAY)
 else
-$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\CS_ElevatorMusic.wav")
-Audiostream.Volume($MUSIC_MISSION) = 0.0
+$MUSIC_MISSION = Audiostream.Load("AUDIO\SOUNDS\CS_ElevatorMusic.mp3")
+Audiostream.Volume($MUSIC_MISSION) = VERO_TIPA_VOLUME
 Audiostream.Loop($MUSIC_MISSION, 1)
 Audiostream.PerformAction($MUSIC_MISSION, PLAY)
 end
 
 /////////////////////Плавное нарастание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int) 
-0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
-
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 2000
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-
-wait 1
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int) 
+//0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+//
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 2000
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+//
+//wait 1
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $MUSIC_MISSION volume $MUSIC_VOLUME time 2000
 
 ////////////////////////////////////////////////////////////////////////////
 end
@@ -350,6 +352,13 @@ if and
     else
     27@ += 1
     NEWSKINS2_NABOR_LISTATB = 0
+    end
+    
+    if and
+    27@ == 1
+    CUSTOM_MAP_FLAG == 1
+    then
+    27@ = 4
     end
     
     if and
@@ -452,7 +461,8 @@ if and
     
     gosub @SECOND_NABOR_GET_ID
     
-    0AD3: v$FP_FILE = format "%d" 28@        
+    0AD3: v$FP_FILE = format "%d" 28@
+    1@ = 0        
     0AF0: 1@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key v$FP_FILE    
     if and
     07DE:   model 28@ exists  // versionB
@@ -580,7 +590,8 @@ if and
     
     gosub @SECOND_NABOR_GET_ID
     
-    0AD3: v$FP_FILE = format "%d" 28@        
+    0AD3: v$FP_FILE = format "%d" 28@
+    1@ = 0        
     0AF0: 1@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key v$FP_FILE    
     if and
     07DE:   model 28@ exists  // versionB
@@ -833,6 +844,7 @@ if
     
     if and
     UNITED_MAP == 0
+    not CUSTOM_MAP_FLAG == 1
     TEAMMATES_CUS_NUM == 0
     then
     gosub @RANDOM_WEAPON_NABOR_SELECT
@@ -917,7 +929,7 @@ if
         TEAMMATES_CUS_NUM = 1
         
         if
-        PEDFUNCS_SUPPORT_ON == 1
+        PEDFUNCS_SUPPORT_ON == 1  
             then
             if
             0AA2: 0@ = load_library "PedFuncs.asi" // IF and SET
@@ -1362,6 +1374,7 @@ if
     
     if and
     UNITED_MAP == 0
+    not CUSTOM_MAP_FLAG == 1
     not SURVIVAL_CUSTOM_WEAPON_NABOR == 1
     then    
     
@@ -1542,8 +1555,9 @@ if
     Audiostream.PerformAction($MENU_ACCEPT_SOUND, PLAY)
     wait $MENU_BACK_WAIT 
     
-    if
+    if and
     not COOP_ACTIVE_FLAG == 1
+    not CUSTOM_MAP_FLAG == 1
     then
     
     while true
@@ -1591,9 +1605,20 @@ if
     
     ///////////////////////////////////Потдверждение выбора игры сразу за отморзка\изгоя/////////////////////////////////// 
     
+    if
+    CUSTOM_MAP_FLAG == 1
+    then
+    0AF1: write_int 0 to_ini_file "data\survsettings.temp" section "PLAYER" key "SCUMBAG_FLAG"
+    Audiostream.Volume($MENU_HORROR01_SOUND) = $SOUNDS_VOLUME 
+    Audiostream.Loop($MENU_HORROR01_SOUND, 0)
+    Audiostream.PerformAction($MENU_HORROR01_SOUND, PLAY)
+    return
+    end
+            
     Audiostream.Volume($MENU_ACCEPT_SOUND) = $SOUNDS_VOLUME 
     Audiostream.Loop($MENU_ACCEPT_SOUND, 0)
     Audiostream.PerformAction($MENU_ACCEPT_SOUND, PLAY)
+            
     wait $MENU_BACK_WAIT 
     
     while true
@@ -2721,7 +2746,8 @@ if and
     
     gosub @SECOND_NABOR_GET_ID
     
-    0AD3: v$FP_FILE = format "%d" 28@        
+    0AD3: v$FP_FILE = format "%d" 28@
+    1@ = 0        
     0AF0: 1@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key v$FP_FILE    
     if and
     07DE:   model 28@ exists  // versionB
@@ -2837,7 +2863,8 @@ if and
     
     gosub @SECOND_NABOR_GET_ID
     
-    0AD3: v$FP_FILE = format "%d" 28@        
+    0AD3: v$FP_FILE = format "%d" 28@
+    1@ = 0        
     0AF0: 1@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key v$FP_FILE    
     if and
     07DE:   model 28@ exists  // versionB
@@ -5187,6 +5214,14 @@ return
 
 :SECOND_NABOR_GET_ID
 
+if and
+27@ == 3
+28@ == 1
+TEAMMATES_CUS_NUM > 0
+then
+28@ = 2
+end
+
 if
 27@ == 3 
 then
@@ -5204,11 +5239,6 @@ TEAMMATES_CUS_NUM == 1
 TEAMMATES_CUS_NUM == 0
 then      
 0AF4: TEAM1_STSK = read_string_from_ini_file "data/otherskinscs.ini" section "SKINS" key v$FP_FILE    
-if
-28@ == 1
-    then
-    TEAM1_STSK = 'ANDRE'
-    end
 end
 
 if or

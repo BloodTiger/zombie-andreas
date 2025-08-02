@@ -1,11 +1,14 @@
 :RD_DEF
 thread 'RD_DEF'
 
+0AF1: write_int 1 to_ini_file "config.ini" section "LAUNCHER" key "RESTART_INTO_GAMEMODE_IF_CRASHED"
+
 0629: change_integer_stat 252 to 10
 0AF1: write_int 10 to_ini_file "saves/ZACM.set" section "SCR" key "GAMEMODE_AUTOSELECT_NUMBER"
 
-if
+if and
 UNITED_MAP == 0
+not CUSTOM_MAP_FLAG == 1
 then
 0776: create_objects_in_object_group "gatesC"
 end
@@ -150,6 +153,7 @@ $START_TUNE_DONT_PLAY = 1
 wait 50
 
 gosub @DEF_MAP_SELECT
+$CAMP_MARKER[CARMA_GLOB_RACE_NUMBER] = Marker.CreateIconWithoutSphere(31, $CAMP_X[CARMA_GLOB_RACE_NUMBER], $CAMP_Y[CARMA_GLOB_RACE_NUMBER], $CAMP_Z[CARMA_GLOB_RACE_NUMBER])
 0629: change_integer_stat 264 to $MAP_SELECTED_NUMBER
 0AF1: write_int $MAP_SELECTED_NUMBER to_ini_file "saves/ZACM.set" section "SCR" key "GAMEMODE_AUTOSELECT_PARAM"  
 
@@ -269,7 +273,8 @@ player.CanMove(PLAYER_CHAR,true)
 camera.Restore_WithJumpCut()
 
 gosub @GAMEMODE_DEFENSE_MEDS_GIVE
-                         
+
+0AF1: write_int 0 to_ini_file "config.ini" section "LAUNCHER" key "RESTART_INTO_GAMEMODE_IF_CRASHED"                         
 fade 1 2000
 
 if
@@ -282,10 +287,44 @@ $MXP_MD = 1
 $INF_AMMO_FLAG = 1
 0331: set_player PLAYER_CHAR fast_reload 1
 0A8C: write_memory 0x969178 size 1 value 1 virtual_protect 0
-0AF3: write_float 0.0 to_ini_file "moonloader/Weapon Recoil.ini" section "Other_Settings" key "nGlobalRecoilMultiplier"
+0AF3: write_float 0.0 to_ini_file "scripts/WeaponRecoilRE.ini" section "WeaponRecoilRE" key "fRecoilMultiplier Global"
+0A8C: write_memory 0x0969110 size 6 value "RRWSR" virtual_protect 0
+
+if
+UNITED_MAP == 0
+then
 1@ = 70
+else
+
+if
+STORIES_MAP == 0
+    then
+    
+    if
+    $UNITED_III_SPAWN == 1
+    then
+    1@ = 152
+    else
+    1@ = 150
+    end
+    
+    else
+    
+    if 
+    $UNITED_III_SPAWN == 1
+    then
+    1@ = 182
+    else
+    1@ = 212
+    end
+    
+    end
+
+end
+
 gosub @CHEAT_PROCESSOR_LOAD_WEP_MODEL            
-actor.GiveWeaponAndAmmo(PLAYER_ACTOR,70,99999)
+actor.GiveWeaponAndAmmo(PLAYER_ACTOR,1@,99999)
+
 00C0: set_current_time 8 0
 end
 
@@ -1650,6 +1689,12 @@ else
 29@ = 3
 end
 
+end
+
+if
+CUSTOM_MAP_FLAG == 1
+then
+0AF0: 29@ = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\RAID_MAPS.ini" section "SETTINGS" key "COUNT"
 end
 
 actor.LockInCurrentPosition(PLAYER_ACTOR,true)

@@ -244,7 +244,7 @@ end
 random_int 0@ 0 5
 if or
 0@ == 2
-32@ > 240000
+001F:   32@ > RANDOM_STALKER_TIME1 // (int) 32@ > 240000
 then
 random_float 0@ 0.0 360.0
 actor.Angle(STALKER_QUEST_ACTOR) = 0@
@@ -297,16 +297,17 @@ Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
 while true
 wait 0
 
-if
+if and
 not $GAME_SPEED == 0.0
+SINGLEFRAME_TIMER_TICK_FLAG == 1
 then   
-STALKER_PAIN_TIMER += 1 
-STALKER_ATTACK_TIMER += 1
-STALKER_HUNTER_TIMER += 1   
-STALKER_TANK_TIMER += 1  
-STALKER_HUNTER2_TIMER += 1  
-STALKER_WITCH_TIMER += 1  
-STALKER_CHARGER_TIMER += 1 
+STALKER_PAIN_TIMER += 3 
+STALKER_ATTACK_TIMER += 3
+STALKER_HUNTER_TIMER += 3   
+STALKER_TANK_TIMER += 3  
+STALKER_HUNTER2_TIMER += 3  
+STALKER_WITCH_TIMER += 3  
+STALKER_CHARGER_TIMER += 3 
 end
 
 if
@@ -1552,8 +1553,9 @@ return
 :STALKER_QUEST_CHECKING_MODEL
 wait 0
 
-if
+if and
 UNITED_MAP == 0
+not CUSTOM_MAP_FLAG == 1
 then
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1604,6 +1606,7 @@ end
 random_int 0@ = MIN_SKIN_GEN MAX_SKIN_GEN
 if and
 0@ == SKIN_GEN_SET
+not CUSTOM_MAP_FLAG == 1
 UNITED_MAP == 0
 $GAMEMODE_WAR == 0
     then
@@ -1653,7 +1656,7 @@ then
 if
 $GAMEMODE_WAR == 0
 then
-0209: 0@ = random_int_in_ranges 7 285
+0209: 0@ = random_int_in_ranges RANDOM_PED_MIN_ID RANDOM_PED_MAX_ID
 else
 
 if
@@ -1891,9 +1894,8 @@ if
 $GAMEMODE_WAR == 0
 then
 0AD3: 2@v = format "%d" 0@
-0AF0: 1@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key 2@v
 if
-not 1@ == 1
+8AF0: not 1@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key 2@v
 jf @STALKER_QUEST_CHECKING_MODEL
 end  
 
@@ -1915,11 +1917,17 @@ random_int 11@ MIN_WEAP_GEN to MAX_WEAP_GEN
 end
 
 if
-not 11@ == WEAP_GEN_SET
+8E4D: not random_percent WEAP_GEN_SET
 then
 0209: 10@ = random_int_in_ranges 22 35 
 else
 0209: 10@ = random_int_in_ranges MIN_WEAPON_NUM MAX_WEAPON_NUM
+if and
+EXTRAWEP_FLAG_AND_MAXNUM >= 225
+0E4D: random_percent EXTRAWEP_GENERATE_CHANCE
+    then    
+    0209: 10@ = random_int_in_ranges 225 EXTRAWEP_FLAG_AND_MAXNUM
+    end
 end
 
 if
@@ -1953,6 +1961,30 @@ end
 end    
 
 ////////////////////////////////////////////////////
+
+if
+10@ >= 225
+    then
+    0AD3: v$SND2_FILE = format "%d" 10@
+    0AF0: $TEMPVAR_FLOAT_1 = get_int_from_ini_file "data\SAExtraweps.ini" section v$SND2_FILE key "DO_NOT_GENERATE_RANDOM_SURVS"
+    if    
+    $TEMPVAR_FLOAT_1 == 1    
+        then
+        10@ = 21
+        else
+        if
+        0AF0: $TEMPVAR_FLOAT_1 = get_int_from_ini_file "data\SAExtraweps.ini" section v$SND2_FILE key "GENERATE_DODGE_PERCENT"    
+            then
+            if
+            0E4D: random_percent $TEMPVAR_FLOAT_1
+                then
+                10@ = 21
+                end
+            end
+        end 
+    end
+    
+////////////////////////////////////////////////////  
 
 if or
 10@ == 22
@@ -2056,6 +2088,7 @@ if or
                                             if or
                                             10@ == 104
                                             10@ == 105
+                                            10@ >= 225
                                                 then       
                                                 else
                                                 jump to @STALKER_QUEST_ACTOR_WEAPON_CREATE

@@ -2,7 +2,8 @@ const
 STRAFE_FLAG = 10@  
 CURRENT_CAM_ANGLE = 11@
 LATEST_CAM_ANGLE = 12@
-LOOKING_BACK_FLAG = 13@ 
+LOOKING_BACK_FLAG = 13@
+FP_CAM_LOCKED_FLAG = 14@ 
 end
 
 :STRAFE
@@ -161,6 +162,7 @@ if or
 actor.Animation(PLAYER_ACTOR) == "car_check"
 actor.Animation(PLAYER_ACTOR) == "BOM_PLANT"
 actor.Animation(PLAYER_ACTOR) == "BOM_Plant_In"
+actor.Animation(PLAYER_ACTOR) == "BOM_Plant_End"
 actor.Animation(PLAYER_ACTOR) == "IDLE_tired"
 actor.Animation(PLAYER_ACTOR) == "EAT_Vomit_P"
 0E48: is_char_fallen_on_ground PLAYER_ACTOR
@@ -437,3 +439,273 @@ end
 end
 
 end_thread      
+
+:STRAF2
+thread 'STRAF2'
+
+while true
+wait 0
+
+if
+$FP_ACTIVATED == 1
+    then        
+    
+    0A96: 1@ = actor PLAYER_ACTOR struct
+    0A8E: 1@ = 1@ + 0x534 //RUN STATE
+    0A8D: 7@ = read_memory 1@ size 4 virtual_protect 1
+    
+    1@ = 0
+    if or
+    actor.Animation(PLAYER_ACTOR) == "getup"       
+    actor.Animation(PLAYER_ACTOR) == "getup_front"
+    actor.Animation(PLAYER_ACTOR) == "FLOOR_hit"
+    actor.Animation(PLAYER_ACTOR) == "FLOOR_hit_f"
+    actor.Animation(PLAYER_ACTOR) == "FALL_collapse"
+    actor.Animation(PLAYER_ACTOR) == "FALL_glide"
+    actor.Animation(PLAYER_ACTOR) == "FALL_land" 
+    then
+    1@ = 1
+    end
+    
+    if
+    actor.Animation(PLAYER_ACTOR) == "KO_skid_back"
+    then
+    1@ = 1
+    end
+    
+    if and
+    0E49: is_char_entering_any_car PLAYER_ACTOR
+    0E42: is_char_doing_task_id PLAYER_ACTOR 802
+    then
+    0373: set_camera_directly_behind_player
+    end
+    
+    if or
+    actor.Animation(PLAYER_ACTOR) == "tank_throw"
+    PLAYER_IN_SEX_FLAG == 1
+    0A32:  actor PLAYER_ACTOR on_turret_of_car
+    then
+    jump to @CUM_UNLOCK
+    end
+    
+    if or
+    0E4B: is_char_playing_any_script_animation PLAYER_ACTOR include_anims 1
+    0E48: is_char_fallen_on_ground PLAYER_ACTOR
+    0E92: is_char_really_in_air PLAYER_ACTOR
+    0E4A: is_char_exiting_any_car PLAYER_ACTOR
+    89E7: not  player PLAYER_CHAR not_frozen
+    actor.Dead(PLAYER_ACTOR)
+    1@ == 1    
+    then
+    7@ = 7
+    0E60: set_camera_control 0
+    FP_CAM_LOCKED_FLAG = 1
+    else
+    :CUM_UNLOCK
+    0E60: set_camera_control 1
+    FP_CAM_LOCKED_FLAG = 0
+    end
+              
+    if and
+    LOOKING_BACK_FLAG == 0
+    00E1:  player 0 pressed_key 19
+    then
+    LOOKING_BACK_FLAG = 1
+    else
+    if and
+    80E1: not  player 0 pressed_key 19
+    LOOKING_BACK_FLAG == 1
+        then
+        LOOKING_BACK_FLAG = 2
+        32@ = 0
+        else
+        if and
+        LOOKING_BACK_FLAG == 2
+        32@ > 50
+            then
+            LOOKING_BACK_FLAG = 0
+            end
+        end
+    end
+    
+    if
+    PLAYER_IN_SEX_FLAG == 1
+    then
+    7@ = 7
+    end
+    
+    //Angle
+    if and
+    8E46: not is_char_using_gun PLAYER_ACTOR
+    not LOOKING_BACK_FLAG == 2
+    not 7@ == 7
+        then  
+        if or
+        80E1: not  player 0 pressed_key 19
+        PLAYER_USING_MELEE_FLAG == 1
+            then                     
+            if or
+            02A0:   actor PLAYER_ACTOR stopped
+            0E47: is_char_fighting PLAYER_ACTOR
+            STRAFE_FLAG == 1
+            actor.Animation(PLAYER_ACTOR) == "Crouch_Roll_L"
+            actor.Animation(PLAYER_ACTOR) == "Crouch_Roll_R"
+                then            
+                0EB2: get_offset_from_camera_in_world_coords 0.0 -5.0 -1.0 store_to 1@ 2@ 3@
+                actor.StorePos(PLAYER_ACTOR,4@,5@,6@)
+                0E27: get_angle_from_two_coords 1@ 2@ and 4@ 5@ to CURRENT_CAM_ANGLE
+                actor.Angle(PLAYER_ACTOR) = CURRENT_CAM_ANGLE
+                06A9: AS_actor PLAYER_ACTOR look_at_point 1@ 2@ 3@ 150 ms 
+                end
+            end
+        end
+        
+    if and
+    STRAFE_FLAG == 1
+    not actor.Animation(PLAYER_ACTOR) == "run_left"
+    not actor.Animation(PLAYER_ACTOR) == "run_right"
+    not actor.Animation(PLAYER_ACTOR) == "run_back"
+    not actor.Animation(PLAYER_ACTOR) == "walk_left"
+    not actor.Animation(PLAYER_ACTOR) == "walk_right"
+    not actor.Animation(PLAYER_ACTOR) == "walk_back"
+    then
+    STRAFE_FLAG = 0
+    end
+    
+    if and
+    STRAFE_FLAG == 1
+    PLAYER_USING_MELEE_FLAG == 1
+    //00E1:  player 0 pressed_key 17
+    then
+    STRAFE_FLAG = 0
+    end      
+    
+    0A96: 1@ = actor PLAYER_ACTOR struct
+    0A8E: 1@ = 1@ + 0x534 //RUN STATE
+    0A8D: 2@ = read_memory 1@ size 4 virtual_protect 1
+    06AC: 3@ = actor PLAYER_ACTOR movement_speed
+    if and
+    2@ == 6
+    3@ < 3.0
+    then
+    0@ = 1 //walk
+    else
+    0@ = 0
+    end
+            
+    if
+    not 0@ == 1
+        then
+        if and
+        0AB0:   key_pressed 18 //ALT
+        8AB0: not  key_pressed 87 //FORWARD
+        80E1: not  player 0 pressed_key 16
+        not $PLAYER_RELOADING == 1
+        not PLAYER_USING_MELEE_FLAG == 1
+        8E47: not is_char_fighting PLAYER_ACTOR
+        not actor.Animation(PLAYER_ACTOR) == "Crouch_Roll_L"
+        not actor.Animation(PLAYER_ACTOR) == "Crouch_Roll_R"
+            then    
+            //Strafing
+            if and
+            0AB0:   key_pressed 65 //LEFT
+            8AB0: not  key_pressed 83 //BACK
+            8AB0: not  key_pressed 68 //RIGHT
+                then 
+                
+                if
+                80E1: not  player 0 pressed_key 14
+                then
+                0605: actor PLAYER_ACTOR perform_animation "walk_left" IFP "PED" framedelta 4.0 loop 0 lockX 1 lockY 1 lockF 0 time 1
+                else
+                0605: actor PLAYER_ACTOR perform_animation "run_left" IFP "PED" framedelta 4.0 loop 0 lockX 1 lockY 1 lockF 0 time 1
+                end
+                 
+                STRAFE_FLAG = 1    
+                end
+            
+            if and
+            0AB0:   key_pressed 68 //RIGHT
+            8AB0: not  key_pressed 65 //LEFT
+                then   
+                
+                if
+                80E1: not  player 0 pressed_key 14
+                then
+                0605: actor PLAYER_ACTOR perform_animation "walk_right" IFP "PED" framedelta 4.0 loop 0 lockX 1 lockY 1 lockF 0 time 1
+                else
+                0605: actor PLAYER_ACTOR perform_animation "run_right" IFP "PED" framedelta 4.0 loop 0 lockX 1 lockY 1 lockF 0 time 1
+                end
+                
+                STRAFE_FLAG = 1      
+                end
+            
+            if
+            0AB0:   key_pressed 83 //BACK
+                then   
+                
+                if
+                80E1: not  player 0 pressed_key 14
+                then
+                0605: actor PLAYER_ACTOR perform_animation "walk_back" IFP "PED" framedelta 4.0 loop 0 lockX 1 lockY 1 lockF 0 time 1
+                else
+                0605: actor PLAYER_ACTOR perform_animation "run_back" IFP "PED" framedelta 4.0 loop 0 lockX 1 lockY 1 lockF 0 time 1
+                end
+                
+                STRAFE_FLAG = 1  
+                if
+                0AB0:   key_pressed 65 //LEFT
+                    then
+                    
+                    if
+                    80E1: not  player 0 pressed_key 14
+                    then
+                    0605: actor PLAYER_ACTOR perform_animation "walk_back" IFP "PED" framedelta 4.0 loop 0 lockX 1 lockY 1 lockF 0 time 1
+                    wait 0
+                    0605: actor PLAYER_ACTOR perform_animation "walk_left" IFP "PED" framedelta 4.0 loop 0 lockX 1 lockY 1 lockF 0 time 1
+                    wait 0    
+                    else
+                    0605: actor PLAYER_ACTOR perform_animation "walk_back" IFP "PED" framedelta 4.0 loop 0 lockX 1 lockY 1 lockF 0 time 1
+                    wait 0
+                    0605: actor PLAYER_ACTOR perform_animation "run_left" IFP "PED" framedelta 4.0 loop 0 lockX 1 lockY 1 lockF 0 time 1
+                    wait 0   
+                    end
+                             
+                    STRAFE_FLAG = 1
+                    end
+                if
+                0AB0:   key_pressed 68 //RIGHT
+                    then
+                    
+                    if
+                    80E1: not  player 0 pressed_key 14
+                    then
+                    0605: actor PLAYER_ACTOR perform_animation "walk_back" IFP "PED" framedelta 4.0 loop 0 lockX 1 lockY 1 lockF 0 time 1
+                    wait 0
+                    0605: actor PLAYER_ACTOR perform_animation "walk_right" IFP "PED" framedelta 4.0 loop 0 lockX 1 lockY 1 lockF 0 time 1
+                    wait 0    
+                    else
+                    0605: actor PLAYER_ACTOR perform_animation "run_back" IFP "PED" framedelta 4.0 loop 0 lockX 1 lockY 1 lockF 0 time 1
+                    wait 0
+                    0605: actor PLAYER_ACTOR perform_animation "run_right" IFP "PED" framedelta 4.0 loop 0 lockX 1 lockY 1 lockF 0 time 1
+                    wait 0 
+                    end
+                           
+                    STRAFE_FLAG = 1
+                    end        
+                end        
+            end
+        end             
+        
+    else
+    if
+    FP_CAM_LOCKED_FLAG == 1
+        then
+        0E60: set_camera_control 1
+        FP_CAM_LOCKED_FLAG = 0
+        end    
+    end
+    
+end
+
+end_thread

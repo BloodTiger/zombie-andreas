@@ -461,28 +461,28 @@ if
 0@ == 2
 then
 0B00: delete_file "data\survival.set"  // IF and SET
-0B04: copy_file "saves\GTAZAsf2.c" to "data\survival.set" //IF and SET
+0B04: copy_file "saves\GTAZAsf2.c" to "data\survival.set" //IF and SET 
 end
 
 if
 0@ == 3
 then
 0B00: delete_file "data\survival.set"  // IF and SET
-0B04: copy_file "saves\GTAZAsf3.c" to "data\survival.set" //IF and SET
+0B04: copy_file "saves\GTAZAsf3.c" to "data\survival.set" //IF and SET   
 end
 
 if
 0@ == 4
 then
 0B00: delete_file "data\survival.set"  // IF and SET
-0B04: copy_file "saves\GTAZAsf4.c" to "data\survival.set" //IF and SET
+0B04: copy_file "saves\GTAZAsf4.c" to "data\survival.set" //IF and SET  
 end
 
 if
 0@ == 5
 then
 0B00: delete_file "data\survival.set"  // IF and SET
-0B04: copy_file "saves\GTAZAsf5.c" to "data\survival.set" //IF and SET
+0B04: copy_file "saves\GTAZAsf5.c" to "data\survival.set" //IF and SET 
 end
 
 if
@@ -1159,6 +1159,7 @@ $MONTHS_PASSED < 2
 $GAMEMODE_WAR == 0
 $GAMEMODE_STORYLINE == 0
 $ALLOW_TRADERS == 1
+803C: not  TRADER_SPIZDIL_MONEY == 1@  // (int)
     then
     gosub @TRADER_RESPAWN_RANDOM_MODEL
     
@@ -1931,6 +1932,14 @@ BLACK_POLOSKI_ON = 0
 end
 
 09BD: allow_other_threads_to_display_text_boxes 0
+
+if
+PEDFUNCS_SUPPORT_ON == 1
+then
+0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "SCR" key "PLAYER_REMAP_NUM" 
+create_thread @REMAPSET PLAYER_ACTOR 0@
+end
+
 jump to @MAKER_CHECK         
 
 :PICKUPS_DELETE
@@ -2207,6 +2216,7 @@ if or
 random_int 0@ = MIN_SKIN_GEN MAX_SKIN_GEN
 if and
 0@ == SKIN_GEN_SET
+not CUSTOM_MAP_FLAG == 1
 UNITED_MAP == 0
     then
     
@@ -2287,9 +2297,8 @@ if
 jf @TRADER_RESPAWN_RANDOM_MODEL
 
 0AD3: v$FP_FILE = format "%d" 0@
-0AF0: 11@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key v$FP_FILE
 if
-not 11@ == 1
+8AF0: not 11@ = get_int_from_ini_file "data/skins.ini" section "LOCKED" key v$FP_FILE
 jf @TRADER_RESPAWN_RANDOM_MODEL     
 
 008A: $TRADER_MODEL[1@] = 0@ // (int)   
@@ -2578,30 +2587,31 @@ return
 
 $DELETE_TEAMMATES = 1
 
-$MUSIC_MISSION = Audiostream.Load("audio\sounds\KingpinEnd.wav")
+$MUSIC_MISSION = Audiostream.Load("audio\sounds\KingpinEnd.mp3")
 
 Audiostream.PerformAction($MUSIC_MISSION, PLAY)
 Audiostream.Loop($MUSIC_MISSION, 1)
-Audiostream.Volume($MUSIC_MISSION) = 0.0
+Audiostream.Volume($MUSIC_MISSION) = VERO_TIPA_VOLUME
 
 /////////////////////Плавное нарастание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int) 
-0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
-
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 4500
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-
-wait 1 
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int) 
+//0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $MUSIC_VOLUME // (float) 
+//
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 4500
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+//
+//wait 1
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $MUSIC_MISSION volume $MUSIC_VOLUME time 4500 
 
 ////////////////////////////////////////////////////////
 
@@ -2651,12 +2661,12 @@ actor.PutAtNoOffset(PLAYER_ACTOR,1232.0098, -808.4877, 1084.0078)
 actor.Angle(PLAYER_ACTOR) = 181.6343
 player.CanMove(PLAYER_CHAR,false)
 
-while not model.Available(#BANDIT1)
+while not model.Available(BANDIT1_SKIN_ID)
 wait 0 
-model.Load(#BANDIT1)
+model.Load(BANDIT1_SKIN_ID)
 end
 
-0@ = actor.Create(25,#BANDIT1,1226.5135, -815.2607, 1084.0078)
+0@ = actor.Create(25,BANDIT1_SKIN_ID,1226.5135, -815.2607, 1084.0078)
 actor.PutAtNoOffset(0@,1226.5135, -815.2607, 1084.0078)
 actor.Angle(0@) = 359.1422
 actor.SetWalkStyle(0@,"GANG2")
@@ -2784,29 +2794,29 @@ $STATS_TOTAL_SHOW_OFF_FLAG = 1
 end
 
 /////////////////////Плавное затухание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int)
-$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 5000
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-
-wait 1
-
-while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
-wait 0
-end
-
-wait 3000
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_MISSION // (int)
+//$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 5000
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+//
+//wait 1
+//
+//while $MUSIC_FADE_ENDED[$MUSIC_FADE_NUMBER] == 0
+//wait 0
+//end
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $MUSIC_MISSION volume $MUSIC_VOLUME time 5000
+wait 5000
 
 0A8C: write_memory 0x0440F73 size 1 value 255 virtual_protect 1
 0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
@@ -4485,6 +4495,7 @@ thread 'MQ_CHKP'
 0AF0: 18@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_SECONDS"
 0AF0: 19@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_MINUTES"
 0AF0: 20@ = get_int_from_ini_file "data\survival.set" section "SCR" key "SURVIVAL_HOURS"
+0AF0: 21@ = get_int_from_ini_file "data\survival.set" section "SCR" key "OOS_CHECKPOINT"
 
 0AF0: 31@ = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "SAVED_SLOT_NUM2"
 //0AD1: show_formatted_text_highpriority "WRITE MAINQUESTS CHECKPOINTS TO %d SLOT" time 2000 31@
@@ -4513,6 +4524,7 @@ then
 0AF1: write_int 18@ to_ini_file "saves\GTAZAsf1.c" section "SCR" key "SURVIVAL_SECONDS"
 0AF1: write_int 19@ to_ini_file "saves\GTAZAsf1.c" section "SCR" key "SURVIVAL_MINUTES"
 0AF1: write_int 20@ to_ini_file "saves\GTAZAsf1.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 21@ to_ini_file "saves\GTAZAsf1.c" section "SCR" key "OOS_CHECKPOINT"
 end
 
 if
@@ -4539,6 +4551,7 @@ then
 0AF1: write_int 18@ to_ini_file "saves\GTAZAsf2.c" section "SCR" key "SURVIVAL_SECONDS"
 0AF1: write_int 19@ to_ini_file "saves\GTAZAsf2.c" section "SCR" key "SURVIVAL_MINUTES"
 0AF1: write_int 20@ to_ini_file "saves\GTAZAsf2.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 21@ to_ini_file "saves\GTAZAsf2.c" section "SCR" key "OOS_CHECKPOINT"
 end
 
 if
@@ -4565,6 +4578,7 @@ then
 0AF1: write_int 18@ to_ini_file "saves\GTAZAsf3.c" section "SCR" key "SURVIVAL_SECONDS"
 0AF1: write_int 19@ to_ini_file "saves\GTAZAsf3.c" section "SCR" key "SURVIVAL_MINUTES"
 0AF1: write_int 20@ to_ini_file "saves\GTAZAsf3.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 21@ to_ini_file "saves\GTAZAsf3.c" section "SCR" key "OOS_CHECKPOINT"
 end
 
 if
@@ -4591,6 +4605,7 @@ then
 0AF1: write_int 18@ to_ini_file "saves\GTAZAsf4.c" section "SCR" key "SURVIVAL_SECONDS"
 0AF1: write_int 19@ to_ini_file "saves\GTAZAsf4.c" section "SCR" key "SURVIVAL_MINUTES"
 0AF1: write_int 20@ to_ini_file "saves\GTAZAsf4.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 21@ to_ini_file "saves\GTAZAsf4.c" section "SCR" key "OOS_CHECKPOINT"
 end
 
 if
@@ -4617,6 +4632,7 @@ then
 0AF1: write_int 18@ to_ini_file "saves\GTAZAsf5.c" section "SCR" key "SURVIVAL_SECONDS"
 0AF1: write_int 19@ to_ini_file "saves\GTAZAsf5.c" section "SCR" key "SURVIVAL_MINUTES"
 0AF1: write_int 20@ to_ini_file "saves\GTAZAsf5.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 21@ to_ini_file "saves\GTAZAsf5.c" section "SCR" key "OOS_CHECKPOINT"
 end
 
 if
@@ -4643,6 +4659,7 @@ then
 0AF1: write_int 18@ to_ini_file "saves\GTAZAsf6.c" section "SCR" key "SURVIVAL_SECONDS"
 0AF1: write_int 19@ to_ini_file "saves\GTAZAsf6.c" section "SCR" key "SURVIVAL_MINUTES"
 0AF1: write_int 20@ to_ini_file "saves\GTAZAsf6.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 21@ to_ini_file "saves\GTAZAsf6.c" section "SCR" key "OOS_CHECKPOINT"
 end
 
 if
@@ -4669,6 +4686,7 @@ then
 0AF1: write_int 18@ to_ini_file "saves\GTAZAsf7.c" section "SCR" key "SURVIVAL_SECONDS"
 0AF1: write_int 19@ to_ini_file "saves\GTAZAsf7.c" section "SCR" key "SURVIVAL_MINUTES"
 0AF1: write_int 20@ to_ini_file "saves\GTAZAsf7.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 21@ to_ini_file "saves\GTAZAsf7.c" section "SCR" key "OOS_CHECKPOINT"
 end
 
 if
@@ -4695,6 +4713,7 @@ then
 0AF1: write_int 18@ to_ini_file "saves\GTAZAsf8.c" section "SCR" key "SURVIVAL_SECONDS"
 0AF1: write_int 19@ to_ini_file "saves\GTAZAsf8.c" section "SCR" key "SURVIVAL_MINUTES"
 0AF1: write_int 20@ to_ini_file "saves\GTAZAsf8.c" section "SCR" key "SURVIVAL_HOURS"
+0AF1: write_int 21@ to_ini_file "saves\GTAZAsf8.c" section "SCR" key "OOS_CHECKPOINT"
 end
 
 end_thread 
@@ -5364,7 +5383,7 @@ if
     
     until false
     
-    0AF1: write_int 1 to_ini_file "data\survival.set" section "SCR" key "OOS_CHECKPOINT"
+    0AF1: write_int 0 to_ini_file "data\survival.set" section "SCR" key "OOS_CHECKPOINT"
     create_thread @MQ_CHKP
     text.ClearAll()
     text.RemoveTextBox()

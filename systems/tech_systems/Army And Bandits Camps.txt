@@ -41,6 +41,37 @@ else
 ZONE_ROCKET_ACCURACY = 70 
 end
 
+if
+CUSTOM_MAP_FLAG == 1
+then
+0AF0: 1@ = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section "SETTINGS" key "COUNT"
+if
+1@ > -1
+    then
+    
+    for 3@ = 0 to 1@
+    0AD3: v$SND2_FILE = format "BASE%d" 3@ 
+    0AF2: 5@ = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section v$SND2_FILE key "MARK_X"
+    0AF2: 6@ = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section v$SND2_FILE key "MARK_Y"
+    0AF2: 7@ = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section v$SND2_FILE key "MARK_Z"
+    0AF0: 2@ = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section v$SND2_FILE key "ACTOR_TYPE"
+    if
+    2@ == 25
+        then
+        $BANDITS1 = Marker.CreateIconWithoutSphere(18, 5@, 6@, 7@)
+        else
+        $ARMY1 = Marker.CreateIconWithoutSphere(23, 5@, 6@, 7@)
+        end  
+    0AF4: 5@v = read_string_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section v$SND2_FILE key "ZONE_NAME"
+    0879: enable_gang_wars 0
+    076C: set_zone 5@v gang 4 density_to 100
+    076C: set_zone 5@v gang 5 density_to 0
+    0879: enable_gang_wars 1     
+    end
+    
+    end
+end
+
 {$INCLUDE zones\1 - SA Zone 69 Army Camp.txt}
 {$INCLUDE zones\2 - SA Sawmill Army Camp.txt}
 {$INCLUDE zones\3 - SA LS Port Army Camp.txt}
@@ -62,6 +93,7 @@ end
 {$INCLUDE zones\19 - LC Escobar Bandits Camp.txt}
 {$INCLUDE zones\20 - LC Salvatore Mansion Bandits Camp.txt}
 {$INCLUDE zones/X - OOS Mansion.txt}
+{$INCLUDE zones/X2 - Custom Base.txt}
 
 /////////////////////////////////////////////////////////////////
 
@@ -424,8 +456,12 @@ jf @ZONE_MARKERS_CHECK2
 
 //////////////////////////////////////////////////////////////////////////////////////
 
+TEMPVAR_INT = 540   
+008D: TEMPVAR_INT = integer TEMPVAR_INT to_float
+0069: TEMPVAR_INT *= GENERAL_FPS_TIMER_DIVIDER2 // (float)
+008C: TEMPVAR_INT = float TEMPVAR_INT to_integer
 if and
-0E45: frame_mod 540
+0E45: frame_mod TEMPVAR_INT
 PODMOGA_BASE_FLAG == 0
 ZONE_SIREN_FLAG == 1
 not OOS_MARK == 156546
@@ -1627,8 +1663,8 @@ end
 0A96: 3@ = actor $ARMY69_2[0@] struct
 3@ += 0x754
 0A8D: 1@ = read_memory 3@ size 4 virtual_protect 0
-2@ = 0    
-0ECE: get_time_char_is_dead $ARMY69_2[0@] store_to 2@
+
+089F: get_actor $ARMY69_2[0@] pedtype_to 2@
 
 if
 2@ == 25
@@ -1657,6 +1693,9 @@ $ARMY_KILLED += 1
 0AF1: write_int 2@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_ARMY_KILLED"
 
 end
+
+2@ = 0    
+0ECE: get_time_char_is_dead $ARMY69_2[0@] store_to 2@
 wait 0
 if and
 0104:   actor $ARMY69_2[0@] near_actor PLAYER_ACTOR radius DEAD_TALK_RADIUS DEAD_TALK_RADIUS DEAD_TALK_RADIUS_Z 0
@@ -1842,32 +1881,35 @@ if
 ZONE_SIREN_FLAG == 1
 then
 
-actor.StorePos(PLAYER_ACTOR,25@,26@,27@)
-050A: 1@ = distance_between_XYZ 25@ 26@ 27@ and_XYZ $SIREN_X $SIREN_Y $SIREN_Z
-
-0077: 1@ /= $SIREN_VOLUME_MULTIPER // (float)
-
-2@ = 1.0
-
-if
-1@ > 0.9
-    then
-    1@ = 0.9
-    end
-    
-0063: 2@ -= 1@  // (float)                   
-
-0086: $SOUNDS_VOLUME22 = $SOUNDS_VOLUME // (float)
-006D: $SOUNDS_VOLUME22 *= 2@ // (float)
-
-if or
-$SIMULATING_FLAG == 1
-not $GAME_SPEED >= 1.0
-then
-$SOUNDS_VOLUME22 = 0.0
-end
-
-Audiostream.Volume($SOUND_EFFECT1) = $SOUNDS_VOLUME22
+Audiostream.SetPosition($SOUND_EFFECT1,$SIREN_X,$SIREN_Y,$SIREN_Z)
+Audiostream.Volume($SOUND_EFFECT1) = $SOUNDS_VOLUME
+2506: SET_AUDIO_STREAM_SOURCE_SIZE $SOUND_EFFECT1 $SIREN_VOLUME_MULTIPER
+//actor.StorePos(PLAYER_ACTOR,25@,26@,27@)
+//050A: 1@ = distance_between_XYZ 25@ 26@ 27@ and_XYZ $SIREN_X $SIREN_Y $SIREN_Z
+//
+//0077: 1@ /= $SIREN_VOLUME_MULTIPER // (float)
+//
+//2@ = 1.0
+//
+//if
+//1@ > 0.9
+//    then
+//    1@ = 0.9
+//    end
+//    
+//0063: 2@ -= 1@  // (float)                   
+//
+//0086: $SOUNDS_VOLUME22 = $SOUNDS_VOLUME // (float)
+//006D: $SOUNDS_VOLUME22 *= 2@ // (float)
+//
+//if or
+//$SIMULATING_FLAG == 1
+//not $GAME_SPEED >= 1.0
+//then
+//$SOUNDS_VOLUME22 = 0.0
+//end
+//
+//Audiostream.Volume($SOUND_EFFECT1) = $SOUNDS_VOLUME22
 
 else
 
@@ -1875,6 +1917,12 @@ random_int 1@ 0 50
 if
 1@ == 25
     then
+    
+    if
+    04C8:   actor PLAYER_ACTOR driving_flying_vehicle
+        then
+        jump to @ZAPALILI_BLYAD_JUMP
+        end
     
     for 1@ = 0 to 39
     
@@ -3821,7 +3869,14 @@ random_float 0@ $KANISTRA_FUEL_MIN $KANISTRA_FUEL_MAX
 0@ *= 3.5
 005F: $SNDK_GSLN_CNT += 0@  // (float)
 008C: $SNDK_GSLN_CNT2 = float $SNDK_GSLN_CNT to_integer
+
+if
+1@ == 6699
+then
+create_thread @RDTXTB 1
+else
 create_thread @RDTXTB
+end
 
 return
 

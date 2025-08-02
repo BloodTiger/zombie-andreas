@@ -253,6 +253,24 @@ $SAVE_WAIT_TIME < 360000
     
 end
 
+if
+CUSTOM_MAP_FLAG == 1
+then
+008D: $SAVE_WAIT_TIME = integer $SAVE_WAIT_TIME to_float
+0AF2: 0@ = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\$GENCONFIG.ini" section "SETTINGS" key "RANDOM_QUESTS_TIMER_MULT"
+006D: $SAVE_WAIT_TIME *= 0@ // (float)
+008C: $SAVE_WAIT_TIME = float $SAVE_WAIT_TIME to_integer
+end
+
+if
+$CUSTOM_MODE == 1
+then
+008D: $SAVE_WAIT_TIME = integer $SAVE_WAIT_TIME to_float
+0AF2: 0@ = get_float_from_ini_file "saves/owngame/owngame.ini" section "DIFF" key "RANDOM_QUESTS_TIMER_MULT"
+006D: $SAVE_WAIT_TIME *= 0@ // (float)
+008C: $SAVE_WAIT_TIME = float $SAVE_WAIT_TIME to_integer
+end
+
 gosub @SUPPLY_QUEST_BACK_COORD_GET
 
 008A: SUPPLY_QUEST_SECOND_CAMP_NUMBER = 4@ // (int)
@@ -291,6 +309,8 @@ BOMBS_TIMER > 0
 
 gosub @SUPPLY_LEADER_RESPAWN
 
+:KEYS_CHECK_AGAIN
+
 repeat
 wait 0
 
@@ -319,6 +339,43 @@ if and
 056D:   actor $LEADER_ACTOR defined
 00FE:   actor PLAYER_ACTOR sphere 0 in_sphere $CAMP_X[4@] $CAMP_Y[4@] $CAMP_Z[4@] radius 140.0 140.0 140.0
     then
+    
+    32@ = 0
+    
+    repeat
+    wait 0
+    
+    if
+    875C: not  marker MISSION_CHECKPOINT enabled
+    then
+    018A: MISSION_CHECKPOINT = create_checkpoint_at 1@ 2@ 3@
+    end
+    
+    if and
+    $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+    $CAMP_AGRED_FLAG[104@] == 0
+    jf @SUPPLY_QUEST_FAILED_AGRED
+    if and
+    803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+    803C: not  LEADER_DIED_FLAG == 104@  // (int) 
+    jf @SUPPLY_QUEST_FAILED_LDEAD
+    if
+    $SAVE_WAIT_TIME > 0
+    jf @SUPPLY_QUEST_FAILED_TIME
+    if
+    RANDOM_QUEST_CANCEL_FLAG == 0
+    jf @SUPPLY_QUEST_FAILED_CANCEL
+    
+    until 32@ >= 1000
+    
+    if and
+    056D:   actor $LEADER_ACTOR defined
+    00FE:   actor PLAYER_ACTOR sphere 0 in_sphere $CAMP_X[4@] $CAMP_Y[4@] $CAMP_Z[4@] radius 140.0 140.0 140.0
+    then
+    //ass
+    else
+    jump to @KEYS_CHECK_AGAIN
+    end
     
     actor.StorePos($LEADER_ACTOR,$KEYS_X,$KEYS_Y,$KEYS_Z)
     $QUEST_KEYS_READY = 1
@@ -1166,7 +1223,10 @@ if and
         car.Destroy(SUPPLY_QUEST_TRUCK)
         car.Destroy(SUPPLY_QUEST_TRUCK_TRAILER)
         
-        if
+        if and
+        881E: not model $SAVE_CAR_MODEL[LATEST_CAR_SLOT_USED] boat
+        881F: not model $SAVE_CAR_MODEL[LATEST_CAR_SLOT_USED] plane
+        8820: not model $SAVE_CAR_MODEL[LATEST_CAR_SLOT_USED] heli
         TEMP_CAR_SAVE_FLAG == 1
         then
         0088: $SAVE_CAR_X[LATEST_CAR_SLOT_USED] = TEMP_CAR_X // (float)
@@ -1359,7 +1419,10 @@ if and
         gosub @SUPPLY_QUEST_TEAMMATE_TP_CHECK
         car.Destroy(SUPPLY_QUEST_TRUCK)
         
-        if
+        if and
+        881E: not model $SAVE_CAR_MODEL[LATEST_CAR_SLOT_USED] boat
+        881F: not model $SAVE_CAR_MODEL[LATEST_CAR_SLOT_USED] plane
+        8820: not model $SAVE_CAR_MODEL[LATEST_CAR_SLOT_USED] heli
         TEMP_CAR_SAVE_FLAG == 1
         then
         0088: $SAVE_CAR_X[LATEST_CAR_SLOT_USED] = TEMP_CAR_X // (float)
@@ -1525,6 +1588,17 @@ mission_cleanup
 return
 
 :SUPPLY_QUEST_BACK_COORD_GET
+
+if
+CUSTOM_MAP_FLAG == 1
+then
+0AD3: v$SND2_FILE = format "CMP%d" 4@
+0AF2: SUPPLY_QUEST_TRUCK_X = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\CAMPS.ini" section v$SND2_FILE key "SUPPLY_QUEST_TRUCK_X"
+0AF2: SUPPLY_QUEST_TRUCK_Y = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\CAMPS.ini" section v$SND2_FILE key "SUPPLY_QUEST_TRUCK_Y"
+0AF2: SUPPLY_QUEST_TRUCK_Z = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\CAMPS.ini" section v$SND2_FILE key "SUPPLY_QUEST_TRUCK_Z"
+0AF2: SUPPLY_QUEST_TRUCK_A = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\CAMPS.ini" section v$SND2_FILE key "SUPPLY_QUEST_TRUCK_A"
+return
+end
 
 if
 UNITED_MAP == 0

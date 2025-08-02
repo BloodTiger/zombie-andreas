@@ -147,7 +147,9 @@ else
 :CREATE_OTMOROZOK_TRADER_JUMP
 TRADER_ACTOR = actor.Create(29,$TRADER_MODEL[24@],$TRADER_X[24@],$TRADER_Y[24@],$TRADER_Z[24@])
 0084: $TRADER_ACTOR = TRADER_ACTOR // (int)
-end             
+end
+
+gosub @TRADER_CREATE_MARK           
 
 if
 PEDFUNCS_SUPPORT_ON == 1
@@ -332,7 +334,8 @@ $SALVATION_FLAG == 1
     PEDFUNCS_SUPPORT_ON == 1
     then
     gosub @TRADER_CHECK_FOR_PEDFUNCS_WRITE_BEFOREDESTROY
-    end                                                                                    
+    end    
+    marker.Disable(TRADER_MARK)                                                                            
     actor.DestroyWithFade(TRADER_ACTOR)
     TRADER_ACTOR = -69
     $TRADER_ACTOR = -69
@@ -478,6 +481,7 @@ actor.Dead(TRADER_ACTOR)
         
     end
     
+    marker.Disable(TRADER_MARK) 
     actor.RemoveReferences(TRADER_ACTOR)
     TRADER_ACTOR = -69
     $TRADER_ACTOR = -69  
@@ -906,6 +910,7 @@ not actor.Driving(PLAYER_ACTOR)
         then
         gosub @TRADER_CHECK_FOR_PEDFUNCS_WRITE_BEFOREDESTROY
         end
+        marker.Disable(TRADER_MARK) 
         actor.DestroyWithFade(TRADER_ACTOR)
         TRADER_ACTOR = -69
         $TRADER_ACTOR = -69
@@ -1029,6 +1034,7 @@ not actor.Driving(COOP_ACTOR)
         then
         gosub @TRADER_CHECK_FOR_PEDFUNCS_WRITE_BEFOREDESTROY
         end
+        marker.Disable(TRADER_MARK) 
         actor.DestroyWithFade(TRADER_ACTOR)
         TRADER_ACTOR = -69
         $TRADER_ACTOR = -69
@@ -1074,7 +1080,8 @@ not actor.Driving(COOP_ACTOR)
         
         end                
                 
-        gosub @TRADER_SAVE_SET                      
+        gosub @TRADER_SAVE_SET
+        create_thread @TRSPZD        
         jump to @TRADER_IDLE_START        
         end
         
@@ -1373,13 +1380,14 @@ $GAMEMODE_WAR == 0
     end
     
 if
-0E4D: random_percent 3
+0E4D: random_percent 3   
     then
         
     010B: 14@ = player PLAYER_CHAR money
     0E5E: change_player_money 0 mode 2 value 14@
         
     $TRADER_DEAD_FLAG[24@] = 1
+    008A: TRADER_SPIZDIL_MONEY = 24@ // (int)
 
     if
     075C:   marker $TRADER_ICON[24@] enabled
@@ -1394,6 +1402,7 @@ if
     076C: set_zone v$TFUCK gang 3 density_to 0
     076C: set_zone v$TFUCK gang 4 density_to 0
     0879: enable_gang_wars 1
+    create_thread @TRSPZD
         
     end    
     
@@ -1722,6 +1731,8 @@ jump to @TRADER_SELL_MENU_IDLE
 :AMMO_BUY_TEXT_PRICE_CHECK
 
 cinema.Widescreen(0)
+
+gosub @EXTRAWEPS_GET_BUY_TEXT
 
 if or
 25@ == 22
@@ -2293,6 +2304,14 @@ BUYER_PLAYER == 1
         090E: set_panel $PANEL_TRADE active_row $TRADER_AMMO_ROW
         end
     end
+    
+gosub @EXTRAWEPS_CHECK_FOR_BUY_AMMO
+if
+25@ == -1
+then
+25@ = 0
+jump to @TRADER_AMMO_WEAPONS_MENU
+end    
 
 if
 $TRADER_AMMO_ROW == 0 
@@ -13480,6 +13499,8 @@ return
 
 :TRADER_ITEMS_CHECK22
 
+gosub @EXTRAWEPS_GET_SELL_PRICE
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 0084: $DESERT_EAGLE_PRICE_SELL = $DESERT_EAGLE_PRICE // (int)
@@ -16406,6 +16427,7 @@ v$RIFLE_STRING = "TRDR59"
 v$SNIPER_STRING = "TRDR59"
 v$GRENADE_STRING = "TRDR59"
 v$MOLOTOV_STRING = "TRDR59"
+gosub @EXTRAWEPS_GET_NAMES_TRADER
 
 //////////////////////////Пистолет//////////////////////////
 
@@ -17310,7 +17332,7 @@ if and
 1@ > 0
     then
     v$MOLOTOV_STRING = "TRDR19"
-    end                                                       
+    end                                                  
     
 return
 
@@ -20174,6 +20196,8 @@ return
 
 :MAX_WEAPON_AMMO_CHECK3
 
+gosub @EXTRAWEPS_GET_MAX_AMMO
+
 if
 25@ == 16 //Grenades
 then
@@ -22471,29 +22495,5 @@ then
 end   
 
 end
-
-return
-
-:TRADER_CHECK_FOR_PEDFUNCS_WRITE_BEFOREDESTROY
-
-0AD3: v$SFUCK = format "TRDR%dRMAP" 24@
-0AF0: 0@ = get_int_from_ini_file "data\survival.set" section "TRADERS_REMAPS" key v$SFUCK
-if
-0@ < -1
-    then
-    if
-    0AA2: 0@ = load_library "PedFuncs.asi" // IF and SET
-        then
-        if
-        0AA4: 1@ = get_proc_address "Ext_GetPedRemap" library 0@ // IF and SET
-            then
-            0A96: 2@ = actor TRADER_ACTOR struct
-            3@ = 0
-            0AA7: call_function 1@ num_params 2 pop 2 3@ 2@ 4@
-            0AA3: free_library 0@
-            0AF1: write_int 4@ to_ini_file "data\survival.set" section "TRADERS_REMAPS" key v$SFUCK
-            end
-        end
-    end
 
 return

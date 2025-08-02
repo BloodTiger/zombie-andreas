@@ -23,12 +23,17 @@ $CARS_WORK_FLAG == 0
         80DD: not actor PLAYER_ACTOR driving_car_with_model #BIKE
         80DD: not actor PLAYER_ACTOR driving_car_with_model 15489
         89AE: not actor PLAYER_ACTOR driving_train
-            then
+            then   
             0@ = Actor.CurrentCar(PLAYER_ACTOR)
+            0D5E: get_vehicle 0@ class_to 11@ subclass_to 22@
+            if
+            not 22@ == 10
+            jf @GASOLINE_CHECK_9 
             32@ = 0  
             0A97: 11@ = car 0@ struct 
             11@ += 4 
-            0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0
+            0A8D: 12@ = read_memory 11@ size 1 virtual_protect 0                        
+            
             if
             88B7:   not test 12@ bit 1
             jf @GASOLINE_CHECK_9    
@@ -101,6 +106,10 @@ end
 
 end
 
+0093: 28@ = integer 28@ to_float
+006F: 28@ *= GAS_WASTE_SPEED_DIVIDER // (float)
+0092: 28@ = float 28@ to_integer
+
 if
 002D:   32@ >= 28@  // (int)
 jf @GASOLINE_MINUS
@@ -109,77 +118,71 @@ else
 
 if
 04C8:   actor PLAYER_ACTOR driving_flying_vehicle
-then
-
-////////////////////////
-
-if
-PERK_GOODRIVER == 0
-then
-
-if 
-32@ >= 1500
-jf @GASOLINE_MINUS
-
-else
-
-if
-PERK_GOODRIVER == 1
-then
-
-if 
-32@ >= 1800
-jf @GASOLINE_MINUS
-
-else
-
-if 
-32@ >= 2175
-jf @GASOLINE_MINUS
-end
-
-end
-
-////////////////////////
-
-end
+    then
+    
+    ////////////////////////
+    
+    if
+    PERK_GOODRIVER == 0
+    then
+    28@ = 1500
+    else
+    
+    if
+    PERK_GOODRIVER == 1
+    then
+    28@ = 1800
+    else
+    28@ = 2175
+    end
+    
+    end
+    
+    ////////////////////////
+    
+    0093: 28@ = integer 28@ to_float
+    006F: 28@ *= GAS_WASTE_SPEED_DIVIDER // (float)
+    0092: 28@ = float 28@ to_integer
+    
+    if
+    002D:   32@ >= 28@  // (int)
+    jf @GASOLINE_MINUS
+    
+    end
 
 if
 04A7:   actor PLAYER_ACTOR driving_boat
-then
-
-////////////////////////
-
-if
-PERK_GOODRIVER == 0
-then
-
-if 
-32@ >= 800
-jf @GASOLINE_MINUS
-
-else
-
-if
-PERK_GOODRIVER == 1
-then
-
-if 
-32@ >= 960
-jf @GASOLINE_MINUS
-
-else
-
-if 
-32@ >= 1160
-jf @GASOLINE_MINUS
-end
-
-end
-
-////////////////////////
-
-end
+    then
+    
+    ////////////////////////
+    
+    if
+    PERK_GOODRIVER == 0
+    then
+    28@ = 800
+    else
+    
+    if
+    PERK_GOODRIVER == 1
+    then
+    28@ = 960
+    else
+    28@ = 1160
+    end
+    
+    end
+    
+    ////////////////////////
+    
+    0093: 28@ = integer 28@ to_float
+    006F: 28@ *= GAS_WASTE_SPEED_DIVIDER // (float)
+    0092: 28@ = float 28@ to_integer
+    
+    if
+    002D:   32@ >= 28@  // (int)
+    jf @GASOLINE_MINUS   
+    
+    end
 
 end
 
@@ -304,6 +307,7 @@ else
 end
 
 text.ShowTextBox('INV362')
+create_thread @GAS_CAR 0@ 0 0 0 PLAYER_ACTOR
 end
 
 else
@@ -317,6 +321,7 @@ GASOLINE_OFFED_FLAG == 0
     then
     GASOLINE_OFFED_FLAG = 1
     text.ShowTextBox('INV362')
+    create_thread @GAS_CAR 0@ 0 0 0 PLAYER_ACTOR
     end
 else
 
@@ -582,4 +587,45 @@ end
 
 end
 
-end_thread   
+end_thread        
+
+:GAS_CAR
+thread 'GAS_CAR'
+
+while 056E:   car 0@ defined
+wait 0
+
+if
+056E:   car 0@ defined
+then
+if
+actor.InCar(4@,0@)
+    then
+    0EFD: get_car_pedals 0@ gas_to 2@ break_to 3@ 
+    00E2: get_player 0 key 0 state_to 3@
+    if and
+    2@ > 0.0
+    3@ == 0
+    8E93: not is_car_really_in_air 0@
+        then    
+        02E3: 1@ = car 0@ speed
+//        0AD1: show_formatted_text_highpriority "%f" time 2000 1@
+        
+        if
+        0E4D: random_percent 80
+        then
+        1@ *= 1.19
+        car.SetSpeedInstantly(0@,1@)
+        end
+            
+        end
+    else
+    end_thread
+    end    
+else
+end_thread
+end
+
+end
+
+end_thread        

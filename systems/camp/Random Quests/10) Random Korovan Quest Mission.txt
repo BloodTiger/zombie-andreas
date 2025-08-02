@@ -65,6 +65,24 @@ repeat
 wait 0
 until $PHRASES_OFF_FLAG == 0
 
+if
+$CHEATS_ON == 1
+then
+$FLASH_FLAG = 1
+$GODMODE_FLAG = 1
+$HITMAN_FLAG = 1
+$MXP_MD = 1
+$INF_AMMO_FLAG = 1
+0331: set_player PLAYER_CHAR fast_reload 1
+0A8C: write_memory 0x969178 size 1 value 1 virtual_protect 0
+0AF3: write_float 0.0 to_ini_file "scripts/WeaponRecoilRE.ini" section "WeaponRecoilRE" key "fRecoilMultiplier Global"
+0A8C: write_memory 0x0969110 size 6 value "RRWSR" virtual_protect 0
+1@ = 70
+gosub @CHEAT_PROCESSOR_LOAD_WEP_MODEL            
+actor.GiveWeaponAndAmmo(PLAYER_ACTOR,70,99999)
+00C0: set_current_time 8 0
+end
+
 RANDOM_QUEST_CANCEL_FLAG = 0
 $QUEST_TYPE = 100
 QUEST10_DONE_RECENTLY = 1
@@ -170,6 +188,24 @@ Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
 $SAVE_WAIT_TIME = 240000
 
 if
+CUSTOM_MAP_FLAG == 1
+then
+008D: $SAVE_WAIT_TIME = integer $SAVE_WAIT_TIME to_float
+0AF2: 0@ = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\$GENCONFIG.ini" section "SETTINGS" key "RANDOM_QUESTS_TIMER_MULT"
+006D: $SAVE_WAIT_TIME *= 0@ // (float)
+008C: $SAVE_WAIT_TIME = float $SAVE_WAIT_TIME to_integer
+end
+
+if
+$CUSTOM_MODE == 1
+then
+008D: $TIME = integer $TIME to_float
+0AF2: 0@ = get_float_from_ini_file "saves/owngame/owngame.ini" section "DIFF" key "RANDOM_QUESTS_TIMER_MULT"
+006D: $TIME *= 0@ // (float)
+008C: $TIME = float $TIME to_integer
+end
+
+if
 BOMBS_TIMER > 0
     then
     014F: stop_timer BOMBS_TIMER
@@ -231,6 +267,12 @@ KOROVAN_QUEST_CURR_CAR_CREATION_NUM = 0
 KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM = 22
 
 random_int KOROVAN_QUEST_ARMY_FLAG 0 2
+if
+$CHEATS_ON == 1
+then
+KOROVAN_QUEST_ARMY_FLAG = 1
+end
+
 if
 NO_MORE_ARMY_CAMPS == 1
 then
@@ -909,14 +951,22 @@ KOROVAN_QUEST_TRUCK_GOT_FLAG == 1
     KOROVAN_QUEST_ARMY_FLAG == 1
     then
     
+    TEMPVAR_INT = 300
+    008D: TEMPVAR_INT = integer TEMPVAR_INT to_float
+    0069: TEMPVAR_INT *= GENERAL_FPS_TIMER_DIVIDER2 // (float)
+    008C: TEMPVAR_INT = float TEMPVAR_INT to_integer
     if
-    0E45: frame_mod 300
+    0E45: frame_mod TEMPVAR_INT
     then
     $ARMY1_SPAWN_FLAG = 1
     end
     
+    TEMPVAR_INT = 600
+    008D: TEMPVAR_INT = integer TEMPVAR_INT to_float
+    0069: TEMPVAR_INT *= GENERAL_FPS_TIMER_DIVIDER2 // (float)
+    008C: TEMPVAR_INT = float TEMPVAR_INT to_integer
     if
-    0E45: frame_mod 600
+    0E45: frame_mod TEMPVAR_INT
         then
         if
         0E4D: random_percent 30 
@@ -926,14 +976,22 @@ KOROVAN_QUEST_TRUCK_GOT_FLAG == 1
         end
     else
     
+    TEMPVAR_INT = 300         
+    008D: TEMPVAR_INT = integer TEMPVAR_INT to_float
+    0069: TEMPVAR_INT *= GENERAL_FPS_TIMER_DIVIDER2 // (float)
+    008C: TEMPVAR_INT = float TEMPVAR_INT to_integer
     if
-    0E45: frame_mod 300
+    0E45: frame_mod TEMPVAR_INT
     then
     $BANDITS1_SPAWN_FLAG = 1
     end
-        
+    
+    TEMPVAR_INT = 600
+    008D: TEMPVAR_INT = integer TEMPVAR_INT to_float
+    0069: TEMPVAR_INT *= GENERAL_FPS_TIMER_DIVIDER2 // (float)
+    008C: TEMPVAR_INT = float TEMPVAR_INT to_integer    
     if
-    0E45: frame_mod 600
+    0E45: frame_mod TEMPVAR_INT
         then
         if
         0E4D: random_percent 30 
@@ -1139,7 +1197,10 @@ KOROVAN_QUEST_TRUCK_OUT_OF_TRUCK_FLAG == 0
         gosub @KOROVAN_QUEST_TEAMMATE_TP_CHECK
         car.Destroy(SUPPLY_QUEST_TRUCK)
         
-        if
+        if and
+        881E: not model $SAVE_CAR_MODEL[LATEST_CAR_SLOT_USED] boat
+        881F: not model $SAVE_CAR_MODEL[LATEST_CAR_SLOT_USED] plane
+        8820: not model $SAVE_CAR_MODEL[LATEST_CAR_SLOT_USED] heli
         KOROVAN_TEMP_CAR_SAVE_FLAG == 1
         then
         0088: $SAVE_CAR_X[LATEST_CAR_SLOT_USED] = KOROVAN_TEMP_CAR_X // (float)
@@ -1196,12 +1257,50 @@ if
     075C:   marker $ARMY_MARKER[31@] enabled    
         then
         
-        if
+        if or
+        30@ == 22
+        30@ == 26
         30@ == 30
         then
         create_thread @ANTKUKL $RNDM_HOUSE_WEAPON[30@] 0 0 0 0 1                
-        else
-        create_thread @ANTKUKL $RNDM_HOUSE_WEAPON[30@]
+        else        
+        
+        if
+        30@ == 23
+        then
+        create_thread @ANTKUKL $RNDM_HOUSE_WEAPON[30@] 0 0 0 0 0 1 0
+        end
+        
+        if
+        30@ == 24
+        then
+        create_thread @ANTKUKL $RNDM_HOUSE_WEAPON[30@] 0 0 0 0 0 1 1
+        end
+        
+        if
+        30@ == 25
+        then
+        create_thread @ANTKUKL $RNDM_HOUSE_WEAPON[30@] 0 0 0 0 0 1 2 
+        end
+        
+        if
+        30@ == 27
+        then       
+        create_thread @ANTKUKL $RNDM_HOUSE_WEAPON[30@] 0 0 0 0 0 1 0
+        end
+        
+        if
+        30@ == 28
+        then
+        create_thread @ANTKUKL $RNDM_HOUSE_WEAPON[30@] 0 0 0 0 0 1 1
+        end
+        
+        if
+        30@ == 29
+        then
+        create_thread @ANTKUKL $RNDM_HOUSE_WEAPON[30@] 0 0 0 0 0 1 2 
+        end
+               
         end        
         
         marker.Disable($ARMY_MARKER[31@])
@@ -2659,36 +2758,36 @@ if
 0@ == 0
     THEN
     
-    while not model.Available(#BANDIT1)
+    while not model.Available(BANDIT1_SKIN_ID)
     wait 0
-    model.Load(#BANDIT1)
+    model.Load(BANDIT1_SKIN_ID)
     mload
     end
     
-    $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsDriver(25, #BANDIT1, KOROVAN_QUEST_CAR_TEMP)
+    $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsDriver(25, BANDIT1_SKIN_ID, KOROVAN_QUEST_CAR_TEMP)
     KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM += 1
     
     if
-    model.Available(#BANDIT1)
+    model.Available(BANDIT1_SKIN_ID)
     then
-    //model.Destroy(#BANDIT1)
+    //model.Destroy(BANDIT1_SKIN_ID)
     end
     
     wait 5
     
-    while not model.Available(#BANDIT2)
+    while not model.Available(BANDIT2_SKIN_ID)
     wait 0
-    model.Load(#BANDIT2)
+    model.Load(BANDIT2_SKIN_ID)
     mload
     end
     
-    $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(25, #BANDIT2, KOROVAN_QUEST_CAR_TEMP,0)
+    $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(25, BANDIT2_SKIN_ID, KOROVAN_QUEST_CAR_TEMP,0)
     KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM += 1
     
     if
-    model.Available(#BANDIT2)
+    model.Available(BANDIT2_SKIN_ID)
     then
-    //model.Destroy(#BANDIT2)
+    //model.Destroy(BANDIT2_SKIN_ID)
     end
     
     if
@@ -2699,36 +2798,36 @@ if
         
         ///////////////////////////////////////////////////////////////////////////////
         
-        while not model.Available(#BANDIT3)
+        while not model.Available(BANDIT3_SKIN_ID)
         wait 0
-        model.Load(#BANDIT3)
+        model.Load(BANDIT3_SKIN_ID)
         mload
         end
         
-        $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(25, #BANDIT3, KOROVAN_QUEST_CAR_TEMP,1)
+        $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(25, BANDIT3_SKIN_ID, KOROVAN_QUEST_CAR_TEMP,1)
         KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM += 1
         
         if
-        model.Available(#BANDIT3)
+        model.Available(BANDIT3_SKIN_ID)
         then
-        //model.Destroy(#BANDIT3)
+        //model.Destroy(BANDIT3_SKIN_ID)
         end
         
         wait 5
         
-        while not model.Available(#BANDIT4)
+        while not model.Available(BANDIT4_SKIN_ID)
         wait 0
-        model.Load(#BANDIT4)
+        model.Load(BANDIT4_SKIN_ID)
         mload
         end
         
-        $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(25, #BANDIT4, KOROVAN_QUEST_CAR_TEMP,2)
+        $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(25, BANDIT4_SKIN_ID, KOROVAN_QUEST_CAR_TEMP,2)
         KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM += 1
         
         if
-        model.Available(#BANDIT4)
+        model.Available(BANDIT4_SKIN_ID)
         then
-        //model.Destroy(#BANDIT4)
+        //model.Destroy(BANDIT4_SKIN_ID)
         end
         
         END
@@ -2737,36 +2836,36 @@ if
 
 ELSE
 
-while not model.Available(#BANDIT5)
+while not model.Available(BANDIT5_SKIN_ID)
 wait 0
-model.Load(#BANDIT5)
+model.Load(BANDIT5_SKIN_ID)
 mload
 end
 
-$RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsDriver(25, #BANDIT5, KOROVAN_QUEST_CAR_TEMP)
+$RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsDriver(25, BANDIT5_SKIN_ID, KOROVAN_QUEST_CAR_TEMP)
 KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM += 1
 
 if
-model.Available(#BANDIT5)
+model.Available(BANDIT5_SKIN_ID)
 then
-//model.Destroy(#BANDIT5)
+//model.Destroy(BANDIT5_SKIN_ID)
 end
 
 wait 5
 
-while not model.Available(#BANDIT6)
+while not model.Available(BANDIT6_SKIN_ID)
 wait 0
-model.Load(#BANDIT6)
+model.Load(BANDIT6_SKIN_ID)
 mload
 end
 
-$RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(25, #BANDIT6, KOROVAN_QUEST_CAR_TEMP,0)
+$RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(25, BANDIT6_SKIN_ID, KOROVAN_QUEST_CAR_TEMP,0)
 KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM += 1
 
 if
-model.Available(#BANDIT6)
+model.Available(BANDIT6_SKIN_ID)
 then
-//model.Destroy(#BANDIT6)
+//model.Destroy(BANDIT6_SKIN_ID)
 end
 
 if
@@ -2775,36 +2874,36 @@ not KOROVAN_QUEST_CURR_CAR_CREATION_NUM == 3
     
     wait 5
     
-    while not model.Available(#BANDIT7)
+    while not model.Available(BANDIT7_SKIN_ID)
     wait 0
-    model.Load(#BANDIT7)
+    model.Load(BANDIT7_SKIN_ID)
     mload
     end
     
-    $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(25, #BANDIT7, KOROVAN_QUEST_CAR_TEMP,1)
+    $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(25, BANDIT7_SKIN_ID, KOROVAN_QUEST_CAR_TEMP,1)
     KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM += 1
     
     if
-    model.Available(#BANDIT7)
+    model.Available(BANDIT7_SKIN_ID)
     then
-    //model.Destroy(#BANDIT7)
+    //model.Destroy(BANDIT7_SKIN_ID)
     end
     
     wait 5
     
-    while not model.Available(#BANDIT8)
+    while not model.Available(BANDIT8_SKIN_ID)
     wait 0
-    model.Load(#BANDIT8)
+    model.Load(BANDIT8_SKIN_ID)
     mload
     end
     
-    $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(25, #BANDIT8, KOROVAN_QUEST_CAR_TEMP,2)
+    $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(25, BANDIT8_SKIN_ID, KOROVAN_QUEST_CAR_TEMP,2)
     KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM += 1
     
     if
-    model.Available(#BANDIT8)
+    model.Available(BANDIT8_SKIN_ID)
     then
-    //model.Destroy(#BANDIT8)
+    //model.Destroy(BANDIT8_SKIN_ID)
     end
     
     END
@@ -3242,36 +3341,36 @@ if
 KOROVAN_QUEST_ARMY_CAMO_COLOR == 0 //CITY CAMO
 THEN
     
-    while not model.Available(#ARMY1)
+    while not model.Available(ARMY1_SKIN_ID)
     wait 0
-    model.Load(#ARMY1)
+    model.Load(ARMY1_SKIN_ID)
     mload
     end
     
-    $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsDriver(27, #ARMY1, KOROVAN_QUEST_CAR_TEMP)
+    $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsDriver(27, ARMY1_SKIN_ID, KOROVAN_QUEST_CAR_TEMP)
     KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM += 1
     
     if
-    model.Available(#ARMY1)
+    model.Available(ARMY1_SKIN_ID)
     then
-    //model.Destroy(#ARMY1)
+    //model.Destroy(ARMY1_SKIN_ID)
     end
     
     wait 5
     
-    while not model.Available(#ARMY2)
+    while not model.Available(ARMY2_SKIN_ID)
     wait 0
-    model.Load(#ARMY2)
+    model.Load(ARMY2_SKIN_ID)
     mload
     end
     
-    $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(27, #ARMY2, KOROVAN_QUEST_CAR_TEMP,0)
+    $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(27, ARMY2_SKIN_ID, KOROVAN_QUEST_CAR_TEMP,0)
     KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM += 1
     
     if
-    model.Available(#ARMY2)
+    model.Available(ARMY2_SKIN_ID)
     then
-    //model.Destroy(#ARMY2)
+    //model.Destroy(ARMY2_SKIN_ID)
     end
     
     if
@@ -3282,36 +3381,36 @@ THEN
         
         ///////////////////////////////////////////////////////////////////////////
         
-        while not model.Available(#ARMY3)
+        while not model.Available(ARMY3_SKIN_ID)
         wait 0
-        model.Load(#ARMY3)
+        model.Load(ARMY3_SKIN_ID)
         mload
         end
         
-        $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(27, #ARMY3, KOROVAN_QUEST_CAR_TEMP,1)
+        $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(27, ARMY3_SKIN_ID, KOROVAN_QUEST_CAR_TEMP,1)
         KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM += 1
         
         if
-        model.Available(#ARMY3)
+        model.Available(ARMY3_SKIN_ID)
         then
-        //model.Destroy(#ARMY3)
+        //model.Destroy(ARMY3_SKIN_ID)
         end
         
         wait 5
         
-        while not model.Available(#ARMY4)
+        while not model.Available(ARMY4_SKIN_ID)
         wait 0
-        model.Load(#ARMY4)
+        model.Load(ARMY4_SKIN_ID)
         mload
         end
         
-        $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(27, #ARMY4, KOROVAN_QUEST_CAR_TEMP,2)
+        $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(27, ARMY4_SKIN_ID, KOROVAN_QUEST_CAR_TEMP,2)
         KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM += 1
         
         if
-        model.Available(#ARMY4)
+        model.Available(ARMY4_SKIN_ID)
         then
-        //model.Destroy(#ARMY4)
+        //model.Destroy(ARMY4_SKIN_ID)
         end
         
         END
@@ -3324,36 +3423,36 @@ if
 KOROVAN_QUEST_ARMY_CAMO_COLOR == 1 //COUNTRY CAMO
     THEN
     
-    while not model.Available(#ARMY5)
+    while not model.Available(ARMY5_SKIN_ID)
     wait 0
-    model.Load(#ARMY5)
+    model.Load(ARMY5_SKIN_ID)
     mload
     end
     
-    $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsDriver(27, #ARMY5, KOROVAN_QUEST_CAR_TEMP)
+    $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsDriver(27, ARMY5_SKIN_ID, KOROVAN_QUEST_CAR_TEMP)
     KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM += 1
     
     if
-    model.Available(#ARMY5)
+    model.Available(ARMY5_SKIN_ID)
     then
-    //model.Destroy(#ARMY5)
+    //model.Destroy(ARMY5_SKIN_ID)
     end
     
     wait 5
     
-    while not model.Available(#ARMY6)
+    while not model.Available(ARMY6_SKIN_ID)
     wait 0
-    model.Load(#ARMY6)
+    model.Load(ARMY6_SKIN_ID)
     mload
     end
     
-    $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(27, #ARMY6, KOROVAN_QUEST_CAR_TEMP,0)
+    $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(27, ARMY6_SKIN_ID, KOROVAN_QUEST_CAR_TEMP,0)
     KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM += 1
     
     if
-    model.Available(#ARMY6)
+    model.Available(ARMY6_SKIN_ID)
     then
-    //model.Destroy(#ARMY6)
+    //model.Destroy(ARMY6_SKIN_ID)
     end
     
     if
@@ -3362,72 +3461,72 @@ KOROVAN_QUEST_ARMY_CAMO_COLOR == 1 //COUNTRY CAMO
         
         wait 5
         
-        while not model.Available(#ARMY7)
+        while not model.Available(ARMY7_SKIN_ID)
         wait 0
-        model.Load(#ARMY7)
+        model.Load(ARMY7_SKIN_ID)
         mload
         end
         
-        $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(27, #ARMY7, KOROVAN_QUEST_CAR_TEMP,1)
+        $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(27, ARMY7_SKIN_ID, KOROVAN_QUEST_CAR_TEMP,1)
         KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM += 1
         
         if
-        model.Available(#ARMY7)
+        model.Available(ARMY7_SKIN_ID)
         then
-        //model.Destroy(#ARMY7)
+        //model.Destroy(ARMY7_SKIN_ID)
         end
         
         wait 5
         
-        while not model.Available(#ARMY8)
+        while not model.Available(ARMY8_SKIN_ID)
         wait 0
-        model.Load(#ARMY8)
+        model.Load(ARMY8_SKIN_ID)
         mload
         end
         
-        $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(27, #ARMY8, KOROVAN_QUEST_CAR_TEMP,2)
+        $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(27, ARMY8_SKIN_ID, KOROVAN_QUEST_CAR_TEMP,2)
         KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM += 1
         
         if
-        model.Available(#ARMY8)
+        model.Available(ARMY8_SKIN_ID)
         then
-        //model.Destroy(#ARMY8)
+        //model.Destroy(ARMY8_SKIN_ID)
         end
         
         END
     
     ELSE //DESERT CAMO        
     
-    while not model.Available(#ARMY9)
+    while not model.Available(ARMY9_SKIN_ID)
     wait 0
-    model.Load(#ARMY9)
+    model.Load(ARMY9_SKIN_ID)
     mload
     end
     
-    $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsDriver(27, #ARMY9, KOROVAN_QUEST_CAR_TEMP)
+    $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsDriver(27, ARMY9_SKIN_ID, KOROVAN_QUEST_CAR_TEMP)
     KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM += 1
     
     if
-    model.Available(#ARMY9)
+    model.Available(ARMY9_SKIN_ID)
     then
-    //model.Destroy(#ARMY9)
+    //model.Destroy(ARMY9_SKIN_ID)
     end
     
     wait 5
     
-    while not model.Available(#ARMY10)
+    while not model.Available(ARMY10_SKIN_ID)
     wait 0
-    model.Load(#ARMY10)
+    model.Load(ARMY10_SKIN_ID)
     mload
     end
     
-    $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(27, #ARMY10, KOROVAN_QUEST_CAR_TEMP,0)
+    $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(27, ARMY10_SKIN_ID, KOROVAN_QUEST_CAR_TEMP,0)
     KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM += 1
     
     if
-    model.Available(#ARMY10)
+    model.Available(ARMY10_SKIN_ID)
     then
-    //model.Destroy(#ARMY10)
+    //model.Destroy(ARMY10_SKIN_ID)
     end
     
     if
@@ -3436,36 +3535,36 @@ KOROVAN_QUEST_ARMY_CAMO_COLOR == 1 //COUNTRY CAMO
         
         wait 5
         
-        while not model.Available(#ARMY11)
+        while not model.Available(ARMY11_SKIN_ID)
         wait 0
-        model.Load(#ARMY11)
+        model.Load(ARMY11_SKIN_ID)
         mload
         end
         
-        $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(27, #ARMY11, KOROVAN_QUEST_CAR_TEMP,1)
+        $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(27, ARMY11_SKIN_ID, KOROVAN_QUEST_CAR_TEMP,1)
         KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM += 1
         
         if
-        model.Available(#ARMY11)
+        model.Available(ARMY11_SKIN_ID)
         then
-        //model.Destroy(#ARMY11)
+        //model.Destroy(ARMY11_SKIN_ID)
         end
         
         wait 5
         
-        while not model.Available(#ARMY12)
+        while not model.Available(ARMY12_SKIN_ID)
         wait 0
-        model.Load(#ARMY12)
+        model.Load(ARMY12_SKIN_ID)
         mload
         end
         
-        $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(27, #ARMY12, KOROVAN_QUEST_CAR_TEMP,2)
+        $RNDM_HOUSE_WEAPON[KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM] = Actor.CreateAsPassenger(27, ARMY12_SKIN_ID, KOROVAN_QUEST_CAR_TEMP,2)
         KOROVAN_QUEST_CURR_DEBIL_CREATION_NUM += 1
         
         if
-        model.Available(#ARMY12)
+        model.Available(ARMY12_SKIN_ID)
         then
-        //model.Destroy(#ARMY12)
+        //model.Destroy(ARMY12_SKIN_ID)
         end
         
         END
@@ -5955,7 +6054,7 @@ if
     pickup.Destroy($RADIO_PICKUP[$RADIO_PICKUP_NUM])
     end  
                     
-$RADIO_PICKUP[$RADIO_PICKUP_NUM] = pickup.Create(#CELLPHONE,3,1@,2@,3@)  
+$RADIO_PICKUP[$RADIO_PICKUP_NUM] = pickup.Create(RADIO_PICKUP_ID,3,1@,2@,3@)  
 
 return
 
@@ -6000,11 +6099,22 @@ if
     pickup.Destroy($JIMMY_PICKUP[$JIMMY_PICKUP_NUM])
     end    
                     
-$JIMMY_PICKUP[$JIMMY_PICKUP_NUM] = pickup.Create(#drug_red,3,1@,2@,3@)  
+$JIMMY_PICKUP[$JIMMY_PICKUP_NUM] = pickup.Create(JIMMY_PICKUP_ID,3,1@,2@,3@)  
 
 return
 
 :KOROVAN_QUEST_BACK_COORD_GET
+
+if
+CUSTOM_MAP_FLAG == 1
+then
+0AD3: v$SND2_FILE = format "CMP%d" $QUEST_CAMP_NUMBER
+0AF2: KOROVAN_QUEST_TRUCK_X = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\CAMPS.ini" section v$SND2_FILE key "SUPPLY_QUEST_TRUCK_X"
+0AF2: KOROVAN_QUEST_TRUCK_Y = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\CAMPS.ini" section v$SND2_FILE key "SUPPLY_QUEST_TRUCK_Y"
+0AF2: KOROVAN_QUEST_TRUCK_Z = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\CAMPS.ini" section v$SND2_FILE key "SUPPLY_QUEST_TRUCK_Z"
+0AF2: KOROVAN_QUEST_TRUCK_A = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\CAMPS.ini" section v$SND2_FILE key "SUPPLY_QUEST_TRUCK_A"
+return
+end
 
 if
 UNITED_MAP == 0

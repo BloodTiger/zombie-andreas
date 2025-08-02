@@ -9,6 +9,7 @@ thread 'LOOP'
 create_thread @LOOP2
 create_thread @LOOP3
 create_thread @LOOP4
+create_thread @LOOP5
 
 create_thread @AIM_FOV
 create_thread @SPECLS
@@ -31,6 +32,22 @@ PLAYER_CAR_BONUS_FLAG = 0 //почему он всегда единица сразу?
 
 :LOOP_IDLE        
 wait 0
+
+if
+0E45: frame_mod 90
+then
+actor.StorePos(PLAYER_ACTOR,0@,1@,2@)
+02C1: store_to 3@ 4@ 5@ car_path_coords_closest_to 0@ 1@ 2@
+0509: 2@ = distance_between_XY 0@ 1@ and_XY 3@ 4@
+if or
+2@ > 100.0
+$ACTIVE_INTERIOR > 0
+    then
+    FAR_AWAY_FROM_ANY_CAR_PATH = 1
+    else
+    FAR_AWAY_FROM_ANY_CAR_PATH = 0
+    end
+end
 
 //Тэги, идите нахуй
 //0A8C: write_memory 0x0A9AD70 size 1 value 0 virtual_protect 0
@@ -671,7 +688,15 @@ else
 if
 0@ == 1
 then 
+
+if
+HIDDEN_60FPS_MODE == 1
+then
+0A8C: write_memory 0xC1704C size 1 value 60 virtual_protect 0
+else
 0A8C: write_memory 0xC1704C size 1 value 40 virtual_protect 0
+end
+
 else
 0A8C: write_memory 0xC1704C size 1 value 30 virtual_protect 0
 end
@@ -1497,7 +1522,8 @@ actor.Animation(PLAYER_ACTOR) == "GUN_STAND"
     if or
     actor.Animation(PLAYER_ACTOR) == "RIFLE_fire_poor"
     actor.Animation(PLAYER_ACTOR) == "FLAME_fire"
-    actor.Animation(PLAYER_ACTOR) == "shotgun_fire_poor"   
+    actor.Animation(PLAYER_ACTOR) == "shotgun_fire_poor"
+    actor.Animation(PLAYER_ACTOR) == "buddy_fire_poor"   
     then
     0@ = 1
     end
@@ -1698,6 +1724,29 @@ $GAMEMODE_HOLD == 1
 ///////////////////////////////////////////////////////////////////////////////////////////////                                     
 
 if
+GODMODE_TEAMMATES_FLAG == 1
+    then
+    
+    for 1@ = 0 to 4
+    
+    092B: 0@ = group PLAYER_GROUP member 1@                                                     
+    if and
+    056D:   actor 0@ defined
+    87D6: not  0@ == COOP_ACTOR // @ == $ (int)
+        then
+        Actor.SetImmunities(0@, 1, 1, 1, 1, 1)
+        0D39: 2@ = actor 0@ max_health
+        0092: 2@ = float 2@ to_integer
+        Actor.Health(0@) = 2@
+        end
+        
+    end
+    
+    end
+    
+///////////////////////////////////////////////////////////////////////////////////////////////    
+
+if
 $GODMODE_FLAG == 1
 then
 
@@ -1825,8 +1874,9 @@ then
 015D: set_gamespeed 0.0 
 end
 
-if
+if and
 $SLOWMODE_ACTIVE == 1
+SLOWMODE_ACTIVE_FULLY == 1
 then
 015D: set_gamespeed 0.2 
 end  
@@ -2070,8 +2120,9 @@ CUSTOM_MODE_EVERYONE_HATES_YOU == 1
     $PEOPLE_ATTACK_PLAYER_FLAG = 1
     end
     
-if
+if and
 CUSTOM_MODE_ONE_HIT_KO == 1
+$GAMEMODE_SELECTED == 1
     then
     PLAYER_EXTRDM_MULT = 6666.0
     end    
@@ -2276,6 +2327,7 @@ $GAMEMODE_SELECTED == 1
     83CA: not  object CANALS_BLACKBOX_OBJ exists
     UNITED_MAP == 0
     CLASSIC_CARMA_MAP < 1
+    not CUSTOM_MAP_FLAG == 1
         then        
         CANALS_BLACKBOX_OBJ = object.Create(19054,0.0,0.0,0.0)
         0566: link_object CANALS_BLACKBOX_OBJ to_interior $ACTIVE_INTERIOR
@@ -2326,6 +2378,7 @@ $GAMEMODE_SELECTED == 1
                 if and
                 83CA: not  object CANALS_BLACKBOX_OBJ exists
                 CLASSIC_CARMA_MAP < 1
+                not CUSTOM_MAP_FLAG == 1
                     then
                     
                     if
@@ -2388,7 +2441,14 @@ $GAMEMODE_EDITOR == 1
     1@ > 0.32
     1@ < 0.34
     then    
-    create_thread @ZAM_ARD
+    if and
+    SLOWMODE_TRANSITION_VAR > 0.32
+    SLOWMODE_TRANSITION_VAR < 0.34
+        then
+        //ass
+        else
+        create_thread @ZAM_ARD
+        end
     end
     
     end
@@ -2518,7 +2578,7 @@ $ALLOW_FATIGUE == 0
 if
 $DRUNK_MODE_FLAG == 1
     then
-    099C: jiggle_camera type 1 timelimit 1.0 intensity 3.0    
+//    099C: jiggle_camera type 1 timelimit 1.0 intensity 3.0 //чиним "васянские эффекты" "как в говномодах на сталкер"   
     03FD: set_player 0 handling_responsiveness 5
     if
     COOP_ACTIVE_FLAG == 1
@@ -3121,4 +3181,4 @@ end_thread
 thread 'MQTMBK'
 wait 1000
 MAIN_QUEST_TEAMMATES_REMOVE_FLAG = 0
-end_thread
+end_thread        

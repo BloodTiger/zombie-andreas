@@ -170,8 +170,18 @@ end
 
 if
 $AIRDROP_QUEST == 1
-then
+then                    
 $SAVE_WAIT_TIME = 240000
+
+if
+CUSTOM_MAP_FLAG == 1
+then
+008D: $SAVE_WAIT_TIME = integer $SAVE_WAIT_TIME to_float
+0AF2: 0@ = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\$GENCONFIG.ini" section "SETTINGS" key "RANDOM_AIRDROP_TIMER_MULT"
+006D: $SAVE_WAIT_TIME *= 0@ // (float)
+008C: $SAVE_WAIT_TIME = float $SAVE_WAIT_TIME to_integer
+end
+
 03C3: set_timer_to $SAVE_WAIT_TIME type 1 GXT 'INV278'
 end
 
@@ -225,12 +235,20 @@ $CHEATS_ON == 1
     0ADC:   test_cheat "LATE"
         then
         $CHEAT_CODE_ACTIVATED = 1
-        32@ = 210000                        
+        
+        if
+        not CUSTOM_MAP_FLAG == 1
+        then
+        32@ = 210000
+        else
+        008B: 32@ = RANDOM_AIRDROP_TIME2 // (int)
+        end 
+                               
         end
     end
 
 if and
-32@ > 210000
+001F:   32@ > RANDOM_AIRDROP_TIME2 // (int) 32@ > 210000
 SAVESTATUS_MEGA_TRUE == 0
 then
 33@ = 0
@@ -260,7 +278,7 @@ end
 
 if and
 33@ > 1000
-32@ > 210000
+001F:   32@ > RANDOM_AIRDROP_TIME2 // (int) 32@ > 210000
 SAVESTATUS_MEGA_TRUE == 0
 then
 33@ = 0
@@ -288,7 +306,7 @@ end
 wait 500
 end
 
-until 32@ > 240000
+until 001F:   32@ > RANDOM_AIRDROP_TIME1 // (int) 32@ > 240000
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -369,23 +387,24 @@ Audiostream.Volume($RADIO_SOUND) = 0.0
 Audiostream.PerformAction($RADIO_SOUND, PLAY)
 
 /////////////////////Плавное нарастание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int) 
-0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $SOUNDS_VOLUME // (float) 
-
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-
-wait 1 
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int) 
+//0086: $MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = $SOUNDS_VOLUME // (float) 
+//
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 500
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 1  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+//
+//wait 1 
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $RADIO_SOUND volume $SOUNDS_VOLUME time 500
 
 ////////////////////////////////////////////////////////    
 
@@ -422,23 +441,26 @@ until 001D:   32@ > 0@  // (int)
 0AF1: write_int 0 to_ini_file "saves/ZACM.set" section "SCR" key "AIRDROP_NOTRANDOM_WAITING_TIMER"
 
 /////////////////////Плавное затухание/////////////////////
-
-$MUSIC_FADE_NUMBER += 1
-if
-$MUSIC_FADE_NUMBER > 4
-    then
-    $MUSIC_FADE_NUMBER = 0 
-    end    
-
-0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int)
-$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
-
-$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 150
-$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
-$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
-create_thread @MUS_FAD
-
-wait 1
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $RADIO_SOUND // (int)
+//$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 150
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+//
+//wait 1
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $RADIO_SOUND volume 0.0 time 250
+wait 250
+audiostream.Release($RADIO_SOUND)
 
 //////////////////////////////////////////////////////////
 
@@ -575,6 +597,25 @@ end_thread
 
 end
 
+//////////////////////////////////////////////////////
+
+while true
+wait 0
+
+gosub @INV_RANDOM_AIRDROP_SPAWN_ZONE_CHECK
+if
+6@ == 0
+then
+text.ShowTextBox('INV302')
+wait 2000
+else
+break
+end
+
+end
+
+//////////////////////////////////////////////////////
+
 actor.StorePos(PLAYER_ACTOR,19@,20@,8@)
 0843: get_zone_at 19@ 20@ 8@ nameA_to s$PLACE_STRING // 8-byte string
 
@@ -691,6 +732,25 @@ AIRDROP_PLAYER_AT_POINT_FLAG = 0
 end_thread
 
 end
+
+//////////////////////////////////////////////////////
+
+//while true
+//wait 0
+//
+//gosub @INV_RANDOM_AIRDROP_SPAWN_ZONE_CHECK
+//if
+//6@ == 0
+//then
+//text.ShowTextBox('INV302')
+//wait 2000
+//else
+//break
+//end
+//
+//end
+
+//////////////////////////////////////////////////////
 
 actor.StorePos(PLAYER_ACTOR,19@,20@,8@)
 0843: get_zone_at 19@ 20@ 8@ nameA_to s$PLACE_STRING // 8-byte string

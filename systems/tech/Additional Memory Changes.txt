@@ -1,6 +1,26 @@
 :ADD_MEM
 thread 'ADD_MEM'
 
+//CLEO 5 SHIT
+//043C: disable_sounds_after_fade 0
+
+///////////////Считываем ID'шники дополнительных скинов выживших///////////////
+0AF0: $MIN_SKIN = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\New Survivors\CONFIG\NEWSKINS.ini" section "NEWSKINS" key "NEW_SKINS_COUNT_MIN"
+0AF0: $MAX_SKIN = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\New Survivors\CONFIG\NEWSKINS.ini" section "NEWSKINS" key "NEW_SKINS_COUNT_MAX"
+$MAX_SKIN += 1
+0AF0: $MIN_SKIN2 = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\New Survivors\CONFIG\NEWSKINS.ini" section "NEWSKINS2" key "NEW_SKINS_COUNT_MIN"
+0AF0: $MAX_SKIN2 = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\New Survivors\CONFIG\NEWSKINS.ini" section "NEWSKINS2" key "NEW_SKINS_COUNT_MAX"
+$MAX_SKIN2 += 1
+
+PEDIKS_OBJS_UNLOADED = 0
+create_thread @IPL_UNL
+
+repeat
+wait 0
+until PEDIKS_OBJS_UNLOADED == 1
+
+create_thread @IPL_CRT
+
 //Выключаем возможность сброса настроек управления до дефолтных
 0A8C: write_memory 0x0531F20 size 2 value 0xC3 virtual_protect 1
 0A8C: write_memory 0x052F6F0 size 2 value 0xC3 virtual_protect 1
@@ -74,15 +94,6 @@ ENGLISH_TRANSLATE == 0
     0AA6: call_method 0x0573260 _ZN12CMenuManager33InitialiseChangedLanguageSettingsEv struct 0x0BA6748 num_params 1 pop 0 0    
     end    
 
-PEDIKS_OBJS_UNLOADED = 0
-create_thread @IPL_UNL
-
-repeat
-wait 0
-until PEDIKS_OBJS_UNLOADED == 1
-
-create_thread @IPL_CRT
-
 0AAA: 0@ = thread 'AMZSCRN' pointer
 if
 0@ == 0
@@ -107,12 +118,11 @@ end
 if
 SNOW_ON_FLAG == 1
 then
-0A8C: write_memory 0x0072BE25 size 4 value 0.5 virtual_protect 0
-0AC6: 0@ = label @SNOW_FOG_EHE offset
-0A8C: write_memory 0@ size 4 value 1.5 virtual_protect 0
-0A8C: write_memory 0x0072BDEB size 4 value 0@ virtual_protect 0
+//0A8C: write_memory 0x0072BE25 size 4 value 0.5 virtual_protect 0
+//0AC6: 0@ = label @SNOW_FOG_EHE offset
+//0A8C: write_memory 0@ size 4 value 1.5 virtual_protect 0
+//0A8C: write_memory 0x0072BDEB size 4 value 0@ virtual_protect 0
 0A8C: write_memory 0x00716E10 size 1 value 180 virtual_protect 0
-
 else
 0A8C: write_memory 0x0072BE25 size 4 value 0.0 virtual_protect 0
 0A8C: write_memory 0x0072BDEB size 4 value 0x0858624 virtual_protect 0
@@ -124,9 +134,9 @@ if
 CLASSIC_CARMA_MAP >= 1
 then
 SNOW_ADDON_INSTALLED_FLAG = 0
-0EFE: get_loaded_library "CLEO.asi" store_to 0@   
-0@ += 0x12188
-0E6A: make_nop 0@ size 9
+0EFE: get_loaded_library "SA.Audio.data" store_to 0@   
+0@ += 0xF9E4
+//0A8C: write_memory 0@ size 2 value 28395 virtual_protect 1 //DO NOT PAUSE AUDIOSTREAMS WHEN PAUSE IS ACTIVE
 0A8C: write_memory 0x04CE060 size 1 value 6 virtual_protect 0
 end
 
@@ -181,6 +191,16 @@ end
 0AF0: AIM_FOLLOWS_CAM = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "AIM_FOLLOWS_CAM"
 0AF0: ENGLISH_MEASURMENTS = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "ENGLISH_MEASURMENTS"
 0AF0: PEDFUNCS_SUPPORT_ON = get_int_from_ini_file "config.ini" section "EXTRA" key "PEDFUNCS_SUPPORT"
+
+0AF0: 0@ = get_int_from_ini_file "data\SAExtraweps.ini" section "SETTINGS" key "ENABLED"
+if
+0@ == 1
+then
+0AF0: 0@ = get_int_from_ini_file "data\SAExtraweps.ini" section "SETTINGS" key "TOTAL_COUNT"
+0@ += 225    
+008A: EXTRAWEP_FLAG_AND_MAXNUM = 0@ // (int)
+0AF0: EXTRAWEP_GENERATE_CHANCE = get_int_from_ini_file "data\SAExtraweps.ini" section "SETTINGS" key "GENERATE_PERCENT"
+end
 
 //Делаем коповские quricks если это нужно
 if
@@ -291,7 +311,8 @@ $GAMEMODE_SELECTED == 1
 COOP_ACTIVE_FLAG == 0
 HYBRID_CONTORLS == 1
     then 
-    0B04: copy_file "modloader\MODLOADER GLOBAL FILES\ZA Some Files\ZA New Weapon\hybrid.coop" to "modloader\MODLOADER GLOBAL FILES\ZA Some Files\ZA New Weapon\hybrid.txt" //IF and SET  
+    0B04: copy_file "modloader\MODLOADER UNITED FILES\hybrid.coop" to "modloader\MODLOADER UNITED FILES\hybrid.txt" //IF and SET
+    0B00: delete_file "modloader\MODLOADER UNITED FILES\ingram.txt"  // IF and SET  
     end         
     
 //Подстройка шизы если это нужно    
@@ -763,8 +784,9 @@ then
 //0A8C: write_memory 0x5DBAE0 size 1 value 195 virtual_protect 1
 else
 
-if
+if and
 UNITED_MAP == 0
+CUSTOM_MAP_FLAG == 0
 then
 0EFE: get_loaded_library "GraphicsTweaker.SA.asi" store_to 0@
 0@ += 0x0041BCC
@@ -1084,7 +1106,71 @@ if
 then
 0AF1: write_int 0 to_ini_file "modloader\modloader.ini" section "Profiles.Stories.Priority" key "ZAME MISSION 8 FILES FOLDER"
 gosub @RELEASE_MISSION_FILES_AND_RESTART
-end 
+end   
+
+0AF0: 0@ = get_int_from_ini_file "modloader\modloader.ini" section "Profiles.CUSTOMMAP.Priority" key "ZAME MISSION 1 FILES FOLDER"
+if
+0@ == 100
+then
+0AF1: write_int 0 to_ini_file "modloader\modloader.ini" section "Profiles.CUSTOMMAP.Priority" key "ZAME MISSION 1 FILES FOLDER"
+gosub @RELEASE_MISSION_FILES_AND_RESTART
+end
+
+0AF0: 0@ = get_int_from_ini_file "modloader\modloader.ini" section "Profiles.CUSTOMMAP.Priority" key "ZAME MISSION 2 FILES FOLDER"
+if
+0@ == 100
+then
+0AF1: write_int 0 to_ini_file "modloader\modloader.ini" section "Profiles.CUSTOMMAP.Priority" key "ZAME MISSION 2 FILES FOLDER"
+gosub @RELEASE_MISSION_FILES_AND_RESTART
+end
+
+0AF0: 0@ = get_int_from_ini_file "modloader\modloader.ini" section "Profiles.CUSTOMMAP.Priority" key "ZAME MISSION 3 FILES FOLDER"
+if
+0@ == 100
+then
+0AF1: write_int 0 to_ini_file "modloader\modloader.ini" section "Profiles.CUSTOMMAP.Priority" key "ZAME MISSION 3 FILES FOLDER"
+gosub @RELEASE_MISSION_FILES_AND_RESTART
+end
+
+0AF0: 0@ = get_int_from_ini_file "modloader\modloader.ini" section "Profiles.CUSTOMMAP.Priority" key "ZAME MISSION 4 FILES FOLDER"
+if
+0@ == 100
+then
+0AF1: write_int 0 to_ini_file "modloader\modloader.ini" section "Profiles.CUSTOMMAP.Priority" key "ZAME MISSION 4 FILES FOLDER"
+gosub @RELEASE_MISSION_FILES_AND_RESTART
+end
+
+0AF0: 0@ = get_int_from_ini_file "modloader\modloader.ini" section "Profiles.CUSTOMMAP.Priority" key "ZAME MISSION 5 FILES FOLDER"
+if
+0@ == 100
+then
+0AF1: write_int 0 to_ini_file "modloader\modloader.ini" section "Profiles.CUSTOMMAP.Priority" key "ZAME MISSION 5 FILES FOLDER"
+gosub @RELEASE_MISSION_FILES_AND_RESTART
+end
+
+0AF0: 0@ = get_int_from_ini_file "modloader\modloader.ini" section "Profiles.CUSTOMMAP.Priority" key "ZAME MISSION 6 FILES FOLDER"
+if
+0@ == 100
+then
+0AF1: write_int 0 to_ini_file "modloader\modloader.ini" section "Profiles.CUSTOMMAP.Priority" key "ZAME MISSION 6 FILES FOLDER"
+gosub @RELEASE_MISSION_FILES_AND_RESTART
+end
+
+0AF0: 0@ = get_int_from_ini_file "modloader\modloader.ini" section "Profiles.CUSTOMMAP.Priority" key "ZAME MISSION 7 FILES FOLDER"
+if
+0@ == 100
+then
+0AF1: write_int 0 to_ini_file "modloader\modloader.ini" section "Profiles.CUSTOMMAP.Priority" key "ZAME MISSION 7 FILES FOLDER"
+gosub @RELEASE_MISSION_FILES_AND_RESTART
+end
+
+0AF0: 0@ = get_int_from_ini_file "modloader\modloader.ini" section "Profiles.CUSTOMMAP.Priority" key "ZAME MISSION 8 FILES FOLDER"
+if
+0@ == 100
+then
+0AF1: write_int 0 to_ini_file "modloader\modloader.ini" section "Profiles.CUSTOMMAP.Priority" key "ZAME MISSION 8 FILES FOLDER"
+gosub @RELEASE_MISSION_FILES_AND_RESTART
+end
 
 end
 
@@ -1155,50 +1241,50 @@ end
 0E6A: make_nop 0x05704CB size 5
 
 //Настраиваем титры
-0A8C: write_memory 0x05A8B27 size 2 value 362 virtual_protect 0 //Enable Highlight
-0A8C: write_memory 0x05A8DCD size 2 value 362 virtual_protect 0 //Enable Highlight
-0A8C: write_memory 0x05A8D04 size 2 value 362 virtual_protect 0 //Enable Highlight
-0A8C: write_memory 0x05A901B size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05A9090 size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05A9159 size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05A91CE size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05A93AB size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05A9420 size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05A9513 size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05A9588 size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05A9627 size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05A969C size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05A978F size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05A9804 size 2 value 106 virtual_protect 0 //Disable Highlight 
-0A8C: write_memory 0x05A9879 size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05A9918 size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05A99E1 size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05A9C24 size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05A9E91 size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05A9F06 size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05A9F7B size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05A9FF0 size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05AA065 size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05AA0FB size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05AA19A size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05AA20F size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05AA8EA size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05AA95F size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05AA9D4 size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05AAA49 size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05AAABE size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05AABB1 size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05AAC26 size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05AACE2 size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05AAD2D size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05AADA2 size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05AAE17 size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05AAE8C size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05AAF01 size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05AAF76 size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05AAFEB size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05AB060 size 2 value 106 virtual_protect 0 //Disable Highlight
-0A8C: write_memory 0x05AB129 size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05A8B27 size 2 value 362 virtual_protect 0 //Enable Highlight
+//0A8C: write_memory 0x05A8DCD size 2 value 362 virtual_protect 0 //Enable Highlight
+//0A8C: write_memory 0x05A8D04 size 2 value 362 virtual_protect 0 //Enable Highlight
+//0A8C: write_memory 0x05A901B size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05A9090 size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05A9159 size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05A91CE size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05A93AB size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05A9420 size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05A9513 size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05A9588 size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05A9627 size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05A969C size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05A978F size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05A9804 size 2 value 106 virtual_protect 0 //Disable Highlight 
+//0A8C: write_memory 0x05A9879 size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05A9918 size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05A99E1 size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05A9C24 size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05A9E91 size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05A9F06 size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05A9F7B size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05A9FF0 size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05AA065 size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05AA0FB size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05AA19A size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05AA20F size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05AA8EA size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05AA95F size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05AA9D4 size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05AAA49 size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05AAABE size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05AABB1 size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05AAC26 size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05AACE2 size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05AAD2D size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05AADA2 size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05AAE17 size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05AAE8C size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05AAF01 size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05AAF76 size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05AAFEB size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05AB060 size 2 value 106 virtual_protect 0 //Disable Highlight
+//0A8C: write_memory 0x05AB129 size 2 value 106 virtual_protect 0 //Disable Highlight
 
 //Убираем сужение текста на 20% при других выбранных языках кроме нулевого
 0AC6: 0@ = label @LANG_ANTISHIT offset
@@ -1209,12 +1295,12 @@ end
 0A8C: write_memory 0x5788B6 size 1 value 0 virtual_protect 0
 
 //Выключаем открытие меню паузы после разворачивания игры
-0AF0: 0@ = get_int_from_ini_file "config.ini" section "LAUNCHER" key "WINDOWED_ON"
-if
-not 0@ == 1
-then
-0E6A: make_nop 0x053BC72 size 5
-end
+//0AF0: 0@ = get_int_from_ini_file "config.ini" section "LAUNCHER" key "WINDOWED_ON"
+//if
+//not 0@ == 1
+//then
+//0E6A: make_nop 0x053BC72 size 5
+//end
 
 //Выключаем лимит на дистанцию двух игроков
 0AC6: 0@ = label @COOP_DISTANCE offset
@@ -1360,6 +1446,7 @@ end
 
 //Заставляем игру рендрить маркер второго игрока не на позиции первого
 0A8C: write_memory 0x0588581 size 2 value 36950 virtual_protect 1
+0A8C: write_memory 0x056E2AD size 2 value 19691 virtual_protect 1 //внутри машин тоже (спасибы Kaizo M)
 
 //Разрешаем стрельбу из двуручных пушек на джетпаке
 0E6A: make_nop 0x067E7FA size 2     
@@ -1652,33 +1739,11 @@ end
 //Вырубаем установление 75 хп транспорту если туда входит горящий пед
 0E6A: make_nop 0x53A651 size 10
 
-//SexTiger 0x0081214A Semi-Fix
-0A8C: write_memory 0x0812140 size 4 value 69485707 virtual_protect 1
-0A8C: write_memory 0x0812144 size 4 value -1418457717 virtual_protect 1
-0A8C: write_memory 0x0812148 size 4 value -125632311 virtual_protect 1
-0A8C: write_memory 0x081214C size 4 value -1962184182 virtual_protect 1
-0A8C: write_memory 0x0812150 size 4 value -1065023484 virtual_protect 1
-0A8C: write_memory 0x0812154 size 4 value -1950154379 virtual_protect 1
-0A8C: write_memory 0x0812158 size 4 value -1866256320 virtual_protect 1
-0A8C: write_memory 0x081215A size 4 value -1869573949 virtual_protect 1
+//SexTiger 0x0081214A govnoobhod (car envmap shitfix)
+//0E6A: make_nop 0x04C982F size 5
+//0E6A: make_nop 0x04C9423 size 5
 
-//SexTiger 0x008125BE Semi-Fix
-0A8C: write_memory 0x08125BE size 4 value -2003770645 virtual_protect 1 //Redirect Jump
-//save check function
-0A8C: write_memory 0x08125A2 size 4 value 1913323395 virtual_protect 1 //cmp edi,0A
-0A8C: write_memory 0x08125A6 size 4 value 942967632 virtual_protect 1 //jb zombie_andreas.exe+4125F7
-0A8C: write_memory 0x08125AA size 4 value 270818440 virtual_protect 1 //mov esi,[eax+edi]
-0A8C: write_memory 0x08125AE size 4 value 1956712683 virtual_protect 1 //mov [esp+10],bl + jmp zombie_andreas.exe+4125C0
-
-//SexTiger 0x00812607 Semi-Fix
-0A8C: write_memory 0x0812607 size 4 value -947189781 virtual_protect 1 //Redirect Jump
-//save check function
-0A8C: write_memory 0x0812610 size 4 value 1913321859 virtual_protect 1 //cmp ecx,0A
-0A8C: write_memory 0x0812614 size 4 value -352220684 virtual_protect 1 //jb 0x0812609
-0A8C: write_memory 0x0812618 size 4 value -1869573904 virtual_protect 1 //mov [ecx],eax
-0A8C: write_memory 0x081261C size 4 value 881580850 virtual_protect 1 //jmp 0x0812609
-
-//SexTiger 0x0074DA25 Semi-Fix
+//SexTiger 0x0074DA25 Semi-Fix (VRODE WORKS, matdestroy obhod if wrong mat)
 0A8C: write_memory 0x074DA13 size 4 value 136606859 virtual_protect 1
 0A8C: write_memory 0x074DA17 size 4 value 1930100355 virtual_protect 1
 0A8C: write_memory 0x074DA1B size 4 value -1866244599 virtual_protect 1
@@ -1686,6 +1751,81 @@ end
 0A8C: write_memory 0x074DA23 size 4 value -1956212592 virtual_protect 1
 0A8C: write_memory 0x074DA27 size 4 value 1030101062 virtual_protect 1
 0A8C: write_memory 0x074DA2B size 4 value 1131741185 virtual_protect 1
+
+//SexTiger 0x05DBF5A Semi-Fix (VRODE WORKS, grassgen crash kinda fix)
+0A8C: write_memory 0x05DBF5A size 4 value -1466919701 virtual_protect 1 //Redirect Jump
+//save check function
+0A8C: write_memory 0x05DBEF0 size 4 value 1913323139 virtual_protect 1 
+0A8C: write_memory 0x05DBEF4 size 4 value 1212582405 virtual_protect 1 
+0A8C: write_memory 0x05DBEF8 size 4 value 1220436971 virtual_protect 1 
+0A8C: write_memory 0x05DBEFC size 4 value -352272326 virtual_protect 1 
+0A8C: write_memory 0x05DBF00 size 4 value -1869573900 virtual_protect 1
+0A8C: write_memory 0x05DBF04 size 4 value -1869574000 virtual_protect 1
+0A8C: write_memory 0x05DBF08 size 4 value -1869574000 virtual_protect 1
+
+//SexTiger 0x05DB6D5 Semi-Fix (VRODE WORKS, grassgen crash kinda fix)
+0A8C: write_memory 0x05DBFA4 size 4 value -636951 virtual_protect 1 //Redirect Jump
+0A8C: write_memory 0x05DBFA8 size 4 value 73521407 virtual_protect 1 //Redirect Jump
+//save check function
+0A8C: write_memory 0x05DB5F0 size 4 value 1913321859 virtual_protect 1 //cmp ecx,0A
+0A8C: write_memory 0x05DB5F4 size 4 value -652093430 virtual_protect 1 //jb 005DB5FF
+0A8C: write_memory 0x05DB5F8 size 4 value -1427569595 virtual_protect 1 //fsub dword ptr [ecx]
+0A8C: write_memory 0x05DB5FC size 4 value -1191182327 virtual_protect 1 //fld dword ptr [ebp+04]
+0A8C: write_memory 0x05DB600 size 4 value 12597832 virtual_protect 1 //jmp 005DBFA9
+0A8C: write_memory 0x05DB604 size 4 value -1869549589 virtual_protect 1 //mov ecx,00C03A48
+0A8C: write_memory 0x05DB608 size 4 value -1869574000 virtual_protect 1 //jmp 005DB5F5
+
+//SexTiger 0x04D1750 Semi-Fix (TOCHNO WORKS, anim frame crash fix)
+0A8C: write_memory 0x04D1750 size 4 value -242711 virtual_protect 1 //Redirect Jump
+0A8C: write_memory 0x04D1754 size 4 value -1973259009 virtual_protect 1 //Redirect Jump
+//save check function
+0A8C: write_memory 0x04D13A0 size 4 value -2079340155 virtual_protect 1
+0A8C: write_memory 0x04D13A4 size 4 value 1493 virtual_protect 1
+0A8C: write_memory 0x04D13A8 size 4 value -2062532213 virtual_protect 1
+0A8C: write_memory 0x04D13AC size 4 value 61073856 virtual_protect 1
+0A8C: write_memory 0x04D13B0 size 4 value -1869611008 virtual_protect 1
+0A8C: write_memory 0x04D13B4 size 4 value -1869574000 virtual_protect 1
+
+if
+not DISABLE_ALL_ENGINETWEAKS_KOSTILS == 1 //old shit, not needed
+then
+
+////////////////////////////CARS ENVMAP SHIT////////////////////////////
+
+//SexTiger 0x0081214A Semi-Fix (DOESN'T WORK WELL, DOMINO EFFECT)
+//0A8C: write_memory 0x0812140 size 4 value 69485707 virtual_protect 1
+//0A8C: write_memory 0x0812144 size 4 value -1418457717 virtual_protect 1
+//0A8C: write_memory 0x0812148 size 4 value -125632311 virtual_protect 1
+//0A8C: write_memory 0x081214C size 4 value -1962184182 virtual_protect 1
+//0A8C: write_memory 0x0812150 size 4 value -1065023484 virtual_protect 1
+//0A8C: write_memory 0x0812154 size 4 value -1950154379 virtual_protect 1
+//0A8C: write_memory 0x0812158 size 4 value -1866256320 virtual_protect 1
+//0A8C: write_memory 0x081215A size 4 value -1869573949 virtual_protect 1
+
+//SexTiger 0x008125BE Semi-Fix (DOESN'T WORK WELL, DOMINO EFFECT)
+//0A8C: write_memory 0x08125BE size 4 value -2003770645 virtual_protect 1 //Redirect Jump
+//save check function
+//0A8C: write_memory 0x08125A2 size 4 value 1913323395 virtual_protect 1 //cmp edi,0A
+//0A8C: write_memory 0x08125A6 size 4 value 942967632 virtual_protect 1 //jb zombie_andreas.exe+4125F7
+//0A8C: write_memory 0x08125AA size 4 value 270818440 virtual_protect 1 //mov esi,[eax+edi]
+//0A8C: write_memory 0x08125AE size 4 value 1956712683 virtual_protect 1 //mov [esp+10],bl + jmp zombie_andreas.exe+4125C0
+
+//SexTiger 0x00812607 Semi-Fix (DOESN'T WORK WELL, DOMINO EFFECT)
+//0A8C: write_memory 0x0812607 size 4 value -947189781 virtual_protect 1 //Redirect Jump
+//save check function
+//0A8C: write_memory 0x0812610 size 4 value 1913321859 virtual_protect 1 //cmp ecx,0A
+//0A8C: write_memory 0x0812614 size 4 value -352220684 virtual_protect 1 //jb 0x0812609
+//0A8C: write_memory 0x0812618 size 4 value -1869573904 virtual_protect 1 //mov [ecx],eax
+//0A8C: write_memory 0x081261C size 4 value 881580850 virtual_protect 1 //jmp 0x0812609
+
+//SexTiger 0x004C8878 Semi-Fix (DOESN'T WORK WELL, DOMINO EFFECT)
+//0A8C: write_memory 0x04C97AF size 2 value 7915 virtual_protect 1 //_ZN17CVehicleModelInfo25SetEnvironmentMapAtomicCBEP8RpAtomicPv
+//0A8C: write_memory 0x04C886A size 2 value 13803 virtual_protect 1 //_ZN17CVehicleModelInfo25SetEnvironmentMapAtomicCBEP8RpAtomicPv
+
+//да ну все это нахуй (DOESN'T WORK WELL, DOMINO EFFECT)
+//0E6A: make_nop 0x04C97C7 size 5
+
+////////////////////////////GRASS SHIT////////////////////////////
 
 //SexTiger 0x05DBF37 Semi-Fix (OLD CUCKOLD)
 //0A8C: write_memory 0x05DBF56 size 4 value -1869563413 virtual_protect 1 //Redirect Jump
@@ -1706,30 +1846,7 @@ end
 //0A8C: write_memory 0x05DBF04 size 4 value -1869574000 virtual_protect 1
 //0A8C: write_memory 0x05DBF08 size 4 value -1869574000 virtual_protect 1
 
-//SexTiger 0x05DBF5A Semi-Fix
-0A8C: write_memory 0x05DBF5A size 4 value -1466919701 virtual_protect 1 //Redirect Jump
-//save check function
-0A8C: write_memory 0x05DBEF0 size 4 value 1913323139 virtual_protect 1 
-0A8C: write_memory 0x05DBEF4 size 4 value 1212582405 virtual_protect 1 
-0A8C: write_memory 0x05DBEF8 size 4 value 1220436971 virtual_protect 1 
-0A8C: write_memory 0x05DBEFC size 4 value -352272326 virtual_protect 1 
-0A8C: write_memory 0x05DBF00 size 4 value -1869573900 virtual_protect 1
-0A8C: write_memory 0x05DBF04 size 4 value -1869574000 virtual_protect 1
-0A8C: write_memory 0x05DBF08 size 4 value -1869574000 virtual_protect 1
-
-//SexTiger 0x05DB6D5 Semi-Fix
-0A8C: write_memory 0x05DBFA4 size 4 value -636951 virtual_protect 1 //Redirect Jump
-0A8C: write_memory 0x05DBFA8 size 4 value 73521407 virtual_protect 1 //Redirect Jump
-//save check function
-0A8C: write_memory 0x05DB5F0 size 4 value 1913321859 virtual_protect 1 //cmp ecx,0A
-0A8C: write_memory 0x05DB5F4 size 4 value -652093430 virtual_protect 1 //jb 005DB5FF
-0A8C: write_memory 0x05DB5F8 size 4 value -1427569595 virtual_protect 1 //fsub dword ptr [ecx]
-0A8C: write_memory 0x05DB5FC size 4 value -1191182327 virtual_protect 1 //fld dword ptr [ebp+04]
-0A8C: write_memory 0x05DB600 size 4 value 12597832 virtual_protect 1 //jmp 005DBFA9
-0A8C: write_memory 0x05DB604 size 4 value -1869549589 virtual_protect 1 //mov ecx,00C03A48
-0A8C: write_memory 0x05DB608 size 4 value -1869574000 virtual_protect 1 //jmp 005DB5F5
-
-//SexTiger 0x05DBFA4 Semi-Fix
+//SexTiger 0x05DBFA4 Semi-Fix (DO NOT ENABLE)
 //0A8C: write_memory 0x05DBFA4 size 4 value -47127 virtual_protect 1 //Redirect Jump
 //0A8C: write_memory 0x05DBFA8 size 4 value 73521407 virtual_protect 1 //Redirect Jump
 //save check function
@@ -1741,16 +1858,7 @@ end
 //0A8C: write_memory 0x05DBEC4 size 4 value -1869548309 virtual_protect 1
 //0A8C: write_memory 0x05DBEC8 size 4 value -1869574000 virtual_protect 1
 
-//SexTiger 0x04D1750 Semi-Fix
-0A8C: write_memory 0x04D1750 size 4 value -242711 virtual_protect 1 //Redirect Jump
-0A8C: write_memory 0x04D1754 size 4 value -1973259009 virtual_protect 1 //Redirect Jump
-//save check function
-0A8C: write_memory 0x04D13A0 size 4 value -2079340155 virtual_protect 1
-0A8C: write_memory 0x04D13A4 size 4 value 1493 virtual_protect 1
-0A8C: write_memory 0x04D13A8 size 4 value -2062532213 virtual_protect 1
-0A8C: write_memory 0x04D13AC size 4 value 61073856 virtual_protect 1
-0A8C: write_memory 0x04D13B0 size 4 value -1869611008 virtual_protect 1
-0A8C: write_memory 0x04D13B4 size 4 value -1869574000 virtual_protect 1
+end
 
 //Выключаем движковое проявление экрана при респавне
 0E6A: make_nop 0x0442080 size 17
@@ -1805,8 +1913,9 @@ end
 0A8C: write_memory 0x0565CB0 size 2 value 60547 virtual_protect 0
 
 //Включаем на United карте Backface Culling
-if
+if or
 UNITED_MAP == 1
+CUSTOM_MAP_DISABLE_BACKFACE_CULLING == 1
 then
 0E6A: make_nop 0x7FE8E2 size 5
 end
@@ -1928,6 +2037,99 @@ end
 
 end
 
+//Дистанция звуков оружия
+0A8C: write_memory 0x0503CF9 size 4 value 5.0 virtual_protect 0
+
+//Задержка создания звука капель дождя на машинах
+0A8C: write_memory 0x08CBD94 size 2 value 6 virtual_protect 0
+
+//Выключаем TaskSimpleTired при длительном беге педа
+0A8C: write_memory 0x046FBDD size 2 value 7403 virtual_protect 0
+0A8C: write_memory 0x046F24B size 2 value 5099 virtual_protect 0
+0A8C: write_memory 0x0665B2A size 2 value 7403 virtual_protect 0
+0A8C: write_memory 0x04962DB size 2 value 5099 virtual_protect 0
+
+//Максимальная степень отдаления радара
+0AC6: 1@ = label @RADAR_ZOOM offset
+0A8C: write_memory 1@ size 4 value 260.0 virtual_protect 1
+0A8C: write_memory 0x0577993 size 4 value 1@ virtual_protect 1
+0A8C: write_memory 0x05779FA size 4 value 260.0 virtual_protect 1
+
+//Выключаем сообщение о перезагрузке WeaponRecoilRE
+0EFE: get_loaded_library "WeaponRecoilRE.asi" store_to 0@   
+0@ += 0x6B15
+0E6A: make_nop 0@ size 2
+
+if
+CUSTOM_MAP_FLAG == 1
+then
+0629: change_integer_stat 283 to 1
+0B00: delete_file "data/raid.ini"  // IF and SET
+0B04: copy_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\RAID.ini" to "data/raid.ini" //IF and SET
+end
+
+//Фиксим оффсет дебаг оффсета в CLEO при использовании FLA
+0A8D: 1@ = read_memory 0x044CA44 size 4 virtual_protect 0
+0EFE: get_loaded_library "CLEO.asi" store_to 0@   
+0@ += 0x6EE4C
+0A8C: write_memory 0@ size 4 value 1@ virtual_protect 0
+0EFE: get_loaded_library "CLEO.asi" store_to 0@   
+0@ += 0x6EE54
+0A8C: write_memory 0@ size 4 value 1@ virtual_protect 0
+0EFE: get_loaded_library "CLEO.asi" store_to 0@   
+0@ += 0x95524
+0A8C: write_memory 0@ size 4 value 1@ virtual_protect 0
+
+//(0xF19D15 + 10787168) - 0x01962E50 = 0x825 (2085)
+//FAKE OFFSET + ORIG MAIN ADRESS - MAIN SCM CURRENT FLA ADRESS = REAL OFFEST
+
+//Выключаем воздействие ветра на объекты (если нужно)
+if
+CUSTOM_MAP_DISABLE_WIND_ON_OBJECTS == 1
+then   
+0A8C: write_memory 0x0536055 size 4 value 741609 virtual_protect 0
+0A8C: write_memory 0x0536059 size 2 value -28672 virtual_protect 0
+end                            
+
+if
+CUSTOM_MAP_DISABLE_DYNAMIC_GRASS == 1
+then
+0A8C: write_memory 0x5DBAE0 size 1 value 195 virtual_protect 0
+end
+
+//Выключаем VehDeform
+0EFE: get_loaded_library "VehDeform.SA.asi" store_to 0@   
+0@ += 0x90AD4
+0A8C: write_memory 0@ size 4 value 99999.0 virtual_protect 0
+
+//if
+//UNITED_MAP == 1
+//then
+//0A8C: write_memory 0x049F9C7 size 4 value 2079991016 virtual_protect 0
+//0A8C: write_memory 0x049F9CB size 4 value 608471914 virtual_protect 0
+//end
+
+if
+VEH_DEFORM_ACTIVE_OUT_ZOMBIEGEDDON == 1
+then
+0A8C: write_memory 0@ size 4 value 50.0 virtual_protect 0
+end
+
+//Сами руководим статусом, нужно ли крепить руки к рулю на байках
+0E6A: make_nop 0x0607461 size 7
+0E6A: make_nop 0x0607470 size 7
+
+//Подрубаем к этой системе и Quadбайки
+0A8C: write_memory 0x0601B8E size 2 value 6261 virtual_protect 0
+0A8C: write_memory 0x0601BA8 size 4 value -1027095 virtual_protect 0
+0A8C: write_memory 0x0601BAC size 4 value -1869573889 virtual_protect 0
+//Объезд
+0A8C: write_memory 0x0600C00 size 4 value 93632899 virtual_protect 0
+0A8C: write_memory 0x0600C04 size 4 value 251789312 virtual_protect 0
+0A8C: write_memory 0x0600C08 size 4 value 1018245 virtual_protect 0
+0A8C: write_memory 0x0600C0C size 4 value 259975424 virtual_protect 0
+0A8C: write_memory 0x0600C10 size 4 value -1869611008 virtual_protect 0
+
 //Вырубаем создание злоебучих паров воды после дождя в VCParticle
 //0EFE: get_loaded_library "CParticleVC.SA.asi" store_to 0@   
 //0@ += 0x3D723
@@ -1951,6 +2153,8 @@ end
 //Вылючаем водомёт
 //0E6A: make_nop 0x053C086 size 5 //CWaterCannons::Update
 
+//end_thread
+
 0662: printstring "----------Don't Burn Flipped Cars by LINK/2012----------"
 0A8C: write_memory 0x570E7F size 2 value 0xD8DD virtual_protect 1
 0A8C: write_memory 0x570E81 size 4 value 0x90909090 virtual_protect 1
@@ -1960,8 +2164,8 @@ if
 then
 0A8C: write_memory 0x6A776B size 2 value 0x9ED9 virtual_protect 1
 0A8C: write_memory 0x6A776D size 4 value 0x4C0 virtual_protect 1
-0A8C: write_memory 0x6D0798 size 4 value 0x057F697 virtual_protect 0 //cTransmission::CalculateDriveAcceleration
-0A8C: write_memory 0x6D07CB size 4 value 0x057F697 virtual_protect 0 //cTransmission::CalculateDriveAcceleration
+0A8C: write_memory 0x6D0798 size 4 value 0x0B7CB5C virtual_protect 0 //cTransmission::CalculateDriveAcceleration
+0A8C: write_memory 0x6D07CB size 4 value 0x0B7CB5C virtual_protect 0 //cTransmission::CalculateDriveAcceleration
 0A8C: write_memory 0x08D348C size 4 value 0.5 virtual_protect 0 //TRANSMISSION_NITROS_INERTIA_MULT
 0A8C: write_memory 0xC2B9B4 size 4 value 0.0003999999899 virtual_protect 0
 0A8C: write_memory 0xC2B9BC size 4 value 0.005555559881 virtual_protect 0
@@ -2021,116 +2225,123 @@ end
 
 ///////////////Выключаем цветовой фильтр если он был включен (United)///////////////
 
+0A8D: 0@ = read_memory 0xBA678C size 1 virtual_protect 0
 if
 UNITED_MAP == 1
 then
-
-0A8D: 0@ = read_memory 0xBA678C size 1 virtual_protect 0
-
 if
 not STORIES_MAP == 1
-then
-0A8C: write_memory 0x5DBAE0 size 1 value 195 virtual_protect 1
-                  
-if and
-0@ == 1
-not SNOW_ADDON_INSTALLED_FLAG == 1
-then
-0A8C: write_memory 0x8D518C size 1 value 1 virtual_protect 0
-
-0B00: delete_file "data\timecyc_24h.dat"  // IF and SET
-    
-if
-$UNITED_III_SPAWN == 1
-then
-0B04: copy_file "data\timecyc_24h_United.dat" to "data\timecyc_24h.dat" //IF and SET
-else
-0B04: copy_file "data\timecyc_24h_United2_bl.dat" to "data\timecyc_24h.dat" //IF and SET
-end
-    
-0AA5: call 0x5BBAC0 num_params 0 pop 0 
-
-else
-0A8C: write_memory 0x8D518C size 1 value 0 virtual_protect 0
-
-0B00: delete_file "data\timecyc_24h.dat"  // IF and SET
-    
-if
-$UNITED_III_SPAWN == 1
-then
-0B04: copy_file "data\timecyc_24h_United.dat" to "data\timecyc_24h.dat" //IF and SET
-else
-0B04: copy_file "data\timecyc_24h_United2.dat" to "data\timecyc_24h.dat" //IF and SET
-end
-    
-0AA5: call 0x5BBAC0 num_params 0 pop 0  
-
-end
-    
-else
-0A8C: write_memory 0x5DBAE0 size 1 value 195 virtual_protect 1
-    
-if
-0@ == 1
-then
-0A8C: write_memory 0xC402CC size 1 value 1 virtual_protect 1
-else
-0A8C: write_memory 0xC402CC size 1 value 1 virtual_protect 1
-end
-
-//Changing between PSP/PS2 timecycle
-0B00: delete_file "data\timecyc_24h.dat"  // IF and SET
-        
-if
-0@ == 1 //PS2
-then
-//31@ = 0
-0A8C: write_memory 0xBA678C size 1 value 1 virtual_protect 1
-0A8C: write_memory 0xC402CC size 1 value 1 virtual_protect 1
-0EFE: get_loaded_library "GraphicsTweaker.SA.asi" store_to 0@
-0@ += 0x0041BCC    
-if             
-0@ == -111222333
     then
-    0B04: copy_file "data\timecyc_24h_Stories.dat" to "data\timecyc_24h.dat" //IF and SET
-    0A8C: write_memory 0@ size 4 value 0.5 virtual_protect 0
-    0@ -= 0xC
-    0A8C: write_memory 0@ size 4 value 0.5 virtual_protect 0
-//    0AD1: show_formatted_text_highpriority "PS2 CYCLE" time 2000
+    0A8C: write_memory 0x5DBAE0 size 1 value 195 virtual_protect 1
+                      
+    if and
+    0@ == 1
+    not SNOW_ADDON_INSTALLED_FLAG == 1
+        then
+        0A8C: write_memory 0x8D518C size 1 value 1 virtual_protect 0
+        
+        0B00: delete_file "data\timecyc_24h.dat"  // IF and SET
+            
+        if
+        $UNITED_III_SPAWN == 1
+        then
+        0B04: copy_file "data\timecyc_24h_United.dat" to "data\timecyc_24h.dat" //IF and SET
+        else
+        0B04: copy_file "data\timecyc_24h_United2_bl.dat" to "data\timecyc_24h.dat" //IF and SET
+        end
+            
+        0AA5: call 0x5BBAC0 num_params 0 pop 0 
+        
+        else
+        0A8C: write_memory 0x8D518C size 1 value 0 virtual_protect 0
+        
+        0B00: delete_file "data\timecyc_24h.dat"  // IF and SET
+            
+        if
+        $UNITED_III_SPAWN == 1
+        then
+        0B04: copy_file "data\timecyc_24h_United.dat" to "data\timecyc_24h.dat" //IF and SET
+        else
+        0B04: copy_file "data\timecyc_24h_United2.dat" to "data\timecyc_24h.dat" //IF and SET
+        end
+            
+        0AA5: call 0x5BBAC0 num_params 0 pop 0  
+        
+        end
+        
     else
-    0B04: copy_file "data\timecyc_24h_Stories_bl.dat" to "data\timecyc_24h.dat" //IF and SET
-    0A8C: write_memory 0@ size 4 value 1.25 virtual_protect 0
-    0@ -= 0xC
-    0A8C: write_memory 0@ size 4 value 1.25 virtual_protect 0
-//    0AD1: show_formatted_text_highpriority "PS2_bl CYCLE" time 2000
+    0A8C: write_memory 0x5DBAE0 size 1 value 195 virtual_protect 1
+        
+    if
+    0@ == 1
+    then
+    0A8C: write_memory 0xC402CC size 1 value 1 virtual_protect 1
+    else
+    0A8C: write_memory 0xC402CC size 1 value 1 virtual_protect 1
+    end
+    
+    //Changing between PSP/PS2 timecycle
+    0B00: delete_file "data\timecyc_24h.dat"  // IF and SET
+            
+    if
+    0@ == 1 //PS2
+    then
+    //31@ = 0
+    0A8C: write_memory 0xBA678C size 1 value 1 virtual_protect 1
+    0A8C: write_memory 0xC402CC size 1 value 1 virtual_protect 1
+    0EFE: get_loaded_library "GraphicsTweaker.SA.asi" store_to 0@
+    0@ += 0x0041BCC    
+    if             
+    0@ == -111222333
+        then
+        0B04: copy_file "data\timecyc_24h_Stories.dat" to "data\timecyc_24h.dat" //IF and SET
+        0A8C: write_memory 0@ size 4 value 0.5 virtual_protect 0
+        0@ -= 0xC
+        0A8C: write_memory 0@ size 4 value 0.5 virtual_protect 0
+    //    0AD1: show_formatted_text_highpriority "PS2 CYCLE" time 2000
+        else
+        0B04: copy_file "data\timecyc_24h_Stories_bl.dat" to "data\timecyc_24h.dat" //IF and SET
+        0A8C: write_memory 0@ size 4 value 1.25 virtual_protect 0
+        0@ -= 0xC
+        0A8C: write_memory 0@ size 4 value 1.25 virtual_protect 0
+    //    0AD1: show_formatted_text_highpriority "PS2_bl CYCLE" time 2000
+        end
+    else
+    //31@ = 1
+    0A8C: write_memory 0xBA678C size 1 value 0 virtual_protect 1
+    0A8C: write_memory 0xC402CC size 1 value 1 virtual_protect 1
+    0EFE: get_loaded_library "GraphicsTweaker.SA.asi" store_to 0@
+    0@ += 0x0041BCC
+    if
+    0@ == -111222333
+        then
+        0B04: copy_file "data\timecyc_24h_Stories_PSP.dat" to "data\timecyc_24h.dat" //IF and SET
+        0A8C: write_memory 0@ size 4 value 0.5 virtual_protect 0
+        0@ -= 0xC
+        0A8C: write_memory 0@ size 4 value 0.5 virtual_protect 0
+    //    0AD1: show_formatted_text_highpriority "PSP CYCLE" time 2000
+        else
+        0B04: copy_file "data\timecyc_24h_Stories_PSP_bl.dat" to "data\timecyc_24h.dat" //IF and SET
+        0A8C: write_memory 0@ size 4 value 1.0 virtual_protect 0
+        0@ -= 0xC
+        0A8C: write_memory 0@ size 4 value 1.0 virtual_protect 0
+    //    0AD1: show_formatted_text_highpriority "PSP_bl CYCLE" time 2000
+        end
+    end
+            
+    0AA5: call 0x5BBAC0 num_params 0 pop 0
+    //end 
+        
     end
 else
-//31@ = 1
-0A8C: write_memory 0xBA678C size 1 value 0 virtual_protect 1
-0A8C: write_memory 0xC402CC size 1 value 1 virtual_protect 1
-0EFE: get_loaded_library "GraphicsTweaker.SA.asi" store_to 0@
-0@ += 0x0041BCC
+
 if
-0@ == -111222333
-    then
-    0B04: copy_file "data\timecyc_24h_Stories_PSP.dat" to "data\timecyc_24h.dat" //IF and SET
-    0A8C: write_memory 0@ size 4 value 0.5 virtual_protect 0
-    0@ -= 0xC
-    0A8C: write_memory 0@ size 4 value 0.5 virtual_protect 0
-//    0AD1: show_formatted_text_highpriority "PSP CYCLE" time 2000
-    else
-    0B04: copy_file "data\timecyc_24h_Stories_PSP_bl.dat" to "data\timecyc_24h.dat" //IF and SET
-    0A8C: write_memory 0@ size 4 value 1.0 virtual_protect 0
-    0@ -= 0xC
-    0A8C: write_memory 0@ size 4 value 1.0 virtual_protect 0
-//    0AD1: show_formatted_text_highpriority "PSP_bl CYCLE" time 2000
-    end
-end
-        
-0AA5: call 0x5BBAC0 num_params 0 pop 0
-//end 
-    
-end
+0@ == 1
+then
+0A8C: write_memory 0x5DBAE0 size 1 value 131 virtual_protect 0
+else
+0A8C: write_memory 0x5DBAE0 size 1 value 195 virtual_protect 0
+end 
 
 end
 
@@ -2194,25 +2405,27 @@ if
 PERK_WEAPON_SKILL == 0
 then
 
-0AF2: 0@ = get_float_from_ini_file "moonloader/Weapon Recoil.ini" section "Other_Settings" key "nGlobalRecoilMultiplier"
+0AF2: 0@ = get_float_from_ini_file "scripts/WeaponRecoilRE.ini" section "WeaponRecoilRE" key "fRecoilMultiplier Global"
     
 if
-not 0@ == 1.65
+not 0@ == RECOIL_DEFAULT_LEVEL
 then
-0AF3: write_float 1.65 to_ini_file "moonloader/Weapon Recoil.ini" section "Other_Settings" key "nGlobalRecoilMultiplier"
+0AF3: write_float RECOIL_DEFAULT_LEVEL to_ini_file "scripts/WeaponRecoilRE.ini" section "WeaponRecoilRE" key "fRecoilMultiplier Global"
+0A8C: write_memory 0x0969110 size 6 value "RRWSR" virtual_protect 0
 end
-
+ 
 end
 
 if
 PERK_WEAPON_SKILL == 1
 then
 
-0AF2: 0@ = get_float_from_ini_file "moonloader/Weapon Recoil.ini" section "Other_Settings" key "nGlobalRecoilMultiplier"    
+0AF2: 0@ = get_float_from_ini_file "scripts/WeaponRecoilRE.ini" section "WeaponRecoilRE" key "fRecoilMultiplier Global"    
 if
-not 0@ == 1.485
+not 0@ == RECOIL_PERK_LEVEL1
 then
-0AF3: write_float 1.485 to_ini_file "moonloader/Weapon Recoil.ini" section "Other_Settings" key "nGlobalRecoilMultiplier"
+0AF3: write_float RECOIL_PERK_LEVEL1 to_ini_file "scripts/WeaponRecoilRE.ini" section "WeaponRecoilRE" key "fRecoilMultiplier Global"
+0A8C: write_memory 0x0969110 size 6 value "RRWSR" virtual_protect 0
 end
 
 end
@@ -2221,11 +2434,12 @@ if
 PERK_WEAPON_SKILL == 2
 then
 
-0AF2: 0@ = get_float_from_ini_file "moonloader/Weapon Recoil.ini" section "Other_Settings" key "nGlobalRecoilMultiplier"    
+0AF2: 0@ = get_float_from_ini_file "scripts/WeaponRecoilRE.ini" section "WeaponRecoilRE" key "fRecoilMultiplier Global"    
 if
-not 0@ == 1.32
+not 0@ == RECOIL_PERK_LEVEL2
 then
-0AF3: write_float 1.32 to_ini_file "moonloader/Weapon Recoil.ini" section "Other_Settings" key "nGlobalRecoilMultiplier"
+0AF3: write_float RECOIL_PERK_LEVEL2 to_ini_file "scripts/WeaponRecoilRE.ini" section "WeaponRecoilRE" key "fRecoilMultiplier Global"
+0A8C: write_memory 0x0969110 size 6 value "RRWSR" virtual_protect 0
 end
 
 end
@@ -2234,11 +2448,12 @@ if
 PERK_WEAPON_SKILL == 3
 then
 
-0AF2: 0@ = get_float_from_ini_file "moonloader/Weapon Recoil.ini" section "Other_Settings" key "nGlobalRecoilMultiplier"    
+0AF2: 0@ = get_float_from_ini_file "scripts/WeaponRecoilRE.ini" section "WeaponRecoilRE" key "fRecoilMultiplier Global"    
 if
-not 0@ == 1.155
+not 0@ == RECOIL_PERK_LEVEL3
 then
-0AF3: write_float 1.155 to_ini_file "moonloader/Weapon Recoil.ini" section "Other_Settings" key "nGlobalRecoilMultiplier"
+0AF3: write_float RECOIL_PERK_LEVEL3 to_ini_file "scripts/WeaponRecoilRE.ini" section "WeaponRecoilRE" key "fRecoilMultiplier Global"
+0A8C: write_memory 0x0969110 size 6 value "RRWSR" virtual_protect 0
 end
 
 end
@@ -2246,7 +2461,8 @@ end
 if
 $HITMAN_FLAG == 1
 then
-0AF3: write_float 0.0 to_ini_file "moonloader/Weapon Recoil.ini" section "Other_Settings" key "nGlobalRecoilMultiplier"
+0AF3: write_float 0.0 to_ini_file "scripts/WeaponRecoilRE.ini" section "WeaponRecoilRE" key "fRecoilMultiplier Global"
+0A8C: write_memory 0x0969110 size 6 value "RRWSR" virtual_protect 0
 end
 
 if
@@ -2271,34 +2487,38 @@ if
 SURVIVAL_CUSTOM_WEAPON_NABOR == 5
 then
 
-0AF2: 0@ = get_float_from_ini_file "moonloader/Weapon Recoil.ini" section "70" key "nRecoil"    
+0AF2: 0@ = get_float_from_ini_file "scripts/WeaponRecoilRE.ini" section "WeaponRecoilRE" key "fRecoilMultiplier Type70"    
 if
 not 0@ == 0.65
 then
-0AF3: write_float 0.65 to_ini_file "moonloader/Weapon Recoil.ini" section "70" key "nRecoil"
+0AF3: write_float 0.65 to_ini_file "scripts/WeaponRecoilRE.ini" section "WeaponRecoilRE" key "fRecoilMultiplier Type70"
+0A8C: write_memory 0x0969110 size 6 value "RRWSR" virtual_protect 0 
 end
 
-0AF2: 0@ = get_float_from_ini_file "moonloader/Weapon Recoil.ini" section "94" key "nRecoil"    
+0AF2: 0@ = get_float_from_ini_file "scripts/WeaponRecoilRE.ini" section "WeaponRecoilRE" key "fRecoilMultiplier Type94" 
 if
 not 0@ == 0.55
 then
-0AF3: write_float 0.55 to_ini_file "moonloader/Weapon Recoil.ini" section "94" key "nRecoil"
+0AF3: write_float 0.55 to_ini_file "scripts/WeaponRecoilRE.ini" section "WeaponRecoilRE" key "fRecoilMultiplier Type94"
+0A8C: write_memory 0x0969110 size 6 value "RRWSR" virtual_protect 0
 end
 
 else
 
-0AF2: 0@ = get_float_from_ini_file "moonloader/Weapon Recoil.ini" section "70" key "nRecoil"    
+0AF2: 0@ = get_float_from_ini_file "scripts/WeaponRecoilRE.ini" section "WeaponRecoilRE" key "fRecoilMultiplier Type70"    
 if
 not 0@ == 1.46
 then
-0AF3: write_float 1.46 to_ini_file "moonloader/Weapon Recoil.ini" section "70" key "nRecoil"
+0AF3: write_float 1.46 to_ini_file "scripts/WeaponRecoilRE.ini" section "WeaponRecoilRE" key "fRecoilMultiplier Type70"
+0A8C: write_memory 0x0969110 size 6 value "RRWSR" virtual_protect 0 
 end
 
-0AF2: 0@ = get_float_from_ini_file "moonloader/Weapon Recoil.ini" section "94" key "nRecoil"    
+0AF2: 0@ = get_float_from_ini_file "scripts/WeaponRecoilRE.ini" section "WeaponRecoilRE" key "fRecoilMultiplier Type94"   
 if
 not 0@ == 1.23
 then
-0AF3: write_float 1.23 to_ini_file "moonloader/Weapon Recoil.ini" section "94" key "nRecoil"
+0AF3: write_float 1.23 to_ini_file "scripts/WeaponRecoilRE.ini" section "WeaponRecoilRE" key "fRecoilMultiplier Type94"
+0A8C: write_memory 0x0969110 size 6 value "RRWSR" virtual_protect 0
 end
 
 end 
@@ -2443,14 +2663,6 @@ else
 //0AF1: write_int 0 to_ini_file "saves\ZACM.set" section "SCR" key "ACHIEVEMENT67_GOT"
 end   
 
-///////////////Считываем ID'шники дополнительных скинов выживших///////////////
-0AF0: $MIN_SKIN = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\New Survivors\CONFIG\NEWSKINS.ini" section "NEWSKINS" key "NEW_SKINS_COUNT_MIN"
-0AF0: $MAX_SKIN = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\New Survivors\CONFIG\NEWSKINS.ini" section "NEWSKINS" key "NEW_SKINS_COUNT_MAX"
-$MAX_SKIN += 1
-0AF0: $MIN_SKIN2 = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\New Survivors\CONFIG\NEWSKINS.ini" section "NEWSKINS2" key "NEW_SKINS_COUNT_MIN"
-0AF0: $MAX_SKIN2 = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\New Survivors\CONFIG\NEWSKINS.ini" section "NEWSKINS2" key "NEW_SKINS_COUNT_MAX"
-$MAX_SKIN2 += 1     
-
 ///////////////Обнуляем цвета неба///////////////
 04FA: reset_sky_colors_with_fade 0
 
@@ -2461,9 +2673,6 @@ $MAX_SKIN2 += 1
 //Убираем запрет на карабкание не в интерьере 0
 0A8C: write_memory 0x0680C9E size 4 value 0x0B79100 virtual_protect 0
 0A8C: write_memory 0x0680ABE size 4 value 0x0B79100 virtual_protect 0
-
-//Настраиваем внешний вид субтитров по центру
-0912: set_text_priority 1 leftmargin 355 maxwidth 750
 
 //Возвращаем оригинальное значение на место дистанции рендра коллизии
 0A8C: write_memory 0x0858BB0 size 4 value 120.0 virtual_protect 1
@@ -2750,11 +2959,11 @@ end
 //0A8C: write_memory 0x705079 size 4 value -1869574000 virtual_protect 1
 
 ///Двойные фары у Quad на карте Stories'ов
-//if
-//STORIES_MAP == 1
-//then
-//0A8C: write_memory 0x6ABCAB size 2 value 0x9090 virtual_protect 1
-//end
+if
+STORIES_MAP == 1
+then
+0A8C: write_memory 0x06ABCA7 size 2 value 1259 virtual_protect 1
+end
 
 ///Вырезанный эквалайзер радио
 0662: printstring "----------Radio EQ Disable by VCSPC Team----------"
@@ -2855,19 +3064,21 @@ DIRECTFONT_INSTALLED = 1
 0A8C: write_memory 0x057E340 size 1 value 0 virtual_protect 0 //Helper Text 2B (G)
 0A8C: write_memory 0x057E33B size 1 value 0 virtual_protect 0 //Helper Text 2B (B)
 
-0EFE: get_loaded_library "CLEO.asi" store_to 0@
-0085: 1@ = 0@ // (int)   
-0@ += 0xB01A
-0E6A: make_nop 0@ size 6 //Draw Plugins And Scripts Text
+//0EFE: get_loaded_library "CLEO.asi" store_to 0@
+//0085: 1@ = 0@ // (int)   
+//0@ += 0x16CBB
+//0E6A: make_nop 0@ size 6 //Draw Plugins And Scripts Text
+0A8C: write_memory 0x057B9FD size 4 value 449400552 virtual_protect 1
+0A8C: write_memory 0x057BA01 size 1 value 0 virtual_protect 1
 
-1@ += 0xAC09
-0A8C: write_memory 1@ size 1 value 225 virtual_protect 1 //Cleo Text (A)
-1@ += 1
-0A8C: write_memory 1@ size 1 value 0 virtual_protect 0 //Cleo Text (B)
-1@ += 1
-0A8C: write_memory 1@ size 1 value 0 virtual_protect 0 //Cleo Text (G)
-1@ += 1
-0A8C: write_memory 1@ size 1 value 225 virtual_protect 0 //Cleo Text (R)
+//1@ += 0xAC09
+//0A8C: write_memory 1@ size 1 value 225 virtual_protect 1 //Cleo Text (A)
+//1@ += 1
+//0A8C: write_memory 1@ size 1 value 0 virtual_protect 0 //Cleo Text (B)
+//1@ += 1
+//0A8C: write_memory 1@ size 1 value 0 virtual_protect 0 //Cleo Text (G)
+//1@ += 1
+//0A8C: write_memory 1@ size 1 value 225 virtual_protect 0 //Cleo Text (R)
 
 end
 
@@ -3101,6 +3312,7 @@ if and
 UNITED_MAP == 0
 CLASSIC_CARMA_MAP < 1
 not 2@ == 1
+not CUSTOM_MAP_FLAG == 1
 then
 
 if
@@ -3176,11 +3388,18 @@ not model.Available(19300)
 
 else
 gosub @EXTRASKINS_COUNT_CHECK
-end
+end    
 
 end    
 
 create_thread @WBL
+
+if and
+CUSTOM_MAP_FLAG == 1 
+8AB0: not  key_pressed 69 
+then
+gosub @CUSTOM_MAP_INTEGRITY_CHECK
+end
 
 end_thread
 
@@ -3304,10 +3523,10 @@ if
 0AF1: write_int 19300 to_ini_file "modloader/MODLOADER GLOBAL FILES/ExtraContent/New Selectable Skins/EXTRASKINS.dat" section "EXTRASKINS" key "EXTRA_SKINS_COUNT_MIN"
 19@ -= 1    
 0AF1: write_int 19@ to_ini_file "modloader/MODLOADER GLOBAL FILES/ExtraContent/New Selectable Skins/EXTRASKINS.dat" section "EXTRASKINS" key "EXTRA_SKINS_COUNT_MAX"
-0AF1: write_int 1 to_ini_file "config.ini" section "LAUNCHER" key "RESTART_GAME"
-0AA2: 0@ = load_library "kernel32.dll" // IF and SET
-0AA4: 1@ = get_proc_address "ExitProcess" library 0@ // IF and SET
-0AA5: call 1@ num_params 1 pop 0 0
+//0AF1: write_int 1 to_ini_file "config.ini" section "LAUNCHER" key "RESTART_GAME"
+//0AA2: 0@ = load_library "kernel32.dll" // IF and SET
+//0AA4: 1@ = get_proc_address "ExitProcess" library 0@ // IF and SET
+//0AA5: call 1@ num_params 1 pop 0 0
             
 end
 
