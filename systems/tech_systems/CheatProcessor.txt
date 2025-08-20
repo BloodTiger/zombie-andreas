@@ -4793,16 +4793,36 @@ $STATE_DESTRUCTION_FLAG == 0
           
     $CHEAT_CODE_ACTIVATED = 1
     
-    wait 1
+    CAN_SHOW_SAVESCREEN_CHEATSAVE = 0
+
+    fade 0 500
+    $HUD_REMOVE = 1
+    wait 500
     
-    Player.CanMove(PLAYER_CHAR) = False
-    create_thread @DIFF_N 
-    fade 0 500 
-    wait 500 
-    $SAVESTATUS = 1 
-    $SAVESTATUS_TRUE = 1 
+    SAVE_PRE_TP_TEAMMATES_FLAG = 1
+    
+    repeat
+    wait 0
+    until SAVE_PRE_TP_TEAMMATES_FLAG == 0
+    
+    if and
+    not $CARL_STORY == 1
+    not $MIKE_STORY == 1
+    then
+    create_thread @DIFF_N
+    end
+    
+    $SAVESTATUS = 1
+    $SAVESTATUS_TRUE = 1
     create_thread @PTL_TXT
+      
     wait $GAME_SAVE_WAIT_TIME
+    
+    if
+    CAMP_RAID_TIMER > 15080
+    then
+    CAMP_RAID_TIMER -= 1080
+    end
     
     while true
     wait 0
@@ -4823,13 +4843,54 @@ $STATE_DESTRUCTION_FLAG == 0
     
     $PREPARING_TEXT_OFF = 1
     wait 10
-    $PLAYER_HEALTH = actor.Health(PLAYER_ACTOR)      
+    $PLAYER_HEALTH = actor.Health(PLAYER_ACTOR) 
     
-    wait 1 
-         
+    wait 1
+    
+    if
+    AFTERSAVE_TIME_COUNT < PLAYER_UPTIME_BEFORE_WANNASLEEP
+    then
+    SKIP_6HOURS_AFTER_SAVE = 1
+    SKIP_6HOURS_AFTER_SAVE2 = 1
+    0A8D: 25@ = read_memory 0x61907A size 4 virtual_protect 1 
+    0A8D: 26@ = read_memory 0x61907E size 1 virtual_protect 1
+    0A8C: write_memory 0x61907A size 4 value -1869574000 virtual_protect 1 
+    0A8C: write_memory 0x61907E size 1 value 144 virtual_protect 1
+    else
+    if and
+    $GAMEMODE_STORYLINE == 0
+    $GAMEMODE_WAR == 0
+        then
+        EXTINCTION_DONE = -1
+        gosub @BEFORE_LONG_SAVE_THINGS_DO
+        end
+    end
+    
+    if and
+    $CHECKPOINT[$ENTERED_CAMP_NUMBER] > 15160
+    SKIP_6HOURS_AFTER_SAVE == 0
+    then
+    random_int $CHECKPOINT[$ENTERED_CAMP_NUMBER] 15160 18160
+    end
+    
+    repeat
+    wait 0
+    until EXTINCTION_DONE == 1 
+    
     065C: release_decision_maker $DEC_PEOPLE 
     wait 10
-    03D8: show_save_screen         
+    
+    if
+    UNITED_MAP == 1
+    then
+    03F0: enable_text_draw 0
+    end
+    
+    repeat
+    wait 0
+    until CAN_SHOW_SAVESCREEN_CHEATSAVE == 1
+    
+    03D8: show_save_screen          
     
     :SAVEGAME_CHEAT
     wait 0
