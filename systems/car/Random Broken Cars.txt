@@ -18,6 +18,12 @@ then
 end_thread
 end
 
+if
+CUSTOM_MAP_FLAG == 1
+then
+gosub @CUSTOM_MAP_LOAD_CUSTOM_CAR_NODES
+end
+
 0AF0: CAR_EXTRA_ENABLED = get_int_from_ini_file "data\SAExtratransport.ini" section "SETTINGS" key "ENABLED"
 if
 CAR_EXTRA_ENABLED == 1
@@ -28,7 +34,25 @@ then
 end
 
 :BROKEN_CARS_CHECK
+
+if and
+CUSTOM_MAP_FLAG == 1
+CUSTOM_CAR_NODES_COUNT > 0
+then
+
+CUSTOM_MAP_CARGEN_WAIT_COUNTER += 1
+0084: TEMPVAR_INT = CUSTOM_CAR_NODES_COUNT // (int)
+TEMPVAR_INT /= 10
+if
+001C:   CUSTOM_MAP_CARGEN_WAIT_COUNTER > TEMPVAR_INT // (int)
+then
+CUSTOM_MAP_CARGEN_WAIT_COUNTER = 0
 wait 0
+end
+
+else
+wait 0
+end
 
 if
 $GAMEMODE_SELECTED == 1
@@ -68,7 +92,25 @@ $ALLOW_BROKEN_CARS == 1
 jf @BROKEN_CARS_CHECK
 end         
 
+if
+USE_CUSTOM_CAR_NODE_FLAG == 1
+then
+object.Angle(DUMMY_OBJECT) = 13@
+random_int 0@ 0 2
+0@ = 2
+if
+0@ == 1
+    then
+    13@ += 180.0
+    object.Angle(DUMMY_OBJECT) = 13@
+    0400: store_coords_to 9@ 10@ 11@ from_object DUMMY_OBJECT with_offset 0.0 0.0 0.0 
+    else
+    0400: store_coords_to 9@ 10@ 11@ from_object DUMMY_OBJECT with_offset 0.0 0.0 0.0 
+    end  
+USE_CUSTOM_CAR_NODE_FLAG = 0     
+else
 06F8: get_nearest_route_for 9@ 10@ 11@ in_direction 1 store_to 25@ 26@ 27@ Z_angle_to 13@
+end
 
 random_float 25@ -10.0 10.0
 
@@ -541,7 +583,25 @@ if or
 return
 
 :BROKEN_CAR_COORD_SET
+
+if and
+CUSTOM_MAP_FLAG == 1
+CUSTOM_CAR_NODES_COUNT > 0
+then
+
+CUSTOM_MAP_CARGEN_WAIT_COUNTER += 1
+0084: TEMPVAR_INT = CUSTOM_CAR_NODES_COUNT // (int)
+TEMPVAR_INT /= 10
+if
+001C:   CUSTOM_MAP_CARGEN_WAIT_COUNTER > TEMPVAR_INT // (int)
+then
+CUSTOM_MAP_CARGEN_WAIT_COUNTER = 0
 wait 0
+end
+
+else
+wait 0
+end
 
 if
 $GAMEMODE_SELECTED == 1
@@ -562,7 +622,20 @@ end
 0208: 9@ = random_float_in_ranges 180.0 -220.0 
 0208: 10@ = random_float_in_ranges -180.0 220.0 
 04C4: store_coords_to 6@ 7@ 8@ from_actor PLAYER_ACTOR with_offset 9@ 10@ 0.0 
-02C1: store_to 9@ 10@ 11@ car_path_coords_closest_to 6@ 7@ 8@ 
+02C1: store_to 9@ 10@ 11@ car_path_coords_closest_to 6@ 7@ 8@
+if
+CUSTOM_MAP_FLAG == 1
+then
+gosub @CUSTOM_MAP_TRY_TO_GET_CUSTOM_CAR_NODE
+if
+USE_CUSTOM_CAR_NODE_FLAG == 1
+    then
+    0089: 9@ = $TEMPVAR_FLOAT_1 // (float)
+    0089: 10@ = $TEMPVAR_FLOAT_2 // (float)
+    0089: 11@ = $TEMPVAR_FLOAT_3 // (float)
+    0089: 13@ = $TEMPVAR_FLOAT2_1 // (float)
+    end
+end 
 Actor.StorePos(PLAYER_ACTOR, 6@, 7@, 8@)
 0509: 17@ = distance_between_XY 6@ 7@ and_XY 9@ 10@ 
 0092: 18@ = float 17@ to_integer

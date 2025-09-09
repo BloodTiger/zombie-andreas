@@ -4681,6 +4681,31 @@ then
 
 0063: 9@ -= 28@  // (float)
 0087: 4@ = 9@ // (float)
+
+if
+04AD:   actor PLAYER_ACTOR in_water
+then
+0652: $TEMPVAR_FLOAT_1 = integer_stat 4080
+if
+$TEMPVAR_FLOAT_1 == 0
+    then
+    0851: set_actor PLAYER_ACTOR decrease_health_by 1 affect_armour 0
+    if
+    8184:   actor PLAYER_ACTOR health < 1 //хп не осталось
+        then
+        0AF0: TEMPVAR_INT = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "ACHIEVEMENT9_GOT"                            
+        if and
+        TEMPVAR_INT == 0 
+        $CHEATED_FLAG == 0
+            then
+            v$ACHIEVEMNT = "ACH9"
+            $ACHIEVEMENT_GOT_FLAG = 1                
+            0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "ACHIEVEMENT9_GOT"                
+            end  
+        end
+    end
+end
+
 0092: 4@ = float 4@ to_integer
 if
 4@ > 0
@@ -4693,12 +4718,33 @@ else
 0EB5: get_char_damage_last_frame PLAYER_ACTOR damager 27@ type 28@ part 25@ intensity 4@
 //0AD1: show_formatted_text_highpriority "DAMAGER - %d, TYPE - %d, PART - %d, INTENSITY %f" time 1000 27@ 28@ 25@ 4@
 0092: 4@ = float 4@ to_integer
-end
+end     
+
+0A96: TEMPVAR_INT = actor PLAYER_ACTOR struct
+if 
+07D6:   27@ == TEMPVAR_INT // селфхарм
+    then
+    TEMPVAR_INT = actor.Health(PLAYER_ACTOR)
+//    0AD1: show_formatted_text_highpriority "selfharm, hp left is %d" time 10 TEMPVAR_INT
+    if
+    8184:   actor PLAYER_ACTOR health < 1 //хп не осталось
+        then         
+        0AF0: TEMPVAR_INT = get_int_from_ini_file "saves\ZACM.set" section "SCR" key "ACHIEVEMENT9_GOT"                    
+        if and
+        TEMPVAR_INT == 0 
+        $CHEATED_FLAG == 0
+            then
+            v$ACHIEVEMNT = "ACH9" //поздравляем, вы сделали роскомнадзор!
+            $ACHIEVEMENT_GOT_FLAG = 1                
+            0AF1: write_int 1 to_ini_file "saves\ZACM.set" section "SCR" key "ACHIEVEMENT9_GOT"                
+            end  
+        end
+    end
 
 if
 4@ > 0
     then
-    
+            
     ////////////////////////////////////////////////////////////////////
         
     if and
@@ -4869,15 +4915,29 @@ if
     0087: 20@ = 4@ // (float)
     24@ = actor.Health(PLAYER_ACTOR)
     0093: 4@ = integer 4@ to_float
-    006F: 4@ *= PLAYER_RESIST_MULT // (float)    
+    006F: 4@ *= PLAYER_RESIST_MULT // (float)   
+    4@ /= 2.5 
     0092: 4@ = float 4@ to_integer
-    4@ /= 3
+//    4@ /= 2
     if
     not 28@ == 53
     then
     005A: 5@ += 4@  // (int)
     end 
-//    0AD1: show_formatted_text_highpriority "DAMAGE: %d, TYPE %d, HEAL COUNT: %d, HP PREV: %d, HP AFTER: %d" time 2000 20@ 28@ 4@ 24@ 5@    
+    
+//    0AD1: show_formatted_text_highpriority "DAMAGE: %d, TYPE %d, HEAL COUNT: %d, HP PREV: %d, HP AFTER: %d" time 2000 20@ 28@ 4@ 24@ 5@
+//    if
+//    002D:   5@ >= 24@  // (int)
+//    then    
+//    
+//    0085: 6@ = 24@ // (int)
+//    0062: 6@ -= 4@  // (int)
+//    repeat
+//    5@ -= 1
+//    until 003B:   5@ == 24@  // (int)
+//    0AD1: show_formatted_text_highpriority "health after pravka %d" time 2000 5@
+//           
+//    end        
     
     20@ = actor.Health(PLAYER_ACTOR)
     0093: 20@ = integer 20@ to_float        
@@ -6057,6 +6117,12 @@ TEMPVAR_INT = 60
 008D: TEMPVAR_INT = integer TEMPVAR_INT to_float
 0069: TEMPVAR_INT *= GENERAL_FPS_TIMER_DIVIDER2 // (float)
 008C: TEMPVAR_INT = float TEMPVAR_INT to_integer
+if
+TEMPVAR_INT < 1
+then
+TEMPVAR_INT = 1
+end
+
 if and
 RADIO_TEXTURE_RENDER_NUMBER == 119
 $CASETTE_PLAYING_FLAG == 1
@@ -6461,6 +6527,8 @@ if or
 5@ == 132
 5@ == 133
 5@ == 134
+5@ == 39
+5@ == 40
     then
     0@ = 1
     end
@@ -6707,6 +6775,22 @@ not actor.Driving(PLAYER_ACTOR)
     then
     
     if and
+    HYBRID_CONTORLS == 1
+    UNITED_MAP == 1
+    then
+    0E64: get_camera_mode 1@
+    if or
+    1@ == 7
+    1@ == 8
+    1@ == 34
+    1@ == 46
+    1@ == 51
+        then
+        jump to @CROSSHAIR_NOT_RENDER
+        end
+    end
+    
+    if and
     00E1:   player 0 pressed_key 6
     0E46: is_char_using_gun PLAYER_ACTOR
         then
@@ -6718,7 +6802,7 @@ not actor.Driving(PLAYER_ACTOR)
     HYBRID_CONTORLS == 1 
     8A4B: not  controls_set_to_joystick
     82D8: not  actor PLAYER_ACTOR current_weapon == 92 
-        then
+        then                
         
         if or
         0A0C:  player PLAYER_CHAR on_jetpack
@@ -11415,10 +11499,77 @@ end
 038F: load_texture "flameicon" as 37 
 038F: load_texture "minigunicon" as 38 
 038F: load_texture "satchelicon" as 39 
-038F: load_texture "bombicon" as 40 
+if
+UNITED_MAP == 0
+then 
+038F: load_texture "satchelicon" as 39
+else
+
+if and
+$UNITED_III_SPAWN == 1
+not STORIES_MAP == 1
+then
+038F: load_texture "3_grenade" as 39
+else
+
+if
+STORIES_MAP == 0
+then
+038F: load_texture "vc_grenade" as 39
+else
+038F: load_texture "lcs_grenade" as 39
+end
+
+end
+
+end
+
+//038F: load_texture "bombicon" as 40
+if
+UNITED_MAP == 0
+then 
+038F: load_texture "bombicon" as 40
+else
+
+if and 
+$UNITED_III_SPAWN == 1
+not STORIES_MAP == 1
+then
+038F: load_texture "bomb_iii" as 40
+else
+
+if
+STORIES_MAP == 0
+then
+038F: load_texture "bomb_vc" as 40
+else
+038F: load_texture "bomb_lcs" as 40
+end
+
+end
+
+end
+ 
 038F: load_texture "SPRAYCANicon" as 41 
 038F: load_texture "fire_exicon" as 42 
-038F: load_texture "Cameraicon" as 43 
+
+//038F: load_texture "Cameraicon" as 43
+if
+UNITED_MAP == 0
+then 
+038F: load_texture "cameraicon" as 43
+else
+
+if
+STORIES_MAP == 0
+then
+038F: load_texture "camera_vc" as 43
+else
+038F: load_texture "camera_lcs" as 43
+end
+
+end
+ 
 038F: load_texture "nvgogglesicon" as 44 
 038F: load_texture "irgogglesicon" as 45
 
@@ -11764,6 +11915,12 @@ SURV_SECOND_WAVE_EVACUATION_STARTED == 0
     008D: TEMPVAR_INT = integer TEMPVAR_INT to_float
     0069: TEMPVAR_INT *= GENERAL_FPS_TIMER_DIVIDER2 // (float)
     008C: TEMPVAR_INT = float TEMPVAR_INT to_integer
+	if
+	TEMPVAR_INT < 1
+	then
+	TEMPVAR_INT = 1
+	end
+	
     00BF: 1@ = current_time_hours, 2@ = current_time_minutes
     if and
     002F:   1@ >= STORIES_SURVIVAL_EJACULATION_DATE // (int)
@@ -11787,6 +11944,12 @@ $RADIO > 0
         008D: TEMPVAR_INT = integer TEMPVAR_INT to_float
         0069: TEMPVAR_INT *= GENERAL_FPS_TIMER_DIVIDER2 // (float)
         008C: TEMPVAR_INT = float TEMPVAR_INT to_integer
+		if
+		TEMPVAR_INT < 1
+		then
+		TEMPVAR_INT = 1
+		end
+		
         008B: 2@ = STORIES_SURVIVAL_EJACULATION_DATE // (int)
         2@ /= 2
         if and

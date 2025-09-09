@@ -129,6 +129,7 @@ OOS_ACT_FERNANDO_FERMERS_GROUP_TARGET = 367@
 OOS_ACT_FERNANDO_FERMERS_GROUP2_TARGET = 368@
 OOS_ACT_FARM_FIGHTERS_COUNT = 369@
 OOS_ACT_WORZAK_PODSOS_SLOWMO_RESTORE_COUNT = 3.5
+OOS_ACT_WORZAK_ACCURACY = 370@
 end
 
 :OOS_ACT
@@ -2399,6 +2400,8 @@ create_thread @OOS_GAT
 
 repeat
 wait 0
+
+ZONE_SIREN_FLAG = 1
 
 if and
 OOS_ACT_BERTON_IMPOSTER_FLAG == 0
@@ -5176,6 +5179,17 @@ if
     0350: set_actor OOS_ACT_WORZAK maintain_position_when_attacked 1
     0816: set_actor OOS_ACT_WORZAK dont_chase_victim 1
     create_thread @PED_BKP OOS_ACT_WORZAK 371 0 0 0 1 0 3 7 3
+    
+    0781: get_weapon_with_ID 70 model_to 1@
+
+    while not model.Available(1@)
+    wait 0
+    model.Load(1@)
+    mload
+    end
+    
+    actor.GiveWeaponAndAmmo(OOS_ACT_WORZAK,70,99999)
+    
     05BE: AS_actor OOS_ACT_WORZAK die
     wait 1500
     player.CanMove(PLAYER_CHAR,true)
@@ -5693,11 +5707,25 @@ then
 OOS_ACT_WORZAK_MAX_HP *= 2 
 end
 
+OOS_ACT_WORZAK_ACCURACY = 20
+
+if
+$EASY_MODE == 1
+then
+OOS_ACT_WORZAK_ACCURACY = 0
+end
+
+if
+$NORMAL_MODE == 1
+then
+OOS_ACT_WORZAK_ACCURACY = 10
+end 
+
 actor.Health(OOS_ACT_WORZAK) = OOS_ACT_WORZAK_MAX_HP    
 0D10: set_actor OOS_ACT_WORZAK alpha 255 // IF and SET
 Actor.SetWalkStyle(OOS_ACT_WORZAK, "GANG2")
 081A: set_actor OOS_ACT_WORZAK weapon_skill_to 2
-Actor.WeaponAccuracy(OOS_ACT_WORZAK) = 25
+Actor.WeaponAccuracy(OOS_ACT_WORZAK) = OOS_ACT_WORZAK_ACCURACY
 060B: set_actor OOS_ACT_WORZAK decision_maker_to $DEC_PEOPLE
 0446: set_actor OOS_ACT_WORZAK dismemberment_possible 0   
 0946: set_actor OOS_ACT_WORZAK actions_uninterupted_by_weapon_fire 1
@@ -5774,6 +5802,8 @@ if
 0800:   in_two_players_mode
 then
 create_thread @SRV_VC2
+else
+create_thread @OOSWRZK OOS_ACT_WORZAK
 end
 
 TEAMMATES_SHOOTS_PROJECTILES = 1        
@@ -5818,6 +5848,28 @@ actor.Animation(OOS_ACT_WORZAK) == "GunCrouchBwd"
 then
 0393: actor OOS_ACT_WORZAK perform_animation "GunCrouchFwd" at 2.5 times_normal_rate
 end
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @OOS_ACT_FAILED_PLAYER_DIED
+
+/////////////////////////////////////
+
+0085: 5@ = OOS_ACT_WORZAK_MAX_HP // (int)    
+//5@ = 12000
+1@ = actor.Health(OOS_ACT_WORZAK)
+                        
+0085: 2@ = 1@ // (int)
+0093: 2@ = integer 2@ to_float
+0085: 4@ = 5@ // (int)
+0093: 4@ = integer 4@ to_float                                                
+4@ /= 100.0                     
+0073: 2@ /= 4@ // (float)
+0092: 2@ = float 2@ to_integer
+            
+008A: $TIM_HEALTH = 2@ // (int)
+            
+/////////////////////////////////////
 
 if
 not actor.Dead(PLAYER_ACTOR)
@@ -5943,7 +5995,7 @@ if
 02D8:   actor OOS_ACT_WORZAK current_weapon == 70
     then
     07DD: set_actor OOS_ACT_WORZAK attack_rate 75 // previously known as temper_to  
-    Actor.WeaponAccuracy(OOS_ACT_WORZAK) = 25  
+    Actor.WeaponAccuracy(OOS_ACT_WORZAK) = OOS_ACT_WORZAK_ACCURACY  
     end
 end
 
@@ -5967,7 +6019,7 @@ if
         02D8:   actor OOS_ACT_WORZAK current_weapon == 70
             then
             07DD: set_actor OOS_ACT_WORZAK attack_rate 75 // previously known as temper_to   
-            Actor.WeaponAccuracy(OOS_ACT_WORZAK) = 25 
+            Actor.WeaponAccuracy(OOS_ACT_WORZAK) = OOS_ACT_WORZAK_ACCURACY 
             end
         end    
     end
@@ -5976,6 +6028,12 @@ TEMPVAR_INT = 120
 008D: TEMPVAR_INT = integer TEMPVAR_INT to_float
 0069: TEMPVAR_INT *= GENERAL_FPS_TIMER_DIVIDER2 // (float)
 008C: TEMPVAR_INT = float TEMPVAR_INT to_integer
+if
+TEMPVAR_INT < 1
+then
+TEMPVAR_INT = 1
+end
+
 if and
 0E45: frame_mod TEMPVAR_INT
 051A:   actor OOS_ACT_WORZAK damaged_by_actor PLAYER_ACTOR
@@ -6508,24 +6566,6 @@ if
     00BC: show_text_highpriority GXT v$PHRASE3 time 3@ flag 1  // ~s~Come back between 9:00 and 17:00.
         
     end  
-
-/////////////////////////////////////
-
-0085: 5@ = OOS_ACT_WORZAK_MAX_HP // (int)    
-//5@ = 12000
-1@ = actor.Health(OOS_ACT_WORZAK)
-                        
-0085: 2@ = 1@ // (int)
-0093: 2@ = integer 2@ to_float
-0085: 4@ = 5@ // (int)
-0093: 4@ = integer 4@ to_float                                                
-4@ /= 100.0                     
-0073: 2@ /= 4@ // (float)
-0092: 2@ = float 2@ to_integer
-            
-008A: $TIM_HEALTH = 2@ // (int)
-            
-/////////////////////////////////////
 
 :WORZAK_DIED
 

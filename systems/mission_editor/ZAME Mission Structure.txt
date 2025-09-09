@@ -2298,7 +2298,8 @@ ZAME_CURRENT_OBJ_TYPE_READED == -2
     
     //////////////////////////////////////////////
 
-    {$INCLUDE newopcodes\forallcars}
+//    {$INCLUDE newopcodes\forallcars}
+    {$INCLUDE newopcodes\forallcars_cleoplus}
     
     if
     056E:   car veh defined
@@ -2311,7 +2312,7 @@ ZAME_CURRENT_OBJ_TYPE_READED == -2
         end   
     end
     
-    {$INCLUDE newopcodes\for_end}
+    {$INCLUDE newopcodes\end}
     
     //////////////////////////////////////////////
     
@@ -4911,8 +4912,129 @@ ZAME_CURRENT_OBJ_TYPE_READED == 9
     0AF2: get_float 70@ to_ini_file "me\temp.dat" section v$RACE_FILE key "CAM_POINT_AT_Z2"  
     0085: 0@ = 8@ // (int)
     0@ += 250 
+    0AF0: get_int 1@ from_ini_file "me\temp.dat" section v$RACE_FILE key "FOLLOW_PED_FLAG"
+    if
+    1@ == 1
+    then
+    camera.SetPosition(2@,3@,4@,0.0,0.0,0.0)
+    
+    0AF0: get_int ZAME_ANIM_PED_HANDLE from_ini_file "me\temp.dat" section v$RACE_FILE key "FOR_PED"
+    if
+    ZAME_ANIM_PED_HANDLE < 1
+    then
+    008B: ZAME_ANIM_PED_HANDLE = PLAYER_ACTOR // (int)
+    else
+    
+    ////////////////////////////////ÍÀÕÎÄÈÌ ÖÅËÅÂÎÃÎ ÏÅÄÀ ÀÍÈÌÀÖÈÈ-ÄÅÉÑÒÂÈß ÏÎ IDNAME////////////////////////////////
+    
+    0AF4: ZAME_TEMPVAR_STRING = read_string_from_ini_file "me\temp.dat" section v$RACE_FILE key "FOR_IDNAME"
+    if
+    8846: not  string ZAME_TEMPVAR_STRING empty // v$
+        then
+        
+        //////////////////////////////////////////////////
+        
+        {$INCLUDE newopcodes\forallpeds_cleoplus}
+                
+        if and
+        056D:   actor ped defined
+        87D6: not  ped == PLAYER_ACTOR // @ == $ (int)
+            then
+            0AC6: ZAME_TEMPVAR_STRING3 = label @SUNUDKS_POSITIONS_ARRAY offset          
+            if  
+            0E16: get_extended_char_var ped id "IDNAME" var 1 to ZAME_TEMPVAR_STRING3
+                then
+    //            0D4D: copy_string ZAME_TEMPVAR_STRING3 to ZAME_TEMPVAR_STRING2
+    //            0D4D: copy_string "yes" to 0@
+                0AD3: ZAME_TEMPVAR_STRING2 = format "%s" ZAME_TEMPVAR_STRING3
+                if
+                0D49: 12@ = compare_strings ZAME_TEMPVAR_STRING2 ZAME_TEMPVAR_STRING // IF and SET
+                    then
+                    0085: ZAME_ANIM_PED_HANDLE = ped // (int)
+                    jump to @DO_CAM_PED_FOLLOW
+                    end
+                end               
+            end
+                
+        {$INCLUDE newopcodes\end}
+            
+        //////////////////////////////////////////////////
+        
+        0AD1: show_formatted_text_highpriority "FAILED TO FIND ANIM PED, SETTING PLAYER AS A ANIM PED" time 2000
+        if or
+        $CHEATS_ON == 2 
+        ZAME_TARGETSKIP_MODE > 0
+        then
+        //ass
+        else
+        wait 2000
+        end
+        
+        jump to @ZAME_SKIP_CUM_ACTION
+        
+        end
+        
+    ///////////////////////////////////////////////////////////////////////////////////
+    
+    0AF2: get_float 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "PED_X"
+    0AF2: get_float 3@ from_ini_file "me\temp.dat" section v$RACE_FILE key "PED_Y"
+    0AF2: get_float 4@ from_ini_file "me\temp.dat" section v$RACE_FILE key "PED_Z"                    
+    0AF0: get_int 5@ to_ini_file "me\temp.dat" section v$RACE_FILE key "PED_MODEL"
+    
+    32@ = 0
+    repeat
+    wait 0
+    
+    if
+    32@ > 3000
+    then
+    
+    0AD1: show_formatted_text_highpriority "FAILED TO FIND ANIM PED, SETTING PLAYER AS A ANIM PED" time 2000    
+    if or
+    $CHEATS_ON == 2 
+    ZAME_TARGETSKIP_MODE > 0
+    then
+    //ass
+    else
+    wait 2000
+    end
+    
+    jump to @ZAME_SKIP_CUM_ACTION
+    end
+    
+    //////////////////////////////////////////////////
+    
+    {$INCLUDE newopcodes\forallpeds_cleoplus}
+            
+    if and
+    056D:   actor ped defined
+    87D6: not  ped == PLAYER_ACTOR // @ == $ (int)
+        then
+        0665: get_actor ped model_to 6@
+        if and
+        0EEA: locate_char_distance_to_coordinates ped pos 2@ 3@ 4@ radius 1.0
+        003B:   6@ == 5@  // (int)
+            then
+            0085: ZAME_ANIM_PED_HANDLE = ped // (int)
+            jump to @DO_CAM_PED_FOLLOW
+            end               
+        end
+            
+    {$INCLUDE newopcodes\end}
+        
+    //////////////////////////////////////////////////
+            
+    until false
+    
+    end
+    
+    :DO_CAM_PED_FOLLOW
+    
+    camera.OnPed(ZAME_ANIM_PED_HANDLE,15,2)
+    else
     0936: set_camera 2@ 3@ 4@ position_to 20@ 30@ 40@ time 0@ smooth_transition 1
     0920: point_camera 5@ 6@ 7@ transverse_to 50@ 60@ 70@ time 0@ smooth_transition 1
+    end
     create_thread @REFR_3D
     gosub @ZAME_ENABLE_CUTSCENE_GODMODE
     
@@ -4956,12 +5078,18 @@ ZAME_CURRENT_OBJ_TYPE_READED == 9
     0E8D: is_any_fire_button_pressed 1 
     $CHEATS_ON == 2
     ZAME_TARGETSKIP_MODE > 0
-        then
+        then  
+        
+        0AF0: get_int 1@ from_ini_file "me\temp.dat" section v$RACE_FILE key "FOLLOW_PED_FLAG"
+        if
+        not 1@ == 1    
+        then 
         068D: get_camera_position_to 2@ 3@ 4@
         068E: get_camera_target_point_to 5@ 6@ 7@
         0936: set_camera 2@ 3@ 4@ position_to 20@ 30@ 40@ time 250 smooth_transition 1
-        0920: point_camera 5@ 6@ 7@ transverse_to 50@ 60@ 70@ time 250 smooth_transition 1
+        0920: point_camera 5@ 6@ 7@ transverse_to 50@ 60@ 70@ time 250 smooth_transition 1  
         wait 250
+        end
         
         if
         ZAME_DOING_INTERTARGET_OBJECTIVE_FLAG == 0
@@ -5023,8 +5151,15 @@ ZAME_CURRENT_OBJ_TYPE_READED == 9
         6@ == 15
         6@ == 11
         then
+        
+        0AF0: get_int 1@ from_ini_file "me\temp.dat" section v$RACE_FILE key "FOLLOW_PED_FLAG"
+        if
+        not 1@ == 1    
+        then
         camera.SetPosition(20@,30@,40@,0.0,0.0,0.0)
         camera.PointAt(50@,60@,70@,2)
+        end
+        
         ZAME_CUTSCENE_MODE = 1
         gosub @ZAME_ENABLE_CUTSCENE_GODMODE
         end
@@ -5890,6 +6025,15 @@ ZAME_CURRENT_OBJ_TYPE_READED == 16
         then
         jump to @SHIT_SKIP_TRYRTYRTYR3
         end
+    
+    if or    
+    0D49: 12@ = compare_strings 4@v "heli_follow_ped" // IF and SET
+    0D49: 12@ = compare_strings 4@v "heli_fly_at" // IF and SET
+    0D49: 12@ = compare_strings 4@v "turret_on_car" // IF and SET 
+    0D49: 12@ = compare_strings 4@v "boat_sail_at" // IF and SET 
+        then
+        jump to @SHIT_SKIP_TRYRTYRTYR3
+        end    
         
     if
     0D49: 12@ = compare_strings 4@v "give_weapon" // IF and SET    
@@ -6353,8 +6497,491 @@ ZAME_CURRENT_OBJ_TYPE_READED == 16
             ///////////////////////////////////////////////////////////////////////////////////////////////////////
                 
             end                    
-        end      
+        end 
+                
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////      
     
+    if
+    0D49: 12@ = compare_strings 4@v "heli_fly_at" // IF and SET
+        then
+        gosub @ZAME_FIND_TARGET_CAR
+        if
+        ZAME_TARGET_CAR_HANDLE == -1
+        then
+        jump to @ZAME_SKIP_ANIM_PLAY 
+        end
+        
+        0AF2: get_float 5@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_X"
+        0AF2: get_float 6@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_Y"
+        0AF2: get_float 7@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_Z"
+        0AF2: get_float 8@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_A"
+        
+        if
+        8AF2: not get_float 9@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_SPEED"
+        then
+        9@ = 50.0
+        else
+        0AF2: get_float 9@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_SPEED"
+        end
+        
+//        05D1: AS_actor ZAME_ANIM_PED_HANDLE drive_car ZAME_TARGET_CAR_HANDLE to 5@ 6@ 7@ speed 9@ 3 model #NULL 3  
+        04A2: set_heli ZAME_TARGET_CAR_HANDLE fly_to 5@ 6@ 7@ altitude_between 5.0 and 7@    
+        0AF0: get_int 9@ from_ini_file "me\temp.dat" section v$RACE_FILE key "NO_WAIT_FOR_NEXT_OBJECTIVE"
+        if
+        not 9@ == 1
+            then
+                
+            ///////////////////////////////////////////////////////////////////////////////////////////////////////
+                
+            repeat
+            wait 0
+            
+            if or
+            $CHEATS_ON == 2 
+            ZAME_TARGETSKIP_MODE > 0
+            then            
+            car.PutAt(ZAME_TARGET_CAR_HANDLE,5@,6@,7@)  
+            car.Angle(ZAME_TARGET_CAR_HANDLE) = 8@       
+            end
+                
+            if or
+            actor.Dead(PLAYER_ACTOR)
+            GAME_OVER_FLAG == 1
+            then
+            jump to @KOD_PROVALA_ZAME
+            end
+                    
+            if
+            0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+            then
+                
+            gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+            if
+            ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+            then
+            jump to @KOD_PROVALA_ZAME
+            end
+                
+            end
+                
+            if
+            056D:   actor ZAME_ANIM_PED_HANDLE defined
+                then
+                if
+                0EEB: locate_car_distance_to_coordinates ZAME_TARGET_CAR_HANDLE pos 5@ 6@ 7@ radius 10.0                
+                    then
+                    
+                    //////////////////////////////////////////////////////
+                    
+                    repeat
+                    wait 0
+                    
+                    if or
+                    $CHEATS_ON == 2 
+                    ZAME_TARGETSKIP_MODE > 0
+                    then            
+                    car.SetSpeedInstantly(ZAME_TARGET_CAR_HANDLE,0.0)    
+                    end
+                    
+                    if or
+                    actor.Dead(PLAYER_ACTOR)
+                    GAME_OVER_FLAG == 1
+                    then
+                    jump to @KOD_PROVALA_ZAME
+                    end
+                            
+                    if
+                    0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+                    then
+                        
+                    gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+                    if
+                    ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+                    then
+                    jump to @KOD_PROVALA_ZAME
+                    end
+                        
+                    end
+                    
+                    if
+                    056E:   car ZAME_TARGET_CAR_HANDLE defined
+                        then
+                        if or
+                        01C1:   car ZAME_TARGET_CAR_HANDLE stopped
+                        81C1: not  car ZAME_TARGET_CAR_HANDLE stopped
+                            then
+                            
+                            if or
+                            $CHEATS_ON == 2 
+                            ZAME_TARGETSKIP_MODE > 0
+                            then
+                            jump to @ZAME_SKIP_ANIM_PLAY
+                            end
+                                                        
+                            0AF0: get_int 10@ from_ini_file "me\temp.dat" section v$RACE_FILE key "HARDLOCK_AT_COORDS"
+                            if or                           
+                            10@ == 1
+                            8AF0: not get_int 9@ from_ini_file "me\temp.dat" section v$RACE_FILE key "FOR_IDNAME2"
+                            then
+                            fade 0 250
+                            wait 250
+                            car.PutAt(ZAME_TARGET_CAR_HANDLE,5@,6@,7@)  
+                            car.Angle(ZAME_TARGET_CAR_HANDLE) = 8@      
+                            fade 1 250
+                            wait 250
+                            end
+                            
+                            jump to @ZAME_SKIP_ANIM_PLAY
+                            end
+                        end
+                    
+                    until false
+                    
+                    //////////////////////////////////////////////////////
+                    
+                    jump to @ZAME_SKIP_ANIM_PLAY
+                    end
+                else
+                jump to @ZAME_SKIP_ANIM_PLAY
+                end
+                
+            until false
+                
+            ///////////////////////////////////////////////////////////////////////////////////////////////////////
+                
+            end                    
+        end      
+        
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////      
+    
+    if
+    0D49: 12@ = compare_strings 4@v "heli_follow_ped" // IF and SET
+        then
+        gosub @ZAME_FIND_TARGET_CAR
+        if
+        ZAME_TARGET_CAR_HANDLE == -1
+        then
+        jump to @ZAME_SKIP_ANIM_PLAY 
+        end
+                
+        if
+        8AF2: not get_float 9@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_RADIUS"
+        then
+        9@ = 30.0
+        else
+        0AF2: get_float 9@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_RADIUS"
+        end
+          
+        gosub @ZAME_FIND_TARGET_PED
+        0726: heli ZAME_TARGET_CAR_HANDLE follow_actor ZAME_TARGET_PED_HANDLE follow_car -1 radius 9@
+
+        0AF0: get_int 9@ from_ini_file "me\temp.dat" section v$RACE_FILE key "NO_WAIT_FOR_NEXT_OBJECTIVE"
+        if
+        not 9@ == 1
+            then
+                
+            ///////////////////////////////////////////////////////////////////////////////////////////////////////
+                
+            repeat
+            wait 0
+            
+            if or
+            $CHEATS_ON == 2 
+            ZAME_TARGETSKIP_MODE > 0
+            then            
+            car.PutAt(ZAME_TARGET_CAR_HANDLE,5@,6@,7@)  
+            car.Angle(ZAME_TARGET_CAR_HANDLE) = 8@       
+            end
+                
+            if or
+            actor.Dead(PLAYER_ACTOR)
+            GAME_OVER_FLAG == 1
+            then
+            jump to @KOD_PROVALA_ZAME
+            end
+                    
+            if
+            0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+            then
+                
+            gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+            if
+            ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+            then
+            jump to @KOD_PROVALA_ZAME
+            end
+                
+            end
+                
+            if
+            056D:   actor ZAME_ANIM_PED_HANDLE defined
+                then
+                if
+                0EEB: locate_car_distance_to_coordinates ZAME_TARGET_CAR_HANDLE pos 5@ 6@ 7@ radius 10.0                
+                    then
+                    
+                    //////////////////////////////////////////////////////
+                    
+                    repeat
+                    wait 0
+                    
+                    if or
+                    $CHEATS_ON == 2 
+                    ZAME_TARGETSKIP_MODE > 0
+                    then            
+                    car.SetSpeedInstantly(ZAME_TARGET_CAR_HANDLE,0.0)    
+                    end
+                    
+                    if or
+                    actor.Dead(PLAYER_ACTOR)
+                    GAME_OVER_FLAG == 1
+                    then
+                    jump to @KOD_PROVALA_ZAME
+                    end
+                            
+                    if
+                    0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+                    then
+                        
+                    gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+                    if
+                    ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+                    then
+                    jump to @KOD_PROVALA_ZAME
+                    end
+                        
+                    end
+                    
+                    if
+                    056E:   car ZAME_TARGET_CAR_HANDLE defined
+                        then
+                        if or
+                        01C1:   car ZAME_TARGET_CAR_HANDLE stopped
+                        81C1: not  car ZAME_TARGET_CAR_HANDLE stopped
+                            then
+                            
+                            if or
+                            $CHEATS_ON == 2 
+                            ZAME_TARGETSKIP_MODE > 0
+                            then
+                            jump to @ZAME_SKIP_ANIM_PLAY
+                            end
+                                                        
+                            0AF0: get_int 10@ from_ini_file "me\temp.dat" section v$RACE_FILE key "HARDLOCK_AT_COORDS"
+                            if or                           
+                            10@ == 1
+                            8AF0: not get_int 9@ from_ini_file "me\temp.dat" section v$RACE_FILE key "FOR_IDNAME2"
+                            then
+                            fade 0 250
+                            wait 250
+                            car.PutAt(ZAME_TARGET_CAR_HANDLE,5@,6@,7@)  
+                            car.Angle(ZAME_TARGET_CAR_HANDLE) = 8@      
+                            fade 1 250
+                            wait 250
+                            end
+                            
+                            jump to @ZAME_SKIP_ANIM_PLAY
+                            end
+                        end
+                    
+                    until false
+                    
+                    //////////////////////////////////////////////////////
+                    
+                    jump to @ZAME_SKIP_ANIM_PLAY
+                    end
+                else
+                jump to @ZAME_SKIP_ANIM_PLAY
+                end
+                
+            until false
+                
+            ///////////////////////////////////////////////////////////////////////////////////////////////////////
+                
+            end                    
+        end   
+        
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////         
+    
+    if
+    0D49: 12@ = compare_strings 4@v "turret_on_car" // IF and SET
+        then
+        gosub @ZAME_FIND_TARGET_CAR
+        if
+        ZAME_TARGET_CAR_HANDLE == -1
+        then
+        jump to @ZAME_SKIP_ANIM_PLAY 
+        end
+                                  
+        0470: 1@ = actor ZAME_ANIM_PED_HANDLE current_weapon
+        0AF2: get_float 5@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TURRET_X_OFFSET"
+        0AF2: get_float 6@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TURRET_Y_OFFSET"
+        0AF2: get_float 7@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TURRET_Z_OFFSET"
+        06A7: put_actor ZAME_ANIM_PED_HANDLE into_turret_on_car ZAME_TARGET_CAR_HANDLE at_car_offset 5@ 6@ 7@ position 1 shooting_angle 360.0 360.0 with_weapon 1@
+        
+        if
+        07D6:   ZAME_ANIM_PED_HANDLE == PLAYER_ACTOR // @ == $ (int)
+        then
+        STORY_DRIVEBY_NO_RETURN_FLAG = 1
+        end
+        
+        end 
+        
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////      
+    
+    if
+    0D49: 12@ = compare_strings 4@v "boat_sail_at" // IF and SET
+        then
+        gosub @ZAME_FIND_TARGET_CAR
+        if
+        ZAME_TARGET_CAR_HANDLE == -1
+        then
+        jump to @ZAME_SKIP_ANIM_PLAY 
+        end
+        
+        0AF2: get_float 5@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_X"
+        0AF2: get_float 6@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_Y"
+        0AF2: get_float 7@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_Z"
+        0AF2: get_float 8@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_A"
+        
+        if
+        8AF2: not get_float 9@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_SPEED"
+        then
+        9@ = 50.0
+        else
+        0AF2: get_float 9@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_SPEED"
+        end
+         
+        02D3: boat ZAME_TARGET_CAR_HANDLE sail_to 5@ 6@ 0.0
+        02DB: set_boat ZAME_TARGET_CAR_HANDLE speed_to 9@
+        0AF0: get_int 9@ from_ini_file "me\temp.dat" section v$RACE_FILE key "NO_WAIT_FOR_NEXT_OBJECTIVE"
+        if
+        not 9@ == 1
+            then
+                
+            ///////////////////////////////////////////////////////////////////////////////////////////////////////
+                
+            repeat
+            wait 0
+            
+            if or
+            $CHEATS_ON == 2 
+            ZAME_TARGETSKIP_MODE > 0
+            then            
+            car.PutAt(ZAME_TARGET_CAR_HANDLE,5@,6@,7@)  
+            car.Angle(ZAME_TARGET_CAR_HANDLE) = 8@       
+            end
+                
+            if or
+            actor.Dead(PLAYER_ACTOR)
+            GAME_OVER_FLAG == 1
+            then
+            jump to @KOD_PROVALA_ZAME
+            end
+                    
+            if
+            0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+            then
+                
+            gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+            if
+            ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+            then
+            jump to @KOD_PROVALA_ZAME
+            end
+                
+            end
+                
+            if
+            056D:   actor ZAME_ANIM_PED_HANDLE defined
+                then
+                if
+                0EEB: locate_car_distance_to_coordinates ZAME_TARGET_CAR_HANDLE pos 5@ 6@ 7@ radius 10.0                
+                    then
+                    
+                    //////////////////////////////////////////////////////
+                    
+                    repeat
+                    wait 0
+                    
+                    if or
+                    $CHEATS_ON == 2 
+                    ZAME_TARGETSKIP_MODE > 0
+                    then            
+                    car.SetSpeedInstantly(ZAME_TARGET_CAR_HANDLE,0.0)    
+                    end
+                    
+                    if or
+                    actor.Dead(PLAYER_ACTOR)
+                    GAME_OVER_FLAG == 1
+                    then
+                    jump to @KOD_PROVALA_ZAME
+                    end
+                            
+                    if
+                    0AB0:   key_pressed ZAME_RETURN_OR_RESTART_KEY
+                    then
+                        
+                    gosub @ZAME_GET_BACK_IN_EDITOR_CONFIRM
+                    if
+                    ZAME_GET_BACK_IN_EDITOR_CONFIRM_FLAG >= 1
+                    then
+                    jump to @KOD_PROVALA_ZAME
+                    end
+                        
+                    end
+                    
+                    if
+                    056E:   car ZAME_TARGET_CAR_HANDLE defined
+                        then
+                        if or
+                        01C1:   car ZAME_TARGET_CAR_HANDLE stopped
+                        81C1: not  car ZAME_TARGET_CAR_HANDLE stopped
+                            then
+                            
+                            if or
+                            $CHEATS_ON == 2 
+                            ZAME_TARGETSKIP_MODE > 0
+                            then
+                            jump to @ZAME_SKIP_ANIM_PLAY
+                            end
+                                                        
+                            0AF0: get_int 10@ from_ini_file "me\temp.dat" section v$RACE_FILE key "HARDLOCK_AT_COORDS"
+                            if or                           
+                            10@ == 1
+                            8AF0: not get_int 9@ from_ini_file "me\temp.dat" section v$RACE_FILE key "FOR_IDNAME2"
+                            then
+                            fade 0 250
+                            wait 250
+                            car.PutAt(ZAME_TARGET_CAR_HANDLE,5@,6@,7@)  
+                            car.Angle(ZAME_TARGET_CAR_HANDLE) = 8@      
+                            fade 1 250
+                            wait 250
+                            end
+                            
+                            jump to @ZAME_SKIP_ANIM_PLAY
+                            end
+                        end
+                    
+                    until false
+                    
+                    //////////////////////////////////////////////////////
+                    
+                    jump to @ZAME_SKIP_ANIM_PLAY
+                    end
+                else
+                jump to @ZAME_SKIP_ANIM_PLAY
+                end
+                
+            until false
+                
+            ///////////////////////////////////////////////////////////////////////////////////////////////////////
+                
+            end                    
+        end      
+        
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////                    
+                
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
     
     if
@@ -6792,6 +7419,18 @@ ZAME_CURRENT_OBJ_TYPE_READED == 16
     0D49: 12@ = compare_strings 4@v "clear_task" // IF and SET
     then
     0687: clear_actor ZAME_ANIM_PED_HANDLE task
+    
+    if
+    0A32:  actor ZAME_ANIM_PED_HANDLE on_turret_of_car
+    then
+    0465: remove_actor ZAME_ANIM_PED_HANDLE from_turret_mode
+    if
+    07D6:   ZAME_ANIM_PED_HANDLE == PLAYER_ACTOR // @ == $ (int)
+        then
+        STORY_DRIVEBY_NO_RETURN_FLAG = 0
+        end
+    end
+    
     jump to @ZAME_SKIP_ANIM_PLAY
     end
     
@@ -8954,7 +9593,26 @@ ZAME_CURRENT_OBJ_TYPE_READED == 24
 
     repeat
     wait 0            
-    until 056E:   car ZAME_GLOB_CAR_ADVENTURE_CAR defined 
+    until 056E:   car ZAME_GLOB_CAR_ADVENTURE_CAR defined
+    
+    11@ = 1000
+    
+    if or
+    car.Id(ZAME_GLOB_CAR_ADVENTURE_CAR) == RHINO_MODEL_NUMBER
+    car.Id(ZAME_GLOB_CAR_ADVENTURE_CAR) == #SEASPAR
+    car.Id(ZAME_GLOB_CAR_ADVENTURE_CAR) == #RUSTLER
+    then
+    11@ = 5000
+    end
+            
+    if or
+    car.Id(ZAME_GLOB_CAR_ADVENTURE_CAR) == ARMY_HUNTER_MODEL_NUMBER
+    car.Id(ZAME_GLOB_CAR_ADVENTURE_CAR) == #HYDRA
+    then
+    11@ = 10000
+    end
+                   
+    car.Health(ZAME_GLOB_CAR_ADVENTURE_CAR) = 11@ 
     
     if
     ZAME_SURV_LAUNCH_FLAG == 1
@@ -9053,6 +9711,25 @@ ZAME_CURRENT_OBJ_TYPE_READED == 24
     repeat
     wait 0            
     until 056E:   car ZAME_GLOB_CAR_ADVENTURE_CAR defined
+    
+    11@ = 1000
+    
+    if or
+    car.Id(ZAME_GLOB_CAR_ADVENTURE_CAR) == RHINO_MODEL_NUMBER
+    car.Id(ZAME_GLOB_CAR_ADVENTURE_CAR) == #SEASPAR
+    car.Id(ZAME_GLOB_CAR_ADVENTURE_CAR) == #RUSTLER
+    then
+    11@ = 5000
+    end
+            
+    if or
+    car.Id(ZAME_GLOB_CAR_ADVENTURE_CAR) == ARMY_HUNTER_MODEL_NUMBER
+    car.Id(ZAME_GLOB_CAR_ADVENTURE_CAR) == #HYDRA
+    then
+    11@ = 10000
+    end
+                   
+    car.Health(ZAME_GLOB_CAR_ADVENTURE_CAR) = 11@ 
     
     008B: ZAME_ADVENTURE_CAR_UKAZATEL = ZAME_GLOB_CAR_ADVENTURE_CAR // (int)
 
@@ -11017,7 +11694,16 @@ jump @UDACHNO_ZAME
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-:ZAME_FIND_TARGET_CAR 
+:ZAME_FIND_TARGET_CAR
+
+ZAME_TEMPVAR_STRING = ""
+
+//0AD1: show_formatted_text_highpriority "ZAME_FIND_TARGET_CAR" time 2000
+//wait 2000
+//0AD1: show_formatted_text_highpriority "OBJ IS %s" time 2000 v$RACE_FILE
+//wait 2000
+//0AD1: show_formatted_text_highpriority "FOR_IDNAME2 is %s" time 2000 ZAME_TEMPVAR_STRING
+//wait 2000      
 
 //cinema.Widescreen(0)
 
@@ -11118,6 +11804,9 @@ if
 0AF2: get_float 11@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_CAR_Y" 
 0AF2: get_float 12@ from_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_CAR_Z"                    
 0AF0: get_int 3@ to_ini_file "me\temp.dat" section v$RACE_FILE key "TARGET_CAR_MODEL"
+
+
+wait 2000 
     
 32@ = 0
 :benis_monke_123
@@ -11134,11 +11823,13 @@ end
     
 //////////////////////////////////////////
 
-{$INCLUDE newopcodes\forallcars}
+//{$INCLUDE newopcodes\forallcars}
+{$INCLUDE newopcodes\forallcars_cleoplus}
     
 if
 056E:   car veh defined
     then
+//    0AD1: show_formatted_text_highpriority "TARGET_CAR_X %f, TARGET_CAR_Y %f, TARGET_CAR_Z %f, TARGET_CAR_MODEL %d" time 2000 10@ 11@ 12@ 13@
     if and
     0EEB: locate_car_distance_to_coordinates veh pos 10@ 11@ 12@ radius 5.0
     car.Model(veh) == 3@
@@ -11148,13 +11839,13 @@ if
         end   
     end
     
-{$INCLUDE newopcodes\for_end}
+{$INCLUDE newopcodes\end}
     
 //////////////////////////////////////////
             
 jump to @benis_monke_123   
 
-return
+return             
 
 :ZAME_FIND_TARGET_PED
 
