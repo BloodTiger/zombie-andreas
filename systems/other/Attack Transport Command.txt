@@ -1,0 +1,93 @@
+:ATTACK_CAR_COMMAND
+thread 'ATT_CAR'
+
+for 2@ = 0 to 5
+
+092B: 3@ = group PLAYER_GROUP member 2@
+if and
+056D:   actor 3@ defined
+87D6: not  3@ == COOP_ACTOR // @ == $ (int)
+    then
+        
+    if
+    $MISSION14_ACTIVE == 1
+        then
+        if
+        not 2@ == 1
+        jf @PLA_TEAM_SKIP_SHOT_AT_AIMED_TARGET_CAR
+        end
+            
+    if
+    $QUEST_TYPE == 9
+        then
+        if
+        87D6: not  3@ == $VERSUS_PEOPLE[1] // @ == $ (int)
+        jf @PLA_TEAM_SKIP_SHOT_AT_AIMED_TARGET_CAR
+        end        
+                
+    if and
+    not actor.Dead(3@)
+    not actor.Animation(3@) == "CAR_sitpLO"
+    044B:   actor 3@ on_foot
+        then
+        text.ClearAll()
+        gosub @RANDOM_DIALOG_REDIRECT_TARGET
+            
+        v$NAME1 = "N_ME"
+        0665: get_actor PLAYER_ACTOR model_to 1@ 
+        if
+        1@ > 10000
+        then
+        v$NAME1 = "N_"
+        end
+        0AD3: v$NAME2 = format "%d" 1@
+        098B: v$NAME3 = v$NAME1 + v$NAME2 // all string variables
+            
+        if
+        FREEMODE_CUSTOM_NAME == 1 
+        then
+        06D1: v$NAME3 = "F_NAME" // v$ = string
+        end
+            
+        09FD: get_gxt_string v$COMMAND3 width_to 8@  // ~k~~PED_SPRINT~ Select
+        0093: 8@ = integer 8@ to_float
+        8@ *= 8.0
+        0092: 8@ = float 8@ to_integer
+            
+        if
+        $PHRASES_OFF_FLAG == 0
+        then
+        0384: show_text_1string GXT v$COMMAND3 string v$NAME3 time 8@ 1
+        end
+            
+        if
+        056D:   actor $VOICE_ACTOR defined
+        then
+        05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 224
+        end
+                            
+        if and
+        not actor.Dead(3@)
+        not actor.Animation(3@) == "CAR_sitpLO"
+        044B:   actor 3@ on_foot                  
+            then        
+            0647: AS_actor 3@ clear_look_task
+            05B9: AS_actor 3@ stay_idle 25 ms 
+            wait 25
+            
+            if and
+            056D:   actor 3@ defined
+            056D:   actor 0@ defined
+            then
+            05E2: AS_actor 3@ kill_actor 0@   
+            end
+                
+            end
+        
+        :PLA_TEAM_SKIP_SHOT_AT_AIMED_TARGET_CAR 
+                
+        end                
+            
+end  
+
+end_thread

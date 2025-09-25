@@ -1323,6 +1323,10 @@ ZOMBEGEDDON_CARRER_STEAL_OPPONENT_CAR_NUM = $240
 ZOMBEGEDDON_CARRER_DIFFICULTY = $241
 TEMPVAR_INT3 = $242
 ZOMBEGEDDON_MAP_RANK = $243
+TEMPVAR_STRING = v$244
+REALLY_READING_NOW_NOTE_FLAG = $248
+EASIER_SHIT_LEVEL = $249
+WITCH_ONESHOT_HP = $250
 //0 LEFT
 end     
 
@@ -3929,6 +3933,20 @@ GAS_WASTE_SPEED_DIVIDER = 1.0
 0AF3: write_float GAS_WASTE_SPEED_DIVIDER to_ini_file "saves/owngame/owngame.ini" section "DIFF" key "GAS_WASTE_SPEED_DIVIDER"
 end
 
+if
+8AF0: not EASIER_SHIT_LEVEL = get_int_from_ini_file "saves/owngame/owngame.ini" section "DIFF" key "EASIER_SHIT_LEVEL"
+then
+EASIER_SHIT_LEVEL = 0
+0AF1: write_int EASIER_SHIT_LEVEL to_ini_file "saves/owngame/owngame.ini" section "DIFF" key "EASIER_SHIT_LEVEL"
+end
+
+if
+8AF0: not WITCH_ONESHOT_HP = get_int_from_ini_file "saves/owngame/owngame.ini" section "DIFF" key "WITCH_ONESHOT_HP"
+then
+WITCH_ONESHOT_HP = 0
+0AF1: write_int WITCH_ONESHOT_HP to_ini_file "saves/owngame/owngame.ini" section "DIFF" key "WITCH_ONESHOT_HP"
+end
+
 RANDOM_STALKER_TIME1 = 240000
 0086: RANDOM_STALKER_TIME1 = RANDOM_STALKER_TIME1 // (float)
 006D: RANDOM_STALKER_TIME1 *= 0@ // (float)
@@ -4467,6 +4485,9 @@ jump to @RADIO_NOT_NEAR_ANY_SAVE_PLACE
 
 0AF0: 0@ = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section "SETTINGS" key "COUNT"
 
+0AD1: show_formatted_text_highpriority "BASES COUNT %d" time 500 0@
+wait 500
+
 if
 0@ < 0
 then
@@ -4478,10 +4499,13 @@ for $SAVE_PLACE_NUMBER = 0 to 0@
 0AF2: $LIMIT_X1 = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section v$SND2_FILE key "MARK_X"
 0AF2: $LIMIT_Y1 = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section v$SND2_FILE key "MARK_Y"
 0AF2: $LIMIT_Z1 = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section v$SND2_FILE key "MARK_Z"
+0AD1: show_formatted_text_highpriority "BASE %d mark %f %f %f" time 500 $SAVE_PLACE_NUMBER $LIMIT_X1 $LIMIT_Y1 $LIMIT_Z1
+wait 500
 if
-00FE:   actor PLAYER_ACTOR sphere 0 near_point $LIMIT_X1 $LIMIT_Y1 $LIMIT_Z1 radius 200.0 200.0 20.0
+00FE:   actor PLAYER_ACTOR sphere 0 near_point $LIMIT_X1 $LIMIT_Y1 $LIMIT_Z1 radius 200.0 200.0 2000.0
     then
-    
+    0AD1: show_formatted_text_highpriority "near BASE NUM %d" time 500 $SAVE_PLACE_NUMBER
+    wait 500
     1@ = 69692828
     if
     1@ == 69692828
@@ -4575,6 +4599,8 @@ if
         0AF3: write_float 4@ to_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section v$SND2_FILE key v$FP_FILE
         0AD3: v$FP_FILE = format "ACTOR%d_A" 10@
         0AF3: write_float 5@ to_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section v$SND2_FILE key v$FP_FILE
+        0AD3: v$FP_FILE = format "ACTOR%d_ID" 10@
+        0AF1: write_int 7 to_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section v$SND2_FILE key v$FP_FILE
         
 //        03BC: 28@ = create_sphere_at 2@ 3@ 4@ radius 5.0
         //018A: 28@ = create_checkpoint_at 2@ 3@ 4@
@@ -4710,6 +4736,8 @@ if
     end
 
 end
+
+return
 
 :READ_FUCKING_CUSTOM_HOLD_MAP_INFO
 
@@ -4922,7 +4950,15 @@ if
         0AF2: 7@ = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\MARKERS.ini" section v$SND2_FILE key "MARK_Z"
         0AF0: 8@ = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\MARKERS.ini" section v$SND2_FILE key "ICON"
         create_thread @CM_MRKW 3 3@ 4@ 5@ 6@ 7@ 8@ 0 0 2@
-        end            
+        end
+    if
+    0AF0: 3@ = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\MARKERS.ini" section v$SND2_FILE key "ATTACHED_TO_NEARCLOSE"
+        then
+        0AF2: 5@ = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\MARKERS.ini" section v$SND2_FILE key "MARK_X"
+        0AF2: 6@ = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\MARKERS.ini" section v$SND2_FILE key "MARK_Y"
+        0AF2: 7@ = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\MARKERS.ini" section v$SND2_FILE key "MARK_Z"
+        create_thread @CM_MRKW 4 3@ 4@ 5@ 6@ 7@ 8@ 0 0 2@
+        end                
     end
     
     end
@@ -4940,7 +4976,11 @@ $GAMEMODE_VERSUS == 0
     then   
     
     for 0@ = 0 to $TRADERS_COUNT
-    $TRADER_ICON[0@] = Marker.CreateIconWithoutSphere(52, $TRADER_X[0@], $TRADER_Y[0@], $TRADER_Z[0@])
+    if
+    $TRADER_Z[0@] < 1000.0
+        then
+        $TRADER_ICON[0@] = Marker.CreateIconWithoutSphere(52, $TRADER_X[0@], $TRADER_Y[0@], $TRADER_Z[0@])
+        end
     end
     
     end
@@ -6373,6 +6413,7 @@ return
 {$INCLUDE systems/other/Custom Camp Gate.txt}
 {$INCLUDE systems/Loop 5.txt}
 {$INCLUDE systems/camp/Endings/OOS Worzak Attack Teammates.txt}
+{$INCLUDE systems/other/Attack Transport Command.txt}
                                                         
 {$INCLUDE storylineold/missions/STORYLINE THREADS.txt}
 {$INCLUDE storylineold/missions2/CARL STORYLINE THREADS.txt}
