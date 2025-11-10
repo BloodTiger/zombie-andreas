@@ -555,7 +555,14 @@ $SAVESTATUS == 0
     33@ = 0
     end
     
-    $SPAWN_WITCH_FLAG = 1        
+    $SPAWN_WITCH_FLAG = 1
+    
+    if and
+    REALISM_MODE == 1
+    8846: not  string v$OBJECTIVE empty // v$
+    then
+    0D4D: copy_string v$OBJECTIVE to v$252
+    end        
     
     while 00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA NEST_ZONE_X1 NEST_ZONE_Y1 NEST_ZONE_Z1 cornerB NEST_ZONE_X2 NEST_ZONE_Y2 NEST_ZONE_Z2
     wait 1
@@ -828,6 +835,25 @@ $SAVESTATUS == 0
         0AF1: write_int 1@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_NESTS_CLEARED"        
                 
         /////////////////////////////////////////////////////////////////////////////
+        TEMPVAR_INT2 = 0 //гнезд больше не осталось
+         
+        for TEMPVAR_INT = 0 to NESTS_NUMBER //сканируем все метки
+        if
+        075C:   marker $BANDIT_MARKER[TEMPVAR_INT] enabled //метка есть       
+            then
+            TEMPVAR_INT2 = 1 //какие-то гнезда еще остались
+            end
+        end
+        
+        if
+        TEMPVAR_INT2 == 0 //маркеров на карте нет - зараженка зачищена
+        then         
+        //Засчитываем, что зараженка зачищена, ибо я больше не могу нахуй
+        0085: NESTS_DESTRYOED = NESTS_NUMBER // (int)
+        end
+        
+        /////////////////////////////////////////////////////////////////////////////
+        
         else
         if and
         8716: not  object_model #GRASSPLANT in_object_group_at 1@ 2@ 3@ radius 2.5 destroyed 0 1
@@ -897,6 +923,7 @@ $SAVESTATUS == 0
     0ADC:   test_cheat "NESTHELP"
         then
         $CHEAT_CODE_ACTIVATED = 1
+        wait 250
         0AD1: show_formatted_text_highpriority "NESTS_DESTROYED %d / NESTS_NUMBER %d" time 2000 NESTS_DESTRYOED NESTS_NUMBER    
         wait 2000 
         
@@ -927,11 +954,34 @@ $SAVESTATUS == 0
         GODMODE_FLAG2 = 0
         
         end
+        
+    if
+    REALISM_MODE == 1
+    then
+    v$OBJECTIVE = "GME1632"
+    OBJECTIVE_NUMBER_TEXT_FLAG = 1
+    008A: OBJECTIVE_NUMBER_TEXT_IS = NESTS_DESTRYOED // (int)
+    OBJECTIVE_NUMBER_TEXT_IS += 1
+    008A: OBJECTIVE_NUMBER_TEXT_IS2 = NESTS_NUMBER
+    OBJECTIVE_NUMBER_TEXT_IS2 += 1
+    end    
     
     if
     002D:   NESTS_DESTRYOED >= NESTS_NUMBER  // (int)
         then
         :NEST_DESTROY_BY_CHEAT
+        
+        if
+        REALISM_MODE == 1
+        then
+        OBJECTIVE_NUMBER_TEXT_FLAG = 0        
+        if
+        8846: not  string v$252 empty // v$
+            then
+            0D4D: copy_string v$252 to v$OBJECTIVE
+            end        
+        end
+        
         WITCHES_TO_SPAWN_COUNT = 0        
         PLAYER_IN_NEST_FLAG = 0
         
@@ -1208,6 +1258,17 @@ $SAVESTATUS == 0
     end
     
     /////////////////////////////////////////////////////////////
+    
+    if
+    REALISM_MODE == 1
+    then
+    OBJECTIVE_NUMBER_TEXT_FLAG = 0
+    if
+    8846: not  string v$252 empty // v$
+        then
+        0D4D: copy_string v$252 to v$OBJECTIVE
+        end  
+    end
     
     WITCHES_TO_SPAWN_COUNT = 0
     PLAYER_IN_NEST_FLAG = 0
@@ -1880,7 +1941,7 @@ then
 005E: $RNDM_HOUSE_BANKA[157] += 1@  // (int)
 end
 if
-$RNDM_HOUSE_BANKA[158] >= 30
+$RNDM_HOUSE_BANKA[158] >= 60 //fernando moment
 then
 005E: $RNDM_HOUSE_BANKA[158] += 1@  // (int)
 end

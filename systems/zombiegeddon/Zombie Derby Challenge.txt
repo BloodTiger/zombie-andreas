@@ -116,15 +116,59 @@ CARMA_VOICE_FINALLAP = $AMM_WEAPON[45]
 CARMA_VOICE_FYEAH1 = $AMM_WEAPON[46]
 CARMA_VOICE_FYEAH2 = $AMM_WEAPON[47]
 CARMA_VOICE_FYEAH3 = $AMM_WEAPON[48]
-CARMA_VOICE_FYEAH4 = $AMM_WEAPON[49]  
+CARMA_VOICE_FYEAH4 = $AMM_WEAPON[49] 
+
+/////////////Звуки интерфейса 2
+CARMA_BONUS_BUYPART = $258
+CARMA_BONUS_RANKUP = $259
 end
 
 :DRB_ZOM
 thread 'DRB_ZOM'
 
+if
+ZOMBEGEDDON_CARRER_MODE == 0
+then
+ZOMBEGEDDON_CARRER_DIFFICULTY = 3
+ZOMBIEGEDDON_REPAIR_COST = 500
+ZOMBIEGEDDON_RECOVERY_COST = 2000
+end
+
+if
+ZOMBEGEDDON_CARRER_DIFFICULTY == 0
+then 
+ZOMBIEGEDDON_UPGRADE_COST = 100000
+ZOMBIEGEDDON_RECOVERY_COST = 1000
+ZOMBIEGEDDON_REPAIR_COST = 250
+end
+        
+if
+ZOMBEGEDDON_CARRER_DIFFICULTY == 1
+then 
+ZOMBIEGEDDON_UPGRADE_COST = 125000
+ZOMBIEGEDDON_RECOVERY_COST = 2000
+ZOMBIEGEDDON_REPAIR_COST = 500
+end
+        
+if
+ZOMBEGEDDON_CARRER_DIFFICULTY == 2    
+then 
+ZOMBIEGEDDON_UPGRADE_COST = 150000
+ZOMBIEGEDDON_RECOVERY_COST = 4000
+ZOMBIEGEDDON_REPAIR_COST = 625
+end
+
+//if
+//
+//then
+//gosub @VIDPLAYER_GIF
+//end
+
 0629: change_integer_stat 252 to 8
 0AF1: write_int 8 to_ini_file "saves/ZACM.set" section "SCR" key "GAMEMODE_AUTOSELECT_NUMBER"
 0AF1: write_int ZOMBIEGEDDON_GAME_TYPE to_ini_file "saves/ZACM.set" section "SCR" key "GAMEMODE_AUTOSELECT_PARAM"
+
+ZOMBEGEDDON_CARRER_STEAL_OPPONENT_CAR_NUM = -1
 
 if
 ZOMBEGEDDON_TOURNAMENT == 0
@@ -282,8 +326,19 @@ not ZOMBIEGEDDON_GAME_TYPE == 3
     
     005F: ZOMBIEGEDDON_GAMESPEED_MULT += 1@  // (float)
     end
-    
+        
 end
+
+if
+ZOMBEGEDDON_CARRER_MODE == 1
+    then    
+    ZOMBIEGEDDON_GAMESPEED_MULT = 0.85
+    0AF0: 0@ = get_int_from_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section "INFO" key "RANK"
+    0093: 0@ = integer 0@ to_float
+    0@ /= 450.0        
+    0067: ZOMBIEGEDDON_GAMESPEED_MULT -= 0@ // (float)   
+    create_thread @PLD_TM7                        
+    end   
 
 create_thread @PLD_TM6
 
@@ -334,13 +389,28 @@ $ALLOW_PLAYER_SLOWMOTION = 0
 $SAVESTATUS = 1
 actor.LockInCurrentPosition(PLAYER_ACTOR,true)
 
-if
+if and
 CARMA_REPLAY_FLAG == 0
+not ZOMBEGEDDON_CARRER_MODE == 1
 then
 gosub @DERBY_RANDOM_PLAYER_MODEL
 else
 
 0AF0: $RANDOM_MODE_MODEL = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\9.dat" section "INFO" key "ACTOR_MODEL"
+
+if
+ZOMBEGEDDON_CARRER_MODE == 1
+    then
+    
+    if
+    ANNA_FLAG == 1
+    then
+    $RANDOM_MODE_MODEL = 12562
+    else
+    $RANDOM_MODE_MODEL = 12563
+    end
+    
+    end
 
 model.Load($RANDOM_MODE_MODEL)
 mload
@@ -824,7 +894,16 @@ then
 $ALLOW_SURVIVERS_CAMP = 0
 $ALLOW_TRADERS = 0
 create_thread @GTS_SWT
-end                                             
+end                
+
+if and
+UNITED_MAP == 1
+STORIES_MAP == 0
+then
+$ALLOW_SURVIVERS_CAMP = 0
+$ALLOW_TRADERS = 0
+create_thread @GTS_SWT  
+end                           
 
 CARMA_GLOB_OPPONENTS_WRECKED = 0
 CARMA_GLOB_DERBY_KILLED_PLAYER = 0
@@ -1208,7 +1287,7 @@ end
 if
 UNITED_MAP == 0
 then
-0@ = #MALE01
+0@ = 12482
 else
 
 if
@@ -1238,6 +1317,12 @@ end
 end
 
 /////////////////////////////////////////////////////
+
+if
+CUSTOM_MAP_FLAG == 1
+then
+0@ = #MALE01
+end
 
 while not model.Available(0@)
 wait 0
@@ -1378,6 +1463,68 @@ UNITED_MAP == 1
 then
 car.SetImmunities(CARMA_GLOB_DERBY_PLAYER_CAR,0,0,1,0,0)
 end      
+
+if
+ZOMBEGEDDON_CARRER_CAR_ENGINE_LEVEL > 0
+    then
+        
+    for 1@ = 1 to $236
+    0A97: 2@ = car CARMA_GLOB_DERBY_PLAYER_CAR struct 
+    0A8E: 2@ = 2@ + CAR_ENGINE_POWER_PLUS_STRUCT // int
+    0A8D: 0@ = read_memory 2@ size 4 virtual_protect 1    
+    0@ += 0.325                                 
+    0A8C: write_memory 2@ size 4 value 0@ virtual_protect 1 
+    end
+    
+    0@ = actor.CurrentCar(PLAYER_ACTOR)    
+    0A97: 1@ = car 0@ struct 
+    0A8E: 2@ = 1@ + CAR_ENGINE_POWER_PLUS_STRUCT // int 
+    0A8D: 1@ = read_memory 2@ size 4 virtual_protect 1
+    0088: PL_CAR_ENGINE_POWER = 1@ // (float)
+        
+    if and
+    PL_CAR_ENGINE_POWER < 0.65
+    PL_CAR_ENGINE_POWER > 0.324
+    then
+    PL_CAR_MAX_SPEED = 58.10
+    end
+                
+    if and
+    PL_CAR_ENGINE_POWER < 0.975
+    PL_CAR_ENGINE_POWER > 0.64
+    then
+    PL_CAR_MAX_SPEED = 66.94
+    end
+                
+    if and
+    PL_CAR_ENGINE_POWER < 1.3
+    PL_CAR_ENGINE_POWER > 0.974
+    then
+    PL_CAR_MAX_SPEED = 75.79
+    end
+                
+    if
+    PL_CAR_ENGINE_POWER > 1.29
+    then
+    PL_CAR_MAX_SPEED = 88.42
+    end        
+        
+    end  
+    
+if
+ZOMBEGEDDON_CARRER_CAR_ARMOUR_LEVEL > 0
+    then
+    
+    for 0@ = 1 to $237
+    2@ = car.Health(CARMA_GLOB_DERBY_PLAYER_CAR)
+    2@ += 150
+    car.Health(CARMA_GLOB_DERBY_PLAYER_CAR) = 2@
+    end
+        
+    008A: ZOMBEGEDDON_CARRER_PLAYER_CAR_HEALTH_MAX = 2@ // (int)
+    else
+    ZOMBEGEDDON_CARRER_PLAYER_CAR_HEALTH_MAX = 1000
+    end    
 
 fade 1 1000
 $HUD_REMOVE = 0
@@ -1695,7 +1842,31 @@ then
 if
 not ZOMBIEGEDDON_GAME_TYPE == 3
 then
+
+if
+ZOMBEGEDDON_CARRER_DIFFICULTY == 0
+then
+CARMA_GLOB_TIME_VAR = 90000
+end
+
+if
+ZOMBEGEDDON_CARRER_DIFFICULTY == 1
+then
 CARMA_GLOB_TIME_VAR = 60000
+end
+
+if
+ZOMBEGEDDON_CARRER_DIFFICULTY == 2
+then
+CARMA_GLOB_TIME_VAR = 30000
+end
+
+if
+ZOMBEGEDDON_CARRER_DIFFICULTY == 3 //not carrer mode
+then
+CARMA_GLOB_TIME_VAR = 45000
+end
+
 else
 008B: 0@ = CARMA_GLOB_RACE_TOTAL_ZOMBIES // (int)
 0@ *= 900
@@ -2015,11 +2186,57 @@ for 2@ = 0 to 19
             if and
             not ZOMBIEGEDDON_GAME_TYPE == 2
             not ZOMBIEGEDDON_GAME_TYPE == 3
-            then            
+            then                         
+            
+            if
+            ZOMBEGEDDON_CARRER_DIFFICULTY == 0
+            then
+            CARMA_GLOB_TIME_VAR += 8000
+            end
+            
+            if
+            ZOMBEGEDDON_CARRER_DIFFICULTY == 1
+            then
+            CARMA_GLOB_TIME_VAR += 6000
+            end           
+            
+            if
+            ZOMBEGEDDON_CARRER_DIFFICULTY == 2
+            then
             CARMA_GLOB_TIME_VAR += 2500
             end
             
-            CARMA_GLOB_DERBY_CREDITS += 250                
+            if
+            ZOMBEGEDDON_CARRER_DIFFICULTY == 3 //not carrer mode
+            then
+            CARMA_GLOB_TIME_VAR += 2000
+            end
+            
+            end
+            
+            if
+            ZOMBEGEDDON_CARRER_DIFFICULTY == 0
+            then
+            CARMA_GLOB_DERBY_CREDITS += 1000
+            end 
+            
+            if
+            ZOMBEGEDDON_CARRER_DIFFICULTY == 1
+            then
+            CARMA_GLOB_DERBY_CREDITS += 750
+            end 
+            
+            if
+            ZOMBEGEDDON_CARRER_DIFFICULTY == 2
+            then
+            CARMA_GLOB_DERBY_CREDITS += 500
+            end   
+            
+            if
+            ZOMBEGEDDON_CARRER_DIFFICULTY == 3 //not carrer mode
+            then  
+            CARMA_GLOB_DERBY_CREDITS += 450
+            end           
             
             0AF0: 1@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ZOMBIGEDDON_ZKILLED"                
                             
@@ -2380,8 +2597,32 @@ if
     006E: 3@ *= CARMA_GLOB_TIME_MULT // (int)
     end
     005E: CARMA_GLOB_TIME_VAR += 3@  // (int)
-    CARMA_GLOB_TIME_VAR += 10000
+    CARMA_GLOB_TIME_VAR += 10000            
     end
+    
+    if
+    ZOMBEGEDDON_CARRER_DIFFICULTY == 0
+    then
+    CARMA_GLOB_DERBY_CREDITS += 2000
+    end 
+            
+    if
+    ZOMBEGEDDON_CARRER_DIFFICULTY == 1
+    then
+    CARMA_GLOB_DERBY_CREDITS += 500
+    end 
+            
+    if
+    ZOMBEGEDDON_CARRER_DIFFICULTY == 2
+    then
+    CARMA_GLOB_DERBY_CREDITS += 50
+    end  
+    
+    if
+    ZOMBEGEDDON_CARRER_DIFFICULTY == 3 //not carrer mode
+    then
+    CARMA_GLOB_DERBY_CREDITS += 1000
+    end         
     
     if
     003A:   LAP_NUMBER == CARMA_GLOB_RACE_TOTAL_LAPS // (int)
@@ -2475,7 +2716,8 @@ if
     end    
     
 if and
-CARMA_GLOB_DERBY_CREDITS >= 500
+//CARMA_GLOB_DERBY_CREDITS >= 500
+002C:   CARMA_GLOB_DERBY_CREDITS >= ZOMBIEGEDDON_REPAIR_COST  // (int)
 0E3D:   key_pressed 90
 CARMA_GLOB_RACE_STARTED2 == 1
 $SPECTATING_FLAG == 0 
@@ -2483,17 +2725,24 @@ $SPECTATING_FLAG == 0
     :CARMA_CREDITS_REPAIR_JUMP         
     0@ = Car.Health(CARMA_GLOB_DERBY_PLAYER_CAR)
     if
-    0@ < 1000
-        then
-        CARMA_GLOB_DERBY_CREDITS -= 500
+//    0@ < 1000
+    801F:   0@ < ZOMBEGEDDON_CARRER_PLAYER_CAR_HEALTH_MAX // (int)
+        then                           
+//        CARMA_GLOB_DERBY_CREDITS -= 500  
+        0060: CARMA_GLOB_DERBY_CREDITS -= ZOMBIEGEDDON_REPAIR_COST // (int)
         Audiostream.Volume(20@) = $SOUNDS_VOLUME
         Audiostream.PerformAction(20@, PLAY)    
-        0@ += 45
+//        0@ += 45
+        008B: 1@ = ZOMBEGEDDON_CARRER_PLAYER_CAR_HEALTH_MAX // (int)
+        1@ /= 22
+        005A: 0@ += 1@  // (int)
         
         if
         0@ > 1000
+//        001F:   0@ > ZOMBEGEDDON_CARRER_PLAYER_CAR_HEALTH_MAX // (int)
         then
-        0@ = 1000        
+//        0@ = 1000
+        008B: 0@ = ZOMBEGEDDON_CARRER_PLAYER_CAR_HEALTH_MAX // (int)        
         0A30: repair_car CARMA_GLOB_DERBY_PLAYER_CAR        
         end
           
@@ -2848,7 +3097,8 @@ $SPECTATING_FLAG == 0
     0@ += 4 //Z
     0A8C: write_memory 0@ size 4 value 0.0 virtual_protect 0
     
-    CARMA_GLOB_DERBY_CREDITS -= 2000
+//    CARMA_GLOB_DERBY_CREDITS -= 2000
+    0060: CARMA_GLOB_DERBY_CREDITS -= ZOMBIEGEDDON_RECOVERY_COST // (int)
     
     camera.Restore_WithJumpCut()                  
                 
@@ -3047,6 +3297,8 @@ $SPECTATING_FLAG == 0
         0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
         else
         $HUD_REMOVE = 1
+        0AF1: write_int ZOMBEGEDDON_CARRER_MODE to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_CARRER_FLAG"
+        0AF1: write_int ZOMBEGEDDON_CARRER_SLOTNUM_SELECTED to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_CARRER_SLOT_NUM"
         0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_START"
         0AF1: write_int ZOMBIEGEDDON_GAME_TYPE to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_MODE"
         0AF1: write_int $SPECTATING_FLAG to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_SPECTATE"
@@ -3084,6 +3336,8 @@ $SPECTATING_FLAG == 0
     0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
     else
     $HUD_REMOVE = 1
+    0AF1: write_int ZOMBEGEDDON_CARRER_MODE to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_CARRER_FLAG"
+    0AF1: write_int ZOMBEGEDDON_CARRER_SLOTNUM_SELECTED to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_CARRER_SLOT_NUM"
     0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_START"
     0AF1: write_int ZOMBIEGEDDON_GAME_TYPE to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_MODE"
     0AF1: write_int $SPECTATING_FLAG to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_SPECTATE"
@@ -3163,6 +3417,8 @@ $SAVESTATUS == 0
     0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
     else
     $HUD_REMOVE = 1
+    0AF1: write_int ZOMBEGEDDON_CARRER_MODE to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_CARRER_FLAG"
+    0AF1: write_int ZOMBEGEDDON_CARRER_SLOTNUM_SELECTED to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_CARRER_SLOT_NUM"
     0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_START"
     0AF1: write_int ZOMBIEGEDDON_GAME_TYPE to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_MODE"
     0AF1: write_int $SPECTATING_FLAG to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_SPECTATE"
@@ -3922,6 +4178,8 @@ $SAVESTATUS == 0
     0AF1: write_int $SPECTATING_FLAG to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_SPECTATE"
     0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
     else
+    0AF1: write_int ZOMBEGEDDON_CARRER_MODE to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_CARRER_FLAG"
+    0AF1: write_int ZOMBEGEDDON_CARRER_SLOTNUM_SELECTED to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_CARRER_SLOT_NUM"
     0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_START"
     0AF1: write_int ZOMBIEGEDDON_GAME_TYPE to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_MODE"
     0AF1: write_int $SPECTATING_FLAG to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_SPECTATE"
@@ -3941,6 +4199,8 @@ $SAVESTATUS == 0
     0AF1: write_int 0 to_ini_file "saves\ZACM.set" section "SCR" key "NO_INIT_TEXT_FLAG"    
     0A8C: write_memory 0xBA67A5 size 4 value 1 virtual_protect 0 // RESTART GAME
     else
+    0AF1: write_int ZOMBEGEDDON_CARRER_MODE to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_CARRER_FLAG"
+    0AF1: write_int ZOMBEGEDDON_CARRER_SLOTNUM_SELECTED to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_CARRER_SLOT_NUM"
     0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_START"
     0AF1: write_int ZOMBIEGEDDON_GAME_TYPE to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_MODE"
     0AF1: write_int $SPECTATING_FLAG to_ini_file "saves/ZACM.set" section "SCR" key "CARMAGEDDON_SPECTATE"
@@ -4049,7 +4309,8 @@ return
 
 :CARMA_RESTORE_UNFADE
 
-text.ShowStyled('CRM76',1500,5)
+//text.ShowStyled('CRM76',1500,5)
+01E3: show_text_1number_styled GXT 'CRM76' number ZOMBIEGEDDON_RECOVERY_COST time 1500 style 5  // NEW HIGH SCORE!!~n~~w~~1~
 
 9@ = 255
 03F0: enable_text_draw 1
@@ -4516,6 +4777,7 @@ CARMA_REPLAY_FLAG == 0
 not SELECT_RANDOM_MAP_AFTER_SELECT_GAMEMODE == 1
 not ZOMBIEGEDDON_GAME_TYPE == 2
 not ZOMBIEGEDDON_GAME_TYPE == 3
+not ZOMBEGEDDON_CARRER_MODE == 1
 then   
 0512: show_permanent_text_box 'CRM61'
 else
@@ -4803,6 +5065,7 @@ CARMA_REPLAY_FLAG == 0
 not SELECT_RANDOM_MAP_AFTER_SELECT_GAMEMODE == 1
 not ZOMBIEGEDDON_GAME_TYPE == 2
 not ZOMBIEGEDDON_GAME_TYPE == 3
+not ZOMBEGEDDON_CARRER_MODE == 1
     then
     ZOMBIEGEDDON_GAMESPEED_MULT += 0.05
     
@@ -4832,6 +5095,7 @@ CARMA_REPLAY_FLAG == 0
 not SELECT_RANDOM_MAP_AFTER_SELECT_GAMEMODE == 1
 not ZOMBIEGEDDON_GAME_TYPE == 2
 not ZOMBIEGEDDON_GAME_TYPE == 3
+not ZOMBEGEDDON_CARRER_MODE == 1
     then
     ZOMBIEGEDDON_GAMESPEED_MULT -= 0.05
     
@@ -4863,6 +5127,7 @@ CARMA_REPLAY_FLAG == 0
 not SELECT_RANDOM_MAP_AFTER_SELECT_GAMEMODE == 1
 not ZOMBIEGEDDON_GAME_TYPE == 2
 not ZOMBIEGEDDON_GAME_TYPE == 3
+not ZOMBEGEDDON_CARRER_MODE == 1
     then
     ZOMBIEGEDDON_GAMESPEED_MULT += 0.05
     
@@ -4892,6 +5157,7 @@ CARMA_REPLAY_FLAG == 0
 not SELECT_RANDOM_MAP_AFTER_SELECT_GAMEMODE == 1
 not ZOMBIEGEDDON_GAME_TYPE == 2
 not ZOMBIEGEDDON_GAME_TYPE == 3
+not ZOMBEGEDDON_CARRER_MODE == 1
     then
     ZOMBIEGEDDON_GAMESPEED_MULT -= 0.05
     
@@ -4911,7 +5177,13 @@ not ZOMBIEGEDDON_GAME_TYPE == 3
     end
 end
     
-end        
+end 
+
+if
+ZOMBEGEDDON_CARRER_MODE == 1
+then
+0@ = 0
+end       
 
 if and
 0@ < 0
@@ -5389,6 +5661,12 @@ then
 CARMA_GLOB_OPPONENTS_COUNT = 9
 end
 
+if
+ZOMBEGEDDON_CARRER_MODE == 1
+then
+CARMA_GLOB_OPPONENTS_COUNT = 5
+end
+
 0084: CARMA_GLOB_OPPONENTS_COUNT2 = CARMA_GLOB_OPPONENTS_COUNT // (int)
 CARMA_GLOB_OPPONENTS_COUNT2 += 1
 0084: CARMA_GLOB_OPPONENTS_COUNT3 = CARMA_GLOB_OPPONENTS_COUNT // (int)
@@ -5428,8 +5706,112 @@ else
 if or
 8AF0: not CARMA_GLOB_OPPONENTS_COUNT = get_int_from_ini_file CLASSIC_CARMAGEDDON_RACES_INI_PATH section v$RACE_FILE key "OPPONENTS_USER_LAST_COUNT"
 ZOMBEGEDDON_TOURNAMENT == 1
+ZOMBEGEDDON_CARRER_MODE == 1
 then
 0AF0: CARMA_GLOB_OPPONENTS_COUNT = get_int_from_ini_file CLASSIC_CARMAGEDDON_RACES_INI_PATH section v$RACE_FILE key "OPPONENTS_COUNT"
+
+if
+ZOMBEGEDDON_CARRER_MODE == 1
+    then
+    
+    CARMA_GLOB_OPPONENTS_COUNT = 5
+    
+    if
+    ZOMBEGEDDON_CARRER_RANK <= 95
+    then
+    CARMA_GLOB_OPPONENTS_COUNT = 6
+    end
+    
+    if
+    ZOMBEGEDDON_CARRER_RANK <= 85
+    then
+    CARMA_GLOB_OPPONENTS_COUNT = 7
+    end
+    
+    if
+    ZOMBEGEDDON_CARRER_RANK <= 75
+    then
+    CARMA_GLOB_OPPONENTS_COUNT = 8
+    end
+    
+    if
+    ZOMBEGEDDON_CARRER_RANK <= 65
+    then
+    CARMA_GLOB_OPPONENTS_COUNT = 9
+    end
+    
+    if
+    ZOMBEGEDDON_CARRER_RANK <= 55
+    then
+    CARMA_GLOB_OPPONENTS_COUNT = 10
+    end
+    
+    if
+    ZOMBEGEDDON_CARRER_RANK <= 45
+    then
+    CARMA_GLOB_OPPONENTS_COUNT = 11
+    end
+    
+    if
+    ZOMBEGEDDON_CARRER_RANK <= 40
+    then
+    CARMA_GLOB_OPPONENTS_COUNT = 12
+    end
+    
+    if
+    ZOMBEGEDDON_CARRER_RANK <= 35
+    then
+    CARMA_GLOB_OPPONENTS_COUNT = 13
+    end
+    
+    if
+    ZOMBEGEDDON_CARRER_RANK <= 30
+    then
+    CARMA_GLOB_OPPONENTS_COUNT = 14
+    end
+    
+    if
+    ZOMBEGEDDON_CARRER_RANK <= 25
+    then
+    CARMA_GLOB_OPPONENTS_COUNT = 15
+    end
+    
+    if
+    ZOMBEGEDDON_CARRER_RANK <= 20
+    then
+    CARMA_GLOB_OPPONENTS_COUNT = 16
+    end
+    
+    if
+    ZOMBEGEDDON_CARRER_RANK <= 15
+    then
+    CARMA_GLOB_OPPONENTS_COUNT = 17
+    end
+    
+    if
+    ZOMBEGEDDON_CARRER_RANK <= 10
+    then
+    CARMA_GLOB_OPPONENTS_COUNT = 18
+    end
+    
+    if
+    ZOMBEGEDDON_CARRER_RANK <= 5
+    then
+    CARMA_GLOB_OPPONENTS_COUNT = 19
+    end
+    
+    if
+    ZOMBEGEDDON_CARRER_RANK == 1
+    then
+    CARMA_GLOB_OPPONENTS_COUNT = 20
+    end
+    
+    0084: CARMA_GLOB_OPPONENTS_COUNT2 = CARMA_GLOB_OPPONENTS_COUNT // (int)
+    CARMA_GLOB_OPPONENTS_COUNT2 += 1
+    0084: CARMA_GLOB_OPPONENTS_COUNT3 = CARMA_GLOB_OPPONENTS_COUNT // (int)
+    CARMA_GLOB_OPPONENTS_COUNT3 -= 1
+    
+    end
 
 if
 ZOMBEGEDDON_TOURNAMENT == 1
@@ -6763,6 +7145,12 @@ CARMA_BONUS_EMPTY_SOUND = Audiostream.Load("audio\sounds\other\zombiegeddon\PART
 for 0@ = 0 to 44
 Audiostream.Loop($AMM_WEAPON[0@], 0)
 end
+
+/////////Звук покупки апгрейда
+CARMA_BONUS_BUYPART = Audiostream.Load("audio\sounds\other\zombiegeddon\PARTBUY.WAV")
+
+/////////Звук повышения ранга
+CARMA_BONUS_RANKUP = Audiostream.Load("audio\sounds\other\zombiegeddon\RANKUP.WAV")
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -8473,6 +8861,76 @@ end
 
 end_thread
 
+:CRMTXTS
+thread 'CRMTXTS'
+
+0@ = 0
+1@ = 0
+33@ = 0
+
+while true
+wait 0
+
+if and
+33@ >= 33
+not 0@ == 250
+then
+0@ += 10
+33@ = 0
+end
+
+03F0: enable_text_draw 1 
+033F: set_text_draw_letter_size 1.0 2.0
+0340: set_text_draw_RGBA 255 255 255 0@
+03E0: draw_text_behind_textures 1
+03E3: set_texture_to_be_drawn_antialiased 1
+0349: set_text_draw_font 2
+if
+DIRECTFONT_INSTALLED == 1
+then    
+0340: set_text_draw_RGBA DIRECTFONT_FONT2_R DIRECTFONT_FONT2_G DIRECTFONT_FONT2_B 0@
+end
+
+0342: set_text_draw_centered 1
+0344: set_text_draw_linewidth 280.0 for_centered_text 
+033E: set_draw_text_position 320.0 180.0 GXT v$2NAME3
+
+03F0: enable_text_draw 1 
+033F: set_text_draw_letter_size 1.0 2.0
+0340: set_text_draw_RGBA 255 255 255 0@
+03E0: draw_text_behind_textures 1
+03E3: set_texture_to_be_drawn_antialiased 1
+0349: set_text_draw_font 2
+if
+DIRECTFONT_INSTALLED == 1
+then    
+0340: set_text_draw_RGBA DIRECTFONT_FONT2_R DIRECTFONT_FONT2_G DIRECTFONT_FONT2_B 0@
+end
+
+0342: set_text_draw_centered 1
+0344: set_text_draw_linewidth 280.0 for_centered_text 
+033E: set_draw_text_position 320.0 205.0 GXT 'CRM95'
+
+if and
+0@ == 250
+33@ > 2000
+    then
+    break
+    end
+    
+if
+$HUD_REMOVE == 1
+    then
+    break
+    end            
+
+end    
+
+/////////////////////////////////////
+
+end_thread
+
+
 :BNS_TEXT
 thread 'BNS_TEXT'
 
@@ -8843,6 +9301,22 @@ ZOMBEGEDDON_TOURNAMENT == 1
     0AF1: write_int 0@ to_ini_file "data\derby_Tournament.ini" section "GLOB_STATS" key "OPPONENTS_WRECKED_BY_PLAYER"
     
     end
+    
+if
+ZOMBEGEDDON_CARRER_MODE == 1
+    then
+    
+    0AF0: 0@ = get_int_from_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section "GLOB_STATS" key "OPPONENTS_WRECKED_BY_PLAYER"                                        
+                                
+    if
+    $CHEATED_FLAG == 0 
+    then   
+    005C: 0@ += CARMA_GLOB_OPPONENTS_WRECKED_BY_PLAYER // (int)
+    end                    
+                             
+    0AF1: write_int 0@ to_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section "GLOB_STATS" key "OPPONENTS_WRECKED_BY_PLAYER"
+    
+    end    
  
 008B: 1@ = CARMA_GLOB_OPPONENTS_WRECKED_BY_PLAYER // (int)
 
@@ -8879,7 +9353,23 @@ ZOMBEGEDDON_TOURNAMENT == 1
                              
     0AF1: write_int 0@ to_ini_file "data\derby_Tournament.ini" section "GLOB_STATS" key "DERBY_CREDITS"
     
-    end       
+    end      
+    
+if
+ZOMBEGEDDON_CARRER_MODE == 1
+    then
+    
+    0AF0: 0@ = get_int_from_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section "GLOB_STATS" key "DERBY_CREDITS"                                        
+                                
+    if
+    $CHEATED_FLAG == 0 
+    then   
+    005C: 0@ += CARMA_GLOB_DERBY_CREDITS // (int)
+    end                    
+                             
+    0AF1: write_int 0@ to_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section "GLOB_STATS" key "DERBY_CREDITS"
+                      
+    end           
 
 008B: 1@ = CARMA_GLOB_DERBY_CREDITS // (int)
 
@@ -8907,6 +9397,24 @@ wait 500
 v$CRM_TXT = "CRM41"
 gosub @CRM_STAT_SHOWCASE_TIME_BONUS
 
+if
+ZOMBEGEDDON_CARRER_MODE == 1
+    then
+    
+    0AF0: 2@ = get_int_from_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section "GLOB_STATS" key "DERBY_CREDITS"                                        
+                                
+    if
+    $CHEATED_FLAG == 0 
+    then   
+    005A: 2@ += 1@  // (int)
+    end                    
+                             
+    0AF1: write_int 2@ to_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section "GLOB_STATS" key "DERBY_CREDITS"
+                      
+    end       
+
+005E: CARMA_GLOB_DERBY_CREDITS += 1@  // (int)
+
 wait 500
 
 if
@@ -8923,7 +9431,23 @@ ZOMBEGEDDON_TOURNAMENT == 1
                              
     0AF1: write_int 0@ to_ini_file "data\derby_Tournament.ini" section "GLOB_STATS" key "DERBY_KILLED_PLAYER"
     
-    end        
+    end 
+    
+if
+ZOMBEGEDDON_CARRER_MODE == 1
+    then
+    
+    0AF0: 0@ = get_int_from_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section "GLOB_STATS" key "DERBY_KILLED_PLAYER"                                        
+                                
+    if
+    $CHEATED_FLAG == 0 
+    then   
+    005C: 0@ += CARMA_GLOB_DERBY_KILLED_PLAYER // (int)
+    end                    
+                             
+    0AF1: write_int 0@ to_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section "GLOB_STATS" key "DERBY_KILLED_PLAYER"
+    
+    end            
 
 008B: 1@ = CARMA_GLOB_DERBY_KILLED_PLAYER // (int)
 
@@ -8945,6 +9469,103 @@ v$CRM_TXT = "CRM42"
 gosub @CRM_STAT_SHOWCASE
 
 wait 500
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+0AF0: 0@ = get_int_from_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section "INFO" key "XP"                                        
+                                
+if
+$CHEATED_FLAG == 0 
+then   
+005C: 0@ += CARMA_GLOB_DERBY_CREDITS // (int)
+end                    
+                             
+0AF1: write_int 0@ to_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section "INFO" key "XP"
+    
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+if
+ZOMBEGEDDON_CARRER_RANK == 1
+then
+jump to @RANK_ALREADY_IS_1
+end
+    
+0AF0: 1@ = get_int_from_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section "INFO" key "NEED_FOR_NEXT_RANK"
+if or
+002D:   0@ >= 1@  // (int)
+802D: not  0@ >= 1@  // (int)
+    then   
+    :RANK_DOUBLE_UP   
+    
+    6@ = 1 //step, count of rank earned, complete race = 1 rank tochno
+    if
+    0E4D: random_percent 35 //if 35% - 1 more rank
+    then
+    6@ += 1
+    end
+    
+    if
+    002D:   0@ >= 1@  // (int) //additional rank earn for XP
+    then
+    0062: 0@ -= 1@  // (int)   
+    0AF1: write_int 0@ to_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section "INFO" key "XP"  
+    0AF0: 3@ = get_int_from_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section "INFO" key "NEED_FOR_NEXT_RANK"
+    3@ += 5000
+    0AF1: write_int 3@ to_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section "INFO" key "NEED_FOR_NEXT_RANK" 
+    6@ += 1
+    end           
+        
+    while true
+    0AF0: 0@ = get_int_from_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section "INFO" key "XP"  
+    0AF0: 1@ = get_int_from_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section "INFO" key "NEED_FOR_NEXT_RANK"
+    if
+    002D:   0@ >= 1@  // (int) //not one rank earned
+        then 
+        6@ += 1 
+        0062: 0@ -= 1@  // (int)   
+        0AF1: write_int 0@ to_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section "INFO" key "XP"         
+        0AF0: 3@ = get_int_from_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section "INFO" key "NEED_FOR_NEXT_RANK"
+        3@ += 5000
+        0AF1: write_int 3@ to_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section "INFO" key "NEED_FOR_NEXT_RANK"
+        else
+        break
+        end
+    end    
+    
+    0AF0: 2@ = get_int_from_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section "INFO" key "RANK"
+    0085: 0@ = 2@ // (int) //prev
+    0062: 2@ -= 6@  // prev rank minus earned ranks count (usual 1)    
+    if
+    2@ < 1
+    then
+    2@ = 1
+    end
+    
+    0AF1: write_int 2@ to_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section "INFO" key "RANK"        
+    0085: 1@ = 2@ // (int) //curr
+    5@ = 1 //step
+    3@ = 500 //time
+    v$CRM_TXT = "CRM87"    
+    gosub @CRM_STAT_SHOWCASE_MINUS
+    wait 500
+    
+    if
+    2@ == 1
+    then
+    TEMPVAR_INT = Audiostream.Load("audio\sounds\other\zombiegeddon\RANK1.wav")
+    Audiostream.Loop(TEMPVAR_INT, 0)
+    Audiostream.Volume(TEMPVAR_INT) = $SOUNDS_VOLUME
+    Audiostream.PerformAction(TEMPVAR_INT, PLAY)
+    v$CRM_TXT = "CRM105"
+    create_thread @CRM_TEXB
+    wait 7500      
+    end
+        
+    end  
+        
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
+
+:RANK_ALREADY_IS_1             
 
 CAMP_RAID_FLAG = 1
 
@@ -9078,8 +9699,32 @@ if or
 32@ == 0
 then
 32@ = 0
-0@ -= 10000
-1@ += 1000
+
+0@ -= 10000 //за каждые 10 секунд в таймере
+if
+ZOMBEGEDDON_CARRER_DIFFICULTY == 0
+then 
+1@ += 250 //бонус к заработанным кредитам
+end
+
+if
+ZOMBEGEDDON_CARRER_DIFFICULTY == 1
+then 
+1@ += 500 
+end
+
+if
+ZOMBEGEDDON_CARRER_DIFFICULTY == 2
+then 
+1@ += 1000 //на харде сложнее заработать, даем больше
+end
+
+if
+ZOMBEGEDDON_CARRER_DIFFICULTY == 3
+then 
+1@ += 250 
+end
+ 
 Audiostream.Loop(CARMA_VOICE_BUTT,0)
 Audiostream.PerformAction(CARMA_VOICE_BUTT, PLAY)
 Audiostream.Volume(CARMA_VOICE_BUTT) = $SOUNDS_VOLUME
@@ -9106,8 +9751,33 @@ if
     then
     
     repeat
-    0@ -= 100
-    1@ += 25
+//    0@ -= 100
+//    1@ += 5
+    0@ -= 10000 //за каждые 10 секунд в таймере
+    if
+    ZOMBEGEDDON_CARRER_DIFFICULTY == 0
+    then 
+    1@ += 250 //бонус к заработанным кредитам
+    end
+    
+    if
+    ZOMBEGEDDON_CARRER_DIFFICULTY == 1
+    then 
+    1@ += 500 
+    end
+    
+    if
+    ZOMBEGEDDON_CARRER_DIFFICULTY == 2
+    then 
+    1@ += 1000 //на харде сложнее заработать, даем больше
+    end
+    
+    if
+    ZOMBEGEDDON_CARRER_DIFFICULTY == 3
+    then 
+    1@ += 250 
+    end
+    
     until 0@ <= 0
     
     break    
@@ -9191,6 +9861,91 @@ ZOMBEGEDDON_TOURNAMENT == 1
 
 return
 
+:CRM_STAT_SHOWCASE_MINUS
+
+4@ = 0
+32@ = 0
+33@ = 0
+
+repeat
+wait 0
+
+if and
+33@ >= 33
+not 4@ == 250
+then
+4@ += 10
+33@ = 0
+end
+
+if or
+001D:   32@ > 3@  // (int)
+3@ == 0
+then
+32@ = 0
+0062: 0@ -= 5@  // (int)
+Audiostream.Loop(CARMA_VOICE_BUTT,0)
+Audiostream.PerformAction(CARMA_VOICE_BUTT, PLAY)
+Audiostream.Volume(CARMA_VOICE_BUTT) = $SOUNDS_VOLUME
+end 
+
+03F0: enable_text_draw 1 
+033F: set_text_draw_letter_size 1.0 2.0
+0340: set_text_draw_RGBA 255 255 255 4@
+03E0: draw_text_behind_textures 1
+03E3: set_texture_to_be_drawn_antialiased 1
+0349: set_text_draw_font 2
+if
+DIRECTFONT_INSTALLED == 1
+then    
+0340: set_text_draw_RGBA DIRECTFONT_FONT2_R DIRECTFONT_FONT2_G DIRECTFONT_FONT2_B 4@
+end
+
+0342: set_text_draw_centered 1
+0344: set_text_draw_linewidth 640.0 for_centered_text 
+045A: draw_text_1number 320.0 200.0 GXT v$CRM_TXT number 0@  // ALL RACES WON!~n~~w~$~1~
+
+if
+00E1: key_pressed 0 17
+    then
+    break    
+    end
+
+until 003B:   0@ == 1@  // (int)
+
+//Audiostream.Loop(CARMA_VOICE_DONE,0)
+//Audiostream.PerformAction(CARMA_VOICE_DONE, PLAY)
+//Audiostream.Volume(CARMA_VOICE_DONE) = $SOUNDS_VOLUME
+Audiostream.PerformAction($259, PLAY)
+Audiostream.Loop($259, 0)
+Audiostream.Volume($259) = $SOUNDS_VOLUME
+
+0085: 0@ = 1@ // (int)
+4@ = 250
+
+32@ = 0
+while 32@ < 1200
+wait 0
+
+03F0: enable_text_draw 1 
+033F: set_text_draw_letter_size 1.0 2.0
+0340: set_text_draw_RGBA 255 255 255 4@
+03E0: draw_text_behind_textures 1
+03E3: set_texture_to_be_drawn_antialiased 1
+0349: set_text_draw_font 2
+if
+DIRECTFONT_INSTALLED == 1
+then    
+0340: set_text_draw_RGBA DIRECTFONT_FONT2_R DIRECTFONT_FONT2_G DIRECTFONT_FONT2_B 4@
+end
+
+0342: set_text_draw_centered 1
+0344: set_text_draw_linewidth 640.0 for_centered_text 
+045A: draw_text_1number 320.0 200.0 GXT v$CRM_TXT number 0@  // ALL RACES WON!~n~~w~$~1~
+end
+
+return
+
 :DRB_BDR
 thread 'DRB_BDR'
 
@@ -9215,3 +9970,93 @@ end
 end     
 
 end_thread
+
+:VIDPLAYER
+//return
+//thread 'VIDPLAYER'
+
+//0AF0: TEMPVAR_INT = get_int_from_ini_file "config.ini" section "LAUNCHER" key "WINDOWED_ON"
+//if
+//TEMPVAR_INT == 0
+//then
+//return
+//end
+
+$MUSIC_TURN_OFF_FLAG = 1
+//fade 0 1000
+//wait 1000
+
+//Fullscreen Fuckery Message
+0AF0: TEMPVAR_INT = get_int_from_ini_file "config.ini" section "LAUNCHER" key "WINDOWED_ON"
+if
+TEMPVAR_INT == 0
+    then
+    
+    32@ = 0
+        
+    while 32@ < 250
+    wait 0
+        
+    03F0: enable_text_draw 1
+    0349: set_text_draw_font 2
+    0340: set_text_draw_RGBA 180 180 180 255
+    if
+    DIRECTFONT_INSTALLED == 1
+    then    
+    0340: set_text_draw_RGBA DIRECTFONT_FONT2_R DIRECTFONT_FONT2_G DIRECTFONT_FONT2_B 255
+    end
+         
+    033F: set_text_draw_letter_size 0.5 1.25      
+    0343: set_text_draw_linewidth 480.0
+    0342: set_text_draw_centered 1
+    0344: set_text_draw_linewidth 480.0 for_centered_text
+    033E: set_draw_text_position 350.0 200.0 GXT 'GME1621'  // Push 
+    end
+    
+    end
+
+0A8C: write_memory 0xB5F852 size 1 value 1 virtual_protect 0
+0A8C: write_memory 0x748BC5 size 2 value 0x13C virtual_protect 1
+//0AA5: call 0x747660 num_params 2 pop 2 "movies\\MIX_INTR.mpg" 0
+0AA5: call 0x747660 num_params 2 pop 2 "debug\\1.mpg" 0
+
+//Fullscreen Fuckery Box
+if
+TEMPVAR_INT == 0
+    then
+    0AA5: call 0x7451F0 num_params 1 pop 1 "To close videoplayer click OK"
+    end
+                                                    
+0A8C: write_memory 0xC8D4C0 size 1 value 4 virtual_protect 0
+
+0000:
+0AA5: call 0x746740 num_params 0 pop 0
+0A8C: write_memory 0xBA677B size 1 value 0 virtual_protect 0
+0A8C: write_memory 0xB5F852 size 1 value 0 virtual_protect 0
+
+//fade 1 1000
+//wait 1000
+$MUSIC_TURN_OFF_FLAG = 0
+
+return
+
+:VIDPLAYER_GIF
+
+model.Load(18180)
+mload
+0@ = object.Init(18180,1885.78, 1793.79, 526.00000003)
+
+camera.SetPosition(1885.309204 1793.769653 526.014587,0.0,0.0,0.0)
+camera.PointAt(1886.309082 1793.780518 526.026733,2)
+
+object.Angle(0@) = 270.0
+
+while true
+wait 0
+fade 1 1
+renderer 1885.78 1793.79
+renderer2 1885.78 1793.79 526.00000003
+0A0B: set_rendering_origin_at_3D_coord 1885.78 1793.79 526.00000003 angle 270.0
+end
+
+return

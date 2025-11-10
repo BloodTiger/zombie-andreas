@@ -160,6 +160,7 @@ $EATING_STATUS == 0
 $PANEL_OPEN == 0
 not USHER_STORY_FEATRUES_LOCKED == 1
 8E46: not is_char_using_gun PLAYER_ACTOR
+not FIGHT_CLUB_FLAG == 1
     then
     if and
     0AB0:   key_pressed $KEY_USE
@@ -2010,6 +2011,36 @@ if
     
 ////////////////////////////////////////////////////
 
+if or
+10@ == 86 //P90
+10@ == 102 //Striker Shotgun
+10@ == 101 //Sig550
+10@ == 96 //SVD
+10@ == 80 //Heavy Sniper
+10@ == 78 //AA12
+10@ == 95 //AR15
+10@ == 105 //HK416
+then
+if
+0E4D: random_percent DODGE_IMBA_WEAPON_PERCENT
+    then
+    10@ = 119
+    end
+else
+if
+10@ == 31 //M4
+//can add more if you want
+    then
+    if
+    0E4D: random_percent DODGE_IMBA_WEAPON_PERCENT
+        then
+        10@ = 119
+        end
+    end
+end  
+
+//////////////////////////////////////////////////// 
+
 if and
 not 10@ == 119
 not 10@ == 115
@@ -2635,11 +2666,14 @@ jf @CAR_SEACRH_CHECK_PATRIOT
 
 random_int 1@ 0 3
 
-if and
+if
 not 1@ == 2
+jf @CAR_SEACRH_CHECK_PATRIOT_GLASSES_AND_M79
+if or
 0491:   actor PLAYER_ACTOR has_weapon 92
-8491: not  actor PLAYER_ACTOR has_weapon 107
-jf @CAR_SEACRH_CHECK_PATRIOT_GLASSES
+0491:   actor PLAYER_ACTOR has_weapon 107
+M79_CARSEARCH_GOT_ONCE_FLAG == 1
+jf @CAR_SEACRH_CHECK_PATRIOT_GLASSES_AND_M79
 
 if
 0E4D: random_percent 5
@@ -2728,7 +2762,7 @@ jump @CAR_SEARCH_CHECK_IDLE
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
-:CAR_SEACRH_CHECK_PATRIOT_GLASSES
+:CAR_SEACRH_CHECK_PATRIOT_GLASSES_AND_M79
 random_int 1@ 0 3
 
 if and
@@ -2830,6 +2864,7 @@ if and
 1@ == 2
 8491: not  actor PLAYER_ACTOR has_weapon 92
 8491: not  actor PLAYER_ACTOR has_weapon 107
+not M79_CARSEARCH_GOT_ONCE_FLAG == 1
     then
     
     $WEAPON_FIND += 1
@@ -2862,6 +2897,7 @@ if and
     then
     04C4: store_coords_to 4@ 5@ 6@ from_actor PLAYER_ACTOR with_offset 0.0 1.0 0.5 
     032B: $CAR_PICKUP[$WEAPON_FIND] = create_weapon_pickup #M79 type 4 ammo 1 at 4@ 5@ 6@
+    M79_CARSEARCH_GOT_ONCE_FLAG = 1    
     end
     
     wait 200 
@@ -2874,7 +2910,7 @@ if or
 0491:   actor PLAYER_ACTOR has_weapon 45
 UNITED_MAP == 1
     then
-    
+    :ARMY_M79_HAS_ALREADY
     $PUST_BAGA += 1
 
     0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_PUST_BAGA"    
@@ -2916,9 +2952,11 @@ UNITED_MAP == 1
     
     end
     
+    jump @CAR_SEARCH_CHECK_IDLE
+    
     end    
 
-jump @CAR_SEARCH_CHECK_IDLE
+jump @ARMY_M79_HAS_ALREADY
 
 /////////////////////////////////////////////////////////////////////////////////////////////// 
 

@@ -1,3 +1,52 @@
+//0A8D: 0@ = read_memory 0x0B7CB49 size 1 virtual_protect 0
+//0A8D: 1@ = read_memory 0x0B7CB48 size 1 virtual_protect 0
+//0AD1: show_formatted_text_highpriority "UserPauseE %d, CodePauseE %d" time 2000 0@ 1@
+//0AD1: show_formatted_text_highpriority "$GAME_SPEED %f, $SOUNDS_VOLUME %f" time 2000 $GAME_SPEED $SOUNDS_VOLUME
+//0AD1: show_formatted_text_highpriority "$SOUNDS_VOLUME %f" time 2000 $SOUNDS_VOLUME
+//0AD1: show_formatted_text_highpriority "$CAMP_DEAD_FLAG[14] %d, CUSTOM_MODE_TURN_OFF_STORY_THINGS %d" time 2000 $CAMP_DEAD_FLAG[14] CUSTOM_MODE_TURN_OFF_STORY_THINGS
+//0AD1: show_formatted_text_highpriority "$FREEMODE %d" time 2000 $FREEMODE
+
+//0470: 0@ = actor PLAYER_ACTOR current_weapon
+//041A: 1@ = actor PLAYER_ACTOR weapon 0@ ammo
+//0AD1: show_formatted_text_highpriority "ammo %d" time 2000 1@
+
+//if
+//0AB0:   key_pressed 45
+//then
+//0AD1: show_formatted_text_highpriority "$ZOMBIES_NOTSPAWN %d / $ZOMBIES_HORDE %d / $SAVEPLACE_ON %d" time 2000 $ZOMBIES_NOTSPAWN $ZOMBIES_HORDE $SAVEPLACE_ON   
+//end
+
+//0AD1: show_formatted_text_highpriority "CUSTOM_MAP_DISABLE_DYNAMIC_GRASS %d" time 2000 CUSTOM_MAP_DISABLE_DYNAMIC_GRASS
+//0AD1: show_formatted_text_highpriority "$PERK_TOTAL_GOT %d" time 2000 $PERK_TOTAL_GOT
+//0F12: get_camera_struct 0@ 1@
+//0@ += 0x0000059
+//0A8D: 2@ = read_memory 0@ size 4 virtual_protect 0
+//0AF1: write_int 0@ to_ini_file "debug\CCAMSTRUCT.ini" section "SectionName" key "intKey"
+//0F12: get_camera_struct 0@ 1@
+//0@ += 0x0000C38
+//0A8D: 2@ = read_memory 0@ size 1 virtual_protect 0
+//0AD1: show_formatted_text_highpriority "m_nModeToGoTo %d" time 2000 2@
+//0E64: get_camera_mode 1@
+//0AD1: show_formatted_text_highpriority "camera mode %d" time 2000 1@
+//0AD1: show_formatted_text_highpriority "ZOMBEGEDDON_CARRER_SLOTNUM_SELECTED %d" time 2000 ZOMBEGEDDON_CARRER_SLOTNUM_SELECTED
+//0AD1: show_formatted_text_highpriority "ZOMBEGEDDON_CARRER_MODE %d ZOMBEGEDDON_CARRER_MAPNUM %d" time 2000 ZOMBEGEDDON_CARRER_MODE ZOMBEGEDDON_CARRER_MAPNUM
+//0AD1: show_formatted_text_highpriority "$BENZIN_CAR %f" time 2000 $BENZIN_CAR
+
+//if
+//0E3D: is_key_just_pressed 69
+//then
+//0D43: 1@ = txd "PiZdA" id
+//0AD1: show_formatted_text_highpriority "TXD ID IS %d" time 2000 1@
+//end
+//
+//if
+//0E3D: is_key_just_pressed 81
+//then
+//0D43: 1@ = txd "PiZdA" id
+//0AA7: call_function 0x0731CD0 {removeTxdSlot} num_params 1 pop 1 1@ 0@
+//0AD1: show_formatted_text_highpriority "UNLOAD, RESULT IS %d" time 2000 0@
+//end
+
 //0AD1: show_formatted_text_highpriority "WITCH_ONESHOT_HP %d" time 2000 WITCH_ONESHOT_HP
 //0AD1: show_formatted_text_highpriority "ALLOW_SLEEPINESS %d" time 2000 ALLOW_SLEEPINESS
 //gosub @CUSTOM_MAP_RENDER_CUSTOM_CAR_NODES
@@ -4782,7 +4831,114 @@ $CHEATS_ON == 1
     then    
     $CHEAT_CODE_ACTIVATED = 1            
     create_thread @CSFREM2           
-    end                  
+    end   
+    
+if and
+0ADC:   test_cheat "GAS0"
+$CHEATS_ON == 1
+actor.Driving(PLAYER_ACTOR)
+    then    
+    $CHEAT_CODE_ACTIVATED = 1 
+    0@ = actor.CurrentCar(PLAYER_ACTOR)               
+    0A97: 1@ = car 0@ struct 
+    0A8E: 1@ = 1@ + 5 // int
+    0A8C: write_memory 1@ size 4 value 0.0 virtual_protect 0   
+    $BENZIN_CAR = 0.0        
+    end 
+      
+if and
+0ADC:   test_cheat "PICKDEST"
+$CHEATS_ON == 1  
+    then  
+    $CHEAT_CODE_ACTIVATED = 1 
+    gosub @PICKUPS_DELETE
+    end  
+    
+if and
+0ADC:   test_cheat "SWEET"
+$CARL_STORY == 1
+$CHEATS_ON == 1 
+    then
+    $CHEAT_CODE_ACTIVATED = 1
+    
+    if
+    COOP_ACTIVE_FLAG == 1
+    then
+    COOP_ACTOR_SURV_NUM = 4
+    end
+    
+    $ALLOW_RANDOM_SURVIVERS = 1
+    $RANDOM_PEOPLE_SPAWN_FLAG = 1
+    SWEET_SPAWN_FLAG = 1
+    $FREND_NUMBER = 4
+    $SURVIVOR_ALLOW_SPAWN[4] = 1
+    $DELETE_TEAMMATES = 0
+    create_thread @SURVVER
+    $HELP_INST_FLAG = 1
+    CUSTOM_MODE_NO_TEAMMATES_DEATHS = 1
+    
+    repeat
+    wait 0
+    until 056D:   actor $SURVIVER[4] defined
+    
+    repeat
+    wait 0
+    until 06EE:   actor $SURVIVER[4] in_group PLAYER_GROUP
+    
+    $RANDOM_PEOPLE_SPAWN_FLAG = 0
+    SWEET_SPAWN_FLAG = 0
+    $HELP_INST_FLAG = 0
+    create_thread @SWEET_D
+    
+    04C4: store_coords_to 1@ 2@ 3@ from_actor PLAYER_ACTOR with_offset 0.0 2.0 0.0
+    actor.PutAtNoOffset($SURVIVER[4],1@,2@,3@)
+    
+    end 
+    
+if and
+0ADC:   test_cheat "MIKE"
+$CARL_STORY == 1
+$CHEATS_ON == 1 
+    then
+    $CHEAT_CODE_ACTIVATED = 1
+    
+    if
+    COOP_ACTIVE_FLAG == 1
+    then
+    COOP_ACTOR_SURV_NUM = 4
+    end
+    
+    $ALLOW_RANDOM_SURVIVERS = 1
+    $RANDOM_PEOPLE_SPAWN_FLAG = 1
+    CARL_SPAWN_FLAG = 0
+    MIKE_SPAWN_FLAG = 1
+    $FREND_NUMBER = 4
+    $SURVIVOR_ALLOW_SPAWN[4] = 1
+    $DELETE_TEAMMATES = 0
+    create_thread @SURVVER
+    $HELP_INST_FLAG = 1
+    CUSTOM_MODE_NO_TEAMMATES_DEATHS = 1
+          
+    repeat
+    wait 0
+    until 056D:   actor $SURVIVER[4] defined
+    
+    repeat
+    wait 0                                                
+    until 06EE:   actor $SURVIVER[4] in_group PLAYER_GROUP
+    
+    $RANDOM_PEOPLE_SPAWN_FLAG = 0
+    
+    $RANDOM_PEOPLE_SPAWN_FLAG = 0
+    MIKE_SPAWN_FLAG = 0
+    $HELP_INST_FLAG = 0
+    $PEOPLE_SPAWN_ON_COORD = 0
+    create_thread @MIKE_D
+    
+    04C4: store_coords_to 1@ 2@ 3@ from_actor PLAYER_ACTOR with_offset 0.0 2.0 0.0
+    actor.PutAtNoOffset($SURVIVER[4],1@,2@,3@)
+    
+    end                        
     
 //if and
 //0ADC:   test_cheat "LOWF"
@@ -5000,6 +5156,28 @@ $CHEATS_ON == 1
 $DEBUG_MENU_ON == 1
 then
 $WEATHER_SYNC_FLAG = 1
+end
+
+if
+0E45: frame_mod 60
+then
+if
+0ADC:   test_cheat "25657390"
+    then
+    
+    if
+    056E:   car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] defined
+    then 
+    0407: store_coords_to 1@ 2@ 3@ from_car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] with_offset 0.0 0.0 100.0
+    0EB4: set_car_coordinates_simple $USED_CAR[SAVE_CAR_CURRENT_NUMBER] position 1@ 2@ 3@
+    07D5: set_car $USED_CAR[SAVE_CAR_CURRENT_NUMBER] velocity_in_direction_XYZ 0.0 0.0 -0.1 rotation_velocitiesXY 0.0 0.0 unk 0.0
+    0AD1: show_formatted_text_highpriority "GETTING OUT SPAWNED LATEST USED VEHICLE!" time 2000
+    else
+    $SAVE_CAR_Z[LATEST_CAR_SLOT_USED] += 100.0
+    0AD1: show_formatted_text_highpriority "GETTING OUT NOT SPAWNED LATEST USED VEHICLE!" time 2000
+    end    
+    
+    end
 end
 
 //if and

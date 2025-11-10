@@ -239,6 +239,14 @@ if and
 0@ == 0
 then
 jump @MAIN_QUEST7_FAILED_CAMERA_WASTED
+else
+0@ = 0
+gosub @MQ7_ADDITIONAL_FOR_PROEB_CAMERA_CHECK
+if
+0@ == 1
+    then
+    jump @MAIN_QUEST7_FAILED_CAMERA_WASTED2
+    end
 end
 
 /////////////////////
@@ -259,6 +267,14 @@ marker.Disable(MISSION_CHECKPOINT)
 while 8491: not  actor PLAYER_ACTOR has_weapon 43
 wait 0
 gosub @QUEST7_LOCK_FOG
+
+gosub @MQ7_ADDITIONAL_FOR_PROEB_CAMERA_CHECK
+if
+0@ == 1
+    then
+    jump @MAIN_QUEST7_FAILED_CAMERA_WASTED2
+    end
+
 end
 
 018A: MISSION_CHECKPOINT = create_checkpoint_at -2341.7559 -2250.7039 18.0073
@@ -415,6 +431,14 @@ if and
 0@ == 0
 then
 jump @MAIN_QUEST7_FAILED_CAMERA_WASTED
+else
+0@ = 0
+gosub @MQ7_ADDITIONAL_FOR_PROEB_CAMERA_CHECK
+if
+0@ == 1
+    then
+    jump @MAIN_QUEST7_FAILED_CAMERA_WASTED2
+    end
 end
 
 /////////////////////
@@ -430,6 +454,24 @@ Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
 
 while 8491: not  actor PLAYER_ACTOR has_weapon 43
 wait 0
+
+if
+not actor.Dead(PLAYER_ACTOR)
+jf @MAIN_QUEST7_FAILED_PLAYER_DIED
+if
+$CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+jf @MAIN_QUEST7_FAILED_AGRO
+if
+803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+jf @MAIN_QUEST7_FAILED_LDEAD
+
+gosub @MQ7_ADDITIONAL_FOR_PROEB_CAMERA_CHECK
+if
+0@ == 1
+    then
+    jump @MAIN_QUEST7_FAILED_CAMERA_WASTED2
+    end
+
 end
 
 v$OBJECTIVE = "GAME580"
@@ -688,6 +730,36 @@ create_thread @GMV_OVR
 mission_cleanup    
 return
 
+:MAIN_QUEST7_FAILED_CAMERA_WASTED2
+
+/////////////////////Плавное затухание/////////////////////
+//
+//$MUSIC_FADE_NUMBER += 1
+//if
+//$MUSIC_FADE_NUMBER > 4
+//    then
+//    $MUSIC_FADE_NUMBER = 0 
+//    end    
+//        
+//0084: $MUSIC_FADE1[$MUSIC_FADE_NUMBER] = $MUSIC_ASSHOLE // (int)
+//$MUSIC_FADE_END_VOLUME[$MUSIC_FADE_NUMBER] = 0.0
+//        
+//$MUSIC_FADE_TIME[$MUSIC_FADE_NUMBER] = 250
+//$MUSIC_FADE_FLAG[$MUSIC_FADE_NUMBER] = 0  
+//$MUSIC_FADE_COUNT[$MUSIC_FADE_NUMBER] = 1 
+//create_thread @MUS_FAD
+2504: SET_AUDIO_STREAM_VOLUME_WITH_TRANSITION $MUSIC_ASSHOLE volume 0.0 time 250
+
+///////////////////////////////////////////////////////////
+
+text.ClearAll()
+BLACK_POLOSKI_ON = 1
+$MUSIC_TURN_OFF_FLAG = 1
+v$FAILED_TEXT = "MSFL128"
+create_thread @GMV_OVR
+mission_cleanup    
+return
+
 :MAIN_QUEST7_FAILED_PLAYER_DIED
 
 /////////////////////Плавное затухание/////////////////////
@@ -725,6 +797,57 @@ if
 0@ == 9
 then
 WEATHER_CYCLE_DONT_CHANGE_FLAG = 1
+end
+
+return
+
+:MQ7_ADDITIONAL_FOR_PROEB_CAMERA_CHECK    
+
+5@ = 1
+
+if
+0E45: frame_mod 30 //чекаем каждую секунду
+    then
+    
+//    0AD1: show_formatted_text_highpriority "checking" time 2000
+           
+    5@ = 0
+    
+    ////////////////////////////////////////////////////////
+    
+    {$I newopcodes\forallpickups} 
+            
+    if
+    09D1:   pickup pick created
+        then
+        0E34: get_pickup_model pick 4@
+        065B: store_pickup pick position_to $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3
+        if              
+        4@ == #CAMERA
+            then     
+            if and
+            048C:   pickup_at $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3 available_to_be_picked_up
+            not pickup.Picked_up(pick) 
+                then   
+                5@ = 1 //в мире лежит пикап камеры
+                03DC: 6@ = create_marker_above_pickup pick
+                wait 500
+                marker.Disable(6@)
+                end
+            end
+        end       
+                
+    {$I newopcodes\for_end}   
+    
+    end  
+
+////////////////////////////////////////////////////////
+
+if and
+5@ == 0 //не лежит
+8491: not  actor PLAYER_ACTOR has_weapon 43 //фотика у ГГ нет
+then
+0@ = 1 //фейлим нахуй
 end
 
 return

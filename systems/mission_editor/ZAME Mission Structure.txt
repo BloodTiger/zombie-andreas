@@ -1,5 +1,12 @@
 :ZAME_MISSION_START
 
+0D43: TEMPVAR_INT = txd "PiZdA" id
+if
+not TEMPVAR_INT == -1
+then
+0AA7: call_function 0x0731CD0 {removeTxdSlot} num_params 1 pop 1 TEMPVAR_INT TEMPVAR_INT2
+end
+
 $ONMISSION = 1
 ZAME_GLOB_LAUNCH_FLAG = 1    
 
@@ -10,6 +17,8 @@ then
 0E6A: make_nop 0x0457C33 size 6
 0E6A: make_nop 0x0457C70 size 6
 else
+
+$OTKZ_NGRDA_FLG = 0 //иначе не будит музыкы
 
 if and
 ZAME_MISSION_STARTING_HOUR == 8
@@ -623,6 +632,7 @@ if
 not ZAME_SURV_LAUNCH_FLAG == 1
 then
 09C7: change_player PLAYER_CHAR model_to 0@
+008A: $RANDOM_MODE_MODEL = 0@ // (int)
 end
 
 actor.DestroyInstantly(ZAME_PLAYER_DUMMY)
@@ -2149,7 +2159,7 @@ if
 ZAME_CURRENT_OBJ_TYPE_READED == -4
     then
     
-    0ACE: show_formatted_text_box "kill all trigger peds plz"
+//    0ACE: show_formatted_text_box "kill all trigger peds plz"
 
     25@ = 0
     
@@ -2229,8 +2239,8 @@ ZAME_CURRENT_OBJ_TYPE_READED == -4
     if
     25@ == 1
         then
-        0ACE: show_formatted_text_box "all killed"
-        wait 2000
+//        0ACE: show_formatted_text_box "all killed"
+//        wait 2000
         break
         end
     
@@ -8380,7 +8390,8 @@ ZAME_CURRENT_OBJ_TYPE_READED == 21
     then
 
     text.ClearAll()
-    text.RemoveTextBox()        
+    text.RemoveTextBox()
+    $NOT_ALLOW_COMMANDS = 1        
     
     0AF0: get_int 2@ from_ini_file "me\temp.dat" section v$RACE_FILE key "OBJ_GOTO_NUM"
     0AD3: 4@v = format "zgto%d" 2@
@@ -8406,14 +8417,32 @@ ZAME_CURRENT_OBJ_TYPE_READED == 21
     0E3E: is_button_just_pressed 0 button 11
         then
         text.ClearAll()
-        1@ = 1        
+        1@ = 1     
+        if
+        0A4B:   controls_set_to_joystick
+        then
+        wait 1000
+        else
+        wait 0
+        end
+        
+        $NOT_ALLOW_COMMANDS = 0   
         break
         end
         
     if
     0E3E: is_button_just_pressed 0 button 10
         then
-        text.ClearAll()        
+        text.ClearAll()
+        if
+        0A4B:   controls_set_to_joystick
+        then
+        wait 1000
+        else
+        wait 0
+        end
+        
+        $NOT_ALLOW_COMMANDS = 0          
         break
         end
         
@@ -9137,9 +9166,16 @@ ZAME_CURRENT_OBJ_TYPE_READED == 22
         
         end
         
-        until 056D:   actor $BANDIT[5] defined
+        if and
+        056D:   actor BANDIT_HELI_DRIVER defined
+        056D:   actor $BANDIT[5] defined
+            then
+            break
+            end
         
-        MISSION_MARKER = marker.CreateAboveActor($BANDIT[5])      
+        until false
+        
+        MISSION_MARKER = marker.CreateAboveActor(BANDIT_HELI_DRIVER)      
         if
         0AF0: get_int 20@ from_ini_file "me\temp.dat" section v$RACE_FILE key "HIDE_MARKER"
             then
@@ -11427,6 +11463,7 @@ ZAME_CURRENT_OBJ_TYPE_READED == 33
     end
     
     09C7: change_player PLAYER_CHAR model_to 1@
+    008A: $RANDOM_MODE_MODEL = 1@ // (int)
     
     0781: get_weapon_with_ID 2@ model_to 0@
     while not model.Available(0@)

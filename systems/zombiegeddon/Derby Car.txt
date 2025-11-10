@@ -321,6 +321,14 @@ DERBY_SURVIVOR_NUMBER == 8
 
 end
 
+if
+ZOMBEGEDDON_CARRER_MODE == 1
+then
+0441: TEMPVAR_INT = car DERBY_CAR model
+0AD3: TEMPVAR_STRING = format "%d" TEMPVAR_INT
+0AF0: 0@ = get_int_from_ini_file "data\drivers.ini" section TEMPVAR_STRING key "DRIVER_SKIN" 
+end
+
 while not model.Available(0@)
 wait 0
 model.Load(0@)
@@ -360,6 +368,29 @@ DERBY_SURVIVOR_NUMBER == 0
 
 09F6: set_actor DERBY_CAR_ACTOR get_out_of_upside_down_car 0
 0982: set_actor DERBY_CAR_ACTOR stay_in_car_when_dead 1
+
+/////////////////////////////////////////////////
+
+if and
+ZOMBEGEDDON_CARRER_MODE == 1
+not ZOMBEGEDDON_CARRER_CAN_STEAL_OPPONENT_CAR == 1  
+then
+0441: TEMPVAR_INT = car DERBY_CAR model
+0AD3: TEMPVAR_STRING = format "%d" TEMPVAR_INT
+0AF0: 0@ = get_int_from_ini_file "data\drivers.ini" section TEMPVAR_STRING key "STEALWORTHY_RANK"
+0AF0: 1@ = get_int_from_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section TEMPVAR_STRING key "STEALED"
+if and
+801E:   ZOMBEGEDDON_CARRER_RANK < 0@ // (int)
+0@ > 0
+not 1@ == 1
+    then             
+    create_thread @STEAL_CAR DERBY_CAR
+    ZOMBEGEDDON_CARRER_CAN_STEAL_OPPONENT_CAR = 1    
+    008A: ZOMBEGEDDON_CARRER_STEAL_OPPONENT_CAR_NUM = DERBY_SURVIVOR_NUMBER // (int)    
+    end    
+end
+
+/////////////////////////////////////////////////
 
 if
 CLASSIC_CARMA_MAP == 1
@@ -707,6 +738,39 @@ if
     ZOMBIEGEDDON_MAX_OPPONENT_HP = 10000
     end
     
+///////////////////////ADJUST HP TO DIFF///////////////////////
+
+0227: 1@ = car DERBY_CAR health
+0093: 1@ = integer 1@ to_float
+
+if
+ZOMBEGEDDON_CARRER_DIFFICULTY == 0
+then
+1@ *= 0.65
+end
+
+if
+ZOMBEGEDDON_CARRER_DIFFICULTY == 1
+then
+1@ *= 0.85
+end
+
+if
+ZOMBEGEDDON_CARRER_DIFFICULTY == 2
+then
+1@ *= 1.05
+end
+
+0092: 1@ = float 1@ to_integer
+car.Health(DERBY_CAR) = 1@
+if
+DERBY_SURVIVOR_NUMBER == 0
+then
+008A: ZOMBIEGEDDON_MAX_OPPONENT_HP = 1@ // (int)
+end
+
+///////////////////////////////////////////////////////////////    
+    
 end            	
     
 if
@@ -1036,25 +1100,35 @@ then
 
 if
 SPEC_MOD_FREE_CAM == 1
-then
-018B: set_marker DERBY_CAR_MARKER radar_mode 3
-07E0: set_marker DERBY_CAR_MARKER type_to 1
+    then
+    018B: set_marker DERBY_CAR_MARKER radar_mode 3
+    07E0: set_marker DERBY_CAR_MARKER type_to 1
+    else
+    
+    if
+    CARMA_GLOB_FREEROAM_DR == 0
+    then
+    018B: set_marker DERBY_CAR_MARKER radar_mode 2
+    else
+    018B: set_marker DERBY_CAR_MARKER radar_mode 0
+    end
+    
+    07E0: set_marker DERBY_CAR_MARKER type_to 0
+    end
+
 else
 
 if
-CARMA_GLOB_FREEROAM_DR == 0
-then
-018B: set_marker DERBY_CAR_MARKER radar_mode 2
-else
-018B: set_marker DERBY_CAR_MARKER radar_mode 0
-end
+803C: not  ZOMBEGEDDON_CARRER_STEAL_OPPONENT_CAR_NUM == DERBY_SURVIVOR_NUMBER  // (int)
+    then
+    018B: set_marker DERBY_CAR_MARKER radar_mode 2
+    07E0: set_marker DERBY_CAR_MARKER type_to 0
+    else
+    07E0: set_marker DERBY_CAR_MARKER type_to 1
+    marker.SetColor(DERBY_CAR_MARKER,5)
+    018B: set_marker DERBY_CAR_MARKER radar_mode 3
+    end
 
-07E0: set_marker DERBY_CAR_MARKER type_to 0
-end
-
-else
-018B: set_marker DERBY_CAR_MARKER radar_mode 2
-07E0: set_marker DERBY_CAR_MARKER type_to 0
 end        
 
 06A2: get_car DERBY_CAR velocity_in_direction_XYZ 25@ 26@ 27@
@@ -1456,8 +1530,40 @@ ZOMBIEGEDDON_GAME_TYPE == 2
         end
         
         CARMA_GLOB_OPPONENTS_WRECKED_BY_PLAYER += 1
-        CARMA_GLOB_DERBY_CREDITS += 8000
-        CARMA_GLOB_TIME_VAR += 60000        
+       
+        if
+        ZOMBEGEDDON_CARRER_DIFFICULTY == 0
+        then
+        CARMA_GLOB_DERBY_CREDITS += 10000
+        CARMA_GLOB_TIME_VAR += 120000
+        end
+        
+        if
+        ZOMBEGEDDON_CARRER_DIFFICULTY == 1
+        then
+        CARMA_GLOB_DERBY_CREDITS += 5000
+        CARMA_GLOB_TIME_VAR += 90000
+        end
+        
+        if
+        ZOMBEGEDDON_CARRER_DIFFICULTY == 2
+        then
+        CARMA_GLOB_DERBY_CREDITS += 3500
+        CARMA_GLOB_TIME_VAR += 60000
+        end
+        
+        if
+        ZOMBEGEDDON_CARRER_DIFFICULTY == 3 //not carrer mode
+        then
+        CARMA_GLOB_DERBY_CREDITS += 7500
+        CARMA_GLOB_TIME_VAR += 70000
+        end
+        
+        if
+        003C:  ZOMBEGEDDON_CARRER_STEAL_OPPONENT_CAR_NUM == DERBY_SURVIVOR_NUMBER  // (int)
+        then 
+        ZOMBEGEDDON_CARRER_STEAL_OPPONENT_CAR_NUM = 666
+        end       
                  
         0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "ZOMBIGEDDON_OPPWRECKED"
         
@@ -1712,8 +1818,8 @@ if
         0093: 1@ = integer 1@ to_float
         006B: 1@ *= 20@  // (float)
         0092: 1@ = float 1@ to_integer
-        end    
-        
+        end  
+                        
         if
         1@ > 5000
         then
@@ -1727,10 +1833,124 @@ if
         end
         
         if
+        ZOMBEGEDDON_CARRER_CAR_ATTACK_LEVEL > 0
+            then
+            008A: TEMPVAR_INT = 1@ // (int)
+            008D: TEMPVAR_INT = integer TEMPVAR_INT to_float
+            TEMPVAR_INT /= 50.0
+            
+            if
+            ZOMBEGEDDON_CARRER_CAR_ATTACK_LEVEL == 1
+            then
+            TEMPVAR_INT2 = 1.0
+            end
+            
+            if
+            ZOMBEGEDDON_CARRER_CAR_ATTACK_LEVEL == 2
+            then
+            TEMPVAR_INT2 = 1.75
+            end
+            
+            if
+            ZOMBEGEDDON_CARRER_CAR_ATTACK_LEVEL == 3
+            then
+            TEMPVAR_INT2 = 2.25
+            end
+            
+            if
+            ZOMBEGEDDON_CARRER_CAR_ATTACK_LEVEL == 4
+            then
+            TEMPVAR_INT2 = 3.45
+            end
+            
+            if
+            ZOMBEGEDDON_CARRER_CAR_ATTACK_LEVEL == 5
+            then
+            TEMPVAR_INT2 = 4.45
+            end
+            
+            if
+            ZOMBEGEDDON_CARRER_CAR_ATTACK_LEVEL == 6
+            then
+            TEMPVAR_INT2 = 5.45
+            end
+            
+            0069: TEMPVAR_INT *= TEMPVAR_INT2 // (float)
+            008C: TEMPVAR_INT = float TEMPVAR_INT to_integer
+            TEMPVAR_INT3 = car.Health(DERBY_CAR)
+            0060: TEMPVAR_INT3 -= TEMPVAR_INT // (int)
+            car.Health(DERBY_CAR) = TEMPVAR_INT3
+            if
+            TEMPVAR_INT > 0
+            then
+            create_thread @DMG_PRC DERBY_CAR_ACTOR 0 0 0 TEMPVAR_INT 0
+            end
+            
+//            0AD1: show_formatted_text_highpriority "car attack level %d, ~n~additional script damage is %d" time 2000 ZOMBEGEDDON_CARRER_CAR_ATTACK_LEVEL TEMPVAR_INT
+            end  
+        
+        if
         not CARMA_GLOB_1VS1_MODE == 1
         then
-        005E: CARMA_GLOB_DERBY_CREDITS += 1@  // (int)
+        
+        if
+        ZOMBEGEDDON_CARRER_DIFFICULTY == 0
+        then
+        0093: 1@ = integer 1@ to_float
+        1@ *= 2.25
+        0092: 1@ = float 1@ to_integer
+        end
+        
+        if
+        ZOMBEGEDDON_CARRER_DIFFICULTY == 1
+        then
+        0093: 1@ = integer 1@ to_float
+        1@ *= 1.75
+        0092: 1@ = float 1@ to_integer
+        end   
+        
+        if
+        ZOMBEGEDDON_CARRER_DIFFICULTY == 2
+        then
+        0093: 1@ = integer 1@ to_float
+        1@ *= 1.25
+        0092: 1@ = float 1@ to_integer
+        end   
+        
+        if
+        ZOMBEGEDDON_CARRER_DIFFICULTY == 3 //not carrer mode
+        then
+        0093: 1@ = integer 1@ to_float
+        1@ *= 1.05 //same as before, but slightly more
+        0092: 1@ = float 1@ to_integer
+        end    
+        
+        005E: CARMA_GLOB_DERBY_CREDITS += 1@  // (int)  
+        
+        if
+        ZOMBEGEDDON_CARRER_DIFFICULTY == 0
+        then
         1@ *= 10
+        end
+        
+        if
+        ZOMBEGEDDON_CARRER_DIFFICULTY == 1
+        then
+        1@ *= 8
+        end   
+        
+        if
+        ZOMBEGEDDON_CARRER_DIFFICULTY == 2
+        then
+        1@ *= 6
+        end 
+        
+        if
+        ZOMBEGEDDON_CARRER_DIFFICULTY == 3 //not carrer mode
+        then
+        1@ *= 5
+        end    
+                      
         005E: CARMA_GLOB_TIME_VAR += 1@  // (int)
         end
             
@@ -2533,6 +2753,12 @@ end
 end_thread
 
 :SURVIVER_ARMAGEDDON_TARGET_FIND
+
+if
+CARMA_GLOB_OPPONENTS_COUNT2 < 10
+then
+3@ = 65
+end    
 
 if
 CARMA_GLOB_OPPONENTS_COUNT2 == 10
@@ -3673,7 +3899,7 @@ $SAME_PLAYER_CHEAT_SPAWN == 0
 //////////////////////////////////////////////////    
 
 if
-UNITED_MAP == 0
+UNITED_MAP == 0  
 then
 
 if
@@ -4262,8 +4488,34 @@ then
 end
 
 CARMA_GLOB_OPPONENTS_WRECKED_BY_PLAYER += 1
-CARMA_GLOB_DERBY_CREDITS += 8000
+
+if
+ZOMBEGEDDON_CARRER_DIFFICULTY == 0
+then
+CARMA_GLOB_DERBY_CREDITS += 10000
+CARMA_GLOB_TIME_VAR += 120000
+end
+        
+if
+ZOMBEGEDDON_CARRER_DIFFICULTY == 1
+then
+CARMA_GLOB_DERBY_CREDITS += 5000
+CARMA_GLOB_TIME_VAR += 90000
+end
+        
+if
+ZOMBEGEDDON_CARRER_DIFFICULTY == 2
+then
+CARMA_GLOB_DERBY_CREDITS += 3500
 CARMA_GLOB_TIME_VAR += 60000
+end
+
+if
+ZOMBEGEDDON_CARRER_DIFFICULTY == 3 //not carrer mode
+then
+CARMA_GLOB_DERBY_CREDITS += 7500
+CARMA_GLOB_TIME_VAR += 70000
+end
  
 0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "ZOMBIGEDDON_OPPWRECKED"
 
@@ -4759,3 +5011,33 @@ thread 'DR_CA74'
 end
 
 return
+
+:STEAL_CAR
+thread 'STEAL_CAR'
+
+2@ = car.Model(0@)
+
+while 056E:   car 0@ defined
+wait 0
+
+if
+ZOMBEGEDDON_CARRER_STEAL_OPPONENT_CAR_NUM == 666
+    then
+    0AF0: 1@ = get_int_from_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section "CARS" key "COUNT"
+    1@ += 1
+    0AF1: write_int 1@ to_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section "CARS" key "COUNT"
+    0AF1: write_int 1@ to_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section "CARS" key "SELECTED"
+    0AD3: TEMPVAR_STRING = format "%d" 1@
+    0AD3: 24@v = format "%d" 2@
+    0AF1: write_int 2@ to_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section "CARS" key TEMPVAR_STRING
+    0AF1: write_int 2@ to_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section "INFO" key "CURRENT_CAR"      
+    0AF1: write_int 1 to_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section 24@v key "STEALED"
+    wait 4000
+    0ADB: v$2NAME3 = car_model 2@ name
+    create_thread @CRMTXTS
+    end_thread  
+    end
+
+end
+
+end_thread
