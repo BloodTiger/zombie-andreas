@@ -3211,6 +3211,7 @@ if and
             0470: 305@ = actor PLAYER_ACTOR current_weapon
             06AB: set_actor PLAYER_ACTOR all_weapons_hidden 1
             0992: set_player PLAYER_CHAR weapons_scrollable 0
+            PLAYER_NO_ITEMS_FLAG = 1
             06AB: set_actor $RNDM_HOUSE_WEAPON[23] all_weapons_hidden 1
             
             HARDCORE_DANGER_FLAG_SCRIPTED = 1            
@@ -3384,12 +3385,40 @@ if and
             Audiostream.Loop($MENU_SCIFI_SOUND, 0)
             Audiostream.PerformAction($MENU_SCIFI_SOUND, PLAY)
             
+            0@ = 0
+            
             repeat
             wait 0
+            
+            0992: set_player PLAYER_CHAR weapons_scrollable 0 //Ë‰Ë Õ¿¿¿¿¿¿¿¿¿¿¿’”…
+            
+            if
+            not actor.Dead(PLAYER_ACTOR)
+            jf @MAIN_QUEST4_FAILED_PLAYER_DIED
+            if
+            $CAMP_AGRED_FLAG[$QUEST_CAMP_NUMBER] == 0
+            jf @MAIN_QUEST4_FAILED_AGRO
+            if
+            803A: not  LEADER_DIED_FLAG == $QUEST_CAMP_NUMBER // (int)
+            jf @MAIN_QUEST4_FAILED_LDEAD
+            
+            if and
+            0@ == 0            
+            051A:   actor $RNDM_HOUSE_WEAPON[28@] damaged_by_actor PLAYER_ACTOR
+                then
+                actor.WeaponAccuracy($RNDM_HOUSE_WEAPON[28@]) = 100
+                0648: unknown_actor $RNDM_HOUSE_WEAPON[28@] task_set 100.0 // float
+                05E2: AS_actor $RNDM_HOUSE_WEAPON[28@] kill_actor PLAYER_ACTOR
+                077A: set_actor $RNDM_HOUSE_WEAPON[28@] acquaintance 4 to_actors_pedtype 0 // see ped.dat
+                03BD: destroy_sphere MISSION_SPHERE
+                marker.Disable(MISSION_CHECKPOINT)
+                0@ = 1
+                end
             
             if and
             00FE:   actor PLAYER_ACTOR sphere 0 in_sphere -259.5964 -2184.9934 28.9885 radius 0.3 0.3 1.0
             02A0:   actor PLAYER_ACTOR stopped
+            not 0@ == 1
                 then
                 break
                 end
@@ -4113,6 +4142,7 @@ if and
                 wait 500
                 
                 0992: set_player PLAYER_CHAR weapons_scrollable 1
+                PLAYER_NO_ITEMS_FLAG = 0
                 06AB: set_actor PLAYER_ACTOR all_weapons_hidden 0
                 01B9: set_actor PLAYER_ACTOR armed_weapon_to 305@
                 
@@ -5890,8 +5920,9 @@ if and
     
     07FB: set_interior 'SKLAD' access 1  // Ganton Gym
     
-    if
+    if and
     00EC:   actor PLAYER_ACTOR sphere 0 near_point -713.1755 -2120.5959 radius 1.5 1.5
+    $ACTIVE_INTERIOR == 0
         then
         break
         end

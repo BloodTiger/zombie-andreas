@@ -1,19 +1,23 @@
 :SRV_VCE
 thread 'SRV_VCE'
+$VOICE_ACTOR = -69
 //end_thread
 //create_thread @SRV_VC2
-create_thread @SRV_VCX 
+create_thread @SRV_VCX
 
 :SURV_VOICE_START
-wait 0
+wait 500
 if and
 $SAVESTATUS_TRUE == 0
 $INT_ENTERING_FLAG == 0
 $ACTOR_DEAD == 0
 not actor.Dead(PLAYER_ACTOR)
+SURVIVAL_STARTED_FULLY_FLAG == 1 //0x00829B97 __CIpow_pentium4 bad leave fix???
+VOICE_ACTOR_NEED_TO_USE_KUKLA == 1
 jf @SURV_VOICE_START
 
 actor.StorePos(PLAYER_ACTOR,1@,2@,3@)
+3@ += 5.0
 0665: get_actor PLAYER_ACTOR model_to $RANDOM_MODE_MODEL
 
 //0084: 30@ = $RANDOM_MODE_MODEL // (int)  
@@ -67,9 +71,9 @@ actor.LockInCurrentPosition($VOICE_ACTOR) = true
 077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 28 // see ped.dat
 077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 29 // see ped.dat
 077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 4 // see ped.dat
-077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 5 // see ped.dat   
+077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 5 // see ped.dat
 
-wait 1
+//0@ = marker.CreateAboveActor($VOICE_ACTOR)   
 
 :SURV_VOICE_IDLE
 wait 0
@@ -82,6 +86,7 @@ not PLAYER_HAS_CUSTOM_VOICE > 0
     056D:   actor $VOICE_ACTOR defined
         then   
         actor.DestroyInstantly($VOICE_ACTOR)
+        $VOICE_ACTOR = -69
         jump to @SURV_VOICE_START
         else
         jump to @SURV_VOICE_START
@@ -99,6 +104,7 @@ actor.Dead(PLAYER_ACTOR)
         PLAYER_DIED_BY_FALL == 1
         then
         actor.DestroyInstantly($VOICE_ACTOR)
+        $VOICE_ACTOR = -69
         jump to @SURV_VOICE_START
         end               
         
@@ -145,6 +151,7 @@ actor.Dead(PLAYER_ACTOR)
         jf @DIE_CHECK
             
         actor.DestroyInstantly($VOICE_ACTOR)
+        $VOICE_ACTOR = -69
         jump to @SURV_VOICE_START
         else
         jump to @SURV_VOICE_START
@@ -156,17 +163,19 @@ if
     then   
     0619: enable_actor $VOICE_ACTOR collision_detection 0
     0337: set_actor $VOICE_ACTOR visibility 0 
-    actor.Health($VOICE_ACTOR) = 9999
+    actor.Health($VOICE_ACTOR) = 9999   
     end
 
 if or
 $SAVESTATUS_TRUE == 1
 $INT_ENTERING_FLAG == 1
+not VOICE_ACTOR_NEED_TO_USE_KUKLA == 1
     then
     if
     056D:   actor $VOICE_ACTOR defined
         then
         actor.DestroyInstantly($VOICE_ACTOR)
+        $VOICE_ACTOR = -69
         jump to @SURV_VOICE_START
         else 
         jump to @SURV_VOICE_START 
@@ -199,6 +208,8 @@ if
     actor.Angle($VOICE_ACTOR) = 4@
 //    actor.PutAtNoOffset($VOICE_ACTOR,1@,2@,3@)
     0E32: set_char_coordinates_simple $VOICE_ACTOR coord 1@ 2@ 3@
+    else
+    jump to @SURV_VOICE_START
     end
 
 jump to @SURV_VOICE_IDLE
@@ -213,7 +224,8 @@ $SAVESTATUS_TRUE == 0
 $INT_ENTERING_FLAG == 0
 $ACTOR_DEAD == 0
 not actor.Dead(PLAYER_ACTOR)
-056D:   actor $VOICE_ACTOR defined
+056D:   actor VOICE_ACTOR_OLD_KUKLA_HANLDE defined
+VOICE_ACTOR_NEED_TO_USE_KUKLA == 1
 jf @PLAYER_HIT_IDLE
 
 if
@@ -223,7 +235,7 @@ then
 if
 $CARL_STORY == 0
 then
-05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 340
+05C1: AS_actor VOICE_ACTOR_OLD_KUKLA_HANLDE speak_from_audio_table 340
 else
 05C1: AS_actor PLAYER_ACTOR speak_from_audio_table 340
 end
@@ -234,7 +246,7 @@ end
 28@ = Actor.Health(PLAYER_ACTOR)
 wait 10 
 if
-056D:   actor $VOICE_ACTOR defined
+056D:   actor VOICE_ACTOR_OLD_KUKLA_HANLDE defined
     then
     04DD: 27@ = actor PLAYER_ACTOR armour
     29@ = Actor.Health(PLAYER_ACTOR) 
@@ -253,9 +265,9 @@ if
                 random_int 0@ 344 346 
                 
                 if
-                056D:   actor $VOICE_ACTOR defined
+                056D:   actor VOICE_ACTOR_OLD_KUKLA_HANLDE defined
                 then
-                05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 0@   
+                05C1: AS_actor VOICE_ACTOR_OLD_KUKLA_HANLDE speak_from_audio_table 0@   
                 end
                 
                 end 
@@ -268,8 +280,7 @@ jump to @PLAYER_HIT_IDLE
 :PLA_VOI
 thread 'PLA_VOI'
 
-create_thread @SRV_VCE
-wait 1  
+create_thread @SRV_VCE  
                 
 32@ = 0 
 $VOICE_RANDOM_TALK_TIMER = 0 
@@ -306,17 +317,17 @@ $VOICE_RANDOM_TALK_TIMER += 50
 end
 
 if
-056D:   actor $VOICE_ACTOR defined
+056D:   actor VOICE_ACTOR_OLD_KUKLA_HANLDE defined
     then
     
     if or    
     $INF_SIDE == 1
     $MIKE_MUTED == 1
-    $VOICE_MUTED == 1
+    $VOICE_MUTED == 1    
     then 
-    0489: set_actor $VOICE_ACTOR muted 1   
+    0489: set_actor VOICE_ACTOR_OLD_KUKLA_HANLDE muted 1   
     else 
-    0489: set_actor $VOICE_ACTOR muted 0  
+    0489: set_actor VOICE_ACTOR_OLD_KUKLA_HANLDE muted 0  
     end
     
     end    
@@ -334,94 +345,96 @@ $GAMEMODE_CRAZY == 0
 jf @VOICE_CHECK   
 
 if
-056D:   actor $VOICE_ACTOR defined
+056D:   actor VOICE_ACTOR_OLD_KUKLA_HANLDE defined
 then
 
+//not needed
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-if and
-not actor.Driving(PLAYER_ACTOR)
-8449: not  actor PLAYER_ACTOR in_a_car
-8A32: not actor PLAYER_ACTOR on_turret_of_car
-89DE: not  actor PLAYER_ACTOR entering_car
-    then
-    
-    if or
-    $PLAYER_SURVIVOR_SIDE == 1
-    $PLAYER_FERMERS_SIDE == 1
-    $SWAT_FERMERS_SIDE == 1
-        then
-        
-        if
-        $BANDITS_DONT_ATTACK_PLAYER_FLAG == 0
-        then
-        077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 25 // see ped.dat
-        else
-        077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 25 // see ped.dat
-        end
-        
-        if
-        $ARMY_DONT_ATTACK_PLAYER_FLAG == 0
-        then
-        077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 27 // see ped.dat
-        else
-        077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 27 // see ped.dat
-        end
-        
-        end
-        
-    if
-    056D:   actor $VOICE_ACTOR defined
-        then
-        if
-        $PLAYER_ARMY_SIDE == 1    
-            then
-            077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 26 // see ped.dat
-            077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 25 // see ped.dat
-            077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 28 // see ped.dat
-            end
-        end   
-        
-    if
-    056D:   actor $VOICE_ACTOR defined
-        then
-        if or
-        $PLAYER_BANDIT_SIDE == 1
-        CARMA_VERY_BAD_FLAG == 1    
-            then
-            077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 26 // see ped.dat
-            077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 27 // see ped.dat
-            077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 28 // see ped.dat
-            end
-        end  
-        
-    end
+//if and
+//not actor.Driving(PLAYER_ACTOR)
+//8449: not  actor PLAYER_ACTOR in_a_car
+//8A32: not actor PLAYER_ACTOR on_turret_of_car
+//89DE: not  actor PLAYER_ACTOR entering_car
+//    then
+//    
+//    if or
+//    $PLAYER_SURVIVOR_SIDE == 1
+//    $PLAYER_FERMERS_SIDE == 1
+//    $SWAT_FERMERS_SIDE == 1
+//        then
+//        
+//        if
+//        $BANDITS_DONT_ATTACK_PLAYER_FLAG == 0
+//        then
+//        077A: set_actor VOICE_ACTOR_OLD_KUKLA_HANLDE acquaintance 0 to_actors_pedtype 25 // see ped.dat
+//        else
+//        077A: set_actor VOICE_ACTOR_OLD_KUKLA_HANLDE acquaintance 0 to_actors_pedtype 25 // see ped.dat
+//        end
+//        
+//        if
+//        $ARMY_DONT_ATTACK_PLAYER_FLAG == 0
+//        then
+//        077A: set_actor VOICE_ACTOR_OLD_KUKLA_HANLDE acquaintance 0 to_actors_pedtype 27 // see ped.dat
+//        else
+//        077A: set_actor VOICE_ACTOR_OLD_KUKLA_HANLDE acquaintance 0 to_actors_pedtype 27 // see ped.dat
+//        end
+//        
+//        end
+//        
+//    if
+//    056D:   actor VOICE_ACTOR_OLD_KUKLA_HANLDE defined
+//        then
+//        if
+//        $PLAYER_ARMY_SIDE == 1    
+//            then
+//            077A: set_actor VOICE_ACTOR_OLD_KUKLA_HANLDE acquaintance 0 to_actors_pedtype 26 // see ped.dat
+//            077A: set_actor VOICE_ACTOR_OLD_KUKLA_HANLDE acquaintance 0 to_actors_pedtype 25 // see ped.dat
+//            077A: set_actor VOICE_ACTOR_OLD_KUKLA_HANLDE acquaintance 0 to_actors_pedtype 28 // see ped.dat
+//            end
+//        end   
+//        
+//    if
+//    056D:   actor VOICE_ACTOR_OLD_KUKLA_HANLDE defined
+//        then
+//        if or
+//        $PLAYER_BANDIT_SIDE == 1
+//        CARMA_VERY_BAD_FLAG == 1    
+//            then
+//            077A: set_actor VOICE_ACTOR_OLD_KUKLA_HANLDE acquaintance 0 to_actors_pedtype 26 // see ped.dat
+//            077A: set_actor VOICE_ACTOR_OLD_KUKLA_HANLDE acquaintance 0 to_actors_pedtype 27 // see ped.dat
+//            077A: set_actor VOICE_ACTOR_OLD_KUKLA_HANLDE acquaintance 0 to_actors_pedtype 28 // see ped.dat
+//            end
+//        end  
+//        
+//    end
 
 ///////////////////////////////////////////////////////////////////////////////////////////            
-    
-if or
-actor.Driving(PLAYER_ACTOR)
-0449:   actor PLAYER_ACTOR in_a_car
-0A32:  actor PLAYER_ACTOR on_turret_of_car
-09DE:   actor PLAYER_ACTOR entering_car   
-    then
-    077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 23 // see ped.dat
-    077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 25 // see ped.dat
-    077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 26 // see ped.dat
-    077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 27 // see ped.dat
-    077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 28 // see ped.dat
-    077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 29 // see ped.dat
-    else
-    
-    if
-    $ZOMBIE_DONT_ATTACK_PLAYER == 0
-    then
-    077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 23 // see ped.dat
-    else
-    077A: set_actor $VOICE_ACTOR acquaintance 0 to_actors_pedtype 23 // see ped.dat
-    end
-    
-    end
+
+//not needed    
+//if or
+//actor.Driving(PLAYER_ACTOR)
+//0449:   actor PLAYER_ACTOR in_a_car
+//0A32:  actor PLAYER_ACTOR on_turret_of_car
+//09DE:   actor PLAYER_ACTOR entering_car   
+//    then
+//    077A: set_actor VOICE_ACTOR_OLD_KUKLA_HANLDE acquaintance 0 to_actors_pedtype 23 // see ped.dat
+//    077A: set_actor VOICE_ACTOR_OLD_KUKLA_HANLDE acquaintance 0 to_actors_pedtype 25 // see ped.dat
+//    077A: set_actor VOICE_ACTOR_OLD_KUKLA_HANLDE acquaintance 0 to_actors_pedtype 26 // see ped.dat
+//    077A: set_actor VOICE_ACTOR_OLD_KUKLA_HANLDE acquaintance 0 to_actors_pedtype 27 // see ped.dat
+//    077A: set_actor VOICE_ACTOR_OLD_KUKLA_HANLDE acquaintance 0 to_actors_pedtype 28 // see ped.dat
+//    077A: set_actor VOICE_ACTOR_OLD_KUKLA_HANLDE acquaintance 0 to_actors_pedtype 29 // see ped.dat
+//    else
+//    
+//    if
+//    $ZOMBIE_DONT_ATTACK_PLAYER == 0
+//    then
+//    077A: set_actor VOICE_ACTOR_OLD_KUKLA_HANLDE acquaintance 0 to_actors_pedtype 23 // see ped.dat
+//    else
+//    077A: set_actor VOICE_ACTOR_OLD_KUKLA_HANLDE acquaintance 0 to_actors_pedtype 23 // see ped.dat
+//    end
+//    
+//    end
     
 /////////////////////////////////////////////////////////////////////////////////////////////             
 
@@ -431,7 +444,7 @@ end
 
 if and
 001C:   $VOICE_RANDOM_TALK_TIMER > $VOICE_RANDOM_TALK_TIMER_END // (int)
-056D:   actor $VOICE_ACTOR defined
+056D:   actor VOICE_ACTOR_OLD_KUKLA_HANLDE defined
 $GAMEMODE_SURVIVAL == 1
 then
 $VOICE_RANDOM_TALK_TIMER = 0
@@ -444,18 +457,18 @@ $ACTOR_BURNING_FLAG == 1
     then
     
     if
-    056D:   actor $VOICE_ACTOR defined
+    056D:   actor VOICE_ACTOR_OLD_KUKLA_HANLDE defined
     then
-    05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 346     
+    05C1: AS_actor VOICE_ACTOR_OLD_KUKLA_HANLDE speak_from_audio_table 346     
     end
     
     end
 
 if 
-056D:   actor $VOICE_ACTOR defined
+056D:   actor VOICE_ACTOR_OLD_KUKLA_HANLDE defined
 jf @VOICE_CHECK2
 if
-not actor.Dead($VOICE_ACTOR)  
+not actor.Dead(VOICE_ACTOR_OLD_KUKLA_HANLDE)  
 jf @VOICE_CHECK2
 :VOICE_CHECK_AHHH_OHHH
 0A8D: 1@ = read_memory 0xB7CB64 size 4 virtual_protect 0
@@ -468,7 +481,7 @@ then
 actor.StorePos(PLAYER_ACTOR,25@,26@,27@)
 if and
 0AE1: 20@ = random_actor_near_point 25@ 26@ 27@ in_radius 5.0 find_next 1 pass_deads 0 
-87D6: not  20@ == $VOICE_ACTOR // @ == $ (int)
+87D6: not  20@ == VOICE_ACTOR_OLD_KUKLA_HANLDE // @ == $ (int)
 87D6: not  20@ == PLAYER_ACTOR // @ == $ (int)  
     then
     
@@ -600,9 +613,9 @@ jf @VOICE_CHECK2
 :FUCK_SKIP_EEIO_FIGHTING      
 
 if
-056D:   actor $VOICE_ACTOR defined
+056D:   actor VOICE_ACTOR_OLD_KUKLA_HANLDE defined
 then
-05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 89  
+05C1: AS_actor VOICE_ACTOR_OLD_KUKLA_HANLDE speak_from_audio_table 89  
 end  
 
 32@ = 0
@@ -694,9 +707,9 @@ for 2@ = 0 to 5
             end
             
             if
-            056D:   actor $VOICE_ACTOR defined
+            056D:   actor VOICE_ACTOR_OLD_KUKLA_HANLDE defined
             then
-            05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 224
+            05C1: AS_actor VOICE_ACTOR_OLD_KUKLA_HANLDE speak_from_audio_table 224
             end
             
             ///////////////////////////////////////////////////////////////////////////
@@ -842,7 +855,7 @@ return
 09E8: 0@ = actor PLAYER_ACTOR active_interior 
 if and
 0818:  actor PLAYER_ACTOR in_air
-056D:   actor $VOICE_ACTOR defined
+056D:   actor VOICE_ACTOR_OLD_KUKLA_HANLDE defined
 0@ == 0
 jf @VOICE_CHECK
 if or
@@ -856,9 +869,9 @@ if
 jf @VOICE_CHECK
 
 if
-056D:   actor $VOICE_ACTOR defined
+056D:   actor VOICE_ACTOR_OLD_KUKLA_HANLDE defined
 then    
-05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 346  
+05C1: AS_actor VOICE_ACTOR_OLD_KUKLA_HANLDE speak_from_audio_table 346  
 end
 
 jump to @VOICE_CHECK
@@ -880,7 +893,7 @@ if
 actor.StorePos(PLAYER_ACTOR,25@,26@,27@)
 if and
 0AE1: 20@ = random_actor_near_point 25@ 26@ 27@ in_radius 10.0 find_next 1 pass_deads 0 
-056D:   actor $VOICE_ACTOR defined  
+056D:   actor VOICE_ACTOR_OLD_KUKLA_HANLDE defined  
 jf @VOICE_CHECK_FRENDLY 
 089F: get_actor 20@ pedtype_to 1@  
 
@@ -920,15 +933,15 @@ $INF_SIDE == 0
 jf @VOICE_CHECK_FRENDLY_RETURN
 if and
 056D:   actor 20@ defined
-056D:   actor $VOICE_ACTOR defined
+056D:   actor VOICE_ACTOR_OLD_KUKLA_HANLDE defined
 jf @VOICE_CHECK_FRENDLY_RETURN
 if or
-0364:   actor 20@ spotted_actor $VOICE_ACTOR
-0364:   actor $VOICE_ACTOR spotted_actor 20@
+0364:   actor 20@ spotted_actor VOICE_ACTOR_OLD_KUKLA_HANLDE
+0364:   actor VOICE_ACTOR_OLD_KUKLA_HANLDE spotted_actor 20@
 jf @VOICE_CHECK_FRENDLY_RETURN
 if and
 0104:   actor PLAYER_ACTOR near_actor 20@ radius 10.0 10.0 10.0 sphere 0
-82F2: not  actor 20@ model == #MALE01
+//82F2: not  actor 20@ model == #MALE01
 not actor.Animation(20@) == "phone_talk"
 not actor.Animation(20@) == "phone_in"
 not actor.Animation(20@) == "phone_out"
@@ -944,9 +957,9 @@ $VOICE_TALK1_FLAG == 0
     then     
     
     if
-    056D:   actor $VOICE_ACTOR defined
+    056D:   actor VOICE_ACTOR_OLD_KUKLA_HANLDE defined
     then    
-    05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 166 
+    05C1: AS_actor VOICE_ACTOR_OLD_KUKLA_HANLDE speak_from_audio_table 166 
     end
     
     else     
@@ -972,7 +985,7 @@ gosub @RANDOM_TALK_FRIEND
 
 if and
 056D:   actor 20@ defined
-056D:   actor $VOICE_ACTOR defined
+056D:   actor VOICE_ACTOR_OLD_KUKLA_HANLDE defined
 jf @VOICE_CHECK_FRENDLY_RETURN
 
 0A8D: 1@ = read_memory 0xB7CB64 size 4 virtual_protect 0
@@ -987,9 +1000,9 @@ then
 else    
 
 if
-056D:   actor $VOICE_ACTOR defined
+056D:   actor VOICE_ACTOR_OLD_KUKLA_HANLDE defined
 then
-05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 2@   
+05C1: AS_actor VOICE_ACTOR_OLD_KUKLA_HANLDE speak_from_audio_table 2@   
 end
 
 end
@@ -1029,7 +1042,7 @@ then
 actor.StorePos(PLAYER_ACTOR,25@,26@,27@)
 if and
 0AE1: 20@ = random_actor_near_point 25@ 26@ 27@ in_radius 5.0 find_next 1 pass_deads 0 
-87D6: not  20@ == $VOICE_ACTOR // @ == $ (int)  
+87D6: not  20@ == VOICE_ACTOR_OLD_KUKLA_HANLDE // @ == $ (int)  
 87D6: not  20@ == PLAYER_ACTOR // @ == $ (int)
     then
     
@@ -1141,9 +1154,9 @@ jf @VOICE_CHECK_AHHH_OHHH2_RETURN
 :FUCK_SKIP_EEIO_FIGHTINGB     
 
 if
-056D:   actor $VOICE_ACTOR defined
+056D:   actor VOICE_ACTOR_OLD_KUKLA_HANLDE defined
 then
-05C1: AS_actor $VOICE_ACTOR speak_from_audio_table 89  
+05C1: AS_actor VOICE_ACTOR_OLD_KUKLA_HANLDE speak_from_audio_table 89  
 end  
 
 33@ = 0
@@ -1382,25 +1395,30 @@ return
 :SRV_VCX
 thread 'SRV_VCX'
 
+create_thread @SRV_VC3
+
 while true
 wait 0
 
 if
-056D:   actor $VOICE_ACTOR defined
+VOICE_ACTOR_NEED_TO_USE_KUKLA == 1
+then
+if
+056D:   actor VOICE_ACTOR_OLD_KUKLA_HANLDE defined
     then
     
     if
-    094D:  actor $VOICE_ACTOR mutally_active
+    094D:  actor VOICE_ACTOR_OLD_KUKLA_HANLDE mutally_active
         then
         
-        while 056D:   actor $VOICE_ACTOR defined
+        while 056D:   actor VOICE_ACTOR_OLD_KUKLA_HANLDE defined
         wait 0
         
         if
-        056D:   actor $VOICE_ACTOR defined
+        056D:   actor VOICE_ACTOR_OLD_KUKLA_HANLDE defined
         then
         if
-        094D:  actor $VOICE_ACTOR mutally_active
+        094D:  actor VOICE_ACTOR_OLD_KUKLA_HANLDE mutally_active
             then
             0967: actor PLAYER_ACTOR move_mouth 5 ms
             else
@@ -1415,7 +1433,56 @@ if
         end        
     
     end
+end
 
 end
 
+end_thread
+
+:SRV_VC3
+thread 'SRV_VC3'
+
+while true
+0665: get_actor PLAYER_ACTOR model_to 0@
+wait 0
+0665: get_actor PLAYER_ACTOR model_to 1@
+if
+803B: not  0@ == 1@  // (int)
+    then
+    create_thread @VC_UPD
+    end
+    
+//if
+//056D:   actor $VOICE_ACTOR defined
+//    then
+//    0AD1: show_formatted_text_highpriority "da, %d" time 2000 $VOICE_ACTOR
+//    else
+//    0AD1: show_formatted_text_highpriority "net, %d" time 2000 $VOICE_ACTOR   
+//    end    
+    
+if or
+PLAYER_HAS_CUSTOM_VOICE > 0 //либо у ГГ кастомно выбранный голос
+$FP_ACTIVATED == 1 //либо мы от первого лица
+OOS_MARK == 692875 //мы бьем ворзака, ему нужна кукла сверху
+    then
+    //если да, то говорит войс актор, создаем куклу
+    0084: VOICE_ACTOR_OLD_KUKLA_HANLDE = $VOICE_ACTOR // (int)
+    VOICE_ACTOR_NEED_TO_USE_KUKLA = 1
+//    0AD1: show_formatted_text_highpriority "speak kukla totally not tech norm player speak" time 2000
+    else    
+    //если нет, говорит физически ГГ, куклы нет
+    0084: VOICE_ACTOR_OLD_KUKLA_HANLDE = $11992 // (int)
+    VOICE_ACTOR_NEED_TO_USE_KUKLA = 0
+//    0AD1: show_formatted_text_highpriority "speak not kukla totally tech norm player speak" time 2000        
+    end    
+    
+end 
+
+:VC_UPD
+thread 'VC_UPD'
+0A96: 2@ = actor PLAYER_ACTOR struct
+0085: 3@ = 2@ // (int) 
+3@ += 0x294 //ped->m_pedSpeech
+0AA6: call_method 0x4E68D0 struct 3@ num_params 1 pop 0 2@ //CAEPedSpeechAudioEntity::Initialise
+//    0AD1: show_formatted_text_highpriority "UPDATE VOICE" time 2000
 end_thread
