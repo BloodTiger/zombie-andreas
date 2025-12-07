@@ -897,7 +897,7 @@ not PLAYER_NO_ITEMS_FLAG == 1
                     $SPEED_08_FLAG = 0
                     BLACK_MENU_OPENED_FLAG = 0
                     015D: set_gamespeed 1.0
-                    Audiostream.Volume(PERK_THEME_AUDIOSTREAM) = VERO_TIPA_VOLUME
+                    Audiostream.Volume(PERK_THEME_AUDIOSTREAM) = VERO_TIPA_VOLUME  
                     
                     fade 1 500
                     $HUD_REMOVE = 0    
@@ -907,7 +907,36 @@ not PLAYER_NO_ITEMS_FLAG == 1
                 end
             end
         end
-    end  
+    end
+    
+if and
+$CASETTE_PLAYING_FLAG == 1
+not $CASETTE_PLAYING_FLAG == 2
+MUSIC_CASSETTE_IS_REALLY_PLAYING == 1
+PLAYER_IN_CANALS_FLAG == 0
+    then
+    
+    if
+    $FP_ACTIVATED == 1
+    then
+    Audiostream.LinkToActor($CASETTE_AUDIO,PLAYER_ACTOR)
+//    0AD1: show_formatted_text_highpriority "link to actor" time 2000
+    else
+    068D: get_camera_position_to $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3
+    Audiostream.SetPosition($CASETTE_AUDIO,$TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+//    0AD1: show_formatted_text_highpriority "link to camera pos" time 2000
+    end
+    
+    0AB9: get_mp3 $CASETTE_AUDIO state_to 0@
+    if
+    0@ == -1
+        then
+        MUSIC_CASSETTE_IS_REALLY_PLAYING = 0
+        $CASETTE_PLAYING_FLAG = 2
+        create_thread @CAS_SHW
+        end
+    
+    end      
     
 if and
 $FREEMODE == 1
@@ -922,6 +951,7 @@ not PLAYER_NO_ITEMS_FLAG == 1
     if or
     0E3D:   key_pressed 221
     OPEN_NOTES_MENU_FLAG == 2
+    MUSIC_CASSETTE_NEED_ENABLE_WHEN_AVALIABLE == 1
         then  
         
         0A8D: 0@ = read_memory 0xB7CB64 size 4 virtual_protect 0
@@ -936,7 +966,8 @@ not PLAYER_NO_ITEMS_FLAG == 1
         $HUD_REMOVE == 0
         $GAMEMODE_HOLD == 0
         $CHEAT_TYPE_FLAG == 0
-        $SAVESTATUS_TRUE == 0  
+        $SAVESTATUS_TRUE == 0 
+        $SAVING_DELAY == 0 
         MAIN_QUEST_MUSIC_FLAG == 0
         0@ == 1.0
             then        
@@ -951,7 +982,18 @@ not PLAYER_NO_ITEMS_FLAG == 1
                 if or
                 02A0:   actor PLAYER_ACTOR stopped
                 $CASETTE_PLAYING_FLAG == 2
-                    then 
+                    then
+                    
+                    if
+                    MUSIC_CASSETTE_NEED_ENABLE_WHEN_AVALIABLE == 1    
+                    then
+                    $CASETTE_AUDIO = Audiostream.Load("AUDIO\SOUNDS\QUESTS\audoff.mp3")
+                    MUSIC_CASSETTE_IS_REALLY_PLAYING = 0
+                    $CASETTE_PLAYING_FLAG = 2
+                    create_thread @CAS_SHW
+                    MUSIC_CASSETTE_NEED_ENABLE_WHEN_AVALIABLE = 0
+                    jump to @SKIP_CASSETTE_SHIT
+                    end 
                                                             
                     $SPEED_08_FLAG = 1
                     $MUTE_MUSIC_FLAG = 1
@@ -1008,7 +1050,7 @@ not PLAYER_NO_ITEMS_FLAG == 1
                     $SPEED_08_FLAG = 0
                     BLACK_MENU_OPENED_FLAG = 0
                     015D: set_gamespeed 1.0
-                    Audiostream.Volume(PERK_THEME_AUDIOSTREAM) = VERO_TIPA_VOLUME
+                    Audiostream.Volume(PERK_THEME_AUDIOSTREAM) = VERO_TIPA_VOLUME 
                     
                     fade 1 500
                     $HUD_REMOVE = 0    
@@ -1027,15 +1069,26 @@ not PLAYER_NO_ITEMS_FLAG == 1
     not $ACTIVE_INTERIOR == 6
     not $DELETE_SOUND == 1
     not INT_ZMB_MALLV_VC_FLAG == 1
-    not ZAME_SURV_LAUNCH_FLAG == 1
+    not ZAME_SURV_LAUNCH_FLAG == 1 
         then
         
         if or
         $SAVESTATUS_TRUE == 1  
+        $SAVING_DELAY == 1
         MAIN_QUEST_MUSIC_FLAG == 1
         $MUSIC_TURN_OFF_FLAG == 1
         actor.Dead(PLAYER_ACTOR)
             then
+            
+            if or
+            $SAVESTATUS_TRUE == 1
+            $SAVING_DELAY == 1  
+            MAIN_QUEST_MUSIC_FLAG == 1
+            $MUSIC_TURN_OFF_FLAG == 1
+            then
+            MUSIC_CASSETTE_NEED_ENABLE_WHEN_AVALIABLE = 1
+            end
+            
             jump to @TAPE_DISABLE
             end                 
         
@@ -1134,19 +1187,25 @@ not PLAYER_NO_ITEMS_FLAG == 1
                 0E3D: is_key_just_pressed 190
                 0E3D: is_key_just_pressed 188
                     then
-                    $CASETTE_PLAYING_FLAG = 2
-                    create_thread @CAS_SHW
-                    wait 3000
+                    if
+                    MUSIC_CASSETTE_IS_REALLY_PLAYING == 1
+                        then
+                        $CASETTE_PLAYING_FLAG = 2
+                        create_thread @CAS_SHW
+                        wait 3000
+                        end
                     end
                 if and
                 0E3D: is_key_just_pressed 191 
                 not CASSETTE_TURNED_ON_LOCALLY == 1
+                MUSIC_CASSETTE_IS_REALLY_PLAYING == 1
                     then
                     :TAPE_DISABLE
                     audiostream.PerformAction($CASETTE_AUDIO,STOP)
                     audiostream.Release($CASETTE_AUDIO)
                     gosub @TAPES_AUD_OFF
                     $CASETTE_PLAYING_FLAG = 0
+                    MUSIC_CASSETTE_IS_REALLY_PLAYING = 0
                     end                    
                 end
             end            
@@ -3953,4 +4012,4 @@ $ACHIV_TOTAL_SHOW_OFF_FLAG = 0
 
 $ACHIV_TOTAL = 50
 
-return  
+return                

@@ -184,6 +184,12 @@ $SAVEPLACE_ON == 0
         end
     end
     
+    if
+    PLAYER_IN_CANALS_FLAG == 1
+    then
+    32@ += 100
+    end
+    
     if or 
     001D:   32@ > 0@  // (int)
     $SPAWN_WITCH_FLAG == 1
@@ -474,7 +480,8 @@ jf @ZOMBIE_WITCH_SPAWN_START
 if and
 $WITCH_INTERIOR_SPAWN == 1
 $SPAWN_WITCH_FLAG == 0
-then
+not PLAYER_IN_CANALS_FLAG == 1
+then         
 jump to @WITCH_SPAWN_TIMER_START
 end  
 
@@ -488,10 +495,10 @@ else
 WTH_JUMPS_COUNT = 0
 end
 31@ = 0
-gosub @WITCH_COORD_SET
+gosub @WITCH_COORD_SET_INITJUMP
 if
 31@ == 999888666
-then
+then                
 jump to @WITCH_SPAWN_TIMER_START
 end
 
@@ -499,7 +506,7 @@ if and
 $WITCH_INTERIOR_SPAWN == 1
 $SPAWN_WITCH_FLAG == 0
 not PLAYER_IN_CANALS_FLAG == 1
-then
+then      
 jump to @WITCH_SPAWN_TIMER_START
 end
 
@@ -930,6 +937,17 @@ not $WITCH_INTERIOR_SPAWN == 1
             
         jump to @WITCH_SPAWN_TIMER_START
         
+        end
+    else
+    if and
+    $WITCH_INTERIOR_SPAWN == 1
+    PLAYER_IN_CANALS_FLAG == 1    
+        then
+        if
+        8104: not  actor WITCH near_actor PLAYER_ACTOR radius 200.0 200.0 90.0 sphere 0
+            then
+            jump to @WTH_REM
+            end
         end    
     end
 
@@ -3523,6 +3541,7 @@ return
 
 :WITCH_COORD_SET
 wait 0
+:WITCH_COORD_SET_INITJUMP
 if
 not CURRENT_USHER_TUTORIAL_NUM == -444666
 jf @ZOMBIE_COORD_USHER4_INT
@@ -3829,8 +3848,8 @@ end
 return
 end
 
-wait 0
-//0AD1: show_formatted_text_highpriority "witch %d is DOING ZALOOPA 9" time 2000 24@
+wait 125 //250
+//0AD1: show_formatted_text_highpriority "witch %d is DOING ZALOOPA 9" time 200 24@
 0208: 27@ = random_float_in_ranges 100.0 -100.0 
 0208: 28@ = random_float_in_ranges -100.0 100.0   
 04C4: store_coords_to 2@ 3@ 4@ from_actor PLAYER_ACTOR with_offset 27@ 28@ 0.0 
@@ -3847,8 +3866,8 @@ Actor.StorePos(PLAYER_ACTOR, 27@, 28@, 29@)
 050A: 30@ = distance_between_XYZ 2@ 3@ 4@ and_XYZ 27@ 28@ 29@ 
 0092: 30@ = float 30@ to_integer
 if and
-30@ > 90 
-not 30@ > 120
+30@ > 45 
+not 30@ > 160
 80C2: not  sphere_onscreen 2@ 3@ 4@ radius 1.0
 jf @WITCH_COORD_SET_INTERIOR
 if
@@ -3858,8 +3877,52 @@ if and
 8AE2: 30@ = random_vehicle_near_point 2@ 3@ 4@ in_radius 5.0 find_next 0 pass_wrecked 0 //IF and SET
 8AE1: 31@ = random_actor_near_point 2@ 3@ 4@ in_radius 2.0 find_next 0 pass_deads 0 
 jf @WITCH_COORD_SET_INTERIOR
+
+if //additional checks for canals spawn
+PLAYER_IN_CANALS_FLAG == 1
+then
+
+0087: 29@ = 4@ // (float)
+4@ += 0.15
+29@ += 5.0
+if //EST ROOF
+0D3A: get_collision_between_poitns 2@ 3@ 4@ and 2@ 3@ 29@ flags 1 0 0 0 0 0 0 0 ignore_entity 0 store_point_to 27@ 28@ 29@ entity_to TEMPVAR_INT colpoint_data_to 1 // IF and SET
+jf @WITCH_COORD_SET_INTERIOR
+
 if
+83CA: not  object DUMMY_OBJECT exists
+then
+DUMMY_OBJECT = object.Init(321,2@,3@,4@)
+0750: set_object DUMMY_OBJECT visibility 0
+0382: set_object DUMMY_OBJECT collision_detection 0
+object.Indestructibility(DUMMY_OBJECT,true)
+object.KeepInMemory(DUMMY_OBJECT,true)
+else
+object.PutAt(DUMMY_OBJECT,2@,3@,4@)
+end
+
+0400: store_coords_to $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3 from_object DUMMY_OBJECT with_offset 0.0 1.0 0.0 //vpered
+if //PVERDE clean
+8D3A: not get_collision_between_poitns 2@ 3@ 4@ and $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3 flags 1 0 0 0 0 0 0 0 ignore_entity 0 store_point_to 27@ 28@ 29@ entity_to TEMPVAR_INT colpoint_data_to 1 // IF and SET
+jf @WITCH_COORD_SET_INTERIOR
+0400: store_coords_to $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3 from_object DUMMY_OBJECT with_offset 0.0 1.0 0.0 //vzad
+if //vzad clean
+8D3A: not get_collision_between_poitns 2@ 3@ 4@ and $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3 flags 1 0 0 0 0 0 0 0 ignore_entity 0 store_point_to 27@ 28@ 29@ entity_to TEMPVAR_INT colpoint_data_to 1 // IF and SET
+jf @WITCH_COORD_SET_INTERIOR
+0400: store_coords_to $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3 from_object DUMMY_OBJECT with_offset -1.0 0.0 0.0 //vlevo
+if //vlevo clean
+8D3A: not get_collision_between_poitns 2@ 3@ 4@ and $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3 flags 1 0 0 0 0 0 0 0 ignore_entity 0 store_point_to 27@ 28@ 29@ entity_to TEMPVAR_INT colpoint_data_to 1 // IF and SET
+jf @WITCH_COORD_SET_INTERIOR
+0400: store_coords_to $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3 from_object DUMMY_OBJECT with_offset 1.0 0.0 0.0 //vpravo
+if //vpravo clean
+8D3A: not get_collision_between_poitns 2@ 3@ 4@ and $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3 flags 1 0 0 0 0 0 0 0 ignore_entity 0 store_point_to 27@ 28@ 29@ entity_to TEMPVAR_INT colpoint_data_to 1 // IF and SET
+jf @WITCH_COORD_SET_INTERIOR
+
+end
+
+if or
 $GAMEMODE_EDITOR == 1
+$ACTIVE_INTERIOR == 0
 then
 31@ = 999888666
 end
