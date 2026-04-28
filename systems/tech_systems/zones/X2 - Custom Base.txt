@@ -7,7 +7,9 @@ CUSTOM_BASE_Y2 = $TRADER_SPHERE_Y[1]
 CUSTOM_BASE_Z2 = $TRADER_SPHERE_Z[1]
 CUSTOM_BASE_ENTERED_NUM = $PACKAGE_PICKED_UP_FLAG[0]
 CUSTOM_BASE_PEDTYPE = $PACKAGE_PICKED_UP_FLAG[1]
-CUSTOM_BASE_MARK = $PACKAGE_PICKED_UP_FLAG[1]
+CUSTOM_BASE_MARK = $BANDIT_MARKER_FLAG[CUSTOM_BASE_ENTERED_NUM]
+CUSTOM_BASE_SAVE_PICKUP = $BANDITS_ZONE_SAVE[4]
+CUSTOM_BASE_SAVE_PICKUP_MARKER = $BANDITS_ZONE_SAVE_MARKER[4]
 end
 
 :ZONE_CUSTOM_START1
@@ -15,7 +17,11 @@ end
 //if
 //0E45: frame_mod 60
 //then
-wait 2000
+//wait 2000
+if or
+0154:   actor PLAYER_ACTOR in_zone 'BNTDZN'
+0154:   actor PLAYER_ACTOR in_zone 'ARMYZN'
+then
 0AF0: 1@ = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section "SETTINGS" key "COUNT"
 if
 1@ > -1
@@ -35,7 +41,7 @@ if
 //    marker.Disable(2@)
 //    marker.Disable(3@)
     if and
-    00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA CUSTOM_BASE_X1 CUSTOM_BASE_Y1 0.0 cornerB CUSTOM_BASE_X2 CUSTOM_BASE_Y2 200.0
+    00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA CUSTOM_BASE_X1 CUSTOM_BASE_Y1 -100.0 cornerB CUSTOM_BASE_X2 CUSTOM_BASE_Y2 200.0
     $SAVESTATUS == 0
         then    
         jump @ZONE_CUSTOM_START_CREATE_OUTSIZE
@@ -43,6 +49,7 @@ if
     end
     
     end
+end
 
 //end
 
@@ -66,6 +73,11 @@ ZOMBIES_NOTSPAWN = 1
 
 0AF0: $ZONE_PEOPLE_COUNT = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section CUSTOM_BASE_STRING key "ACTOR_TOTAL"
 0AF0: CUSTOM_BASE_PEDTYPE = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section CUSTOM_BASE_STRING key "ACTOR_TYPE"
+if 
+CUSTOM_BASE_PEDTYPE == 25    
+then
+0084: $ENTERED_BCAMP_NUMBER = CUSTOM_BASE_ENTERED_NUM // (int)
+end
 
 /////////////////////////////////////////////////////////////////////////////////
 
@@ -74,18 +86,18 @@ for 0@ = 0 to $ZONE_PEOPLE_COUNT
 0AD3: v$GAS_TANK_X = format "ACTOR%d_ID" 0@
 0AF0: 1@ = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section CUSTOM_BASE_STRING key v$GAS_TANK_X
 
+while not model.Available(1@)
+wait 0
+model.Load(1@)
+mload
+end
+
 0AD3: v$GAS_TANK_X = format "ACTOR%d_X" 0@
 0AF2: $TEMPVAR_FLOAT_1 = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section CUSTOM_BASE_STRING key v$GAS_TANK_X
 0AD3: v$GAS_TANK_Y = format "ACTOR%d_Y" 0@
 0AF2: $TEMPVAR_FLOAT_2 = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section CUSTOM_BASE_STRING key v$GAS_TANK_Y
 0AD3: v$GAS_TANK_Z = format "ACTOR%d_Z" 0@
 0AF2: $TEMPVAR_FLOAT_3 = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section CUSTOM_BASE_STRING key v$GAS_TANK_Z
-
-while not model.Available(1@)
-wait 0
-model.Load(1@)
-mload
-end
 
 $ARMY69_2[0@] = actor.Create(CUSTOM_BASE_PEDTYPE,1@,$TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
 0AD3: v$GAS_TANK_X = format "ACTOR%d_A" 0@
@@ -99,7 +111,7 @@ end
   
 for 0@ = 0 to $ZONE_PEOPLE_COUNT
 
-gosub @CHECK_CURRENT_ENTERED_BASE_ZONE
+gosub @CHECK_CURRENT_ENTERED_BASE_ZONE2
 0085: 31@ = 0@
 31@ *= 4 //size of byte
 0EE2: read_struct_offset_multi 2@ offset 31@ count 1 size 4 1@
@@ -290,7 +302,9 @@ Audiostream.Loop($SOUND_EFFECT1, 1)
 
 0084: HORDE_PREV_STATUS = $ZOMBIES_HORDE // (int)
 $SOUND_EFFECT1_FLAG = 1
-0AC6: 1@ = label @ZONE_LVBAND_KILLED_BOICI offset
+//0AC6: 1@ = label @ZONE_LVBAND_KILLED_BOICI offset
+gosub @CHECK_CURRENT_ENTERED_BASE_ZONE2
+0085: 1@ = 2@ // (int)
 gosub @KILL_KILLED_ZONE_BOICI
 
 if
@@ -307,13 +321,15 @@ for 0@ = 0 to $ZONE_PEOPLE_COUNT
 wait 1
 gosub @SIREN_VOLUME 
 end  
+
+//wait 10000
                              
 jump @ZONE_CUSTOM_CHECK_OUTSIZE
 
 :ZONE_CUSTOM_CHECK_OUTSIZE
 wait 0
 if and
-00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA CUSTOM_BASE_X1 CUSTOM_BASE_Y1 0.0 cornerB CUSTOM_BASE_X2 CUSTOM_BASE_Y2 200.0
+00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA CUSTOM_BASE_X1 CUSTOM_BASE_Y1 -100.0 cornerB CUSTOM_BASE_X2 CUSTOM_BASE_Y2 200.0
 $SAVESTATUS == 0
 jf @ZONE_CUSTOM_DELETE_OUTSIZE
 gosub @ZONE_MARKERS_CHECK
@@ -323,7 +339,7 @@ gosub @SIREN_VOLUME
 
 for 0@ = 0 to $ZONE_PEOPLE_COUNT
 if
-8184:   actor $ARMY69_2[0] health < 1
+8184:   actor $ARMY69_2[0@] health < 1
     then
     //ass
     else
@@ -358,11 +374,11 @@ then
 if
 $FREEMODE == 1
 then
-text.ShowTextBox('GAME96')
+//text.ShowTextBox('GAME96')
 $BANDITS_SPAWN_MIN += PLUS_TIMER_TO_SPAWN_FRACTION
 $BANDITS_SPAWN_MAX += PLUS_TIMER_TO_SPAWN_FRACTION
 else
-text.ShowTextBox('GAME102')
+//text.ShowTextBox('GAME102')
 end
 
 else
@@ -447,7 +463,17 @@ Audiostream.PerformAction($KARMA_GOOD, PLAY)
 Audiostream.Volume($KARMA_GOOD) = $SOUNDS_VOLUME
 end
 
+if
+CUSTOM_BASE_PEDTYPE == 25
+then
+1@ = 6699
+end
+
 gosub @ENEMY_ZONE_GIVE_PRIPASI_AFTER_ZAHVAT
+
+if
+CUSTOM_BASE_PEDTYPE == 25
+then
 
 0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_BANDITS_CAMPS_CLEARED"
 
@@ -458,6 +484,20 @@ then
 end                
  
 0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_BANDITS_CAMPS_CLEARED"
+
+else
+
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "STATS_ARMY_CAMPS_CLEARED"
+
+if
+$CHEATED_FLAG == 0 
+then                   
+0@ += 1
+end                
+ 
+0AF1: write_int 0@ to_ini_file "saves/ZACM.set" section "SCR" key "STATS_ARMY_CAMPS_CLEARED"
+
+end
 
 if
 075C:   marker CUSTOM_BASE_MARK enabled
@@ -515,6 +555,93 @@ jump @ZONE_CUSTOM_CHECK_SAVE1
 /////////////////////////////////////////////////////////////////////////////////
 
 :ZONE_CUSTOM_CHECK2_OUTSIZE
+
+if
+CUSTOM_BASE_PEDTYPE == 25  
+then
+if and
+$PLAYER_BANDIT_SIDE == 0
+not CARMA_VERY_BAD_FLAG == 1
+    then
+    jump to @SKIP_SHITFACTION_WAR  
+    end
+end
+
+if and
+CUSTOM_BASE_PEDTYPE == 27  
+$PLAYER_ARMY_SIDE == 0
+then
+jump to @SKIP_SHITFACTION_WAR
+end
+
+if
+CUSTOM_MAP_FLAG == 1
+then
+if
+875C: not  marker CUSTOM_BASE_SAVE_PICKUP_MARKER enabled
+    then
+    if and
+    $SAVESTATUS == 0
+    $ONMISSION == 0
+    not HRDOR_DNGR_FLG == 1
+    not $NOTSAVE_MODE == 1
+    $STATE_DESTRUCTION_FLAG == 0 
+        then
+        0AF2: $TEMPVAR_FLOAT_1 = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section CUSTOM_BASE_STRING key "SAVE_X"
+        0AF2: $TEMPVAR_FLOAT_2 = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section CUSTOM_BASE_STRING key "SAVE_Y"
+        0AF2: $TEMPVAR_FLOAT_3 = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section CUSTOM_BASE_STRING key "SAVE_Z"
+        CUSTOM_BASE_SAVE_PICKUP = pickup.Create(#PICKUPSAVE,15,$TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+        CUSTOM_BASE_SAVE_PICKUP_MARKER = marker.CreateIconWithoutSphere(35,$TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+        end
+    else
+    if
+    pickup.Picked_up(CUSTOM_BASE_SAVE_PICKUP)
+        then
+        player.CanMove(PLAYER_CHAR) = false
+        Pickup.Destroy(CUSTOM_BASE_SAVE_PICKUP)
+        
+        if
+        075C:   marker CUSTOM_BASE_SAVE_PICKUP_MARKER enabled
+        then
+        marker.Disable(CUSTOM_BASE_SAVE_PICKUP_MARKER)
+        CUSTOM_BASE_SAVE_PICKUP_MARKER = 0
+        end
+        
+        gosub @ZONE_BASE_SAVE_DO
+        player.CanMove(PLAYER_CHAR) = true
+        0AF2: $TEMPVAR_FLOAT_1 = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section CUSTOM_BASE_STRING key "SAVE_TP_X"
+        0AF2: $TEMPVAR_FLOAT_2 = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section CUSTOM_BASE_STRING key "SAVE_TP_Y"
+        0AF2: $TEMPVAR_FLOAT_3 = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section CUSTOM_BASE_STRING key "SAVE_TP_Z"
+        Actor.PutAtNoOffset(PLAYER_ACTOR, $TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+        0AF2: $TEMPVAR_FLOAT_1 = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section CUSTOM_BASE_STRING key "SAVE_TP_A"
+        Actor.Angle(PLAYER_ACTOR) = $TEMPVAR_FLOAT_1
+        camera.Restore_WithJumpCut()
+        
+        if
+        SKIP_6HOURS_AFTER_SAVE == 0
+        then
+        
+        if
+        $FREEMODE == 0
+        then
+        $MINUTES_PLAYED += 6
+        end
+        
+        else
+        
+        0A8C: write_memory 0x61907A size 4 value 25@ virtual_protect 1 
+        0A8C: write_memory 0x61907E size 1 value 26@ virtual_protect 1
+        
+        SKIP_6HOURS_AFTER_SAVE = 0
+        
+        end
+        
+        end
+    end
+end
+
+:SKIP_SHITFACTION_WAR
+
 if
 $INV_CLOSED == 1
 jf @ZONE_CUSTOM_CHECK_OUTSIZE 
@@ -562,7 +689,7 @@ if
 end
 
 if 
-00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA CUSTOM_BASE_X1 CUSTOM_BASE_Y1 0.0 cornerB CUSTOM_BASE_X2 CUSTOM_BASE_Y2 200.0
+00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA CUSTOM_BASE_X1 CUSTOM_BASE_Y1 -100.0 cornerB CUSTOM_BASE_X2 CUSTOM_BASE_Y2 200.0
 jf @ZONE_CUSTOM_CHECK_SAVE2_DELETE
 if and
 $SAVESTATUS == 0
@@ -574,16 +701,17 @@ jf @ZONE_CUSTOM_CHECK_SAVE1
 0AF2: $TEMPVAR_FLOAT_1 = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section CUSTOM_BASE_STRING key "SAVE_X"
 0AF2: $TEMPVAR_FLOAT_2 = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section CUSTOM_BASE_STRING key "SAVE_Y"
 0AF2: $TEMPVAR_FLOAT_3 = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section CUSTOM_BASE_STRING key "SAVE_Z"
-$BANDITS_ZONE_SAVE[4] = pickup.Create(#PICKUPSAVE,15,$TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
-$BANDITS_ZONE_SAVE_MARKER[4] = marker.CreateIconWithoutSphere(35,$TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+CUSTOM_BASE_SAVE_PICKUP = pickup.Create(#PICKUPSAVE,15,$TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
+CUSTOM_BASE_SAVE_PICKUP_MARKER = marker.CreateIconWithoutSphere(35,$TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
 //$ENTERED_BCAMP_NUMBER = 8
 
 //////////////////////////////////////////
 
-//gosub @ZONE_CHECK_BASE_TEMMATE_TYPE
+gosub @ZONE_CHECK_BASE_TEMMATE_TYPE
 //BASE_TEAMMATES_NUMBER_GIVE = 15
-//create_thread @BAS_TEA
-//0AD1: show_formatted_text_highpriority "FUCKING SLAVES CREATE" time 500
+0084: BASE_TEAMMATES_NUMBER_GIVE = CUSTOM_BASE_ENTERED_NUM // (int)
+create_thread @BAS_TEA
+//0AD1: show_formatted_text_highpriority "FUCKING SLAVES CREATE, base num give %d" time 500 BASE_TEAMMATES_NUMBER_GIVE
 
 //////////////////////////////////////////
 
@@ -623,23 +751,23 @@ if
 end
 
 if and
-00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA CUSTOM_BASE_X1 CUSTOM_BASE_Y1 0.0 cornerB CUSTOM_BASE_X2 CUSTOM_BASE_Y2 200.0
+00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA CUSTOM_BASE_X1 CUSTOM_BASE_Y1 -100.0 cornerB CUSTOM_BASE_X2 CUSTOM_BASE_Y2 200.0
 $SAVESTATUS == 0
 $ONMISSION == 0
 not HRDOR_DNGR_FLG == 1
 $STATE_DESTRUCTION_FLAG == 0
 jf @ZONE_CUSTOM_CHECK_SAVE2_DELETE
 if
-pickup.Picked_up($BANDITS_ZONE_SAVE[4])
+pickup.Picked_up(CUSTOM_BASE_SAVE_PICKUP)
 jf @ZONE_CUSTOM_CHECK_SAVE2
 player.CanMove(PLAYER_CHAR) = false
-Pickup.Destroy($BANDITS_ZONE_SAVE[4])
+Pickup.Destroy(CUSTOM_BASE_SAVE_PICKUP)
 
 if
-075C:   marker $BANDITS_ZONE_SAVE_MARKER[4] enabled
+075C:   marker CUSTOM_BASE_SAVE_PICKUP_MARKER enabled
 then
-marker.Disable($BANDITS_ZONE_SAVE_MARKER[4])
-$BANDITS_ZONE_SAVE_MARKER[4] = 0
+marker.Disable(CUSTOM_BASE_SAVE_PICKUP_MARKER)
+CUSTOM_BASE_SAVE_PICKUP_MARKER = 0
 end
 
 gosub @ZONE_BASE_SAVE_DO
@@ -701,16 +829,16 @@ BASE_TEAMMATES_DESTORY_FLAG = 2
 end 
 
 if
-09D1:   pickup $BANDITS_ZONE_SAVE[4] created
+09D1:   pickup CUSTOM_BASE_SAVE_PICKUP created
 then
-pickup.Destroy($BANDITS_ZONE_SAVE[4])
+pickup.Destroy(CUSTOM_BASE_SAVE_PICKUP)
 end
 
 if
-075C:   marker $BANDITS_ZONE_SAVE_MARKER[4] enabled
+075C:   marker CUSTOM_BASE_SAVE_PICKUP_MARKER enabled
 then
-marker.Disable($BANDITS_ZONE_SAVE_MARKER[4])
-$BANDITS_ZONE_SAVE_MARKER[4] = 0
+marker.Disable(CUSTOM_BASE_SAVE_PICKUP_MARKER)
+CUSTOM_BASE_SAVE_PICKUP_MARKER = 0
 end
 
 jump @ZONE_CUSTOM_START1
@@ -727,6 +855,103 @@ for 0@ = 0 to $ZONE_PEOPLE_COUNT
 $ARMY69_2[0@] = -69
 end
 
+if
+CUSTOM_BASE_PEDTYPE == 25
+then
+
+if or
+$BANDITS_DONT_ATTACK_PLAYER_FLAG == 1
+$PLAYER_BANDIT_SIDE == 1
+then
+2@ = 692835678
+else
 2@ = 0
+end
+
+else
+
+if or
+$ARMY_DONT_ATTACK_PLAYER_FLAG == 1
+$PLAYER_ARMY_SIDE == 1
+then
+2@ = 692835678
+else
+2@ = 0
+end
+
+end
+
 gosub @MARKERS_DISABLE
+
+if
+075C:   marker CUSTOM_BASE_SAVE_PICKUP_MARKER enabled //FRIENDLY SAVE PICKUP
+then
+Pickup.Destroy(CUSTOM_BASE_SAVE_PICKUP)
+marker.Disable(CUSTOM_BASE_SAVE_PICKUP_MARKER)        
+end
+
+if 
+CUSTOM_BASE_PEDTYPE == 25    
+then
+$ENTERED_BCAMP_NUMBER = -1 //thug play
+end
+
 jump @ZONE_CUSTOM_START1
+
+:CHECK_CURRENT_ENTERED_BASE_ZONE2
+
+if
+CUSTOM_BASE_ENTERED_NUM == 0
+then
+0AC6: 2@ = label @ZONE_69_KILLED_BOICI offset
+end
+
+if
+CUSTOM_BASE_ENTERED_NUM == 1
+then
+0AC6: 2@ = label @ZONE_SAWMILL_KILLED_BOICI offset
+end
+
+if
+CUSTOM_BASE_ENTERED_NUM == 2
+then
+0AC6: 2@ = label @ZONE_LSPORT_KILLED_BOICI offset
+end
+
+if
+CUSTOM_BASE_ENTERED_NUM == 3
+then
+0AC6: 2@ = label @ZONE_AIRCRAFT_KILLED_BOICI offset
+end
+
+if
+CUSTOM_BASE_ENTERED_NUM == 4
+then
+0AC6: 2@ = label @ZONE_LSBAND_KILLED_BOICI offset
+end
+
+if
+CUSTOM_BASE_ENTERED_NUM == 5
+then
+0AC6: 2@ = label @ZONE_CNBAND_KILLED_BOICI offset
+end
+
+if
+CUSTOM_BASE_ENTERED_NUM == 6
+then
+0AC6: 2@ = label @ZONE_LVBAND_KILLED_BOICI offset
+end
+
+if
+CUSTOM_BASE_ENTERED_NUM == 7
+then
+0AC6: 2@ = label @ZONE_SFBAND_KILLED_BOICI offset
+end
+
+if
+CUSTOM_BASE_ENTERED_NUM == 8
+then
+0AC6: 2@ = label @ZONE_GUNPOWDER_KILLED_BOICI offset
+end
+
+return

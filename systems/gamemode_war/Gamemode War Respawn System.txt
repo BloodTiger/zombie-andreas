@@ -1,3 +1,7 @@
+const
+GWAR_RESPAWN_INCAMP_FLAG = 30@
+end
+
 :GMW_RSP
 thread 'GMW_RSP'
 
@@ -53,6 +57,7 @@ wait 500
 fade 0 0
 $SAVESTATUS = 1
 $DELETE_TEAMMATES = 1
+create_thread @GMWRSPT
 gosub @PARK_CARS_SETTINGS
        
 for 0@ = 0 to 109
@@ -93,8 +98,9 @@ end
 
 :GAMEMODE_WAR_SELECT_SPAWN_AGAIN
 
-if
+if and
 UNITED_MAP == 0
+not CUSTOM_MAP_FLAG == 1
 then
 
 if
@@ -168,6 +174,10 @@ $PLAYER_BANDIT_SIDE == 1
     end    
 
 else
+
+if
+not CUSTOM_MAP_FLAG == 1
+then
 
 if
 $PLAYER_ARMY_SIDE == 1
@@ -303,6 +313,73 @@ $PLAYER_BANDIT_SIDE == 1
         end    
     end
     
+else
+0AF0: 1@ = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section "SETTINGS" key "COUNT"
+if
+1@ > -1
+    then
+    
+    1@ += 1
+    random_int 3@ 0 1@
+    0AD3: v$SND2_FILE = format "BASE%d" 3@ 
+    0AF2: 5@ = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section v$SND2_FILE key "SAVE_TP_X"
+    0AF2: 6@ = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section v$SND2_FILE key "SAVE_TP_Y"
+    0AF2: 7@ = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section v$SND2_FILE key "SAVE_TP_Z"
+    0AF2: 8@ = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section v$SND2_FILE key "SAVE_TP_A"
+    0AF0: 2@ = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section v$SND2_FILE key "ACTOR_TYPE"
+    GWAR_RESPAWN_INCAMP_FLAG = 0
+    
+    if and
+    0E4D: random_percent 65
+    1@ < 5 //баз меньше шести, от того с 50% шансом спавним игрока на одном из захваченных лагерей выживших
+    then
+    
+    32@ = 0
+    repeat
+    wait 0
+    fade 0 0
+    random_int 0@ 0 15
+    if and
+    $CAMP_DEAD_FLAG[0@] == 1
+    not $CAMP_X[0@] == 0.0
+        then
+        Actor.PutAtNoOffset(PLAYER_ACTOR, $CAMP_SAVE_TP_X[0@], $CAMP_SAVE_TP_Y[0@], $CAMP_SAVE_TP_Z[0@])
+        Actor.Angle(PLAYER_ACTOR) = $CAMP_SAVE_TP_A[0@]
+        GWAR_RESPAWN_INCAMP_FLAG = 1
+        break
+        end 
+        
+    if
+    32@ > 2000
+    then
+    jump to @GAMEMODE_WAR_SELECT_SPAWN_AGAIN
+    end    
+        
+    until false
+    
+    else
+        
+    if and
+    2@ == 25
+    $PLAYER_BANDIT_SIDE == 1
+        then
+        Actor.PutAtNoOffset(PLAYER_ACTOR,5@,6@,7@)
+        Actor.Angle(PLAYER_ACTOR) = 8@  
+        end
+        
+    if and
+    2@ == 27
+    $PLAYER_ARMY_SIDE == 1
+        then 
+        Actor.PutAtNoOffset(PLAYER_ACTOR,5@,6@,7@)
+        Actor.Angle(PLAYER_ACTOR) = 8@
+        end
+    end    
+    
+    end 
+    
+end    
+    
 end
 
 if or
@@ -361,12 +438,19 @@ repeat
 fade 0 0
 wait 0
 if
-32@ > 2000
+32@ > 3000
 then
 jump to @GAMEMODE_WAR_SELECT_SPAWN_AGAIN
 end
 
 fade 0 0
+
+if
+GWAR_RESPAWN_INCAMP_FLAG == 1
+then
+break
+end
+
 until $SOUND_EFFECT1_FLAG == 1
 
 else
@@ -409,6 +493,7 @@ until 32@ > 250
 if and
 $PLAYER_ARMY_SIDE == 1
 UNITED_MAP == 0
+not CUSTOM_MAP_FLAG == 1
 then
 fade 0 0
 wait 0
@@ -425,5 +510,70 @@ wait 500
 
 create_thread @DED_CHK
 09BD: allow_other_threads_to_display_text_boxes 0
+
+end_thread
+
+:GMWRSPT
+thread 'GMWRSPT'
+
+32@ = 0
+0@ = 0
+
+while $HUD_REMOVE == 1
+wait 0   
+
+03F0: enable_text_draw 1  
+0349: set_text_draw_font 2
+0342: set_text_draw_centered 0
+
+if
+DIRECTFONT_INSTALLED == 1
+then    
+0340: set_text_draw_RGBA DIRECTFONT_FONT2_R DIRECTFONT_FONT2_G DIRECTFONT_FONT2_B 255
+else
+0340: set_text_draw_RGBA 180 180 180 255
+end
+ 
+033F: set_text_draw_letter_size 0.5 1.25 
+
+if
+32@ > 500
+then
+32@ = 0
+0@ += 1
+end
+
+if or
+0@ == 0
+0@ == 4
+then
+033E: set_draw_text_position 290.0 200.0 GXT 'GAME50'  // Push 
+end
+
+if
+0@ == 1
+then
+033E: set_draw_text_position 290.0 200.0 GXT 'GAME51'  // Push 
+end  
+
+if
+0@ == 2
+then
+033E: set_draw_text_position 290.0 200.0 GXT 'GAME52'  // Push 
+end  
+
+if
+0@ == 3
+then
+033E: set_draw_text_position 290.0 200.0 GXT 'GAME53'  // Push 
+end    
+
+if
+0@ == 4
+then
+0@ = 0
+end 
+
+end
 
 end_thread

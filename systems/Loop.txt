@@ -33,21 +33,37 @@ PLAYER_CAR_BONUS_FLAG = 0 //почему он всегда единица сразу?
 :LOOP_IDLE        
 wait 0
 
+//Проверяем, есть ли рядом какой-либо дорожный путь        
 if
 0E45: frame_mod 90
-then
-actor.StorePos(PLAYER_ACTOR,0@,1@,2@)
-02C1: store_to 3@ 4@ 5@ car_path_coords_closest_to 0@ 1@ 2@
-0509: 2@ = distance_between_XY 0@ 1@ and_XY 3@ 4@
-if or
-2@ > 100.0
-$ACTIVE_INTERIOR > 0
     then
-    FAR_AWAY_FROM_ANY_CAR_PATH = 1
-    else
-    FAR_AWAY_FROM_ANY_CAR_PATH = 0
+    actor.StorePos(PLAYER_ACTOR,0@,1@,2@)
+    02C1: store_to 3@ 4@ 5@ car_path_coords_closest_to 0@ 1@ 2@
+    0509: 2@ = distance_between_XY 0@ 1@ and_XY 3@ 4@
+    if or
+    2@ > 100.0
+    $ACTIVE_INTERIOR > 0
+        then
+        FAR_AWAY_FROM_ANY_CAR_PATH = 1
+        //учитываем кастомные пути с кастоммап под эту хуйню
+        if and
+        CUSTOM_MAP_FLAG == 1
+        CUSTOM_CAR_NODES_COUNT > 0
+        $ACTIVE_INTERIOR == 0
+            then    
+            gosub @CUSTOM_MAP_CHECK_FOR_ANY_NEAR_CAR_NODE_100
+            if
+            USE_CUSTOM_CAR_NODE_FLAG == 0 //рядом с игроком в радиусе 100 метров есть хоть один кастомный путь (НЕ)
+                then            
+                FAR_AWAY_FROM_ANY_CAR_PATH = 1
+                else
+                FAR_AWAY_FROM_ANY_CAR_PATH = 0   
+                end
+            end
+        else
+        FAR_AWAY_FROM_ANY_CAR_PATH = 0
+        end
     end
-end
 
 //Тэги, идите нахуй
 //0A8C: write_memory 0x0A9AD70 size 1 value 0 virtual_protect 0
@@ -777,18 +793,7 @@ $PLAYER_OUT_CAR_TIMER = 0
 if
 1@ == 1
 then
-0AB9: get_mp3 $SLOWMODE_SOUND2 state_to 1@
-if and
-not 1@ == 1
-847A: not  actor PLAYER_ACTOR driving_bike
-84C8: not  actor PLAYER_ACTOR driving_flying_vehicle
-84A7: not  actor PLAYER_ACTOR driving_boat
-    then
-    0A8C: write_memory 0x047B18F size 1 value 100 virtual_protect 0 //setBoosts
-    09E9: car 0@ add_single_nitro
-    0A8C: write_memory 0x047B18F size 1 value 1 virtual_protect 0 //setBoosts
-//    0AD1: show_formatted_text_highpriority "add nitro" time 2000
-    end
+create_thread @NITRO 0@
 end
     
 0A97: 1@ = car 0@ struct 
@@ -2308,8 +2313,9 @@ $GAMEMODE_HOLD == 1
     then
     08E7: disable_entrance_markers 1
     
-    if
+    if and
     8A29: not  player PLAYER_CHAR climbing
+    not $CHEATS_ON == 1
     then
     07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 0
     else
@@ -3041,6 +3047,14 @@ return
 
 0@ = 0
 
+//проверяем близость нахождения с кастомной точкой спасения
+if
+CUSTOM_MAP_FLAG == 1
+then
+gosub @CUSTOMMAP_SALVATION_NEARPOINT_CHECK
+return 
+end
+
 if
 UNITED_MAP == 0
 then
@@ -3231,3 +3245,36 @@ thread 'MQTMBK'
 wait 1000
 MAIN_QUEST_TEAMMATES_REMOVE_FLAG = 0
 end_thread        
+
+:NITRO
+thread 'NITRO'
+
+wait 250
+
+if
+856E: not  car 0@ defined
+then
+end_thread
+end
+
+0AB9: get_mp3 $SLOWMODE_SOUND2 state_to 1@
+if and
+not 1@ == 1
+847A: not  actor PLAYER_ACTOR driving_bike
+84C8: not  actor PLAYER_ACTOR driving_flying_vehicle
+84A7: not  actor PLAYER_ACTOR driving_boat
+    then
+    0A97: 2@ = car 0@ struct 
+    2@ += 17 //engine borken 
+    0A8D: 2@ = read_memory 2@ size 1 virtual_protect 0           
+    if 
+    88B4: not  test 2@ bit 4      
+        then
+        0A8C: write_memory 0x047B18F size 1 value 100 virtual_protect 0 //setBoosts
+        09E9: car 0@ add_single_nitro
+        0A8C: write_memory 0x047B18F size 1 value 1 virtual_protect 0 //setBoosts
+//        0AD1: show_formatted_text_highpriority "add nitro" time 2000   
+        end
+    end
+    
+end_thread    

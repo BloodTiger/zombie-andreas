@@ -1416,6 +1416,14 @@ OFFICE_EXTRA_TRACK_FOR_CAMPOS = $345
 GUNPOWDER_BASE_CAPTURED = $346
 GUNPOWDER_BASE_MARK = $347
 DONT_DRAW_HUNTER_CROSSHAIR = $348
+WATER_Z_LEVEL = $349
+WATER_Z_LEVEL2 = $350
+CGEN_REMOVE_CAR_MODEL_AFTER_CREATE = $351
+CUSTOMMAP_PACKAGES_ARRAY = $352
+//NEXT_VAR = $402
+CUSTOMMAP_LATEST_SAVEPOINT = $402 
+CUSTOM_MAP_SPAWN_SPEC_INFECTED_ON_CAR_PATHS = $403
+CUSTOM_MAP_SPAWN_SPEC_INFECTED_ON_PED_PATHS = $404
 //0 LEFT
 end     
 
@@ -1875,8 +1883,9 @@ if or
     end
     
 0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "GAMEMODE_AUTOSELECT_CRASH"    
-if
+if or
 0@ == 1
+0AAB:   file_exists "data\MoonLoaderOFF.pg"
     then
     jump to @STRAIGHT_INTO_GAMEMODE_SELECT_DEV_JUMP_SKIP
     end           
@@ -4807,7 +4816,7 @@ if
         0AF3: write_float 25@ to_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section v$SND2_FILE key "SAVE_TP_X"
         0AF3: write_float 26@ to_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section v$SND2_FILE key "SAVE_TP_Y"
         0AF3: write_float 27@ to_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section v$SND2_FILE key "SAVE_TP_Z"
-        0AF3: write_float 27@ to_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section v$SND2_FILE key "SAVE_TP_A"
+        0AF3: write_float 28@ to_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section v$SND2_FILE key "SAVE_TP_A"
         
         0AD1: show_formatted_text_highpriority "SAVE_TP_X: %f, SAVE_TP_Y: %f, SAVE_TP_Z: %f - WRITTEN" time 2000 25@ 26@ 27@
         09F1: play_audio_at_actor PLAYER_ACTOR event 1138
@@ -5885,7 +5894,17 @@ end
 0AF0: SWAT_SQUAD_EXTRAWEP1 = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\$GENCONFIG.ini" section "FRACTIONS_SKINS_IDS" key "SWAT_SQUAD_EXTRAWEP1"
 
 0AF0: BIKE_BAGS_OBJ_ID_BMX = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\$GENCONFIG.ini" section "SETTINGS" key "BIKE_BAGS_OBJ_ID_BMX"
-0AF0: BIKE_BAGS_OBJ_ID_BIKE = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\$GENCONFIG.ini" section "SETTINGS" key "BIKE_BAGS_OBJ_ID_BIKE"  
+0AF0: BIKE_BAGS_OBJ_ID_BIKE = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\$GENCONFIG.ini" section "SETTINGS" key "BIKE_BAGS_OBJ_ID_BIKE"
+
+if
+0AF2: 0@ = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\$GENCONFIG.ini" section "SETTINGS" key "WATER_Z_LEVEL"
+    then
+    0AF2: WATER_Z_LEVEL = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\$GENCONFIG.ini" section "SETTINGS" key "WATER_Z_LEVEL"
+    0086: WATER_Z_LEVEL2 = WATER_Z_LEVEL // (float)
+    end
+    
+0AF0: CUSTOM_MAP_SPAWN_SPEC_INFECTED_ON_CAR_PATHS = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\$GENCONFIG.ini" section "SETTINGS" key "SPAWN_SPEC_INFECTED_ON_CAR_PATHS"
+0AF0: CUSTOM_MAP_SPAWN_SPEC_INFECTED_ON_PED_PATHS = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\$GENCONFIG.ini" section "SETTINGS" key "SPAWN_SPEC_INFECTED_ON_PED_PATHS"    
 
 return
 
@@ -6606,6 +6625,556 @@ BANDITWAR_FP_SKIN_ID = 15009
 SWATWAR_FP_SKIN_ID = 15010
 BIKE_BAGS_OBJ_ID_BMX = 12248
 BIKE_BAGS_OBJ_ID_BIKE = 12247
+WATER_Z_LEVEL = 0.0
+0086: WATER_Z_LEVEL2 = WATER_Z_LEVEL // (float)
+WATER_Z_LEVEL2 += 0.25
+return
+
+:CUSTOMMAP_CREATE_BASE_MARKER
+
+if
+$GAMEMODE_WAR == 0
+    then
+    
+    if
+    2@ == 25
+    then
+    $BANDIT_MARKER_FLAG[3@] = Marker.CreateIconWithoutSphere(18, 5@, 6@, 7@)
+    else
+    $BANDIT_MARKER_FLAG[3@] = Marker.CreateIconWithoutSphere(23, 5@, 6@, 7@)
+    end
+    
+    else
+    
+    if
+    2@ == 25
+    then
+    if 
+    $PLAYER_BANDIT_SIDE == 1
+        then
+        $BANDIT_MARKER_FLAG[3@] = Marker.CreateIconWithoutSphere(18, 5@, 6@, 7@)
+        else
+        $BANDIT_MARKER_FLAG[3@] = Marker.CreateIconAndSphere2(18, 5@, 6@, 7@)
+        end
+    else
+    if 
+    $PLAYER_ARMY_SIDE == 1
+        then
+        $BANDIT_MARKER_FLAG[3@] = Marker.CreateIconWithoutSphere(23, 5@, 6@, 7@)
+        else
+        $BANDIT_MARKER_FLAG[3@] = Marker.CreateIconAndSphere2(23, 5@, 6@, 7@)
+        end
+    end
+    
+    end
+    
+return   
+
+:SURV_GET_SKIN_FOR_FACTION_WAR_CUSTOMMAP
+
+////////////////////////////////////КАСТОМКАРТА, ВОЙНА СРАКЦИЙ////////////////////////////////////
+if or
+$PLAYER_ARMY_SIDE == 1
+29@ == 1
+then
+random_int 0@ 0 8
+if
+0@ == 0
+    then    
+    008B: 0@ = ARMY1_SKIN_ID // (int)
+    end
+    
+if
+0@ == 1
+    then    
+    008B: 0@ = ARMY2_SKIN_ID // (int)
+    end  
+    
+if
+0@ == 2
+    then    
+    008B: 0@ = ARMY3_SKIN_ID // (int)
+    end      
+    
+if
+0@ == 3
+    then    
+    008B: 0@ = ARMY4_SKIN_ID // (int)
+    end  
+    
+if
+0@ == 4
+    then    
+    008B: 0@ = ARMY5_SKIN_ID // (int)
+    end
+    
+if
+0@ == 5
+    then    
+    008B: 0@ = ARMY6_SKIN_ID // (int)
+    end  
+    
+if
+0@ == 6
+    then    
+    008B: 0@ = ARMY7_SKIN_ID // (int)
+    end      
+    
+if
+0@ == 7
+    then    
+    008B: 0@ = ARMY8_SKIN_ID // (int)
+    end        
+
+end
+
+if or
+$PLAYER_BANDIT_SIDE == 1
+29@ == 2
+then
+random_int 0@ 0 8
+if
+0@ == 0
+    then    
+    008B: 0@ = BANDIT1_SKIN_ID // (int)
+    end
+    
+if
+0@ == 1
+    then    
+    008B: 0@ = BANDIT2_SKIN_ID // (int)
+    end  
+    
+if
+0@ == 2
+    then    
+    008B: 0@ = BANDIT3_SKIN_ID // (int)
+    end      
+    
+if
+0@ == 3
+    then    
+    008B: 0@ = BANDIT4_SKIN_ID // (int)
+    end  
+    
+if
+0@ == 4
+    then    
+    008B: 0@ = BANDIT5_SKIN_ID // (int)
+    end
+    
+if
+0@ == 5
+    then    
+    008B: 0@ = BANDIT6_SKIN_ID // (int)
+    end  
+    
+if
+0@ == 6
+    then    
+    008B: 0@ = BANDIT7_SKIN_ID // (int)
+    end      
+    
+if
+0@ == 7
+    then    
+    008B: 0@ = BANDIT8_SKIN_ID // (int)
+    end 
+    
+end     
+    
+if
+$PLAYER_FERMERS_SIDE == 1  
+    then    
+    random_int 0@ 0 4
+    if
+    0@ == 0
+        then    
+        008B: 0@ = FERMER1_SKIN_ID // (int)
+        end
+        
+    if
+    0@ == 1
+        then    
+        008B: 0@ = FERMER2_SKIN_ID // (int)
+        end  
+        
+    if
+    0@ == 2
+        then    
+        008B: 0@ = FERMER3_SKIN_ID // (int)
+        end      
+        
+    if
+    0@ == 3
+        then    
+        008B: 0@ = FERMER4_SKIN_ID // (int)
+        end  
+    
+    end
+
+if
+$PLAYER_SWAT_SIDE == 1
+    then 
+    0@ = #SWAT           
+    end  
+           
+return 
+
+:CUSTOMMAP_PLACESHIT_GOSUB
+
+if and
+not actor.Driving(PLAYER_ACTOR)
+0E3D: is_key_just_pressed 88
+    then
+    0792: disembark_instantly_actor PLAYER_ACTOR
+    0AF0: 10@ = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\PACKAGES.ini" section "SETTINGS" key "COUNT"
+    10@ += 1
+    actor.StorePos(PLAYER_ACTOR,2@,3@,4@)
+    0AD3: write_float v$SND2_FILE = format "DRG%d" 10@
+    0AF3: write_float 2@ to_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\PACKAGES.ini" section v$SND2_FILE key "PACKAGE_X"
+    0AF3: write_float 3@ to_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\PACKAGES.ini" section v$SND2_FILE key "PACKAGE_Y"
+    0AF3: write_float 4@ to_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\PACKAGES.ini" section v$SND2_FILE key "PACKAGE_Z"
+    0AF1: write_int 10@ to_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\PACKAGES.ini" section "SETTINGS" key "COUNT"
+    0AD1: show_formatted_text_highpriority "package %d at %f %f %f created!" time 2000 10@ 2@ 3@ 4@
+    0959: 0@ = create_horseshoe_at 2@ 3@ 4@
+    018A: 1@ = create_checkpoint_at 2@ 3@ 4@
+    end
+    
+return   
+
+:CUSTOMMAP_GENERAL_SHIT_GOSUB 
+
+//////////////////////////////////////Secret Packages////////////////////////////////////////
+
+if and
+$GAMEMODE_WAR == 0
+$GAMEMODE_VERSUS == 0
+$DEFENSE_CHALLENGE_FLAG == 0
+$CANALS_CHALLENGE_FLAG == 0
+then
+
+for 0@ = 0 to 49
+0AD3: v$SND2_FILE = format "DRG%d" 0@ 
+if
+0AF2: 7@ = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\PACKAGES.ini" section v$SND2_FILE key "PACKAGE_Z"
+    then
+    0AF2: 5@ = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\PACKAGES.ini" section v$SND2_FILE key "PACKAGE_X"
+    0AF2: 6@ = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\PACKAGES.ini" section v$SND2_FILE key "PACKAGE_Y"
+    0AF2: 7@ = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\PACKAGES.ini" section v$SND2_FILE key "PACKAGE_Z"
+    0959: $352(0@,50i) = create_horseshoe_at 5@ 6@ 7@
+    end
+end    
+
+end
+
+//Убираем собранные  
+
+for 0@ = 0 to 49
+
+if
+not $CHEATS_ON == 1
+    then
+    0AF4: TEMPVAR_STRING = read_string_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\PACKAGES.ini" section "SETTINGS" key "CODE"
+    0AD3: v$WEAPONS_FILE = format "%s%d" TEMPVAR_STRING 0@
+    0AF0: TEMPVAR_INT = get_int_from_ini_file "saves/ZACM.set" section "SCR" key v$WEAPONS_FILE
+    if and
+    TEMPVAR_INT == 1
+    09D1:   pickup $352(0@,50i) created
+        then
+        0623: add 1 to_integer_stat 241
+        pickup.Destroy($352(0@,50i))
+        end
+    end
+    
+end     
+
+return
+
+:CUSTOMMAP_SALVATION_NEARPOINT_CHECK
+
+if
+$NEAR_SALV_POINT == 0
+    then
+    if
+    0E45: frame_mod 200 //every ~5 sec
+        then        
+        0AF0: TEMPVAR_INT = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\SALVATION_POINTS.ini" section "SETTINGS" key "COUNT"
+        if
+        TEMPVAR_INT > -1
+            then
+            
+            for $226 = 0 to $113
+            0AD3: TEMPVAR_STRING = format "SLVPT%d" TEMPVAR_INT2
+            0AF2: 1@ = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\SALVATION_POINTS.ini" section TEMPVAR_STRING key "POINT_X"
+            0AF2: 2@ = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\SALVATION_POINTS.ini" section TEMPVAR_STRING key "POINT_Y"
+            0AF2: 3@ = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\SALVATION_POINTS.ini" section TEMPVAR_STRING key "POINT_Z"
+            if
+            00FE:   actor PLAYER_ACTOR sphere 0 near_point 1@ 2@ 3@ radius SALVATION_POINT_NEAR_RADIUS SALVATION_POINT_NEAR_RADIUS SALVATION_POINT_NEAR_RADIUS_Z
+                then              
+                0084: CUSTOMMAP_LATEST_SAVEPOINT = $226 // (int)
+                0@ = 1
+                return 
+                end
+            end
+            
+            end     
+        end
+    
+    else
+    0@ = 1
+    if
+    0E45: frame_mod 200 //every ~5 sec
+        then     
+        0AD3: TEMPVAR_STRING = format "SLVPT%d" CUSTOMMAP_LATEST_SAVEPOINT
+        0AF2: 1@ = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\SALVATION_POINTS.ini" section TEMPVAR_STRING key "POINT_X"
+        0AF2: 2@ = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\SALVATION_POINTS.ini" section TEMPVAR_STRING key "POINT_Y"
+        0AF2: 3@ = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\SALVATION_POINTS.ini" section TEMPVAR_STRING key "POINT_Z"
+        if
+        80FE: not  actor PLAYER_ACTOR sphere 0 near_point 1@ 2@ 3@ radius SALVATION_POINT_NEAR_RADIUS SALVATION_POINT_NEAR_RADIUS SALVATION_POINT_NEAR_RADIUS_Z
+            then              
+            CUSTOMMAP_LATEST_SAVEPOINT = -1
+            0@ = 0
+            return 
+            end
+        end
+    end
+
+return
+
+:CUSTOM_MAP_SET_BANDIT_BASES_AS_FRIENDLY_ASTHUG
+
+//////////////////////////////////////////////////
+    
+0AF0: TEMPVAR_INT2 = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section "SETTINGS" key "COUNT"
+TEMPVAR_INT2 += 1
+for $113 = 0 to $226
+0AD3: TEMPVAR_STRING = format "BASE%d" TEMPVAR_INT
+0AF0: TEMPVAR_INT3 = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section TEMPVAR_STRING key "ACTOR_TYPE" 
+if
+TEMPVAR_INT3 == 25
+    then
+    0AF4: TEMPVAR_STRING2 = read_string_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section TEMPVAR_STRING key "ZONE_NAME"    
+    0879: enable_gang_wars 0
+    076C: set_zone TEMPVAR_STRING2 gang 4 density_to 0
+    076C: set_zone TEMPVAR_STRING2 gang 5 density_to 100
+    0879: enable_gang_wars 1    
+    end
+end            
+
+//////////////////////////////////////////////////
+
+return
+
+:CUSTOMMAP_CHECK_HOLD_RECORDS
+
+if
+CUSTOM_MAP_FLAG == 1
+then
+
+0084: TEMPVAR_INT = $PANEL4_ACTIVE_ROW // (int)
+
+if
+TEMPVAR_INT == 0
+then
+TEMPVAR_INT = 12
+end
+
+if
+TEMPVAR_INT == 5
+then
+TEMPVAR_INT = 13
+end  
+
+if and
+TEMPVAR_INT > 6
+TEMPVAR_INT < 12
+then  
+TEMPVAR_INT -= 1
+end      
+
+0AF4: TEMPVAR_STRING2 = read_string_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\HOLD_MAPS.ini" section "SETTINGS" key "CODE"
+0AD3: TEMPVAR_STRING = format "%sHD%dHW" TEMPVAR_STRING2 TEMPVAR_INT
+0AF0: $RECORD_WAVE = get_int_from_ini_file "saves/ZACM.set" section "SCR" key TEMPVAR_STRING
+0AD3: TEMPVAR_STRING = format "%sHD%dMN" TEMPVAR_STRING2 TEMPVAR_INT
+0AF0: $RECORD_MINUTES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key TEMPVAR_STRING
+0AD3: TEMPVAR_STRING = format "%sHD%dSC" TEMPVAR_STRING2 TEMPVAR_INT
+0AF0: $RECORD_SECONDS = get_int_from_ini_file "saves/ZACM.set" section "SCR" key TEMPVAR_STRING
+0AD3: TEMPVAR_STRING = format "%sHD%dZK" TEMPVAR_STRING2 TEMPVAR_INT
+0AF0: $RECORD_ZOMBIES = get_int_from_ini_file "saves/ZACM.set" section "SCR" key TEMPVAR_STRING
+
+if
+$RECORD_WAVE < 0
+then
+$RECORD_WAVE = 0
+end
+
+if
+$RECORD_MINUTES < 0
+then
+$RECORD_MINUTES = 0
+end
+
+if
+$RECORD_SECONDS < 0
+then
+$RECORD_SECONDS = 0
+end
+
+if
+$RECORD_ZOMBIES < 0
+then
+$RECORD_ZOMBIES = 0
+end
+
+return
+end
+
+return
+
+:CUSTOM_MAP_GET_BANDIT_BASES_TOTAL_COUNT
+
+1@ = 0
+0@ = 0
+
+//////////////////////////////////////////////////
+    
+0AF0: TEMPVAR_INT2 = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section "SETTINGS" key "COUNT"
+TEMPVAR_INT2 += 1
+for $113 = 0 to $226
+0AD3: TEMPVAR_STRING = format "BASE%d" TEMPVAR_INT
+0AF0: TEMPVAR_INT3 = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section TEMPVAR_STRING key "ACTOR_TYPE" 
+if
+TEMPVAR_INT3 == 25
+    then
+    1@ += 1
+    008B: 2@ = $113 // (int)
+    2@ += 156
+    if
+    $RNDM_HOUSE_BANKA[2@] >= 100
+        then
+        0@ += 1
+        end   
+    end
+end            
+
+//////////////////////////////////////////////////
+
+return
+
+:CUSTOM_MAP_GET_ARMY_BASES_TOTAL_COUNT
+
+1@ = 0
+0@ = 0
+
+//////////////////////////////////////////////////
+    
+0AF0: TEMPVAR_INT2 = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section "SETTINGS" key "COUNT"
+TEMPVAR_INT2 += 1
+for $113 = 0 to $226
+0AD3: TEMPVAR_STRING = format "BASE%d" TEMPVAR_INT
+0AF0: TEMPVAR_INT3 = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section TEMPVAR_STRING key "ACTOR_TYPE" 
+if
+TEMPVAR_INT3 == 27 //база военных
+    then
+    1@ += 1
+    008B: 2@ = $113 // (int)
+    2@ += 156
+    0AF0: TEMPVAR_INT3 = get_int_from_ini_file "data\survival.set" section "CUSTOM_BASES" key TEMPVAR_STRING
+    if
+    TEMPVAR_INT3 == 1 //захвачена
+        then
+        0@ += 1
+        end   
+    end
+end            
+
+//////////////////////////////////////////////////
+
+return
+
+:CUSTOM_MAP_CHECK_KINGPIN_WIN
+
+4@ = 0 //win factor
+
+if
+8E45: not frame_mod 150 //чекаем каждые пять секунд (при 30 фпс)
+then
+return
+end
+
+4@ = 1 //win factor
+
+/////////////////////////////////////////////////////////////////////////
+
+gosub @CUSTOM_MAP_GET_BANDIT_BASES_TOTAL_COUNT //уважение главарей
+if
+803B: not  0@ == 1@  // (int)
+    then
+    4@ = 0
+    end
+    
+//return    
+        
+/////////////////////////////////////////////////////////////////////////    
+    
+gosub @CUSTOM_MAP_GET_ARMY_BASES_TOTAL_COUNT //базы военных
+if
+803B: not  0@ == 1@  // (int)
+    then
+    4@ = 0
+    end 
+    
+//return   
+
+/////////////////////////////////////////////////////////////////////////    
+    
+//все лагеря дед
+0@ = 0
+008B: 1@ = $CAMPS_COUNT // (int)
+    
+for 2@ = 0 to 13
+if
+$CAMP_DEAD_FLAG[2@] == 1
+    then
+    0@ += 1
+    end
+end    
+
+//0AD1: show_formatted_text_highpriority "%d == %d" time 2000 0@ 1@
+if
+803B: not  0@ == 1@  // (int)
+    then
+    4@ = 0
+    end     
+    
+/////////////////////////////////////////////////////////////////////////    
+
+//return
+
+//зараженки    
+0AF0: 1@ = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\NESTS.ini" section "SETTINGS" key "TOTAL"
+1@ += 1  
+//0AD1: show_formatted_text_highpriority "%d == %d" time 2000 0@ 1@
+if
+//803C: not  NESTS_CLEARED_TOTAL == 1@  // (int)
+002E:   NESTS_CLEARED_TOTAL <!= 1@ // (int)
+    then
+    4@ = 0
+    end 
+    
+/////////////////////////////////////////////////////////////////////////    
+
+//очки отморозка    
+008B: 0@ = CARMA_BAD_POINTS // (int)
+0@ -= 100
+//0AD1: show_formatted_text_highpriority "%d < %d" time 2000 0@ 250
+if
+0@ < 250
+    then
+    4@ = 0
+    end        
+
 return
 
 {$INCLUDE systems/tech/Gamemode Select Music.txt}

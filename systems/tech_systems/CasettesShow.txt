@@ -12,6 +12,7 @@ then
 $CASETTE_PLAYING_FLAG = 1
 audiostream.PerformAction(CASETTE_AUDIO_PREVIEW,STOP)
 audiostream.Release(CASETTE_AUDIO_PREVIEW)
+CASETTE_AUDIO_PREVIEW = Audiostream.Load("AUDIO\SOUNDS\radoff.mp3") //временная пустышка
 //gosub @TAPE_TURN_OFF
 
 RADIO_TEXTURE_RENDER_NUMBER = 118
@@ -53,15 +54,35 @@ RADIO_TEXTURE_RENDER_NUMBER = 117
 wait 820
 
 audiostream.Release($SHIT_FUCK)
+32@ = 0 //CASSETTE NEW TRACK DEGENERATE TIME
 
 repeat
 :benis_monke
 wait 0
+//0AD1: show_formatted_text_highpriority "%d" time 2000 32@
+
+if
+32@ > 750 //если новый трек генерируется достаточно долго - включаем режим безкомпромиссного поиска трека
+    then
+    
+    while true
+    //без вейта нах, что-то найдем одно
+    random_int 0@ 0 75
+    008A: CASSETTES_SHOW_LAST_SELECTED = 0@ // (int)    
+    gosub @CASSETTESS_NUMBER_GET    
+    if
+    $ACHIV_GOT_FLAG == 1
+        then
+        jump to @NO_COMPROMISE_PLAY_TRACK_UNSTUCK_FROM_SHIT
+        end
+    end    
+        
+    end
 
 //if
 //UNITED_MAP == 0
 //then
-random_int 0@ 0 74
+random_int 0@ 0 75
 if or
 0@ == 3
 0@ == 27
@@ -87,7 +108,9 @@ end
 gosub @CASSETTESS_NUMBER_GET
 if
 $ACHIV_GOT_FLAG == 1
-    then
+    then 
+    :NO_COMPROMISE_PLAY_TRACK_UNSTUCK_FROM_SHIT
+    audiostream.Release(CASETTE_AUDIO_PREVIEW) //удаляем временную пустышку
     gosub @CASSETTE_PLAY2
     v$ACHIV_NAME1 = "1CST" // v$ // Sunday  
     0AD3: v$ACHIV_NAME2 = format "%d" CASSETTES_SHOW_LAST_SELECTED 
@@ -464,16 +487,54 @@ else
 033E: set_draw_text_position $ACHIV_TOTAL_ACHIV_TEXT_X $ACHIV_TOTAL_ACHIV_TEXT_Y GXT 'GAME454'  // Push 
 end
 
+//Выключение играющей кассеты с геймпада
+if and
+0A4B:   controls_set_to_joystick
+00E1:   player 0 pressed_key 6 // (RB)
+MUSIC_CASSETTE_IS_REALLY_PLAYING == 1 //CASSETTE IS ON
+$GAMEMODE_SELECTED == 1
+    then
+    audiostream.PerformAction($CASETTE_AUDIO,STOP)
+    audiostream.Release($CASETTE_AUDIO)    
+    $CASETTE_PLAYING_FLAG = 0
+    MUSIC_CASSETTE_IS_REALLY_PLAYING = 0
+    OPEN_NOTES_MENU_FLAG = -111 //EXIT BLACK MENU
+    
+    $ACHIV_TOTAL_SHOW_OFF_FLAG = 1
+    wait 1  
+    
+    cinema.Widescreen(0)
+    0A48: enable_menu_access_in_widescreen_mode 1            
+    
+    //player.CanMove(PLAYER_CHAR) = true
+    0E68: set_player_control_pad 1 1 
+    0E69: set_player_control_pad_movement 0 1
+    
+    $MUTE_MUSIC_FLAG = 0    
+    $SPEED_08_FLAG = 0
+    BLACK_MENU_OPENED_FLAG = 0
+    015D: set_gamespeed 1.0
+    Audiostream.Volume(PERK_THEME_AUDIOSTREAM) = VERO_TIPA_VOLUME        
+    
+    fade 1 500
+    $HUD_REMOVE = 0
+    gosub @TAPES_AUD_OFF    
+    wait 500          
+    
+    $READING_STAT_FLAG = 0    
+    end_thread
+    end 
+
 if and
 00E1: key_pressed 0 17
 $ACHIV_GOT_FLAG == 1
-    then    
+    then        
     gosub @CASSETTE_PLAY 
     if
     $GAMEMODE_SELECTED == 1
         then            
         jump to @TURN_OFF_HORNY_SHIT
-        end   
+        end          
     end
     
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
