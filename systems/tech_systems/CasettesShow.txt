@@ -8,7 +8,7 @@ thread 'CAS_SHW'
             
 if
 $CASETTE_PLAYING_FLAG == 2
-then
+then               
 $CASETTE_PLAYING_FLAG = 1
 audiostream.PerformAction(CASETTE_AUDIO_PREVIEW,STOP)
 audiostream.Release(CASETTE_AUDIO_PREVIEW)
@@ -54,7 +54,9 @@ RADIO_TEXTURE_RENDER_NUMBER = 117
 wait 820
 
 audiostream.Release($SHIT_FUCK)
+$SHIT_FUCK = 0
 32@ = 0 //CASSETTE NEW TRACK DEGENERATE TIME
+gosub @CASETTES_CHECK_FOR_FULL_QUEUE
 
 repeat
 :benis_monke
@@ -66,14 +68,43 @@ if
     then
     
     while true
+//    wait 0
     //без вейта нах, что-то найдем одно
+    
+    if
+    CUSTOM_CASETTES_COUNT > 0 //CUSTOM_MAP_FLAG == 1
+    then
+    random_int 0@ 0 CUSTOM_CASETTES_COUNT
+//    0AD1: show_formatted_text_highpriority "%d" time 2000 0@
+    else
     random_int 0@ 0 75
+//    0AD1: show_formatted_text_highpriority "%d" time 2000 0@
+    end
+    
     008A: CASSETTES_SHOW_LAST_SELECTED = 0@ // (int)    
     gosub @CASSETTESS_NUMBER_GET    
     if
     $ACHIV_GOT_FLAG == 1
         then
-        jump to @NO_COMPROMISE_PLAY_TRACK_UNSTUCK_FROM_SHIT
+        
+        if
+        CUSTOM_CASETTES_COUNT > 0
+        then
+        0AF4: TEMPVAR_STRING = read_string_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\CASSETTES.ini" section "SETTINGS" key "CODE"
+        0AD3: TEMPVAR_STRING2 = format "%sc%dPLD" TEMPVAR_STRING CASSETTES_SHOW_LAST_SELECTED
+        else
+        0AD3: TEMPVAR_STRING2 = format "CASS%dPLD" CASSETTES_SHOW_LAST_SELECTED
+        end
+        
+        TEMPVAR_INT = 0
+        0AF0: TEMPVAR_INT = get_int_from_ini_file "za\cas.set" section "QUEUE" key TEMPVAR_STRING2
+//        0AD1: show_formatted_text_highpriority "%s=%d ~n~%d" time 2000 TEMPVAR_STRING2 TEMPVAR_INT 0@
+        if
+        not TEMPVAR_INT == 1
+            then        
+            jump to @NO_COMPROMISE_PLAY_TRACK_UNSTUCK_FROM_SHIT
+            end
+        
         end
     end    
         
@@ -82,7 +113,15 @@ if
 //if
 //UNITED_MAP == 0
 //then
+
+if
+CUSTOM_CASETTES_COUNT > 0 //CUSTOM_MAP_FLAG == 1
+then
+random_int 0@ 0 CUSTOM_CASETTES_COUNT
+else
 random_int 0@ 0 75
+end
+
 if or
 0@ == 3
 0@ == 27
@@ -90,7 +129,11 @@ if or
 0@ == 52
 0@ == 66
 then
-jump to @benis_monke
+if
+not CUSTOM_CASETTES_COUNT > 0 //CUSTOM_MAP_FLAG == 1
+    then
+    jump to @benis_monke
+    end
 end
 //else
 //
@@ -108,15 +151,32 @@ end
 gosub @CASSETTESS_NUMBER_GET
 if
 $ACHIV_GOT_FLAG == 1
-    then 
-    :NO_COMPROMISE_PLAY_TRACK_UNSTUCK_FROM_SHIT
-    audiostream.Release(CASETTE_AUDIO_PREVIEW) //удаляем временную пустышку
-    gosub @CASSETTE_PLAY2
-    v$ACHIV_NAME1 = "1CST" // v$ // Sunday  
-    0AD3: v$ACHIV_NAME2 = format "%d" CASSETTES_SHOW_LAST_SELECTED 
-    098B: v$ACHIV_NAME3 = v$ACHIV_NAME1 + v$ACHIV_NAME2 // all string variables
-    text.ShowTextBox(v$ACHIV_NAME3)
-    end_thread
+    then
+     
+    if
+    CUSTOM_CASETTES_COUNT > 0
+    then
+    0AF4: TEMPVAR_STRING = read_string_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\CASSETTES.ini" section "SETTINGS" key "CODE"
+    0AD3: TEMPVAR_STRING2 = format "%sc%dPLD" TEMPVAR_STRING CASSETTES_SHOW_LAST_SELECTED
+    else
+    0AD3: TEMPVAR_STRING2 = format "CASS%dPLD" CASSETTES_SHOW_LAST_SELECTED
+    end
+    
+    TEMPVAR_INT = 0    
+    0AF0: TEMPVAR_INT = get_int_from_ini_file "za\cas.set" section "QUEUE" key TEMPVAR_STRING2
+    if
+    not TEMPVAR_INT == 1
+        then      
+        :NO_COMPROMISE_PLAY_TRACK_UNSTUCK_FROM_SHIT
+        0AF1: write_int 1 to_ini_file "za\cas.set" section "QUEUE" key TEMPVAR_STRING2
+        audiostream.Release(CASETTE_AUDIO_PREVIEW) //удаляем временную пустышку
+        gosub @CASSETTE_PLAY2
+        v$ACHIV_NAME1 = "1CST" // v$ // Sunday  
+        0AD3: v$ACHIV_NAME2 = format "%d" CASSETTES_SHOW_LAST_SELECTED 
+        098B: v$ACHIV_NAME3 = v$ACHIV_NAME1 + v$ACHIV_NAME2 // all string variables
+        text.ShowTextBox(v$ACHIV_NAME3)
+        end_thread
+        end
     end
 
 until false
@@ -132,9 +192,29 @@ $ACHIV_TOTAL_GOT = 0
 
 CASSETTE_SHOW_PLAYING_FLAG = 0
 
+if
+not CUSTOM_CASETTES_COUNT > 0 //CUSTOM_MAP_FLAG == 1
+then
 0AF0: 29@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "CASSETTES_FOUNDED_TOTAL"
+else
+0AF4: TEMPVAR_STRING = read_string_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\CASSETTES.ini" section "SETTINGS" key "CODE"
+0AD3: TEMPVAR_STRING2 = format "%sCSFDTL" TEMPVAR_STRING CASSETTES_SHOW_LAST_SELECTED
+0AF0: 29@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key TEMPVAR_STRING2
+if
+29@ < 0
+then
+29@ = 0
+end
 
+end
+
+if
+not CUSTOM_CASETTES_COUNT > 0 //CUSTOM_MAP_FLAG == 1
+then
 $ACHIV_TOTAL = 74
+else
+0084: $ACHIV_TOTAL = CUSTOM_CASETTES_COUNT2 // (int)
+end
 
 $ACHIV_TEXT_SIZE_X = 0.6
 $ACHIV_TEXT_SIZE_Y = 1.35
@@ -495,7 +575,8 @@ MUSIC_CASSETTE_IS_REALLY_PLAYING == 1 //CASSETTE IS ON
 $GAMEMODE_SELECTED == 1
     then
     audiostream.PerformAction($CASETTE_AUDIO,STOP)
-    audiostream.Release($CASETTE_AUDIO)    
+    audiostream.Release($CASETTE_AUDIO)
+    $CASETTE_AUDIO = 0    
     $CASETTE_PLAYING_FLAG = 0
     MUSIC_CASSETTE_IS_REALLY_PLAYING = 0
     OPEN_NOTES_MENU_FLAG = -111 //EXIT BLACK MENU
@@ -554,11 +635,27 @@ then
 end
 
 if
+CUSTOM_CASETTES_COUNT > 0 //CUSTOM_MAP_FLAG == 1
+then
+
+if
 $ACHIV_GOT_FLAG == 1
 then
-045A: draw_text_1number $ACHIV_TOTAL3_ACHIV_TEXT_X $ACHIV_TOTAL3_ACHIV_TEXT_Y GXT 'GAME471' number 29@
+045B: draw_text_2number $ACHIV_TOTAL3_ACHIV_TEXT_X $ACHIV_TOTAL3_ACHIV_TEXT_Y GXT 'GAME471' numbers 29@ CUSTOM_CASETTES_COUNT
 else
-045A: draw_text_1number $ACHIV_TOTAL3_ACHIV_TEXT_X $ACHIV_TOTAL3_ACHIV_TEXT_Y2 GXT 'GAME471' number 29@
+045B: draw_text_2number $ACHIV_TOTAL3_ACHIV_TEXT_X $ACHIV_TOTAL3_ACHIV_TEXT_Y2 GXT 'GAME471' numbers 29@ CUSTOM_CASETTES_COUNT
+end
+
+else
+
+if
+$ACHIV_GOT_FLAG == 1
+then
+045B: draw_text_2number $ACHIV_TOTAL3_ACHIV_TEXT_X $ACHIV_TOTAL3_ACHIV_TEXT_Y GXT 'GAME471' numbers 29@ 75
+else
+045B: draw_text_2number $ACHIV_TOTAL3_ACHIV_TEXT_X $ACHIV_TOTAL3_ACHIV_TEXT_Y2 GXT 'GAME471' numbers 29@ 75
+end
+
 end
 
 gosub @TEXT_OFFSET_NUMBER
@@ -598,7 +695,14 @@ end
 033F: set_text_draw_letter_size $ACHIV_TOTAL3_ACHIV_TEXT_SIZE_X $ACHIV_TOTAL3_ACHIV_TEXT_SIZE_Y
 008B: 25@ = CASSETTES_SHOW_LAST_SELECTED // (int)
 25@ += 1 
-045B: draw_text_2numbers 330.0 185.0 GXT 'DISP5' numbers 25@ 75  // ~1~:~1~            
+
+if
+CUSTOM_CASETTES_COUNT > 0 //CUSTOM_MAP_FLAG == 1
+then
+045B: draw_text_2numbers 330.0 185.0 GXT 'DISP5' numbers 25@ CUSTOM_CASETTES_COUNT  // ~1~:~1~
+else
+045B: draw_text_2numbers 330.0 185.0 GXT 'DISP5' numbers 25@ 75  // ~1~:~1~  
+end          
 
 jump to @CASETTES_SHOW_IDLE
 
@@ -611,6 +715,22 @@ return
 :CASSETTESS_NUMBER_GET
 
 $ACHIV_GOT_FLAG = 0
+
+if
+CUSTOM_CASETTES_COUNT > 0 //CUSTOM_MAP_FLAG == 1
+then
+0AF4: TEMPVAR_STRING = read_string_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\CASSETTES.ini" section "SETTINGS" key "CODE"
+0AD3: TEMPVAR_STRING2 = format "%sCS%dFD" TEMPVAR_STRING CASSETTES_SHOW_LAST_SELECTED
+0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key TEMPVAR_STRING2
+
+if
+0@ == 1
+then
+$ACHIV_GOT_FLAG = 1 
+end
+
+return
+end 
 
 if
 CASSETTES_SHOW_LAST_SELECTED == 0
@@ -1678,6 +1798,14 @@ CASSETTE_SHOW_PLAYING_FLAG = 0
 end
 
 if
+CUSTOM_CASETTES_COUNT > 0 //CUSTOM_MAP_FLAG == 1
+then
+008B: 0@ = CASSETTES_SHOW_LAST_SELECTED // (int)
+gosub @CUSTOM_MAP_LOAD_CASSETTE_AUDIO
+jump to @VERY_BIG_PENIS_MUSIC
+end
+
+if
 CASSETTES_SHOW_LAST_SELECTED == 0
 then         
 CASETTE_AUDIO_PREVIEW = Audiostream.Load3D(CASSETTE1)
@@ -2126,6 +2254,8 @@ CASSETTES_SHOW_LAST_SELECTED == 74
 then                 
 CASETTE_AUDIO_PREVIEW = Audiostream.Load3D(STORIES_CASSETTE25)
 end
+
+:VERY_BIG_PENIS_MUSIC
 
 if
 $GAMEMODE_SELECTED == 0

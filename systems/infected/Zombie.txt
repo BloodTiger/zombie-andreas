@@ -1553,18 +1553,34 @@ not $ZOMBIE_DERBY_FLAG == 1
                     actor.Animation($ZOMBIE[24@]) == "zombie_run2"  
                     actor.Animation($ZOMBIE[24@]) == "zombie_run3"
                         then
-                        :ZMB_SLOW_CLIMB_JMP2   
-                        if or
-                        0364:   actor $ZOMBIE[24@] spotted_actor ZMB_TARGET 
-                        00F2:   actor $ZOMBIE[24@] near_actor ZMB_TARGET radius 10.0 15.0 sphere 0
-                        $ZOMBIES_HORDE == 1
-                            then
-                            actor.StorePos($ZOMBIE[24@], 3@, 4@, 5@) 
-                            04C4: store_coords_to 27@ 28@ 29@ from_actor $ZOMBIE[24@] with_offset 0.0 3.0 0.3 
+                        :ZMB_SLOW_CLIMB_JMP2 
+                        actor.StorePos($ZOMBIE[24@], 3@, 4@, 5@) 
+                        04C4: store_coords_to 27@ 28@ 29@ from_actor $ZOMBIE[24@] with_offset 0.0 3.0 0.3 
+                        if
+                        86BD: not no_obstacles_between 27@ 28@ 29@ and 3@ 4@ 5@ solid 0 car 1 actor 0 object 0 particle 0
+                            then  
+                            
                             if
-                            86BD: not no_obstacles_between 27@ 28@ 29@ and 3@ 4@ 5@ solid 0 car 1 actor 0 object 0 particle 0
+                            $ZOMBIES_HORDE == 1 //при орде пусть прыгают всегда на тачки
+                            then
+                            jump to @ZMB_CLIMB_HORDE_JUMP
+                            end
+                            
+                            if
+                            0E45: frame_mod 30 //в других случаях проверяем каждую секунду видит ли зараженный цель, а не каждый фрейм
+                            then
+                            if
+                            0364:   actor $ZOMBIE[24@] spotted_actor ZMB_TARGET
                                 then
-//                                32@ = 0 
+                                jump to @ZMB_CLIMB_HORDE_JUMP
+                                end
+                            end
+                            
+                            if                             
+                            00F2:   actor $ZOMBIE[24@] near_actor ZMB_TARGET radius 10.0 15.0 sphere 0 //если в радиусе 10 на 15 - прыгаем                           
+                                then 
+                                :ZMB_CLIMB_HORDE_JUMP                           
+                                32@ = 0 
                                 05BC: AS_actor $ZOMBIE[24@] jump 1
                                 0967: actor $ZOMBIE[24@] move_mouth 99999999 ms
                                 end 
@@ -5745,8 +5761,9 @@ jf @ZOMBIE_COORD_SET
 
 gosub @ZOMBIE_ZONE_CHECK        
 
-if
+if and
 UNITED_MAP == 0
+not CUSTOM_MAP_FLAG == 1
 then
 if or
 0@ == 1
@@ -5774,8 +5791,9 @@ if and
 not 30@ > 120
 jf @ZOMBIE_COORD_SET
 
-if
+if and
 UNITED_MAP == 0
+not CUSTOM_MAP_FLAG == 1
 then
 if or
 0027: 4@ > WATER_Z_LEVEL //not 4@ < 0.0
@@ -5783,7 +5801,7 @@ if or
 jf @ZOMBIE_COORD_SET
 else
 if
-not 4@ < 0.0
+0027: 4@ > WATER_Z_LEVEL //not 4@ < 0.0
 jf @ZOMBIE_COORD_SET
 end
 
@@ -5804,8 +5822,20 @@ wait 0
 02CE: 4@ = ground_z_at 2@ 3@ 4@ 
 
 if
+not CUSTOM_MAP_FLAG == 1
+then
+if
 4@ > 2.0
 jf @ZOMBIE_COORD_SET_BEFOREGAMEMODE
+else
+0086: WATER_Z_LEVEL2 = WATER_Z_LEVEL // (float)
+WATER_Z_LEVEL2 += 0.25
+0089: 30@ = WATER_Z_LEVEL // (float)
+30@ += 2.0
+if
+0025:   4@ > 30@  // (float)
+jf @ZOMBIE_COORD_SET_BEFOREGAMEMODE
+end
 
 if and
 8AE2: 30@ = random_vehicle_near_point 2@ 3@ 4@ in_radius 10.0 find_next 0 pass_wrecked 1 //IF and SET
@@ -5828,7 +5858,7 @@ if
 30@ > 5 
 jf @ZOMBIE_COORD_SET_BEFOREGAMEMODE
 if
-not 4@ < 0.0
+0027: 4@ > WATER_Z_LEVEL //not 4@ < 0.0
 jf @ZOMBIE_COORD_SET_BEFOREGAMEMODE     
 
 if
@@ -5910,16 +5940,17 @@ if
 not QUEST_NEST_NUMBER == 15
 then
 
-if
+if and
 UNITED_MAP == 0
+not CUSTOM_MAP_FLAG == 1
 then
 if or
-4@ > 0.25
+0027: 4@ > WATER_Z_LEVEL2 //4@ > 0.25
 00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA 860.55 1031.71 -100.0 cornerB 337.24 710.84 0.0
 jf @ZOMBIE_COORD_SET
 else
 if
-4@ > 0.25
+0027: 4@ > WATER_Z_LEVEL2 //4@ > 0.25
 jf @ZOMBIE_COORD_SET
 end
 
@@ -5949,8 +5980,9 @@ jf @ZOMBIE_COORD_SET
 
 gosub @ZOMBIE_ZONE_CHECK        
 
-if
+if and
 UNITED_MAP == 0
+not CUSTOM_MAP_FLAG == 1
 then
 if or
 0@ == 1
@@ -5978,16 +6010,17 @@ if and
 not 30@ > 70
 jf @ZOMBIE_COORD_SET
 
-if
+if and
 UNITED_MAP == 0
+not CUSTOM_MAP_FLAG == 1
 then
 if or
-not 4@ < 0.0
+0027: 4@ > WATER_Z_LEVEL //not 4@ < 0.0
 00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA 860.55 1031.71 -100.0 cornerB 337.24 710.84 0.0
 jf @ZOMBIE_COORD_SET
 else
 if
-not 4@ < 0.0
+0027: 4@ > WATER_Z_LEVEL //not 4@ < 0.0
 jf @ZOMBIE_COORD_SET
 end
 

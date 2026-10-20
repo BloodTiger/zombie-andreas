@@ -921,24 +921,35 @@ $CASETTE_PLAYING_FLAG == 1
 not $CASETTE_PLAYING_FLAG == 2
 MUSIC_CASSETTE_IS_REALLY_PLAYING == 1
 PLAYER_IN_CANALS_FLAG == 0
-RADIO_TEXTURE_RENDER_NUMBER == 119 //трек конкретно играет
+//RADIO_TEXTURE_RENDER_NUMBER == 119 //трек конкретно играет (хуйня, НА НОЛЬ ЖЕ СБРАСЫВАЕТСЯ, ЕБЛАН!)
     then
-    
+            
     if
     $FP_ACTIVATED == 1
     then
     Audiostream.LinkToActor($CASETTE_AUDIO,PLAYER_ACTOR)
-//    0AD1: show_formatted_text_highpriority "link to actor" time 2000
-    else
-    068D: get_camera_position_to $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3
-    Audiostream.SetPosition($CASETTE_AUDIO,$TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)
-//    0AD1: show_formatted_text_highpriority "link to camera pos" time 2000
+//    0AD1: show_formatted_text_highpriority "link to actor" time 250
+    else        
+    //аджастим скорость трека чтобы компенсировать эффект допплера
+    06AC: 0@ = actor PLAYER_ACTOR movement_speed
+    0@ /= 200.0
+    1@ = 1.0
+    0063: 1@ -= 0@  // (float)    
+    2503: SET_AUDIO_STREAM_SPEED $CASETTE_AUDIO speed 1@
+//    0AD1: show_formatted_text_highpriority "%f" time 2000 1@                          
+    068D: get_camera_position_to $TEMPVAR_FLOAT_1 $TEMPVAR_FLOAT_2 $TEMPVAR_FLOAT_3    
+    Audiostream.SetPosition($CASETTE_AUDIO,$TEMPVAR_FLOAT_1, $TEMPVAR_FLOAT_2, $TEMPVAR_FLOAT_3)      
+//    0AD1: show_formatted_text_highpriority "link to camera pos" time 250
     end   
     
-    0AB9: get_mp3 $CASETTE_AUDIO state_to 0@   
-    if
+    0AB9: get_mp3 $CASETTE_AUDIO state_to 0@
+    Audiostream.Volume($CASETTE_AUDIO) = $MUSIC_VOLUME   
+    if and
     0@ == -1
-        then               
+    not RADIO_TEXTURE_RENDER_NUMBER == 117 //статус на смене трека ПО ДРУГОЙ причине
+    not RADIO_TEXTURE_RENDER_NUMBER == 118 //статус на смене трека ПО ДРУГОЙ причине
+        then
+//        0AD1: show_formatted_text_highpriority "go next track cuz this ended" time 250               
         MUSIC_CASSETTE_IS_REALLY_PLAYING = 0
         $CASETTE_PLAYING_FLAG = 2
         create_thread @CAS_SHW
@@ -1072,6 +1083,14 @@ not PLAYER_NO_ITEMS_FLAG == 1
             end
         end
     else
+    
+    if and
+    INT_ZMB_MALLV_VC_FLAG == 1 //молл в ВС, надо вырубать шарманку
+    MUSIC_CASSETTE_IS_REALLY_PLAYING == 1
+    then
+    jump to @TAPE_DISABLE
+    end
+    
     if and
     $CASETTE_PLAYING_FLAG == 1
     PLAYER_IN_CANALS_FLAG == 0
@@ -1199,6 +1218,7 @@ not PLAYER_NO_ITEMS_FLAG == 1
                     if
                     MUSIC_CASSETTE_IS_REALLY_PLAYING == 1
                         then
+//                        0AD1: show_formatted_text_highpriority "go next track pressed" time 250
                         $CASETTE_PLAYING_FLAG = 2
                         create_thread @CAS_SHW
                         wait 3000
@@ -1208,12 +1228,21 @@ not PLAYER_NO_ITEMS_FLAG == 1
                 0E3D: is_key_just_pressed 191 
                 not CASSETTE_TURNED_ON_LOCALLY == 1
                 MUSIC_CASSETTE_IS_REALLY_PLAYING == 1
+                not RADIO_TEXTURE_RENDER_NUMBER == 117 //статус на смене трека
+                not RADIO_TEXTURE_RENDER_NUMBER == 118 //статус на смене трека
                     then
                     :TAPE_DISABLE
                     audiostream.PerformAction($CASETTE_AUDIO,STOP)
                     audiostream.Release($CASETTE_AUDIO)
-                    gosub @TAPES_AUD_OFF
+//                    0AD1: show_formatted_text_highpriority "tape disable by some reason" time 250
+                    $CASETTE_AUDIO = 0
+                    gosub @TAPES_AUD_OFF                    
+                    if
+                    not INT_ZMB_MALLV_VC_FLAG == 1 //молл в ВС, оставляем кассете плеинг флаг
+                    then
                     $CASETTE_PLAYING_FLAG = 0
+                    end
+                    
                     MUSIC_CASSETTE_IS_REALLY_PLAYING = 0
                     end                    
                 end

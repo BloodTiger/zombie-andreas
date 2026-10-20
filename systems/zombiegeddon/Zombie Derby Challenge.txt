@@ -164,6 +164,14 @@ end
 //gosub @VIDPLAYER_GIF
 //end
 
+//Фикс для GTC (гейммод не запоминался в режиме "быстрой игры со случайными трассами")
+if and
+CLASSIC_CARMA_MAP >= 1
+GAMEMODE_AUTOSELECT == 1
+then                 
+0084: ZOMBIEGEDDON_GAME_TYPE = GAMEMODE_AUTOSELECT_PARAM // (int)
+end
+
 0629: change_integer_stat 252 to 8
 0AF1: write_int 8 to_ini_file "saves/ZACM.set" section "SCR" key "GAMEMODE_AUTOSELECT_NUMBER"
 0AF1: write_int ZOMBIEGEDDON_GAME_TYPE to_ini_file "saves/ZACM.set" section "SCR" key "GAMEMODE_AUTOSELECT_PARAM"
@@ -256,6 +264,18 @@ then
 0777: delete_objects_in_object_group "trdr2"
 0777: delete_objects_in_object_group "trdr1"
 0777: delete_objects_in_object_group "trdr0"
+//добавка
+0777: delete_objects_in_object_group "police1"
+0777: delete_objects_in_object_group "police2"
+0777: delete_objects_in_object_group "police3"
+0777: delete_objects_in_object_group "police4"
+0777: delete_objects_in_object_group "policedep"
+0777: delete_objects_in_object_group "policedep2"
+0777: delete_objects_in_object_group "policedep3"
+0776: create_objects_in_object_group "policedep4"
+0777: delete_objects_in_object_group "meds"
+0777: delete_objects_in_object_group "quest4"
+0777: delete_objects_in_object_group "bibi_camp" //как же ты заебал!
 end
 
 if
@@ -687,10 +707,15 @@ if
 end
 
 //фикс для кастоммапов если играли на другой трассе а тут столько нет
+//ver 2.0
+008A: TEMPVAR_INT = 29@ // (int)
+TEMPVAR_INT += 1
 if
-801F:   29@ < CARMA_GLOB_RACE_NUMBER // (int)
+//801F:   29@ < CARMA_GLOB_RACE_NUMBER // (int)
+801C:   TEMPVAR_INT < CARMA_GLOB_RACE_NUMBER // (int)
 then
 CARMA_GLOB_RACE_NUMBER = 0
+CARMA_GLOB_RACE_NUMBER_T = 0
 end
 
 if or
@@ -801,6 +826,7 @@ not CARMA_REPLAY_FLAG == 1
 then
 car.LockInCurrentPosition(CARMA_GLOB_DERBY_PLAYER_CAR,false)
 end
+0084: CARMA_GLOB_DERBY_PLAYER_CAR_REPLAY = CARMA_GLOB_DERBY_PLAYER_CAR // (int)
 036A: put_actor PLAYER_ACTOR in_car CARMA_GLOB_DERBY_PLAYER_CAR
 0840: link_car CARMA_GLOB_DERBY_PLAYER_CAR to_interior CARMA_GLOB_RACE_INTERIOR
 0084: $USED_CAR[0] = CARMA_GLOB_DERBY_PLAYER_CAR // (int)
@@ -1254,6 +1280,10 @@ Actor.SetWalkStyle($PARK_CAR_DAMAGED[9], "surv5")
 $PARK_CAR_ENGINE[9] = 69000
 create_thread @SPECTAT
 0084: $SPEC_ACTOR = $PARK_CAR_DAMAGED[9] // (int)
+0@ = 0
+0@ = marker.CreateAboveCar(CARMA_GLOB_DERBY_PLAYER_CAR)
+07E0: set_marker 0@ type_to 1
+018B: set_marker 0@ radar_mode 2
 end
 
 if or
@@ -1833,7 +1863,7 @@ CARMA_GLOB_RACE_STARTED = 1
 if
 CARMA_REPLAY_FLAG == 1
 then
-06FD: set_car CARMA_GLOB_DERBY_PLAYER_CAR speed_on_path_to 1.0
+06FD: set_car CARMA_GLOB_DERBY_PLAYER_CAR_REPLAY speed_on_path_to 1.0 //CARMA_GLOB_DERBY_PLAYER_CAR
 end
 
 //////////////////////////////////////////////////////////////////
@@ -1961,6 +1991,12 @@ wait 0
 if
 $CHEATS_ON == 1
 then
+
+if
+0E3D: is_key_just_pressed 48 //minus minute to timer
+    then
+    CARMA_GLOB_TIME_VAR -= 60000
+    end
 
 if
 0E3D: is_key_just_pressed 189 //add minute to timer
@@ -2504,6 +2540,45 @@ Audiostream.Volume(30@) = $SOUNDS_VOLUME
 07CC: set_player PLAYER_CHAR can_enter_exit_vehicles 0
 
 0652: CARMA_GLOB_DERBY_KILLED_PLAYER3 = integer_stat 121
+
+////////////////////////////
+
+if
+CARMA_REPLAY_FLAG == 1
+then           
+gosub @DERBY_CAR_SHOW_INFO_REPLAY_PLAYER
+
+if
+003A:  $SPEC_ACTOR == $PARK_CAR_DAMAGED[9] // (int)
+then            
+0084: CARMA_REPLAY_LAP_FOR_SHOW = LAP_NUMBER // (int)
+end
+
+//0AD1: show_formatted_text_highpriority "CHECKPOINT %d, LAP %d, POSITION %d" time 10 PLAYER_CHECKPOINT_NUMBER LAP_NUMBER CARMA_PLAYER_POSITION
+if
+00EC:   actor $PARK_CAR_DAMAGED[9] sphere 0 near_point $RNDM_HOUSE_ITEM_X[PLAYER_CHECKPOINT_NUMBER] $RNDM_HOUSE_ITEM_Y[PLAYER_CHECKPOINT_NUMBER] radius 10.0 10.0
+    then
+//    random_int 0@ 0 64
+//    random_int 1@ 0 64
+//    0229: set_car $PARK_CAR[0] primary_color_to 0@ secondary_color_to 1@
+        
+    PLAYER_CHECKPOINT_NUMBER += 1
+    008A: CARMA_GLOB_PLAYER_CHECKPOINT_NUMBER = PLAYER_CHECKPOINT_NUMBER // (int)        
+    
+    if
+    001F:   PLAYER_CHECKPOINT_NUMBER > CARMA_GLOB_RACE_TOTAL_CHECKPOINTS // (int)
+    then
+    LAP_NUMBER += 1
+    PLAYER_CHECKPOINT_NUMBER = 0
+    008A: CARMA_GLOB_PLAYER_CHECKPOINT_NUMBER = PLAYER_CHECKPOINT_NUMBER // (int)
+    end
+    
+    end
+else
+0084: CARMA_GLOB_DERBY_PLAYER_CAR_REPLAY = CARMA_GLOB_DERBY_PLAYER_CAR // (int)
+end
+
+////////////////////////////
     
 if
 00EC:   actor PLAYER_ACTOR sphere 0 near_point $RNDM_HOUSE_ITEM_X[PLAYER_CHECKPOINT_NUMBER] $RNDM_HOUSE_ITEM_Y[PLAYER_CHECKPOINT_NUMBER] radius 10.0 10.0
@@ -2884,7 +2959,9 @@ if
     CARMA_GLOB_RACE_NUMBER == 13
     CARMA_GLOB_RACE_NUMBER == 14
         then
-        if    
+        if and
+        not CUSTOM_MAP_FLAG == 1
+        not UNITED_MAP == 1   
         2@ < 1000.0
             then
             9@ = 1
@@ -3132,7 +3209,24 @@ $SPECTATING_FLAG == 0
     
     jump to @PLAYER_RESTORE_JUMPAFTER
     :DERBY_PLAYER_RESTORE_FREE_BUT_NOT_FREE
-    CARMA_GLOB_DERBY_CREDITS -= 2000
+    0060: CARMA_GLOB_DERBY_CREDITS -= ZOMBIEGEDDON_RECOVERY_COST // (int) //CARMA_GLOB_DERBY_CREDITS -= 2000
+    
+    camera.Restore_WithJumpCut()                  
+                
+    wait 0
+            
+    if
+    8ABE: not  vehicle CARMA_GLOB_DERBY_PLAYER_CAR engine_on
+    then
+    0918: set_car CARMA_GLOB_DERBY_PLAYER_CAR engine_operation 1
+    end
+        
+    gosub @CARMAGEDDON_GET_PLAYER_DAMAGE    
+    0@ = car.Health(CARMA_GLOB_DERBY_PLAYER_CAR)
+    0A30: repair_car CARMA_GLOB_DERBY_PLAYER_CAR
+    car.Health(CARMA_GLOB_DERBY_PLAYER_CAR) = 0@
+    gosub @CARMAGEDDON_SET_PLAYER_DAMAGE
+    
     :DERBY_PLAYER_RESTORE_FREE
     
     015D: set_gamespeed 0.0
@@ -3174,8 +3268,9 @@ $SPECTATING_FLAG == 0
     0089: 5@ = $RNDM_HOUSE_ITEM_Z[0@] // (float)
     end
             
-    if
+    if or
     8AE2: not 0@ = random_vehicle_near_point 3@ 4@ 5@ in_radius 5.0 find_next 0 pass_wrecked 0
+    0AE2:  0@ = random_vehicle_near_point 3@ 4@ 5@ in_radius 5.0 find_next 0 pass_wrecked 0 //гений на разрабе
         then        
         
         if
@@ -3186,7 +3281,8 @@ $SPECTATING_FLAG == 0
         
         008B: 0@ = CARMA_GLOB_PLAYER_CHECKPOINT_NUMBER // (int)
         0@ -= 1
-            
+        
+        :ZANYATO_BLYAT    
         if
         0@ < 0
         then
@@ -3201,7 +3297,23 @@ $SPECTATING_FLAG == 0
         0AF2: 5@ = get_float_from_ini_file "data\derby.ini" section v$RACE_FILE key FUCK_CHRISTOPHER
         end
                  
-        5@ += 1.0 
+        5@ += 1.0
+        if and
+        0AE2: 2@ = random_vehicle_near_point 3@ 4@ 5@ in_radius 5.0 find_next 0 pass_wrecked 0 //на чекпоните кто-то есть
+        87D6: not  2@ == CARMA_GLOB_DERBY_PLAYER_CAR // @ == $ (int)
+        then
+        0@ -= 1 //идем на пред. предыдущий чекпоинт
+        if
+        0@ < 0 //дальше некуда
+            then
+            //восстанавливаемся просто на путях
+            Car.StorePos(CARMA_GLOB_DERBY_PLAYER_CAR, 0@, 1@, 2@) 
+            random_int 7@ 0 2
+            06F8: get_nearest_route_for 0@ 1@ 2@ in_direction 7@ store_to 3@ 4@ 5@ Z_angle_to 6@
+            else //есть куда
+            jump to @ZANYATO_BLYAT
+            end                
+        end 
         Car.PutAt(CARMA_GLOB_DERBY_PLAYER_CAR, 3@, 4@, 5@)
         07C6: set_car CARMA_GLOB_DERBY_PLAYER_CAR axis_angle_relation_to 0.0 0.0 0.0 0.0
         
@@ -3234,8 +3346,7 @@ $SPECTATING_FLAG == 0
         0918: set_car CARMA_GLOB_DERBY_PLAYER_CAR engine_operation 1
         end
         
-        gosub @CARMA_RESTORE_UNFADE
-            
+        gosub @CARMA_RESTORE_UNFADE    
         end
     end
     
@@ -3364,7 +3475,7 @@ CARMA_GLOB_TIME_VAR == 0
 $SPECTATING_FLAG == 0
 $SAVESTATUS == 0
     then
-    
+    0221: set_player PLAYER_CHAR apply_brakes_to_car 1 //при провале не жались тормоза и машина просто катилась вперде
     0084: CARMA_GLOB_TIME_VAR2 = CARMA_GLOB_TIME_VAR // (int)
     
     0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ZOMBIGEDDON_FAILS"                
@@ -3522,7 +3633,7 @@ not CARMA_GLOB_1VS1_MODE == 1
     if
     1@ == 1
     then
-    
+    0221: set_player PLAYER_CHAR apply_brakes_to_car 1 //при провале не жались тормоза и машина просто катилась вперде
     0084: CARMA_GLOB_TIME_VAR2 = CARMA_GLOB_TIME_VAR // (int)
     
     0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ZOMBIGEDDON_FAILS"                
@@ -3628,9 +3739,11 @@ $SAVESTATUS == 0
 $SPECTATING_FLAG == 0
     then
     ZOMBIEGEDDON_SOME_BOT_FINISHED_FLAG = 0
+    CARMA_GLOB_TIME_VAR = 0 //for reaction
+    CARMA_REPLAY_END_REC_AND_SAVE = 1 //игрок долго ездил, какой-то бот финишировал, можно и засейвить реплей
         
     /////////////////////////////////////////////////////////////////////////////    
-    
+    0221: set_player PLAYER_CHAR apply_brakes_to_car 1 //при провале не жались тормоза и машина просто катилась вперде
     0084: CARMA_GLOB_TIME_VAR2 = CARMA_GLOB_TIME_VAR // (int)
     
     0AF0: 0@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ZOMBIGEDDON_FAILS"                
@@ -3729,6 +3842,7 @@ $SAVESTATUS == 0
     then
     :CARMA_WIN
     CARMA_GLOB_CARMA_WIN = 1
+    CARMA_REPLAY_END_REC_AND_SAVE = 1 //игрок выиграл заезд, сохраняем реплей
     car.SetImmunities(CARMA_GLOB_DERBY_PLAYER_CAR,1,1,1,1,1)
     
     if
@@ -4023,6 +4137,8 @@ $SAVESTATUS == 0
     
     0430: put_actor PLAYER_ACTOR into_car CARMA_GLOB_DERBY_PLAYER_CAR passenger_seat 0
     0337: set_actor PLAYER_ACTOR visibility 0
+        
+    0459: end_thread_named 'CAR_BST' //ice skating go fuck нахуй
     
     0665: get_actor PLAYER_ACTOR model_to 4@    
     while not model.Available(4@)    
@@ -4297,7 +4413,7 @@ $SPECTATING_FLAG == 1
         
     gosub @ZOMBIEGEDDON_MUSIC_OFF
     
-    CLASSIC_MUSIC = 2  
+    CLASSIC_MUSIC = 2      
         
     wait 1500
         
@@ -4492,7 +4608,14 @@ if
                     003A:   PLAYER_CHECKPOINT_NUMBER == $PARK_CAR_H_MIN[2@] // (int)
                     then
                     
+                    if
+                    CARMA_REPLAY_FLAG == 1
+                    then                    
+                    car.StorePos(CARMA_GLOB_DERBY_PLAYER_CAR_REPLAY,4@,5@,6@)
+                    else
                     car.StorePos(CARMA_GLOB_DERBY_PLAYER_CAR,4@,5@,6@)
+                    end
+                    
                     050A: 7@ = distance_between_XYZ 4@ 5@ 6@ and_XYZ $RNDM_HOUSE_ITEM_X[PLAYER_CHECKPOINT_NUMBER] $RNDM_HOUSE_ITEM_Y[PLAYER_CHECKPOINT_NUMBER] $RNDM_HOUSE_ITEM_Z[PLAYER_CHECKPOINT_NUMBER]
                     car.StorePos($PARK_CAR[2@],4@,5@,6@)
                     050A: 8@ = distance_between_XYZ 4@ 5@ 6@ and_XYZ $RNDM_HOUSE_ITEM_X[PLAYER_CHECKPOINT_NUMBER] $RNDM_HOUSE_ITEM_Y[PLAYER_CHECKPOINT_NUMBER] $RNDM_HOUSE_ITEM_Z[PLAYER_CHECKPOINT_NUMBER]
@@ -4528,10 +4651,18 @@ then
 3@ -= 1
 end 
 
+if
+CARMA_REPLAY_FLAG == 1
+then
+0084: $VERSUS_PEOPLE[3@] = CARMA_GLOB_DERBY_PLAYER_CAR_REPLAY // (int)
+else
 0084: $VERSUS_PEOPLE[3@] = CARMA_GLOB_DERBY_PLAYER_CAR // (int)
+end
+
 0085: CARMA_PLAYER_POSITION = 3@ // (int)
 
 //0AD1: show_formatted_text_highpriority "PLA_DIST: %f" time 2000 CARMA_PLAYER_CAR_DISTANCE
+//0AD1: show_formatted_text_highpriority "CARMA_PLAYER_POSITION: %d" time 2000 CARMA_PLAYER_POSITION
 
 return
 
@@ -4870,13 +5001,36 @@ end
 
 else
 
-if and
-8A2A: not  text_box 'CRM61B' displayed
-ZOMBEGEDDON_TOURNAMENT == 0   
-then
-09C1: add_next_text_to_brief_history 0
-0512: show_permanent_text_box 'CRM61B' 
-end
+if or
+ZOMBIEGEDDON_GAME_TYPE == 2
+ZOMBIEGEDDON_GAME_TYPE == 3
+    then
+    if and
+    CARMA_REPLAY_FLAG == 0
+    not SELECT_RANDOM_MAP_AFTER_SELECT_GAMEMODE == 1
+        then
+
+        if and
+        8A2A: not  text_box 'CRM61C' displayed
+        ZOMBEGEDDON_TOURNAMENT == 0   
+        then
+        09C1: add_next_text_to_brief_history 0
+        0512: show_permanent_text_box 'CRM61C' 
+        end
+                        
+        end
+        
+    else
+    
+    if and
+    8A2A: not  text_box 'CRM61B' displayed
+    ZOMBEGEDDON_TOURNAMENT == 0   
+    then
+    09C1: add_next_text_to_brief_history 0
+    0512: show_permanent_text_box 'CRM61B' 
+    end
+        
+    end
 
 end
 
@@ -6851,6 +7005,18 @@ return
 
 :CARMA_GET_RACE_NUMBER_FIRST
 
+if
+ZOMBEGEDDON_CARRER_MODE == 1
+then
+0AF0: 0@ = get_int_from_ini_file ZOMBIEGEDDON_CARRER_PROFILE_STRING section "PLAYED_TIME" key "DERBY_MINUTES"
+if
+0@ == 0 //только что начатый сейв карьберы
+    then
+    CARMA_GLOB_RACE_NUMBER_T = 0 //ставим выбранную трассу на ноль
+    return
+    end
+end
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 if and
@@ -6905,7 +7071,7 @@ then
 end
 
 if
-CARMA_REPLAY_FLAG == 1
+CARMA_REPLAY_FLAG == 2
 then
 0AF0: CARMA_GLOB_RACE_NUMBER_T = get_int_from_ini_file "modloader\MODLOADER GLOBAL FILES\ExtraContent\Zombiegeddon Replay\9.dat" section "GAMEINFO" key "RACE_NUM"
 end
@@ -7305,6 +7471,7 @@ return
 if and
 ZOMBIEGEDDON_GAME_TYPE == 2
 $SPECTATING_FLAG == 0
+not CARMA_GLOB_OPPONENTS_WRECKED >= CARMA_GLOB_OPPONENTS_COUNT //если все дебилы выбыли - не начинаем езду по карреку, ибо мы можем находится в любом месте трассы
     then
     
     if

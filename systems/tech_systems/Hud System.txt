@@ -859,7 +859,7 @@ not SNIPER_DMGPRC_CHAR == 0
             then
             
             0093: 3@ = integer 4@ to_float
-            3@ *= 2.0
+            3@ *= 2.0 
             0092: 3@ = float 3@ to_integer
             
             if and
@@ -2084,7 +2084,7 @@ if
     PLAYER_USING_MELEE_FLAG == 0
     REALISM_MODE == 1
     then
-    3@ *= 3.0
+    3@ *= 3.0 
     end
     
     if
@@ -2237,11 +2237,25 @@ if
     :FRIENDLY_FIRE_INSTASKIP2
                          
     1@ = actor.Health(0@)
+    
+    //0364 SLOWDOWNER CHECK
+    0A8D: TEMPVAR_INT = read_memory 0x05E1788 size 1 virtual_protect 0
+    if
+    not TEMPVAR_INT == -1 //0364 SLOWDOWNER IS ON, IGNORE CHECK
+    then
+    //ass
+    else
+    if
+    8364: not  actor PLAYER_ACTOR spotted_actor 0@
+        then
+        1@ = 0
+        end
+    end
+    
     if and
     1@ > 0
     not 6@ == 1
-    00F2:   actor PLAYER_ACTOR near_actor 0@ radius 230.0 230.0 sphere 0
-    0364:   actor PLAYER_ACTOR spotted_actor 0@
+    00F2:   actor PLAYER_ACTOR near_actor 0@ radius 230.0 230.0 sphere 0    
     not REALISM_MODE == 1
         then                
         
@@ -2953,8 +2967,8 @@ if
             not actor.Model(0@) == #SPECIAL01
             not actor.Model(0@) == #SPECIAL02
             not actor.Model(0@) == #SPECIAL03            
-                then
-                033E: set_draw_text_position $TARGET_TEXT_X $TARGET_TEXT_Y2 GXT 'GAME192'
+                then                                                                    
+                033E: set_draw_text_position $TARGET_TEXT_X $TARGET_TEXT_Y2 GXT 'GAME192' 
                 else
                 
                 /////////////////////////////////////////////////////////////////////////////////
@@ -3322,29 +3336,32 @@ if
         not actor.Model(0@) == 16855
         not actor.Model(0@) == 15842
         86EE: not  actor 0@ in_group PLAYER_GROUP
-        then               
-            
-        03F0: enable_text_draw 1 
-        03E0: draw_text_behind_textures 1
-        03E3: set_texture_to_be_drawn_antialiased 1 
-        0342: set_text_draw_centered 1
-        gosub @TARGET_COLOR_CHECK_FERMER
-        0340: set_text_draw_RGBA 10@ 11@ 12@ $HUD_ALPHA   
-        081C: draw_text_outline 1 RGBA 0 0 0 $HUD_ALPHA 
-            
-        0086: $TARGET_TEXT_Y2 = $TARGET_TEXT_Y // (float)    
-        $TARGET_TEXT_Y2 -= 10.0
-
-        033F: set_text_draw_letter_size $TEAM_TEXT_SIZE_X $TEAM_TEXT_SIZE_Y    
-        
+        then
         if
-        UNITED_MAP == 1
-        then    
-        0349: set_text_draw_font UNITED_HUD_FONT_NUMBER
-        end
-        
-        033E: set_draw_text_position $TARGET_TEXT_X $TARGET_TEXT_Y2 GXT 'GAME195'
+        not actor.Model(0@) == #SWAT //NEW
+            then               
+                
+            03F0: enable_text_draw 1 
+            03E0: draw_text_behind_textures 1
+            03E3: set_texture_to_be_drawn_antialiased 1 
+            0342: set_text_draw_centered 1
+            gosub @TARGET_COLOR_CHECK_FERMER
+            0340: set_text_draw_RGBA 10@ 11@ 12@ $HUD_ALPHA   
+            081C: draw_text_outline 1 RGBA 0 0 0 $HUD_ALPHA 
+                
+            0086: $TARGET_TEXT_Y2 = $TARGET_TEXT_Y // (float)    
+            $TARGET_TEXT_Y2 -= 10.0
+    
+            033F: set_text_draw_letter_size $TEAM_TEXT_SIZE_X $TEAM_TEXT_SIZE_Y    
             
+            if
+            UNITED_MAP == 1
+            then    
+            0349: set_text_draw_font UNITED_HUD_FONT_NUMBER
+            end
+            
+            033E: set_draw_text_position $TARGET_TEXT_X $TARGET_TEXT_Y2 GXT 'GAME195'
+            end    
         end    
         
         ///////////////////////Каратель///////////////////////
@@ -4949,9 +4966,21 @@ if
     if
     8@ == 1
     then
-    4@ *= -15
+    //    4@ *= -15
+    $TEMPVAR_FLOAT_1 = -15.0
+    $TEMPVAR_FLOAT_2 = 0.5
+    0061: $TEMPVAR_FLOAT_2 -= PLAYER_RESIST_MULT // (float)
+    0069: $TEMPVAR_FLOAT_1 *= $TEMPVAR_FLOAT_2 // (float)
+    008C: $TEMPVAR_FLOAT_1 = float $TEMPVAR_FLOAT_1 to_integer
+    006E: 4@ *= $TEMPVAR_FLOAT_1 // (int)       
     else
-    4@ *= -30
+    //4@ *= -30
+    $TEMPVAR_FLOAT_1 = -30.0
+    $TEMPVAR_FLOAT_2 = 0.5
+    0061: $TEMPVAR_FLOAT_2 -= PLAYER_RESIST_MULT // (float)
+    0069: $TEMPVAR_FLOAT_1 *= $TEMPVAR_FLOAT_2 // (float)
+    008C: $TEMPVAR_FLOAT_1 = float $TEMPVAR_FLOAT_1 to_integer
+    006E: 4@ *= $TEMPVAR_FLOAT_1 // (int)    
     end
     
     end   
@@ -6135,6 +6164,18 @@ $ZOMBIE_DERBY_FLAG == 1
 $QUEST_TYPE == 200
 then
 return
+end
+
+if and
+$CASETTE_PLAYING_FLAG == 1
+UNITED_MAP == 0
+then
+if or
+RADIO_TEXTURE_RENDER_NUMBER == 117 //смена трека
+RADIO_TEXTURE_RENDER_NUMBER == 118 //смена трека
+    then
+    jump to @RENDER_RADIO_TEXTURE_NUM
+    end 
 end
 
 if and
@@ -12007,6 +12048,8 @@ SURV_SECOND_WAVE_EVACUATION_STARTED == 0
     if and
     002F:   1@ >= STORIES_SURVIVAL_EJACULATION_DATE // (int)
     0E45: frame_mod TEMPVAR_INT
+    not $READING_NOTE_FLAG == 1 //new
+    not $AIRDROP_FLAG == 1 //new
         then
         SURV_SECOND_WAVE_EVACUATION_STARTED = 1
         create_thread @SALVAT
@@ -12037,6 +12080,8 @@ $RADIO > 0
         if and
         002D:   1@ >= 2@  // (int)
         0E45: frame_mod TEMPVAR_INT
+        not $READING_NOTE_FLAG == 1 //new
+        not $AIRDROP_FLAG == 1 //new
             then
             SURV_SECOND_WAVE_EVACUATION_STARTED = 1
             create_thread @SALVAT

@@ -7,7 +7,7 @@ CUSTOM_BASE_Y2 = $TRADER_SPHERE_Y[1]
 CUSTOM_BASE_Z2 = $TRADER_SPHERE_Z[1]
 CUSTOM_BASE_ENTERED_NUM = $PACKAGE_PICKED_UP_FLAG[0]
 CUSTOM_BASE_PEDTYPE = $PACKAGE_PICKED_UP_FLAG[1]
-CUSTOM_BASE_MARK = $BANDIT_MARKER_FLAG[CUSTOM_BASE_ENTERED_NUM]
+CUSTOM_BASE_MARK = $417(CUSTOM_BASE_ENTERED_NUM,20i) //$BANDIT_MARKER_FLAG[CUSTOM_BASE_ENTERED_NUM]
 CUSTOM_BASE_SAVE_PICKUP = $BANDITS_ZONE_SAVE[4]
 CUSTOM_BASE_SAVE_PICKUP_MARKER = $BANDITS_ZONE_SAVE_MARKER[4]
 end
@@ -44,6 +44,13 @@ if
     00A4:   actor PLAYER_ACTOR sphere 0 in_cube_cornerA CUSTOM_BASE_X1 CUSTOM_BASE_Y1 -100.0 cornerB CUSTOM_BASE_X2 CUSTOM_BASE_Y2 200.0
     $SAVESTATUS == 0
         then    
+        
+        if
+        $CHEATS_ON == 1
+        then
+        0ACE: show_formatted_text_box "$ENTERED_BASE_NUMBER is %d" CUSTOM_BASE_ENTERED_NUM
+        end
+        
         jump @ZONE_CUSTOM_START_CREATE_OUTSIZE
         end
     end
@@ -504,6 +511,7 @@ if
 then
 marker.Disable(CUSTOM_BASE_MARK)
 CUSTOM_BASE_MARK = 0
+gosub @CHECK_FOR_CAPTURED_ALL_BASES
 end
 
 0AF2: $TEMPVAR_FLOAT_1 = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section CUSTOM_BASE_STRING key "MARK_X"
@@ -607,6 +615,7 @@ if
         CUSTOM_BASE_SAVE_PICKUP_MARKER = 0
         end
         
+        gosub @ZONE_CUSTOM_DELETE_OUTSIZE_FOR_THUG_WAR_SAVE
         gosub @ZONE_BASE_SAVE_DO
         player.CanMove(PLAYER_CHAR) = true
         0AF2: $TEMPVAR_FLOAT_1 = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section CUSTOM_BASE_STRING key "SAVE_TP_X"
@@ -635,6 +644,8 @@ if
         SKIP_6HOURS_AFTER_SAVE = 0
         
         end
+        
+        jump to @ZONE_CUSTOM_START1
         
         end
     end
@@ -812,6 +823,7 @@ end
   
 ZOMBIES_NOTSPAWN = 0
 $ENTERED_BCAMP_NUMBER = 0
+BCAMP_AGRED_FLAG = 0
 MECHA_SHIT_FLAG = 0  
 
 if
@@ -846,6 +858,8 @@ jump @ZONE_CUSTOM_START1
 :ZONE_CUSTOM_DELETE_OUTSIZE
 $SAVEPLACE_ON = 0  
 ZOMBIES_NOTSPAWN = 0
+BCAMP_AGRED_FLAG = 0
+$ENTERED_BCAMP_NUMBER = 0
 
 for 0@ = 0 to $ZONE_PEOPLE_COUNT
 actor.DestroyWithFade($ARMY69_2[0@])
@@ -953,5 +967,124 @@ CUSTOM_BASE_ENTERED_NUM == 8
 then
 0AC6: 2@ = label @ZONE_GUNPOWDER_KILLED_BOICI offset
 end
+
+return
+
+:ZONE_CUSTOM_DELETE_OUTSIZE_FOR_THUG_WAR_SAVE
+$SAVEPLACE_ON = 0  
+ZOMBIES_NOTSPAWN = 0
+
+for 0@ = 0 to $ZONE_PEOPLE_COUNT
+actor.DestroyWithFade($ARMY69_2[0@])
+end
+
+for 0@ = 0 to $ZONE_PEOPLE_COUNT
+$ARMY69_2[0@] = -69
+end
+
+if
+CUSTOM_BASE_PEDTYPE == 25
+then
+
+if or
+$BANDITS_DONT_ATTACK_PLAYER_FLAG == 1
+$PLAYER_BANDIT_SIDE == 1
+then
+2@ = 692835678
+else
+2@ = 0
+end
+
+else
+
+if or
+$ARMY_DONT_ATTACK_PLAYER_FLAG == 1
+$PLAYER_ARMY_SIDE == 1
+then
+2@ = 692835678
+else
+2@ = 0
+end
+
+end
+
+gosub @MARKERS_DISABLE
+
+if 
+CUSTOM_BASE_PEDTYPE == 25    
+then
+$ENTERED_BCAMP_NUMBER = -1 //thug play
+end
+
+return
+
+:CHECK_FOR_CAPTURED_ALL_BASES
+TEMPVAR_INT3 = 1
+
+0AF0: 0@ = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section "SETTINGS" key "COUNT"
+
+/////////////////////////////////////////////////////////////////
+for 1@ = 0 to 0@
+0AD3: TEMPVAR_STRING = format "BASE%d" 1@
+0AF0: TEMPVAR_INT = get_int_from_ini_file "data\survival.set" section "CUSTOM_BASES" key TEMPVAR_STRING
+0AF0: 2@ = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\BASES.ini" section TEMPVAR_STRING key "ACTOR_TYPE"
+
+if and
+CUSTOM_BASE_PEDTYPE == 25 //захваченная нами база бандитская
+2@ == 25 //сканируемая бандитская  
+then
+
+if
+not TEMPVAR_INT == 1 //база не захвачена
+    then
+    TEMPVAR_INT3 = 0 //все базы военных не захвачены так как не захвачена она
+    end 
+    
+else
+
+if and
+CUSTOM_BASE_PEDTYPE == 27 //захваченная нами база военная
+2@ == 27 //сканируемая бандитская   
+    then
+    TEMPVAR_INT3 = 0 //все базы военных не захвачены так как не захвачена она
+    end 
+
+end     
+    
+end    
+/////////////////////////////////////////////////////////////////
+
+if and   
+NO_MORE_BANDITS_CAMPS == 0
+TEMPVAR_INT3 == 1 //все базы захвачены
+    then
+    NO_MORE_BANDITS_CAMPS = 1
+    RAID_FRACTION_FLAG = 0
+    $TEMP_XP = 80000
+    008D: $TEMP_XP = integer $TEMP_XP to_float
+    0069: $TEMP_XP *= $XP_COEFF // (float)
+    008C: $TEMP_XP = float $TEMP_XP to_integer
+    0058: $PLAYER_XP += $TEMP_XP // (int)
+    end
+    
+if and
+NO_MORE_ARMY_CAMPS == 0
+TEMPVAR_INT3 == 1 //все базы захвачены
+    then
+    NO_MORE_ARMY_CAMPS = 1
+            
+    if
+    $GAMEMODE_WAR == 0
+    then
+    $ARMY_PROCENT = 0.0
+    end
+            
+    RAID_FRACTION_FLAG = 0
+    $TEMP_XP = 80000
+    008D: $TEMP_XP = integer $TEMP_XP to_float
+    0069: $TEMP_XP *= $XP_COEFF // (float)
+    008C: $TEMP_XP = float $TEMP_XP to_integer
+    0058: $PLAYER_XP += $TEMP_XP // (int)
+    end     
 
 return

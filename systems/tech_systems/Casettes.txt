@@ -1,6 +1,6 @@
 const
 CASETTE_TURNED_ON = 28@  
-CASETTE_RADIUS_PLAY = 50.0
+CASETTE_RADIUS_PLAY = 100.0
 CASETTE_X_POS = 3@
 CASETTE_Y_POS = 4@
 CASETTE_Z_POS = 5@ 
@@ -45,7 +45,24 @@ thread 'CASSETT'
 if
 CUSTOM_MAP_FLAG == 1
 then
-end_thread
+0AF4: TEMPVAR_STRING = read_string_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\CASSETTES.ini" section "SETTINGS" key "CODE"
+0AF0: CUSTOM_CASETTES_COUNT = get_int_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\CASSETTES.ini" section "SETTINGS" key "COUNT"
+CUSTOM_CASETTES_COUNT += 1
+0084: CUSTOM_CASETTES_COUNT2 = CUSTOM_CASETTES_COUNT // (int)   
+CUSTOM_CASETTES_COUNT2 -= 1 
+if
+0846:   string TEMPVAR_STRING empty // v$
+    then    
+    end_thread
+    else
+    0AF4: TEMPVAR_STRING = read_string_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\CASSETTES.ini" section "SETTINGS" key "CODE"     
+    0AD3: TEMPVAR_STRING2 = format "za/%s/c1.ogg" TEMPVAR_STRING
+    if
+    8AAB: not  file_exists TEMPVAR_STRING2 //музикпак не скачан
+        then
+        end_thread
+        end
+    end
 end
 
 $CASETTE_PLAYING_FLAG = 0
@@ -99,6 +116,8 @@ if
         else
         CASETTE_HINT_FLAG = 0 
         end
+        
+        gosub @LOAD_CASSETTE_HINT_SOUND
           
         jump to @CASSETTES_PLAY
         end
@@ -121,7 +140,8 @@ then
 if
 CASETTE_TURNED_ON == 0
     then
-    0D54: draw_corona_with_extra_params_texture 0 color 128 0 0 128 on_entity 0 at CASETTE_X_POS CASETTE_Y_POS CASETTE_Z_POS size 0.25 far_clip 10.0 near_clip 0.5 flare 0 enable_reflection 1 check_obstacles 0 flash_while_fading 0 fade_speed 15.0 only_from_below 0
+    gosub @CASSETTE_ADJUST_NOTCASETTE_MUSIC_VOLUME
+    0D54: draw_corona_with_extra_params_texture 0 color 128 0 0 128 on_entity 0 at CASETTE_X_POS CASETTE_Y_POS CASETTE_Z_POS size 0.5 far_clip 50.0 near_clip 0.5 flare 0 enable_reflection 1 check_obstacles 0 flash_while_fading 0 fade_speed 15.0 only_from_below 0
     else
     TEMPVAR_INT = 180
     008D: TEMPVAR_INT = integer TEMPVAR_INT to_float
@@ -151,7 +171,11 @@ if or
 $SAVESTATUS_TRUE == 1  
 MAIN_QUEST_MUSIC_FLAG == 1
 actor.Dead(PLAYER_ACTOR)
-then         
+then
+
+:CASETTE_IDLING_AGAIN
+
+gosub @RESTORE_MUSIC_VOLUME    
 
 ////////////////////////////////////////////////////////
 
@@ -163,6 +187,200 @@ CASSETTE_TURNED_ON_LOCALLY = 0
     
 repeat
 wait 0
+
+//0AD1: show_formatted_text_highpriority "idling" time 2000
+
+///////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////
+
+if and
+$SAVESTATUS_TRUE == 1
+$SAVING_DELAY == 1
+then
+
+while $SAVESTATUS_TRUE == 1
+wait 0
+end
+
+while $SAVING_DELAY == 1
+wait 0
+end
+
+gosub @CST_SYS_WRITE_ARRAY
+
+end
+
+////////////////////////////////////////////////////////////////////
+
+wait 500   
+
+for 0@ = 0 to 24
+
+0085: 31@ = 0@
+31@ *= 12 //size of xyz
+0EE2: read_struct_offset_multi CST_SYS_ARRAY_STRUCT offset 31@ count 3 size 4 CASETTE_X_POS CASETTE_Y_POS CASETTE_Z_POS
+
+if
+0EEA: locate_char_distance_to_coordinates PLAYER_ACTOR pos CASETTE_X_POS CASETTE_Y_POS CASETTE_Z_POS radius CASETTE_RADIUS_PLAY
+    then
+    if and
+    80FE: not  actor PLAYER_ACTOR sphere 0 in_sphere 0.0 0.0 0.0 radius CASETTE_RADIUS_PLAY CASETTE_RADIUS_PLAY CASETTE_RADIUS_PLAY
+    $SAVESTATUS_TRUE == 0
+    not actor.Dead(PLAYER_ACTOR)
+    MAGNITIFON_DOSTAN_FROM_LORE_MODE == 0
+        then
+        
+        gosub @LOAD_CASSETTE_HINT_SOUND  
+        
+        while true
+        wait 0
+        
+        ////////////////////////////////////////////////////////
+        
+        if
+        00FE:   actor PLAYER_ACTOR sphere 0 in_sphere CASETTE_X_POS CASETTE_Y_POS CASETTE_Z_POS radius 7.5 7.5 7.5
+            then     
+            gosub @CASETTES_FOUNDED_CHECK    
+            if
+            not 16@ == 1
+                then
+                gosub @CASETTES_MARK_AS_FOUND
+                
+                if
+                CUSTOM_CASETTES_COUNT > 0 //CUSTOM_MAP_FLAG == 1
+                then                
+                0AF4: TEMPVAR_STRING = read_string_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\CASSETTES.ini" section "SETTINGS" key "CODE"
+                0AD3: TEMPVAR_STRING2 = format "%sCSFDTL" TEMPVAR_STRING CASSETTES_SHOW_LAST_SELECTED
+                
+                0AF0: 10@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key TEMPVAR_STRING2
+                if
+                10@ < 0
+                then
+                10@ = 0
+                end
+                
+                if
+                $CHEATED_FLAG == 0 
+                then   
+                10@ += 1
+                end 
+                 
+                0AF1: write_int 10@ to_ini_file "saves/ZACM.set" section "SCR" key TEMPVAR_STRING2                
+                else                
+                0AF0: 10@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "CASSETTES_FOUNDED_TOTAL"
+                
+                if
+                $CHEATED_FLAG == 0 
+                then   
+                10@ += 1
+                end 
+                 
+                0AF1: write_int 10@ to_ini_file "saves/ZACM.set" section "SCR" key "CASSETTES_FOUNDED_TOTAL"
+                end
+                
+                0AF0: 10@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "CASSETTES_FOUNDED_TOTAL"
+                if
+                CUSTOM_CASETTES_COUNT > 0 //CUSTOM_MAP_FLAG == 1
+                then                
+                0AF4: TEMPVAR_STRING = read_string_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\CASSETTES.ini" section "SETTINGS" key "CODE"
+                0AD3: TEMPVAR_STRING2 = format "%sCSFDTL" TEMPVAR_STRING CASSETTES_SHOW_LAST_SELECTED                        
+                0AF0: 10@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key TEMPVAR_STRING2
+                end
+                
+                0AF0: 11@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT22_GOT"
+                
+                if and
+                $CHEATED_FLAG == 0
+                CUSTOM_CASETTES_COUNT > 0 //CUSTOM_MAP_FLAG == 1 
+                11@ == 0
+                10@ >= 75
+                then   
+                v$ACHIEVEMNT = "ACH22"
+                $ACHIEVEMENT_GOT_FLAG = 1
+                0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT22_GOT"
+                end
+                
+                if
+                $CHEATED_FLAG == 0
+                then
+                Audiostream.Volume($MENU_MISC42_SOUND) = $SOUNDS_VOLUME 
+                Audiostream.Loop($MENU_MISC42_SOUND, 0)
+                Audiostream.PerformAction($MENU_MISC42_SOUND, PLAY) 
+                
+                if
+                CUSTOM_CASETTES_COUNT > 0 //CUSTOM_MAP_FLAG == 1
+                then
+                036D: show_text_2numbers_styled GXT "GAME199" numbers 10@ CUSTOM_CASETTES_COUNT time 5000 style 5
+                else
+                036D: show_text_2numbers_styled GXT "GAME199" numbers 10@ 75 time 5000 style 5
+                end
+                
+                $TEMP_XP = CASSETTE_FOUND_XP
+                008D: $TEMP_XP = integer $TEMP_XP to_float
+                0069: $TEMP_XP *= $XP_COEFF // (float)
+                008C: $TEMP_XP = float $TEMP_XP to_integer
+                0058: $PLAYER_XP += $TEMP_XP // (int)
+                end
+                
+                end
+            end
+        
+        ////////////////////////////////////////////////////////
+                
+        if
+        MAGNITIFON_DOSTAN_FROM_LORE_MODE == 0
+        then 
+        gosub @CASSETTE_ADJUST_NOTCASETTE_MUSIC_VOLUME       
+        0D54: draw_corona_with_extra_params_texture 0 color 128 0 0 128 on_entity 0 at CASETTE_X_POS CASETTE_Y_POS CASETTE_Z_POS size 0.5 far_clip 50.0 near_clip 0.5 flare 0 enable_reflection 1 check_obstacles 0 flash_while_fading 0 fade_speed 15.0 only_from_below 0
+        end
+        
+        ////////////////////////////////////////////////////////
+
+        if and
+        USER_TAPE_TURNED_ON_FLAG == 0
+        MAGNITIFON_DOSTAN_FROM_LORE_MODE == 0
+            then
+            
+            if and
+            00FE:   actor PLAYER_ACTOR sphere 0 in_sphere CASETTE_X_POS CASETTE_Y_POS CASETTE_Z_POS radius 1.0 1.0 3.0
+            MAGNITIFON_DOSTAN_FROM_LORE_MODE == 0
+                then                    
+                0512: show_permanent_text_box 'GM1182B'
+                else
+                if
+                0A2A:   text_box 'GM1182B' displayed
+                    then
+                    text.RemoveTextBox()
+                    end  
+                end
+            
+            if and
+            00FE:   actor PLAYER_ACTOR sphere 0 in_sphere CASETTE_X_POS CASETTE_Y_POS CASETTE_Z_POS radius 1.0 1.0 3.0
+            0AB0:   key_pressed $KEY_USE
+                then  
+                jump to @CASSETTES_PLAY_EXTRA
+                end
+            end
+        
+        if or
+        80FE: not  actor PLAYER_ACTOR sphere 0 in_sphere CASETTE_X_POS CASETTE_Y_POS CASETTE_Z_POS radius CASETTE_RADIUS_PLAY CASETTE_RADIUS_PLAY CASETTE_RADIUS_PLAY
+        $SAVESTATUS_TRUE == 1  
+        MAIN_QUEST_MUSIC_FLAG == 1
+        actor.Dead(PLAYER_ACTOR)
+            then 
+            jump to @CASETTE_IDLING_AGAIN
+            end
+            
+        end    
+            
+        end
+    end
+
+end
+
+///////////////////////////////////////////////////////////////////////
+
 until $CASETTE_PLAYING_FLAG == 0    
     
 end 
@@ -182,6 +400,8 @@ MAGNITIFON_DOSTAN_FROM_LORE_MODE == 0
     00FE:   actor PLAYER_ACTOR sphere 0 in_sphere CASETTE_X_POS CASETTE_Y_POS CASETTE_Z_POS radius 1.0 1.0 3.0
     0AB0:   key_pressed $KEY_USE
         then
+        :CASSETTES_PLAY_EXTRA
+        gosub @RESTORE_MUSIC_VOLUME
         33@ = 0              
         text.ClearAll()  
         text.RemoveTextBox()
@@ -196,8 +416,9 @@ MAGNITIFON_DOSTAN_FROM_LORE_MODE == 0
         
         audiostream.PerformAction($CASETTE_AUDIO,STOP)
         audiostream.Release($CASETTE_AUDIO)
-        
+        $CASETTE_AUDIO = 0
         RADIO_TEXTURE_RENDER_NUMBER = 118
+        MUSIC_CASSETTE_IS_REALLY_PLAYING = 0
         
 //        audiostream.PerformAction($SHIT_FUCK,STOP)
 //        audiostream.Release($SHIT_FUCK)
@@ -236,6 +457,7 @@ MAGNITIFON_DOSTAN_FROM_LORE_MODE == 0
         wait 500
         
         audiostream.Release($SHIT_FUCK)
+        $SHIT_FUCK = 0
         
         end
         
@@ -370,9 +592,31 @@ if
     then     
     gosub @CASETTES_FOUNDED_CHECK    
     if
-    16@ == 0
+    not 16@ == 1
         then
         gosub @CASETTES_MARK_AS_FOUND
+        
+        if
+        CUSTOM_CASETTES_COUNT > 0 //CUSTOM_MAP_FLAG == 1
+        then                
+        0AF4: TEMPVAR_STRING = read_string_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\CASSETTES.ini" section "SETTINGS" key "CODE"
+        0AD3: TEMPVAR_STRING2 = format "%sCSFDTL" TEMPVAR_STRING CASSETTES_SHOW_LAST_SELECTED        
+                
+        0AF0: 10@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key TEMPVAR_STRING2
+        if
+        10@ < 0
+        then
+        10@ = 0
+        end
+                
+        if
+        $CHEATED_FLAG == 0 
+        then   
+        10@ += 1
+        end 
+                 
+        0AF1: write_int 10@ to_ini_file "saves/ZACM.set" section "SCR" key TEMPVAR_STRING2 
+        else
         0AF0: 10@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "CASSETTES_FOUNDED_TOTAL"
         
         if
@@ -382,12 +626,22 @@ if
         end 
          
         0AF1: write_int 10@ to_ini_file "saves/ZACM.set" section "SCR" key "CASSETTES_FOUNDED_TOTAL"
+        end
         
         0AF0: 10@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "CASSETTES_FOUNDED_TOTAL"
+        if
+        CUSTOM_CASETTES_COUNT > 0 //CUSTOM_MAP_FLAG == 1
+        then                
+        0AF4: TEMPVAR_STRING = read_string_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\CASSETTES.ini" section "SETTINGS" key "CODE"
+        0AD3: TEMPVAR_STRING2 = format "%sCSFDTL" TEMPVAR_STRING CASSETTES_SHOW_LAST_SELECTED                        
+        0AF0: 10@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key TEMPVAR_STRING2
+        end
+        
         0AF0: 11@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key "ACHIEVEMENT22_GOT"
         
         if and
-        $CHEATED_FLAG == 0 
+        $CHEATED_FLAG == 0
+        not CUSTOM_CASETTES_COUNT > 0 //CUSTOM_MAP_FLAG == 1 
         11@ == 0
         10@ >= 75
         then   
@@ -403,7 +657,13 @@ if
         Audiostream.Loop($MENU_MISC42_SOUND, 0)
         Audiostream.PerformAction($MENU_MISC42_SOUND, PLAY) 
         
-        01E3: show_text_1number_styled GXT "GAME199" number 10@ time 5000 style 5
+        if
+        CUSTOM_CASETTES_COUNT > 0 //CUSTOM_MAP_FLAG == 1
+        then
+        036D: show_text_2numbers_styled GXT "GAME199" numbers 10@ CUSTOM_CASETTES_COUNT time 5000 style 5
+        else
+        036D: show_text_2numbers_styled GXT "GAME199" numbers 10@ 75 time 5000 style 5
+        end
         
         $TEMP_XP = CASSETTE_FOUND_XP
         008D: $TEMP_XP = integer $TEMP_XP to_float
@@ -485,9 +745,19 @@ end_thread
 
 for 13@ = 0 to 24
 0AD3: v$CST_FILE = format "cs%d" 13@
+
+if     
+CUSTOM_CASETTES_COUNT > 0 //CUSTOM_MAP_FLAG == 1 
+then
+0AF2: 21@ = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\CASSETTES.ini" section v$CST_FILE key "CSX" 
+0AF2: 22@ = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\CASSETTES.ini" section v$CST_FILE key "CSY" 
+0AF2: 23@ = get_float_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\CASSETTES.ini" section v$CST_FILE key "CSZ" 
+else
 0AF2: 21@ = get_float_from_ini_file "data/cassettes.ini" section v$CST_FILE key "CSX" 
 0AF2: 22@ = get_float_from_ini_file "data/cassettes.ini" section v$CST_FILE key "CSY" 
 0AF2: 23@ = get_float_from_ini_file "data/cassettes.ini" section v$CST_FILE key "CSZ" 
+end
+
 0085: 31@ = 13@
 31@ *= 12 //size of xyz  
 
@@ -528,6 +798,17 @@ return
 
 //0AD1: show_formatted_text_highpriority "load cassette num %d" time 2000 0@
 
+///////////////////////////////////////////////
+
+if
+CUSTOM_CASETTES_COUNT > 0 //CUSTOM_MAP_FLAG == 1
+then
+gosub @CUSTOM_MAP_LOAD_CASSETTE_AUDIO
+return
+end
+
+///////////////////////////////////////////////
+
 if
 UNITED_MAP == 0
 then
@@ -535,151 +816,151 @@ then
 if
 0@ == 0
 then         
-$CASETTE_AUDIO = Audiostream.Load(CASSETTE1)
+$CASETTE_AUDIO = Audiostream.Load3d(CASSETTE1)
 end
 
 if
 0@ == 1
 then         
-$CASETTE_AUDIO = Audiostream.Load(CASSETTE2)
+$CASETTE_AUDIO = Audiostream.Load3d(CASSETTE2)
 end
 
 if
 0@ == 2
 then         
-$CASETTE_AUDIO = Audiostream.Load(CASSETTE3)
+$CASETTE_AUDIO = Audiostream.Load3d(CASSETTE3)
 end
 
 if
 0@ == 3
 then         
-$CASETTE_AUDIO = Audiostream.Load(CASSETTE4)
+$CASETTE_AUDIO = Audiostream.Load3d(CASSETTE4)
 end
 
 if
 0@ == 4
 then         
-$CASETTE_AUDIO = Audiostream.Load(CASSETTE5)
+$CASETTE_AUDIO = Audiostream.Load3d(CASSETTE5)
 end
 
 if
 0@ == 5
 then         
-$CASETTE_AUDIO = Audiostream.Load(CASSETTE6)
+$CASETTE_AUDIO = Audiostream.Load3d(CASSETTE6)
 end
 
 if
 0@ == 6
 then         
-$CASETTE_AUDIO = Audiostream.Load(CASSETTE7)
+$CASETTE_AUDIO = Audiostream.Load3d(CASSETTE7)
 end
 
 if
 0@ == 7
 then         
-$CASETTE_AUDIO = Audiostream.Load(CASSETTE8)
+$CASETTE_AUDIO = Audiostream.Load3d(CASSETTE8)
 end
 
 if
 0@ == 8
 then         
-$CASETTE_AUDIO = Audiostream.Load(CASSETTE9)
+$CASETTE_AUDIO = Audiostream.Load3d(CASSETTE9)
 end
 
 if
 0@ == 9
 then         
-$CASETTE_AUDIO = Audiostream.Load(CASSETTE10)
+$CASETTE_AUDIO = Audiostream.Load3d(CASSETTE10)
 end
 
 if
 0@ == 10
 then         
-$CASETTE_AUDIO = Audiostream.Load(CASSETTE11)
+$CASETTE_AUDIO = Audiostream.Load3d(CASSETTE11)
 end
 
 if
 0@ == 11
 then         
-$CASETTE_AUDIO = Audiostream.Load(CASSETTE12)
+$CASETTE_AUDIO = Audiostream.Load3d(CASSETTE12)
 end
 
 if
 0@ == 12
 then         
-$CASETTE_AUDIO = Audiostream.Load(CASSETTE13)
+$CASETTE_AUDIO = Audiostream.Load3d(CASSETTE13)
 end
 
 if
 0@ == 13
 then         
-$CASETTE_AUDIO = Audiostream.Load(CASSETTE14)
+$CASETTE_AUDIO = Audiostream.Load3d(CASSETTE14)
 end
 
 if
 0@ == 14
 then         
-$CASETTE_AUDIO = Audiostream.Load(CASSETTE15)
+$CASETTE_AUDIO = Audiostream.Load3d(CASSETTE15)
 end
 
 if
 0@ == 15
 then         
-$CASETTE_AUDIO = Audiostream.Load(CASSETTE16)
+$CASETTE_AUDIO = Audiostream.Load3d(CASSETTE16)
 end
 
 if
 0@ == 16
 then         
-$CASETTE_AUDIO = Audiostream.Load(CASSETTE17)
+$CASETTE_AUDIO = Audiostream.Load3d(CASSETTE17)
 end
 
 if
 0@ == 17
 then         
-$CASETTE_AUDIO = Audiostream.Load(CASSETTE18)
+$CASETTE_AUDIO = Audiostream.Load3d(CASSETTE18)
 end
 
 if
 0@ == 18
 then         
-$CASETTE_AUDIO = Audiostream.Load(CASSETTE19)
+$CASETTE_AUDIO = Audiostream.Load3d(CASSETTE19)
 end
 
 if
 0@ == 19
 then         
-$CASETTE_AUDIO = Audiostream.Load(CASSETTE20)
+$CASETTE_AUDIO = Audiostream.Load3d(CASSETTE20)
 end
 
 if
 0@ == 20
 then         
-$CASETTE_AUDIO = Audiostream.Load(CASSETTE21)
+$CASETTE_AUDIO = Audiostream.Load3d(CASSETTE21)
 end
 
 if
 0@ == 21
 then         
-$CASETTE_AUDIO = Audiostream.Load(CASSETTE22)
+$CASETTE_AUDIO = Audiostream.Load3d(CASSETTE22)
 end
 
 if
 0@ == 22
 then         
-$CASETTE_AUDIO = Audiostream.Load(CASSETTE23)
+$CASETTE_AUDIO = Audiostream.Load3d(CASSETTE23)
 end
 
 if
 0@ == 23
 then         
-$CASETTE_AUDIO = Audiostream.Load(CASSETTE24)
+$CASETTE_AUDIO = Audiostream.Load3d(CASSETTE24)
 end
 
 if
 0@ == 24
 then         
-$CASETTE_AUDIO = Audiostream.Load(CASSETTE25)
+$CASETTE_AUDIO = Audiostream.Load3d(CASSETTE25)
 end
 
 else
@@ -691,9 +972,9 @@ then
 if
 STORIES_MAP == 0
 then         
-$CASETTE_AUDIO = Audiostream.Load(UNITED_CASSETTE1)
+$CASETTE_AUDIO = Audiostream.Load3d(UNITED_CASSETTE1)
 else
-$CASETTE_AUDIO = Audiostream.Load(STORIES_CASSETTE1)
+$CASETTE_AUDIO = Audiostream.Load3d(STORIES_CASSETTE1)
 end
 
 end
@@ -705,9 +986,9 @@ then
 if
 STORIES_MAP == 0
 then         
-$CASETTE_AUDIO = Audiostream.Load(UNITED_CASSETTE2)
+$CASETTE_AUDIO = Audiostream.Load3d(UNITED_CASSETTE2)
 else
-$CASETTE_AUDIO = Audiostream.Load(STORIES_CASSETTE2)
+$CASETTE_AUDIO = Audiostream.Load3d(STORIES_CASSETTE2)
 end
 
 end
@@ -719,9 +1000,9 @@ then
 if
 STORIES_MAP == 0
 then         
-$CASETTE_AUDIO = Audiostream.Load(UNITED_CASSETTE3)
+$CASETTE_AUDIO = Audiostream.Load3d(UNITED_CASSETTE3)
 else
-$CASETTE_AUDIO = Audiostream.Load(STORIES_CASSETTE3)
+$CASETTE_AUDIO = Audiostream.Load3d(STORIES_CASSETTE3)
 end
 
 end
@@ -733,9 +1014,9 @@ then
 if
 STORIES_MAP == 0
 then         
-$CASETTE_AUDIO = Audiostream.Load(UNITED_CASSETTE4)
+$CASETTE_AUDIO = Audiostream.Load3d(UNITED_CASSETTE4)
 else
-$CASETTE_AUDIO = Audiostream.Load(STORIES_CASSETTE4)
+$CASETTE_AUDIO = Audiostream.Load3d(STORIES_CASSETTE4)
 end
 
 end
@@ -747,9 +1028,9 @@ then
 if
 STORIES_MAP == 0
 then         
-$CASETTE_AUDIO = Audiostream.Load(UNITED_CASSETTE5)
+$CASETTE_AUDIO = Audiostream.Load3d(UNITED_CASSETTE5)
 else
-$CASETTE_AUDIO = Audiostream.Load(STORIES_CASSETTE5)
+$CASETTE_AUDIO = Audiostream.Load3d(STORIES_CASSETTE5)
 end
 
 end
@@ -761,9 +1042,9 @@ then
 if
 STORIES_MAP == 0
 then         
-$CASETTE_AUDIO = Audiostream.Load(UNITED_CASSETTE6)
+$CASETTE_AUDIO = Audiostream.Load3d(UNITED_CASSETTE6)
 else
-$CASETTE_AUDIO = Audiostream.Load(STORIES_CASSETTE6)
+$CASETTE_AUDIO = Audiostream.Load3d(STORIES_CASSETTE6)
 end
 
 end
@@ -775,9 +1056,9 @@ then
 if
 STORIES_MAP == 0
 then         
-$CASETTE_AUDIO = Audiostream.Load(UNITED_CASSETTE7)
+$CASETTE_AUDIO = Audiostream.Load3d(UNITED_CASSETTE7)
 else
-$CASETTE_AUDIO = Audiostream.Load(STORIES_CASSETTE7)
+$CASETTE_AUDIO = Audiostream.Load3d(STORIES_CASSETTE7)
 end
 
 end
@@ -789,9 +1070,9 @@ then
 if
 STORIES_MAP == 0
 then         
-$CASETTE_AUDIO = Audiostream.Load(UNITED_CASSETTE8)
+$CASETTE_AUDIO = Audiostream.Load3d(UNITED_CASSETTE8)
 else
-$CASETTE_AUDIO = Audiostream.Load(STORIES_CASSETTE8)
+$CASETTE_AUDIO = Audiostream.Load3d(STORIES_CASSETTE8)
 end
 
 end
@@ -803,9 +1084,9 @@ then
 if
 STORIES_MAP == 0
 then         
-$CASETTE_AUDIO = Audiostream.Load(UNITED_CASSETTE9)
+$CASETTE_AUDIO = Audiostream.Load3d(UNITED_CASSETTE9)
 else
-$CASETTE_AUDIO = Audiostream.Load(STORIES_CASSETTE9)
+$CASETTE_AUDIO = Audiostream.Load3d(STORIES_CASSETTE9)
 end
 
 end
@@ -817,9 +1098,9 @@ then
 if
 STORIES_MAP == 0
 then         
-$CASETTE_AUDIO = Audiostream.Load(UNITED_CASSETTE10)
+$CASETTE_AUDIO = Audiostream.Load3d(UNITED_CASSETTE10)
 else
-$CASETTE_AUDIO = Audiostream.Load(STORIES_CASSETTE10)
+$CASETTE_AUDIO = Audiostream.Load3d(STORIES_CASSETTE10)
 end
 
 end
@@ -831,9 +1112,9 @@ then
 if
 STORIES_MAP == 0
 then         
-$CASETTE_AUDIO = Audiostream.Load(UNITED_CASSETTE11)
+$CASETTE_AUDIO = Audiostream.Load3d(UNITED_CASSETTE11)
 else
-$CASETTE_AUDIO = Audiostream.Load(STORIES_CASSETTE11)
+$CASETTE_AUDIO = Audiostream.Load3d(STORIES_CASSETTE11)
 end
 
 end
@@ -845,9 +1126,9 @@ then
 if
 STORIES_MAP == 0
 then         
-$CASETTE_AUDIO = Audiostream.Load(UNITED_CASSETTE12)
+$CASETTE_AUDIO = Audiostream.Load3d(UNITED_CASSETTE12)
 else
-$CASETTE_AUDIO = Audiostream.Load(STORIES_CASSETTE12)
+$CASETTE_AUDIO = Audiostream.Load3d(STORIES_CASSETTE12)
 end
 
 end
@@ -859,9 +1140,9 @@ then
 if
 STORIES_MAP == 0
 then         
-$CASETTE_AUDIO = Audiostream.Load(UNITED_CASSETTE13)
+$CASETTE_AUDIO = Audiostream.Load3d(UNITED_CASSETTE13)
 else
-$CASETTE_AUDIO = Audiostream.Load(STORIES_CASSETTE13)
+$CASETTE_AUDIO = Audiostream.Load3d(STORIES_CASSETTE13)
 end
 
 end
@@ -873,9 +1154,9 @@ then
 if
 STORIES_MAP == 0
 then         
-$CASETTE_AUDIO = Audiostream.Load(UNITED_CASSETTE14)
+$CASETTE_AUDIO = Audiostream.Load3d(UNITED_CASSETTE14)
 else
-$CASETTE_AUDIO = Audiostream.Load(STORIES_CASSETTE14)
+$CASETTE_AUDIO = Audiostream.Load3d(STORIES_CASSETTE14)
 end
 
 end
@@ -887,9 +1168,9 @@ then
 if
 STORIES_MAP == 0
 then         
-$CASETTE_AUDIO = Audiostream.Load(UNITED_CASSETTE15)
+$CASETTE_AUDIO = Audiostream.Load3d(UNITED_CASSETTE15)
 else
-$CASETTE_AUDIO = Audiostream.Load(STORIES_CASSETTE15)
+$CASETTE_AUDIO = Audiostream.Load3d(STORIES_CASSETTE15)
 end
 
 end
@@ -901,9 +1182,9 @@ then
 if
 STORIES_MAP == 0
 then         
-$CASETTE_AUDIO = Audiostream.Load(UNITED_CASSETTE16)
+$CASETTE_AUDIO = Audiostream.Load3d(UNITED_CASSETTE16)
 else
-$CASETTE_AUDIO = Audiostream.Load(STORIES_CASSETTE16)
+$CASETTE_AUDIO = Audiostream.Load3d(STORIES_CASSETTE16)
 end
 
 end
@@ -915,9 +1196,9 @@ then
 if
 STORIES_MAP == 0
 then         
-$CASETTE_AUDIO = Audiostream.Load(UNITED_CASSETTE17)
+$CASETTE_AUDIO = Audiostream.Load3d(UNITED_CASSETTE17)
 else
-$CASETTE_AUDIO = Audiostream.Load(STORIES_CASSETTE17)
+$CASETTE_AUDIO = Audiostream.Load3d(STORIES_CASSETTE17)
 end
 
 end
@@ -929,9 +1210,9 @@ then
 if
 STORIES_MAP == 0
 then         
-$CASETTE_AUDIO = Audiostream.Load(UNITED_CASSETTE18)
+$CASETTE_AUDIO = Audiostream.Load3d(UNITED_CASSETTE18)
 else
-$CASETTE_AUDIO = Audiostream.Load(STORIES_CASSETTE18)
+$CASETTE_AUDIO = Audiostream.Load3d(STORIES_CASSETTE18)
 end
 
 end
@@ -943,9 +1224,9 @@ then
 if
 STORIES_MAP == 0
 then         
-$CASETTE_AUDIO = Audiostream.Load(UNITED_CASSETTE19)
+$CASETTE_AUDIO = Audiostream.Load3d(UNITED_CASSETTE19)
 else
-$CASETTE_AUDIO = Audiostream.Load(STORIES_CASSETTE19)
+$CASETTE_AUDIO = Audiostream.Load3d(STORIES_CASSETTE19)
 end
 
 end
@@ -957,9 +1238,9 @@ then
 if
 STORIES_MAP == 0
 then         
-$CASETTE_AUDIO = Audiostream.Load(UNITED_CASSETTE20)
+$CASETTE_AUDIO = Audiostream.Load3d(UNITED_CASSETTE20)
 else
-$CASETTE_AUDIO = Audiostream.Load(STORIES_CASSETTE20)
+$CASETTE_AUDIO = Audiostream.Load3d(STORIES_CASSETTE20)
 end
 
 end
@@ -971,9 +1252,9 @@ then
 if
 STORIES_MAP == 0
 then         
-$CASETTE_AUDIO = Audiostream.Load(UNITED_CASSETTE21)
+$CASETTE_AUDIO = Audiostream.Load3d(UNITED_CASSETTE21)
 else
-$CASETTE_AUDIO = Audiostream.Load(STORIES_CASSETTE21)
+$CASETTE_AUDIO = Audiostream.Load3d(STORIES_CASSETTE21)
 end
 
 end
@@ -985,9 +1266,9 @@ then
 if
 STORIES_MAP == 0
 then         
-$CASETTE_AUDIO = Audiostream.Load(UNITED_CASSETTE22)
+$CASETTE_AUDIO = Audiostream.Load3d(UNITED_CASSETTE22)
 else
-$CASETTE_AUDIO = Audiostream.Load(STORIES_CASSETTE22)
+$CASETTE_AUDIO = Audiostream.Load3d(STORIES_CASSETTE22)
 end
 
 end
@@ -999,9 +1280,9 @@ then
 if
 STORIES_MAP == 0
 then         
-$CASETTE_AUDIO = Audiostream.Load(UNITED_CASSETTE23)
+$CASETTE_AUDIO = Audiostream.Load3d(UNITED_CASSETTE23)
 else
-$CASETTE_AUDIO = Audiostream.Load(STORIES_CASSETTE23)
+$CASETTE_AUDIO = Audiostream.Load3d(STORIES_CASSETTE23)
 end
 
 end
@@ -1013,9 +1294,9 @@ then
 if
 STORIES_MAP == 0
 then         
-$CASETTE_AUDIO = Audiostream.Load(UNITED_CASSETTE24)
+$CASETTE_AUDIO = Audiostream.Load3d(UNITED_CASSETTE24)
 else
-$CASETTE_AUDIO = Audiostream.Load(STORIES_CASSETTE24)
+$CASETTE_AUDIO = Audiostream.Load3d(STORIES_CASSETTE24)
 end
 
 end
@@ -1027,9 +1308,9 @@ then
 if
 STORIES_MAP == 0
 then         
-$CASETTE_AUDIO = Audiostream.Load(UNITED_CASSETTE25)
+$CASETTE_AUDIO = Audiostream.Load3d(UNITED_CASSETTE25)
 else
-$CASETTE_AUDIO = Audiostream.Load(STORIES_CASSETTE25)
+$CASETTE_AUDIO = Audiostream.Load3d(STORIES_CASSETTE25)
 end
 
 end
@@ -1039,6 +1320,15 @@ end
 return
 
 :CASETTES_FOUNDED_CHECK
+
+if
+CUSTOM_CASETTES_COUNT > 0 //CUSTOM_MAP_FLAG == 1
+then
+0AF4: TEMPVAR_STRING = read_string_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\CASSETTES.ini" section "SETTINGS" key "CODE"
+0AD3: TEMPVAR_STRING2 = format "%sCS%dFD" TEMPVAR_STRING 0@
+0AF0: 16@ = get_int_from_ini_file "saves/ZACM.set" section "SCR" key TEMPVAR_STRING2
+return
+end
 
 if
 UNITED_MAP == 0
@@ -1513,9 +1803,18 @@ return
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 if and
-16@ == 0
+not 16@ == 1
 $CHEATED_FLAG == 0
-then   
+then
+
+if
+CUSTOM_CASETTES_COUNT > 0 //CUSTOM_MAP_FLAG == 1
+then
+0AF4: TEMPVAR_STRING = read_string_from_ini_file "modloader\ZA CUSTOM MAP FOLDER\CONFIGS\CASSETTES.ini" section "SETTINGS" key "CODE"
+0AD3: TEMPVAR_STRING2 = format "%sCS%dFD" TEMPVAR_STRING 0@
+0AF1: write_int 1 to_ini_file "saves/ZACM.set" section "SCR" key TEMPVAR_STRING2
+return
+end   
 
 if
 UNITED_MAP == 0
